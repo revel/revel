@@ -23,7 +23,9 @@ type Route struct {
 type RouteMatch struct {
 	ControllerName string     // e.g. Application
 	FunctionName string       // e.g. ShowApp
-	Params map[string]string  // e.g. {id: 123}
+	Params []string
+	// TODO: Store the param name as well as its order
+	// Params map[string]string  // e.g. {id: 123}
 	StaticFilename string
 }
 
@@ -132,6 +134,7 @@ func (r *Route) Match(method string, path string) *RouteMatch {
 	return &RouteMatch{
 		ControllerName: actionSplit[0],
 		FunctionName: actionSplit[1],
+		Params: matches[1:],
 	}
 }
 

@@ -9,6 +9,7 @@ import (
 	// "io/ioutil"
 	"log"
 	"reflect"
+	"strconv"
 )
 
 var router *Router
@@ -42,7 +43,7 @@ func handle(w http.ResponseWriter, r *http.Request) {
 	// Now call the action.
 	// TODO: Figure out the arguments it expects, and try to bind parameters to
 	// them.
-	method := appControllerPtr.MethodByName(route.FunctionName)
+	var method reflect.Value = appControllerPtr.MethodByName(route.FunctionName)
 	if !method.IsValid() {
 		LOG.Printf("E: Function %s not found on Controller %s",
 			route.FunctionName, route.ControllerName)
@@ -50,7 +51,43 @@ func handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resultValue := method.Call([]reflect.Value{ })[0]
+	// Get the types of the method parameters.
+	var methodType reflect.Type = method.Type()
+	var paramTypes []reflect.Type = make([]reflect.Type, 0, 5)
+	for i := 0; i < methodType.NumIn(); i++ {
+		paramTypes = append(paramTypes, methodType.In(i))
+	}
+
+	// Check they are equal.
+	if len(paramTypes) != len(route.Params) {
+		LOG.Printf("E: # matched params (%d) != # expected params (%d)",
+			len(route.Params), len(paramTypes))
+		http.NotFound(w, r)
+		return
+	}
+
+	// Get the values of the method params
+	paramValues := make([]reflect.Value, 0, 5)
+	for i := 0; i < len(route.Params); i++ {
+		// For each, parse it into the type that the method expects.
+		var param string = route.Params[i]
+		var paramType reflect.Type = paramTypes[i]
+		var paramValue reflect.Value
+		switch (paramType.Kind()) {
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			intParam, err := strconv.Atoi(param)
+			if err != nil {
+				LOG.Printf("Failed to parse param to int: %s", param)
+				http.NotFound(w, r)
+				return
+			}
+			paramValue = reflect.ValueOf(intParam)
+		}
+		paramValues = append(paramValues, paramValue)
+	}
+
+	// Call the method.
+	resultValue := method.Call(paramValues)[0]
 	result := resultValue.Interface().(*Result)
 	w.Write([]byte(result.body))
 }
