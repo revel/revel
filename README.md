@@ -76,3 +76,17 @@ func (*Users u) saveUser(userId int) play.Result r {
 1. Get simple server working: A route from routes, a controller, a no-arg mustache view
 2. Get hot-compile working: A go proxy, compile, show compile errors
 
+Routing
+ORM
+Http/Request/Response/Session/Flash
+- Gorilla sessions, except its session is like a Play cache.
+Form validation
+Data binding
+- Start with Gorilla schema package
+Templating
+Interceptors
+Libraries (XML, File IO, WS, OAuth, Email, Images)
+Async programming (suspend, resume)
+Websockets
+Internationalization
+Jobs

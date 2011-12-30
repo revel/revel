@@ -9,10 +9,10 @@ type Application struct {
 }
 
 func (c *Application) Index() (*play.Result) {
-	return c.Render()
+	return c.Render(nil)
 }
 
 func (c *Application) ShowApp(id int) (*play.Result) {
-	return c.Render()
+	return c.Render(id)
 }
 

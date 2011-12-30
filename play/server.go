@@ -13,6 +13,7 @@ import (
 )
 
 var router *Router
+var templateLoader *TemplateLoader
 
 func handle(w http.ResponseWriter, r *http.Request) {
 	// Figure out the Controller/Action
@@ -105,8 +106,10 @@ func Run() {
 	// Load the routes
 	router = LoadRoutes()
 
+	templateLoader = new(TemplateLoader)
+
 	// Now that we know all the Controllers, start the server.
 	log.Printf("Listening on port 8080...")
 	http.HandleFunc("/", handle)
-	http.ListenAndServe(":8080", nil)
+	http.ListenAndServe(":9000", nil)
 }

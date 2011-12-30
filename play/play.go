@@ -13,3 +13,4 @@ var AppPath = path.Join(BasePath, "app")
 //var LOG = l4g.NewDefaultLogger(l4g.FINEST)
 var LOG = log.New(os.Stdout, "", log.Ldate | log.Ltime | log.Lshortfile)
 
+var PlayPath = "/Users/robfig/code/goplay/play"

@@ -2,13 +2,14 @@ package play
 
 import (
 	"net/http"
-	"io/ioutil"
+	//"io/ioutil"
 	"log"
-	"path"
+	//"path"
 	"reflect"
 	"runtime"
-	"os"
+	//"os"
 	"strings"
+//	"html/template"
 )
 
 type Controller struct {
@@ -17,7 +18,7 @@ type Controller struct {
 	name string
 }
 
-func (c *Controller) Render() (*Result) {
+func (c *Controller) Render(arg interface{}) (*Result) {
 	// Find the template.
 	// Get the calling function name.
 	pc, _, _, _ := runtime.Caller(1)
@@ -26,23 +27,19 @@ func (c *Controller) Render() (*Result) {
 	var viewName string = fqViewName[
 		strings.LastIndex(fqViewName, ".") + 1 : len(fqViewName)]
 
-	// Look through the views directory for it.
-	viewsDir := path.Join(AppPath, "views", c.name)
-	fileInfos, _ := ioutil.ReadDir(viewsDir)
-	var viewFile os.FileInfo
-	for _, file := range(fileInfos) {
-		if strings.HasPrefix(file.Name(), viewName + ".") {
-			viewFile = file
-			break
-		}
+	// Refresh templates.
+	err := templateLoader.LoadTemplates()
+	if err != nil {
+		c.responseWriter.Write([]byte(err.Html()))
+		return &Result{}
 	}
 
 	// Render the template
-	bytes, _ := ioutil.ReadFile(path.Join(viewsDir, viewFile.Name()))
+	html, _ := templateLoader.RenderTemplate(c.name + "/" + viewName + ".html", arg)
 
 	// Prepare the result
 	r := new(Result)
-	c.responseWriter.Write(bytes)
+	c.responseWriter.Write([]byte(html))
 	return r
 }
 
