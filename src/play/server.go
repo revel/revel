@@ -1,15 +1,17 @@
 package play
 
 import (
+//	"os"
 	"net/http"
-	// "path/filepath"
-	// "go/token"
-	// "go/parser"
-	// "go/ast"
-	// "io/ioutil"
+	//"path/filepath"
+	 // "go/token"
+	 // "go/parser"
+	 // "go/ast"
+	//"io/ioutil"
 	"log"
 	"reflect"
 	"strconv"
+	// "fmt"
 )
 
 var router *Router
@@ -94,14 +96,8 @@ func handle(w http.ResponseWriter, r *http.Request) {
 }
 
 func Run() {
-	// TODO: Scan the application directory and automatically register Controllers
-	// fset := token.NewFileSet()
-	// fileInfos, _ := ioutil.ReadDir(filepath.Join(AppPath, "controllers"))
-	// for i, file := range(fileInfos) {
-	// 	fset.AddFile(file.Name(), fset.Base(), int(file.Size()))
-	// }
-	// var a map[string]*ast.Package
-	// a , _ = parser.ParseDir(fset, AppPath, nil, 0)
+
+	// ast.Print(fset, a["controllers"])
 
 	// Load the routes
 	router = LoadRoutes()
@@ -113,3 +109,5 @@ func Run() {
 	http.HandleFunc("/", handle)
 	http.ListenAndServe(":9000", nil)
 }
+
+

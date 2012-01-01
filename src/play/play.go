@@ -7,10 +7,11 @@ import (
 	"os"
 )
 
-var BasePath = "/Users/robfig/code/goplay/sample"
+var AppName = "sample"
+var BasePath = "/Users/robfig/code/goplay/src/sample"
 var AppPath = path.Join(BasePath, "app")
 // TODO: Get log4go to work and use that instead.
 //var LOG = l4g.NewDefaultLogger(l4g.FINEST)
 var LOG = log.New(os.Stdout, "", log.Ldate | log.Ltime | log.Lshortfile)
 
-var PlayPath = "/Users/robfig/code/goplay/play"
+var PlayPath = "/Users/robfig/code/goplay/src/play"

@@ -25,9 +25,9 @@ type TemplateLoader struct {
 	viewsDir string
 }
 
-type Template struct {
-	template *template.Template
-}
+// type Template struct {
+// 	template *template.Template
+// }
 
 type sourceLine struct {
 	Source string
