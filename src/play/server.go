@@ -1,22 +1,17 @@
 package play
 
 import (
-//	"os"
+	"fmt"
 	"net/http"
-	//"path/filepath"
-	 // "go/token"
-	 // "go/parser"
-	 // "go/ast"
-	//"io/ioutil"
 	"log"
 	"reflect"
 	"strconv"
-	// "fmt"
 )
 
 var router *Router
 var templateLoader *TemplateLoader
 
+// This method handles all http requests.
 func handle(w http.ResponseWriter, r *http.Request) {
 	// Figure out the Controller/Action
 	var route *RouteMatch = router.Route(r)
@@ -95,19 +90,20 @@ func handle(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(result.body))
 }
 
-func Run() {
-
-	// ast.Print(fset, a["controllers"])
-
+// Run the server.
+func Run(port int) {
 	// Load the routes
 	router = LoadRoutes()
 
 	templateLoader = new(TemplateLoader)
 
 	// Now that we know all the Controllers, start the server.
-	log.Printf("Listening on port 8080...")
+	LOG.Printf("Listening on port %d...", port)
 	http.HandleFunc("/", handle)
-	http.ListenAndServe(":9000", nil)
+	err := http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
+	if err != nil {
+		log.Println("Failed to listen:", err)
+	}
 }
 
 

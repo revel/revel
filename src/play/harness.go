@@ -1,8 +1,8 @@
 // The Harness for a GoPlay! program.
 //
 // It has a couple responsibilities:
-// 1. Parse the user program, generating source files:
-//   _controllers.go: Calls to register all of the controller classes.
+// 1. Parse the user program, generating a main.go file that registers
+//    controller classes and starts the user's server.
 // 2. Build and run the user program.  Show compile errors.
 // 3. Monitor the user source and re-build / restart the program when necessary.
 //
@@ -11,38 +11,142 @@
 package main
 
 import (
-	"text/template"
-	"play"
-	"log"
-	"os"
-	"path/filepath"
-	"go/build"
-	"go/token"
-	"go/parser"
-	"go/ast"
+	"bytes"
 	"fmt"
+	"go/ast"
+	"go/build"
+	"go/parser"
+	"go/token"
+	"io"
+	"log"
+	"net"
+	"net/http"
+	"net/http/httputil"
+	"net/url"
+	"os"
 	"os/exec"
+	"path/filepath"
+	"play"
+	"text/template"
 )
 
 const REGISTER_CONTROLLERS = `
 package main
 
 import (
+	"flag"
 	"play"
 	{{range .controllers}}
   "{{.FullPackageName}}"
   {{end}}
 )
 
+var port *int = flag.Int("port", 0, "Port")
+
 func main() {
+	play.LOG.Println("Running play server")
+	flag.Parse()
   {{range .controllers}}
 	play.RegisterController((*{{.PackageName}}.{{.StructName}})(nil))
   {{end}}
-  play.Run()
+	play.Run(*port)
 }
 `
 
+// Reverse proxy requests to the application server.
+// On each request, proxy sends (NotifyRequest = true)
+// If code change has been detected in app:
+// - app is rebuilt and restarted, send proxy (NotifyReady = true)
+// - else, send proxy (NotifyReady = true)
+
+type harnessProxy struct {
+	proxy *httputil.ReverseProxy
+	NotifyRequest chan bool  // Strobed on every request.
+	NotifyReady chan bool  // Strobed when request may proceed.
+}
+
+func (hp *harnessProxy) ServeHTTP(wr http.ResponseWriter, req *http.Request) {
+	hp.NotifyRequest <- true
+	<- hp.NotifyReady
+	hp.proxy.ServeHTTP(wr, req)
+}
+
+func startReverseProxy(port int) *harnessProxy {
+	serverUrl, _ := url.ParseRequest(fmt.Sprintf("http://localhost:%d", port))
+	reverseProxy := &harnessProxy{
+		proxy: httputil.NewSingleHostReverseProxy(serverUrl),
+		NotifyRequest: make(chan bool),
+		NotifyReady: make(chan bool),
+	}
+	go func() {
+		err := http.ListenAndServe(":9000", reverseProxy)
+		if err != nil {
+			log.Fatalln("Failed to start reverse proxy:", err)
+		}
+	}()
+	return reverseProxy
+}
+
 func main() {
+
+	// Get a port on which to run the application
+	port := getFreePort()
+
+	// Run a reverse proxy to it.
+	proxy := startReverseProxy(port)
+
+	// Listen for changes to the user app.
+	watcher := play.NewWatcher(play.AppPath)
+
+	// Define an exit handler that kills the play server (since it won't die on
+	// its own, if the harness exits)
+	defer func() {
+		if cmd != nil {
+			cmd.Process.Kill()
+			cmd = nil
+		}
+	}()
+
+	// Build the application, and run it on that port.
+	rebuild(port)
+
+	// Start the listen / rebuild loop.
+	for {
+
+		// It spins in this loop for each inotify change, and each request.
+		// If there is a request after an inotify change, it breaks out to rebuild.
+		dirty := false
+		for {
+			select {
+			case ev := <-watcher.Event:
+				log.Println("Detected change to application directories:", ev.DirNames)
+				dirty = true
+				continue
+			case err := <-watcher.Error:
+				log.Fatalf("Inotify error: %s", err)
+			case _ = <-proxy.NotifyRequest:
+				if !dirty {
+					proxy.NotifyReady <- true
+					continue
+				}
+			}
+
+			break
+		}
+
+		// There has been a change to the app and a new request is pending.
+		// Rebuild it and send the "ready" signal.
+		log.Println("Rebuild")
+		rebuild(port)
+		dirty = false
+		proxy.NotifyReady <- true
+	}
+}
+
+var cmd *exec.Cmd
+
+// Rebuild the Play! application and run it on the given port.
+func rebuild(port int) {
 	tmpl := template.New("RegisterControllers")
 	tmpl = template.Must(tmpl.Parse(REGISTER_CONTROLLERS))
 
@@ -50,11 +154,22 @@ func main() {
 		"controllers": ListControllers(filepath.Join(play.AppPath, "controllers")),
 	})
 
+	// Terminate the server if it's already running.
+	if cmd != nil {
+		log.Println("Killing play server pid", cmd.Process.Pid)
+		err := cmd.Process.Kill()
+		if err != nil {
+			log.Fatalln("Failed to kill play server:", err)
+		}
+	}
+
 	// Create a fresh temp dir.
 	tmpPath := filepath.Join(play.AppPath, "tmp")
-
-	os.Remove(tmpPath)
-	err := os.Mkdir(tmpPath, 0777)
+	err := os.RemoveAll(tmpPath)
+	if err != nil {
+		log.Println("Failed to remove tmp dir:", err)
+	}
+	err = os.Mkdir(tmpPath, 0777)
 	if err != nil {
 		log.Fatalf("Failed to make tmp directory: %v", err)
 	}
@@ -114,14 +229,49 @@ func main() {
 		}
 	}
 
-	// Run the user's server, via tmp/main.go.
+	// Run the server, via tmp/main.go.
 	appTree, _, _ := build.FindTree(play.AppPath)
-	cmd := exec.Command(filepath.Join(appTree.BinDir(), "tmp"))
-	err = cmd.Run()
+	cmd = exec.Command(filepath.Join(appTree.BinDir(), "tmp"), fmt.Sprintf("-port=%d", port))
+	listeningWriter := StartupListeningWriter{os.Stdout, make(chan bool)}
+	cmd.Stdout = listeningWriter
+	cmd.Stderr = os.Stderr
+	err = cmd.Start()
 	if err != nil {
-		fmt.Println("Error running:", err)
+		log.Fatalln("Error running:", err)
 	}
-	fmt.Println("Exit.")
+
+	<-listeningWriter.notifyReady
+}
+
+// A io.Writer that copies to the destination, and listens for "Listening on.."
+// in the stream.  (Which tells us when the play server has finished starting up)
+// This is super ghetto, but by far the simplest thing that should work.
+type StartupListeningWriter struct {
+	dest io.Writer
+	notifyReady chan bool
+}
+
+func (w StartupListeningWriter) Write(p []byte) (n int, err error) {
+	if w.notifyReady != nil && bytes.Contains(p, []byte("Listening")) {
+		w.notifyReady <- true
+		w.notifyReady = nil
+	}
+	return w.dest.Write(p)
+}
+
+// Find an unused port
+func getFreePort() (port int) {
+	conn, err := net.Listen("tcp", ":0")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	port = conn.Addr().(*net.TCPAddr).Port
+	err = conn.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
+	return port
 }
 
 type typeName struct {
