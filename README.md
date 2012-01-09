@@ -1,8 +1,19 @@
 # Go Play!
 
-This is a port of the amazing [Play! framework][http://www.playframework.org] to Go.
+This is a port of the amazing [Play! framework](http://www.playframework.org) to Go.
 
 It is nowhere near ready for anyone to look at, much less use.
+
+# To try it out:
+- clone this repo into your GOPATH.  e.g:
+```export GOPATH=/Users/$USER/gocode/src
+mkdir -p $GOPATH
+cd $GOPATH
+git clone github.com/robfig/go-play/play```
+- build the command line tool: `gb src/play/cmd`
+- run the sample app: `./bin/play`
+
+# Scratch space
 
 ## Five cool things you can do.
 
@@ -31,17 +42,17 @@ A typical method:
 myapp/controllers/users.go:
 
 type Users struct {
-  play.Controller
+  *play.Controller
 }
 
-func (*Users u) showUser(userId int) play.Result r {
+func (*Users u) showUser(userId int) play.Result {
 
   // Look for myapp/views/Users/showUser.*
   // If it ends in .mustache, use that.
   // If it ends in .html .. default to something?
-  u.Render(map[string]User{"user": user})  // Template uses map as usual
+  return u.Render(map[string]User{"user": user})  // Template uses map
   // or
-  u.Render(user)  // Template uses fields of user.
+  return u.Render(user)  // Template uses fields of user.
 }
 
 type User struct { .. }
@@ -90,3 +101,46 @@ Async programming (suspend, resume)
 Websockets
 Internationalization
 Jobs
+Plugins
+
+
+server.go:
+- Router
+- TemplateLoader
+
+mvc.go:
+
+
+tmpl.go:
+How to test?
+
+
+Is it necessary to recompile/restart the whole server when e.g. a Controller changes?
+
+harness
+- User builds and runs harness, passing path to play app.
+- Harness loads the app's config, builds it.
+- Harness starts it.
+
+
+Todo:
+- Build the user app correctly (ie, with dependency analysis, using godg)
+ - See about goinstall godag .. making a makefile is too hard.
+- Show go compile errors prettily.
+- Interceptors
+- Reverse routing
+- application.conf parsing
+- Gorilla schema / support field[0].property
+- Cookies
+- Flash
+- Form validation (Gorilla schema going to do it?)
+- Jobs
+- Plugins
+
+
+// @Before controllers.Login
+
+// Register interceptors.
+func init() {
+	play.Intercept((*Application) nil, )
+}

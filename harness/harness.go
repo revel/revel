@@ -8,7 +8,7 @@
 //
 // Source files are generated in the app/tmp directory.
 
-package main
+package harness
 
 import (
 	"bytes"
@@ -26,18 +26,19 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"play"
 	"text/template"
+	"play"
 )
 
 const REGISTER_CONTROLLERS = `
+// target: {{.AppName}}
 package main
 
 import (
 	"flag"
 	"play"
-	{{range .controllers}}
-  "{{.FullPackageName}}"
+	{{range $k, $v := .controllers}}
+  "{{$k}}"
   {{end}}
 )
 
@@ -46,8 +47,10 @@ var port *int = flag.Int("port", 0, "Port")
 func main() {
 	play.LOG.Println("Running play server")
 	flag.Parse()
-  {{range .controllers}}
+  {{range $k, $v := .controllers}}
+  {{range $v}}
 	play.RegisterController((*{{.PackageName}}.{{.StructName}})(nil))
+  {{end}}
   {{end}}
 	play.Run(*port)
 }
@@ -87,7 +90,7 @@ func startReverseProxy(port int) *harnessProxy {
 	return reverseProxy
 }
 
-func main() {
+func Run() {
 
 	// Get a port on which to run the application
 	port := getFreePort()
@@ -96,7 +99,7 @@ func main() {
 	proxy := startReverseProxy(port)
 
 	// Listen for changes to the user app.
-	watcher := play.NewWatcher(play.AppPath)
+	watcher := NewWatcher(play.AppPath)
 
 	// Define an exit handler that kills the play server (since it won't die on
 	// its own, if the harness exits)
@@ -149,9 +152,9 @@ var cmd *exec.Cmd
 func rebuild(port int) {
 	tmpl := template.New("RegisterControllers")
 	tmpl = template.Must(tmpl.Parse(REGISTER_CONTROLLERS))
-
 	var registerControllerSource string = play.ExecuteTemplate(tmpl, map[string]interface{} {
-		"controllers": ListControllers(filepath.Join(play.AppPath, "controllers")),
+		"AppName": play.AppName,
+		"controllers": listControllers(filepath.Join(play.AppPath, "controllers")),
 	})
 
 	// Terminate the server if it's already running.
@@ -185,54 +188,22 @@ func rebuild(port int) {
 	}
 
 	// Build the user program (all code under app).
-
-	// Find all subdirectories of /app/
-	var appDirectories []string
-	appDir, err := os.Open(play.AppPath)
+	// It relies on the user having gb installed.
+	gbPath, err := exec.LookPath("gb")
 	if err != nil {
-		log.Fatalf("Failed to open directory: %s", err)
+		log.Fatalf("GB executable not found in PATH.  Please goinstall it.")
 	}
-
-	fileInfos, err := appDir.Readdir(-1)
+	cmd := exec.Command(gbPath, path.Join(play.AppPath, "tmp"))
+	err = cmd.Run()
 	if err != nil {
-		log.Fatalf("Failed to read directory %s: %s", play.AppPath, err)
-	}
-	for _, fileInfo := range(fileInfos) {
-		if fileInfo.IsDir() {
-			appDirectories = append(appDirectories, fileInfo.Name())
-		}
-	}
-
-	// Scan each directory.
-	for _, appDirectory := range(appDirectories) {
-		fqDir := filepath.Join(play.AppPath, appDirectory)
-		dir, e := build.ScanDir(fqDir)
-		if e != nil {
-			// TODO: Ignore just the "no Go source files" error.
-			continue
-		}
-
-		tree, pkg, e := build.FindTree(fqDir)
-		if e != nil {
-			log.Fatal(e)
-		}
-
-		// If this tree has the main package, we're going to be running it.
-		script, e := build.Build(tree, pkg, dir)
-		if e != nil {
-			log.Fatal(e)
-		}
-
-		e = script.Run()
-		if e != nil {
-			log.Fatal(e)
-		}
+		output, _ := cmd.CombinedOutput()
+		log.Fatalln("Failed to build app:\n%s", string(output))
 	}
 
 	// Run the server, via tmp/main.go.
 	appTree, _, _ := build.FindTree(play.AppPath)
 	cmd = exec.Command(filepath.Join(appTree.BinDir(), "tmp"), fmt.Sprintf("-port=%d", port))
-	listeningWriter := StartupListeningWriter{os.Stdout, make(chan bool)}
+	listeningWriter := startupListeningWriter{os.Stdout, make(chan bool)}
 	cmd.Stdout = listeningWriter
 	cmd.Stderr = os.Stderr
 	err = cmd.Start()
@@ -246,12 +217,12 @@ func rebuild(port int) {
 // A io.Writer that copies to the destination, and listens for "Listening on.."
 // in the stream.  (Which tells us when the play server has finished starting up)
 // This is super ghetto, but by far the simplest thing that should work.
-type StartupListeningWriter struct {
+type startupListeningWriter struct {
 	dest io.Writer
 	notifyReady chan bool
 }
 
-func (w StartupListeningWriter) Write(p []byte) (n int, err error) {
+func (w startupListeningWriter) Write(p []byte) (n int, err error) {
 	if w.notifyReady != nil && bytes.Contains(p, []byte("Listening")) {
 		w.notifyReady <- true
 		w.notifyReady = nil
@@ -275,10 +246,12 @@ func getFreePort() (port int) {
 }
 
 type typeName struct {
-	FullPackageName, PackageName, StructName string
+	PackageName, StructName string
 }
 
-func ListControllers(path string) (controllerTypeNames []*typeName) {
+func listControllers(path string) (controllerTypeNames map[string][]*typeName) {
+	controllerTypeNames = make(map[string][]*typeName)
+
 	// Parse files within the path.
 	var pkgs map[string]*ast.Package
 	fset := token.NewFileSet()
@@ -339,8 +312,9 @@ func ListControllers(path string) (controllerTypeNames []*typeName) {
 
 				// TODO: Support sub-types of play.Controller as well.
 				if pkgIdent.Name == "play" && selectorExpr.Sel.Name == "Controller" {
-					controllerTypeNames = append(controllerTypeNames,
-						&typeName{play.AppName + "/app/" + pkg.Name, pkg.Name, spec.Name.Name})
+					fullImportPath := play.BaseImportPath + "/" + play.AppName + "/app/" + pkg.Name
+					controllerTypeNames[fullImportPath] = append(controllerTypeNames[fullImportPath],
+						&typeName{ pkg.Name, spec.Name.Name })
 				}
 			}
 		}

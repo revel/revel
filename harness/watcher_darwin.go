@@ -1,6 +1,6 @@
 // A inotify-style filesystem watcher for Mac, using kqueue.
 // It's purpose is watching and notifying for source code changes.
-package play
+package harness
 
 import (
 	"log"
@@ -50,8 +50,6 @@ func setupWatcher(path string) *Watcher {
 	var dirFileMap map[int] *os.File = make(map[int] *os.File)
 	var dirContentsMap map[int] []os.FileInfo = make(map[int] []os.FileInfo)
 	var dirQueue []string = []string{path}
-	// var dirQueue []string = make([]string, 1, 10)
-	// dirQueue[0] = path
 	for len(dirQueue) > 0 {
 		// Get the next directory to add to the watcher.
 		dirPath := dirQueue[0]
@@ -136,6 +134,9 @@ func watchForever(watcher *Watcher) {
 			// Otherwise, Readdir returns "readdirent: invalid argument" error, on
 			// some (not all) changes.
 			dir, err = os.Open(dir.Name())
+			if err != nil {
+				log.Fatalln("Failed to open dir:", dir.Name())
+			}
 			defer dir.Close()
 			newFileInfos, err := dir.Readdir(-1)
 			if err != nil {
