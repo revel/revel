@@ -11,7 +11,7 @@ It is nowhere near ready for anyone to look at, much less use.
 export GOPATH=/Users/$USER/gocode/src
 mkdir -p $GOPATH
 cd $GOPATH
-git clone github.com/robfig/go-play/play
+git clone github.com/robfig/go-play play
 ```
 
 - install [gb](http://code.google.com/p/go-gb/): `goinstall github.com/skelterjohn/go-gb/gb`
