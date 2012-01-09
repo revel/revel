@@ -6,11 +6,16 @@ It is nowhere near ready for anyone to look at, much less use.
 
 # To try it out:
 - clone this repo into your GOPATH.  e.g:
-```export GOPATH=/Users/$USER/gocode/src
+
+```
+export GOPATH=/Users/$USER/gocode/src
 mkdir -p $GOPATH
 cd $GOPATH
-git clone github.com/robfig/go-play/play```
-- build the command line tool: `gb src/play/cmd`
+git clone github.com/robfig/go-play/play
+```
+
+- install [gb](http://code.google.com/p/go-gb/): `goinstall github.com/skelterjohn/go-gb/gb`
+- build the play command line tool with gb: `gb src/play/cmd`
 - run the sample app: `./bin/play`
 
 # Scratch space
