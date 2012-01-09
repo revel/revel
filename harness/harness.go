@@ -193,7 +193,7 @@ func rebuild(port int) {
 	if err != nil {
 		log.Fatalf("GB executable not found in PATH.  Please goinstall it.")
 	}
-	cmd := exec.Command(gbPath, path.Join(play.AppPath, "tmp"))
+	cmd := exec.Command(gbPath, filepath.Join(play.AppPath, "tmp"))
 	err = cmd.Run()
 	if err != nil {
 		output, _ := cmd.CombinedOutput()
