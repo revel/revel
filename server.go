@@ -19,6 +19,13 @@ func handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Dispatch the static files first.
+	if route.StaticFilename != "" {
+		http.ServeFile(w, r, route.StaticFilename)
+		return
+	}
+
+	// Invoke the controller method...
 	LOG.Printf("Calling %s.%s", route.ControllerName, route.FunctionName)
 	var t reflect.Type = LookupControllerType(route.ControllerName)
 

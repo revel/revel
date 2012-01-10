@@ -98,7 +98,7 @@ func (r *Route) compute() {
 
 	// Handle action
 	r.actionArgs = make([]*arg, 0, 3)
-	var actionPatternStr string = strings.Replace(".", `\.`, r.action, -1)
+	var actionPatternStr string = strings.Replace(r.action, ".", `\.`, -1)
 	for _, arg := range(r.args) {
 		var argName string = "{" + arg.name + "}"
 		if argIndex := strings.Index(actionPatternStr, argName); argIndex != -1 {
@@ -112,18 +112,25 @@ func (r *Route) compute() {
 }
 
 // Return nil if no match.
-func (r *Route) Match(method string, path string) *RouteMatch {
+func (r *Route) Match(method string, reqPath string) *RouteMatch {
 	// Check the Method
 	if r.method != "*" && method != r.method && !(method == "HEAD" && r.method == "GET") {
 		return nil
 	}
 
 	// Check the Path
-	var matches []string = r.pathPattern.FindStringSubmatch(path)
+	var matches []string = r.pathPattern.FindStringSubmatch(reqPath)
 	if matches == nil {
 		return nil
 	}
 	LOG.Printf("Path Match: %v", matches)
+
+	// If it's a static file request..
+	if r.staticDir != "" {
+		return &RouteMatch{
+			StaticFilename: path.Join(BasePath, r.staticDir, matches[1]),
+		}
+	}
 
 	// Split the action into controller and function
 	actionSplit := strings.Split(r.action, ".")
@@ -163,7 +170,10 @@ var routePattern *regexp.Regexp = regexp.MustCompile(
 // Load the routes file.
 func LoadRoutes() *Router {
 	// Get the routes file content.
-	contentBytes, _ := ioutil.ReadFile(path.Join(BasePath, "conf", "routes"))
+	contentBytes, err := ioutil.ReadFile(path.Join(BasePath, "conf", "routes"))
+	if err != nil {
+		LOG.Fatalln("Failed to load routes file:", err)
+	}
 	content := string(contentBytes)
 	return NewRouter(content)
 }
@@ -200,5 +210,20 @@ func NewRouter(routesConf string) *Router {
 	return router
 }
 
+func (router *Router) Reverse(action string, args []interface{}) string {
+	for _, route := range router.routes {
+		if route.actionPattern == nil {
+			continue
+		}
 
+		var matches []string = route.actionPattern.FindStringSubmatch(action)
+		if len(matches) == 0 {
+			continue
+		}
 
+		// TODO: Support reversing actions with arguments.
+		// This is pending on achieving named parameter passing to actions (rather than positional).
+		return route.path
+	}
+	return "#"
+}

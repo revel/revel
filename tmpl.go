@@ -1,7 +1,7 @@
 package play
 
 import (
-	 "html/template"
+	"html/template"
 	"fmt"
 	"path/filepath"
 	"path"
@@ -24,6 +24,13 @@ type TemplateLoader struct {
 
 	viewsDir string
 }
+
+var (
+	// The functions available for use in the templates.
+	tmplFuncs = map[string]interface{} {
+		"url": ReverseUrl,
+	}
+)
 
 // This scans the views directory and parses all templates.
 // If a template fails to parse, the error is returned.
@@ -51,7 +58,9 @@ func (loader *TemplateLoader) LoadTemplates() (err *CompileError) {
 
 		fileStr := string(fileBytes)
 		if templateSet == nil {
-			templateSet, err = template.New(templateName).Parse(fileStr)
+			templateSet, err = template.New(templateName).
+				Funcs(tmplFuncs).
+				Parse(fileStr)
 		} else {
 			_, err = templateSet.New(templateName).Parse(fileStr)
 		}
@@ -113,5 +122,19 @@ func (loader *TemplateLoader) RenderTemplate(name string, arg interface{}) (stri
 	return b.String(), false
 }
 
+/////////////////////
+// Template functions
+/////////////////////
 
+// Return a url capable of invoking a given controller method:
+// "Application.ShowApp 123" => "/app/123"
+func ReverseUrl(args ...interface{}) string {
+	if len(args) == 0 {
+		LOG.Println("Warning: no arguments provided to url function")
+		return "#"
+	}
+
+	return router.Reverse(args[0].(string), args[1:])
+	return "#"
+}
 

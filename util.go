@@ -30,3 +30,12 @@ func MustReadLines(filename string) []string {
 	}
 	return strings.Split(string(bytes), "\n")
 }
+
+func ContainsString(list []string, target string) bool {
+	for _, el := range list {
+		if el == target {
+			return true
+		}
+	}
+	return false
+}
