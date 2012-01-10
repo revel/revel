@@ -135,7 +135,7 @@ func watchForever(watcher *Watcher) {
 			// some (not all) changes.
 			dir, err = os.Open(dir.Name())
 			if err != nil {
-				log.Fatalln("Failed to open dir:", dir.Name())
+				log.Fatalln(err.Error())
 			}
 			defer dir.Close()
 			newFileInfos, err := dir.Readdir(-1)

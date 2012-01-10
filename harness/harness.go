@@ -43,11 +43,15 @@ import (
   {{end}}
 )
 
-var port *int = flag.Int("port", 0, "Port")
+var (
+	port *int = flag.Int("port", 0, "Port")
+	basePath *string = flag.String("basePath", "", "Path to the app.")
+)
 
 func main() {
 	play.LOG.Println("Running play server")
 	flag.Parse()
+	play.Init(*basePath)
   {{range $k, $v := .controllers}}
   {{range $v}}
 	play.RegisterController((*{{.PackageName}}.{{.StructName}})(nil))
@@ -70,6 +74,7 @@ type harnessProxy struct {
 }
 
 func (hp *harnessProxy) ServeHTTP(wr http.ResponseWriter, req *http.Request) {
+
 	// First, poll to see if there's a pending error in NotifyReady
 	select {
 	case err := <-hp.NotifyReady:
@@ -142,18 +147,20 @@ func Run() {
 	}()
 
 	// Start the listen / rebuild loop.
+	var err error = nil
+	var dirty bool = true
 	for {
+		err = nil
 
 		// It spins in this loop for each inotify change, and each request.
 		// If there is a request after an inotify change, it breaks out to rebuild.
-		dirty := true
 		for {
 			select {
 			case ev := <-watcher.Event:
 				log.Println("Detected change to application directories:", ev.DirNames)
 				dirty = true
 				continue
-			case err := <-watcher.Error:
+			case err = <-watcher.Error:
 				log.Fatalf("Inotify error: %s", err)
 			case _ = <-proxy.NotifyRequest:
 				if !dirty {
@@ -170,6 +177,7 @@ func Run() {
 		log.Println("Rebuild")
 		err := rebuild(port)
 		if err != nil {
+			log.Println(err.Error())
 			proxy.NotifyReady <- err
 			continue
 		}
@@ -239,7 +247,9 @@ func rebuild(port int) (compileError *play.CompileError) {
 
 	// Run the server, via tmp/main.go.
 	appTree, _, _ := build.FindTree(play.AppPath)
-	cmd = exec.Command(filepath.Join(appTree.BinDir(), "tmp"), fmt.Sprintf("-port=%d", port))
+	cmd = exec.Command(filepath.Join(appTree.BinDir(), play.AppName),
+		fmt.Sprintf("-port=%d", port),
+		fmt.Sprintf("-basePath=%s", play.BasePath))
 	listeningWriter := startupListeningWriter{os.Stdout, make(chan bool)}
 	cmd.Stdout = listeningWriter
 	cmd.Stderr = os.Stderr
@@ -365,7 +375,7 @@ func listControllers(path string) (controllerTypeNames map[string][]*typeName, c
 
 				// TODO: Support sub-types of play.Controller as well.
 				if pkgIdent.Name == "play" && selectorExpr.Sel.Name == "Controller" {
-					fullImportPath := play.BaseImportPath + "/" + play.AppName + "/app/" + pkg.Name
+					fullImportPath := play.ImportPath + "/app/" + pkg.Name
 					controllerTypeNames[fullImportPath] = append(controllerTypeNames[fullImportPath],
 						&typeName{ pkg.Name, spec.Name.Name })
 				}

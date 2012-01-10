@@ -3,7 +3,6 @@ package play
 import (
 	"fmt"
 	"net/http"
-	"log"
 	"reflect"
 	"strconv"
 )
@@ -91,6 +90,7 @@ func handle(w http.ResponseWriter, r *http.Request) {
 }
 
 // Run the server.
+// This is called from the generated main file.
 func Run(port int) {
 	// Load the routes
 	router = LoadRoutes()
@@ -102,7 +102,7 @@ func Run(port int) {
 	http.HandleFunc("/", handle)
 	err := http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
 	if err != nil {
-		log.Println("Failed to listen:", err)
+		LOG.Fatalln("Failed to listen:", err)
 	}
 }
 

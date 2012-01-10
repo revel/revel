@@ -16,7 +16,15 @@ git clone github.com/robfig/go-play play
 
 - install [gb](http://code.google.com/p/go-gb/): `goinstall github.com/skelterjohn/go-gb/gb`
 - build the play command line tool with gb: `gb src/play/cmd`
-- run the sample app: `./bin/play`
+- run the sample app: `./bin/play src/play/sample`
+
+# File layout
+
+Go Play! depends on the layout prescribed by goinstall (and the new go command line tool).
+(TODO: link)
+
+Play must be installed in the same GOPATH as the user app -- it uses that assumption to find its own source, e.g. for finding templates.
+
 
 # Scratch space
 
@@ -129,12 +137,10 @@ harness
 
 
 Todo:
-- Build the user app correctly (ie, with dependency analysis, using godg)
- - See about goinstall godag .. making a makefile is too hard.
-- Show go compile errors prettily.
-- Interceptors
-- Reverse routing
 - application.conf parsing
+- Static file serving
+- Reverse routing
+- Interceptors
 - Gorilla schema / support field[0].property
 - Cookies
 - Flash
