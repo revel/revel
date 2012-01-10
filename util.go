@@ -6,6 +6,8 @@ package play
 import (
 	"bytes"
 	"io"
+	"io/ioutil"
+	"strings"
 )
 
 // Add some more methods to the default Template.
@@ -20,3 +22,11 @@ func ExecuteTemplate(tmpl ExecutableTemplate, data interface{}) string {
 	return b.String()
 }
 
+// Reads the lines of the given file.  Panics in the case of error.
+func MustReadLines(filename string) []string {
+	bytes, err := ioutil.ReadFile(filename)
+	if err != nil {
+		panic(err)
+	}
+	return strings.Split(string(bytes), "\n")
+}

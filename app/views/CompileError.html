@@ -2,8 +2,6 @@
 <html>
   <head>
     <title>Application error</title>
-  </head>
-  <body>
     <style type="text/css">
     html, body {
         margin: 0;
@@ -85,25 +83,34 @@
         font-weight: bold;
     }
     </style>
-
+  </head>
+  <body>
     <div id="header" class="block">
       <h1>
         {{.Title}}
       </h1>
       <p>
-        The template <strong>{{.Path}}</strong> does not compile: <strong>{{.Description}}</strong>
+        The {{.SourceType}} <strong>{{.Path}}</strong> does not compile: <strong>{{.Description}}</strong>
       </p>
     </div>
+    {{if .Path}}
     <div id="source" class="block">
-      <h2>In {{.Path}} (around line {{.Line}})</h2>
-
+      <h2>In {{.Path}}
+        {{if .Line}}
+          (around {{if .Line}}line {{.Line}}{{end}} {{if .Column}}column {{.Column}}{{end}})
+        {{end}}
+      </h2>
       {{range .ContextSource}}
         <div class="line {{if .IsError}}error{{end}}">
           <span class="lineNumber">{{.Line}}:</span>
           <pre>{{.Source}}</pre>
         </div>
       {{end}}
-
     </div>
+    {{end}}
   </body>
 </html>
+
+
+
+

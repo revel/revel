@@ -25,56 +25,9 @@ type TemplateLoader struct {
 	viewsDir string
 }
 
-// type Template struct {
-// 	template *template.Template
-// }
-
-type sourceLine struct {
-	Source string
-	Line int
-	IsError bool
-}
-
-type TemplateCompilationError struct {
-	Title string
-	Path string
-	Line int
-	Description string
-	SourceLines []string
-}
-
-func (e TemplateCompilationError) Error() string {
-	return fmt.Sprintf("html/template:%s:%d: %s", e.Path, e.Line, e.Description)
-}
-
-// Returns a snippet of the source around where the error occurred.
-func (e TemplateCompilationError) ContextSource() []sourceLine {
-	start := (e.Line - 1) - 5
-	if start < 0 {
-		start = 0
-	}
-	end := (e.Line - 1) + 5
-	if end > len(e.SourceLines) {
-		end = len(e.SourceLines)
-	}
-	var lines []sourceLine = make([]sourceLine, end - start)
-	for i, src := range(e.SourceLines[start:end]) {
-		lines[i] = sourceLine{src, start+i+1, i == e.Line - 1}
-	}
-	return lines
-}
-
-var errorTemplate = template.Must(template.ParseFiles(filepath.Join(PlayPath, "error.html")))
-
-func (e TemplateCompilationError) Html() string {
-	var b bytes.Buffer
-	errorTemplate.Execute(&b, &e)
-	return b.String()
-}
-
 // This scans the views directory and parses all templates.
 // If a template fails to parse, the error is returned.
-func (loader *TemplateLoader) LoadTemplates() (err *TemplateCompilationError) {
+func (loader *TemplateLoader) LoadTemplates() (err *CompileError) {
 	viewsDir := path.Join(AppPath, "views")
 	var templateSet *template.Template = nil
 	walkErr := filepath.Walk(viewsDir, func(path string, info os.FileInfo, err error) error {
@@ -114,19 +67,19 @@ func (loader *TemplateLoader) LoadTemplates() (err *TemplateCompilationError) {
 				}
 				description = description[ii[1]+1:]
 			}
-			return &TemplateCompilationError{
-				"Template Compilation Error",
-				templateName,
-				line,
-				description,
-				strings.Split(fileStr, "\n"),
+			return &CompileError{
+				Title: "Template Compilation Error",
+				Path: templateName,
+				Description: description,
+				Line: line,
+				SourceLines: strings.Split(fileStr, "\n"),
 			}
 		}
 		return nil
 	})
 
 	if walkErr != nil {
-		err = walkErr.(*TemplateCompilationError)
+		err = walkErr.(*CompileError)
 	}
 
 	loader.templateSet = templateSet

@@ -16,6 +16,7 @@ import (
 	"go/ast"
 	"go/build"
 	"go/parser"
+	"go/scanner"
 	"go/token"
 	"io"
 	"log"
@@ -65,13 +66,43 @@ func main() {
 type harnessProxy struct {
 	proxy *httputil.ReverseProxy
 	NotifyRequest chan bool  // Strobed on every request.
-	NotifyReady chan bool  // Strobed when request may proceed.
+	NotifyReady chan error  // Strobed when request may proceed.
 }
 
 func (hp *harnessProxy) ServeHTTP(wr http.ResponseWriter, req *http.Request) {
+	// First, poll to see if there's a pending error in NotifyReady
+	select {
+	case err := <-hp.NotifyReady:
+		serveError(wr, req, err)
+	default:
+		// Usually do nothing.
+	}
+
+	// Notify that a request is coming through, and wait for the go-ahead.
 	hp.NotifyRequest <- true
-	<- hp.NotifyReady
+	err := <- hp.NotifyReady
+
+	// If an error was returned, create the page and show it to the user.
+	if err != nil {
+		serveError(wr, req, err)
+		return
+	}
+
+	// Reverse proxy the request.
 	hp.proxy.ServeHTTP(wr, req)
+}
+
+func serveError(wr http.ResponseWriter, req *http.Request, err error) {
+	switch e := err.(type) {
+	case *play.CompileError:
+		play.ErrorTemplate.Execute(wr, e)
+	default:
+		play.ErrorTemplate.Execute(wr, map[string]string {
+			"Title": "Unexpected error",
+			"Path": "(unknown)",
+			"Description": "An unexpected error occurred: " + err.Error(),
+		})
+	}
 }
 
 func startReverseProxy(port int) *harnessProxy {
@@ -79,7 +110,7 @@ func startReverseProxy(port int) *harnessProxy {
 	reverseProxy := &harnessProxy{
 		proxy: httputil.NewSingleHostReverseProxy(serverUrl),
 		NotifyRequest: make(chan bool),
-		NotifyReady: make(chan bool),
+		NotifyReady: make(chan error),
 	}
 	go func() {
 		err := http.ListenAndServe(":9000", reverseProxy)
@@ -110,15 +141,12 @@ func Run() {
 		}
 	}()
 
-	// Build the application, and run it on that port.
-	rebuild(port)
-
 	// Start the listen / rebuild loop.
 	for {
 
 		// It spins in this loop for each inotify change, and each request.
 		// If there is a request after an inotify change, it breaks out to rebuild.
-		dirty := false
+		dirty := true
 		for {
 			select {
 			case ev := <-watcher.Event:
@@ -129,7 +157,7 @@ func Run() {
 				log.Fatalf("Inotify error: %s", err)
 			case _ = <-proxy.NotifyRequest:
 				if !dirty {
-					proxy.NotifyReady <- true
+					proxy.NotifyReady <- nil
 					continue
 				}
 			}
@@ -140,21 +168,30 @@ func Run() {
 		// There has been a change to the app and a new request is pending.
 		// Rebuild it and send the "ready" signal.
 		log.Println("Rebuild")
-		rebuild(port)
+		err := rebuild(port)
+		if err != nil {
+			proxy.NotifyReady <- err
+			continue
+		}
 		dirty = false
-		proxy.NotifyReady <- true
+		proxy.NotifyReady <- nil
 	}
 }
 
 var cmd *exec.Cmd
 
 // Rebuild the Play! application and run it on the given port.
-func rebuild(port int) {
+func rebuild(port int) (compileError *play.CompileError) {
+	controllerTypeNames, compileError := listControllers(filepath.Join(play.AppPath, "controllers"))
+	if compileError != nil {
+		return compileError
+	}
+
 	tmpl := template.New("RegisterControllers")
 	tmpl = template.Must(tmpl.Parse(REGISTER_CONTROLLERS))
 	var registerControllerSource string = play.ExecuteTemplate(tmpl, map[string]interface{} {
 		"AppName": play.AppName,
-		"controllers": listControllers(filepath.Join(play.AppPath, "controllers")),
+		"controllers": controllerTypeNames,
 	})
 
 	// Terminate the server if it's already running.
@@ -212,6 +249,7 @@ func rebuild(port int) {
 	}
 
 	<-listeningWriter.notifyReady
+	return nil
 }
 
 // A io.Writer that copies to the destination, and listens for "Listening on.."
@@ -249,7 +287,9 @@ type typeName struct {
 	PackageName, StructName string
 }
 
-func listControllers(path string) (controllerTypeNames map[string][]*typeName) {
+// Parse the app directory and return a list of the controller types found.
+// Returns a CompileError if the parsing fails.
+func listControllers(path string) (controllerTypeNames map[string][]*typeName, compileError *play.CompileError) {
 	controllerTypeNames = make(map[string][]*typeName)
 
 	// Parse files within the path.
@@ -257,6 +297,19 @@ func listControllers(path string) (controllerTypeNames map[string][]*typeName) {
 	fset := token.NewFileSet()
 	pkgs, err := parser.ParseDir(fset, path, func(f os.FileInfo) bool { return !f.IsDir() }, 0)
 	if err != nil {
+		if errList, ok := err.(scanner.ErrorList); ok {
+			var pos token.Position = errList[0].Pos
+			return nil, &play.CompileError{
+				SourceType: ".go source",
+				Title: "Go Compilation Error",
+				Path: pos.Filename,
+				Description: errList[0].Msg,
+				Line: pos.Line,
+				Column: pos.Column,
+				SourceLines: play.MustReadLines(pos.Filename),
+			}
+		}
+		ast.Print(nil, err)
 		log.Fatalf("Failed to parse dir: %s", err)
 	}
 
