@@ -9,6 +9,12 @@ import (
 _	"go/ast"
 	"strings"
 	"path/filepath"
+	"play"
+)
+
+var (
+	// Will not watch directories with these names (or their subdirectories)
+	DoNotWatch = []string{ "tmp", "views" }
 )
 
 // Watches app directories and sends events when .go files are
@@ -65,7 +71,7 @@ func setupWatcher(path string) *Watcher {
 			log.Fatalf("Failed to read directory: %s", err)
 		}
 		for _, fileInfo := range fileInfos {
-			if fileInfo.IsDir() {
+			if fileInfo.IsDir() && ! play.ContainsString(DoNotWatch, fileInfo.Name()) {
 				dirQueue = append(dirQueue, filepath.Join(dirPath, fileInfo.Name()))
 			}
 		}
