@@ -42,7 +42,8 @@ const header = `~
 ~
 `
 
-const usageText = `~ Usage: play [app_path]`
+const usageText = `~ Usage: play [app_path]
+`
 
 func usage() {
 	fmt.Fprintf(os.Stderr, usageText)

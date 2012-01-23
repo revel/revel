@@ -97,7 +97,7 @@
     <div id="source" class="block">
       <h2>In {{.Path}}
         {{if .Line}}
-          (around {{if .Line}}line {{.Line}}{{end}} {{if .Column}}column {{.Column}}{{end}})
+          (around {{if .Line}}line {{.Line}}{{end}}{{if .Column}} column {{.Column}}{{end}})
         {{end}}
       </h2>
       {{range .ContextSource}}
@@ -107,6 +107,13 @@
         </div>
       {{end}}
     </div>
+    {{end}}
+    {{if .MetaError}}
+      <div id="source" class="block">
+        <div class="line error">
+          {{.MetaError}}
+        </div>
+      </div>
     {{end}}
   </body>
 </html>

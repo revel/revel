@@ -5,8 +5,10 @@ package play
 
 import (
 	"bytes"
+	"go/build"
 	"io"
 	"io/ioutil"
+	"path"
 	"strings"
 )
 
@@ -24,11 +26,20 @@ func ExecuteTemplate(tmpl ExecutableTemplate, data interface{}) string {
 
 // Reads the lines of the given file.  Panics in the case of error.
 func MustReadLines(filename string) []string {
-	bytes, err := ioutil.ReadFile(filename)
+	r, err := ReadLines(filename)
 	if err != nil {
 		panic(err)
 	}
-	return strings.Split(string(bytes), "\n")
+	return r
+}
+
+// Reads the lines of the given file.  Panics in the case of error.
+func ReadLines(filename string) ([]string, error) {
+	bytes, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+	return strings.Split(string(bytes), "\n"), nil
 }
 
 func ContainsString(list []string, target string) bool {
@@ -38,4 +49,15 @@ func ContainsString(list []string, target string) bool {
 		}
 	}
 	return false
+}
+
+// Look for a given path in the GOPATHs.  Return it as an absolute path.
+// Return empty string if not found.
+func FindSource(relPath string) string {
+	for _, p := range build.Path {
+		if p.HasSrc(relPath) {
+			return path.Join(p.SrcDir(), relPath)
+		}
+	}
+	return ""
 }

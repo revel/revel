@@ -13,11 +13,7 @@ package harness
 import (
 	"bytes"
 	"fmt"
-	"go/ast"
 	"go/build"
-	"go/parser"
-	"go/scanner"
-	"go/token"
 	"io"
 	"log"
 	"net"
@@ -26,7 +22,9 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
-	"path/filepath"
+	"path"
+	"regexp"
+	"strconv"
 	"text/template"
 	"play"
 )
@@ -38,8 +36,8 @@ package main
 import (
 	"flag"
 	"play"
-	{{range $k, $v := .controllers}}
-  "{{$k}}"
+	{{range .ImportPaths}}
+  "{{.}}"
   {{end}}
 )
 
@@ -52,10 +50,8 @@ func main() {
 	play.LOG.Println("Running play server")
 	flag.Parse()
 	play.Init(*basePath)
-  {{range $k, $v := .controllers}}
-  {{range $v}}
+  {{range .Controllers}}
 	play.RegisterController((*{{.PackageName}}.{{.StructName}})(nil))
-  {{end}}
   {{end}}
 	play.Run(*port)
 }
@@ -190,7 +186,7 @@ var cmd *exec.Cmd
 
 // Rebuild the Play! application and run it on the given port.
 func rebuild(port int) (compileError *play.CompileError) {
-	controllerTypeNames, compileError := listControllers(filepath.Join(play.AppPath, "controllers"))
+	controllerSpecs, compileError := ScanControllers(path.Join(play.AppPath, "controllers"))
 	if compileError != nil {
 		return compileError
 	}
@@ -199,7 +195,8 @@ func rebuild(port int) (compileError *play.CompileError) {
 	tmpl = template.Must(tmpl.Parse(REGISTER_CONTROLLERS))
 	var registerControllerSource string = play.ExecuteTemplate(tmpl, map[string]interface{} {
 		"AppName": play.AppName,
-		"controllers": controllerTypeNames,
+		"Controllers": controllerSpecs,
+		"ImportPaths": uniqueImportPaths(controllerSpecs),
 	})
 
 	// Terminate the server if it's already running.
@@ -212,7 +209,7 @@ func rebuild(port int) (compileError *play.CompileError) {
 	}
 
 	// Create a fresh temp dir.
-	tmpPath := filepath.Join(play.AppPath, "tmp")
+	tmpPath := path.Join(play.AppPath, "tmp")
 	err := os.RemoveAll(tmpPath)
 	if err != nil {
 		log.Println("Failed to remove tmp dir:", err)
@@ -223,7 +220,7 @@ func rebuild(port int) (compileError *play.CompileError) {
 	}
 
 	// Create the new file
-	controllersFile, err := os.Create(filepath.Join(tmpPath, "main.go"))
+	controllersFile, err := os.Create(path.Join(tmpPath, "main.go"))
 	if err != nil {
 		log.Fatalf("Failed to create main.go: %v", err)
 	}
@@ -238,16 +235,18 @@ func rebuild(port int) (compileError *play.CompileError) {
 	if err != nil {
 		log.Fatalf("GB executable not found in PATH.  Please goinstall it.")
 	}
-	cmd := exec.Command(gbPath, filepath.Join(play.AppPath, "tmp"))
-	err = cmd.Run()
+
+	cmd := exec.Command(gbPath, path.Join(play.AppPath, "tmp"))
+	output, err := cmd.Output()
+
+	// If we failed to build, parse the error message.
 	if err != nil {
-		output, _ := cmd.CombinedOutput()
-		log.Fatalln("Failed to build app:\n%s", string(output))
+		return newCompileError(output)
 	}
 
 	// Run the server, via tmp/main.go.
 	appTree, _, _ := build.FindTree(play.AppPath)
-	cmd = exec.Command(filepath.Join(appTree.BinDir(), play.AppName),
+	cmd = exec.Command(path.Join(appTree.BinDir(), play.AppName),
 		fmt.Sprintf("-port=%d", port),
 		fmt.Sprintf("-basePath=%s", play.BasePath))
 	listeningWriter := startupListeningWriter{os.Stdout, make(chan bool)}
@@ -293,94 +292,62 @@ func getFreePort() (port int) {
 	return port
 }
 
-type typeName struct {
-	PackageName, StructName string
-}
-
-// Parse the app directory and return a list of the controller types found.
-// Returns a CompileError if the parsing fails.
-func listControllers(path string) (controllerTypeNames map[string][]*typeName, compileError *play.CompileError) {
-	controllerTypeNames = make(map[string][]*typeName)
-
-	// Parse files within the path.
-	var pkgs map[string]*ast.Package
-	fset := token.NewFileSet()
-	pkgs, err := parser.ParseDir(fset, path, func(f os.FileInfo) bool { return !f.IsDir() }, 0)
-	if err != nil {
-		if errList, ok := err.(scanner.ErrorList); ok {
-			var pos token.Position = errList[0].Pos
-			return nil, &play.CompileError{
-				SourceType: ".go source",
-				Title: "Go Compilation Error",
-				Path: pos.Filename,
-				Description: errList[0].Msg,
-				Line: pos.Line,
-				Column: pos.Column,
-				SourceLines: play.MustReadLines(pos.Filename),
-			}
-		}
-		ast.Print(nil, err)
-		log.Fatalf("Failed to parse dir: %s", err)
+func uniqueImportPaths(specs []*ControllerSpec) (paths []string) {
+	importPathMap := make(map[string]bool)
+	for _, spec := range specs {
+		importPathMap[spec.ImportPath] = true
 	}
-
-	// For each package... (often only "controllers")
-	for _, pkg := range pkgs {
-
-		// For each source file in the package...
-		for _, file := range pkg.Files {
-
-			// For each declaration in the source file...
-			for _, decl := range file.Decls {
-				// Find Type declarations that embed *play.Controller.
-				genDecl, ok := decl.(*ast.GenDecl)
-				if !ok {
-					continue
-				}
-
-				if genDecl.Tok != token.TYPE {
-					continue
-				}
-
-				if len(genDecl.Specs) != 1 {
-					play.LOG.Printf("Surprising: Decl does not have 1 Spec: %v", genDecl)
-					continue
-				}
-
-				spec := genDecl.Specs[0].(*ast.TypeSpec)
-				structType, ok := spec.Type.(*ast.StructType)
-				if !ok {
-					continue
-				}
-
-				var fieldList []*ast.Field = structType.Fields.List
-				if len(fieldList) == 0 {
-					continue
-				}
-
-				// Look for ast.Field to have type StarExpr { SelectorExpr { "play", "Controller" } }
-				starExpr, ok := fieldList[0].Type.(*ast.StarExpr)
-				if !ok {
-					continue
-				}
-
-				selectorExpr, ok := starExpr.X.(*ast.SelectorExpr)
-				if !ok {
-					continue
-				}
-
-				pkgIdent, ok := selectorExpr.X.(*ast.Ident)
-				if !ok {
-					continue
-				}
-
-				// TODO: Support sub-types of play.Controller as well.
-				if pkgIdent.Name == "play" && selectorExpr.Sel.Name == "Controller" {
-					fullImportPath := play.ImportPath + "/app/" + pkg.Name
-					controllerTypeNames[fullImportPath] = append(controllerTypeNames[fullImportPath],
-						&typeName{ pkg.Name, spec.Name.Name })
-				}
-			}
-		}
+	for importPath, _ := range importPathMap {
+		paths = append(paths, importPath)
 	}
 	return
+}
+
+// Parse the output of the "gb" compile command.
+// Return a detailed CompileError.
+func newCompileError(output []byte) *play.CompileError {
+	errorMatch := regexp.MustCompile(`(?m:^\(in (.*)\).*$\s+^([\w.]+):(\d+): (.*)$)`).
+		FindSubmatch(output)
+	if errorMatch == nil {
+		log.Println("Failed to parse build errors:\n", string(output))
+		return &play.CompileError{
+			SourceType: "Go code",
+			Title: "Go Compilation Error",
+			Description: "See console for build error.",
+		}
+	}
+
+	// Read the source for the offending file.
+	var (
+		pkgName = string(errorMatch[1])
+		baseName = string(errorMatch[2])
+		absPath = play.FindSource(pkgName)
+		line, _ = strconv.Atoi(string(errorMatch[3]))
+		description = string(errorMatch[4])
+		compileError = &play.CompileError{
+			SourceType: "Go code",
+			Title: "Go Compilation Error",
+			Path: path.Join(pkgName, baseName),
+			Description: description,
+			Line: line,
+		}
+	)
+
+	if absPath == "" {
+		log.Println("Couldn't find source in GOPATH. (pkg ", pkgName, " file ", baseName)
+		compileError.MetaError = "Couldn't find source in GOPATH."
+		return compileError
+	}
+
+	filename := path.Join(absPath, baseName)
+	fileStr, err := play.ReadLines(filename)
+	if err != nil {
+		compileError.MetaError = filename + ": " + err.Error()
+		log.Println(compileError.MetaError)
+		return compileError
+	}
+
+	compileError.Path = filename
+	compileError.SourceLines = fileStr
+	return compileError
 }

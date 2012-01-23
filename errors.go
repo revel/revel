@@ -16,6 +16,7 @@ type CompileError struct {
 	Title, Path, Description string  // Description of the error, as presented to the user.
 	Line, Column int                 // Where the error was encountered.
 	SourceLines []string             // The entire source file, split into lines.
+	MetaError string                 // Error that occurred producing the error page.
 }
 
 // An object to hold the per-source-line details.
@@ -26,11 +27,14 @@ type sourceLine struct {
 }
 
 func (e CompileError) Error() string {
-	return fmt.Sprintf("html/template:%s:%d: %s", e.Path, e.Line, e.Description)
+	return fmt.Sprintf("%s:%d: %s", e.Path, e.Line, e.Description)
 }
 
 // Returns a snippet of the source around where the error occurred.
 func (e *CompileError) ContextSource() []sourceLine {
+	if e.SourceLines == nil {
+		return nil
+	}
 	start := (e.Line - 1) - 5
 	if start < 0 {
 		start = 0
@@ -39,6 +43,7 @@ func (e *CompileError) ContextSource() []sourceLine {
 	if end > len(e.SourceLines) {
 		end = len(e.SourceLines)
 	}
+
 	var lines []sourceLine = make([]sourceLine, end - start)
 	for i, src := range(e.SourceLines[start:end]) {
 		fileLine := start + i + 1
