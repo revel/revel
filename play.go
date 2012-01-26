@@ -17,7 +17,7 @@ var (
 	ImportPath string  // e.g. "play/sample"
 
 	// Play installation details
-	PlayTemplatePath string = "/Users/robfig/code/gocode/src/play/app/views"
+	PlayTemplatePath string  // e.g. "/Users/robfig/gocode/src/play/app/views"
 
 	LOG = log.New(os.Stdout, "", log.Ldate | log.Ltime | log.Lshortfile)
 
@@ -31,6 +31,7 @@ func Init(basePath string) {
 	AppPath = path.Join(BasePath, "app")
 	ViewsPath = path.Join(AppPath, "views")
 	ImportPath = getImportPath(basePath)
+	PlayTemplatePath = FindSource("play/app/views")
 
 	playInit = true
 }
