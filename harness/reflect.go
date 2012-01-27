@@ -9,7 +9,6 @@ import (
 	"go/scanner"
 	"go/token"
 	"log"
-	"reflect"
 	"os"
 	"play"
 )
@@ -26,8 +25,12 @@ type ControllerSpec struct {
 
 type MethodSpec struct {
 	Name string    // Name of the method, e.g. "Index"
-	Args []string  // Argument names, in the order that they are accepted.
-	ArgTypes []reflect.Type  // Argument types, parallel to Args.
+	Args []*MethodArg  // Argument descriptors
+}
+
+type MethodArg struct {
+	Name string  // Name of the argument.
+	TypeName string  // The name of the type, e.g. "int", "*pkg.UserType"
 }
 
 type embeddedTypeName struct {
@@ -184,15 +187,20 @@ func appendMethod(mm methodMap, decl ast.Decl) {
 		recvTypeName = recvType.(*ast.Ident).Name
 	}
 
-	mm[recvTypeName] = append(mm[recvTypeName], &MethodSpec{
+	method := &MethodSpec{
 		Name: funcDecl.Name.Name,
-	})
+	}
 
-	// var args []string
-	// funcType := funcDecl.Type.(*ast.FuncType)
-	// for _, field := range funcType.Params.List {
-	// 	Args = append(args,
-	// }
+	for _, field := range funcDecl.Type.Params.List {
+		for _, name := range field.Names {
+			method.Args = append(method.Args, &MethodArg{
+				Name: name.Name,
+				TypeName: ExprName(field.Type),
+			})
+		}
+	}
+
+	mm[recvTypeName] = append(mm[recvTypeName], method)
 }
 
 func (s *ControllerSpec) SimpleName() string {
@@ -227,4 +235,19 @@ func filterControllers(specs []*ControllerSpec) (filtered []*ControllerSpec) {
 		}
 	}
 	return
+}
+
+func ExprName(expr ast.Expr) string {
+	switch t := expr.(type) {
+	case *ast.Ident:
+		return t.Name
+	case *ast.SelectorExpr:
+		return ExprName(t.X) + "." + ExprName(t.Sel)
+	case *ast.StarExpr:
+		return "*" + ExprName(t.X)
+	default:
+		ast.Print(nil, expr)
+		panic("Failed to generate name for field.")
+	}
+	return ""
 }

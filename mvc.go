@@ -2,14 +2,10 @@ package play
 
 import (
 	"net/http"
-	//"io/ioutil"
 	"log"
-	//"path"
 	"reflect"
 	"runtime"
-	//"os"
 	"strings"
-//	"html/template"
 )
 
 type Controller struct {
@@ -47,21 +43,33 @@ type Result struct {
 	body string
 }
 
-// Need the home directory.
+// Internal bookeeping
 
+type ControllerType struct {
+	Type reflect.Type
+	Methods []*MethodType
+}
 
-// Eventually the harness will run the Parser, check the AST for Controllers,
-// and create a registration file.  For now, clients have to register:
+type MethodType struct {
+	Name string
+	Args []*MethodArg
+}
 
-var controllers map[string]reflect.Type = make(map[string]reflect.Type)
+type MethodArg struct {
+	Name string
+	Type reflect.Type
+}
 
-func RegisterController(c interface{}) {
+var controllers map[string]*ControllerType = make(map[string]*ControllerType)
+
+func RegisterController(c interface{}, methods []*MethodType) {
 	var t reflect.Type = reflect.TypeOf(c)
 	var elem reflect.Type = t.Elem()
-	controllers[elem.Name()] = elem
+	controllers[elem.Name()] = &ControllerType{Type: elem, Methods: methods}
 	log.Printf("Registered controller: %s", elem.Name())
 }
 
 func LookupControllerType(name string) reflect.Type {
-	return controllers[name]
+	return controllers[name].Type
 }
+

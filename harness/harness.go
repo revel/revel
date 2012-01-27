@@ -35,6 +35,7 @@ package main
 
 import (
 	"flag"
+	"reflect"
 	"play"
 	{{range .ImportPaths}}
   "{{.}}"
@@ -50,9 +51,18 @@ func main() {
 	play.LOG.Println("Running play server")
 	flag.Parse()
 	play.Init(*basePath)
-  {{range .Controllers}}
-	play.RegisterController((*{{.PackageName}}.{{.StructName}})(nil))
-  {{end}}
+	{{range $i, $c := .Controllers}}
+	play.RegisterController((*{{.PackageName}}.{{.StructName}})(nil),
+		[]*play.MethodType{
+			{{range .MethodSpecs}}&play.MethodType{
+				Name: "{{.Name}}",
+				Args: []*play.MethodArg{ {{range .Args}}
+					&play.MethodArg{Name: "{{.Name}}", Type: reflect.TypeOf((*{{.TypeName}})(nil)) },{{end}}
+			  },
+			},
+			{{end}}
+		})
+	{{end}}
 	play.Run(*port)
 }
 `
@@ -96,9 +106,9 @@ func (hp *harnessProxy) ServeHTTP(wr http.ResponseWriter, req *http.Request) {
 func serveError(wr http.ResponseWriter, req *http.Request, err error) {
 	switch e := err.(type) {
 	case *play.CompileError:
-		play.ErrorTemplate.Execute(wr, e)
+		play.RenderError(wr, e)
 	default:
-		play.ErrorTemplate.Execute(wr, map[string]string {
+		play.RenderError(wr, map[string]string {
 			"Title": "Unexpected error",
 			"Path": "(unknown)",
 			"Description": "An unexpected error occurred: " + err.Error(),

@@ -4,11 +4,9 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
+	"io"
 	"path"
 )
-
-var ErrorTemplate = template.Must(template.ParseFiles(
-	path.Join(PlayTemplatePath, "CompileError.html")))
 
 // A compilation error, used as an argument to the CompileError.html template.
 type CompileError struct {
@@ -52,8 +50,19 @@ func (e *CompileError) ContextSource() []sourceLine {
 	return lines
 }
 
+var errorTemplate *template.Template
+
 func (e *CompileError) Html() string {
 	var b bytes.Buffer
-	ErrorTemplate.Execute(&b, &e)
+	RenderError(&b, &e)
 	return b.String()
+}
+
+
+func RenderError(buffer io.Writer, data interface{}) {
+	if errorTemplate == nil {
+		errorTemplate = template.Must(template.ParseFiles(
+			path.Join(PlayTemplatePath, "CompileError.html")))
+	}
+	errorTemplate.Execute(buffer, &data)
 }
