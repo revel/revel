@@ -16,7 +16,7 @@ type Route struct {
 	pathPattern *regexp.Regexp  // for matching the url path
 	staticDir string  // e.g. "public" from action "staticDir:public"
 	args []*arg // e.g. {id} from path /app/{id}
-	actionArgs []*arg
+	actionArgs []string
 	actionPattern *regexp.Regexp
 }
 
@@ -42,7 +42,13 @@ var argsPattern *regexp.Regexp =
  	regexp.MustCompile(`\{<(?P<pattern>[^>]+)>(?P<var>[a-zA-Z_0-9]+)\}`)
 
 // Prepares the route to be used in matching.
-func (r *Route) compute() {
+func NewRoute(method, path, action string) (r *Route) {
+	r = &Route{
+		method: strings.ToUpper(method),
+		path: path,
+		action: action,
+	}
+
 	// Handle static routes
 	if strings.HasPrefix(r.action, "staticDir:") {
 		if r.method != "*" && r.method != "GET" {
@@ -72,15 +78,14 @@ func (r *Route) compute() {
 
 	// Convert path arguments with unspecified regexes to standard form.
 	// e.g. "/customer/{id}" => "/customer/{<[^/]+>id}
-	// to /customer/[^/]+
-	r.path = nakedPathParamRegex.ReplaceAllStringFunc(r.path, func(m string) string {
+	normPath := nakedPathParamRegex.ReplaceAllStringFunc(r.path, func(m string) string {
 		var argMatches []string = nakedPathParamRegex.FindStringSubmatch(m)
 		return "{<[^/]+>" + argMatches[1] + "}"
 	})
 
 	// Go through the arguments
 	r.args = make([]*arg, 0, 3)
-	for i, m := range(argsPattern.FindAllString(r.path, -1)) {
+	for i, m := range(argsPattern.FindAllStringSubmatch(normPath, -1)) {
 		r.args = append(r.args, &arg{
 			name: string(m[2]),
 			index: i,
@@ -90,25 +95,25 @@ func (r *Route) compute() {
 
 	// Now assemble the entire path regex, including the embedded parameters.
 	// e.g. /app/{<[^/]+>id} => /app/(?P<id>[^/]+)
-	pathPatternStr := argsPattern.ReplaceAllStringFunc(r.path, func(m string) string {
+	pathPatternStr := argsPattern.ReplaceAllStringFunc(normPath, func(m string) string {
 		var argMatches []string = argsPattern.FindStringSubmatch(m)
 		return "(?P<" + argMatches[2] + ">" + argMatches[1] + ")"
 	})
 	r.pathPattern = regexp.MustCompile(pathPatternStr + "$")
 
 	// Handle action
-	r.actionArgs = make([]*arg, 0, 3)
 	var actionPatternStr string = strings.Replace(r.action, ".", `\.`, -1)
 	for _, arg := range(r.args) {
 		var argName string = "{" + arg.name + "}"
 		if argIndex := strings.Index(actionPatternStr, argName); argIndex != -1 {
 			actionPatternStr = strings.Replace(actionPatternStr, argName,
 				"(" + argName + arg.constraint.String() + ")", -1)
-			r.actionArgs = append(r.actionArgs, arg)
+			r.actionArgs = append(r.actionArgs, arg.name)
 		}
 	}
 	r.actionPattern = regexp.MustCompile(actionPatternStr)
 	LOG.Printf("Path pattern: %s", r.pathPattern)
+	return
 }
 
 // Return nil if no match.
@@ -163,7 +168,7 @@ func (router *Router) Route(req *http.Request) *RouteMatch {
 // 4: path
 // 5: action
 var routePattern *regexp.Regexp = regexp.MustCompile(
-	"^(GET|POST|PUT|DELETE|OPTIONS|HEAD|WS|\\*)" +
+	"(?i)^(GET|POST|PUT|DELETE|OPTIONS|HEAD|WS|\\*)" +
 	"[(]?([^)]*)(\\))? +" +
 	"(.*/[^ ]*) +([^ (]+)(.+)?( *)$")
 
@@ -178,6 +183,16 @@ func LoadRoutes() *Router {
 	return NewRouter(content)
 }
 
+func parseRouteLine(line string) (method, path, action string, found bool) {
+	var matches []string = routePattern.FindStringSubmatch(line)
+	if matches == nil {
+		return
+	}
+	method, path, action = matches[1], matches[4], matches[5]
+	found = true
+	return
+}
+
 func NewRouter(routesConf string) *Router {
 	router := new(Router)
 	routes := make([]*Route, 0, 10)
@@ -189,18 +204,12 @@ func NewRouter(routesConf string) *Router {
 			continue
 		}
 
-		var matches []string = routePattern.FindStringSubmatch(line)
-		if matches == nil {
+		method, path, action, found := parseRouteLine(line)
+		if ! found {
 			continue
 		}
 
-		route := &Route{
-			method: strings.ToUpper(matches[1]),
-			path: matches[4],
-			action: matches[5],
-		}
-		route.compute()
-
+		route := NewRoute(method, path, action)
 		routes = append(routes, route)
 	}
 
@@ -210,7 +219,17 @@ func NewRouter(routesConf string) *Router {
 	return router
 }
 
-func (router *Router) Reverse(action string, args []interface{}) string {
+type ActionDefinition struct {
+	Host, Method, Url, Action string
+	Star bool
+	Args map[string]interface{}
+}
+
+func (a *ActionDefinition) String() string {
+	return a.Url
+}
+
+func (router *Router) Reverse(action string, args []interface{}) *ActionDefinition {
 	for _, route := range router.routes {
 		if route.actionPattern == nil {
 			continue
@@ -221,9 +240,12 @@ func (router *Router) Reverse(action string, args []interface{}) string {
 			continue
 		}
 
+		LOG.Println("Reverse routing.  Pattern:", route.actionPattern, "Matching:", action, "Matches:", matches)
+
 		// TODO: Support reversing actions with arguments.
 		// This is pending on achieving named parameter passing to actions (rather than positional).
-		return route.path
+		return &ActionDefinition{Url: route.path}
 	}
-	return "#"
+	LOG.Println("Failed to find reverse route:", action, args)
+	return nil
 }

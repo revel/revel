@@ -134,7 +134,7 @@ func ReverseUrl(args ...interface{}) string {
 		return "#"
 	}
 
-	return router.Reverse(args[0].(string), args[1:])
+	return router.Reverse(args[0].(string), args[1:]).Url
 	return "#"
 }
 
