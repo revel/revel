@@ -27,7 +27,7 @@ func handle(w http.ResponseWriter, r *http.Request) {
 
 	// Invoke the controller method...
 	LOG.Printf("Calling %s.%s", route.ControllerName, route.FunctionName)
-	var t reflect.Type = LookupControllerType(route.ControllerName)
+	var t reflect.Type = LookupControllerType(route.ControllerName).Type
 
 	// Create an AppController.
 	var appControllerPtr reflect.Value = reflect.New(t)

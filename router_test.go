@@ -60,7 +60,7 @@ var routeTestCases = map[string]*Route{
 				constraint: regexp.MustCompile("[^/]+"),
 			},
 		},
-		actionPattern: regexp.MustCompile("({controller}[^/]+)\\.({action}[^/]+)"),
+		actionPattern: regexp.MustCompile("(?P<controller>[^/]+)\\.(?P<action>[^/]+)"),
 		actionArgs: []string { "controller", "action" },
 	},
 }
@@ -98,25 +98,87 @@ func TestComputeRoute(t *testing.T) {
 
 // Router Tests
 
-// const TEST_ROUTES = `
-// # This is a comment
-// GET  /                       Application.index
-// GET  /app/{id}               Application.show
-// POST /app/{id}               Application.save
+const TEST_ROUTES = `
+# This is a comment
+GET  /                       Application.Index
+GET  /app/{id}               Application.Show
+POST /app/{id}               Application.Save
 
-// GET  /public/                staticDir:public
-// *    /_{controller}/{action} {controller}.{action}
-// `
+GET  /public/                staticDir:public
+*    /{controller}/{action} {controller}.{action}
+`
 
-// func (t *testing.T) TestRouter {
-// 	router := NewRouter(TEST_ROUTES)
-// }
+// Reverse Routing
+
+type ReverseRouteArgs struct {
+	action string
+	args map[string]string
+}
+
+var reverseRoutingTestCases = map[*ReverseRouteArgs]*ActionDefinition {
+	&ReverseRouteArgs{
+		action: "Application.Index",
+		args: map[string]string{},
+	}: &ActionDefinition{
+		Url: "/",
+		Method: "GET",
+		Star: false,
+		Action: "Application.Index",
+	},
+
+	&ReverseRouteArgs{
+		action: "Application.Show",
+		args: map[string]string{"id": "123"},
+	}: &ActionDefinition{
+		Url: "/app/123",
+		Method: "GET",
+		Star: false,
+		Action: "Application.Show",
+	},
+
+	&ReverseRouteArgs{
+		action: "Implicit.Route",
+		args: map[string]string{},
+	}: &ActionDefinition{
+		Url: "/Implicit/Route",
+		Method: "GET",
+		Star: true,
+		Action: "Implicit.Route",
+	},
+
+	&ReverseRouteArgs{
+		action: "Application.Save",
+		args: map[string]string{"id": "123", "c": "http://continue"},
+	}: &ActionDefinition{
+		Url: "/app/123?c=http%3A%2F%2Fcontinue",
+		Method: "POST",
+		Star: false,
+		Action: "Application.Save",
+	},
+}
+
+func TestReverseRouting(t *testing.T) {
+	router := NewRouter(TEST_ROUTES)
+	for routeArgs, expected := range reverseRoutingTestCases {
+		actual := router.Reverse(routeArgs.action, routeArgs.args)
+		if ! eq(t, "Found route", actual != nil, expected != nil) {
+			continue
+		}
+		eq(t, "Url", actual.Url, expected.Url)
+		eq(t, "Method", actual.Method, expected.Method)
+		eq(t, "Star", actual.Star, expected.Star)
+		eq(t, "Action", actual.Action, expected.Action)
+	}
+}
+
 
 // Helpers
 
-func eq(t *testing.T, name string, a, b interface{}) {
+func eq(t *testing.T, name string, a, b interface{}) bool {
 	if a != b {
 		t.Error(name, ": (actual)", a, " != ", b, "(expected)")
+		return false
 	}
+	return true
 }
 

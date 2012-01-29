@@ -60,6 +60,15 @@ type MethodArg struct {
 	Type reflect.Type
 }
 
+func (ct *ControllerType) Method(name string) *MethodType {
+	for _, method := range ct.Methods {
+		if method.Name == name {
+			return method
+		}
+	}
+	return nil
+}
+
 var controllers map[string]*ControllerType = make(map[string]*ControllerType)
 
 func RegisterController(c interface{}, methods []*MethodType) {
@@ -69,7 +78,7 @@ func RegisterController(c interface{}, methods []*MethodType) {
 	log.Printf("Registered controller: %s", elem.Name())
 }
 
-func LookupControllerType(name string) reflect.Type {
-	return controllers[name].Type
+func LookupControllerType(name string) *ControllerType {
+	return controllers[name]
 }
 

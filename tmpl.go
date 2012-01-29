@@ -134,7 +134,17 @@ func ReverseUrl(args ...interface{}) string {
 		return "#"
 	}
 
-	return router.Reverse(args[0].(string), args[1:]).Url
+	action := args[0].(string)
+	actionSplit := strings.Split(action, ".")
+	ctrl, meth := actionSplit[0], actionSplit[1]
+	controllerType := LookupControllerType(ctrl)
+	methodType := controllerType.Method(meth)
+	argsByName := make(map[string]string)
+	for i, argValue := range args[1:] {
+		argsByName[methodType.Args[i].Name] = argValue.(string)
+	}
+
+	return router.Reverse(args[0].(string), argsByName).Url
 	return "#"
 }
 

@@ -2,10 +2,11 @@ package play
 
 import (
 	"io/ioutil"
-	"strings"
+	"net/http"
+	"net/url"
 	"path"
 	"regexp"
-	"net/http"
+	"strings"
 )
 
 type Route struct {
@@ -107,7 +108,7 @@ func NewRoute(method, path, action string) (r *Route) {
 		var argName string = "{" + arg.name + "}"
 		if argIndex := strings.Index(actionPatternStr, argName); argIndex != -1 {
 			actionPatternStr = strings.Replace(actionPatternStr, argName,
-				"(" + argName + arg.constraint.String() + ")", -1)
+				"(?P<" + arg.name + ">" + arg.constraint.String() + ")", -1)
 			r.actionArgs = append(r.actionArgs, arg.name)
 		}
 	}
@@ -213,23 +214,24 @@ func NewRouter(routesConf string) *Router {
 		routes = append(routes, route)
 	}
 
-	// Convert the List into an array.
 	router.routes = routes
-
 	return router
 }
 
 type ActionDefinition struct {
 	Host, Method, Url, Action string
 	Star bool
-	Args map[string]interface{}
+	Args map[string]string
 }
 
 func (a *ActionDefinition) String() string {
 	return a.Url
 }
 
-func (router *Router) Reverse(action string, args []interface{}) *ActionDefinition {
+func (router *Router) Reverse(action string, argValues map[string]string) *ActionDefinition {
+
+NEXT_ROUTE:
+	// Loop through the routes.
 	for _, route := range router.routes {
 		if route.actionPattern == nil {
 			continue
@@ -240,12 +242,60 @@ func (router *Router) Reverse(action string, args []interface{}) *ActionDefiniti
 			continue
 		}
 
-		LOG.Println("Reverse routing.  Pattern:", route.actionPattern, "Matching:", action, "Matches:", matches)
+		for i, match := range matches[1:] {
+			argValues[route.actionPattern.SubexpNames()[i+1]] = match
+		}
 
-		// TODO: Support reversing actions with arguments.
-		// This is pending on achieving named parameter passing to actions (rather than positional).
-		return &ActionDefinition{Url: route.path}
+		// Create a lookup for the route args.
+		routeArgs := make(map[string]*arg)
+		for _, arg := range route.args {
+			routeArgs[arg.name] = arg
+		}
+
+		// Enforce the constraints on the arg values.
+		for argKey, argValue := range argValues {
+			arg, ok := routeArgs[argKey]
+			if ok && ! arg.constraint.MatchString(argValue) {
+				continue NEXT_ROUTE
+			}
+		}
+
+		// Build up the URL.
+		var queryValues url.Values = make(url.Values)
+		path := route.path
+		for argKey, argValue := range argValues {
+			if _, ok := routeArgs[argKey]; ok {
+				// If this arg goes into the path, put it in.
+				path = regexp.MustCompile(`\{(<[^>]+>)?` + regexp.QuoteMeta(argKey) + `\}`).
+					ReplaceAllString(path, url.QueryEscape(string(argValue)))
+			} else {
+				// Else, add it to the query string.
+				queryValues.Set(argKey, argValue)
+			}
+		}
+
+		// Calculate the final URL and Method
+		url := path
+		if len(queryValues) > 0 {
+			url += "?" + queryValues.Encode()
+		}
+
+		method := route.method
+		star := false
+		if route.method == "*" {
+			method = "GET"
+			star = true
+		}
+
+		return &ActionDefinition{
+			Url: url,
+			Method: method,
+			Star: star,
+			Action: action,
+			Args: argValues,
+			Host: "TODO",
+		}
 	}
-	LOG.Println("Failed to find reverse route:", action, args)
+	LOG.Println("Failed to find reverse route:", action, argValues)
 	return nil
 }
