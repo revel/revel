@@ -1,12 +1,8 @@
-<html>
-  <head>
-    <link rel="stylesheet" href="/public/stylesheets/all.css" type="text/css" >
-  </head>
-  <body>
-{{template "msg.html"}}
+{{template "header.html"}}
+
 Hello world.
 
-<a href="{{"Application.Index" | url}}"> Click here to go to index</a>
-<a href="{{"Application.ShowApp 123" | url}}"> Click here to go to app 123</a>
-  </body>
-</html>
+<a href="{{url "Application.Index"}}"> Click here to go to index</a>
+<a href="{{url "Application.ShowApp" "123"}}"> Click here to go to app 123</a>
+
+{{template "footer.html"}}
