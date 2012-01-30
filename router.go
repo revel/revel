@@ -23,10 +23,8 @@ type Route struct {
 
 type RouteMatch struct {
 	ControllerName string     // e.g. Application
-	FunctionName string       // e.g. ShowApp
-	Params []string
-	// TODO: Store the param name as well as its order
-	// Params map[string]string  // e.g. {id: 123}
+	MethodName string         // e.g. ShowApp
+	Params map[string]string  // e.g. {id: 123}
 	StaticFilename string
 }
 
@@ -138,16 +136,30 @@ func (r *Route) Match(method string, reqPath string) *RouteMatch {
 		}
 	}
 
-	// Split the action into controller and function
+	// Figure out the Param names.
+	params := make(map[string]string)
+	for i, m := range matches[1:] {
+		params[r.pathPattern.SubexpNames()[i+1]] = m
+	}
+
+	// If the action is variablized, replace into it with the captured args.
+	if strings.Contains(r.action, "{") {
+		for key, value := range params {
+			r.action = strings.Replace(r.action, "{" + key + "}", value, -1)
+		}
+	}
+
+	// Split the action into controller and method
 	actionSplit := strings.Split(r.action, ".")
 	if len(actionSplit) != 2 {
 		LOG.Printf("E: Failed to split action: %s", r.action)
 		return nil
 	}
+
 	return &RouteMatch{
 		ControllerName: actionSplit[0],
-		FunctionName: actionSplit[1],
-		Params: matches[1:],
+		MethodName: actionSplit[1],
+		Params: params,
 	}
 }
 

@@ -2,6 +2,8 @@ package play
 
 import (
 	"fmt"
+	"net/http"
+	"net/url"
 	"regexp"
 	"testing"
 )
@@ -104,9 +106,78 @@ GET  /                       Application.Index
 GET  /app/{id}               Application.Show
 POST /app/{id}               Application.Save
 
-GET  /public/                staticDir:public
+GET  /public/                staticDir:www
 *    /{controller}/{action} {controller}.{action}
 `
+
+var routeMatchTestCases = map[*http.Request]*RouteMatch {
+	&http.Request{
+		Method: "GET",
+		URL: &url.URL{ Path: "/" },
+	}: &RouteMatch{
+		ControllerName: "Application",
+		MethodName: "Index",
+		Params: map[string]string{},
+		StaticFilename: "",
+	},
+
+	&http.Request{
+		Method: "GET",
+		URL: &url.URL{ Path: "/app/123" },
+	}: &RouteMatch{
+		ControllerName: "Application",
+		MethodName: "ShowApp",
+		Params: map[string]string{"id": "123"},
+		StaticFilename: "",
+	},
+
+	&http.Request{
+		Method: "POST",
+		URL: &url.URL{ Path: "/app/123" },
+	}: &RouteMatch{
+		ControllerName: "Application",
+		MethodName: "SaveApp",
+		Params: map[string]string{"id": "123"},
+		StaticFilename: "",
+	},
+
+	&http.Request{
+		Method: "GET",
+		URL: &url.URL{ Path: "/public/style.css" },
+	}: &RouteMatch{
+		ControllerName: "",
+		MethodName: "",
+		Params: map[string]string{},
+		StaticFilename: "www/style.css",
+	},
+
+	&http.Request{
+		Method: "GET",
+		URL: &url.URL{ Path: "/Implicit/Route" },
+	}: &RouteMatch{
+		ControllerName: "Implicit",
+		MethodName: "Route",
+		Params: map[string]string{"controller": "Implicit", "action": "Route"},
+		StaticFilename: "",
+	},
+}
+
+func TestRouteMatches(t *testing.T) {
+	router := NewRouter(TEST_ROUTES)
+	for req, expected := range routeMatchTestCases {
+		actual := router.Route(req)
+		if ! eq(t, "Found route", actual != nil, expected != nil) {
+			continue
+		}
+		eq(t, "ControllerName", actual.ControllerName, expected.ControllerName)
+		eq(t, "MethodName", actual.ControllerName, expected.ControllerName)
+		eq(t, "len(Params)", len(actual.Params), len(expected.Params))
+		for key, actualValue := range actual.Params {
+			eq(t, "Params", actualValue, expected.Params[key])
+		}
+		eq(t, "StaticFilename", actual.StaticFilename, expected.StaticFilename)
+	}
+}
 
 // Reverse Routing
 
@@ -170,7 +241,6 @@ func TestReverseRouting(t *testing.T) {
 		eq(t, "Action", actual.Action, expected.Action)
 	}
 }
-
 
 // Helpers
 
