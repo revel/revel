@@ -12,6 +12,7 @@ type Controller struct {
 	request *http.Request
 	responseWriter http.ResponseWriter
 	name string
+	controllerType *ControllerType
 }
 
 func (c *Controller) Render(arg interface{}) (*Result) {

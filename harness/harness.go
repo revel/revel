@@ -23,6 +23,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"text/template"
@@ -44,13 +45,13 @@ import (
 
 var (
 	port *int = flag.Int("port", 0, "Port")
-	basePath *string = flag.String("basePath", "", "Path to the app.")
+	importPath *string = flag.String("importPath", "", "Path to the app.")
 )
 
 func main() {
 	play.LOG.Println("Running play server")
 	flag.Parse()
-	play.Init(*basePath)
+	play.Init(*importPath)
 	{{range $i, $c := .Controllers}}
 	play.RegisterController((*{{.PackageName}}.{{.StructName}})(nil),
 		[]*play.MethodType{
@@ -241,12 +242,14 @@ func rebuild(port int) (compileError *play.CompileError) {
 
 	// Build the user program (all code under app).
 	// It relies on the user having gb installed.
-	gbPath, err := exec.LookPath("gb")
+	goPath, err := exec.LookPath("go")
 	if err != nil {
 		log.Fatalf("GB executable not found in PATH.  Please goinstall it.")
 	}
 
-	cmd := exec.Command(gbPath, path.Join(play.AppPath, "tmp"))
+	appTree, _, _ := build.FindTree(play.AppPath)
+	binName := path.Join(appTree.BinDir(), play.AppName)
+	cmd := exec.Command(goPath, "build", "-o", binName, path.Join(play.AppPath, "tmp"))
 	output, err := cmd.Output()
 
 	// If we failed to build, parse the error message.
@@ -255,10 +258,9 @@ func rebuild(port int) (compileError *play.CompileError) {
 	}
 
 	// Run the server, via tmp/main.go.
-	appTree, _, _ := build.FindTree(play.AppPath)
-	cmd = exec.Command(path.Join(appTree.BinDir(), play.AppName),
+	cmd = exec.Command(binName,
 		fmt.Sprintf("-port=%d", port),
-		fmt.Sprintf("-basePath=%s", play.BasePath))
+		fmt.Sprintf("-importPath=%s", play.ImportPath))
 	listeningWriter := startupListeningWriter{os.Stdout, make(chan bool)}
 	cmd.Stdout = listeningWriter
 	cmd.Stderr = os.Stderr
@@ -316,7 +318,7 @@ func uniqueImportPaths(specs []*ControllerSpec) (paths []string) {
 // Parse the output of the "gb" compile command.
 // Return a detailed CompileError.
 func newCompileError(output []byte) *play.CompileError {
-	errorMatch := regexp.MustCompile(`(?m:^\(in (.*)\).*$\s+^([\w.]+):(\d+): (.*)$)`).
+	errorMatch := regexp.MustCompile(`(?m)^(.+):(\d+): (.*)$`).
 		FindSubmatch(output)
 	if errorMatch == nil {
 		log.Println("Failed to parse build errors:\n", string(output))
@@ -329,35 +331,26 @@ func newCompileError(output []byte) *play.CompileError {
 
 	// Read the source for the offending file.
 	var (
-		pkgName = string(errorMatch[1])
-		baseName = string(errorMatch[2])
-		absPath = play.FindSource(pkgName)
-		line, _ = strconv.Atoi(string(errorMatch[3]))
-		description = string(errorMatch[4])
+		relFilename = string(errorMatch[1])  // e.g. "src/play/sample/app/controllers/app.go"
+		absFilename, _ = filepath.Abs(relFilename)
+		line, _ = strconv.Atoi(string(errorMatch[2]))
+		description = string(errorMatch[3])
 		compileError = &play.CompileError{
 			SourceType: "Go code",
 			Title: "Go Compilation Error",
-			Path: path.Join(pkgName, baseName),
+			Path: relFilename,
 			Description: description,
 			Line: line,
 		}
 	)
 
-	if absPath == "" {
-		log.Println("Couldn't find source in GOPATH. (pkg ", pkgName, " file ", baseName)
-		compileError.MetaError = "Couldn't find source in GOPATH."
-		return compileError
-	}
-
-	filename := path.Join(absPath, baseName)
-	fileStr, err := play.ReadLines(filename)
+	fileStr, err := play.ReadLines(absFilename)
 	if err != nil {
-		compileError.MetaError = filename + ": " + err.Error()
+		compileError.MetaError = absFilename + ": " + err.Error()
 		log.Println(compileError.MetaError)
 		return compileError
 	}
 
-	compileError.Path = filename
 	compileError.SourceLines = fileStr
 	return compileError
 }

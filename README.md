@@ -14,13 +14,12 @@ cd $GOPATH
 git clone github.com/robfig/go-play play
 ```
 
-- install [gb](http://code.google.com/p/go-gb/): `goinstall github.com/skelterjohn/go-gb/gb`
-- build the play command line tool with gb: `gb src/play/cmd`
-- run the sample app: `./bin/play src/play/sample`
+- build the play command line tool: `go build -o ./bin/play play/cmd`
+- run the sample app: `./bin/play play/sample`
 
 # File layout
 
-Go Play! depends on the layout prescribed by goinstall (and the new go command line tool).
+Go Play! depends on the GOPATH layout prescribed by the go command line tool).
 (TODO: link)
 
 Play must be installed in the same GOPATH as the user app -- it uses that assumption to find its own source, e.g. for finding templates.

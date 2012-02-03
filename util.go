@@ -51,6 +51,21 @@ func ContainsString(list []string, target string) bool {
 	return false
 }
 
+// The Import Path is how we can import its code.
+// For example, the sample app resides in src/play/sample, and it must be
+// imported as "play/sample/...".  Here, the import path is "play/sample".
+// This assumes that the user's app is in a GOPATH, which requires the root of
+// the packages to be "src".
+func GetImportPath(path string) string {
+	srcIndex := strings.Index(path, "src")
+	if srcIndex == -1 {
+		LOG.Fatalf("App directory (%s) does not appear to be below \"src\". " +
+			" I don't know how to import your code.  Please use GOPATH layout.",
+			path)
+	}
+	return path[srcIndex+4:]
+}
+
 // Look for a given path in the GOPATHs.  Return it as an absolute path.
 // Return empty string if not found.
 func FindSource(relPath string) string {

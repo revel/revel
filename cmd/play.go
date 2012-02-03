@@ -8,7 +8,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"path/filepath"
 	"os"
 
 	"play"
@@ -26,12 +25,7 @@ func main() {
 	}
 
 	// Find and parse application.yaml
-	appDirPath, err := filepath.Abs(args[0])
-	if err != nil {
-		play.LOG.Fatalln(err.Error())
-	}
-
-	play.Init(appDirPath)
+	play.Init(args[0])
 	play.LOG.Printf("Running app: %s (%s)\n", play.AppName, play.BasePath)
 
 	harness.Run()
