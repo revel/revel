@@ -81,7 +81,6 @@ type harnessProxy struct {
 }
 
 func (hp *harnessProxy) ServeHTTP(wr http.ResponseWriter, req *http.Request) {
-
 	// First, poll to see if there's a pending error in NotifyReady
 	select {
 	case err := <-hp.NotifyReady:
@@ -241,10 +240,10 @@ func rebuild(port int) (compileError *play.CompileError) {
 	}
 
 	// Build the user program (all code under app).
-	// It relies on the user having gb installed.
+	// It relies on the user having "go" installed.
 	goPath, err := exec.LookPath("go")
 	if err != nil {
-		log.Fatalf("GB executable not found in PATH.  Please goinstall it.")
+		log.Fatalf("Go executable not found in PATH.")
 	}
 
 	appTree, _, _ := build.FindTree(play.AppPath)
@@ -315,7 +314,7 @@ func uniqueImportPaths(specs []*ControllerSpec) (paths []string) {
 	return
 }
 
-// Parse the output of the "gb" compile command.
+// Parse the output of the "go build" command.
 // Return a detailed CompileError.
 func newCompileError(output []byte) *play.CompileError {
 	errorMatch := regexp.MustCompile(`(?m)^(.+):(\d+): (.*)$`).

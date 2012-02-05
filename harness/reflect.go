@@ -11,6 +11,7 @@ import (
 	"log"
 	"os"
 	"play"
+	"unicode"
 )
 
 type ControllerSpec struct {
@@ -127,8 +128,6 @@ func appendStruct(specs []*ControllerSpec, pkg *ast.Package, decl ast.Decl) []*C
 		PackageName: pkg.Name,
 		StructName: spec.Name.Name,
 		ImportPath: play.ImportPath + "/app/" + pkg.Name,
-		// MethodSpecs: make([]*MethodSpec),
-		// embeddedTypes: make([]*embeddedTypeName),
 	}
 
 	for _, field := range structType.Fields.List {
@@ -175,6 +174,26 @@ func appendMethod(mm methodMap, decl ast.Decl) {
 
 	// Have a receiver?
 	if funcDecl.Recv == nil {
+		return
+	}
+
+	// Is it public?
+	if ! unicode.IsUpper([]rune(funcDecl.Name.Name)[0]) {
+		return
+	}
+
+	// Does it return a play.Result?
+	if funcDecl.Type.Results == nil || len(funcDecl.Type.Results.List) != 1 {
+		return
+	}
+	selExpr, ok := funcDecl.Type.Results.List[0].Type.(*ast.SelectorExpr)
+	if ! ok {
+		return
+	}
+	if pkgIdent, ok := selExpr.X.(*ast.Ident); !ok || pkgIdent.Name != "play" {
+		return
+	}
+	if selExpr.Sel.Name != "Result" {
 		return
 	}
 

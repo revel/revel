@@ -1,13 +1,14 @@
 package play
 
 import (
-	"html/template"
+	"errors"
 	"fmt"
+	"html/template"
+	"io"
 	"path/filepath"
 	"path"
 	"os"
 	"io/ioutil"
-	"bytes"
 	"strings"
 	"regexp"
 	"strconv"
@@ -23,6 +24,10 @@ type TemplateLoader struct {
 	error *template.Error
 
 	viewsDir string
+}
+
+type Template interface {
+	Render(wr io.Writer, arg interface{}) error
 }
 
 var (
@@ -105,21 +110,38 @@ func (loader *TemplateLoader) LoadTemplates() (err *CompileError) {
 	return nil
 }
 
-// Executes a template and returns the result.
-// name is the template path relative to views e.g. "Application/Index.html"
-func (loader *TemplateLoader) RenderTemplate(name string, arg interface{}) (string, bool) {
+func (loader *TemplateLoader) Template(name string) (Template, error) {
 	tmpl := loader.templateSet.Lookup(name)
 	if tmpl == nil {
-		return fmt.Sprintf("Template %s not found.\n", name), true
+		return nil, errors.New(fmt.Sprintf("Template %s not found.\n", name))
 	}
+	return GoTemplate{tmpl}, nil
+}
 
-	var b bytes.Buffer
-	err := tmpl.Execute(&b, arg)
-	if err != nil {
-		return fmt.Sprintf("Failed to execute template: %s", err.Error()), true
-	}
+// // Executes a template and returns the result.
+// // name is the template path relative to views e.g. "Application/Index.html"
+// func (loader *TemplateLoader) RenderTemplate(wr io.Writer, name string, arg interface{}) error {
+// 	tmpl, err := loader.Template(name)
+// 	if err != nil {
+// 		return err
+// 	}
 
-	return b.String(), false
+// 	err = tmpl.Execute(wr, arg)
+// 	if err != nil {
+// 		return err
+// 	}
+
+// 	return nil
+// }
+
+// Adapter for Go Templates.
+type GoTemplate struct {
+	*template.Template
+}
+
+// return a 'play.Template' from Go's template.
+func (gotmpl GoTemplate) Render(wr io.Writer, arg interface{}) error {
+	return gotmpl.Execute(wr, arg)
 }
 
 /////////////////////

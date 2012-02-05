@@ -2,4 +2,4 @@
 GET /                     Application.Index
 GET /app/{id}             Application.ShowApp
 GET /public/              staticDir:public
-* /_{controller}/{action} {controller}.{action}
+* /{controller}/{action} {controller}.{action}

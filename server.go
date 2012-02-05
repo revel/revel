@@ -11,6 +11,8 @@ var templateLoader *TemplateLoader
 
 // This method handles all http requests.
 func handle(w http.ResponseWriter, r *http.Request) {
+	// TODO: StaticPathsCache
+
 	// Figure out the Controller/Action
 	var route *RouteMatch = router.Route(r)
 	if route == nil {
@@ -25,7 +27,6 @@ func handle(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Invoke the controller method...
-	LOG.Printf("Calling %s.%s", route.ControllerName, route.MethodName)
 	var controllerType *ControllerType = LookupControllerType(route.ControllerName)
 	if controllerType == nil {
 		LOG.Printf("E: Controller %s not found", route.ControllerName)
@@ -38,16 +39,11 @@ func handle(w http.ResponseWriter, r *http.Request) {
 	var appController reflect.Value = appControllerPtr.Elem()
 
 	// Create and configure Play Controller
-	var c *Controller = &Controller{
-		request: r,
-		responseWriter: w,
-		name: controllerType.Type.Name(),
-		controllerType: controllerType,
-	}
+	var controller *Controller = NewController(w, r, controllerType)
 
 	// Set the embedded Play Controller field, in the App Controller
 	var controllerField reflect.Value = appController.Field(0)
-	controllerField.Set(reflect.ValueOf(c))
+	controllerField.Set(reflect.ValueOf(controller))
 
 	// Now call the action.
 	methodType := controllerType.Method(route.MethodName)
@@ -66,22 +62,26 @@ func handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Add the route Params to the Request Params.
+	for key, value := range route.Params {
+		controller.Request.Params.Add(key, value)
+	}
+
 	// Collect the values for the method's arguments.
 	var actualArgs []reflect.Value
 	for _, arg := range methodType.Args {
 		// If this arg is provided, add it to actualArgs
 		// Else, leave it as the default 0 value.
-		if value, ok := route.Params[arg.Name]; ok {
+		if value, ok := controller.Request.Params[arg.Name]; ok {
 			actualArgs = append(actualArgs, Bind(arg.Type, value))
 		} else {
 			actualArgs = append(actualArgs, reflect.Zero(arg.Type))
 		}
 	}
 
-	// Call the method.
-	resultValue := method.Call(actualArgs)[0]
-	result := resultValue.Interface().(*Result)
-	w.Write([]byte(result.body))
+	// Invoke the method.
+	// (Note that the method Value is already bound to the appController receiver.)
+	controller.Invoke(method, actualArgs)
 }
 
 // Run the server.
@@ -95,8 +95,12 @@ func Run(port int) {
 
 	// Now that we know all the Controllers, start the server.
 	LOG.Printf("Listening on port %d...", port)
-	http.HandleFunc("/", handle)
-	err := http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
+	server := &http.Server{
+		Addr: fmt.Sprintf(":%d", port),
+		Handler: http.HandlerFunc(handle),
+	}
+
+	err := server.ListenAndServe()
 	if err != nil {
 		LOG.Fatalln("Failed to listen:", err)
 	}

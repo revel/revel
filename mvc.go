@@ -2,21 +2,85 @@ package play
 
 import (
 	"net/http"
+	"net/url"
 	"log"
 	"reflect"
 	"runtime"
 	"strings"
 )
 
-type Controller struct {
-	request *http.Request
-	responseWriter http.ResponseWriter
-	name string
-	controllerType *ControllerType
+type Flash map[string]string
+
+type Request struct {
+	*http.Request
+	Params url.Values
 }
 
-func (c *Controller) Render(arg interface{}) (*Result) {
-	// Find the template.
+type Response struct {
+	Status int
+	ContentType string
+	Headers http.Header
+	Cookies []*http.Cookie
+
+	out http.ResponseWriter
+}
+
+type Controller struct {
+	Name string
+	Type *ControllerType
+
+	Request  *Request
+	Response *Response
+
+	Flash Flash  // User cookie, cleared after each request.
+	Session map[string]string  // Session, stored in cookie.
+	Params map[string]string
+	RenderArgs map[string]interface{}
+}
+
+func NewController(w http.ResponseWriter, r *http.Request, ct *ControllerType) *Controller {
+	return &Controller{
+		Name: ct.Type.Name(),
+		Type: ct,
+		Request: &Request{r, r.URL.Query()},
+		Response: &Response{
+			Status: 200,
+			ContentType: "",
+			Headers: w.Header(),
+			out: w,
+		},
+
+		Flash: make(map[string]string),
+		Session: make(map[string]string),
+		RenderArgs: make(map[string]interface{}),
+	}
+}
+
+func (c *Controller) SetCookie(cookie *http.Cookie) {
+	http.SetCookie(c.Response.out, cookie)
+}
+
+// Invoke the given method, save headers/cookies to the response, and apply the
+// result.  (e.g. render a template to the response)
+func (c *Controller) Invoke(method reflect.Value, methodArgs []reflect.Value) {
+	result := method.Call(methodArgs)[0].Interface().(Result)
+
+	// Store the flash.
+	var flashValue string
+	for key, value := range c.Flash {
+		flashValue += "\x00" + key + ":" + value + "\x00"
+	}
+	c.SetCookie(&http.Cookie{
+		Name: "PLAY_FLASH",
+		Value: flashValue,
+		Path: "/",
+	})
+
+	// Apply the result, which generally results in the ResponseWriter getting written.
+	result.Apply(c.Request, c.Response)
+}
+
+func (c *Controller) Render(arg interface{}) Result {
 	// Get the calling function name.
 	pc, _, _, _ := runtime.Caller(1)
 	// e.g. sample/app/controllers.(*Application).Index
@@ -27,21 +91,35 @@ func (c *Controller) Render(arg interface{}) (*Result) {
 	// Refresh templates.
 	err := templateLoader.LoadTemplates()
 	if err != nil {
-		c.responseWriter.Write([]byte(err.Html()))
-		return &Result{}
+		c.Response.out.Write([]byte(err.Html()))
+		return nil
 	}
 
-	// Render the template
-	html, _ := templateLoader.RenderTemplate(c.name + "/" + viewName + ".html", arg)
+	template, err2 := templateLoader.Template(c.Name + "/" + viewName + ".html")
+	if err2 != nil {
+		c.Response.out.Write([]byte(err2.Error()))
+		return nil
+	}
 
-	// Prepare the result
-	r := new(Result)
-	c.responseWriter.Write([]byte(html))
-	return r
+	return &RenderTemplateResult{
+		Template: template,
+		Arg: arg,
+	}
 }
 
-type Result struct {
-	body string
+// Redirect to an action within the same Controller.
+func (c *Controller) Redirect(val interface{}) Result {
+	return &RedirectResult{
+		val: val,
+	}
+}
+
+func (f Flash) Error(msg string) {
+	f["error"] = msg
+}
+
+func (f Flash) Success(msg string) {
+	f["success"] = msg
 }
 
 // Internal bookeeping
@@ -70,11 +148,21 @@ func (ct *ControllerType) Method(name string) *MethodType {
 	return nil
 }
 
-var controllers map[string]*ControllerType = make(map[string]*ControllerType)
+var controllers = make(map[string]*ControllerType)
 
 func RegisterController(c interface{}, methods []*MethodType) {
+	// De-star the controller type
+	// (e.g. given TypeOf((*Application)(nil)), want TypeOf(Application))
 	var t reflect.Type = reflect.TypeOf(c)
 	var elem reflect.Type = t.Elem()
+
+	// De-star all of the method arg types too.
+	for _, m := range methods {
+		for _, arg := range m.Args {
+			arg.Type = arg.Type.Elem()
+		}
+	}
+
 	controllers[elem.Name()] = &ControllerType{Type: elem, Methods: methods}
 	log.Printf("Registered controller: %s", elem.Name())
 }

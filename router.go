@@ -22,6 +22,7 @@ type Route struct {
 }
 
 type RouteMatch struct {
+	Action string             // e.g. Application.ShowApp
 	ControllerName string     // e.g. Application
 	MethodName string         // e.g. ShowApp
 	Params map[string]string  // e.g. {id: 123}
@@ -143,20 +144,22 @@ func (r *Route) Match(method string, reqPath string) *RouteMatch {
 	}
 
 	// If the action is variablized, replace into it with the captured args.
-	if strings.Contains(r.action, "{") {
+	action := r.action
+	if strings.Contains(action, "{") {
 		for key, value := range params {
-			r.action = strings.Replace(r.action, "{" + key + "}", value, -1)
+			action = strings.Replace(action, "{" + key + "}", value, -1)
 		}
 	}
 
 	// Split the action into controller and method
-	actionSplit := strings.Split(r.action, ".")
+	actionSplit := strings.Split(action, ".")
 	if len(actionSplit) != 2 {
 		LOG.Printf("E: Failed to split action: %s", r.action)
 		return nil
 	}
 
 	return &RouteMatch{
+		Action: action,
 		ControllerName: actionSplit[0],
 		MethodName: actionSplit[1],
 		Params: params,
