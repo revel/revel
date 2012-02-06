@@ -12,14 +12,15 @@ type Result interface {
 // Action methods return this result to request a template be rendered.
 type RenderTemplateResult struct {
 	Template Template
-	Arg interface{}  // e.g. a map[string]interface{}, or a struct
+	RenderArgs map[string]interface{}
+	Response *Response
 }
 
 func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
 	// TODO: Put the session, request, flash, params, errors into context.
 
 	// Render the template into the response buffer.
-	err := r.Template.Render(resp.out, r.Arg)
+	err := r.Template.Render(resp.out, r.RenderArgs)
 	if err != nil {
 		resp.out.Write([]byte(err.Error()))
 	}

@@ -28,6 +28,7 @@ type Response struct {
 type Controller struct {
 	Name string
 	Type *ControllerType
+	MethodType *MethodType
 
 	Request  *Request
 	Response *Response
@@ -80,9 +81,13 @@ func (c *Controller) Invoke(method reflect.Value, methodArgs []reflect.Value) {
 	result.Apply(c.Request, c.Response)
 }
 
-func (c *Controller) Render(arg interface{}) Result {
+func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
 	// Get the calling function name.
-	pc, _, _, _ := runtime.Caller(1)
+	pc, _, line, ok := runtime.Caller(1)
+	if ! ok {
+		log.Println("Failed to get Caller information")
+		return nil
+	}
 	// e.g. sample/app/controllers.(*Application).Index
 	var fqViewName string = runtime.FuncForPC(pc).Name()
 	var viewName string = fqViewName[
@@ -95,15 +100,31 @@ func (c *Controller) Render(arg interface{}) Result {
 		return nil
 	}
 
+	// Get the Template.
 	template, err2 := templateLoader.Template(c.Name + "/" + viewName + ".html")
 	if err2 != nil {
 		c.Response.out.Write([]byte(err2.Error()))
 		return nil
 	}
 
+	// Get the extra RenderArgs passed in.
+	if renderArgNames, ok := c.MethodType.RenderArgNames[line]; ok {
+		if len(renderArgNames) == len(extraRenderArgs) {
+			for i, extraRenderArg := range extraRenderArgs {
+				c.RenderArgs[renderArgNames[i]] = extraRenderArg
+			}
+		} else {
+			LOG.Println(len(renderArgNames), "RenderArg names found for",
+				len(extraRenderArgs), "extra RenderArgs")
+		}
+	} else {
+		LOG.Println("No RenderArg names found for Render call on line", line)
+	}
+
 	return &RenderTemplateResult{
 		Template: template,
-		Arg: arg,
+		RenderArgs: c.RenderArgs,
+		Response: c.Response,
 	}
 }
 
@@ -132,6 +153,7 @@ type ControllerType struct {
 type MethodType struct {
 	Name string
 	Args []*MethodArg
+	RenderArgNames map[int][]string
 }
 
 type MethodArg struct {

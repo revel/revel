@@ -46,8 +46,8 @@ func handle(w http.ResponseWriter, r *http.Request) {
 	controllerField.Set(reflect.ValueOf(controller))
 
 	// Now call the action.
-	methodType := controllerType.Method(route.MethodName)
-	if methodType == nil {
+	controller.MethodType = controllerType.Method(route.MethodName)
+	if controller.MethodType == nil {
 		LOG.Println("E: Failed to find method", route.MethodName, "on Controller",
 			route.ControllerName)
 		http.NotFound(w, r)
@@ -69,7 +69,7 @@ func handle(w http.ResponseWriter, r *http.Request) {
 
 	// Collect the values for the method's arguments.
 	var actualArgs []reflect.Value
-	for _, arg := range methodType.Args {
+	for _, arg := range controller.MethodType.Args {
 		// If this arg is provided, add it to actualArgs
 		// Else, leave it as the default 0 value.
 		if value, ok := controller.Request.Params[arg.Name]; ok {

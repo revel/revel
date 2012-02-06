@@ -11,7 +11,7 @@ type Login struct {
 }
 
 func (c *Login) ShowLogin() play.Result {
-	return c.Render(nil)
+	return c.Render()
 }
 
 // TODO: Call with empty parameter, if necessary

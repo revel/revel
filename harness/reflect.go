@@ -24,9 +24,17 @@ type ControllerSpec struct {
 	embeddedTypes []*embeddedTypeName
 }
 
+// This is a description of a call to c.Render(..)
+// It documents the argument names used, in order to propagate them to RenderArgs.
+type renderCall struct {
+	Line int
+	Names []string
+}
+
 type MethodSpec struct {
 	Name string    // Name of the method, e.g. "Index"
 	Args []*MethodArg  // Argument descriptors
+	RenderCalls []*renderCall  // Descriptions of Render() invocations from this Method.
 }
 
 type MethodArg struct {
@@ -79,7 +87,7 @@ func ScanControllers(path string) (specs []*ControllerSpec, compileError *play.C
 
 				// Match and add both structs and methods
 				structSpecs = appendStruct(structSpecs, pkg, decl)
-				appendMethod(methodSpecs, decl)
+				appendMethod(fset, methodSpecs, decl)
 			}
 		}
 
@@ -165,7 +173,7 @@ func appendStruct(specs []*ControllerSpec, pkg *ast.Package, decl ast.Decl) []*C
 // If decl is a Method declaration, it is summarized and added to the array
 // underneath its receiver type.
 // e.g. "Login" => {MethodSpec, MethodSpec, ..}
-func appendMethod(mm methodMap, decl ast.Decl) {
+func appendMethod(fset *token.FileSet, mm methodMap, decl ast.Decl) {
 	// Func declaration?
 	funcDecl, ok := decl.(*ast.FuncDecl)
 	if !ok {
@@ -210,6 +218,7 @@ func appendMethod(mm methodMap, decl ast.Decl) {
 		Name: funcDecl.Name.Name,
 	}
 
+	// Add a description of the arguments to the method.
 	for _, field := range funcDecl.Type.Params.List {
 		for _, name := range field.Names {
 			method.Args = append(method.Args, &MethodArg{
@@ -218,6 +227,46 @@ func appendMethod(mm methodMap, decl ast.Decl) {
 			})
 		}
 	}
+
+	// Add a description of the calls to Render from the method.
+	// Inspect every node (e.g. always return true).
+	method.RenderCalls = []*renderCall{}
+	ast.Inspect(funcDecl.Body, func(node ast.Node) bool {
+		// Is it a function call?
+		callExpr, ok := node.(*ast.CallExpr)
+		if ! ok {
+			return true
+		}
+
+		// Is it calling (*Controller).Render?
+		selExpr, ok := callExpr.Fun.(*ast.SelectorExpr)
+		if ! ok {
+			return true
+		}
+
+		// The type of the receiver is not easily available, so just store every
+		// call to any method called Render.
+		if selExpr.Sel.Name != "Render" {
+			return true
+		}
+
+		// Add this call's args to the renderArgs.
+		pos := fset.Position(selExpr.Sel.NamePos)
+		renderCall := &renderCall{
+			Line: pos.Line,
+			Names: []string{},
+		}
+		for _, arg := range callExpr.Args {
+			argIdent, ok := arg.(*ast.Ident)
+			if ! ok {
+				log.Println("Unnamed argument to Render call:", pos)
+				continue
+			}
+			renderCall.Names = append(renderCall.Names, argIdent.Name)
+		}
+		method.RenderCalls = append(method.RenderCalls, renderCall)
+		return true
+	})
 
 	mm[recvTypeName] = append(mm[recvTypeName], method)
 }

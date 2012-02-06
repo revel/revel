@@ -60,6 +60,11 @@ func main() {
 				Args: []*play.MethodArg{ {{range .Args}}
 					&play.MethodArg{Name: "{{.Name}}", Type: reflect.TypeOf((*{{.TypeName}})(nil)) },{{end}}
 			  },
+				RenderArgNames: map[int][]string{ {{range .RenderCalls}}
+					{{.Line}}: []string{ {{range .Names}}
+						"{{.}}",{{end}}
+					},{{end}}
+				},
 			},
 			{{end}}
 		})
