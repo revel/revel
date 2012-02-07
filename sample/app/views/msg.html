@@ -1,1 +1,13 @@
-Success and error messages..
+{{if .flash.success}}
+  <div class="app-successbox">
+    {{.flash.success}}
+  </div>
+{{end}}
+
+{{if .flash.error}}
+  <div class="app-errorbox">
+    {{.flash.error}}
+  </div>
+{{end}}
+
+

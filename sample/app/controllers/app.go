@@ -13,5 +13,7 @@ func (c *Application) Index() play.Result {
 }
 
 func (c *Application) ShowApp(id int) play.Result {
-	return c.Render(id)
+	return c.Render(
+		id,
+	)
 }

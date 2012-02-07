@@ -38,7 +38,7 @@ func (r *RedirectResult) Apply(req *Request, resp *Response) {
 		return
 	}
 	resp.Headers.Set("Location", url)
-	resp.out.WriteHeader(301)
+	resp.out.WriteHeader(302)
 }
 
 func getRedirectUrl(item interface{}) (string, error) {

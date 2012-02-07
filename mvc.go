@@ -5,11 +5,36 @@ import (
 	"net/url"
 	"log"
 	"reflect"
+	"regexp"
 	"runtime"
 	"strings"
 )
 
-type Flash map[string]string
+
+var (
+	flashParser = regexp.MustCompile("\x00([^:]*):([^\x00]*)\x00")
+)
+
+type Flash struct {
+	Data, Out map[string]string
+}
+
+// Restore flash from a request.
+func restoreFlash(req *http.Request) Flash {
+	flash := Flash{
+		Data: make(map[string]string),
+		Out: make(map[string]string),
+	}
+	if cookie, err := req.Cookie("PLAY_FLASH"); err == nil {
+		val, _ := url.QueryUnescape(cookie.Value)
+		if matches := flashParser.FindAllStringSubmatch(val, -1); matches != nil {
+			for _, match := range matches {
+				flash.Data[match[1]] = match[2]
+			}
+		}
+	}
+	return flash
+}
 
 type Request struct {
 	*http.Request
@@ -40,6 +65,7 @@ type Controller struct {
 }
 
 func NewController(w http.ResponseWriter, r *http.Request, ct *ControllerType) *Controller {
+	flash := restoreFlash(r)
 	return &Controller{
 		Name: ct.Type.Name(),
 		Type: ct,
@@ -51,9 +77,11 @@ func NewController(w http.ResponseWriter, r *http.Request, ct *ControllerType) *
 			out: w,
 		},
 
-		Flash: make(map[string]string),
+		Flash: flash,
 		Session: make(map[string]string),
-		RenderArgs: make(map[string]interface{}),
+		RenderArgs: map[string]interface{}{
+			"flash": flash.Data,
+		},
 	}
 }
 
@@ -68,12 +96,12 @@ func (c *Controller) Invoke(method reflect.Value, methodArgs []reflect.Value) {
 
 	// Store the flash.
 	var flashValue string
-	for key, value := range c.Flash {
+	for key, value := range c.Flash.Out {
 		flashValue += "\x00" + key + ":" + value + "\x00"
 	}
 	c.SetCookie(&http.Cookie{
 		Name: "PLAY_FLASH",
-		Value: flashValue,
+		Value: url.QueryEscape(flashValue),
 		Path: "/",
 	})
 
@@ -136,11 +164,11 @@ func (c *Controller) Redirect(val interface{}) Result {
 }
 
 func (f Flash) Error(msg string) {
-	f["error"] = msg
+	f.Out["error"] = msg
 }
 
 func (f Flash) Success(msg string) {
-	f["success"] = msg
+	f.Out["success"] = msg
 }
 
 // Internal bookeeping
