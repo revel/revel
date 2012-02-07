@@ -251,7 +251,7 @@ func appendMethod(fset *token.FileSet, mm methodMap, decl ast.Decl) {
 		}
 
 		// Add this call's args to the renderArgs.
-		pos := fset.Position(selExpr.Sel.NamePos)
+		pos := fset.Position(callExpr.Rparen)
 		renderCall := &renderCall{
 			Line: pos.Line,
 			Names: []string{},
