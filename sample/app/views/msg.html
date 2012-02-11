@@ -10,4 +10,13 @@
   </div>
 {{end}}
 
+{{if .errors}}
+  <div class="app-errorbox">
+    <ul>
+    {{range .errors}}
+      <li>{{.Message}}</li>
+    {{end}}
+    </ul>
+  </div>
+{{end}}
 

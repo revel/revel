@@ -5,14 +5,8 @@ import (
 	"net/url"
 	"log"
 	"reflect"
-	"regexp"
 	"runtime"
 	"strings"
-)
-
-
-var (
-	flashParser = regexp.MustCompile("\x00([^:]*):([^\x00]*)\x00")
 )
 
 type Flash struct {
@@ -26,19 +20,29 @@ func restoreFlash(req *http.Request) Flash {
 		Out: make(map[string]string),
 	}
 	if cookie, err := req.Cookie("PLAY_FLASH"); err == nil {
-		val, _ := url.QueryUnescape(cookie.Value)
-		if matches := flashParser.FindAllStringSubmatch(val, -1); matches != nil {
-			for _, match := range matches {
-				flash.Data[match[1]] = match[2]
-			}
-		}
+		ParseKeyValueCookie(cookie.Value, func(key, val string) {
+			flash.Data[key] = val
+		})
 	}
 	return flash
 }
 
+// Restore Validation.Errors from a request.
+func restoreValidationErrors(req *http.Request) []*ValidationError {
+	errors := make([]*ValidationError, 0, 5)
+	if cookie, err := req.Cookie("PLAY_ERRORS"); err == nil {
+		ParseKeyValueCookie(cookie.Value, func(key, val string) {
+			errors = append(errors, &ValidationError{
+				Key: key,
+				Message: val,
+			})
+		})
+	}
+	return errors
+}
+
 type Request struct {
 	*http.Request
-	Params url.Values
 }
 
 type Response struct {
@@ -60,8 +64,9 @@ type Controller struct {
 
 	Flash Flash  // User cookie, cleared after each request.
 	Session map[string]string  // Session, stored in cookie.
-	Params map[string]string
+	Params url.Values
 	RenderArgs map[string]interface{}
+	Validation *Validation
 }
 
 func NewController(w http.ResponseWriter, r *http.Request, ct *ControllerType) *Controller {
@@ -69,7 +74,7 @@ func NewController(w http.ResponseWriter, r *http.Request, ct *ControllerType) *
 	return &Controller{
 		Name: ct.Type.Name(),
 		Type: ct,
-		Request: &Request{r, r.URL.Query()},
+		Request: &Request{r},
 		Response: &Response{
 			Status: 200,
 			ContentType: "",
@@ -77,11 +82,22 @@ func NewController(w http.ResponseWriter, r *http.Request, ct *ControllerType) *
 			out: w,
 		},
 
+		Params: r.URL.Query(),
 		Flash: flash,
 		Session: make(map[string]string),
 		RenderArgs: map[string]interface{}{
 			"flash": flash.Data,
 		},
+		Validation: &Validation{
+			Errors: restoreValidationErrors(r),
+			keep: false,
+		},
+	}
+}
+
+func (c *Controller) FlashParams() {
+	for key, vals := range c.Params {
+		c.Flash.Out[key] = vals[0]
 	}
 }
 
@@ -102,6 +118,21 @@ func (c *Controller) Invoke(method reflect.Value, methodArgs []reflect.Value) {
 	c.SetCookie(&http.Cookie{
 		Name: "PLAY_FLASH",
 		Value: url.QueryEscape(flashValue),
+		Path: "/",
+	})
+
+	// Store the Validation errors
+	var errorsValue string
+	if c.Validation.keep {
+		for _, error := range c.Validation.Errors {
+			if error.Message != "" {
+				errorsValue += "\x00" + error.Key + ":" + error.Message + "\x00"
+			}
+		}
+	}
+	c.SetCookie(&http.Cookie{
+		Name: "PLAY_ERRORS",
+		Value: url.QueryEscape(errorsValue),
 		Path: "/",
 	})
 
@@ -148,6 +179,9 @@ func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
 	} else {
 		LOG.Println("No RenderArg names found for Render call on line", line)
 	}
+
+	// Add Validation errors to RenderArgs.
+	c.RenderArgs["errors"] = c.Validation.Errors
 
 	return &RenderTemplateResult{
 		Template: template,

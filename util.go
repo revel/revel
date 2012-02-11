@@ -8,7 +8,9 @@ import (
 	"go/build"
 	"io"
 	"io/ioutil"
+	"net/url"
 	"path"
+	"regexp"
 	"reflect"
 	"strings"
 )
@@ -89,4 +91,18 @@ func FindMethod(recvType reflect.Type, funcVal *reflect.Value) *reflect.Method {
 		}
 	}
 	return nil
+}
+
+var (
+	cookieKeyValueParser = regexp.MustCompile("\x00([^:]*):([^\x00]*)\x00")
+)
+
+// Takes the raw (escaped) cookie value and parses out key values.
+func ParseKeyValueCookie(val string, cb func(key, val string)) {
+	val, _ = url.QueryUnescape(val)
+	if matches := cookieKeyValueParser.FindAllStringSubmatch(val, -1); matches != nil {
+		for _, match := range matches {
+			cb(match[1], match[2])
+		}
+	}
 }

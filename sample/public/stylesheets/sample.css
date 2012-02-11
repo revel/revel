@@ -1,3 +1,25 @@
+ol, ul {
+  list-style: none;
+}
+
+.app-errorbox, .app-successbox {
+  font-weight: bold;
+  margin-bottom: 10px;
+  padding: 10px;
+}
+
+.app-errorbox {
+  background-color: #FFE5E5;
+  border: 1px solid #F00;
+  color: #F00;
+}
+
+.app-successbox {
+  background-color: #E5F7E8;
+  border: 1px solid #04AF1C;
+  color: #04AF1C;
+}
+
 #footer-bar {
     border-top: 1px solid black;
     border-bottom: 1px solid black;

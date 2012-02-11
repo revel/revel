@@ -64,7 +64,7 @@ func handle(w http.ResponseWriter, r *http.Request) {
 
 	// Add the route Params to the Request Params.
 	for key, value := range route.Params {
-		controller.Request.Params.Add(key, value)
+		controller.Params.Add(key, value)
 	}
 
 	// Collect the values for the method's arguments.
@@ -72,7 +72,7 @@ func handle(w http.ResponseWriter, r *http.Request) {
 	for _, arg := range controller.MethodType.Args {
 		// If this arg is provided, add it to actualArgs
 		// Else, leave it as the default 0 value.
-		if value, ok := controller.Request.Params[arg.Name]; ok {
+		if value, ok := controller.Params[arg.Name]; ok {
 			actualArgs = append(actualArgs, Bind(arg.Type, value))
 		} else {
 			actualArgs = append(actualArgs, reflect.Zero(arg.Type))
