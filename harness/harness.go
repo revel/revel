@@ -26,8 +26,10 @@ import (
 	"path/filepath"
 	"regexp"
 	"strconv"
+	"strings"
 	"text/template"
 	"play"
+	"github.com/robfig/fsnotify"
 )
 
 const REGISTER_CONTROLLERS = `
@@ -137,6 +139,11 @@ func startReverseProxy(port int) *harnessProxy {
 	return reverseProxy
 }
 
+var (
+	// Will not watch directories with these names (or their subdirectories)
+	DoNotWatch = []string{ "tmp", "views" }
+)
+
 func Run() {
 
 	// Get a port on which to run the application
@@ -146,7 +153,29 @@ func Run() {
 	proxy := startReverseProxy(port)
 
 	// Listen for changes to the user app.
-	watcher := NewWatcher(play.AppPath)
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Listen to all app subdirectories (except /views)
+	filepath.Walk(play.AppPath, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			play.LOG.Println("error walking app:", err)
+			return nil
+		}
+		if info.IsDir() {
+			if play.ContainsString(DoNotWatch, info.Name()) {
+				return filepath.SkipDir
+			}
+			err = watcher.Watch(path)
+			play.LOG.Println("Watching:", path)
+			if err != nil {
+				play.LOG.Println("Failed to watch", path, ":", err)
+			}
+		}
+		return nil
+	})
 
 	// Define an exit handler that kills the play server (since it won't die on
 	// its own, if the harness exits)
@@ -158,7 +187,6 @@ func Run() {
 	}()
 
 	// Start the listen / rebuild loop.
-	var err error = nil
 	var dirty bool = true
 	for {
 		err = nil
@@ -168,11 +196,15 @@ func Run() {
 		for {
 			select {
 			case ev := <-watcher.Event:
-				log.Println("Detected change to application directories:", ev.DirNames)
-				dirty = true
+				// Ignore changes to dot-files.
+				if ! strings.HasPrefix(path.Base(ev.Name), ".") {
+					log.Println(ev)
+					dirty = true
+				}
 				continue
 			case err = <-watcher.Error:
-				log.Fatalf("Inotify error: %s", err)
+				log.Println("Inotify error:", err)
+				continue
 			case _ = <-proxy.NotifyRequest:
 				if !dirty {
 					proxy.NotifyReady <- nil

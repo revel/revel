@@ -112,7 +112,6 @@ func NewRoute(method, path, action string) (r *Route) {
 		}
 	}
 	r.actionPattern = regexp.MustCompile(actionPatternStr)
-	LOG.Printf("Path pattern: %s", r.pathPattern)
 	return
 }
 
@@ -128,7 +127,6 @@ func (r *Route) Match(method string, reqPath string) *RouteMatch {
 	if matches == nil {
 		return nil
 	}
-	LOG.Printf("Path Match: %v", matches)
 
 	// If it's a static file request..
 	if r.staticDir != "" {
