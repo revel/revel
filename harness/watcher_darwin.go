@@ -75,13 +75,13 @@ func setupWatcher(path string) *Watcher {
 				dirQueue = append(dirQueue, filepath.Join(dirPath, fileInfo.Name()))
 			}
 		}
-		dirFileMap[dir.Fd()] = dir
-		dirContentsMap[dir.Fd()] = filterFileInfos(fileInfos)
+		dirFileMap[int(dir.Fd())] = dir
+		dirContentsMap[int(dir.Fd())] = filterFileInfos(fileInfos)
 
 		// Register the kevent (a write to the directory) and verify the receipt.
 		var kbuf [1]syscall.Kevent_t
 		ev := &kbuf[0]
-		syscall.SetKevent(&kbuf[0], dir.Fd(), syscall.EVFILT_VNODE, syscall.EV_ADD|syscall.EV_RECEIPT|syscall.EV_CLEAR)
+		syscall.SetKevent(&kbuf[0], int(dir.Fd()), syscall.EVFILT_VNODE, syscall.EV_ADD|syscall.EV_RECEIPT|syscall.EV_CLEAR)
 		ev.Fflags = syscall.NOTE_WRITE
 		n, err := syscall.Kevent(kqueue, kbuf[0:], kbuf[0:], nil)
 		if err != nil {
@@ -90,7 +90,7 @@ func setupWatcher(path string) *Watcher {
 
 		if n != 1 ||
 			(ev.Flags&syscall.EV_ERROR) == 0 ||
-			int(ev.Ident) != dir.Fd() ||
+			int(ev.Ident) != int(dir.Fd()) ||
 			int(ev.Filter) != syscall.EVFILT_VNODE {
 			log.Fatalf("Kevent failed")
 		}
