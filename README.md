@@ -2,25 +2,24 @@
 
 This is a port of the amazing [Play! framework](http://www.playframework.org) to the [Go language](http://www.golang.org).
 
-It tries to be a high-productivity web framework.
+It is a high productivity web framework
 
 # Example
 
-1. Write a routes file declaration for some actions, assets and a catchall:
-```
-conf/routes:
+Write a routes file declaration for some actions, assets and a catchall:
 
+```
+# conf/routes
 GET /                     Application.Index
 GET /app/{id}             Application.ShowApp
 GET /public/              staticDir:public
 * /{controller}/{action} {controller}.{action}
 ```
 
-2. Declare a Controller:
+Declare a Controller:
 
 ```go
-app/controllers/app.go:
-
+// app/controllers/app.go
 package controllers
 import "play"
 
@@ -33,11 +32,10 @@ func (c *Application) ShowApp(id int) play.Result {
 }
 ```
 
-3. Define a view using [go templates](http://www.golang.org/pkg/text/template/):
+Define a view using [go templates](http://www.golang.org/pkg/text/template/):
 
 ```
-app/views/Application/ShowApp.html:
-
+{{/* app/views/Application/ShowApp.html */}}
 {{template "header.html" .}}
 This is app {{.id}}!
 {{template "footer.html" .}}
@@ -122,6 +120,7 @@ typical Go installation.
 ```
 gocode                         GOPATH root
   src                          GOPATH src directory
+    play                       Go Play source code
     sample
       app                      App sources
         controllers            App controllers
@@ -134,7 +133,6 @@ gocode                         GOPATH root
         css                    CSS files
         js                     Javascript files
         img                    Image files
-    play                       Go Play source code
 ```
 
 ## The app/ directory
@@ -142,6 +140,7 @@ gocode                         GOPATH root
 The `app` directory contains the source code and templates for your application.
 
 By default, these are:
+
 - `app/controllers`
 - `app/models`
 - `app/views`
