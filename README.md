@@ -120,21 +120,21 @@ Here is the default layout of a Go Play application called `sample`, within a
 typical Go installation.
 
 ```
-gocode                         ’ GOPATH root
- src                         ’ GOPATH src directory
-   sample                    ’
-     app                     ’ App sources
-       controllers           ’ App controllers
-       models                ’ App business layer
-       views                 ’ Templates
-     conf                    ’ Configuration files
-       application.conf      ’ Main configuration file
-       routes                ’ Routes definition
-     public                  ’ Public assets
-       css                   ’ CSS files
-       js                    ’ Javascript files
-       img                   ’ Image files
-   play                      ’ Go Play source code
+gocode                         GOPATH root
+  src                          GOPATH src directory
+    sample
+      app                      App sources
+        controllers            App controllers
+        models                 App business layer
+        views                  Templates
+      conf                     Configuration files
+        application.conf       Main configuration file
+        routes                 Routes definition
+      public                   Public assets
+        css                    CSS files
+        js                     Javascript files
+        img                    Image files
+    play                       Go Play source code
 ```
 
 ## The app/ directory
