@@ -4,7 +4,7 @@ This is a port of the amazing [Play! framework](http://www.playframework.org) to
 
 It is a high productivity web framework
 
-# Example
+# Simple Example
 
 Write a routes file declaration for some actions, assets and a catchall:
 
@@ -27,6 +27,10 @@ type Application struct {
 	*play.Controller
 }
 
+func (c *Application) Index() play.Result {
+	return c.Render()
+}
+
 func (c *Application) ShowApp(id int) play.Result {
 	return c.Render(id)
 }
@@ -40,6 +44,49 @@ Define a view using [go templates](http://www.golang.org/pkg/text/template/):
 This is app {{.id}}!
 {{template "footer.html" .}}
 ```
+
+# Bigger Example
+
+This is an example Controller method that processes a Login request.  It demonstrates:
+
+- Validating posted data 
+- Keeping validation errors and parameters in the Flash scope (a cookie that lives for one page view)
+- Redirecting
+- Setting a cookie
+
+```go
+func (c *Login) DoLogin(username, password string) play.Result {
+	// Validate parameters.
+	c.Validation.Required(username).Message("Please enter a username.")
+	c.Validation.Required(password).Message("Please enter a password.")
+	c.Validation.Required(len(password) > 6).Message("Password must be at least 6 chars.")
+
+	// If validation failed, redirect back to the login form.
+	if c.Validation.HasErrors() {
+		c.Validation.Keep()
+		c.FlashParams()
+		return c.Redirect((*Login).ShowLogin)
+	}
+
+ 	// Check the credentials.
+	if username != "user" || password != "password" {
+		c.Flash.Error("Username or password not recognized")
+		c.FlashParams()
+		return c.Redirect((*Login).ShowLogin)
+	}
+
+	// Success.  Set the login cookie.
+	c.SetCookie(&http.Cookie{
+		Name: "Login",
+		Value: "Success",
+		Path: "/",
+		Expires: time.Now().AddDate(0, 0, 7),
+	})
+	c.Flash.Success("Login successful.")
+	return c.Redirect((*Application).Index)
+}
+```
+
 
 # Quick start
 
