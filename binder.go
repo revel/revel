@@ -21,7 +21,9 @@ type keyValue struct {
 // - Binder(int,       keyValue[]{ {"id", "123"} })
 // - Binder([]int,     keyValue[]{ {"ol[0]", "1"}, {"ol[1]", "2"} })
 // - Binder([]string,  keyValue[]{ {"ul[]", "str"}, {"ul[]", "array"} })
-// - Binder(User,      keyValue[]{ {"user.name", "rob"} })
+// - Binder(User,      keyValue[]{ {"user.Name", "rob"} })
+//
+// Note that only exported struct fields may be bound.
 //
 // valueType is the type of value that should be returned.
 // keyValues are the key/value pairs that constitute the value.
@@ -38,10 +40,17 @@ var (
 // Sadly, the binder lookups can not be declared initialized -- that results in
 // an "initialization loop" compile error.
 func init() {
-	TypeBinders[reflect.TypeOf("")] = bindStr
-	TypeBinders[reflect.TypeOf(0)] = bindInt
+	KindBinders[reflect.Int] = bindInt
+	KindBinders[reflect.Int8] = bindInt
+	KindBinders[reflect.Int16] = bindInt
+	KindBinders[reflect.Int32] = bindInt
+	KindBinders[reflect.Int64] = bindInt
 
+	KindBinders[reflect.String] = bindStr
+	KindBinders[reflect.Bool] = bindBool
 	KindBinders[reflect.Slice] = bindSlice
+	KindBinders[reflect.Struct] = bindStruct
+	KindBinders[reflect.Ptr] = bindPointer
 }
 
 func bindStr(valueType reflect.Type, kv []keyValue) reflect.Value {
@@ -51,9 +60,24 @@ func bindStr(valueType reflect.Type, kv []keyValue) reflect.Value {
 func bindInt(valueType reflect.Type, kv []keyValue) reflect.Value {
 	intValue, err := strconv.Atoi(kv[0].value)
 	if err != nil {
-		LOG.Println("Error binding to int:", err)
+		LOG.Println("Error binding", kv[0].key, ":", err)
 	}
 	return reflect.ValueOf(intValue)
+}
+
+// Booleans support a couple different value formats:
+// "true" and "false"
+// "on" and "" (a checkbox)
+// "1" and "0" (why not)
+func bindBool(valueType reflect.Type, kv []keyValue) reflect.Value {
+	v := strings.TrimSpace(
+		strings.ToLower(kv[0].value))
+	switch v {
+	case "true", "on", "1":
+		return reflect.ValueOf(true)
+	}
+	// Return false by default.
+	return reflect.ValueOf(false)
 }
 
 // Used to keep track of the index for individual keyvalues.
@@ -119,6 +143,61 @@ func bindSlice(valueType reflect.Type, kvArr []keyValue) reflect.Value {
 	}
 
 	return resultArray
+}
+
+func bindStruct(valueType reflect.Type, kvArr []keyValue) reflect.Value {
+	// Map from field name (e.g. key="x.name.first" => "name") to key values for that field.
+	structValues := make(map[string][]keyValue)
+	for _, kv := range kvArr {
+		// Ignore everything up to the first dot.
+		// e.g. foo.bar.baz => bar.baz
+		dot := strings.Index(kv.key, ".")
+		if dot == -1 {
+			LOG.Println("bindStruct: missing dot", kv.key)
+			return reflect.Zero(valueType)
+		}
+		subKey := kv.key[dot+1:]
+
+		// Break subKey into prefix and suffix, on dots and brackets.
+		// e.g. bar.baz breaks to prefix = "bar" , suffix = ".baz"
+		// e.g. bar[0] breaks to prefix = "bar" , suffix = "[0]"
+		prefixLen := strings.IndexAny(subKey, ".[")
+		if prefixLen == -1 {
+			prefixLen = len(subKey)
+		}
+		prefix := subKey[:prefixLen]
+		suffix := subKey[prefixLen:]
+
+		// TODO: This part of grouping args will be shared to any callers of Bind.
+		kv.key = suffix
+		if sv, ok := structValues[prefix]; ok {
+			structValues[prefix] = append(sv, kv)
+		} else {
+			structValues[prefix] = []keyValue{kv}
+		}
+	}
+
+	result := reflect.New(valueType).Elem()
+	for fieldName, subKv := range structValues {
+		// Find the field to bind.
+		fieldValue := result.FieldByName(fieldName)
+		if ! fieldValue.IsValid() {
+			LOG.Println("bindStruct: Field not found:", fieldName)
+			continue
+		}
+		if ! fieldValue.CanSet() {
+			LOG.Println("bindStruct: Field not settable:", fieldName)
+			continue
+		}
+
+		// Bind it
+		fieldValue.Set(Bind(fieldValue.Type(), subKv))
+	}
+	return result
+}
+
+func bindPointer(valueType reflect.Type, kvArr []keyValue) reflect.Value {
+	return Bind(valueType.Elem(), kvArr).Addr()
 }
 
 // Parse the value string into a real Go value.
