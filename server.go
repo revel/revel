@@ -72,8 +72,12 @@ func handle(w http.ResponseWriter, r *http.Request) {
 	for _, arg := range controller.MethodType.Args {
 		// If this arg is provided, add it to actualArgs
 		// Else, leave it as the default 0 value.
-		if value, ok := controller.Params[arg.Name]; ok {
-			actualArgs = append(actualArgs, Bind(arg.Type, value))
+		if values, ok := controller.Params[arg.Name]; ok {
+			kv := make([]keyValue, 0, 1)
+			for _, value := range values {
+				kv = append(kv, keyValue{arg.Name, value})
+			}
+			actualArgs = append(actualArgs, Bind(arg.Type, kv))
 		} else {
 			actualArgs = append(actualArgs, reflect.Zero(arg.Type))
 		}
