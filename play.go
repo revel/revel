@@ -1,24 +1,24 @@
 package play
 
 import (
-	"path"
-	"path/filepath"
 	"log"
 	"os"
+	"path"
+	"path/filepath"
 )
 
 var (
 	// App details
-	AppName    string  // e.g. "sample"
-	BasePath   string  // e.g. "/Users/robfig/gocode/src/play/sample"
-	AppPath    string  // e.g. "/Users/robfig/gocode/src/play/sample/app"
-	ViewsPath  string  // e.g. "/Users/robfig/gocode/src/play/sample/app/views"
-	ImportPath string  // e.g. "play/sample"
+	AppName    string // e.g. "sample"
+	BasePath   string // e.g. "/Users/robfig/gocode/src/play/sample"
+	AppPath    string // e.g. "/Users/robfig/gocode/src/play/sample/app"
+	ViewsPath  string // e.g. "/Users/robfig/gocode/src/play/sample/app/views"
+	ImportPath string // e.g. "play/sample"
 
 	// Play installation details
-	PlayTemplatePath string  // e.g. "/Users/robfig/gocode/src/play/app/views"
+	PlayTemplatePath string // e.g. "/Users/robfig/gocode/src/play/app/views"
 
-	LOG = log.New(os.Stdout, "", log.Ldate | log.Ltime | log.Lshortfile)
+	LOG = log.New(os.Stdout, "", log.Ldate|log.Ltime|log.Lshortfile)
 
 	// Private
 	playInit bool = false
@@ -39,7 +39,7 @@ func Init(importPath string) {
 }
 
 func CheckInit() {
-	if ! playInit {
+	if !playInit {
 		panic("Play has not been initialized!")
 	}
 }

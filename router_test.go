@@ -12,24 +12,24 @@ import (
 // the expected Route object.
 var routeTestCases = map[string]*Route{
 	"get / Application.Index": &Route{
-		method:"GET",
-		path:"/",
-		action:"Application.Index",
-		pathPattern: regexp.MustCompile("/$"),
-		staticDir: "",
-		args: []*arg{},
+		method:        "GET",
+		path:          "/",
+		action:        "Application.Index",
+		pathPattern:   regexp.MustCompile("/$"),
+		staticDir:     "",
+		args:          []*arg{},
 		actionPattern: regexp.MustCompile("Application\\.Index"),
 	},
 
 	"post /app/{id} Application.SaveApp": &Route{
-		method:"POST",
-		path:"/app/{id}",
-		action:"Application.SaveApp",
+		method:      "POST",
+		path:        "/app/{id}",
+		action:      "Application.SaveApp",
 		pathPattern: regexp.MustCompile("/app/(?P<id>[^/]+)$"),
-		staticDir: "",
+		staticDir:   "",
 		args: []*arg{
 			{
-				name: "id",
+				name:       "id",
 				constraint: regexp.MustCompile("[^/]+"),
 			},
 		},
@@ -37,33 +37,33 @@ var routeTestCases = map[string]*Route{
 	},
 
 	"GET /public/ staticDir:www": &Route{
-		method:"GET",
-		path:"/public/",
-		action:"staticDir:www",
-		pathPattern: regexp.MustCompile("^/public/(.*)$"),
-		staticDir: "www",
-		args: []*arg{},
+		method:        "GET",
+		path:          "/public/",
+		action:        "staticDir:www",
+		pathPattern:   regexp.MustCompile("^/public/(.*)$"),
+		staticDir:     "www",
+		args:          []*arg{},
 		actionPattern: nil,
 	},
 
 	"* /{controller}/{action} {controller}.{action}": &Route{
-		method:"*",
-		path:"/{controller}/{action}",
-		action:"{controller}.{action}",
+		method:      "*",
+		path:        "/{controller}/{action}",
+		action:      "{controller}.{action}",
 		pathPattern: regexp.MustCompile("/(?P<controller>[^/]+)/(?P<action>[^/]+)$"),
-		staticDir: "",
+		staticDir:   "",
 		args: []*arg{
 			{
-				name: "controller",
+				name:       "controller",
 				constraint: regexp.MustCompile("[^/]+"),
 			},
 			{
-				name: "action",
+				name:       "action",
 				constraint: regexp.MustCompile("[^/]+"),
 			},
 		},
 		actionPattern: regexp.MustCompile("(?P<controller>[^/]+)\\.(?P<action>[^/]+)"),
-		actionArgs: []string { "controller", "action" },
+		actionArgs:    []string{"controller", "action"},
 	},
 }
 
@@ -71,7 +71,7 @@ var routeTestCases = map[string]*Route{
 func TestComputeRoute(t *testing.T) {
 	for routeLine, expected := range routeTestCases {
 		method, path, action, found := parseRouteLine(routeLine)
-		if ! found {
+		if !found {
 			t.Error("Failed to parse route line:", routeLine)
 			continue
 		}
@@ -110,54 +110,54 @@ GET  /public/                staticDir:www
 *    /{controller}/{action} {controller}.{action}
 `
 
-var routeMatchTestCases = map[*http.Request]*RouteMatch {
+var routeMatchTestCases = map[*http.Request]*RouteMatch{
 	&http.Request{
 		Method: "GET",
-		URL: &url.URL{ Path: "/" },
+		URL:    &url.URL{Path: "/"},
 	}: &RouteMatch{
 		ControllerName: "Application",
-		MethodName: "Index",
-		Params: map[string]string{},
+		MethodName:     "Index",
+		Params:         map[string]string{},
 		StaticFilename: "",
 	},
 
 	&http.Request{
 		Method: "GET",
-		URL: &url.URL{ Path: "/app/123" },
+		URL:    &url.URL{Path: "/app/123"},
 	}: &RouteMatch{
 		ControllerName: "Application",
-		MethodName: "ShowApp",
-		Params: map[string]string{"id": "123"},
+		MethodName:     "ShowApp",
+		Params:         map[string]string{"id": "123"},
 		StaticFilename: "",
 	},
 
 	&http.Request{
 		Method: "POST",
-		URL: &url.URL{ Path: "/app/123" },
+		URL:    &url.URL{Path: "/app/123"},
 	}: &RouteMatch{
 		ControllerName: "Application",
-		MethodName: "SaveApp",
-		Params: map[string]string{"id": "123"},
+		MethodName:     "SaveApp",
+		Params:         map[string]string{"id": "123"},
 		StaticFilename: "",
 	},
 
 	&http.Request{
 		Method: "GET",
-		URL: &url.URL{ Path: "/public/style.css" },
+		URL:    &url.URL{Path: "/public/style.css"},
 	}: &RouteMatch{
 		ControllerName: "",
-		MethodName: "",
-		Params: map[string]string{},
+		MethodName:     "",
+		Params:         map[string]string{},
 		StaticFilename: "www/style.css",
 	},
 
 	&http.Request{
 		Method: "GET",
-		URL: &url.URL{ Path: "/Implicit/Route" },
+		URL:    &url.URL{Path: "/Implicit/Route"},
 	}: &RouteMatch{
 		ControllerName: "Implicit",
-		MethodName: "Route",
-		Params: map[string]string{"controller": "Implicit", "action": "Route"},
+		MethodName:     "Route",
+		Params:         map[string]string{"controller": "Implicit", "action": "Route"},
 		StaticFilename: "",
 	},
 }
@@ -166,7 +166,7 @@ func TestRouteMatches(t *testing.T) {
 	router := NewRouter(TEST_ROUTES)
 	for req, expected := range routeMatchTestCases {
 		actual := router.Route(req)
-		if ! eq(t, "Found route", actual != nil, expected != nil) {
+		if !eq(t, "Found route", actual != nil, expected != nil) {
 			continue
 		}
 		eq(t, "ControllerName", actual.ControllerName, expected.ControllerName)
@@ -183,47 +183,47 @@ func TestRouteMatches(t *testing.T) {
 
 type ReverseRouteArgs struct {
 	action string
-	args map[string]string
+	args   map[string]string
 }
 
-var reverseRoutingTestCases = map[*ReverseRouteArgs]*ActionDefinition {
+var reverseRoutingTestCases = map[*ReverseRouteArgs]*ActionDefinition{
 	&ReverseRouteArgs{
 		action: "Application.Index",
-		args: map[string]string{},
+		args:   map[string]string{},
 	}: &ActionDefinition{
-		Url: "/",
+		Url:    "/",
 		Method: "GET",
-		Star: false,
+		Star:   false,
 		Action: "Application.Index",
 	},
 
 	&ReverseRouteArgs{
 		action: "Application.Show",
-		args: map[string]string{"id": "123"},
+		args:   map[string]string{"id": "123"},
 	}: &ActionDefinition{
-		Url: "/app/123",
+		Url:    "/app/123",
 		Method: "GET",
-		Star: false,
+		Star:   false,
 		Action: "Application.Show",
 	},
 
 	&ReverseRouteArgs{
 		action: "Implicit.Route",
-		args: map[string]string{},
+		args:   map[string]string{},
 	}: &ActionDefinition{
-		Url: "/Implicit/Route",
+		Url:    "/Implicit/Route",
 		Method: "GET",
-		Star: true,
+		Star:   true,
 		Action: "Implicit.Route",
 	},
 
 	&ReverseRouteArgs{
 		action: "Application.Save",
-		args: map[string]string{"id": "123", "c": "http://continue"},
+		args:   map[string]string{"id": "123", "c": "http://continue"},
 	}: &ActionDefinition{
-		Url: "/app/123?c=http%3A%2F%2Fcontinue",
+		Url:    "/app/123?c=http%3A%2F%2Fcontinue",
 		Method: "POST",
-		Star: false,
+		Star:   false,
 		Action: "Application.Save",
 	},
 }
@@ -232,7 +232,7 @@ func TestReverseRouting(t *testing.T) {
 	router := NewRouter(TEST_ROUTES)
 	for routeArgs, expected := range reverseRoutingTestCases {
 		actual := router.Reverse(routeArgs.action, routeArgs.args)
-		if ! eq(t, "Found route", actual != nil, expected != nil) {
+		if !eq(t, "Found route", actual != nil, expected != nil) {
 			continue
 		}
 		eq(t, "Url", actual.Url, expected.Url)
@@ -251,4 +251,3 @@ func eq(t *testing.T, name string, a, b interface{}) bool {
 	}
 	return true
 }
-

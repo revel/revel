@@ -11,9 +11,9 @@ type Result interface {
 
 // Action methods return this result to request a template be rendered.
 type RenderTemplateResult struct {
-	Template Template
+	Template   Template
 	RenderArgs map[string]interface{}
-	Response *Response
+	Response   *Response
 }
 
 func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
@@ -74,4 +74,3 @@ func getRedirectUrl(item interface{}) (string, error) {
 	// Out of guesses
 	return "", errors.New("didn't recognize type: " + typ.String())
 }
-

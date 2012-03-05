@@ -10,8 +10,8 @@ import (
 	"io/ioutil"
 	"net/url"
 	"path"
-	"regexp"
 	"reflect"
+	"regexp"
 	"strings"
 )
 
@@ -62,7 +62,7 @@ func ContainsString(list []string, target string) bool {
 func GetImportPath(path string) string {
 	srcIndex := strings.Index(path, "src")
 	if srcIndex == -1 {
-		LOG.Fatalf("App directory (%s) does not appear to be below \"src\". " +
+		LOG.Fatalf("App directory (%s) does not appear to be below \"src\". "+
 			" I don't know how to import your code.  Please use GOPATH layout.",
 			path)
 	}

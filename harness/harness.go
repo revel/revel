@@ -13,6 +13,7 @@ package harness
 import (
 	"bytes"
 	"fmt"
+	"github.com/robfig/fsnotify"
 	"go/build"
 	"io"
 	"log"
@@ -24,12 +25,11 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"play"
 	"regexp"
 	"strconv"
 	"strings"
 	"text/template"
-	"play"
-	"github.com/robfig/fsnotify"
 )
 
 const REGISTER_CONTROLLERS = `
@@ -82,9 +82,9 @@ func main() {
 // - else, send proxy (NotifyReady = true)
 
 type harnessProxy struct {
-	proxy *httputil.ReverseProxy
+	proxy         *httputil.ReverseProxy
 	NotifyRequest chan bool  // Strobed on every request.
-	NotifyReady chan error  // Strobed when request may proceed.
+	NotifyReady   chan error // Strobed when request may proceed.
 }
 
 func (hp *harnessProxy) ServeHTTP(wr http.ResponseWriter, req *http.Request) {
@@ -98,7 +98,7 @@ func (hp *harnessProxy) ServeHTTP(wr http.ResponseWriter, req *http.Request) {
 
 	// Notify that a request is coming through, and wait for the go-ahead.
 	hp.NotifyRequest <- true
-	err := <- hp.NotifyReady
+	err := <-hp.NotifyReady
 
 	// If an error was returned, create the page and show it to the user.
 	if err != nil {
@@ -115,20 +115,20 @@ func serveError(wr http.ResponseWriter, req *http.Request, err error) {
 	case *play.CompileError:
 		play.RenderError(wr, e)
 	default:
-		play.RenderError(wr, map[string]string {
-			"Title": "Unexpected error",
-			"Path": "(unknown)",
+		play.RenderError(wr, map[string]string{
+			"Title":       "Unexpected error",
+			"Path":        "(unknown)",
 			"Description": "An unexpected error occurred: " + err.Error(),
 		})
 	}
 }
 
 func startReverseProxy(port int) *harnessProxy {
-	serverUrl, _ := url.ParseRequest(fmt.Sprintf("http://localhost:%d", port))
+	serverUrl, _ := url.ParseRequestURI(fmt.Sprintf("http://localhost:%d", port))
 	reverseProxy := &harnessProxy{
-		proxy: httputil.NewSingleHostReverseProxy(serverUrl),
+		proxy:         httputil.NewSingleHostReverseProxy(serverUrl),
 		NotifyRequest: make(chan bool),
-		NotifyReady: make(chan error),
+		NotifyReady:   make(chan error),
 	}
 	go func() {
 		err := http.ListenAndServe(":9000", reverseProxy)
@@ -141,7 +141,7 @@ func startReverseProxy(port int) *harnessProxy {
 
 var (
 	// Will not watch directories with these names (or their subdirectories)
-	DoNotWatch = []string{ "tmp", "views" }
+	DoNotWatch = []string{"tmp", "views"}
 )
 
 func Run() {
@@ -197,7 +197,7 @@ func Run() {
 			select {
 			case ev := <-watcher.Event:
 				// Ignore changes to dot-files.
-				if ! strings.HasPrefix(path.Base(ev.Name), ".") {
+				if !strings.HasPrefix(path.Base(ev.Name), ".") {
 					log.Println(ev)
 					dirty = true
 				}
@@ -240,8 +240,8 @@ func rebuild(port int) (compileError *play.CompileError) {
 
 	tmpl := template.New("RegisterControllers")
 	tmpl = template.Must(tmpl.Parse(REGISTER_CONTROLLERS))
-	var registerControllerSource string = play.ExecuteTemplate(tmpl, map[string]interface{} {
-		"AppName": play.AppName,
+	var registerControllerSource string = play.ExecuteTemplate(tmpl, map[string]interface{}{
+		"AppName":     play.AppName,
 		"Controllers": controllerSpecs,
 		"ImportPaths": uniqueImportPaths(controllerSpecs),
 	})
@@ -313,7 +313,7 @@ func rebuild(port int) (compileError *play.CompileError) {
 // in the stream.  (Which tells us when the play server has finished starting up)
 // This is super ghetto, but by far the simplest thing that should work.
 type startupListeningWriter struct {
-	dest io.Writer
+	dest        io.Writer
 	notifyReady chan bool
 }
 
@@ -359,24 +359,24 @@ func newCompileError(output []byte) *play.CompileError {
 	if errorMatch == nil {
 		log.Println("Failed to parse build errors:\n", string(output))
 		return &play.CompileError{
-			SourceType: "Go code",
-			Title: "Go Compilation Error",
+			SourceType:  "Go code",
+			Title:       "Go Compilation Error",
 			Description: "See console for build error.",
 		}
 	}
 
 	// Read the source for the offending file.
 	var (
-		relFilename = string(errorMatch[1])  // e.g. "src/play/sample/app/controllers/app.go"
+		relFilename    = string(errorMatch[1]) // e.g. "src/play/sample/app/controllers/app.go"
 		absFilename, _ = filepath.Abs(relFilename)
-		line, _ = strconv.Atoi(string(errorMatch[2]))
-		description = string(errorMatch[3])
-		compileError = &play.CompileError{
-			SourceType: "Go code",
-			Title: "Go Compilation Error",
-			Path: relFilename,
+		line, _        = strconv.Atoi(string(errorMatch[2]))
+		description    = string(errorMatch[3])
+		compileError   = &play.CompileError{
+			SourceType:  "Go code",
+			Title:       "Go Compilation Error",
+			Path:        relFilename,
 			Description: description,
-			Line: line,
+			Line:        line,
 		}
 	)
 

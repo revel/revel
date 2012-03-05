@@ -27,19 +27,19 @@ type ControllerSpec struct {
 // This is a description of a call to c.Render(..)
 // It documents the argument names used, in order to propagate them to RenderArgs.
 type renderCall struct {
-	Line int
+	Line  int
 	Names []string
 }
 
 type MethodSpec struct {
-	Name string    // Name of the method, e.g. "Index"
-	Args []*MethodArg  // Argument descriptors
-	RenderCalls []*renderCall  // Descriptions of Render() invocations from this Method.
+	Name        string        // Name of the method, e.g. "Index"
+	Args        []*MethodArg  // Argument descriptors
+	RenderCalls []*renderCall // Descriptions of Render() invocations from this Method.
 }
 
 type MethodArg struct {
-	Name string  // Name of the argument.
-	TypeName string  // The name of the type, e.g. "int", "*pkg.UserType"
+	Name     string // Name of the argument.
+	TypeName string // The name of the type, e.g. "int", "*pkg.UserType"
 }
 
 type embeddedTypeName struct {
@@ -61,12 +61,12 @@ func ScanControllers(path string) (specs []*ControllerSpec, compileError *play.C
 		if errList, ok := err.(scanner.ErrorList); ok {
 			var pos token.Position = errList[0].Pos
 			return nil, &play.CompileError{
-				SourceType: ".go source",
-				Title: "Go Compilation Error",
-				Path: pos.Filename,
+				SourceType:  ".go source",
+				Title:       "Go Compilation Error",
+				Path:        pos.Filename,
 				Description: errList[0].Msg,
-				Line: pos.Line,
-				Column: pos.Column,
+				Line:        pos.Line,
+				Column:      pos.Column,
 				SourceLines: play.MustReadLines(pos.Filename),
 			}
 		}
@@ -134,8 +134,8 @@ func appendStruct(specs []*ControllerSpec, pkg *ast.Package, decl ast.Decl) []*C
 	// Add it provisionally to the Controller list -- it's later filtered using field info.
 	controllerSpec := &ControllerSpec{
 		PackageName: pkg.Name,
-		StructName: spec.Name.Name,
-		ImportPath: play.ImportPath + "/app/" + pkg.Name,
+		StructName:  spec.Name.Name,
+		ImportPath:  play.ImportPath + "/app/" + pkg.Name,
 	}
 
 	for _, field := range structType.Fields.List {
@@ -163,7 +163,7 @@ func appendStruct(specs []*ControllerSpec, pkg *ast.Package, decl ast.Decl) []*C
 
 		controllerSpec.embeddedTypes = append(controllerSpec.embeddedTypes, &embeddedTypeName{
 			PackageName: pkgIdent.Name,
-			StructName: selectorExpr.Sel.Name,
+			StructName:  selectorExpr.Sel.Name,
 		})
 	}
 
@@ -186,7 +186,7 @@ func appendMethod(fset *token.FileSet, mm methodMap, decl ast.Decl) {
 	}
 
 	// Is it public?
-	if ! unicode.IsUpper([]rune(funcDecl.Name.Name)[0]) {
+	if !unicode.IsUpper([]rune(funcDecl.Name.Name)[0]) {
 		return
 	}
 
@@ -195,7 +195,7 @@ func appendMethod(fset *token.FileSet, mm methodMap, decl ast.Decl) {
 		return
 	}
 	selExpr, ok := funcDecl.Type.Results.List[0].Type.(*ast.SelectorExpr)
-	if ! ok {
+	if !ok {
 		return
 	}
 	if pkgIdent, ok := selExpr.X.(*ast.Ident); !ok || pkgIdent.Name != "play" {
@@ -222,7 +222,7 @@ func appendMethod(fset *token.FileSet, mm methodMap, decl ast.Decl) {
 	for _, field := range funcDecl.Type.Params.List {
 		for _, name := range field.Names {
 			method.Args = append(method.Args, &MethodArg{
-				Name: name.Name,
+				Name:     name.Name,
 				TypeName: ExprName(field.Type),
 			})
 		}
@@ -234,13 +234,13 @@ func appendMethod(fset *token.FileSet, mm methodMap, decl ast.Decl) {
 	ast.Inspect(funcDecl.Body, func(node ast.Node) bool {
 		// Is it a function call?
 		callExpr, ok := node.(*ast.CallExpr)
-		if ! ok {
+		if !ok {
 			return true
 		}
 
 		// Is it calling (*Controller).Render?
 		selExpr, ok := callExpr.Fun.(*ast.SelectorExpr)
-		if ! ok {
+		if !ok {
 			return true
 		}
 
@@ -253,12 +253,12 @@ func appendMethod(fset *token.FileSet, mm methodMap, decl ast.Decl) {
 		// Add this call's args to the renderArgs.
 		pos := fset.Position(callExpr.Rparen)
 		renderCall := &renderCall{
-			Line: pos.Line,
+			Line:  pos.Line,
 			Names: []string{},
 		}
 		for _, arg := range callExpr.Args {
 			argIdent, ok := arg.(*ast.Ident)
-			if ! ok {
+			if !ok {
 				log.Println("Unnamed argument to Render call:", pos)
 				continue
 			}
@@ -282,11 +282,11 @@ func (s *embeddedTypeName) SimpleName() string {
 // Remove any types that do not (directly or indirectly) embed *play.Controller.
 func filterControllers(specs []*ControllerSpec) (filtered []*ControllerSpec) {
 	// Do a search in the "embedded type graph", starting with play.Controller.
-	nodeQueue := []string {"play.Controller"}
+	nodeQueue := []string{"play.Controller"}
 	for _, controllerSimpleName := range nodeQueue {
 		for _, spec := range specs {
 			if play.ContainsString(nodeQueue, spec.SimpleName()) {
-				continue  // Already added
+				continue // Already added
 			}
 
 			// Look through the embedded types to see if the current type is among them.

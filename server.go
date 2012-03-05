@@ -100,7 +100,7 @@ func Run(port int) {
 	// Now that we know all the Controllers, start the server.
 	LOG.Printf("Listening on port %d...", port)
 	server := &http.Server{
-		Addr: fmt.Sprintf(":%d", port),
+		Addr:    fmt.Sprintf(":%d", port),
 		Handler: http.HandlerFunc(handle),
 	}
 
@@ -109,5 +109,3 @@ func Run(port int) {
 		LOG.Fatalln("Failed to listen:", err)
 	}
 }
-
-

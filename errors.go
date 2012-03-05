@@ -10,17 +10,17 @@ import (
 
 // A compilation error, used as an argument to the CompileError.html template.
 type CompileError struct {
-	SourceType string                // The type of source that failed to build.
-	Title, Path, Description string  // Description of the error, as presented to the user.
-	Line, Column int                 // Where the error was encountered.
-	SourceLines []string             // The entire source file, split into lines.
-	MetaError string                 // Error that occurred producing the error page.
+	SourceType               string   // The type of source that failed to build.
+	Title, Path, Description string   // Description of the error, as presented to the user.
+	Line, Column             int      // Where the error was encountered.
+	SourceLines              []string // The entire source file, split into lines.
+	MetaError                string   // Error that occurred producing the error page.
 }
 
 // An object to hold the per-source-line details.
 type sourceLine struct {
-	Source string
-	Line int
+	Source  string
+	Line    int
 	IsError bool
 }
 
@@ -42,8 +42,8 @@ func (e *CompileError) ContextSource() []sourceLine {
 		end = len(e.SourceLines)
 	}
 
-	var lines []sourceLine = make([]sourceLine, end - start)
-	for i, src := range(e.SourceLines[start:end]) {
+	var lines []sourceLine = make([]sourceLine, end-start)
+	for i, src := range e.SourceLines[start:end] {
 		fileLine := start + i + 1
 		lines[i] = sourceLine{src, fileLine, fileLine == e.Line}
 	}
@@ -57,7 +57,6 @@ func (e *CompileError) Html() string {
 	RenderError(&b, &e)
 	return b.String()
 }
-
 
 func RenderError(buffer io.Writer, data interface{}) {
 	if errorTemplate == nil {

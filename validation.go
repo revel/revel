@@ -9,11 +9,10 @@ func (e *ValidationError) String() string {
 	return e.Message
 }
 
-
 // A Validation context manages data validation and error messages.
 type Validation struct {
 	Errors []*ValidationError
-	keep bool
+	keep   bool
 }
 
 func (v *Validation) Keep() {
@@ -32,7 +31,7 @@ func (v *Validation) HasErrors() bool {
 // It provides an indication of success, and a pointer to the Error (if any).
 type ValidationResult struct {
 	Error *ValidationError
-	Ok bool
+	Ok    bool
 }
 
 func (r *ValidationResult) Key(key string) *ValidationResult {
@@ -55,7 +54,7 @@ type Check interface {
 
 type Required struct{}
 
-func (r Required) IsSatisfied(obj interface{})  bool {
+func (r Required) IsSatisfied(obj interface{}) bool {
 	if obj == nil {
 		return false
 	}
@@ -91,7 +90,7 @@ func (v *Validation) check(chk Check, obj interface{}) *ValidationResult {
 
 	// Also return it in the result.
 	return &ValidationResult{
-		Ok: false,
+		Ok:    false,
 		Error: err,
 	}
 }

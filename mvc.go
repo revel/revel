@@ -1,9 +1,9 @@
 package play
 
 import (
+	"log"
 	"net/http"
 	"net/url"
-	"log"
 	"reflect"
 	"runtime"
 	"strings"
@@ -17,7 +17,7 @@ type Flash struct {
 func restoreFlash(req *http.Request) Flash {
 	flash := Flash{
 		Data: make(map[string]string),
-		Out: make(map[string]string),
+		Out:  make(map[string]string),
 	}
 	if cookie, err := req.Cookie("PLAY_FLASH"); err == nil {
 		ParseKeyValueCookie(cookie.Value, func(key, val string) {
@@ -33,7 +33,7 @@ func restoreValidationErrors(req *http.Request) []*ValidationError {
 	if cookie, err := req.Cookie("PLAY_ERRORS"); err == nil {
 		ParseKeyValueCookie(cookie.Value, func(key, val string) {
 			errors = append(errors, &ValidationError{
-				Key: key,
+				Key:     key,
 				Message: val,
 			})
 		})
@@ -46,25 +46,25 @@ type Request struct {
 }
 
 type Response struct {
-	Status int
+	Status      int
 	ContentType string
-	Headers http.Header
-	Cookies []*http.Cookie
+	Headers     http.Header
+	Cookies     []*http.Cookie
 
 	out http.ResponseWriter
 }
 
 type Controller struct {
-	Name string
-	Type *ControllerType
+	Name       string
+	Type       *ControllerType
 	MethodType *MethodType
 
 	Request  *Request
 	Response *Response
 
-	Flash Flash  // User cookie, cleared after each request.
-	Session map[string]string  // Session, stored in cookie.
-	Params url.Values
+	Flash      Flash             // User cookie, cleared after each request.
+	Session    map[string]string // Session, stored in cookie.
+	Params     url.Values
 	RenderArgs map[string]interface{}
 	Validation *Validation
 }
@@ -72,25 +72,25 @@ type Controller struct {
 func NewController(w http.ResponseWriter, r *http.Request, ct *ControllerType) *Controller {
 	flash := restoreFlash(r)
 	return &Controller{
-		Name: ct.Type.Name(),
-		Type: ct,
+		Name:    ct.Type.Name(),
+		Type:    ct,
 		Request: &Request{r},
 		Response: &Response{
-			Status: 200,
+			Status:      200,
 			ContentType: "",
-			Headers: w.Header(),
-			out: w,
+			Headers:     w.Header(),
+			out:         w,
 		},
 
-		Params: r.URL.Query(),
-		Flash: flash,
+		Params:  r.URL.Query(),
+		Flash:   flash,
 		Session: make(map[string]string),
 		RenderArgs: map[string]interface{}{
 			"flash": flash.Data,
 		},
 		Validation: &Validation{
 			Errors: restoreValidationErrors(r),
-			keep: false,
+			keep:   false,
 		},
 	}
 }
@@ -116,9 +116,9 @@ func (c *Controller) Invoke(method reflect.Value, methodArgs []reflect.Value) {
 		flashValue += "\x00" + key + ":" + value + "\x00"
 	}
 	c.SetCookie(&http.Cookie{
-		Name: "PLAY_FLASH",
+		Name:  "PLAY_FLASH",
 		Value: url.QueryEscape(flashValue),
-		Path: "/",
+		Path:  "/",
 	})
 
 	// Store the Validation errors
@@ -131,9 +131,9 @@ func (c *Controller) Invoke(method reflect.Value, methodArgs []reflect.Value) {
 		}
 	}
 	c.SetCookie(&http.Cookie{
-		Name: "PLAY_ERRORS",
+		Name:  "PLAY_ERRORS",
 		Value: url.QueryEscape(errorsValue),
-		Path: "/",
+		Path:  "/",
 	})
 
 	// Apply the result, which generally results in the ResponseWriter getting written.
@@ -143,14 +143,13 @@ func (c *Controller) Invoke(method reflect.Value, methodArgs []reflect.Value) {
 func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
 	// Get the calling function name.
 	pc, _, line, ok := runtime.Caller(1)
-	if ! ok {
+	if !ok {
 		log.Println("Failed to get Caller information")
 		return nil
 	}
 	// e.g. sample/app/controllers.(*Application).Index
 	var fqViewName string = runtime.FuncForPC(pc).Name()
-	var viewName string = fqViewName[
-		strings.LastIndex(fqViewName, ".") + 1 : len(fqViewName)]
+	var viewName string = fqViewName[strings.LastIndex(fqViewName, ".")+1 : len(fqViewName)]
 
 	// Refresh templates.
 	err := templateLoader.LoadTemplates()
@@ -184,9 +183,9 @@ func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
 	c.RenderArgs["errors"] = c.Validation.Errors
 
 	return &RenderTemplateResult{
-		Template: template,
+		Template:   template,
 		RenderArgs: c.RenderArgs,
-		Response: c.Response,
+		Response:   c.Response,
 	}
 }
 
@@ -208,13 +207,13 @@ func (f Flash) Success(msg string) {
 // Internal bookeeping
 
 type ControllerType struct {
-	Type reflect.Type
+	Type    reflect.Type
 	Methods []*MethodType
 }
 
 type MethodType struct {
-	Name string
-	Args []*MethodArg
+	Name           string
+	Args           []*MethodArg
 	RenderArgNames map[int][]string
 }
 
@@ -254,4 +253,3 @@ func RegisterController(c interface{}, methods []*MethodType) {
 func LookupControllerType(name string) *ControllerType {
 	return controllers[name]
 }
-

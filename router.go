@@ -10,42 +10,40 @@ import (
 )
 
 type Route struct {
-	method string  // e.g. GET
-	path string    // e.g. /app/{id}
-	action string  // e.g. Application.ShowApp
+	method string // e.g. GET
+	path   string // e.g. /app/{id}
+	action string // e.g. Application.ShowApp
 
-	pathPattern *regexp.Regexp  // for matching the url path
-	staticDir string  // e.g. "public" from action "staticDir:public"
-	args []*arg // e.g. {id} from path /app/{id}
-	actionArgs []string
+	pathPattern   *regexp.Regexp // for matching the url path
+	staticDir     string         // e.g. "public" from action "staticDir:public"
+	args          []*arg         // e.g. {id} from path /app/{id}
+	actionArgs    []string
 	actionPattern *regexp.Regexp
 }
 
 type RouteMatch struct {
-	Action string             // e.g. Application.ShowApp
-	ControllerName string     // e.g. Application
-	MethodName string         // e.g. ShowApp
-	Params map[string]string  // e.g. {id: 123}
+	Action         string            // e.g. Application.ShowApp
+	ControllerName string            // e.g. Application
+	MethodName     string            // e.g. ShowApp
+	Params         map[string]string // e.g. {id: 123}
 	StaticFilename string
 }
 
 type arg struct {
-	name string
-	index int
+	name       string
+	index      int
 	constraint *regexp.Regexp
 }
 
 // TODO: Use exp/regexp and named groups e.g. (?P<name>a)
-var nakedPathParamRegex *regexp.Regexp =
-	regexp.MustCompile(`\{([a-zA-Z_][a-zA-Z_0-9]*)\}`)
-var argsPattern *regexp.Regexp =
- 	regexp.MustCompile(`\{<(?P<pattern>[^>]+)>(?P<var>[a-zA-Z_0-9]+)\}`)
+var nakedPathParamRegex *regexp.Regexp = regexp.MustCompile(`\{([a-zA-Z_][a-zA-Z_0-9]*)\}`)
+var argsPattern *regexp.Regexp = regexp.MustCompile(`\{<(?P<pattern>[^>]+)>(?P<var>[a-zA-Z_0-9]+)\}`)
 
 // Prepares the route to be used in matching.
 func NewRoute(method, path, action string) (r *Route) {
 	r = &Route{
 		method: strings.ToUpper(method),
-		path: path,
+		path:   path,
 		action: action,
 	}
 
@@ -85,10 +83,10 @@ func NewRoute(method, path, action string) (r *Route) {
 
 	// Go through the arguments
 	r.args = make([]*arg, 0, 3)
-	for i, m := range(argsPattern.FindAllStringSubmatch(normPath, -1)) {
+	for i, m := range argsPattern.FindAllStringSubmatch(normPath, -1) {
 		r.args = append(r.args, &arg{
-			name: string(m[2]),
-			index: i,
+			name:       string(m[2]),
+			index:      i,
 			constraint: regexp.MustCompile(string(m[1])),
 		})
 	}
@@ -103,11 +101,11 @@ func NewRoute(method, path, action string) (r *Route) {
 
 	// Handle action
 	var actionPatternStr string = strings.Replace(r.action, ".", `\.`, -1)
-	for _, arg := range(r.args) {
+	for _, arg := range r.args {
 		var argName string = "{" + arg.name + "}"
 		if argIndex := strings.Index(actionPatternStr, argName); argIndex != -1 {
 			actionPatternStr = strings.Replace(actionPatternStr, argName,
-				"(?P<" + arg.name + ">" + arg.constraint.String() + ")", -1)
+				"(?P<"+arg.name+">"+arg.constraint.String()+")", -1)
 			r.actionArgs = append(r.actionArgs, arg.name)
 		}
 	}
@@ -145,7 +143,7 @@ func (r *Route) Match(method string, reqPath string) *RouteMatch {
 	action := r.action
 	if strings.Contains(action, "{") {
 		for key, value := range params {
-			action = strings.Replace(action, "{" + key + "}", value, -1)
+			action = strings.Replace(action, "{"+key+"}", value, -1)
 		}
 	}
 
@@ -157,10 +155,10 @@ func (r *Route) Match(method string, reqPath string) *RouteMatch {
 	}
 
 	return &RouteMatch{
-		Action: action,
+		Action:         action,
 		ControllerName: actionSplit[0],
-		MethodName: actionSplit[1],
-		Params: params,
+		MethodName:     actionSplit[1],
+		Params:         params,
 	}
 }
 
@@ -169,7 +167,7 @@ type Router struct {
 }
 
 func (router *Router) Route(req *http.Request) *RouteMatch {
-	for _, route := range(router.routes) {
+	for _, route := range router.routes {
 		if m := route.Match(req.Method, req.URL.Path); m != nil {
 			return m
 		}
@@ -183,8 +181,8 @@ func (router *Router) Route(req *http.Request) *RouteMatch {
 // 5: action
 var routePattern *regexp.Regexp = regexp.MustCompile(
 	"(?i)^(GET|POST|PUT|DELETE|OPTIONS|HEAD|WS|\\*)" +
-	"[(]?([^)]*)(\\))? +" +
-	"(.*/[^ ]*) +([^ (]+)(.+)?( *)$")
+		"[(]?([^)]*)(\\))? +" +
+		"(.*/[^ ]*) +([^ (]+)(.+)?( *)$")
 
 // Load the routes file.
 func LoadRoutes() *Router {
@@ -212,14 +210,14 @@ func NewRouter(routesConf string) *Router {
 	routes := make([]*Route, 0, 10)
 
 	// For each line..
-	for _, line := range(strings.Split(routesConf, "\n")) {
+	for _, line := range strings.Split(routesConf, "\n") {
 		line = strings.TrimSpace(line)
 		if len(line) == 0 || line[0] == '#' {
 			continue
 		}
 
 		method, path, action, found := parseRouteLine(line)
-		if ! found {
+		if !found {
 			continue
 		}
 
@@ -233,8 +231,8 @@ func NewRouter(routesConf string) *Router {
 
 type ActionDefinition struct {
 	Host, Method, Url, Action string
-	Star bool
-	Args map[string]string
+	Star                      bool
+	Args                      map[string]string
 }
 
 func (a *ActionDefinition) String() string {
@@ -268,7 +266,7 @@ NEXT_ROUTE:
 		// Enforce the constraints on the arg values.
 		for argKey, argValue := range argValues {
 			arg, ok := routeArgs[argKey]
-			if ok && ! arg.constraint.MatchString(argValue) {
+			if ok && !arg.constraint.MatchString(argValue) {
 				continue NEXT_ROUTE
 			}
 		}
@@ -279,7 +277,7 @@ NEXT_ROUTE:
 		for argKey, argValue := range argValues {
 			if _, ok := routeArgs[argKey]; ok {
 				// If this arg goes into the path, put it in.
-				path = regexp.MustCompile(`\{(<[^>]+>)?` + regexp.QuoteMeta(argKey) + `\}`).
+				path = regexp.MustCompile(`\{(<[^>]+>)?`+regexp.QuoteMeta(argKey)+`\}`).
 					ReplaceAllString(path, url.QueryEscape(string(argValue)))
 			} else {
 				// Else, add it to the query string.
@@ -301,12 +299,12 @@ NEXT_ROUTE:
 		}
 
 		return &ActionDefinition{
-			Url: url,
+			Url:    url,
 			Method: method,
-			Star: star,
+			Star:   star,
 			Action: action,
-			Args: argValues,
-			Host: "TODO",
+			Args:   argValues,
+			Host:   "TODO",
 		}
 	}
 	LOG.Println("Failed to find reverse route:", action, argValues)

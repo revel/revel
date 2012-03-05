@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"html/template"
 	"io"
-	"path/filepath"
-	"path"
-	"os"
 	"io/ioutil"
-	"strings"
+	"os"
+	"path"
+	"path/filepath"
 	"regexp"
 	"strconv"
+	"strings"
 )
 
 // This object handles loading and parsing of templates.
@@ -32,7 +32,7 @@ type Template interface {
 
 var (
 	// The functions available for use in the templates.
-	tmplFuncs = map[string]interface{} {
+	tmplFuncs = map[string]interface{}{
 		"url": ReverseUrl,
 	}
 )
@@ -75,17 +75,17 @@ func (loader *TemplateLoader) LoadTemplates() (err *CompileError) {
 			description := err.Error()
 			ii := regexp.MustCompile(`:\d+:`).FindStringIndex(description)
 			if ii != nil {
-				line, err = strconv.Atoi(description[ii[0]+1:ii[1]-1])
+				line, err = strconv.Atoi(description[ii[0]+1 : ii[1]-1])
 				if err != nil {
 					fmt.Println("Failed to parse line number from error message:", err)
 				}
 				description = description[ii[1]+1:]
 			}
 			return &CompileError{
-				Title: "Template Compilation Error",
-				Path: templateName,
+				Title:       "Template Compilation Error",
+				Path:        templateName,
 				Description: description,
-				Line: line,
+				Line:        line,
 				SourceLines: strings.Split(fileStr, "\n"),
 			}
 		}
@@ -169,4 +169,3 @@ func ReverseUrl(args ...interface{}) string {
 	return router.Reverse(args[0].(string), argsByName).Url
 	return "#"
 }
-

@@ -82,9 +82,9 @@ func bindBool(valueType reflect.Type, kv []keyValue) reflect.Value {
 
 // Used to keep track of the index for individual keyvalues.
 type sliceValue struct {
-	hasIndex bool  // true if an explicit index was assigned
-	index int  // Index extracted from brackets.
-	subKv []keyValue // key suffix left over, e.g. key="x[0].name" => keySuffix=".name"
+	hasIndex bool       // true if an explicit index was assigned
+	index    int        // Index extracted from brackets.
+	subKv    []keyValue // key suffix left over, e.g. key="x[0].name" => keySuffix=".name"
 }
 
 // This function creates a slice of the given type, Binds each of the individual
@@ -103,8 +103,8 @@ func bindSlice(valueType reflect.Type, kvArr []keyValue) reflect.Value {
 			return reflect.Zero(valueType)
 		}
 		index := -1
-		if rightBracket > leftBracket + 1 {
-			index, _ = strconv.Atoi(kv.key[leftBracket+1:rightBracket])
+		if rightBracket > leftBracket+1 {
+			index, _ = strconv.Atoi(kv.key[leftBracket+1 : rightBracket])
 			if index > maxIndex {
 				maxIndex = index
 			}
@@ -125,8 +125,8 @@ func bindSlice(valueType reflect.Type, kvArr []keyValue) reflect.Value {
 		} else {
 			sliceValues[prefix] = &sliceValue{
 				hasIndex: index > -1,
-				index: index,
-				subKv: []keyValue{kv},
+				index:    index,
+				subKv:    []keyValue{kv},
 			}
 		}
 	}
@@ -181,11 +181,11 @@ func bindStruct(valueType reflect.Type, kvArr []keyValue) reflect.Value {
 	for fieldName, subKv := range structValues {
 		// Find the field to bind.
 		fieldValue := result.FieldByName(fieldName)
-		if ! fieldValue.IsValid() {
+		if !fieldValue.IsValid() {
 			LOG.Println("bindStruct: Field not found:", fieldName)
 			continue
 		}
-		if ! fieldValue.CanSet() {
+		if !fieldValue.CanSet() {
 			LOG.Println("bindStruct: Field not settable:", fieldName)
 			continue
 		}
@@ -204,9 +204,9 @@ func bindPointer(valueType reflect.Type, kvArr []keyValue) reflect.Value {
 // Returns 0 values when things can not be parsed.
 func Bind(valueType reflect.Type, kv []keyValue) reflect.Value {
 	binder, ok := TypeBinders[valueType]
-	if ! ok {
+	if !ok {
 		binder, ok = KindBinders[valueType.Kind()]
-		if ! ok {
+		if !ok {
 			LOG.Println("No binder for type:", valueType)
 			return reflect.Zero(valueType)
 		}
