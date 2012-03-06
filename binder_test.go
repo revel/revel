@@ -76,35 +76,35 @@ func TestBinder(t *testing.T) {
 type bindKeyTestCaseArgs struct {
 	name   string
 	typeof interface{}
-	key string
-	params     map[string][]string
+	key    string
+	params map[string][]string
 }
 
 var bindKeyTestCases = map[*bindKeyTestCaseArgs]interface{}{
-	&bindKeyTestCaseArgs{"int", 0, "id", map[string][]string{"id": {"5"}}}: 5,
-	&bindKeyTestCaseArgs{"int2", 0, "id", map[string][]string{"id": {"5"}, "name": {"rob"}}}: 5,
+	&bindKeyTestCaseArgs{"int", 0, "id", map[string][]string{"id": {"5"}}}:                      5,
+	&bindKeyTestCaseArgs{"int2", 0, "id", map[string][]string{"id": {"5"}, "name": {"rob"}}}:    5,
 	&bindKeyTestCaseArgs{"str2", "", "name", map[string][]string{"id": {"5"}, "name": {"rob"}}}: "rob",
 	&bindKeyTestCaseArgs{"struct", A{}, "a", map[string][]string{
-			"a.Id": {"5"},
-			"a.Name": {"rob"},
-			"alpha": {"bar"},
-			"a.B.Extra": {"foo"},
+		"a.Id":      {"5"},
+		"a.Name":    {"rob"},
+		"alpha":     {"bar"},
+		"a.B.Extra": {"foo"},
 	}}: A{Id: 5, Name: "rob", B: B{"foo"}},
 	&bindKeyTestCaseArgs{"array-struct", []A{}, "arr", map[string][]string{
-			"arr[0].Id": {"5"},
-			"arr[0].Name": {"rob"},
-			"arr[0].B.Extra": {"foo"},
-			"arrgh": {"bar"},
-			"arr[1].Id": {"8"},
-			"arr[1].Name": {"bill"},
+		"arr[0].Id":      {"5"},
+		"arr[0].Name":    {"rob"},
+		"arr[0].B.Extra": {"foo"},
+		"arrgh":          {"bar"},
+		"arr[1].Id":      {"8"},
+		"arr[1].Name":    {"bill"},
 	}}: []A{
 		{
-			Id: 5,
+			Id:   5,
 			Name: "rob",
-			B: B{"foo"},
+			B:    B{"foo"},
 		},
 		{
-			Id: 8,
+			Id:   8,
 			Name: "bill",
 		},
 	},

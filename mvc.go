@@ -38,7 +38,7 @@ type Controller struct {
 
 	Flash      Flash             // User cookie, cleared after each request.
 	Session    map[string]string // Session, stored in cookie.
-	Params     Params  // URL Query parameters
+	Params     Params            // URL Query parameters
 	RenderArgs map[string]interface{}
 	Validation *Validation
 }
