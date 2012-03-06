@@ -13,33 +13,7 @@ type Flash struct {
 	Data, Out map[string]string
 }
 
-// Restore flash from a request.
-func restoreFlash(req *http.Request) Flash {
-	flash := Flash{
-		Data: make(map[string]string),
-		Out:  make(map[string]string),
-	}
-	if cookie, err := req.Cookie("PLAY_FLASH"); err == nil {
-		ParseKeyValueCookie(cookie.Value, func(key, val string) {
-			flash.Data[key] = val
-		})
-	}
-	return flash
-}
-
-// Restore Validation.Errors from a request.
-func restoreValidationErrors(req *http.Request) []*ValidationError {
-	errors := make([]*ValidationError, 0, 5)
-	if cookie, err := req.Cookie("PLAY_ERRORS"); err == nil {
-		ParseKeyValueCookie(cookie.Value, func(key, val string) {
-			errors = append(errors, &ValidationError{
-				Key:     key,
-				Message: val,
-			})
-		})
-	}
-	return errors
-}
+type Params url.Values
 
 type Request struct {
 	*http.Request
@@ -64,7 +38,7 @@ type Controller struct {
 
 	Flash      Flash             // User cookie, cleared after each request.
 	Session    map[string]string // Session, stored in cookie.
-	Params     url.Values
+	Params     Params  // URL Query parameters
 	RenderArgs map[string]interface{}
 	Validation *Validation
 }
@@ -82,7 +56,7 @@ func NewController(w http.ResponseWriter, r *http.Request, ct *ControllerType) *
 			out:         w,
 		},
 
-		Params:  r.URL.Query(),
+		Params:  Params(r.URL.Query()),
 		Flash:   flash,
 		Session: make(map[string]string),
 		RenderArgs: map[string]interface{}{
@@ -196,12 +170,44 @@ func (c *Controller) Redirect(val interface{}) Result {
 	}
 }
 
+// Restore flash from a request.
+func restoreFlash(req *http.Request) Flash {
+	flash := Flash{
+		Data: make(map[string]string),
+		Out:  make(map[string]string),
+	}
+	if cookie, err := req.Cookie("PLAY_FLASH"); err == nil {
+		ParseKeyValueCookie(cookie.Value, func(key, val string) {
+			flash.Data[key] = val
+		})
+	}
+	return flash
+}
+
+// Restore Validation.Errors from a request.
+func restoreValidationErrors(req *http.Request) []*ValidationError {
+	errors := make([]*ValidationError, 0, 5)
+	if cookie, err := req.Cookie("PLAY_ERRORS"); err == nil {
+		ParseKeyValueCookie(cookie.Value, func(key, val string) {
+			errors = append(errors, &ValidationError{
+				Key:     key,
+				Message: val,
+			})
+		})
+	}
+	return errors
+}
+
 func (f Flash) Error(msg string) {
 	f.Out["error"] = msg
 }
 
 func (f Flash) Success(msg string) {
 	f.Out["success"] = msg
+}
+
+func (p Params) Bind(valueType reflect.Type, key string) reflect.Value {
+	return BindKey(p, valueType, key)
 }
 
 // Internal bookeeping

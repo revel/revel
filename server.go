@@ -3,6 +3,7 @@ package play
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"reflect"
 )
 
@@ -64,23 +65,13 @@ func handle(w http.ResponseWriter, r *http.Request) {
 
 	// Add the route Params to the Request Params.
 	for key, value := range route.Params {
-		controller.Params.Add(key, value)
+		url.Values(controller.Params).Add(key, value)
 	}
 
 	// Collect the values for the method's arguments.
 	var actualArgs []reflect.Value
 	for _, arg := range controller.MethodType.Args {
-		// If this arg is provided, add it to actualArgs
-		// Else, leave it as the default 0 value.
-		if values, ok := controller.Params[arg.Name]; ok {
-			kv := make([]keyValue, 0, 1)
-			for _, value := range values {
-				kv = append(kv, keyValue{arg.Name, value})
-			}
-			actualArgs = append(actualArgs, Bind(arg.Type, kv))
-		} else {
-			actualArgs = append(actualArgs, reflect.Zero(arg.Type))
-		}
+		actualArgs = append(actualArgs, controller.Params.Bind(arg.Type, arg.Name))
 	}
 
 	// Invoke the method.

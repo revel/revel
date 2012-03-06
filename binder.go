@@ -213,3 +213,36 @@ func Bind(valueType reflect.Type, kv []keyValue) reflect.Value {
 	}
 	return binder(valueType, kv)
 }
+
+// Bind a particular key to a particular value type.
+func BindKey(params map[string][]string, valueType reflect.Type, key string) reflect.Value {
+	if strings.ContainsAny(key, ".[]") {
+		LOG.Println("W: Invalid parameter name:", key)
+		return reflect.Zero(valueType)
+	}
+
+	// Look through params for all key/values matching the regex 'key[.\[].*'
+	kv := []keyValue{}
+	for candidateKey, candidateValues := range params {
+		// There are two options for matching:
+		// - The candidate key is equal to the requested key
+		// - The candidate key has a prefix of the requested key, followed by a "." or "["
+		if !strings.HasPrefix(candidateKey, key) {
+			continue
+		}
+		if len(candidateKey) == len(key) {
+			kv = []keyValue{}
+			for _, v := range candidateValues {
+				kv = append(kv, keyValue{key, v})
+			}
+			return Bind(valueType, kv)
+		}
+		nextChar := candidateKey[len(key)]
+		if nextChar == '.' || nextChar == '[' {
+			for _, v := range candidateValues {
+				kv = append(kv, keyValue{candidateKey, v})
+			}
+		}
+	}
+	return Bind(valueType, kv)
+}
