@@ -17,3 +17,7 @@ func (c *Application) ShowApp(id int) play.Result {
 		id,
 	)
 }
+
+func init() {
+	play.Intercept(CheckLogin, play.BEFORE, &Application{})
+}

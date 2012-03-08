@@ -69,6 +69,37 @@ func NewController(w http.ResponseWriter, r *http.Request, ct *ControllerType) *
 	}
 }
 
+func NewAppController(w http.ResponseWriter, r *http.Request, controllerName, methodName string) (*Controller, reflect.Value) {
+	var controllerType *ControllerType = LookupControllerType(controllerName)
+	if controllerType == nil {
+		LOG.Printf("E: Controller %s not found", controllerName)
+		return nil, reflect.ValueOf(nil)
+	}
+
+	var (
+		// Create an AppController.
+		appControllerPtr reflect.Value = reflect.New(controllerType.Type)
+		appController    reflect.Value = appControllerPtr.Elem()
+
+		// Create and configure Play Controller
+		controller *Controller = NewController(w, r, controllerType)
+	)
+
+	// Set the embedded Play Controller field, in the App Controller
+	var controllerField reflect.Value = appController.Field(0)
+	controllerField.Set(reflect.ValueOf(controller))
+
+	// Set the method being called.
+	controller.MethodType = controllerType.Method(methodName)
+	if controller.MethodType == nil {
+		LOG.Println("E: Failed to find method", methodName, "on Controller",
+			controllerName)
+		return nil, reflect.ValueOf(nil)
+	}
+
+	return controller, appControllerPtr
+}
+
 func (c *Controller) FlashParams() {
 	for key, vals := range c.Params {
 		c.Flash.Out[key] = vals[0]
@@ -81,8 +112,30 @@ func (c *Controller) SetCookie(cookie *http.Cookie) {
 
 // Invoke the given method, save headers/cookies to the response, and apply the
 // result.  (e.g. render a template to the response)
-func (c *Controller) Invoke(method reflect.Value, methodArgs []reflect.Value) {
-	result := method.Call(methodArgs)[0].Interface().(Result)
+func (c *Controller) Invoke(appControllerPtr reflect.Value, method reflect.Value, methodArgs []reflect.Value) {
+	// Calculate the Result by running the interceptors and the action.
+	resultValue := func() reflect.Value {
+		// Call the BEFORE interceptors
+		result := c.invokeInterceptors(BEFORE, appControllerPtr.Type())
+		if result != nil {
+			return reflect.ValueOf(result)
+		}
+
+		// Invoke the action.
+		resultValue := method.Call(methodArgs)[0]
+
+		// Call the AFTER interceptors
+		result = c.invokeInterceptors(AFTER, appControllerPtr.Type())
+		if result != nil {
+			return reflect.ValueOf(result)
+		}
+		return resultValue
+	}()
+
+	if resultValue.IsNil() {
+		return
+	}
+	result := resultValue.Interface().(Result)
 
 	// Store the flash.
 	var flashValue string
@@ -114,6 +167,17 @@ func (c *Controller) Invoke(method reflect.Value, methodArgs []reflect.Value) {
 	result.Apply(c.Request, c.Response)
 }
 
+func (c *Controller) invokeInterceptors(when InterceptTime, targetType reflect.Type) Result {
+	var result Result
+	for _, intc := range getInterceptors(when, targetType) {
+		result = intc(c)
+		if when == BEFORE && result != nil {
+			return result
+		}
+	}
+	return result
+}
+
 func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
 	// Get the calling function name.
 	pc, _, line, ok := runtime.Caller(1)
@@ -126,8 +190,10 @@ func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
 	var viewName string = fqViewName[strings.LastIndex(fqViewName, ".")+1 : len(fqViewName)]
 
 	// Refresh templates.
+	// TODO: Instead of this, the template loader should watch the templates itself.
 	err := templateLoader.LoadTemplates()
 	if err != nil {
+		// TODO: Instead of writing output directly, return an error Result
 		c.Response.out.Write([]byte(err.Html()))
 		return nil
 	}

@@ -27,30 +27,9 @@ func handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Invoke the controller method...
-	var controllerType *ControllerType = LookupControllerType(route.ControllerName)
-	if controllerType == nil {
-		LOG.Printf("E: Controller %s not found", route.ControllerName)
-		http.NotFound(w, r)
-		return
-	}
-
-	// Create an AppController.
-	var appControllerPtr reflect.Value = reflect.New(controllerType.Type)
-	var appController reflect.Value = appControllerPtr.Elem()
-
-	// Create and configure Play Controller
-	var controller *Controller = NewController(w, r, controllerType)
-
-	// Set the embedded Play Controller field, in the App Controller
-	var controllerField reflect.Value = appController.Field(0)
-	controllerField.Set(reflect.ValueOf(controller))
-
-	// Now call the action.
-	controller.MethodType = controllerType.Method(route.MethodName)
-	if controller.MethodType == nil {
-		LOG.Println("E: Failed to find method", route.MethodName, "on Controller",
-			route.ControllerName)
+	// Construct the controller and get the method to call.
+	controller, appControllerPtr := NewAppController(w, r, route.ControllerName, route.MethodName)
+	if controller == nil {
 		http.NotFound(w, r)
 		return
 	}
@@ -76,7 +55,7 @@ func handle(w http.ResponseWriter, r *http.Request) {
 
 	// Invoke the method.
 	// (Note that the method Value is already bound to the appController receiver.)
-	controller.Invoke(method, actualArgs)
+	controller.Invoke(appControllerPtr, method, actualArgs)
 }
 
 // Run the server.
