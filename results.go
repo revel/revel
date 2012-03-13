@@ -22,7 +22,16 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
 	// Render the template into the response buffer.
 	err := r.Template.Render(resp.out, r.RenderArgs)
 	if err != nil {
-		resp.out.Write([]byte(err.Error()))
+		line, description := parseTemplateError(err)
+		compileError := CompileError{
+			Title:       "Template Execution Error",
+			Path:        r.Template.Name(),
+			Description: description,
+			Line:        line,
+			SourceLines: r.Template.Content(),
+			SourceType: "template",
+		}
+		resp.out.Write([]byte(compileError.Html()))
 	}
 }
 
