@@ -138,22 +138,28 @@ func appendStruct(specs []*ControllerSpec, pkg *ast.Package, decl ast.Decl) []*C
 		ImportPath:  play.ImportPath + "/app/" + pkg.Name,
 	}
 
+NEXT_FIELD:
 	for _, field := range structType.Fields.List {
 		// If field.Names is set, it's not an embedded type.
 		if field.Names != nil {
 			continue
 		}
 
-		// A direct "sub-type" has an ast.Field like:
+		// A direct "sub-type" has an ast.Field as either:
+		// SelectorExpr { "play", "Controller" }
 		// StarExpr { SelectorExpr { "play", "Controller" } }
-		starExpr, ok := field.Type.(*ast.StarExpr)
-		if !ok {
-			continue
-		}
-
-		selectorExpr, ok := starExpr.X.(*ast.SelectorExpr)
-		if !ok {
-			continue
+		// Drill through all the StarExprs to get the SelectorExpr.
+		fieldType := field.Type
+		var selectorExpr *ast.SelectorExpr
+		for {
+			if selectorExpr, ok = fieldType.(*ast.SelectorExpr); ok {
+				break
+			}
+			if starExpr, ok := fieldType.(*ast.StarExpr); ok {
+				fieldType = starExpr.X
+			} else {
+				continue NEXT_FIELD
+			}
 		}
 
 		pkgIdent, ok := selectorExpr.X.(*ast.Ident)
