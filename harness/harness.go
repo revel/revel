@@ -288,7 +288,7 @@ func rebuild(port int) (compileError *play.CompileError) {
 
 	appTree, _, _ := build.FindTree(play.AppPath)
 	binName := path.Join(appTree.BinDir(), play.AppName)
-	cmd := exec.Command(goPath, "build", "-o", binName, path.Join(play.AppPath, "tmp"))
+	cmd = exec.Command(goPath, "build", "-o", binName, path.Join(play.AppPath, "tmp"))
 	output, err := cmd.Output()
 
 	// If we failed to build, parse the error message.
