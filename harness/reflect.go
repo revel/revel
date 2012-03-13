@@ -11,6 +11,7 @@ import (
 	"log"
 	"os"
 	"play"
+	"strings"
 	"unicode"
 )
 
@@ -87,7 +88,7 @@ func ScanControllers(path string) (specs []*ControllerSpec, compileError *play.C
 
 				// Match and add both structs and methods
 				structSpecs = appendStruct(structSpecs, pkg, decl)
-				appendMethod(fset, methodSpecs, decl)
+				appendMethod(fset, methodSpecs, decl, pkg.Name)
 			}
 		}
 
@@ -179,7 +180,7 @@ NEXT_FIELD:
 // If decl is a Method declaration, it is summarized and added to the array
 // underneath its receiver type.
 // e.g. "Login" => {MethodSpec, MethodSpec, ..}
-func appendMethod(fset *token.FileSet, mm methodMap, decl ast.Decl) {
+func appendMethod(fset *token.FileSet, mm methodMap, decl ast.Decl, pkgName string) {
 	// Func declaration?
 	funcDecl, ok := decl.(*ast.FuncDecl)
 	if !ok {
@@ -227,9 +228,13 @@ func appendMethod(fset *token.FileSet, mm methodMap, decl ast.Decl) {
 	// Add a description of the arguments to the method.
 	for _, field := range funcDecl.Type.Params.List {
 		for _, name := range field.Names {
+			typeName := ExprName(field.Type)
+			if !strings.Contains(typeName, ".") && unicode.IsUpper([]rune(typeName)[0]) {
+				typeName = pkgName + "." + typeName
+			}
 			method.Args = append(method.Args, &MethodArg{
 				Name:     name.Name,
-				TypeName: ExprName(field.Type),
+				TypeName: typeName,
 			})
 		}
 	}
@@ -311,6 +316,9 @@ func filterControllers(specs []*ControllerSpec) (filtered []*ControllerSpec) {
 	return
 }
 
+// This returns the syntactic expression for referencing this type in Go.
+// One complexity is that package-local types have to be fully-qualified.
+// For example, if the type is "Hello", then it really means "pkg.Hello".
 func ExprName(expr ast.Expr) string {
 	switch t := expr.(type) {
 	case *ast.Ident:
