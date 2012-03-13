@@ -48,6 +48,9 @@ import (
 var (
 	port *int = flag.Int("port", 0, "Port")
 	importPath *string = flag.String("importPath", "", "Path to the app.")
+
+	// So compiler won't complain if the generated code doesn't reference reflect package...
+	_ = reflect.Invalid
 )
 
 func main() {
