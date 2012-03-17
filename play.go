@@ -1,6 +1,7 @@
 package play
 
 import (
+	"go/build"
 	"log"
 	"os"
 	"path"
@@ -25,7 +26,12 @@ var (
 )
 
 func Init(importPath string) {
-	BasePath = FindSource(importPath)
+	// Find the user's app path.
+	pkg, err := build.Import(importPath, "", build.FindOnly)
+	if err != nil {
+		log.Fatalf("Failed to import", importPath, "with error", err)
+	}
+	BasePath = pkg.Dir
 	if BasePath == "" {
 		log.Fatalf("Failed to find code.  Did you pass the import path?")
 	}
@@ -33,7 +39,13 @@ func Init(importPath string) {
 	AppPath = path.Join(BasePath, "app")
 	ViewsPath = path.Join(AppPath, "views")
 	ImportPath = importPath
-	PlayTemplatePath = FindSource("play/app/views")
+
+	// Find the provided resources.
+	playPkg, err := build.Import("play", "", build.FindOnly)
+	if err != nil {
+		log.Fatalf("Failed to find play code.")
+	}
+	PlayTemplatePath = path.Join(playPkg.Dir, "app", "views")
 
 	playInit = true
 }

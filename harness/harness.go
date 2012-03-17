@@ -286,10 +286,14 @@ func rebuild(port int) (compileError *play.CompileError) {
 		log.Fatalf("Go executable not found in PATH.")
 	}
 
-	appTree, _, _ := build.FindTree(play.AppPath)
-	binName := path.Join(appTree.BinDir(), play.AppName)
-	cmd = exec.Command(goPath, "build", "-o", binName, path.Join(play.AppPath, "tmp"))
-	output, err := cmd.Output()
+	ctx := build.Default
+	pkg, err := ctx.Import(play.ImportPath, "", build.FindOnly)
+	if err != nil {
+		log.Fatalf("Failure importing", play.ImportPath)
+	}
+	binName := path.Join(pkg.BinDir, play.AppName)
+	cmd = exec.Command(goPath, "build", "-o", binName, path.Join(play.ImportPath, "app", "tmp"))
+	output, err := cmd.CombinedOutput()
 
 	// If we failed to build, parse the error message.
 	if err != nil {
