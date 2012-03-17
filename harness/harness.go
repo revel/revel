@@ -292,8 +292,8 @@ func rebuild(port int) (compileError *play.CompileError) {
 		log.Fatalf("Failure importing", play.ImportPath)
 	}
 	binName := path.Join(pkg.BinDir, play.AppName)
-	cmd = exec.Command(goPath, "build", "-o", binName, path.Join(play.ImportPath, "app", "tmp"))
-	output, err := cmd.CombinedOutput()
+	buildCmd := exec.Command(goPath, "build", "-o", binName, path.Join(play.ImportPath, "app", "tmp"))
+	output, err := buildCmd.CombinedOutput()
 
 	// If we failed to build, parse the error message.
 	if err != nil {
