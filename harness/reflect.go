@@ -39,8 +39,9 @@ type MethodSpec struct {
 }
 
 type MethodArg struct {
-	Name     string // Name of the argument.
-	TypeName string // The name of the type, e.g. "int", "*pkg.UserType"
+	Name       string // Name of the argument.
+	TypeName   string // The name of the type, e.g. "int", "*pkg.UserType"
+	ImportPath string // If the arg is of an imported type, this is the import path.
 }
 
 type embeddedTypeName struct {
@@ -83,12 +84,17 @@ func ScanControllers(path string) (specs []*ControllerSpec, compileError *play.C
 		// For each source file in the package...
 		for _, file := range pkg.Files {
 
+			// Imports maps the package key to the full import path.
+			// e.g. import "sample/app/models" => "models": "sample/app/models"
+			imports := map[string]string{}
+
 			// For each declaration in the source file...
 			for _, decl := range file.Decls {
 
 				// Match and add both structs and methods
+				addImports(imports, decl)
 				structSpecs = appendStruct(structSpecs, pkg, decl)
-				appendMethod(fset, methodSpecs, decl, pkg.Name)
+				appendMethod(fset, methodSpecs, decl, pkg.Name, imports)
 			}
 		}
 
@@ -104,6 +110,28 @@ func ScanControllers(path string) (specs []*ControllerSpec, compileError *play.C
 		specs = append(specs, structSpecs...)
 	}
 	return
+}
+
+func addImports(imports map[string]string, decl ast.Decl) {
+	genDecl, ok := decl.(*ast.GenDecl)
+	if !ok {
+		return
+	}
+
+	if genDecl.Tok != token.IMPORT {
+		return
+	}
+
+	for _, spec := range genDecl.Specs {
+		importSpec := spec.(*ast.ImportSpec)
+		quotedPath := importSpec.Path.Value           // e.g. "\"sample/app/models\""
+		fullPath := quotedPath[1 : len(quotedPath)-1] // Remove the quotes
+		key := fullPath
+		if lastSlash := strings.LastIndex(fullPath, "/"); lastSlash != -1 {
+			key = fullPath[lastSlash+1:]
+		}
+		imports[key] = fullPath
+	}
 }
 
 // If this Decl is a struct type definition, it is summarized and added to specs.
@@ -180,7 +208,7 @@ NEXT_FIELD:
 // If decl is a Method declaration, it is summarized and added to the array
 // underneath its receiver type.
 // e.g. "Login" => {MethodSpec, MethodSpec, ..}
-func appendMethod(fset *token.FileSet, mm methodMap, decl ast.Decl, pkgName string) {
+func appendMethod(fset *token.FileSet, mm methodMap, decl ast.Decl, pkgName string, imports map[string]string) {
 	// Func declaration?
 	funcDecl, ok := decl.(*ast.FuncDecl)
 	if !ok {
@@ -229,12 +257,23 @@ func appendMethod(fset *token.FileSet, mm methodMap, decl ast.Decl, pkgName stri
 	for _, field := range funcDecl.Type.Params.List {
 		for _, name := range field.Names {
 			typeName := ExprName(field.Type)
-			if !strings.Contains(typeName, ".") && unicode.IsUpper([]rune(typeName)[0]) {
+			importPath := ""
+			dotIndex := strings.Index(typeName, ".")
+			isExported := unicode.IsUpper([]rune(typeName)[0])
+			if dotIndex == -1 && isExported {
 				typeName = pkgName + "." + typeName
+			} else if dotIndex != -1 {
+				// The type comes from may come from an imported package.
+				argPkgName := typeName[:dotIndex]
+				if importPath, ok = imports[argPkgName]; !ok {
+					log.Println("Failed to find import for arg of type:", typeName)
+				}
 			}
+
 			method.Args = append(method.Args, &MethodArg{
-				Name:     name.Name,
-				TypeName: typeName,
+				Name:       name.Name,
+				TypeName:   typeName,
+				ImportPath: importPath,
 			})
 		}
 	}

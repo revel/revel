@@ -250,7 +250,7 @@ func rebuild(port int) (compileError *play.CompileError) {
 	})
 
 	// Terminate the server if it's already running.
-	if cmd != nil {
+	if cmd != nil && (cmd.ProcessState == nil || !cmd.ProcessState.Exited()) {
 		log.Println("Killing play server pid", cmd.Process.Pid)
 		err := cmd.Process.Kill()
 		if err != nil {
@@ -351,10 +351,19 @@ func uniqueImportPaths(specs []*ControllerSpec) (paths []string) {
 	importPathMap := make(map[string]bool)
 	for _, spec := range specs {
 		importPathMap[spec.ImportPath] = true
+		for _, methSpec := range spec.MethodSpecs {
+			for _, methArg := range methSpec.Args {
+				if methArg.ImportPath != "" {
+					importPathMap[methArg.ImportPath] = true
+				}
+			}
+		}
 	}
+
 	for importPath, _ := range importPathMap {
 		paths = append(paths, importPath)
 	}
+
 	return
 }
 
