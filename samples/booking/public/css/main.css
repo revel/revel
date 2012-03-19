@@ -1,0 +1,175 @@
+html {
+    background: #e0e0e0;
+}
+
+body {
+    width: 690px;
+    margin: 20px auto;
+    font-family: Arial;
+    font-size: 90%;
+    color: rgb(54, 47, 45);
+    background: #fff;
+    -webkit-border-radius: 8px;
+    -webkit-box-shadow: 0 0 10px rgba(0,0,0,.2);
+    -moz-border-radius: 8px;
+    -moz-box-shadow: 0 0 10px rgba(0,0,0,.2);
+}
+
+a {
+    color: #666;
+}
+
+/** Main **/
+
+.fError, .fSuccess {
+    text-align: center;
+    position: relative;
+    top: -10px;
+}
+
+.fError {
+    color: #c00;
+}
+
+.fSuccess {
+    color: #0c0;
+}
+
+#content {
+    padding: 20px;
+}
+
+
+/** Header **/
+
+#header {
+    height: 200px;
+    position: relative;
+    background: #fff url(../img/hotel.jpg) 0px -90px no-repeat;
+}
+
+#header h1 {
+    margin: 0;
+    background: #333;
+    color: #eee;
+    border-bottom: 1px solid rgba(255,255,255,.5);
+    font-weight: lighter;
+    font-size: 18px;
+    padding: 10px 20px;
+    text-shadow: 0 0 5px rgba(255,255,255,.5);
+}
+
+#header #options {
+    position: absolute;
+    right: 10px;
+    top: 13px;
+    font-size: 80%;
+    color: #eee;
+}
+
+#header #options a {
+    color: #eee;
+}
+
+/** Login **/
+
+#login {
+    text-align: center;
+}
+
+#formLogin {
+    border-bottom: 1px dashed #aaa;
+    width: 300px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+#formLogin label {
+    text-align: right;
+}
+
+#formLogin p.buttons {
+    text-align: center;
+    background: none;
+    margin-top: 0;
+}
+
+/** Table **/
+
+table {
+    border-collapse: collapse;
+    border: 1px solid #aaa;
+    width: 100%;
+}
+
+th {
+    background: #eee !important;
+}
+
+td, th {
+    padding: 5px;
+    text-align: left;
+    border-right: 1px solid #aaa;
+    border-bottom: 1px solid #aaa;
+}
+
+/** Forms **/
+
+label {
+    display: block;
+    float: left;
+    width: 100px;
+    text-align: right;
+    margin-right: 5px;
+}
+
+form p {
+    text-align: center;
+    height: 20px;
+}
+
+form p.field {
+    text-align: left;
+    margin: 0 0 5px 0;
+}
+
+form strong {
+    display: block;
+    width: 150px;
+    float: left;
+    text-align: right;
+    margin-right: 10px;
+    background: #eee;
+    padding: 2px;
+}
+
+form p {
+    clear: both;
+    text-align: left;
+    margin: 7px 0;
+    min-height: 15px;
+}
+
+form p.hasError {
+    color: #c00;
+}
+
+form .hasError .error {
+    font-size: 80%;
+}
+
+form .buttons {
+    text-align: left;
+    background: #dedede;
+    padding: 10px;
+    margin-top: 20px;
+}
+
+/** Footer **/
+
+#footer {
+    padding: 10px;
+    font-size: 70%;
+    border-top: 1px dotted #ccc;
+    text-align: center;
+}
