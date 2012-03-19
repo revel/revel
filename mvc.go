@@ -45,6 +45,19 @@ type Controller struct {
 
 func NewController(w http.ResponseWriter, r *http.Request, ct *ControllerType) *Controller {
 	flash := restoreFlash(r)
+	values := r.URL.Query()
+
+	// Add form values to params.
+	if err := r.ParseForm(); err != nil {
+		LOG.Println("Error parsing request body:", err)
+	} else {
+		for key, vals := range r.Form {
+			for _, val := range vals {
+				values.Add(key, val)
+			}
+		}
+	}
+
 	return &Controller{
 		Name:    ct.Type.Name(),
 		Type:    ct,
@@ -56,7 +69,7 @@ func NewController(w http.ResponseWriter, r *http.Request, ct *ControllerType) *
 			out:         w,
 		},
 
-		Params:  Params(r.URL.Query()),
+		Params:  Params(values),
 		Flash:   flash,
 		Session: make(map[string]string),
 		RenderArgs: map[string]interface{}{
@@ -220,7 +233,7 @@ func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
 	}
 
 	// Add Validation errors to RenderArgs.
-	c.RenderArgs["errors"] = c.Validation.Errors
+	c.RenderArgs["errors"] = c.Validation.ErrorMap()
 
 	return &RenderTemplateResult{
 		Template:   template,

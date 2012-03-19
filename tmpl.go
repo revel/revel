@@ -32,10 +32,31 @@ type Template interface {
 	Render(wr io.Writer, arg interface{}) error
 }
 
+type Field struct {
+	Name, Value string
+	Error       *ValidationError
+}
+
+func (f *Field) ErrorClass() string {
+	if f.Error != nil {
+		return "hasError"
+	}
+	return ""
+}
+
 var (
 	// The functions available for use in the templates.
 	tmplFuncs = map[string]interface{}{
 		"url": ReverseUrl,
+		"field": func(name string, renderArgs map[string]interface{}) *Field {
+			value, _ := renderArgs["flash"].(map[string]string)[name]
+			err, _ := renderArgs["errors"].(map[string]*ValidationError)[name]
+			return &Field{
+				Name:  name,
+				Value: value,
+				Error: err,
+			}
+		},
 	}
 )
 
@@ -142,7 +163,7 @@ func (gotmpl GoTemplate) Render(wr io.Writer, arg interface{}) error {
 }
 
 func (gotmpl GoTemplate) Content() []string {
-	content, _ :=  gotmpl.loader.getTemplateContent(gotmpl.Name())
+	content, _ := gotmpl.loader.getTemplateContent(gotmpl.Name())
 	return content
 }
 
@@ -160,7 +181,12 @@ func ReverseUrl(args ...interface{}) string {
 
 	action := args[0].(string)
 	actionSplit := strings.Split(action, ".")
-	ctrl, meth := actionSplit[0], actionSplit[1]
+	var ctrl, meth string
+	if len(actionSplit) != 2 {
+		LOG.Println("Warning: Must provide Controller.Method for reverse router.")
+		return "#"
+	}
+	ctrl, meth = actionSplit[0], actionSplit[1]
 	controllerType := LookupControllerType(ctrl)
 	methodType := controllerType.Method(meth)
 	argsByName := make(map[string]string)

@@ -29,7 +29,7 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
 			Description: description,
 			Line:        line,
 			SourceLines: r.Template.Content(),
-			SourceType: "template",
+			SourceType:  "template",
 		}
 		resp.out.Write([]byte(compileError.Html()))
 	}
