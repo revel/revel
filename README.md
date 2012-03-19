@@ -49,7 +49,7 @@ This is app {{.id}}!
 
 This is an example Controller method that processes a Login request.  It demonstrates:
 
-- Validating posted data 
+- Validating posted data
 - Keeping validation errors and parameters in the Flash scope (a cookie that lives for one page view)
 - Redirecting
 - Setting a cookie
@@ -127,19 +127,21 @@ The basic workflow is already working, as you can see in the sample app.
 - Static file serving
 - Basic validation
 - Flash Scope
+- Data binding
+- Interceptors
 
 ## TODO
 
 There is a large list of things left to do.
 
-- Data binding
+- app/views/errors/{404,500}.html
 - Form validation
+  - Default error message
+  - Form key along with error.
 - application.conf
-- Session support
-- Interceptors
+- Session support (encrypted)
 - Jobs
 - Plugins
-- Async / evented support (e.g. suspend/resume)
 - Websockets
 - Compiled assets (e.g. LESS, Coffee)
 - Logging
@@ -150,6 +152,17 @@ There is a large list of things left to do.
 - Command line tool support for initializing the default project layout.
 - Windows support (fsnotify package is OSX/Linux only)
 - Performance testing / tuning
+- godoc cleanup
+- AppEngine support
+- HOCON library for application.conf
+- Sample with a rich client side app
+  - Accepting / Returning JSON
+- .routes.Application.Method
+- User provided template funcs
+- "Production mode"
+- Multipart forms / file uploads
+- Extract 'field' template helper
+- Extract default error messages to resource file
 
 
 # File layout
