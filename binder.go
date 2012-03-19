@@ -203,6 +203,11 @@ func bindPointer(valueType reflect.Type, kvArr []keyValue) reflect.Value {
 // Parse the value string into a real Go value.
 // Returns 0 values when things can not be parsed.
 func Bind(valueType reflect.Type, kv []keyValue) reflect.Value {
+	// If there's no data, just return the type's zero.
+	if len(kv) == 0 {
+		return reflect.Zero(valueType)
+	}
+
 	binder, ok := TypeBinders[valueType]
 	if !ok {
 		binder, ok = KindBinders[valueType.Kind()]
