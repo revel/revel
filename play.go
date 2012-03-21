@@ -22,7 +22,8 @@ var (
 	LOG = log.New(os.Stdout, "", log.Ldate|log.Ltime|log.Lshortfile)
 
 	// Private
-	playInit bool = false
+	playInit  bool   = false
+	secretKey []byte = []byte("secret")
 )
 
 func Init(importPath string) {

@@ -27,11 +27,11 @@ type Application struct {
 	*play.Controller
 }
 
-func (c *Application) Index() play.Result {
+func (c Application) Index() play.Result {
 	return c.Render()
 }
 
-func (c *Application) ShowApp(id int) play.Result {
+func (c Application) ShowApp(id int) play.Result {
 	return c.Render(id)
 }
 ```
@@ -55,7 +55,7 @@ This is an example Controller method that processes a Login request.  It demonst
 - Setting a cookie
 
 ```go
-func (c *Login) DoLogin(username, password string) play.Result {
+func (c Login) DoLogin(username, password string) play.Result {
 	// Validate parameters.
 	c.Validation.Required(username).Message("Please enter a username.")
 	c.Validation.Required(password).Message("Please enter a password.")
@@ -65,26 +65,54 @@ func (c *Login) DoLogin(username, password string) play.Result {
 	if c.Validation.HasErrors() {
 		c.Validation.Keep()
 		c.FlashParams()
-		return c.Redirect((*Login).ShowLogin)
+		return c.Redirect(Login.ShowLogin)
 	}
 
  	// Check the credentials.
 	if username != "user" || password != "password" {
 		c.Flash.Error("Username or password not recognized")
 		c.FlashParams()
-		return c.Redirect((*Login).ShowLogin)
+		return c.Redirect(Login.ShowLogin)
 	}
 
 	// Success.  Set the login cookie.
 	c.SetCookie(&http.Cookie{
-		Name: "Login",
-		Value: "Success",
-		Path: "/",
+		Name:    "Login",
+		Value:   "Success",
+		Path:    "/",
 		Expires: time.Now().AddDate(0, 0, 7),
 	})
 	c.Flash.Success("Login successful.")
-	return c.Redirect((*Application).Index)
+
+	return c.Redirect(Application.Index)
 }
+```
+
+There are also helpers to make validation errors easy to surface in the template.  Here's an example from the "register a new user" form in the sample application:
+
+```
+{{template "header.html" .}}
+
+<h1>Register:</h1>
+
+<form action="{{url "Application.SaveUser"}}" method="POST">
+  {{with $field := field "user.Username" .}}
+    <p class="{{$field.ErrorClass}}">
+      <strong>Username:</strong>
+      <input type="text" name="{{$field.Name}}" size="16" value="{{$field.Value}}"> *
+      <span class="error">{{$field.Error}}</span>
+    </p>
+  {{end}}
+  {{with $field := field "user.Password" .}}
+    <p class="{{$field.ErrorClass}}">
+      <strong>Password:</strong> <input type="password" name="{{$field.Name}}" size="16" value="{{$field.Value}}"> *
+      <span class="error">{{$field.Error}}</span>
+    </p>
+  {{end}}
+  <p class="buttons">
+    <input type="submit" value="Register"> <a href="{{url "Application.Index"}}">Cancel</a>
+  </p>
+</form>
 ```
 
 
@@ -129,17 +157,15 @@ The basic workflow is already working, as you can see in the sample app.
 - Flash Scope
 - Data binding
 - Interceptors
+- Form validation
+- Session (signed cookie)
 
 ## TODO
 
 There is a large list of things left to do.
 
 - app/views/errors/{404,500}.html
-- Form validation
-  - Default error message
-  - Form key along with error.
 - application.conf
-- Session support (encrypted)
 - Jobs
 - Plugins
 - Websockets

@@ -15,6 +15,8 @@ type Flash struct {
 
 type Params url.Values
 
+type Session map[string]string
+
 type Request struct {
 	*http.Request
 }
@@ -36,11 +38,11 @@ type Controller struct {
 	Request  *Request
 	Response *Response
 
-	Flash      Flash             // User cookie, cleared after each request.
-	Session    map[string]string // Session, stored in cookie.
-	Params     Params            // URL Query parameters
-	RenderArgs map[string]interface{}
-	Validation *Validation
+	Flash      Flash                  // User cookie, cleared after each request.
+	Session    Session                // Session, stored in cookie, signed.
+	Params     Params                 // URL Query parameters
+	RenderArgs map[string]interface{} // Args passed to the template.
+	Validation *Validation            // Data validation helpers
 }
 
 func NewController(w http.ResponseWriter, r *http.Request, ct *ControllerType) *Controller {
@@ -71,7 +73,7 @@ func NewController(w http.ResponseWriter, r *http.Request, ct *ControllerType) *
 
 		Params:  Params(values),
 		Flash:   flash,
-		Session: make(map[string]string),
+		Session: restoreSession(r),
 		RenderArgs: map[string]interface{}{
 			"flash": flash.Data,
 		},
@@ -176,6 +178,18 @@ func (c *Controller) Invoke(appControllerPtr reflect.Value, method reflect.Value
 		Path:  "/",
 	})
 
+	// Store the session (and sign it).
+	var sessionValue string
+	for key, value := range c.Session {
+		sessionValue += "\x00" + key + ":" + value + "\x00"
+	}
+	sessionData := url.QueryEscape(sessionValue)
+	c.SetCookie(&http.Cookie{
+		Name:  "PLAY_SESSION",
+		Value: Sign(sessionData) + "-" + sessionData,
+		Path:  "/",
+	})
+
 	// Apply the result, which generally results in the ResponseWriter getting written.
 	result.Apply(c.Request, c.Response)
 }
@@ -275,6 +289,33 @@ func restoreValidationErrors(req *http.Request) []*ValidationError {
 		})
 	}
 	return errors
+}
+
+func restoreSession(req *http.Request) Session {
+	session := make(map[string]string)
+	cookie, err := req.Cookie("PLAY_SESSION")
+	if err != nil {
+		return Session(session)
+	}
+
+	// Separate the data from the signature.
+	hyphen := strings.Index(cookie.Value, "-")
+	if hyphen == -1 || hyphen >= len(cookie.Value)-1 {
+		return Session(session)
+	}
+	sig, data := cookie.Value[:hyphen], cookie.Value[hyphen+1:]
+
+	// Verify the signature.
+	if Sign(data) != sig {
+		LOG.Println("Session cookie signature failed")
+		return Session(session)
+	}
+
+	ParseKeyValueCookie(data, func(key, val string) {
+		session[key] = val
+	})
+
+	return Session(session)
 }
 
 func (f Flash) Error(msg string) {
