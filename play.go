@@ -15,6 +15,7 @@ var (
 	AppPath    string // e.g. "/Users/robfig/gocode/src/play/sample/app"
 	ViewsPath  string // e.g. "/Users/robfig/gocode/src/play/sample/app/views"
 	ImportPath string // e.g. "play/sample"
+	Config     *MergedConfig
 
 	// Play installation details
 	PlayTemplatePath string // e.g. "/Users/robfig/gocode/src/play/app/views"
@@ -22,8 +23,8 @@ var (
 	LOG = log.New(os.Stdout, "", log.Ldate|log.Ltime|log.Lshortfile)
 
 	// Private
-	playInit  bool   = false
-	secretKey []byte = []byte("secret")
+	playInit  bool = false
+	secretKey []byte
 )
 
 func Init(importPath string) {
@@ -47,6 +48,18 @@ func Init(importPath string) {
 		log.Fatalf("Failed to find play code.")
 	}
 	PlayTemplatePath = path.Join(playPkg.Dir, "app", "views")
+
+	// Load application.conf
+	Config, err = LoadConfig(
+		path.Join(BasePath, "conf", "app.conf"))
+	if err != nil {
+		log.Fatalln("Failed to load app.conf:", err)
+	}
+	secretStr, err := Config.String("app.secret")
+	if err != nil {
+		log.Fatalln("No app.secret provided.")
+	}
+	secretKey = []byte(secretStr)
 
 	playInit = true
 }

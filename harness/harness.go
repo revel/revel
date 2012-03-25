@@ -134,7 +134,13 @@ func startReverseProxy(port int) *harnessProxy {
 		NotifyReady:   make(chan error),
 	}
 	go func() {
-		err := http.ListenAndServe(":9000", reverseProxy)
+		frontPort, err := play.Config.Int("http.port")
+		if err != nil {
+			log.Println("Parsing http.port failed:", err)
+			frontPort = 9000
+		}
+		log.Println("Listening on port", frontPort)
+		err = http.ListenAndServe(fmt.Sprintf(":%d", frontPort), reverseProxy)
 		if err != nil {
 			log.Fatalln("Failed to start reverse proxy:", err)
 		}
@@ -360,7 +366,7 @@ func uniqueImportPaths(specs []*ControllerSpec) (paths []string) {
 		}
 	}
 
-	for importPath, _ := range importPathMap {
+	for importPath := range importPathMap {
 		paths = append(paths, importPath)
 	}
 

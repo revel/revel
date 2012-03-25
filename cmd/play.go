@@ -1,10 +1,10 @@
 // The command line tool for running Play apps.
-// Presently it does nothing but run the harness / sample app.
 package main
 
 import (
 	"flag"
 	"fmt"
+	"log"
 	"os"
 
 	"play"
@@ -21,9 +21,9 @@ func main() {
 		usage()
 	}
 
-	// Find and parse application.yaml
+	// Find and parse app.conf
 	play.Init(args[0])
-	play.LOG.Printf("Running app: %s (%s)\n", play.AppName, play.BasePath)
+	log.Printf("Running app: %s (%s)\n", play.AppName, play.BasePath)
 
 	harness.Run()
 }
