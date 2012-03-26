@@ -216,19 +216,11 @@ func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
 	var fqViewName string = runtime.FuncForPC(pc).Name()
 	var viewName string = fqViewName[strings.LastIndex(fqViewName, ".")+1 : len(fqViewName)]
 
-	// Refresh templates.
-	// TODO: Instead of this, the template loader should watch the templates itself.
-	err := templateLoader.LoadTemplates()
+	// Get the Template.
+	template, err := templateLoader.Template(c.Name + "/" + viewName + ".html")
 	if err != nil {
 		// TODO: Instead of writing output directly, return an error Result
-		c.Response.out.Write([]byte(err.Html()))
-		return nil
-	}
-
-	// Get the Template.
-	template, err2 := templateLoader.Template(c.Name + "/" + viewName + ".html")
-	if err2 != nil {
-		c.Response.out.Write([]byte(err2.Error()))
+		c.Response.out.Write([]byte(err.Error()))
 		return nil
 	}
 

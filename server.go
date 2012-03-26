@@ -64,8 +64,7 @@ func Run(port int) {
 	// Load the routes
 	// TODO: Watch the routes file for changes, and reload.
 	router = LoadRoutes()
-
-	templateLoader = new(TemplateLoader)
+	templateLoader = NewTemplateLoader()
 
 	// Now that we know all the Controllers, start the server.
 	LOG.Printf("Listening on port %d...", port)

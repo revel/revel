@@ -3,6 +3,7 @@ package play
 import (
 	"errors"
 	"fmt"
+	"github.com/robfig/fsnotify"
 	"html/template"
 	"io"
 	"io/ioutil"
@@ -17,13 +18,10 @@ import (
 // This object handles loading and parsing of templates.
 // Everything below the application's views directory is treated as a template.
 type TemplateLoader struct {
+	// This watcher watches the views tree for changes.
+	watcher *fsnotify.Watcher
 	// This is the set of all templates under views
 	templateSet *template.Template
-	// If a template failed to parse, this holds the error.
-	// (All templates must parse before the TemplateLoader can be used)
-	error *template.Error
-
-	viewsDir string
 }
 
 type Template interface {
@@ -60,30 +58,63 @@ var (
 	}
 )
 
-// This scans the views directory and parses all templates.
-// If a template fails to parse, the error is returned.
-func (loader *TemplateLoader) LoadTemplates() (err *CompileError) {
-	viewsDir := path.Join(AppPath, "views")
-	var templateSet *template.Template = nil
-	walkErr := filepath.Walk(viewsDir, func(path string, info os.FileInfo, err error) error {
+func NewTemplateLoader() *TemplateLoader {
+	// Watch all directories under /views
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		LOG.Fatal(err)
+	}
+
+	// Replace the unbuffered Event channel with a buffered one.
+	// Otherwise multiple change events only come out one at a time, across
+	// multiple page views.
+	watcher.Event = make(chan *fsnotify.FileEvent, 10)
+	watcher.Error = make(chan error, 10)
+
+	// Walk through all files / directories under /views.
+	// - Add each directory to the watcher.
+	filepath.Walk(ViewsPath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			LOG.Printf("%v", err)
+			LOG.Println("Error walking views:", err)
 			return nil
 		}
+		if info.IsDir() {
+			err = watcher.Watch(path)
+			if err != nil {
+				LOG.Println("Failed to watch", path, ":", err)
+			}
+		}
+		return nil
+	})
 
-		// Skip directories
+	loader := &TemplateLoader{
+		watcher: watcher,
+	}
+	loader.Refresh()
+	return loader
+}
+
+// This scans the views directory and parses all templates.
+// If a template fails to parse, the error is returned.
+// (It's awkward to refresh a single Go Template )
+func (loader *TemplateLoader) Refresh() (err *CompileError) {
+	LOG.Println("Refresh")
+	var templateSet *template.Template = nil
+	walkErr := filepath.Walk(ViewsPath, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			LOG.Println("error walking views:", err)
+			return nil
+		}
 		if info.IsDir() {
 			return nil
 		}
-
-		// The template name is the filename relative to the views directory.
-		templateName := path[len(viewsDir)+1:]
 		fileBytes, err := ioutil.ReadFile(path)
 		if err != nil {
-			fmt.Println("Failed reading file:", path)
+			LOG.Println("Failed reading file:", path)
 			return nil
 		}
 
+		templateName := path[len(ViewsPath)+1:]
 		fileStr := string(fileBytes)
 		if templateSet == nil {
 			templateSet, err = template.New(templateName).
@@ -111,7 +142,6 @@ func (loader *TemplateLoader) LoadTemplates() (err *CompileError) {
 	}
 
 	loader.templateSet = templateSet
-	loader.viewsDir = viewsDir
 
 	// There was an error parsing a template.
 	// Log it to the console and return a friendly HTML error page.
@@ -140,10 +170,35 @@ func parseTemplateError(err error) (line int, description string) {
 }
 
 func (loader *TemplateLoader) getTemplateContent(name string) ([]string, error) {
-	return ReadLines(path.Join(loader.viewsDir, name))
+	return ReadLines(path.Join(ViewsPath, name))
 }
 
 func (loader *TemplateLoader) Template(name string) (Template, error) {
+	// First, check to see if the watcher saw any changes.
+	// Pull all pending events / errors from the watcher.
+	refresh := false
+	for {
+		select {
+		case ev := <-loader.watcher.Event:
+			// Ignore changes to dotfiles.
+			if !strings.HasPrefix(path.Base(ev.Name), ".") {
+				refresh = true
+			}
+			continue
+		case <-loader.watcher.Error:
+			continue
+		default:
+			// No events left to pull
+		}
+		break
+	}
+
+	// If we got a qualifying event, refresh the templates.
+	if refresh {
+		loader.Refresh()
+	}
+
+	// Look up and return the template.
 	tmpl := loader.templateSet.Lookup(name)
 	if tmpl == nil {
 		return nil, errors.New(fmt.Sprintf("Template %s not found.\n", name))
