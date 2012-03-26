@@ -17,15 +17,20 @@ func main() {
 	flag.Parse()
 	args := flag.Args()
 
-	if len(args) != 1 || args[0] == "help" {
+	if len(args) < 1 || len(args) > 2 || args[0] == "help" {
 		usage()
 	}
 
-	// Find and parse app.conf
-	play.Init(args[0])
-	log.Printf("Running app: %s (%s)\n", play.AppName, play.BasePath)
+	mode := play.DEV
+	if len(args) == 2 && args[1] == "prod" {
+		mode = play.PROD
+	}
 
-	harness.Run()
+	// Find and parse app.conf
+	play.Init(args[0], mode)
+	log.Printf("Running app (%s): %s (%s)\n", mode, play.AppName, play.BasePath)
+
+	harness.Run(mode)
 }
 
 const header = `~
@@ -33,7 +38,7 @@ const header = `~
 ~
 `
 
-const usageText = `~ Usage: play [app_path]
+const usageText = `~ Usage: play import_path [mode]
 `
 
 func usage() {

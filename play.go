@@ -8,6 +8,13 @@ import (
 	"path/filepath"
 )
 
+type RunMode string
+
+const (
+	DEV  RunMode = "dev"
+	PROD         = "prod"
+)
+
 var (
 	// App details
 	AppName    string // e.g. "sample"
@@ -15,7 +22,9 @@ var (
 	AppPath    string // e.g. "/Users/robfig/gocode/src/play/sample/app"
 	ViewsPath  string // e.g. "/Users/robfig/gocode/src/play/sample/app/views"
 	ImportPath string // e.g. "play/sample"
-	Config     *MergedConfig
+
+	Config  *MergedConfig
+	AppMode RunMode // DEV or PROD
 
 	// Play installation details
 	PlayTemplatePath string // e.g. "/Users/robfig/gocode/src/play/app/views"
@@ -27,7 +36,7 @@ var (
 	secretKey []byte
 )
 
-func Init(importPath string) {
+func Init(importPath string, mode RunMode) {
 	// Find the user's app path.
 	pkg, err := build.Import(importPath, "", build.FindOnly)
 	if err != nil {
@@ -55,6 +64,7 @@ func Init(importPath string) {
 	if err != nil {
 		log.Fatalln("Failed to load app.conf:", err)
 	}
+	Config.SetSection(string(mode))
 	secretStr, err := Config.String("app.secret")
 	if err != nil {
 		log.Fatalln("No app.secret provided.")

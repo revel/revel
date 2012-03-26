@@ -56,7 +56,7 @@ var (
 func main() {
 	play.LOG.Println("Running play server")
 	flag.Parse()
-	play.Init(*importPath)
+	play.Init(*importPath, "{{.RunMode}}")
 	{{range $i, $c := .Controllers}}
 	play.RegisterController((*{{.PackageName}}.{{.StructName}})(nil),
 		[]*play.MethodType{
@@ -134,13 +134,9 @@ func startReverseProxy(port int) *harnessProxy {
 		NotifyReady:   make(chan error),
 	}
 	go func() {
-		frontPort, err := play.Config.Int("http.port")
-		if err != nil {
-			log.Println("Parsing http.port failed:", err)
-			frontPort = 9000
-		}
-		log.Println("Listening on port", frontPort)
-		err = http.ListenAndServe(fmt.Sprintf(":%d", frontPort), reverseProxy)
+		appPort := getAppPort()
+		log.Println("Listening on port", appPort)
+		err := http.ListenAndServe(fmt.Sprintf(":%d", appPort), reverseProxy)
 		if err != nil {
 			log.Fatalln("Failed to start reverse proxy:", err)
 		}
@@ -148,12 +144,31 @@ func startReverseProxy(port int) *harnessProxy {
 	return reverseProxy
 }
 
+func getAppPort() int {
+	port, err := play.Config.Int("http.port")
+	if err != nil {
+		log.Println("Parsing http.port failed:", err)
+		return 9000
+	}
+	return port
+}
+
 var (
 	// Will not watch directories with these names (or their subdirectories)
 	DoNotWatch = []string{"tmp", "views"}
 )
 
-func Run() {
+func Run(mode play.RunMode) {
+
+	// If we are in prod mode, just build and run the application.
+	if mode == play.PROD {
+		log.Println("Building...")
+		if err := rebuild(getAppPort()); err != nil {
+			log.Fatalln(err)
+		}
+		cmd.Wait()
+		return
+	}
 
 	// Get a port on which to run the application
 	port := getFreePort()
@@ -253,6 +268,7 @@ func rebuild(port int) (compileError *play.CompileError) {
 		"AppName":     play.AppName,
 		"Controllers": controllerSpecs,
 		"ImportPaths": uniqueImportPaths(controllerSpecs),
+		"RunMode": play.AppMode,
 	})
 
 	// Terminate the server if it's already running.
