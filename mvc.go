@@ -131,7 +131,7 @@ func (c *Controller) Invoke(appControllerPtr reflect.Value, method reflect.Value
 	// Calculate the Result by running the interceptors and the action.
 	resultValue := func() reflect.Value {
 		// Call the BEFORE interceptors
-		result := c.invokeInterceptors(BEFORE, appControllerPtr.Type())
+		result := c.invokeInterceptors(BEFORE, appControllerPtr)
 		if result != nil {
 			return reflect.ValueOf(result)
 		}
@@ -140,7 +140,7 @@ func (c *Controller) Invoke(appControllerPtr reflect.Value, method reflect.Value
 		resultValue := method.Call(methodArgs)[0]
 
 		// Call the AFTER interceptors
-		result = c.invokeInterceptors(AFTER, appControllerPtr.Type())
+		result = c.invokeInterceptors(AFTER, appControllerPtr)
 		if result != nil {
 			return reflect.ValueOf(result)
 		}
@@ -194,10 +194,13 @@ func (c *Controller) Invoke(appControllerPtr reflect.Value, method reflect.Value
 	result.Apply(c.Request, c.Response)
 }
 
-func (c *Controller) invokeInterceptors(when InterceptTime, targetType reflect.Type) Result {
+func (c *Controller) invokeInterceptors(when InterceptTime, appControllerPtr reflect.Value) Result {
 	var result Result
-	for _, intc := range getInterceptors(when, targetType) {
-		result = intc(c)
+	for _, intc := range getInterceptors(when, appControllerPtr.Type()) {
+		resultValue := intc.Invoke(appControllerPtr)
+		if !resultValue.IsNil() {
+			result = resultValue.Interface().(Result)
+		}
 		if when == BEFORE && result != nil {
 			return result
 		}
