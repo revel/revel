@@ -3,7 +3,7 @@ package play
 import (
 	"errors"
 	"fmt"
-	"github.com/robfig/fsnotify"
+	"github.com/howeyc/fsnotify"
 	"html/template"
 	"io"
 	"io/ioutil"

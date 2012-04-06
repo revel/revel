@@ -13,7 +13,7 @@ package harness
 import (
 	"bytes"
 	"fmt"
-	"github.com/robfig/fsnotify"
+	"github.com/howeyc/fsnotify"
 	"go/build"
 	"io"
 	"log"
