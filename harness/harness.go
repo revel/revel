@@ -392,7 +392,7 @@ func uniqueImportPaths(specs []*ControllerSpec) (paths []string) {
 // Parse the output of the "go build" command.
 // Return a detailed CompileError.
 func newCompileError(output []byte) *play.CompileError {
-	errorMatch := regexp.MustCompile(`(?m)^(.+):(\d+): (.*)$`).
+	errorMatch := regexp.MustCompile(`(?m)^([^:#]+):(\d+):(\d+:)? (.*)$`).
 		FindSubmatch(output)
 	if errorMatch == nil {
 		log.Println("Failed to parse build errors:\n", string(output))
@@ -408,7 +408,7 @@ func newCompileError(output []byte) *play.CompileError {
 		relFilename    = string(errorMatch[1]) // e.g. "src/play/sample/app/controllers/app.go"
 		absFilename, _ = filepath.Abs(relFilename)
 		line, _        = strconv.Atoi(string(errorMatch[2]))
-		description    = string(errorMatch[3])
+		description    = string(errorMatch[4])
 		compileError   = &play.CompileError{
 			SourceType:  "Go code",
 			Title:       "Go Compilation Error",
