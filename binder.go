@@ -15,13 +15,16 @@ type keyValue struct {
 // argument (e.g. an array or a struct).
 //
 // Here is an example.
-// Request: url?id=123&ol[0]=1&ol[1]=2&ul[]=str&ul[]=array&user.name=rob
-// Action: Example.Action(id int, ol []int, ul []string, user User)
+//
+// Request:
+//   url?id=123&ol[0]=1&ol[1]=2&ul[]=str&ul[]=array&user.name=rob
+// Action:
+//   Example.Action(id int, ol []int, ul []string, user User)
 // Calls:
-// - Binder(int,       keyValue[]{ {"id", "123"} })
-// - Binder([]int,     keyValue[]{ {"ol[0]", "1"}, {"ol[1]", "2"} })
-// - Binder([]string,  keyValue[]{ {"ul[]", "str"}, {"ul[]", "array"} })
-// - Binder(User,      keyValue[]{ {"user.Name", "rob"} })
+//   Binder(int,       keyValue[]{ {"id", "123"} })
+//   Binder([]int,     keyValue[]{ {"ol[0]", "1"}, {"ol[1]", "2"} })
+//   Binder([]string,  keyValue[]{ {"ul[]", "str"}, {"ul[]", "array"} })
+//   Binder(User,      keyValue[]{ {"user.Name", "rob"} })
 //
 // Note that only exported struct fields may be bound.
 //
