@@ -167,7 +167,6 @@ func appendStruct(specs []*ControllerSpec, pkg *ast.Package, decl ast.Decl) []*C
 		ImportPath:  play.ImportPath + "/app/" + pkg.Name,
 	}
 
-NEXT_FIELD:
 	for _, field := range structType.Fields.List {
 		// If field.Names is set, it's not an embedded type.
 		if field.Names != nil {
@@ -175,30 +174,42 @@ NEXT_FIELD:
 		}
 
 		// A direct "sub-type" has an ast.Field as either:
-		// SelectorExpr { "play", "Controller" }
-		// StarExpr { SelectorExpr { "play", "Controller" } }
-		// Drill through all the StarExprs to get the SelectorExpr.
+		//   Ident { "AppController" }
+		//   SelectorExpr { "play", "Controller" }
+		// Additionally, that can be wrapped by StarExprs.
 		fieldType := field.Type
-		var selectorExpr *ast.SelectorExpr
-		for {
-			if selectorExpr, ok = fieldType.(*ast.SelectorExpr); ok {
+		pkgName, typeName := func() (string, string) {
+			// Drill through any StarExprs.
+			for {
+				if starExpr, ok := fieldType.(*ast.StarExpr); ok {
+					fieldType = starExpr.X
+					continue
+				}
 				break
 			}
-			if starExpr, ok := fieldType.(*ast.StarExpr); ok {
-				fieldType = starExpr.X
-			} else {
-				continue NEXT_FIELD
-			}
-		}
 
-		pkgIdent, ok := selectorExpr.X.(*ast.Ident)
-		if !ok {
+			// If the embedded type is in the same package, it's an Ident.
+			if ident, ok := fieldType.(*ast.Ident); ok {
+				return pkg.Name, ident.Name
+			}
+
+			if selectorExpr, ok := fieldType.(*ast.SelectorExpr); ok {
+				if pkgIdent, ok := selectorExpr.X.(*ast.Ident); ok {
+					return pkgIdent.Name, selectorExpr.Sel.Name
+				}
+			}
+
+			return "", ""
+		}()
+
+		// If a typename wasn't found, skip it.
+		if typeName == "" {
 			continue
 		}
 
 		controllerSpec.embeddedTypes = append(controllerSpec.embeddedTypes, &embeddedTypeName{
-			PackageName: pkgIdent.Name,
-			StructName:  selectorExpr.Sel.Name,
+			PackageName: pkgName,
+			StructName:  typeName,
 		})
 	}
 
@@ -333,7 +344,9 @@ func (s *embeddedTypeName) SimpleName() string {
 func filterControllers(specs []*ControllerSpec) (filtered []*ControllerSpec) {
 	// Do a search in the "embedded type graph", starting with play.Controller.
 	nodeQueue := []string{"play.Controller"}
-	for _, controllerSimpleName := range nodeQueue {
+	for len(nodeQueue) > 0 {
+		controllerSimpleName := nodeQueue[0]
+		nodeQueue = nodeQueue[1:]
 		for _, spec := range specs {
 			if play.ContainsString(nodeQueue, spec.SimpleName()) {
 				continue // Already added
@@ -342,7 +355,7 @@ func filterControllers(specs []*ControllerSpec) (filtered []*ControllerSpec) {
 			// Look through the embedded types to see if the current type is among them.
 			for _, embeddedType := range spec.embeddedTypes {
 
-				// If so, add this type's simple name to the nodeQueue, and it's spec to
+				// If so, add this type's simple name to the nodeQueue, and its spec to
 				// the filtered list.
 				if controllerSimpleName == embeddedType.SimpleName() {
 					nodeQueue = append(nodeQueue, spec.SimpleName())

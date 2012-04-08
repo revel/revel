@@ -84,28 +84,23 @@ func NewController(w http.ResponseWriter, r *http.Request, ct *ControllerType) *
 	}
 }
 
+var (
+	controllerType    = reflect.TypeOf(Controller{})
+	controllerPtrType = reflect.TypeOf(&Controller{})
+)
+
 func NewAppController(w http.ResponseWriter, r *http.Request, controllerName, methodName string) (*Controller, reflect.Value) {
-	var controllerType *ControllerType = LookupControllerType(controllerName)
-	if controllerType == nil {
+	var appControllerType *ControllerType = LookupControllerType(controllerName)
+	if appControllerType == nil {
 		LOG.Printf("E: Controller %s not found", controllerName)
 		return nil, reflect.ValueOf(nil)
 	}
 
-	var (
-		// Create an AppController.
-		appControllerPtr reflect.Value = reflect.New(controllerType.Type)
-		appController    reflect.Value = appControllerPtr.Elem()
-
-		// Create and configure Play Controller
-		controller *Controller = NewController(w, r, controllerType)
-	)
-
-	// Set the embedded Play Controller field, in the App Controller
-	var controllerField reflect.Value = appController.Field(0)
-	controllerField.Set(reflect.ValueOf(controller))
+	controller := NewController(w, r, appControllerType)
+	appControllerPtr := initNewAppController(appControllerType.Type, controller)
 
 	// Set the method being called.
-	controller.MethodType = controllerType.Method(methodName)
+	controller.MethodType = appControllerType.Method(methodName)
 	if controller.MethodType == nil {
 		LOG.Println("E: Failed to find method", methodName, "on Controller",
 			controllerName)
@@ -113,6 +108,44 @@ func NewAppController(w http.ResponseWriter, r *http.Request, controllerName, me
 	}
 
 	return controller, appControllerPtr
+}
+
+// This is a helper that initializes (zeros) a new app controller value.
+// Generally, everything is set to its zero value, except:
+// 1. Embedded controller pointers are newed up.
+// 2. The play.Controller embedded type is set to the value provided.
+// Returns a value representing a pointer to the new app controller.
+func initNewAppController(appControllerType reflect.Type, c *Controller) reflect.Value {
+	// It might be a multi-level embedding, so we have to create new controllers
+	// at every level of the hierarchy.
+	// ASSUME: the first field in each type is the way up to play.Controller.
+	appControllerPtr := reflect.New(appControllerType)
+	ptr := appControllerPtr
+	for {
+		var (
+			embeddedField     reflect.Value = ptr.Elem().Field(0)
+			embeddedFieldType reflect.Type  = embeddedField.Type()
+		)
+
+		// Check if it's the Play! controller.
+		if embeddedFieldType == controllerType {
+			embeddedField.Set(reflect.ValueOf(c).Elem())
+			break
+		} else if embeddedFieldType == controllerPtrType {
+			embeddedField.Set(reflect.ValueOf(c))
+			break
+		}
+
+		// If the embedded field is a pointer, then instantiate an object and set it.
+		// (If it's not a pointer, then it's already initialized)
+		if embeddedFieldType.Kind() == reflect.Ptr {
+			embeddedField.Set(reflect.New(embeddedFieldType.Elem()))
+			ptr = embeddedField
+		} else {
+			ptr = embeddedField.Addr()
+		}
+	}
+	return appControllerPtr
 }
 
 func (c *Controller) FlashParams() {
