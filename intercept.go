@@ -60,21 +60,29 @@ type Interception struct {
 // val is a pointer to the App Controller.
 func (i Interception) Invoke(val reflect.Value) reflect.Value {
 	// Figure out what type of parameter the interceptor needs.
+	argType := i.callableValue.Type().In(0)
+
+	// Find that arg.
 	var arg reflect.Value
-	switch i.callableValue.Type().In(0) {
-	case reflect.TypeOf(Controller{}):
-		arg = val.Elem().Field(0).Elem()
-	case reflect.TypeOf(&Controller{}):
-		arg = val.Elem().Field(0)
-	case val.Type():
+	if i.function == nil {
+		// If it's an InterceptorMethod, then the type is the app controller.
+		if val.Type() == argType {
+			arg = val
+		} else {
+			arg = val.Elem()
+		}
+	} else {
+		// If it's an InterceptorFunc, then the type must be *Controller.
+		// We can find that by following the embedded types up the chain.
+		for val.Type() != controllerPtrType {
+			if val.Kind() == reflect.Ptr {
+				val = val.Elem()
+			}
+			val = val.Field(0)
+		}
 		arg = val
-	case val.Type().Elem():
-		arg = val.Elem()
-	default:
-		// This should never happen.
-		// Validation happens at the time the interceptor is installed.
-		log.Fatalln("Unrecognized parameter type.")
 	}
+
 	vals := i.callableValue.Call([]reflect.Value{arg})
 	return vals[0]
 }
