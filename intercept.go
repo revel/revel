@@ -52,25 +52,17 @@ type Interception struct {
 	function InterceptorFunc
 	method   InterceptorMethod
 
-	callableValue reflect.Value
-	targetType    reflect.Type
+	callable reflect.Value
+	target   reflect.Type
 }
 
 // Perform the given interception.
 // val is a pointer to the App Controller.
 func (i Interception) Invoke(val reflect.Value) reflect.Value {
-	// Figure out what type of parameter the interceptor needs.
-	argType := i.callableValue.Type().In(0)
-
-	// Find that arg.
 	var arg reflect.Value
 	if i.function == nil {
-		// If it's an InterceptorMethod, then the type is the app controller.
-		if val.Type() == argType {
-			arg = val
-		} else {
-			arg = val.Elem()
-		}
+		// If it's an InterceptorMethod, then we have to pass in the target type.
+		arg = findTarget(val, i.target)
 	} else {
 		// If it's an InterceptorFunc, then the type must be *Controller.
 		// We can find that by following the embedded types up the chain.
@@ -83,7 +75,7 @@ func (i Interception) Invoke(val reflect.Value) reflect.Value {
 		arg = val
 	}
 
-	vals := i.callableValue.Call([]reflect.Value{arg})
+	vals := i.callable.Call([]reflect.Value{arg})
 	return vals[0]
 }
 
@@ -95,10 +87,10 @@ var interceptors []*Interception
 // func example(c *play.Controller) play.Result
 func InterceptFunc(intc InterceptorFunc, when InterceptTime, target interface{}) {
 	interceptors = append(interceptors, &Interception{
-		When:          when,
-		function:      intc,
-		callableValue: reflect.ValueOf(intc),
-		targetType:    reflect.TypeOf(target),
+		When:     when,
+		function: intc,
+		callable: reflect.ValueOf(intc),
+		target:   reflect.TypeOf(target),
 	})
 }
 
@@ -112,20 +104,56 @@ func InterceptMethod(intc InterceptorMethod, when InterceptTime) {
 			"'func (c *AppController) example() play.Result' but was", methodType)
 	}
 	interceptors = append(interceptors, &Interception{
-		When:          when,
-		method:        intc,
-		callableValue: reflect.ValueOf(intc),
-		targetType:    methodType.In(0),
+		When:     when,
+		method:   intc,
+		callable: reflect.ValueOf(intc),
+		target:   methodType.In(0),
 	})
 }
 
-func getInterceptors(when InterceptTime, targetType reflect.Type) []*Interception {
+func getInterceptors(when InterceptTime, val reflect.Value) []*Interception {
 	result := []*Interception{}
 	for _, intc := range interceptors {
-		if intc.When == when &&
-			(intc.targetType == targetType || intc.targetType == targetType.Elem()) {
+		if intc.When != when {
+			continue
+		}
+
+		if findTarget(val, intc.target).IsValid() {
 			result = append(result, intc)
 		}
 	}
 	return result
+}
+
+// Find the value of the target, starting from val and including embedded types.
+// Also, convert between any difference in indirection.
+// If the target couldn't be found, the returned Value will have IsValid() == false
+func findTarget(val reflect.Value, target reflect.Type) reflect.Value {
+	// Look through the embedded types (until we reach the *play.Controller at the top).
+	for {
+		// Check if val is of a similar type to the target type.
+		if val.Type() == target {
+			return val
+		}
+		if val.Kind() == reflect.Ptr && val.Elem().Type() == target {
+			return val.Elem()
+		}
+		if target.Kind() == reflect.Ptr && target.Elem() == val.Type() {
+			return val.Addr()
+		}
+
+		// If we reached the *play.Controller and still didn't find what we were
+		// looking for, give up.
+		if val.Type() == controllerPtrType {
+			break
+		}
+
+		// Else, drill into the first field (which had better be an embedded type).
+		if val.Kind() == reflect.Ptr {
+			val = val.Elem()
+		}
+		val = val.Field(0)
+	}
+
+	return reflect.Value{}
 }

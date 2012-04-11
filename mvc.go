@@ -229,7 +229,7 @@ func (c *Controller) Invoke(appControllerPtr reflect.Value, method reflect.Value
 
 func (c *Controller) invokeInterceptors(when InterceptTime, appControllerPtr reflect.Value) Result {
 	var result Result
-	for _, intc := range getInterceptors(when, appControllerPtr.Type()) {
+	for _, intc := range getInterceptors(when, appControllerPtr) {
 		resultValue := intc.Invoke(appControllerPtr)
 		if !resultValue.IsNil() {
 			result = resultValue.Interface().(Result)
