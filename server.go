@@ -67,7 +67,10 @@ func Run(port int) {
 	templateLoader = NewTemplateLoader()
 
 	// Now that we know all the Controllers, start the server.
-	LOG.Printf("Listening on port %d...", port)
+	go func() {
+		time.Sleep(100 * time.Millisecond)
+		LOG.Printf("Listening on port %d...", port)
+	}()
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":%d", port),
 		Handler: http.HandlerFunc(handle),
