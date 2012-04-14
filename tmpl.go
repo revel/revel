@@ -22,6 +22,8 @@ type TemplateLoader struct {
 	watcher *fsnotify.Watcher
 	// This is the set of all templates under views
 	templateSet *template.Template
+	// If an error was encountered parsing the templates, it is stored here.
+	compileError *CompileError
 }
 
 type Template interface {
@@ -90,15 +92,16 @@ func NewTemplateLoader() *TemplateLoader {
 	loader := &TemplateLoader{
 		watcher: watcher,
 	}
-	loader.Refresh()
+	loader.refresh()
 	return loader
 }
 
 // This scans the views directory and parses all templates.
-// If a template fails to parse, the error is returned.
+// If a template fails to parse, the error is set on the loader.
 // (It's awkward to refresh a single Go Template )
-func (loader *TemplateLoader) Refresh() (err *CompileError) {
+func (loader *TemplateLoader) refresh() {
 	LOG.Println("Refresh")
+	loader.compileError = nil
 	var templateSet *template.Template = nil
 	walkErr := filepath.Walk(ViewsPath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -138,20 +141,16 @@ func (loader *TemplateLoader) Refresh() (err *CompileError) {
 	})
 
 	if walkErr != nil {
-		err = walkErr.(*CompileError)
+		// There was an error parsing a template.
+		// Log it to the console and return a friendly HTML error page.
+		err := walkErr.(*CompileError)
+		LOG.Printf("Template compilation error (In %s around line %d):\n%s",
+			err.Path, err.Line, err.Description)
+		loader.compileError = err
+		return
 	}
 
 	loader.templateSet = templateSet
-
-	// There was an error parsing a template.
-	// Log it to the console and return a friendly HTML error page.
-	if err != nil {
-		LOG.Printf("Template compilation error (In %s around line %d):\n%s",
-			err.Path, err.Line, err.Description)
-		return err
-	}
-
-	return nil
 }
 
 // Parse the line, and description from an error message like:
@@ -195,7 +194,12 @@ func (loader *TemplateLoader) Template(name string) (Template, error) {
 
 	// If we got a qualifying event, refresh the templates.
 	if refresh {
-		loader.Refresh()
+		loader.refresh()
+	}
+
+	// If there was an error refreshing the templates, return it.
+	if loader.compileError != nil {
+		return nil, loader.compileError
 	}
 
 	// Look up and return the template.

@@ -256,7 +256,11 @@ func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
 	template, err := templateLoader.Template(c.Name + "/" + viewName + ".html")
 	if err != nil {
 		// TODO: Instead of writing output directly, return an error Result
-		c.Response.out.Write([]byte(err.Error()))
+		if err, ok := err.(*CompileError); ok {
+			c.Response.out.Write([]byte(err.Html()))
+		} else {
+			c.Response.out.Write([]byte(err.Error()))
+		}
 		return nil
 	}
 
