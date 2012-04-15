@@ -1,0 +1,16 @@
+language: erlang # wither art thou, Go?
+
+install:
+ - hg clone -r weekly https://code.google.com/p/go $HOME/go
+ - cd $HOME/go/src && ./make.bash
+ - mkdir -p $HOME/src || true
+ - mkdir -p $HOME/bin || true
+ - mkdir -p $HOME/pkg || true
+ - export GOPATH=$HOME
+ - export PATH=$PATH:$HOME/go/bin
+ - ln -s $HOME/builds/robfig/go-play $HOME/src/go-play
+ - git clone git://github.com/robfig/go-play.git $HOME/src/play
+
+script:
+ - cd $HOME/src/play && go build -v .
+ - cd $HOME/src/play && go test -v .
