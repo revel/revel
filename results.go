@@ -1,6 +1,7 @@
 package play
 
 import (
+	"bytes"
 	"errors"
 	"reflect"
 )
@@ -17,10 +18,12 @@ type RenderTemplateResult struct {
 }
 
 func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
-	// TODO: Put the session, request, flash, params, errors into context.
-
-	// Render the template into the response buffer.
-	err := r.Template.Render(resp.out, r.RenderArgs)
+	// Render the template into a temporary buffer, to see if there was an error
+	// rendering the template.  If not, then copy it into the response buffer.
+	// TODO: It seems a shame to make a copy of everything, but if we don't,
+	// template errors result in unpredictable HTML for error pages.
+	var b bytes.Buffer
+	err := r.Template.Render(&b, r.RenderArgs)
 	if err != nil {
 		line, description := parseTemplateError(err)
 		compileError := CompileError{
@@ -32,7 +35,11 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
 			SourceType:  "template",
 		}
 		resp.out.Write([]byte(compileError.Html()))
+		return
 	}
+
+	b.WriteTo(resp.out)
+}
 }
 
 type RedirectResult struct {
