@@ -77,6 +77,8 @@ func Run(port int) {
 		Handler: http.HandlerFunc(handle),
 	}
 
+	plugins.OnAppStart()
+
 	err := server.ListenAndServe()
 	if err != nil {
 		LOG.Fatalln("Failed to listen:", err)

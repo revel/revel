@@ -161,6 +161,9 @@ func (c *Controller) SetCookie(cookie *http.Cookie) {
 // Invoke the given method, save headers/cookies to the response, and apply the
 // result.  (e.g. render a template to the response)
 func (c *Controller) Invoke(appControllerPtr reflect.Value, method reflect.Value, methodArgs []reflect.Value) {
+	// Run the plugins.
+	plugins.BeforeRequest(c)
+
 	// Calculate the Result by running the interceptors and the action.
 	resultValue := func() reflect.Value {
 		// Call the BEFORE interceptors
@@ -179,6 +182,8 @@ func (c *Controller) Invoke(appControllerPtr reflect.Value, method reflect.Value
 		}
 		return resultValue
 	}()
+
+	plugins.AfterRequest(c)
 
 	if resultValue.IsNil() {
 		return
