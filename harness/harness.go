@@ -94,7 +94,9 @@ func (hp *harnessProxy) ServeHTTP(wr http.ResponseWriter, req *http.Request) {
 	// First, poll to see if there's a pending error in NotifyReady
 	select {
 	case err := <-hp.NotifyReady:
-		serveError(wr, req, err)
+		if err != nil {
+			serveError(wr, req, err)
+		}
 	default:
 		// Usually do nothing.
 	}
