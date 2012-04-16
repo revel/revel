@@ -1,6 +1,8 @@
 package play
 
 import (
+	"database/sql"
+	"fmt"
 	"log"
 	"net/http"
 	"net/url"
@@ -41,8 +43,10 @@ type Controller struct {
 	Flash      Flash                  // User cookie, cleared after each request.
 	Session    Session                // Session, stored in cookie, signed.
 	Params     Params                 // URL Query parameters
+	Args       map[string]interface{} // Per-request scratch space.
 	RenderArgs map[string]interface{} // Args passed to the template.
 	Validation *Validation            // Data validation helpers
+	Txn        *sql.Tx                // Nil by default, but may be used by the app / plugins
 }
 
 func NewController(w http.ResponseWriter, r *http.Request, ct *ControllerType) *Controller {
@@ -92,7 +96,7 @@ var (
 func NewAppController(w http.ResponseWriter, r *http.Request, controllerName, methodName string) (*Controller, reflect.Value) {
 	var appControllerType *ControllerType = LookupControllerType(controllerName)
 	if appControllerType == nil {
-		LOG.Printf("E: Controller %s not found", controllerName)
+		LOG.Printf("E: Controller %s not found: %s", controllerName, r.URL)
 		return nil, reflect.ValueOf(nil)
 	}
 
@@ -293,11 +297,18 @@ func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
 	}
 }
 
-// Redirect to an action within the same Controller.
-func (c *Controller) Redirect(val interface{}) Result {
-	return &RedirectResult{
-		val: val,
+// Redirect to an action or to a URL.
+//   c.Redirect(Controller.Action)
+//   c.Redirect("/controller/action")
+//   c.Redirect("/controller/%d/action", id)
+func (c *Controller) Redirect(val interface{}, args ...interface{}) Result {
+	if url, ok := val.(string); ok {
+		if len(args) == 0 {
+			return &RedirectToUrlResult{url}
+		}
+		return &RedirectToUrlResult{fmt.Sprintf(url, args...)}
 	}
+	return &RedirectToActionResult{val}
 }
 
 // Restore flash from a request.
@@ -355,12 +366,12 @@ func restoreSession(req *http.Request) Session {
 	return Session(session)
 }
 
-func (f Flash) Error(msg string) {
-	f.Out["error"] = msg
+func (f Flash) Error(msg string, args ...interface{}) {
+	f.Out["error"] = fmt.Sprintf(msg, args)
 }
 
-func (f Flash) Success(msg string) {
-	f.Out["success"] = msg
+func (f Flash) Success(msg string, args ...interface{}) {
+	f.Out["success"] = fmt.Sprintf(msg, args)
 }
 
 func (p Params) Bind(valueType reflect.Type, key string) reflect.Value {

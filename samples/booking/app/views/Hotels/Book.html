@@ -1,0 +1,107 @@
+{{template "header.html" .}}
+
+<script src="/public/js/jquery-ui-1.7.2.custom.min.js" type="text/javascript" charset="utf-8"></script>
+<link rel="stylesheet" type="text/css" media="screen" href="/public/ui-lightness/jquery-ui-1.7.2.custom.css" />
+
+<h1>Book hotel</h1>
+
+<form method="POST" action="/hotels/{{.hotel.HotelId}}/booking">
+  <p>
+    <strong>Name:</strong> {{.hotel.Name}}
+  </p>
+  <p>
+    <strong>Address:</strong> {{.hotel.Address}}
+  </p>
+  <p>
+    <strong>City:</strong> {{.hotel.City}}
+  </p>
+  <p>
+    <strong>State:</strong> {{.hotel.State}}
+  </p>
+  <p>
+    <strong>Zip:</strong> {{.hotel.Zip}}
+  </p>
+  <p>
+    <strong>Country:</strong> {{.hotel.Country}}
+  </p>
+  <p>
+    <strong>Nightly rate:</strong> {{.hotel.Price}}
+  </p>
+  {{with $field := field "booking.CheckInDate" .}}
+    <p class="{{$field.ErrorClass}}">
+      <strong>Check In Date:</strong>
+      <input type="text" size="10" name="{{$field.Name}}" class="datepicker" value="{{$field.Value}}">
+      * <span class="error">{{$field.Error}}</span>
+    </p>
+  {{end}}
+  {{with $field := field "booking.CheckOutDate" .}}
+    <p class="{{$field.ErrorClass}}">
+      <strong>Check Out Date:</strong>
+      <input type="text" size="10" name="{{$field.Name}}" class="datepicker" value="{{$field.Value}}">
+      * <span class="error">{{$field.Error}}</span>
+    </p>
+  {{end}}
+  <p>
+    <strong>Room preference:</strong>
+    <select name="booking.Beds">
+      <option value="1" {{if eq .booking.Beds 1}}selected{{end}}>One king-size bed</option>
+      <option value="2" {{if eq .booking.Beds 2}}selected{{end}}>Two double beds</option>
+      <option value="3" {{if eq .booking.Beds 3}}selected{{end}}>Three beds</option>
+    </select>
+  </p>
+  <p>
+    <strong>Smoking preference:</strong>
+    <input type="radio" name="booking.Smoking" value="true" {{if .booking.Smoking}}checked{{end}}> Smoking
+    <input type="radio" name="booking.Smoking" value="false" {{if .booking.Smoking}}checked{{end}}> Non smoking
+  </p>
+  {{with $field := field "booking.CardNumber" .}}
+    <p class="{{$field.ErrorClass}}">
+      <strong>Credit Card #:</strong>
+      <input type="text" name="{{$field.Name}}" size="16" value="{{$field.Value}}">
+      * <span class="error">{{$field.Error}}</span>
+    </p>
+  {{end}}
+  {{with $field := field "booking.NameOnCard" .}}
+    <p class="{{$field.ErrorClass}}">
+      <strong>Credit Card Name:</strong>
+      <input type="text" name="{{$field.Name}}" size="16" value="{{$field.Value}}">
+      * <span class="error">{{$field.Error}}</span>
+    </p>
+  {{end}}
+  <p>
+    <strong>Credit Card Expiry:</strong>
+    <select name="booking.CardExpMonth"> value:booking?.creditCardExpiryMonth}
+      <option value="1">Jan</option>
+      <option value="2">Feb</option>
+      <option value="3">Mar</option>
+      <option value="4">Apr</option>
+      <option value="5">May</option>
+      <option value="6">Jun</option>
+      <option value="7">Jul</option>
+      <option value="8">Aug</option>
+      <option value="9">Sep</option>
+      <option value="10">Oct</option>
+      <option value="11">Nov</option>
+      <option value="112">Dec</option>
+    </select>
+    <select name="booking.CardExpYear"> value:booking?.creditCardExpiryYear}
+      <option value="2008">2008</option>
+      <option value="2009">2009</option>
+      <option value="2010">2010</option>
+      <option value="2011">2011</option>
+      <option value="2012">2012</option>
+    </select>
+  </p>
+  <p class="buttons">
+    <input type="submit" value="Proceed">
+    <a href="{{url "Hotels.Show" .hotel.HotelId}}">Cancel</a>
+  </p>
+</form>
+
+<script type="text/javascript" charset="utf-8">
+$(function() {
+  $(".datepicker").datepicker({dateFormat: 'yy-mm-dd'});
+);
+</script>
+
+{{template "footer.html" .}}

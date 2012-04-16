@@ -48,6 +48,7 @@ var (
 	// The functions available for use in the templates.
 	tmplFuncs = map[string]interface{}{
 		"url": ReverseUrl,
+		"eq":  func(a, b interface{}) bool { return a == b },
 		"field": func(name string, renderArgs map[string]interface{}) *Field {
 			value, _ := renderArgs["flash"].(map[string]string)[name]
 			err, _ := renderArgs["errors"].(map[string]*ValidationError)[name]
@@ -250,9 +251,8 @@ func ReverseUrl(args ...interface{}) string {
 	methodType := controllerType.Method(meth)
 	argsByName := make(map[string]string)
 	for i, argValue := range args[1:] {
-		argsByName[methodType.Args[i].Name] = argValue.(string)
+		argsByName[methodType.Args[i].Name] = fmt.Sprintf("%s", argValue)
 	}
 
 	return router.Reverse(args[0].(string), argsByName).Url
-	return "#"
 }

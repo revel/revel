@@ -7,6 +7,7 @@ import (
 )
 
 type User struct {
+	UserId                   int
 	Username, Password, Name string
 }
 

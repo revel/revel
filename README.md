@@ -4,16 +4,19 @@ This is a port of the amazing [Play! framework](http://www.playframework.org) to
 
 It is a high productivity web framework
 
+[![Build Status](https://secure.travis-ci.org/robfig/go-play.png?branch=master)](http://travis-ci.org/robfig/go-play)
+
 # Simple Example
 
 Write a routes file declaration for some actions, assets and a catchall:
 
 ```
 # conf/routes
-GET /                     Application.Index
-GET /app/{id}             Application.ShowApp
-GET /public/              staticDir:public
-* /{controller}/{action} {controller}.{action}
+GET /                       Application.Index
+GET /app/{id}               Application.ShowApp
+GET /app/{id}/{action}      Application.{action}
+GET /public/                staticDir:public
+*   /{controller}/{action}  {controller}.{action}
 ```
 
 Declare a Controller:
@@ -90,7 +93,7 @@ func (c Login) DoLogin(username, password string) play.Result {
 
 There are also helpers to make validation errors easy to surface in the template.  Here's an example from the "register a new user" form in the sample application:
 
-```
+```html
 {{template "header.html" .}}
 
 <h1>Register:</h1>
@@ -118,18 +121,13 @@ There are also helpers to make validation errors easy to surface in the template
 
 # Quick start
 
-- Clone this repo into your GOPATH.  (If you don't know what GOPATH is, see appendix)
+From your GOPATH base:
 
 ```
-export GOPATH=/Users/$USER/gocode
-mkdir -p $GOPATH/src
-cd $GOPATH
-git clone github.com/robfig/go-play src/play
+go get github.com/robfig/go-play
+go build -o /bin/play play/cmd
+./bin/play play/samples/booking
 ```
-
-- Build the `play` command line tool: `go build -o ./bin/play src/play/cmd`
-- Run the sample app by invoking the tool with the import path: `./bin/play play/sample`
-- Visit localhost:9000
 
 # How it works
 
@@ -159,15 +157,23 @@ The basic workflow is already working, as you can see in the sample app.
 - Interceptors
 - Form validation
 - Session (signed cookie)
+- application.conf
+- "Production mode"
 
 ## TODO
 
 There is a large list of things left to do.
 
+- SSL
+- Change install procedure to "go get" instead of "git clone"
+- Render other content types.
+- Handle panics -- it should show the bottom line of app source in the trace.
+- Return different return codes.
+- Support streaming response (e.g. should be able to fetch a file, and stream the bytes back to the client) -- return c.Chan(c) or c.Stream(reader)
 - app/views/errors/{404,500}.html
-- application.conf
 - Jobs
 - Plugins
+- Modules
 - Websockets
 - Compiled assets (e.g. LESS, Coffee)
 - Logging
@@ -178,18 +184,24 @@ There is a large list of things left to do.
 - Command line tool support for initializing the default project layout.
 - Windows support (fsnotify package is OSX/Linux only)
 - Performance testing / tuning
-- godoc cleanup
+- godoc cleanup / break into a bunch of packages?
 - AppEngine support
 - HOCON library for application.conf
 - Sample with a rich client side app
   - Accepting / Returning JSON
 - .routes.Application.Method
 - User provided template funcs
-- "Production mode"
 - Multipart forms / file uploads
 - Extract 'field' template helper
 - Extract default error messages to resource file
-
+- Examples: Regular web page, JSON return, streaming return, comet, websocket
+- Clean up stack traces
+- Allow access to requestwriter and make it easy to get Play out of the way when necessary
+- Make it not hard to do this: https://gist.github.com/2328236
+- BigDecimal replacement (for currency / that works with MySQL)
+- PrettyError.
+- Fixtures
+- How to do moreStyles / moreScripts equivalent.
 
 # File layout
 

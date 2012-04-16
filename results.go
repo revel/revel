@@ -40,13 +40,21 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
 
 	b.WriteTo(resp.out)
 }
+
+type RedirectToUrlResult struct {
+	url string
 }
 
-type RedirectResult struct {
+func (r *RedirectToUrlResult) Apply(req *Request, resp *Response) {
+	resp.Headers.Set("Location", r.url)
+	resp.out.WriteHeader(302)
+}
+
+type RedirectToActionResult struct {
 	val interface{}
 }
 
-func (r *RedirectResult) Apply(req *Request, resp *Response) {
+func (r *RedirectToActionResult) Apply(req *Request, resp *Response) {
 	url, err := getRedirectUrl(r.val)
 	if err != nil {
 		LOG.Println("Couldn't resolve redirect:", err.Error())

@@ -16,8 +16,24 @@ func connected(c *play.Controller) *models.User {
 	if c.RenderArgs["user"] != nil {
 		return c.RenderArgs["user"].(*models.User)
 	}
-	if _, ok := c.Session["user"]; ok {
-		// TODO: Return the user by username
+	if username, ok := c.Session["user"]; ok {
+		rows, err := c.Txn.Query(`
+select Password, Name
+  from User where Username = :Username`, username)
+		if err != nil {
+			panic(err)
+		}
+		defer rows.Close()
+		if !rows.Next() {
+			return nil
+		}
+
+		user := &models.User{Username: username}
+		err = rows.Scan(&user.Password, &user.Name)
+		if err != nil {
+			panic(err)
+		}
+		return user
 	}
 	return nil
 }
@@ -51,12 +67,43 @@ func (c Application) SaveUser(user models.User, verifyPassword string) play.Resu
 		return c.Redirect(Application.Register)
 	}
 
-	// TODO: Create user.
+	_, err := c.Txn.Exec("insert into User (Username, Password, Name) values (?, ?, ?)",
+		user.Username, user.Password, user.Name)
+	if err != nil {
+		panic(err)
+	}
+
 	c.Session["user"] = user.Username
 	c.Flash.Success("Welcome, " + user.Name)
 	return c.Redirect(Hotels.Index)
 }
 
+func (c Application) Login(username, password string) play.Result {
+	rows, err := c.Txn.Query(
+		"select 1 from User where Username = ? and Password = ?",
+		username, password)
+	if err != nil {
+		panic(err)
+	}
+	defer rows.Close()
+	if rows.Next() {
+		c.Session["user"] = username
+		c.Flash.Success("Welcome, " + username)
+		return c.Redirect(Hotels.Index)
+	}
+
+	c.Flash.Out["username"] = username
+	c.Flash.Error("Login failed")
+	return c.Redirect(Application.Index)
+}
+
+func (c Application) Logout() play.Result {
+	for k := range c.Session {
+		delete(c.Session, k)
+	}
+	return c.Redirect(Application.Index)
+}
+
 func init() {
-	play.Intercept(addUser, play.BEFORE, &Application{})
+	play.InterceptFunc(addUser, play.BEFORE, &Application{})
 }
