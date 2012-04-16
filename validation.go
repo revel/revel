@@ -3,6 +3,7 @@ package play
 import (
 	"fmt"
 	"regexp"
+	"time"
 )
 
 type ValidationError struct {
@@ -92,6 +93,9 @@ func (r Required) IsSatisfied(obj interface{}) bool {
 	}
 	if i, ok := obj.(int); ok {
 		return i > 0
+	}
+	if t, ok := obj.(time.Time); ok {
+		return !t.IsZero()
 	}
 	return true
 }
