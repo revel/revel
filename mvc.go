@@ -367,11 +367,19 @@ func restoreSession(req *http.Request) Session {
 }
 
 func (f Flash) Error(msg string, args ...interface{}) {
-	f.Out["error"] = fmt.Sprintf(msg, args)
+	if len(args) == 0 {
+		f.Out["error"] = msg
+	} else {
+		f.Out["error"] = fmt.Sprintf(msg, args)
+	}
 }
 
 func (f Flash) Success(msg string, args ...interface{}) {
-	f.Out["success"] = fmt.Sprintf(msg, args)
+	if len(args) == 0 {
+		f.Out["success"] = msg
+	} else {
+		f.Out["success"] = fmt.Sprintf(msg, args)
+	}
 }
 
 func (p Params) Bind(valueType reflect.Type, key string) reflect.Value {
