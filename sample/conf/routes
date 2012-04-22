@@ -1,5 +1,0 @@
-# This is a comment
-GET /                     Application.Index
-GET /app/{id}             Application.ShowApp
-GET /public/              staticDir:public
-* /{controller}/{action} {controller}.{action}
