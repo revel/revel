@@ -255,7 +255,7 @@ func handleInvocationPanic(c *Controller, err interface{}) {
 	appFrame := strings.Index(stack, BasePath)
 	if appFrame == -1 {
 		// How embarassing.
-		LOG.Print("Framework Panic:\n" + stack)
+		LOG.Println(err, "\n", stack)
 		c.Response.out.WriteHeader(500)
 		c.Response.out.Write([]byte(stack))
 		return
@@ -267,7 +267,7 @@ func handleInvocationPanic(c *Controller, err interface{}) {
 	fmt.Sscan(stackElement[colonIndex+1:], &line)
 
 	// Log the trace starting at the app frame.
-	LOG.Print("Application Panic:\n" + stack[appFrame:])
+	LOG.Println(err, "\n", stack[appFrame:])
 
 	// Show an error page.
 	description := "Unspecified error"
