@@ -23,7 +23,7 @@ type TemplateLoader struct {
 	// This is the set of all templates under views
 	templateSet *template.Template
 	// If an error was encountered parsing the templates, it is stored here.
-	compileError *CompileError
+	compileError *Error
 }
 
 type Template interface {
@@ -130,7 +130,7 @@ func (loader *TemplateLoader) refresh() {
 
 		if err != nil {
 			line, description := parseTemplateError(err)
-			return &CompileError{
+			return &Error{
 				Title:       "Template Compilation Error",
 				Path:        templateName,
 				Description: description,
@@ -144,7 +144,7 @@ func (loader *TemplateLoader) refresh() {
 	if walkErr != nil {
 		// There was an error parsing a template.
 		// Log it to the console and return a friendly HTML error page.
-		err := walkErr.(*CompileError)
+		err := walkErr.(*Error)
 		LOG.Printf("Template compilation error (In %s around line %d):\n%s",
 			err.Path, err.Line, err.Description)
 		loader.compileError = err

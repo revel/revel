@@ -26,7 +26,7 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
 	err := r.Template.Render(&b, r.RenderArgs)
 	if err != nil {
 		line, description := parseTemplateError(err)
-		compileError := CompileError{
+		compileError := Error{
 			Title:       "Template Execution Error",
 			Path:        r.Template.Name(),
 			Description: description,

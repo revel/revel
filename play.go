@@ -27,7 +27,7 @@ var (
 	AppMode RunMode // DEV or PROD
 
 	// Play installation details
-	PlayTemplatePath string // e.g. "/Users/robfig/gocode/src/play/app/views"
+	PlayTemplatePath string // e.g. "/Users/robfig/gocode/src/play/templates"
 
 	LOG = log.New(os.Stdout, "", log.Ldate|log.Ltime|log.Lshortfile)
 
@@ -56,7 +56,7 @@ func Init(importPath string, mode RunMode) {
 	if err != nil {
 		log.Fatalf("Failed to find play code.")
 	}
-	PlayTemplatePath = path.Join(playPkg.Dir, "app", "views")
+	PlayTemplatePath = path.Join(playPkg.Dir, "templates")
 
 	// Load application.conf
 	Config, err = LoadConfig(

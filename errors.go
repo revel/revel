@@ -2,14 +2,13 @@ package play
 
 import (
 	"bytes"
-	"fmt"
 	"html/template"
 	"io"
 	"path"
 )
 
 // A compilation error, used as an argument to the CompileError.html template.
-type CompileError struct {
+type Error struct {
 	SourceType               string   // The type of source that failed to build.
 	Title, Path, Description string   // Description of the error, as presented to the user.
 	Line, Column             int      // Where the error was encountered.
@@ -24,12 +23,12 @@ type sourceLine struct {
 	IsError bool
 }
 
-func (e CompileError) Error() string {
-	return fmt.Sprintf("%s:%d: %s", e.Path, e.Line, e.Description)
+func (e Error) Error() string {
+	return e.Description
 }
 
 // Returns a snippet of the source around where the error occurred.
-func (e *CompileError) ContextSource() []sourceLine {
+func (e *Error) ContextSource() []sourceLine {
 	if e.SourceLines == nil {
 		return nil
 	}
@@ -52,7 +51,7 @@ func (e *CompileError) ContextSource() []sourceLine {
 
 var errorTemplate *template.Template
 
-func (e *CompileError) Html() string {
+func (e *Error) Html() string {
 	var b bytes.Buffer
 	RenderError(&b, &e)
 	return b.String()
@@ -61,7 +60,7 @@ func (e *CompileError) Html() string {
 func RenderError(buffer io.Writer, data interface{}) {
 	if errorTemplate == nil {
 		errorTemplate = template.Must(template.ParseFiles(
-			path.Join(PlayTemplatePath, "CompileError.html")))
+			path.Join(PlayTemplatePath, "500.html")))
 	}
 	errorTemplate.Execute(buffer, &data)
 }

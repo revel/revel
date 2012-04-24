@@ -54,7 +54,7 @@ type methodMap map[string][]*MethodSpec
 
 // Parse the app directory and return a list of the controller types found.
 // Returns a CompileError if the parsing fails.
-func ScanControllers(path string) (specs []*ControllerSpec, compileError *play.CompileError) {
+func ScanControllers(path string) (specs []*ControllerSpec, compileError *play.Error) {
 	// Parse files within the path.
 	var pkgs map[string]*ast.Package
 	fset := token.NewFileSet()
@@ -62,7 +62,7 @@ func ScanControllers(path string) (specs []*ControllerSpec, compileError *play.C
 	if err != nil {
 		if errList, ok := err.(scanner.ErrorList); ok {
 			var pos token.Position = errList[0].Pos
-			return nil, &play.CompileError{
+			return nil, &play.Error{
 				SourceType:  ".go source",
 				Title:       "Go Compilation Error",
 				Path:        pos.Filename,

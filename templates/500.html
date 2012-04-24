@@ -90,7 +90,11 @@
         {{.Title}}
       </h1>
       <p>
-        The {{.SourceType}} <strong>{{.Path}}</strong> does not compile: <strong>{{.Description}}</strong>
+        {{if .SourceType}}
+          The {{.SourceType}} <strong>{{.Path}}</strong> does not compile: <strong>{{.Description}}</strong>
+        {{else}}
+          {{.Description}}
+        {{end}}
       </p>
     </div>
     {{if .Path}}

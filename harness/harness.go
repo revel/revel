@@ -117,7 +117,7 @@ func (hp *harnessProxy) ServeHTTP(wr http.ResponseWriter, req *http.Request) {
 
 func serveError(wr http.ResponseWriter, req *http.Request, err error) {
 	switch e := err.(type) {
-	case *play.CompileError:
+	case *play.Error:
 		play.RenderError(wr, e)
 	default:
 		play.RenderError(wr, map[string]string{
@@ -258,7 +258,7 @@ func Run(mode play.RunMode) {
 var cmd *exec.Cmd
 
 // Rebuild the Play! application and run it on the given port.
-func rebuild(port int) (compileError *play.CompileError) {
+func rebuild(port int) (compileError *play.Error) {
 	controllerSpecs, compileError := ScanControllers(path.Join(play.AppPath, "controllers"))
 	if compileError != nil {
 		return compileError
@@ -392,13 +392,13 @@ func uniqueImportPaths(specs []*ControllerSpec) (paths []string) {
 }
 
 // Parse the output of the "go build" command.
-// Return a detailed CompileError.
-func newCompileError(output []byte) *play.CompileError {
+// Return a detailed Error.
+func newCompileError(output []byte) *play.Error {
 	errorMatch := regexp.MustCompile(`(?m)^([^:#]+):(\d+):(\d+:)? (.*)$`).
 		FindSubmatch(output)
 	if errorMatch == nil {
 		log.Println("Failed to parse build errors:\n", string(output))
-		return &play.CompileError{
+		return &play.Error{
 			SourceType:  "Go code",
 			Title:       "Go Compilation Error",
 			Description: "See console for build error.",
@@ -411,7 +411,7 @@ func newCompileError(output []byte) *play.CompileError {
 		absFilename, _ = filepath.Abs(relFilename)
 		line, _        = strconv.Atoi(string(errorMatch[2]))
 		description    = string(errorMatch[4])
-		compileError   = &play.CompileError{
+		compileError   = &play.Error{
 			SourceType:  "Go code",
 			Title:       "Go Compilation Error",
 			Path:        relFilename,

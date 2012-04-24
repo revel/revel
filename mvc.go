@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"reflect"
 	"runtime"
+	"runtime/debug"
 	"strings"
 )
 
@@ -168,6 +169,12 @@ func (c *Controller) Invoke(appControllerPtr reflect.Value, method reflect.Value
 	// Run the plugins.
 	plugins.BeforeRequest(c)
 
+	defer func() {
+		if err := recover(); err != nil {
+			handleInvocationPanic(c, err)
+		}
+	}()
+
 	// Calculate the Result by running the interceptors and the action.
 	resultValue := func() reflect.Value {
 		// Call the BEFORE interceptors
@@ -236,6 +243,42 @@ func (c *Controller) Invoke(appControllerPtr reflect.Value, method reflect.Value
 	result.Apply(c.Request, c.Response)
 }
 
+// This function handles a panic in an action invocation.
+// It cleans up the stack trace, logs it, and displays an error page.
+func handleInvocationPanic(c *Controller, err interface{}) {
+	plugins.OnException(c, err)
+
+	// Parse the filename and line from the originating line of app code.
+	// /Users/robfig/code/gocode/src/play/samples/booking/app/controllers/hotels.go:191 (0x44735)
+	stack := string(debug.Stack())
+	appFrame := strings.Index(stack, BasePath)
+	if appFrame == -1 {
+		// How embarassing.
+		LOG.Print("Framework Panic:\n" + stack)
+		c.Response.out.WriteHeader(500)
+		c.Response.out.Write([]byte(stack))
+		return
+	}
+	stackElement := stack[appFrame : appFrame+strings.Index(stack[appFrame:], "\n")]
+	colonIndex := strings.LastIndex(stackElement, ":")
+	filename := stackElement[:colonIndex]
+	var line int
+	fmt.Sscan(stackElement[colonIndex+1:], &line)
+
+	// Log the trace starting at the app frame.
+	LOG.Print("Application Panic:\n" + stack[appFrame:])
+
+	// Show an error page.
+	c.Response.out.WriteHeader(500)
+	c.Response.out.Write([]byte((&Error{
+		Title:       "Panic",
+		Path:        filename[len(BasePath):],
+		Line:        line,
+		Description: "Something went wrong",
+		SourceLines: MustReadLines(filename),
+	}).Html()))
+}
+
 func (c *Controller) invokeInterceptors(when InterceptTime, appControllerPtr reflect.Value) Result {
 	var result Result
 	for _, intc := range getInterceptors(when, appControllerPtr) {
@@ -265,7 +308,7 @@ func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
 	template, err := templateLoader.Template(c.Name + "/" + viewName + ".html")
 	if err != nil {
 		// TODO: Instead of writing output directly, return an error Result
-		if err, ok := err.(*CompileError); ok {
+		if err, ok := err.(*Error); ok {
 			c.Response.out.Write([]byte(err.Html()))
 		} else {
 			c.Response.out.Write([]byte(err.Error()))
