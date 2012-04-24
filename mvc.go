@@ -166,14 +166,15 @@ func (c *Controller) SetCookie(cookie *http.Cookie) {
 // Invoke the given method, save headers/cookies to the response, and apply the
 // result.  (e.g. render a template to the response)
 func (c *Controller) Invoke(appControllerPtr reflect.Value, method reflect.Value, methodArgs []reflect.Value) {
-	// Run the plugins.
-	plugins.BeforeRequest(c)
 
 	defer func() {
 		if err := recover(); err != nil {
 			handleInvocationPanic(c, err)
 		}
 	}()
+
+	// Run the plugins.
+	plugins.BeforeRequest(c)
 
 	// Calculate the Result by running the interceptors and the action.
 	resultValue := func() reflect.Value {
@@ -269,12 +270,16 @@ func handleInvocationPanic(c *Controller, err interface{}) {
 	LOG.Print("Application Panic:\n" + stack[appFrame:])
 
 	// Show an error page.
+	description := "Unspecified error"
+	if err != nil {
+		description = fmt.Sprintln(err)
+	}
 	c.Response.out.WriteHeader(500)
 	c.Response.out.Write([]byte((&Error{
 		Title:       "Panic",
 		Path:        filename[len(BasePath):],
 		Line:        line,
-		Description: "Something went wrong",
+		Description: description,
 		SourceLines: MustReadLines(filename),
 	}).Html()))
 }
