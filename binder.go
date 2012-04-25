@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type keyValue struct {
@@ -54,7 +55,15 @@ func init() {
 	KindBinders[reflect.Slice] = bindSlice
 	KindBinders[reflect.Struct] = bindStruct
 	KindBinders[reflect.Ptr] = bindPointer
+
+	TypeBinders[reflect.TypeOf(time.Time{})] = bindTime
 }
+
+var (
+	// Applications can add custom time formats to this array, and they will be
+	// automatically attempted when binding a time.Time.
+	TimeFormats = []string{"2006-01-02", "2006-01-02 15:04"}
+)
 
 func bindStr(valueType reflect.Type, kv []keyValue) reflect.Value {
 	return reflect.ValueOf(kv[0].value)
@@ -156,7 +165,7 @@ func bindStruct(valueType reflect.Type, kvArr []keyValue) reflect.Value {
 		// e.g. foo.bar.baz => bar.baz
 		dot := strings.Index(kv.key, ".")
 		if dot == -1 {
-			LOG.Println("bindStruct: missing dot", kv.key)
+			LOG.Println("bindStruct: missing dot binding", valueType, "key", kv.key, "value", kv.value)
 			return reflect.Zero(valueType)
 		}
 		subKey := kv.key[dot+1:]
@@ -201,6 +210,20 @@ func bindStruct(valueType reflect.Type, kvArr []keyValue) reflect.Value {
 
 func bindPointer(valueType reflect.Type, kvArr []keyValue) reflect.Value {
 	return Bind(valueType.Elem(), kvArr).Addr()
+}
+
+// This expects a single keyValue.
+func bindTime(valueType reflect.Type, kvArr []keyValue) reflect.Value {
+	if len(kvArr) >= 0 {
+		timeStr := kvArr[0].value
+
+		for _, f := range TimeFormats {
+			if r, err := time.Parse(f, timeStr); err == nil {
+				return reflect.ValueOf(r)
+			}
+		}
+	}
+	return reflect.Zero(valueType)
 }
 
 // Parse the value string into a real Go value.

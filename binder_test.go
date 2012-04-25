@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 	"testing"
+	"time"
 )
 
 type binderTestCaseArgs struct {
@@ -23,6 +24,11 @@ type B struct {
 	Extra string
 }
 
+var (
+	testDate     = time.Date(1982, time.July, 9, 0, 0, 0, 0, time.UTC)
+	testDatetime = time.Date(1982, time.July, 9, 21, 30, 0, 0, time.UTC)
+)
+
 var binderTestCases = map[*binderTestCaseArgs]interface{}{
 	&binderTestCaseArgs{"int", 0, []keyValue{{"", "1"}}}:                                 1,
 	&binderTestCaseArgs{"str", "", []keyValue{{"", "hello"}}}:                            "hello",
@@ -32,6 +38,8 @@ var binderTestCases = map[*binderTestCaseArgs]interface{}{
 	&binderTestCaseArgs{"bool", false, []keyValue{{"", "false"}}}:                        false,
 	&binderTestCaseArgs{"bool", false, []keyValue{{"", "0"}}}:                            false,
 	&binderTestCaseArgs{"bool", false, []keyValue{{"", ""}}}:                             false,
+	&binderTestCaseArgs{"date", time.Time{}, []keyValue{{"", "1982-07-09"}}}:             testDate,
+	&binderTestCaseArgs{"dt", time.Time{}, []keyValue{{"", "1982-07-09 21:30"}}}:         testDatetime,
 	&binderTestCaseArgs{"arr", []int{}, []keyValue{{"arr[0]", "1"}}}:                     []int{1},
 	&binderTestCaseArgs{"uarr", []int{}, []keyValue{{"arr[]", "1"}}}:                     []int{1},
 	&binderTestCaseArgs{"arruarr", [][]int{{}}, []keyValue{{"arr[0][]", "1"}}}:           [][]int{{1}},
@@ -52,6 +60,9 @@ var binderTestCases = map[*binderTestCaseArgs]interface{}{
 		{"a.Id", "123"}, {"a.Name", "rob"}, {"a.B.Extra", "hello"}},
 	}: &A{Id: 123, Name: "rob", B: B{Extra: "hello"}},
 
+	// This one uses a custom-added TimeFormat
+	&binderTestCaseArgs{"customDate", time.Time{}, []keyValue{{"", "07/09/1982"}}}: testDate,
+
 	// TODO: Tests that use TypeBinders
 
 	// Invalid value tests (the result should always be the zero value for that type)
@@ -63,6 +74,10 @@ var binderTestCases = map[*binderTestCaseArgs]interface{}{
 	&binderTestCaseArgs{"private field", A{}, []keyValue{
 		{"a.private", "123"}},
 	}: A{},
+}
+
+func init() {
+	TimeFormats = append(TimeFormats, "01/02/2006")
 }
 
 func TestBinder(t *testing.T) {
