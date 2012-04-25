@@ -418,7 +418,7 @@ func (f Flash) Error(msg string, args ...interface{}) {
 	if len(args) == 0 {
 		f.Out["error"] = msg
 	} else {
-		f.Out["error"] = fmt.Sprintf(msg, args)
+		f.Out["error"] = fmt.Sprintf(msg, args...)
 	}
 }
 
@@ -426,7 +426,7 @@ func (f Flash) Success(msg string, args ...interface{}) {
 	if len(args) == 0 {
 		f.Out["success"] = msg
 	} else {
-		f.Out["success"] = fmt.Sprintf(msg, args)
+		f.Out["success"] = fmt.Sprintf(msg, args...)
 	}
 }
 
