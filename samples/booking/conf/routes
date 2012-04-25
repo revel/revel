@@ -8,7 +8,7 @@ GET     /hotels/list                            Hotels.List
 GET     /hotels/{id}                            Hotels.Show
 GET     /hotels/{id}/booking                    Hotels.Book
 POST    /hotels/{id}/booking                    Hotels.ConfirmBooking
-DELETE  /bookings/{id}                          Hotels.CancelBooking
+POST    /bookings/{id}/cancel                   Hotels.CancelBooking
 GET     /register                               Application.Register
 POST    /register                               Application.SaveUser
 GET     /settings                               Hotels.Settings

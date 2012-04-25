@@ -159,6 +159,7 @@ The basic workflow is already working, as you can see in the sample app.
 - Session (signed cookie)
 - application.conf
 - "Production mode"
+- Handle panics -- it shows the bottom line of app source in the trace.
 
 ## TODO
 
@@ -167,7 +168,6 @@ There is a large list of things left to do.
 - SSL
 - Change install procedure to "go get" instead of "git clone"
 - Render other content types.
-- Handle panics -- it should show the bottom line of app source in the trace.
 - Return different return codes.
 - Support streaming response (e.g. should be able to fetch a file, and stream the bytes back to the client) -- return c.Chan(c) or c.Stream(reader)
 - app/views/errors/{404,500}.html
@@ -182,7 +182,6 @@ There is a large list of things left to do.
 - Internationalization support
 - Testing tools
 - Command line tool support for initializing the default project layout.
-- Windows support (fsnotify package is OSX/Linux only)
 - Performance testing / tuning
 - godoc cleanup / break into a bunch of packages?
 - AppEngine support
@@ -199,7 +198,6 @@ There is a large list of things left to do.
 - Allow access to requestwriter and make it easy to get Play out of the way when necessary
 - Make it not hard to do this: https://gist.github.com/2328236
 - BigDecimal replacement (for currency / that works with MySQL)
-- PrettyError.
 - Fixtures
 - How to do moreStyles / moreScripts equivalent.
 

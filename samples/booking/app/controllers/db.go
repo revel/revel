@@ -22,7 +22,7 @@ type DbPlugin struct {
 }
 
 func (p DbPlugin) OnAppStart() {
-	fmt.Println("OnAppStart")
+	fmt.Println("Open DB")
 	var err error
 	db, err = sql.Open("sqlite3", ":memory:")
 	if err != nil {
@@ -32,7 +32,7 @@ func (p DbPlugin) OnAppStart() {
 	// Create tables
 	_, err = db.Exec(`
 create table User (
-  UserId   int,
+  UserId   integer primary key autoincrement,
   Username varchar(20),
   Password varchar(20),
   Name varchar(100))`)
@@ -48,7 +48,7 @@ create table User (
 
 	_, err = db.Exec(`
 create table Booking (
-  BookingId    int,
+  BookingId    integer primary key autoincrement,
   UserId       int,
   HotelId      int,
   CheckInDate  datetime,
@@ -66,7 +66,7 @@ create table Booking (
 
 	_, err = db.Exec(`
 create table Hotel (
-  HotelId int,
+  HotelId integer primary key autoincrement,
   Name    varchar(50),
   Address varchar(100),
   City    varchar(40),
@@ -80,14 +80,14 @@ create table Hotel (
 	}
 
 	hotels := []string{
-		"(1, 'Marriott Courtyard', 'Tower Pl, Buckhead', 'Atlanta', 'GA', '30305', 'USA', 120)",
-		"(2, 'W Hotel', 'Union Square, Manhattan', 'New York', 'NY', '10011', 'USA', 450)",
-		"(3, 'Hotel Rouge', '1315 16th St NW', 'Washington', 'DC', '20036', 'USA', 250)",
+		"('Marriott Courtyard', 'Tower Pl, Buckhead', 'Atlanta', 'GA', '30305', 'USA', 120)",
+		"('W Hotel', 'Union Square, Manhattan', 'New York', 'NY', '10011', 'USA', 450)",
+		"('Hotel Rouge', '1315 16th St NW', 'Washington', 'DC', '20036', 'USA', 250)",
 	}
 
 	for _, h := range hotels {
 		_, err = db.Exec(`insert into Hotel
-(HotelId, Name, Address, City, State, Zip, Country, Price)
+(Name, Address, City, State, Zip, Country, Price)
  values ` + h)
 		if err != nil {
 			panic(err)
@@ -96,7 +96,6 @@ create table Hotel (
 }
 
 func (p DbPlugin) BeforeRequest(c *play.Controller) {
-	fmt.Println("BeforeRequest")
 	txn, err := db.Begin()
 	if err != nil {
 		panic(err)
@@ -105,9 +104,7 @@ func (p DbPlugin) BeforeRequest(c *play.Controller) {
 }
 
 func (p DbPlugin) AfterRequest(c *play.Controller) {
-	fmt.Println("AfterRequest")
 	if err := c.Txn.Commit(); err != nil {
-		fmt.Println("ErrTxDone")
 		if err != sql.ErrTxDone {
 			panic(err)
 		}
@@ -116,9 +113,7 @@ func (p DbPlugin) AfterRequest(c *play.Controller) {
 }
 
 func (p DbPlugin) OnException(c *play.Controller, err interface{}) {
-	fmt.Println("OnException")
 	if err := c.Txn.Rollback(); err != nil {
-		fmt.Println("ErrTxDone")
 		if err != sql.ErrTxDone {
 			panic(err)
 		}

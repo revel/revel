@@ -43,16 +43,20 @@
   {{end}}
   <p>
     <strong>Room preference:</strong>
-    <select name="booking.Beds">
-      <option value="1" {{if eq .booking.Beds 1}}selected{{end}}>One king-size bed</option>
-      <option value="2" {{if eq .booking.Beds 2}}selected{{end}}>Two double beds</option>
-      <option value="3" {{if eq .booking.Beds 3}}selected{{end}}>Three beds</option>
+    {{with $field := field "booking.Beds" .}}
+    <select name="{{$field.Name}}">
+      {{option $field "1" "One king-size bed"}}
+      {{option $field "2" "Two double beds"}}
+      {{option $field "3" "Three beds"}}
     </select>
+    {{end}}
   </p>
   <p>
     <strong>Smoking preference:</strong>
-    <input type="radio" name="booking.Smoking" value="true" {{if .booking.Smoking}}checked{{end}}> Smoking
-    <input type="radio" name="booking.Smoking" value="false" {{if .booking.Smoking}}checked{{end}}> Non smoking
+    {{with $field := field "booking.Smoking" .}}
+      {{radio $field "true"}} Smoking
+      {{radio $field "false"}} Non smoking
+    {{end}}
   </p>
   {{with $field := field "booking.CardNumber" .}}
     <p class="{{$field.ErrorClass}}">
@@ -70,27 +74,31 @@
   {{end}}
   <p>
     <strong>Credit Card Expiry:</strong>
-    <select name="booking.CardExpMonth"> value:booking?.creditCardExpiryMonth}
-      <option value="1">Jan</option>
-      <option value="2">Feb</option>
-      <option value="3">Mar</option>
-      <option value="4">Apr</option>
-      <option value="5">May</option>
-      <option value="6">Jun</option>
-      <option value="7">Jul</option>
-      <option value="8">Aug</option>
-      <option value="9">Sep</option>
-      <option value="10">Oct</option>
-      <option value="11">Nov</option>
-      <option value="112">Dec</option>
+    {{with $field := field "booking.CardExpMonth" .}}
+    <select name="{{$field.Name}}">
+      {{option $field "1" "Jan"}}
+      {{option $field "2" "Feb"}}
+      {{option $field "3" "Mar"}}
+      {{option $field "4" "Apr"}}
+      {{option $field "5" "May"}}
+      {{option $field "6" "Jun"}}
+      {{option $field "7" "Jul"}}
+      {{option $field "8" "Aug"}}
+      {{option $field "9" "Sep"}}
+      {{option $field "10" "Oct"}}
+      {{option $field "11" "Nov"}}
+      {{option $field "12" "Dec"}}
     </select>
-    <select name="booking.CardExpYear"> value:booking?.creditCardExpiryYear}
-      <option value="2008">2008</option>
-      <option value="2009">2009</option>
-      <option value="2010">2010</option>
-      <option value="2011">2011</option>
-      <option value="2012">2012</option>
+    {{end}}
+    {{with $field := field "booking.CardExpYear" .}}
+    <select name="{{$field.Name}}">
+      {{option $field "2008" "2008"}}
+      {{option $field "2009" "2009"}}
+      {{option $field "2010" "2010"}}
+      {{option $field "2011" "2011"}}
+      {{option $field "2012" "2012"}}
     </select>
+    {{end}}
   </p>
   <p class="buttons">
     <input type="submit" value="Proceed">
@@ -101,7 +109,7 @@
 <script type="text/javascript" charset="utf-8">
 $(function() {
   $(".datepicker").datepicker({dateFormat: 'yy-mm-dd'});
-);
+});
 </script>
 
 {{template "footer.html" .}}

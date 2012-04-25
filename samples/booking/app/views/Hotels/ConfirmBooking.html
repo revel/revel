@@ -2,7 +2,7 @@
 
 <h1>Confirm hotel booking</h1>
 
-<form method="POST" action="{{url "Hotels.ConfirmBooking" .hotel.Id}}">
+<form method="POST" action="/hotels/{{.hotel.HotelId}}/booking">
   <p>
     <strong>Name:</strong> {{.hotel.Name}}
   </p>
@@ -45,12 +45,13 @@
     <input type="hidden" name="booking.NameOnCard" value="{{.booking.NameOnCard}}">
     <input type="hidden" name="booking.CardExpMonth" value="{{.booking.CardExpMonth}}">
     <input type="hidden" name="booking.CardExpYear" value="{{.booking.CardExpYear}}">
+    <input type="hidden" name="booking.Smoking" value="{{.booking.Smoking}}">
   </p>
 
   <p class="buttons">
     <input type="submit" value="Confirm" name="confirm">
     <input type="submit" value="Revise" name="revise">
-    <a href="{{url "Hotels.Show" .hotel.Id}}">Cancel</a>
+    <a href="/hotels/{{.hotel.HotelId}}">Cancel</a>
   </p>
 </form>
 

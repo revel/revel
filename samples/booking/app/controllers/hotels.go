@@ -6,6 +6,7 @@ import (
 	"play"
 	"play/samples/booking/app/models"
 	"strings"
+	"time"
 )
 
 func checkUser(c *play.Controller) play.Result {
@@ -32,14 +33,21 @@ select BookingId, UserId, HotelId, CheckInDate, CheckOutDate,
 	}
 	defer rows.Close()
 	var bookings []*models.Booking
+	var checkInDate, checkOutDate string
 	for rows.Next() {
 		b := &models.Booking{}
-		err := rows.Scan(&b.BookingId, &b.User.UserId, &b.Hotel.HotelId, &b.CheckInDate, &b.CheckOutDate,
+		err := rows.Scan(&b.BookingId, &b.UserId, &b.HotelId, &checkInDate, &checkOutDate,
 			&b.CardNumber, &b.NameOnCard, &b.CardExpMonth, &b.CardExpYear, &b.Smoking, &b.Beds)
 		if err != nil {
 			panic(err)
 		}
+		b.CheckInDate, _ = time.Parse("2006-01-02", checkInDate)
+		b.CheckOutDate, _ = time.Parse("2006-01-02", checkOutDate)
 		bookings = append(bookings, b)
+	}
+
+	for _, b := range bookings {
+		b.Hotel = c.loadHotelById(b.HotelId)
 	}
 
 	return c.Render(title, bookings)
@@ -56,16 +64,16 @@ func (c Hotels) List(search string, size, page int) play.Result {
 	var hotels []*models.Hotel
 	if search == "" {
 		hotels = loadHotels(c.Txn.Query(`
-select Name, Address, City, State, Zip, Country, Price
+select HotelId, Name, Address, City, State, Zip, Country, Price
   from Hotel
  limit ?, ?`, (page-1)*size, size))
 	} else {
 		search = strings.ToLower(search)
 		hotels = loadHotels(c.Txn.Query(`
-select Name, Address, City, State, Zip, Country, Price
+select HotelId, Name, Address, City, State, Zip, Country, Price
   from Hotel
  where lower(Name) like ? or lower(City) like ?
- limit ?, ?`, "%"+search+"%", "%"+search+"%", page*size, size))
+ limit ?, ?`, "%"+search+"%", "%"+search+"%", (page-1)*size, size))
 	}
 
 	return c.Render(title, hotels, search, size, page, nextPage)
@@ -158,8 +166,8 @@ insert into Booking (
 ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 			booking.User.UserId,
 			booking.Hotel.HotelId,
-			booking.CheckInDate,
-			booking.CheckOutDate,
+			booking.CheckInDate.Format("2006-01-02"),
+			booking.CheckOutDate.Format("2006-01-02"),
 			booking.CardNumber,
 			booking.NameOnCard,
 			booking.CardExpMonth,
@@ -170,7 +178,7 @@ insert into Booking (
 			panic(err)
 		}
 		bookingId, _ := result.LastInsertId()
-		c.Flash.Success("Thank you, %s, your confirmation number for %s is %s",
+		c.Flash.Success("Thank you, %s, your confirmation number for %s is %d",
 			booking.User.Name, hotel.Name, bookingId)
 		return c.Redirect(Hotels.Index)
 	}

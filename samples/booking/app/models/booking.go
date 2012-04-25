@@ -8,14 +8,20 @@ import (
 )
 
 type Booking struct {
-	BookingId                 int
-	User                      *User
-	Hotel                     *Hotel
-	CheckInDate, CheckOutDate time.Time
-	CardNumber, NameOnCard    string
-	CardExpMonth, CardExpYear int
-	Smoking                   bool
-	Beds                      int
+	BookingId    int
+	UserId       int
+	HotelId      int
+	CheckInDate  time.Time
+	CheckOutDate time.Time
+	CardNumber   string
+	NameOnCard   string
+	CardExpMonth int
+	CardExpYear  int
+	Smoking      bool
+	Beds         int
+
+	User  *User
+	Hotel *Hotel
 }
 
 // TODO: Make an interface for Validate() and then validation can pass in the
@@ -26,7 +32,7 @@ func (b Booking) Validate(v *play.Validation) {
 	v.Required(b.CheckInDate).Key("booking.CheckInDate")
 	v.Required(b.CheckOutDate).Key("booking.CheckOutDate")
 
-	v.Match(b.CardNumber, regexp.MustCompile(`\d{16}$`)).
+	v.Match(b.CardNumber, regexp.MustCompile(`\d{16}`)).
 		Key("booking.CardNumber").
 		Message("Credit card number must be numeric and 16 digits")
 
@@ -40,7 +46,7 @@ func (b Booking) Total() int {
 }
 
 func (b Booking) Nights() int {
-	return int((b.CheckOutDate.Unix() - b.CheckInDate.Unix()) / 1000 / 60 / 60 / 24)
+	return int((b.CheckOutDate.Unix() - b.CheckInDate.Unix()) / 60 / 60 / 24)
 }
 
 const DATE_FORMAT = "Jan _2, 2006"

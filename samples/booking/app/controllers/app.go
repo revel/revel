@@ -18,7 +18,7 @@ func connected(c *play.Controller) *models.User {
 	}
 	if username, ok := c.Session["user"]; ok {
 		rows, err := c.Txn.Query(`
-select Password, Name
+select UserId, Password, Name
   from User where Username = :Username`, username)
 		if err != nil {
 			panic(err)
@@ -29,7 +29,7 @@ select Password, Name
 		}
 
 		user := &models.User{Username: username}
-		err = rows.Scan(&user.Password, &user.Name)
+		err = rows.Scan(&user.UserId, &user.Password, &user.Name)
 		if err != nil {
 			panic(err)
 		}
@@ -47,6 +47,7 @@ func (c Application) Index() play.Result {
 		return c.Redirect(Hotels.Index)
 	}
 	title := "Home"
+	c.Flash.Error("Please log in first")
 	return c.Render(title)
 }
 

@@ -3,7 +3,7 @@
 <h1>View hotel</h1>
 
 {{with .hotel}}
-<form method="POST" action="/hotels/{{.HotelId}}/booking">
+<form action="/hotels/{{.HotelId}}/booking">
 
   <p>
     <strong>Name:</strong> {{.Name}}

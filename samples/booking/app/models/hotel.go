@@ -5,9 +5,11 @@ import (
 )
 
 type Hotel struct {
-	HotelId                                  int
-	Name, Address, City, State, Zip, Country string
-	Price                                    int
+	HotelId          int
+	Name, Address    string
+	City, State, Zip string
+	Country          string
+	Price            int
 }
 
 func (h *Hotel) Validate(v *play.Validation) {

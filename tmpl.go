@@ -44,6 +44,14 @@ func (f *Field) ErrorClass() string {
 	return ""
 }
 
+// Return "checked" if this field.Value matches the provided value
+func (f *Field) Checked(val string) string {
+	if f.Value == val {
+		return "checked"
+	}
+	return ""
+}
+
 var (
 	// The functions available for use in the templates.
 	tmplFuncs = map[string]interface{}{
@@ -57,6 +65,22 @@ var (
 				Value: value,
 				Error: err,
 			}
+		},
+		"option": func(f *Field, val, label string) template.HTML {
+			selected := ""
+			if f.Value == val {
+				selected = " selected"
+			}
+			return template.HTML(
+				fmt.Sprintf(`<option value="%s"%s>%s</option>`, val, selected, label))
+		},
+		"radio": func(f *Field, val string) template.HTML {
+			checked := ""
+			if f.Value == val {
+				checked = " checked"
+			}
+			return template.HTML(
+				fmt.Sprintf(`<input type="radio" name="%s" value="%s"%s>`, f.Name, val, checked))
 		},
 	}
 )
