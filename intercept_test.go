@@ -6,6 +6,7 @@ import (
 )
 
 var funcP = func(c *Controller) Result { return nil }
+var funcP2 = func(c *Controller) Result { return nil }
 
 type InterceptController struct{ *Controller }
 type InterceptControllerN struct{ InterceptController }
@@ -47,18 +48,20 @@ func TestInvokeArgType(t *testing.T) {
 func testInterceptorController(t *testing.T, appControllerPtr reflect.Value, methods []interface{}) {
 	interceptors = []*Interception{}
 	InterceptFunc(funcP, BEFORE, appControllerPtr.Elem().Interface())
+	InterceptFunc(funcP2, BEFORE, ALL_CONTROLLERS)
 	for _, m := range methods {
 		InterceptMethod(m, BEFORE)
 	}
 	ints := getInterceptors(BEFORE, appControllerPtr)
 
-	if len(ints) != 5 {
-		t.Fatalf("N: Expected 5 interceptors, got %d.", len(ints))
+	if len(ints) != 6 {
+		t.Fatalf("N: Expected 6 interceptors, got %d.", len(ints))
 	}
 
 	testInterception(t, ints[0], reflect.ValueOf(&Controller{}))
+	testInterception(t, ints[1], reflect.ValueOf(&Controller{}))
 	for i := range methods {
-		testInterception(t, ints[i+1], appControllerPtr)
+		testInterception(t, ints[i+2], appControllerPtr)
 	}
 }
 

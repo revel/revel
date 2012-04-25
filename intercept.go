@@ -46,14 +46,21 @@ const (
 	AFTER
 )
 
+type InterceptTarget int
+
+const (
+	ALL_CONTROLLERS InterceptTarget = iota
+)
+
 type Interception struct {
 	When InterceptTime
 
 	function InterceptorFunc
 	method   InterceptorMethod
 
-	callable reflect.Value
-	target   reflect.Type
+	callable     reflect.Value
+	target       reflect.Type
+	interceptAll bool
 }
 
 // Perform the given interception.
@@ -84,19 +91,20 @@ var interceptors []*Interception
 // Install a general interceptor.
 // This can be applied to any Controller.
 // It must have the signature of:
-// func example(c *play.Controller) play.Result
+//   func example(c *play.Controller) play.Result
 func InterceptFunc(intc InterceptorFunc, when InterceptTime, target interface{}) {
 	interceptors = append(interceptors, &Interception{
-		When:     when,
-		function: intc,
-		callable: reflect.ValueOf(intc),
-		target:   reflect.TypeOf(target),
+		When:         when,
+		function:     intc,
+		callable:     reflect.ValueOf(intc),
+		target:       reflect.TypeOf(target),
+		interceptAll: target == ALL_CONTROLLERS,
 	})
 }
 
 // Install an interceptor method that applies to its own Controller.
-// func (c AppController) example() play.Result
-// func (c *AppController) example() play.Result
+//   func (c AppController) example() play.Result
+//   func (c *AppController) example() play.Result
 func InterceptMethod(intc InterceptorMethod, when InterceptTime) {
 	methodType := reflect.TypeOf(intc)
 	if methodType.Kind() != reflect.Func || methodType.NumOut() != 1 || methodType.NumIn() != 1 {
@@ -118,7 +126,7 @@ func getInterceptors(when InterceptTime, val reflect.Value) []*Interception {
 			continue
 		}
 
-		if findTarget(val, intc.target).IsValid() {
+		if intc.interceptAll || findTarget(val, intc.target).IsValid() {
 			result = append(result, intc)
 		}
 	}
