@@ -2,29 +2,142 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Revel</title>
-    <link href="/css/bootstrap.min.css" rel="stylesheet">
-    <link href="/css/revel.css" rel="stylesheet">
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/bootstrap-responsive.min.css" rel="stylesheet">
+    <link href="css/revel.css" rel="stylesheet">
+    <link href="css/prettify.css" type="text/css" rel="stylesheet" />
+    <script src="js/prettify.js" type="text/javascript"></script>
   </head>
 
-  <body>
+  <body onload="prettyPrint()">
     <header class="hero-unit">
       <div class="container">
-      <div class="hero-img"><img src="/img/RevelBlackLines.png" height="500" width="350"></div>
-      <div class="hero-text">
-        <h1>Revel</h1>
-        <p>A high-productivity web framework for the Go language,<br> modeled on <a href="http://www.playframework.org">Play! Framework</a>.</p>
-      </div>
+        <div class="row" style="margin-left:-50px;">
+          <div class="hero-img"><img src="img/RevelWhiteLines.png" height="500" width="350"></div>
+          <div class="hero-text">
+            <h1>Revel</h1>
+            <p>A high-productivity web framework for the Go language,
+              modeled on <a href="http://www.playframework.org">Play! Framework</a>.</p>
+          </div>
+        </div>
       </div>
     </header>
 
     <div class="container">
+      <div class="page-header">
+        <h1>Features</h1>
+      </div>
       <div class="row">
         <div class="span4">
-          <h2>Quick Start</h2>
-           <p> </p>
+          <h2>Hot Compile</h2>
+          <p>
+            Edit, save, and refresh.  Revel compiles your code and templates for
+            you, so you don't miss a beat.  Code doesn't compile?  It gives you a
+            <a href="#">helpful description</a>.
+          </p>
+        </div>
+        <div class="span4">
+          <h2>Simplicity</h2>
+          <p>
+            Revel provides a comprehensive toolkit for making web apps.  From
+            configuring interceptors and plugins to bread and butter like form
+            validation, Revel makes it as convenient as possible.
+          </p>
+          <p>
+            Don't want to use the helpers?  Revel gets out of the way and gives
+            you direct access to the request/response.
+          </p>
+        </div>
+        <div class="span4">
+          <h2>Blocking</h2>
+          <p>
+            Revel builds on top of the
+            <a href="http://golang.org/pkg/net/http/">Go HTTP server</a>,
+            which runs each request in its own
+            <a href="http://golang.org/doc/effective_go.html#goroutines">goroutine</a>.
+            Write simple blocking code without guilt.
+          </p>
         </div>
       </div>
+      <div class="row">
+      </div>
+      <section id="quickstart">
+        <div class="page-header">
+          <h1>Quick Start</h1>
+        </div>
+        <div class="row">
+          <div class="span6">
+            <p>
+              Revel ships with a sample application that is meant to be a
+              demonstration of a typical web application that would find Revel
+              useful.
+            </p>
+            <p>
+              You will need a <a href="http://golang.org/doc/install">functioning Go
+              installation</a> for this to work.
+            </p>
+            <p>
+              The commands at right will:
+              <ol>
+                <li>Install Revel into your GOPATH
+                <li>Build the Revel command-line tool
+                <li>Run the Booking sample application
+              </ol>
+            </p>
+          </div>
+          <div class="span6" style="vertical-align:bottom;">
+            <pre>
+  # From the base of your GOPATH...
+  go get github.com/robfig/revel
+  go build -o bin/rev github.com/robfig/revel/cmd
+  bin/rev github.com/robfig/revel/samples/booking
+            </pre>
+          </div>
+        </div>
+      </section>
+
+      <section id="sample">
+        <div class="page-header">
+          <h1>Sample</h1>
+        </div>
+        <p>
+          This section shows a few snippets from the Booking sample application.
+        </p>
+
+        <h2>Routing</h2>
+        <div class="row">
+          <div class="span4">
+            <p>
+              Revel uses the
+              <a href="http://www.playframework.org/documentation/1.2.4/routes#syntax">
+                original Play! routing syntax</a>. It collects all routes for an
+              app in a single file, with a simple syntax for matching requests
+              and extracting arguments from URIs.
+            </p>
+          </div>
+          <div class="span8">
+            <pre>
+# Routes
+# This file defines all application routes (Higher priority routes first)
+# ~~~~
+
+GET     /                                       Application.Index
+GET     /hotels                                 Hotels.Index
+GET     /hotels/{id}                            Hotels.Show
+POST    /hotels/{id}/booking                    Hotels.ConfirmBooking
+POST    /bookings/{id}/cancel                   Hotels.CancelBooking
+
+# Map static resources from the /app/public folder to the /public path
+GET     /public/                                staticDir:public
+
+# Catch all
+*       /{controller}/{action}                  {controller}.{action}
+            </pre>
+          </div>
+        </div>
+      </section>
 
       <hr>
 

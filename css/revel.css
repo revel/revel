@@ -1,13 +1,13 @@
 body {
-  padding-top: 0px;
-  padding-bottom: 40px;
+  padding: 0 0 40px 0;
 }
 
 .hero-unit {
-  background-color: #ddd;
+  background-color: #222;
   margin-top:0px;
-  color:#333;
+  color:#ccc;
   padding-top:0px;
+  border-bottom:1px solid #375EAB;
 
   -webkit-border-radius: 0px;
      -moz-border-radius: 0px;
