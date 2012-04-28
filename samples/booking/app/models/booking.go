@@ -2,7 +2,7 @@ package models
 
 import (
 	"fmt"
-	"play"
+	"github.com/robfig/revel"
 	"regexp"
 	"time"
 )
@@ -26,7 +26,7 @@ type Booking struct {
 
 // TODO: Make an interface for Validate() and then validation can pass in the
 // key prefix ("booking.")
-func (b Booking) Validate(v *play.Validation) {
+func (b Booking) Validate(v *rev.Validation) {
 	v.Required(b.User).Key("booking.User")
 	v.Required(b.Hotel).Key("booking.Hotel")
 	v.Required(b.CheckInDate).Key("booking.CheckInDate")

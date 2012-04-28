@@ -1,4 +1,4 @@
-package play
+package rev
 
 import (
 	"errors"
@@ -241,7 +241,7 @@ type GoTemplate struct {
 	loader *TemplateLoader
 }
 
-// return a 'play.Template' from Go's template.
+// return a 'rev.Template' from Go's template.
 func (gotmpl GoTemplate) Render(wr io.Writer, arg interface{}) error {
 	return gotmpl.Execute(wr, arg)
 }

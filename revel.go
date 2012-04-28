@@ -1,4 +1,4 @@
-package play
+package rev
 
 import (
 	"go/build"
@@ -18,21 +18,21 @@ const (
 var (
 	// App details
 	AppName    string // e.g. "sample"
-	BasePath   string // e.g. "/Users/robfig/gocode/src/play/sample"
-	AppPath    string // e.g. "/Users/robfig/gocode/src/play/sample/app"
-	ViewsPath  string // e.g. "/Users/robfig/gocode/src/play/sample/app/views"
-	ImportPath string // e.g. "play/sample"
+	BasePath   string // e.g. "/Users/robfig/gocode/src/revel/sample"
+	AppPath    string // e.g. "/Users/robfig/gocode/src/revel/sample/app"
+	ViewsPath  string // e.g. "/Users/robfig/gocode/src/revel/sample/app/views"
+	ImportPath string // e.g. "revel/sample"
 
 	Config  *MergedConfig
 	AppMode RunMode // DEV or PROD
 
-	// Play installation details
-	PlayTemplatePath string // e.g. "/Users/robfig/gocode/src/play/templates"
+	// Revel installation details
+	RevelTemplatePath string // e.g. "/Users/robfig/gocode/src/revel/templates"
 
 	LOG = log.New(os.Stdout, "", log.Ldate|log.Ltime|log.Lshortfile)
 
 	// Private
-	playInit  bool = false
+	revelInit  bool = false
 	secretKey []byte
 )
 
@@ -52,11 +52,11 @@ func Init(importPath string, mode RunMode) {
 	ImportPath = importPath
 
 	// Find the provided resources.
-	playPkg, err := build.Import("play", "", build.FindOnly)
+	revelPkg, err := build.Import("github.com/robfig/revel", "", build.FindOnly)
 	if err != nil {
-		log.Fatalf("Failed to find play code.")
+		log.Fatalf("Failed to find revel code.")
 	}
-	PlayTemplatePath = path.Join(playPkg.Dir, "templates")
+	RevelTemplatePath = path.Join(revelPkg.Dir, "templates")
 
 	// Load application.conf
 	Config, err = LoadConfig(
@@ -71,11 +71,11 @@ func Init(importPath string, mode RunMode) {
 	}
 	secretKey = []byte(secretStr)
 
-	playInit = true
+	revelInit = true
 }
 
 func CheckInit() {
-	if !playInit {
-		panic("Play has not been initialized!")
+	if !revelInit {
+		panic("Revel has not been initialized!")
 	}
 }

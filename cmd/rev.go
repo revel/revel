@@ -7,8 +7,8 @@ import (
 	"log"
 	"os"
 
-	"play"
-	"play/harness"
+	"github.com/robfig/revel"
+	"github.com/robfig/revel/harness"
 )
 
 func main() {
@@ -21,24 +21,24 @@ func main() {
 		usage()
 	}
 
-	mode := play.DEV
+	mode := rev.DEV
 	if len(args) == 2 && args[1] == "prod" {
-		mode = play.PROD
+		mode = rev.PROD
 	}
 
 	// Find and parse app.conf
-	play.Init(args[0], mode)
-	log.Printf("Running app (%s): %s (%s)\n", mode, play.AppName, play.BasePath)
+	rev.Init(args[0], mode)
+	log.Printf("Running app (%s): %s (%s)\n", mode, rev.AppName, rev.BasePath)
 
 	harness.Run(mode)
 }
 
 const header = `~
-~ go play! http://www.github.com/robfig/go-play
+~ revel! http://www.github.com/robfig/revel
 ~
 `
 
-const usageText = `~ Usage: play import_path [mode]
+const usageText = `~ Usage: rev import_path [mode]
 `
 
 func usage() {

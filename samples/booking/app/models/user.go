@@ -2,7 +2,7 @@ package models
 
 import (
 	"fmt"
-	"play"
+	"github.com/robfig/revel"
 	"regexp"
 )
 
@@ -17,7 +17,7 @@ func (u *User) String() string {
 
 var userRegex = regexp.MustCompile("^\\w*$")
 
-func (u *User) Validate(v *play.Validation) {
+func (u *User) Validate(v *rev.Validation) {
 	v.Required(u.Username).Key("user.Username")
 	v.MaxSize(u.Username, 15).Key("user.Username")
 	v.MinSize(u.Username, 4).Key("user.Username")

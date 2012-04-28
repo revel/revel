@@ -3,13 +3,13 @@ package controllers
 import (
 	"database/sql"
 	"fmt"
-	"play"
-	"play/samples/booking/app/models"
+	"github.com/robfig/revel"
+	"github.com/robfig/revel/samples/booking/app/models"
 	"strings"
 	"time"
 )
 
-func checkUser(c *play.Controller) play.Result {
+func checkUser(c *rev.Controller) rev.Result {
 	if user := connected(c); user == nil {
 		c.Flash.Error("Please log in first")
 		return c.Redirect(Application.Index)
@@ -18,10 +18,10 @@ func checkUser(c *play.Controller) play.Result {
 }
 
 type Hotels struct {
-	*play.Controller
+	*rev.Controller
 }
 
-func (c Hotels) Index() play.Result {
+func (c Hotels) Index() rev.Result {
 	title := "Search"
 	rows, err := c.Txn.Query(`
 select BookingId, UserId, HotelId, CheckInDate, CheckOutDate,
@@ -53,7 +53,7 @@ select BookingId, UserId, HotelId, CheckInDate, CheckOutDate,
 	return c.Render(title, bookings)
 }
 
-func (c Hotels) List(search string, size, page int) play.Result {
+func (c Hotels) List(search string, size, page int) rev.Result {
 	title := "List"
 	if page == 0 {
 		page = 1
@@ -108,7 +108,7 @@ select HotelId, Name, Address, City, State, Zip, Country, Price
 	return hotels[0]
 }
 
-func (c Hotels) Show(id int) play.Result {
+func (c Hotels) Show(id int) rev.Result {
 	var title string
 	hotel := c.loadHotelById(id)
 	if hotel == nil {
@@ -120,12 +120,12 @@ func (c Hotels) Show(id int) play.Result {
 	return c.Render(title, hotel)
 }
 
-func (c Hotels) Settings() play.Result {
+func (c Hotels) Settings() rev.Result {
 	title := "Settings"
 	return c.Render(title)
 }
 
-func (c Hotels) SaveSettings(password, verifyPassword string) play.Result {
+func (c Hotels) SaveSettings(password, verifyPassword string) rev.Result {
 	user := connected(c.Controller)
 	user.Password = password
 	user.Validate(c.Validation)
@@ -144,7 +144,7 @@ func (c Hotels) SaveSettings(password, verifyPassword string) play.Result {
 	return c.Redirect(Hotels.Index)
 }
 
-func (c Hotels) ConfirmBooking(id int, booking models.Booking) play.Result {
+func (c Hotels) ConfirmBooking(id int, booking models.Booking) rev.Result {
 	hotel := c.loadHotelById(id)
 	title := fmt.Sprintf("Confirm %s booking", hotel.Name)
 	booking.Hotel = hotel
@@ -186,7 +186,7 @@ insert into Booking (
 	return c.Render(title, hotel, booking)
 }
 
-func (c Hotels) CancelBooking(id int) play.Result {
+func (c Hotels) CancelBooking(id int) rev.Result {
 	_, err := c.Txn.Exec("delete from Booking where BookingId = ?", id)
 	if err != nil {
 		panic(err)
@@ -195,7 +195,7 @@ func (c Hotels) CancelBooking(id int) play.Result {
 	return c.Redirect(Hotels.Index)
 }
 
-func (c Hotels) Book(id int) play.Result {
+func (c Hotels) Book(id int) rev.Result {
 	hotel := c.loadHotelById(id)
 	title := "Book " + hotel.Name
 	// if hotel == nil {
@@ -205,5 +205,5 @@ func (c Hotels) Book(id int) play.Result {
 }
 
 func init() {
-	play.InterceptFunc(checkUser, play.BEFORE, &Hotels{})
+	rev.InterceptFunc(checkUser, rev.BEFORE, &Hotels{})
 }

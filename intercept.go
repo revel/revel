@@ -1,4 +1,4 @@
-package play
+package rev
 
 import (
 	"log"
@@ -29,13 +29,13 @@ import (
 //
 // Func Interceptors may apply to any / all Controllers.
 //
-//   func example(*play.Controller) play.Result
+//   func example(*rev.Controller) rev.Result
 //
 // Method Interceptors are provided so that properties can be set on application
 // controllers.
 //
-//   func (c AppController) example() play.Result
-//   func (c *AppController) example() play.Result
+//   func (c AppController) example() rev.Result
+//   func (c *AppController) example() rev.Result
 //
 type InterceptorFunc func(*Controller) Result
 type InterceptorMethod interface{}
@@ -91,7 +91,7 @@ var interceptors []*Interception
 // Install a general interceptor.
 // This can be applied to any Controller.
 // It must have the signature of:
-//   func example(c *play.Controller) play.Result
+//   func example(c *rev.Controller) rev.Result
 func InterceptFunc(intc InterceptorFunc, when InterceptTime, target interface{}) {
 	interceptors = append(interceptors, &Interception{
 		When:         when,
@@ -103,13 +103,13 @@ func InterceptFunc(intc InterceptorFunc, when InterceptTime, target interface{})
 }
 
 // Install an interceptor method that applies to its own Controller.
-//   func (c AppController) example() play.Result
-//   func (c *AppController) example() play.Result
+//   func (c AppController) example() rev.Result
+//   func (c *AppController) example() rev.Result
 func InterceptMethod(intc InterceptorMethod, when InterceptTime) {
 	methodType := reflect.TypeOf(intc)
 	if methodType.Kind() != reflect.Func || methodType.NumOut() != 1 || methodType.NumIn() != 1 {
 		log.Fatalln("Interceptor method should have signature like",
-			"'func (c *AppController) example() play.Result' but was", methodType)
+			"'func (c *AppController) example() rev.Result' but was", methodType)
 	}
 	interceptors = append(interceptors, &Interception{
 		When:     when,
@@ -137,7 +137,7 @@ func getInterceptors(when InterceptTime, val reflect.Value) []*Interception {
 // Also, convert between any difference in indirection.
 // If the target couldn't be found, the returned Value will have IsValid() == false
 func findTarget(val reflect.Value, target reflect.Type) reflect.Value {
-	// Look through the embedded types (until we reach the *play.Controller at the top).
+	// Look through the embedded types (until we reach the *rev.Controller at the top).
 	for {
 		// Check if val is of a similar type to the target type.
 		if val.Type() == target {
@@ -150,7 +150,7 @@ func findTarget(val reflect.Value, target reflect.Type) reflect.Value {
 			return val.Addr()
 		}
 
-		// If we reached the *play.Controller and still didn't find what we were
+		// If we reached the *rev.Controller and still didn't find what we were
 		// looking for, give up.
 		if val.Type() == controllerPtrType {
 			break

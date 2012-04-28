@@ -1,4 +1,4 @@
-package play
+package rev
 
 // An plugin that allows the user to inject behavior at various points in the request cycle.
 type Plugin interface {

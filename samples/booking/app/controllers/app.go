@@ -1,18 +1,18 @@
 package controllers
 
 import (
-	"play"
-	"play/samples/booking/app/models"
+	"github.com/robfig/revel"
+	"github.com/robfig/revel/samples/booking/app/models"
 )
 
-func addUser(c *play.Controller) play.Result {
+func addUser(c *rev.Controller) rev.Result {
 	if user := connected(c); user != nil {
 		c.RenderArgs["user"] = user
 	}
 	return nil
 }
 
-func connected(c *play.Controller) *models.User {
+func connected(c *rev.Controller) *models.User {
 	if c.RenderArgs["user"] != nil {
 		return c.RenderArgs["user"].(*models.User)
 	}
@@ -39,10 +39,10 @@ select UserId, Password, Name
 }
 
 type Application struct {
-	*play.Controller
+	*rev.Controller
 }
 
-func (c Application) Index() play.Result {
+func (c Application) Index() rev.Result {
 	if connected(c.Controller) != nil {
 		return c.Redirect(Hotels.Index)
 	}
@@ -51,12 +51,12 @@ func (c Application) Index() play.Result {
 	return c.Render(title)
 }
 
-func (c Application) Register() play.Result {
+func (c Application) Register() rev.Result {
 	title := "Register"
 	return c.Render(title)
 }
 
-func (c Application) SaveUser(user models.User, verifyPassword string) play.Result {
+func (c Application) SaveUser(user models.User, verifyPassword string) rev.Result {
 	c.Validation.Required(verifyPassword).Key("verifyPassword")
 	c.Validation.Required(verifyPassword == user.Password).Key("verifyPassword").
 		Message("Password does not match")
@@ -79,7 +79,7 @@ func (c Application) SaveUser(user models.User, verifyPassword string) play.Resu
 	return c.Redirect(Hotels.Index)
 }
 
-func (c Application) Login(username, password string) play.Result {
+func (c Application) Login(username, password string) rev.Result {
 	rows, err := c.Txn.Query(
 		"select 1 from User where Username = ? and Password = ?",
 		username, password)
@@ -98,7 +98,7 @@ func (c Application) Login(username, password string) play.Result {
 	return c.Redirect(Application.Index)
 }
 
-func (c Application) Logout() play.Result {
+func (c Application) Logout() rev.Result {
 	for k := range c.Session {
 		delete(c.Session, k)
 	}
@@ -106,5 +106,5 @@ func (c Application) Logout() play.Result {
 }
 
 func init() {
-	play.InterceptFunc(addUser, play.BEFORE, &Application{})
+	rev.InterceptFunc(addUser, rev.BEFORE, &Application{})
 }

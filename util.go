@@ -1,7 +1,4 @@
-// Various utility functions to make the standard library a bit easier to deal
-// with.
-
-package play
+package rev
 
 import (
 	"bytes"

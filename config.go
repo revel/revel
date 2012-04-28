@@ -1,4 +1,4 @@
-package play
+package rev
 
 import (
 	"github.com/kless/goconfig/config"

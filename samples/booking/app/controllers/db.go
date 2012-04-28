@@ -4,13 +4,13 @@ import (
 	"database/sql"
 	"fmt"
 	_ "github.com/mattn/go-sqlite3"
-	"play"
+	"github.com/robfig/revel"
 )
 
 // This plugin manages transaction-per-request for any controllers that embed
 // GorpController.
 type GorpController struct {
-	*play.Controller
+	*rev.Controller
 }
 
 var (
@@ -18,7 +18,7 @@ var (
 )
 
 type DbPlugin struct {
-	play.EmptyPlugin
+	rev.EmptyPlugin
 }
 
 func (p DbPlugin) OnAppStart() {
@@ -95,7 +95,7 @@ create table Hotel (
 	}
 }
 
-func (p DbPlugin) BeforeRequest(c *play.Controller) {
+func (p DbPlugin) BeforeRequest(c *rev.Controller) {
 	txn, err := db.Begin()
 	if err != nil {
 		panic(err)
@@ -103,7 +103,7 @@ func (p DbPlugin) BeforeRequest(c *play.Controller) {
 	c.Txn = txn
 }
 
-func (p DbPlugin) AfterRequest(c *play.Controller) {
+func (p DbPlugin) AfterRequest(c *rev.Controller) {
 	if err := c.Txn.Commit(); err != nil {
 		if err != sql.ErrTxDone {
 			panic(err)
@@ -112,7 +112,7 @@ func (p DbPlugin) AfterRequest(c *play.Controller) {
 	c.Txn = nil
 }
 
-func (p DbPlugin) OnException(c *play.Controller, err interface{}) {
+func (p DbPlugin) OnException(c *rev.Controller, err interface{}) {
 	if err := c.Txn.Rollback(); err != nil {
 		if err != sql.ErrTxDone {
 			panic(err)
@@ -121,5 +121,5 @@ func (p DbPlugin) OnException(c *play.Controller, err interface{}) {
 }
 
 func init() {
-	play.RegisterPlugin(DbPlugin{})
+	rev.RegisterPlugin(DbPlugin{})
 }

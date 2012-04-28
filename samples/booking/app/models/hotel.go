@@ -1,7 +1,7 @@
 package models
 
 import (
-	"play"
+	"github.com/robfig/revel"
 )
 
 type Hotel struct {
@@ -12,7 +12,7 @@ type Hotel struct {
 	Price            int
 }
 
-func (h *Hotel) Validate(v *play.Validation) {
+func (h *Hotel) Validate(v *rev.Validation) {
 	v.Required(h.Name).Key("hotel.Name")
 	v.MaxSize(h.Name, 50).Key("hotel.Name")
 

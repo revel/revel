@@ -1,4 +1,4 @@
-package play
+package rev
 
 import (
 	"database/sql"
@@ -118,12 +118,12 @@ func NewAppController(w http.ResponseWriter, r *http.Request, controllerName, me
 // This is a helper that initializes (zeros) a new app controller value.
 // Generally, everything is set to its zero value, except:
 // 1. Embedded controller pointers are newed up.
-// 2. The play.Controller embedded type is set to the value provided.
+// 2. The rev.Controller embedded type is set to the value provided.
 // Returns a value representing a pointer to the new app controller.
 func initNewAppController(appControllerType reflect.Type, c *Controller) reflect.Value {
 	// It might be a multi-level embedding, so we have to create new controllers
 	// at every level of the hierarchy.
-	// ASSUME: the first field in each type is the way up to play.Controller.
+	// ASSUME: the first field in each type is the way up to rev.Controller.
 	appControllerPtr := reflect.New(appControllerType)
 	ptr := appControllerPtr
 	for {
@@ -132,7 +132,7 @@ func initNewAppController(appControllerType reflect.Type, c *Controller) reflect
 			embeddedFieldType reflect.Type  = embeddedField.Type()
 		)
 
-		// Check if it's the Play! controller.
+		// Check if it's the controller.
 		if embeddedFieldType == controllerType {
 			embeddedField.Set(reflect.ValueOf(c).Elem())
 			break
@@ -208,7 +208,7 @@ func (c *Controller) Invoke(appControllerPtr reflect.Value, method reflect.Value
 		flashValue += "\x00" + key + ":" + value + "\x00"
 	}
 	c.SetCookie(&http.Cookie{
-		Name:  "PLAY_FLASH",
+		Name:  "REVEL_FLASH",
 		Value: url.QueryEscape(flashValue),
 		Path:  "/",
 	})
@@ -223,7 +223,7 @@ func (c *Controller) Invoke(appControllerPtr reflect.Value, method reflect.Value
 		}
 	}
 	c.SetCookie(&http.Cookie{
-		Name:  "PLAY_ERRORS",
+		Name:  "REVEL_ERRORS",
 		Value: url.QueryEscape(errorsValue),
 		Path:  "/",
 	})
@@ -235,7 +235,7 @@ func (c *Controller) Invoke(appControllerPtr reflect.Value, method reflect.Value
 	}
 	sessionData := url.QueryEscape(sessionValue)
 	c.SetCookie(&http.Cookie{
-		Name:  "PLAY_SESSION",
+		Name:  "REVEL_SESSION",
 		Value: Sign(sessionData) + "-" + sessionData,
 		Path:  "/",
 	})
@@ -250,7 +250,7 @@ func handleInvocationPanic(c *Controller, err interface{}) {
 	plugins.OnException(c, err)
 
 	// Parse the filename and line from the originating line of app code.
-	// /Users/robfig/code/gocode/src/play/samples/booking/app/controllers/hotels.go:191 (0x44735)
+	// /Users/robfig/code/gocode/src/revel/samples/booking/app/controllers/hotels.go:191 (0x44735)
 	stack := string(debug.Stack())
 	appFrame := strings.Index(stack, BasePath)
 	if appFrame == -1 {
@@ -365,7 +365,7 @@ func restoreFlash(req *http.Request) Flash {
 		Data: make(map[string]string),
 		Out:  make(map[string]string),
 	}
-	if cookie, err := req.Cookie("PLAY_FLASH"); err == nil {
+	if cookie, err := req.Cookie("REVEL_FLASH"); err == nil {
 		ParseKeyValueCookie(cookie.Value, func(key, val string) {
 			flash.Data[key] = val
 		})
@@ -376,7 +376,7 @@ func restoreFlash(req *http.Request) Flash {
 // Restore Validation.Errors from a request.
 func restoreValidationErrors(req *http.Request) []*ValidationError {
 	errors := make([]*ValidationError, 0, 5)
-	if cookie, err := req.Cookie("PLAY_ERRORS"); err == nil {
+	if cookie, err := req.Cookie("REVEL_ERRORS"); err == nil {
 		ParseKeyValueCookie(cookie.Value, func(key, val string) {
 			errors = append(errors, &ValidationError{
 				Key:     key,
@@ -389,7 +389,7 @@ func restoreValidationErrors(req *http.Request) []*ValidationError {
 
 func restoreSession(req *http.Request) Session {
 	session := make(map[string]string)
-	cookie, err := req.Cookie("PLAY_SESSION")
+	cookie, err := req.Cookie("REVEL_SESSION")
 	if err != nil {
 		return Session(session)
 	}

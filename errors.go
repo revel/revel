@@ -1,4 +1,4 @@
-package play
+package rev
 
 import (
 	"bytes"
@@ -60,7 +60,7 @@ func (e *Error) Html() string {
 func RenderError(buffer io.Writer, data interface{}) {
 	if errorTemplate == nil {
 		errorTemplate = template.Must(template.ParseFiles(
-			path.Join(PlayTemplatePath, "500.html")))
+			path.Join(RevelTemplatePath, "500.html")))
 	}
 	errorTemplate.Execute(buffer, &data)
 }

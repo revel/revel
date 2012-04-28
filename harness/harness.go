@@ -1,4 +1,4 @@
-// The Harness for a GoPlay! program.
+// The Harness for a Revel program.
 //
 // It has a couple responsibilities:
 // 1. Parse the user program, generating a main.go file that registers
@@ -25,7 +25,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
-	"play"
+	"github.com/robfig/revel"
 	"regexp"
 	"strconv"
 	"strings"
@@ -39,7 +39,7 @@ package main
 import (
 	"flag"
 	"reflect"
-	"play"
+	"github.com/robfig/revel"
 	{{range .ImportPaths}}
   "{{.}}"
   {{end}}
@@ -54,16 +54,16 @@ var (
 )
 
 func main() {
-	play.LOG.Println("Running play server")
+	rev.LOG.Println("Running revel server")
 	flag.Parse()
-	play.Init(*importPath, "{{.RunMode}}")
+	rev.Init(*importPath, "{{.RunMode}}")
 	{{range $i, $c := .Controllers}}
-	play.RegisterController((*{{.PackageName}}.{{.StructName}})(nil),
-		[]*play.MethodType{
-			{{range .MethodSpecs}}&play.MethodType{
+	rev.RegisterController((*{{.PackageName}}.{{.StructName}})(nil),
+		[]*rev.MethodType{
+			{{range .MethodSpecs}}&rev.MethodType{
 				Name: "{{.Name}}",
-				Args: []*play.MethodArg{ {{range .Args}}
-					&play.MethodArg{Name: "{{.Name}}", Type: reflect.TypeOf((*{{.TypeName}})(nil)) },{{end}}
+				Args: []*rev.MethodArg{ {{range .Args}}
+					&rev.MethodArg{Name: "{{.Name}}", Type: reflect.TypeOf((*{{.TypeName}})(nil)) },{{end}}
 			  },
 				RenderArgNames: map[int][]string{ {{range .RenderCalls}}
 					{{.Line}}: []string{ {{range .Names}}
@@ -74,7 +74,7 @@ func main() {
 			{{end}}
 		})
 	{{end}}
-	play.Run(*port)
+	rev.Run(*port)
 }
 `
 
@@ -117,10 +117,10 @@ func (hp *harnessProxy) ServeHTTP(wr http.ResponseWriter, req *http.Request) {
 
 func serveError(wr http.ResponseWriter, req *http.Request, err error) {
 	switch e := err.(type) {
-	case *play.Error:
-		play.RenderError(wr, e)
+	case *rev.Error:
+		rev.RenderError(wr, e)
 	default:
-		play.RenderError(wr, map[string]string{
+		rev.RenderError(wr, map[string]string{
 			"Title":       "Unexpected error",
 			"Path":        "(unknown)",
 			"Description": "An unexpected error occurred: " + err.Error(),
@@ -147,7 +147,7 @@ func startReverseProxy(port int) *harnessProxy {
 }
 
 func getAppPort() int {
-	port, err := play.Config.Int("http.port")
+	port, err := rev.Config.Int("http.port")
 	if err != nil {
 		log.Println("Parsing http.port failed:", err)
 		return 9000
@@ -160,10 +160,10 @@ var (
 	DoNotWatch = []string{"tmp", "views"}
 )
 
-func Run(mode play.RunMode) {
+func Run(mode rev.RunMode) {
 
 	// If we are in prod mode, just build and run the application.
-	if mode == play.PROD {
+	if mode == rev.PROD {
 		log.Println("Building...")
 		if err := rebuild(getAppPort()); err != nil {
 			log.Fatalln(err)
@@ -185,25 +185,25 @@ func Run(mode play.RunMode) {
 	}
 
 	// Listen to all app subdirectories (except /views)
-	filepath.Walk(play.AppPath, func(path string, info os.FileInfo, err error) error {
+	filepath.Walk(rev.AppPath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			play.LOG.Println("error walking app:", err)
+			rev.LOG.Println("error walking app:", err)
 			return nil
 		}
 		if info.IsDir() {
-			if play.ContainsString(DoNotWatch, info.Name()) {
+			if rev.ContainsString(DoNotWatch, info.Name()) {
 				return filepath.SkipDir
 			}
 			err = watcher.Watch(path)
-			play.LOG.Println("Watching:", path)
+			rev.LOG.Println("Watching:", path)
 			if err != nil {
-				play.LOG.Println("Failed to watch", path, ":", err)
+				rev.LOG.Println("Failed to watch", path, ":", err)
 			}
 		}
 		return nil
 	})
 
-	// Define an exit handler that kills the play server (since it won't die on
+	// Define an exit handler that kills the revel server (since it won't die on
 	// its own, if the harness exits)
 	defer func() {
 		if cmd != nil {
@@ -257,33 +257,33 @@ func Run(mode play.RunMode) {
 
 var cmd *exec.Cmd
 
-// Rebuild the Play! application and run it on the given port.
-func rebuild(port int) (compileError *play.Error) {
-	controllerSpecs, compileError := ScanControllers(path.Join(play.AppPath, "controllers"))
+// Rebuild the Revel application and run it on the given port.
+func rebuild(port int) (compileError *rev.Error) {
+	controllerSpecs, compileError := ScanControllers(path.Join(rev.AppPath, "controllers"))
 	if compileError != nil {
 		return compileError
 	}
 
 	tmpl := template.New("RegisterControllers")
 	tmpl = template.Must(tmpl.Parse(REGISTER_CONTROLLERS))
-	var registerControllerSource string = play.ExecuteTemplate(tmpl, map[string]interface{}{
-		"AppName":     play.AppName,
+	var registerControllerSource string = rev.ExecuteTemplate(tmpl, map[string]interface{}{
+		"AppName":     rev.AppName,
 		"Controllers": controllerSpecs,
 		"ImportPaths": uniqueImportPaths(controllerSpecs),
-		"RunMode": play.AppMode,
+		"RunMode": rev.AppMode,
 	})
 
 	// Terminate the server if it's already running.
 	if cmd != nil && (cmd.ProcessState == nil || !cmd.ProcessState.Exited()) {
-		log.Println("Killing play server pid", cmd.Process.Pid)
+		log.Println("Killing revel server pid", cmd.Process.Pid)
 		err := cmd.Process.Kill()
 		if err != nil {
-			log.Fatalln("Failed to kill play server:", err)
+			log.Fatalln("Failed to kill revel server:", err)
 		}
 	}
 
 	// Create a fresh temp dir.
-	tmpPath := path.Join(play.AppPath, "tmp")
+	tmpPath := path.Join(rev.AppPath, "tmp")
 	err := os.RemoveAll(tmpPath)
 	if err != nil {
 		log.Println("Failed to remove tmp dir:", err)
@@ -311,12 +311,12 @@ func rebuild(port int) (compileError *play.Error) {
 	}
 
 	ctx := build.Default
-	pkg, err := ctx.Import(play.ImportPath, "", build.FindOnly)
+	pkg, err := ctx.Import(rev.ImportPath, "", build.FindOnly)
 	if err != nil {
-		log.Fatalf("Failure importing", play.ImportPath)
+		log.Fatalf("Failure importing", rev.ImportPath)
 	}
-	binName := path.Join(pkg.BinDir, play.AppName)
-	buildCmd := exec.Command(goPath, "build", "-o", binName, path.Join(play.ImportPath, "app", "tmp"))
+	binName := path.Join(pkg.BinDir, rev.AppName)
+	buildCmd := exec.Command(goPath, "build", "-o", binName, path.Join(rev.ImportPath, "app", "tmp"))
 	output, err := buildCmd.CombinedOutput()
 
 	// If we failed to build, parse the error message.
@@ -327,7 +327,7 @@ func rebuild(port int) (compileError *play.Error) {
 	// Run the server, via tmp/main.go.
 	cmd = exec.Command(binName,
 		fmt.Sprintf("-port=%d", port),
-		fmt.Sprintf("-importPath=%s", play.ImportPath))
+		fmt.Sprintf("-importPath=%s", rev.ImportPath))
 	listeningWriter := startupListeningWriter{os.Stdout, make(chan bool)}
 	cmd.Stdout = listeningWriter
 	cmd.Stderr = os.Stderr
@@ -341,7 +341,7 @@ func rebuild(port int) (compileError *play.Error) {
 }
 
 // A io.Writer that copies to the destination, and listens for "Listening on.."
-// in the stream.  (Which tells us when the play server has finished starting up)
+// in the stream.  (Which tells us when the revel server has finished starting up)
 // This is super ghetto, but by far the simplest thing that should work.
 type startupListeningWriter struct {
 	dest        io.Writer
@@ -393,12 +393,12 @@ func uniqueImportPaths(specs []*ControllerSpec) (paths []string) {
 
 // Parse the output of the "go build" command.
 // Return a detailed Error.
-func newCompileError(output []byte) *play.Error {
+func newCompileError(output []byte) *rev.Error {
 	errorMatch := regexp.MustCompile(`(?m)^([^:#]+):(\d+):(\d+:)? (.*)$`).
 		FindSubmatch(output)
 	if errorMatch == nil {
 		log.Println("Failed to parse build errors:\n", string(output))
-		return &play.Error{
+		return &rev.Error{
 			SourceType:  "Go code",
 			Title:       "Go Compilation Error",
 			Description: "See console for build error.",
@@ -407,11 +407,11 @@ func newCompileError(output []byte) *play.Error {
 
 	// Read the source for the offending file.
 	var (
-		relFilename    = string(errorMatch[1]) // e.g. "src/play/sample/app/controllers/app.go"
+		relFilename    = string(errorMatch[1]) // e.g. "src/revel/sample/app/controllers/app.go"
 		absFilename, _ = filepath.Abs(relFilename)
 		line, _        = strconv.Atoi(string(errorMatch[2]))
 		description    = string(errorMatch[4])
-		compileError   = &play.Error{
+		compileError   = &rev.Error{
 			SourceType:  "Go code",
 			Title:       "Go Compilation Error",
 			Path:        relFilename,
@@ -420,7 +420,7 @@ func newCompileError(output []byte) *play.Error {
 		}
 	)
 
-	fileStr, err := play.ReadLines(absFilename)
+	fileStr, err := rev.ReadLines(absFilename)
 	if err != nil {
 		compileError.MetaError = absFilename + ": " + err.Error()
 		log.Println(compileError.MetaError)

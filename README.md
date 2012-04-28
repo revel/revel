@@ -1,10 +1,10 @@
-# Go Play!
+# Revel!
 
 This is a port of the amazing [Play! framework](http://www.playframework.org) to the [Go language](http://www.golang.org).
 
 It is a high productivity web framework
 
-[![Build Status](https://secure.travis-ci.org/robfig/go-play.png?branch=master)](http://travis-ci.org/robfig/go-play)
+[![Build Status](https://secure.travis-ci.org/robfig/revel.png?branch=master)](http://travis-ci.org/robfig/revel)
 
 # Simple Example
 
@@ -24,17 +24,17 @@ Declare a Controller:
 ```go
 // app/controllers/app.go
 package controllers
-import "play"
+import "github.com/robfig/revel"
 
 type Application struct {
-	*play.Controller
+	*rev.Controller
 }
 
-func (c Application) Index() play.Result {
+func (c Application) Index() rev.Result {
 	return c.Render()
 }
 
-func (c Application) ShowApp(id int) play.Result {
+func (c Application) ShowApp(id int) rev.Result {
 	return c.Render(id)
 }
 ```
@@ -58,7 +58,7 @@ This is an example Controller method that processes a Login request.  It demonst
 - Setting a cookie
 
 ```go
-func (c Login) DoLogin(username, password string) play.Result {
+func (c Login) DoLogin(username, password string) rev.Result {
 	// Validate parameters.
 	c.Validation.Required(username).Message("Please enter a username.")
 	c.Validation.Required(password).Message("Please enter a password.")
@@ -124,9 +124,11 @@ There are also helpers to make validation errors easy to surface in the template
 From your GOPATH base:
 
 ```
-go get github.com/robfig/go-play
-go build -o /bin/play play/cmd
-./bin/play play/samples/booking
+go get github.com/howeyc/fsnotify \
+  github.com/kless/goconfig/config \
+  github.com/robfig/revel
+go build -o /bin/rev github.com/robfig/revel/cmd
+./bin/rev github.com/robfig/revel/samples/booking
 ```
 
 # How it works
@@ -195,28 +197,29 @@ There is a large list of things left to do.
 - Extract default error messages to resource file
 - Examples: Regular web page, JSON return, streaming return, comet, websocket
 - Clean up stack traces
-- Allow access to requestwriter and make it easy to get Play out of the way when necessary
+- Allow access to requestwriter and make it easy to get Revel out of the way when necessary
 - Make it not hard to do this: https://gist.github.com/2328236
 - BigDecimal replacement (for currency / that works with MySQL)
 - Fixtures
 - How to do moreStyles / moreScripts equivalent.
+- Reflection magic does not work if app code imports revel with a modified identifier.
 
 # File layout
 
-Go Play! depends on the GOPATH layout prescribed by the go command line tool.  A description is at the end.
+Revel depends on the GOPATH layout prescribed by the go command line tool.  A description is at the end.
 
-Note that Play must be installed in the same GOPATH as the user app -- it uses that assumption to find its own source, e.g. for finding templates.
+Note that Revel must be installed in the same GOPATH as the user app -- it uses that assumption to find its own source, e.g. for finding templates.
 
 
 ## Example layout
 
-Here is the default layout of a Go Play application called `sample`, within a
+Here is the default layout of a Revel application called `sample`, within a
 typical Go installation.
 
 ```
 gocode                         GOPATH root
   src                          GOPATH src directory
-    play                       Go Play source code
+    revel                      Revel source code
     sample
       app                      App sources
         controllers            App controllers

@@ -10,7 +10,7 @@ import (
 	"go/token"
 	"log"
 	"os"
-	"play"
+	"github.com/robfig/revel"
 	"strings"
 	"unicode"
 )
@@ -21,7 +21,7 @@ type ControllerSpec struct {
 	ImportPath  string
 	MethodSpecs []*MethodSpec
 
-	// Used internally to identify controllers that indirectly embed *play.Controller.
+	// Used internally to identify controllers that indirectly embed *rev.Controller.
 	embeddedTypes []*embeddedTypeName
 }
 
@@ -54,7 +54,7 @@ type methodMap map[string][]*MethodSpec
 
 // Parse the app directory and return a list of the controller types found.
 // Returns a CompileError if the parsing fails.
-func ScanControllers(path string) (specs []*ControllerSpec, compileError *play.Error) {
+func ScanControllers(path string) (specs []*ControllerSpec, compileError *rev.Error) {
 	// Parse files within the path.
 	var pkgs map[string]*ast.Package
 	fset := token.NewFileSet()
@@ -62,14 +62,14 @@ func ScanControllers(path string) (specs []*ControllerSpec, compileError *play.E
 	if err != nil {
 		if errList, ok := err.(scanner.ErrorList); ok {
 			var pos token.Position = errList[0].Pos
-			return nil, &play.Error{
+			return nil, &rev.Error{
 				SourceType:  ".go source",
 				Title:       "Go Compilation Error",
 				Path:        pos.Filename,
 				Description: errList[0].Msg,
 				Line:        pos.Line,
 				Column:      pos.Column,
-				SourceLines: play.MustReadLines(pos.Filename),
+				SourceLines: rev.MustReadLines(pos.Filename),
 			}
 		}
 		ast.Print(nil, err)
@@ -98,7 +98,7 @@ func ScanControllers(path string) (specs []*ControllerSpec, compileError *play.E
 			}
 		}
 
-		// Filter the struct specs to just the ones that embed play.Controller.
+		// Filter the struct specs to just the ones that embed rev.Controller.
 		structSpecs = filterControllers(structSpecs)
 
 		// Add the method specs to them.
@@ -148,7 +148,7 @@ func appendStruct(specs []*ControllerSpec, pkg *ast.Package, decl ast.Decl) []*C
 	}
 
 	if len(genDecl.Specs) != 1 {
-		play.LOG.Printf("Surprising: Decl does not have 1 Spec: %v", genDecl)
+		rev.LOG.Printf("Surprising: Decl does not have 1 Spec: %v", genDecl)
 		return specs
 	}
 
@@ -164,7 +164,7 @@ func appendStruct(specs []*ControllerSpec, pkg *ast.Package, decl ast.Decl) []*C
 	controllerSpec := &ControllerSpec{
 		PackageName: pkg.Name,
 		StructName:  spec.Name.Name,
-		ImportPath:  play.ImportPath + "/app/" + pkg.Name,
+		ImportPath:  rev.ImportPath + "/app/" + pkg.Name,
 	}
 
 	for _, field := range structType.Fields.List {
@@ -175,7 +175,7 @@ func appendStruct(specs []*ControllerSpec, pkg *ast.Package, decl ast.Decl) []*C
 
 		// A direct "sub-type" has an ast.Field as either:
 		//   Ident { "AppController" }
-		//   SelectorExpr { "play", "Controller" }
+		//   SelectorExpr { "rev", "Controller" }
 		// Additionally, that can be wrapped by StarExprs.
 		fieldType := field.Type
 		pkgName, typeName := func() (string, string) {
@@ -236,7 +236,7 @@ func appendMethod(fset *token.FileSet, mm methodMap, decl ast.Decl, pkgName stri
 		return
 	}
 
-	// Does it return a play.Result?
+	// Does it return a rev.Result?
 	if funcDecl.Type.Results == nil || len(funcDecl.Type.Results.List) != 1 {
 		return
 	}
@@ -244,7 +244,7 @@ func appendMethod(fset *token.FileSet, mm methodMap, decl ast.Decl, pkgName stri
 	if !ok {
 		return
 	}
-	if pkgIdent, ok := selExpr.X.(*ast.Ident); !ok || pkgIdent.Name != "play" {
+	if pkgIdent, ok := selExpr.X.(*ast.Ident); !ok || pkgIdent.Name != "rev" {
 		return
 	}
 	if selExpr.Sel.Name != "Result" {
@@ -340,15 +340,15 @@ func (s *embeddedTypeName) SimpleName() string {
 	return s.PackageName + "." + s.StructName
 }
 
-// Remove any types that do not (directly or indirectly) embed *play.Controller.
+// Remove any types that do not (directly or indirectly) embed *rev.Controller.
 func filterControllers(specs []*ControllerSpec) (filtered []*ControllerSpec) {
-	// Do a search in the "embedded type graph", starting with play.Controller.
-	nodeQueue := []string{"play.Controller"}
+	// Do a search in the "embedded type graph", starting with rev.Controller.
+	nodeQueue := []string{"rev.Controller"}
 	for len(nodeQueue) > 0 {
 		controllerSimpleName := nodeQueue[0]
 		nodeQueue = nodeQueue[1:]
 		for _, spec := range specs {
-			if play.ContainsString(nodeQueue, spec.SimpleName()) {
+			if rev.ContainsString(nodeQueue, spec.SimpleName()) {
 				continue // Already added
 			}
 
