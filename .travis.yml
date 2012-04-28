@@ -8,10 +8,8 @@ install:
  - mkdir -p $HOME/pkg || true
  - export GOPATH=$HOME
  - export PATH=$PATH:$HOME/go/bin
+ - go get -v github.com/robfig/revel
  - ln -s $HOME/builds/robfig/revel $HOME/src/github.com/robfig/revel
- - go get -v github.com/howeyc/fsnotify
- - go get -v github.com/kless/goconfig/config
- - git clone git://github.com/robfig/revel.git $HOME/src/github.com/robfig/revel
 
 script:
  - cd $HOME/src/github.com/robfig/revel && go build -v .
