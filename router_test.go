@@ -36,6 +36,31 @@ var routeTestCases = map[string]*Route{
 		actionPattern: regexp.MustCompile("Application\\.SaveApp"),
 	},
 
+	"post /app/{<[0-9]+>id} Application.SaveApp": &Route{
+		method:      "POST",
+		path:        "/app/{<[0-9]+>id}",
+		action:      "Application.SaveApp",
+		pathPattern: regexp.MustCompile("/app/(?P<id>[0-9]+)$"),
+		staticDir:   "",
+		args: []*arg{
+			{
+				name:       "id",
+				constraint: regexp.MustCompile("[0-9]+"),
+			},
+		},
+		actionPattern: regexp.MustCompile("Application\\.SaveApp"),
+	},
+
+	"get /app/? Application.List": &Route{
+		method:      "GET",
+		path:        "/app/?",
+		action:      "Application.List",
+		pathPattern: regexp.MustCompile("/app/?$"),
+		staticDir:   "",
+		args: []*arg{},
+		actionPattern: regexp.MustCompile("Application\\.List"),
+	},
+
 	"GET /public/ staticDir:www": &Route{
 		method:        "GET",
 		path:          "/public/",
@@ -44,6 +69,26 @@ var routeTestCases = map[string]*Route{
 		staticDir:     "www",
 		args:          []*arg{},
 		actionPattern: nil,
+	},
+
+	"* /apps/{id}/{action} Application.{action}": &Route{
+		method:      "*",
+		path:        "/apps/{id}/{action}",
+		action:      "Application.{action}",
+		pathPattern: regexp.MustCompile("/apps/(?P<id>[^/]+)/(?P<action>[^/]+)$"),
+		staticDir:   "",
+		args: []*arg{
+			{
+				name:       "id",
+				constraint: regexp.MustCompile("[^/]+"),
+			},
+			{
+				name:       "action",
+				constraint: regexp.MustCompile("[^/]+"),
+			},
+		},
+		actionPattern: regexp.MustCompile("Application\\.(?P<action>[^/]+)"),
+		actionArgs:    []string{"action"},
 	},
 
 	"* /{controller}/{action} {controller}.{action}": &Route{
