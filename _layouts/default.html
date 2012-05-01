@@ -8,7 +8,9 @@
     <link href="css/bootstrap-responsive.min.css" rel="stylesheet">
     <link href="css/revel.css" rel="stylesheet">
     <link href="css/prettify.css" type="text/css" rel="stylesheet" />
+    <link href="css/sunburst.css" type="text/css" rel="stylesheet" />
     <script src="js/prettify.js" type="text/javascript"></script>
+    <script src="js/lang-go.js" type="text/javascript"></script>
   </head>
 
   <body onload="prettyPrint()">
@@ -98,51 +100,222 @@
         </div>
       </section>
 
-      <section id="sample">
+      <section id="teaser">
         <div class="page-header">
-          <h1>Sample</h1>
+          <h1>Teaser</h1>
         </div>
         <p>
-          This section shows a few snippets from the Booking sample application.
+          This section gives you a taste of various parts of the framework:
         </p>
 
-        <h2>Routing</h2>
+        <dl class="dl-horizontal">
+          <dt><a href="#routing">Routing</a></dt>
+          <dd>A simple declarative routing syntax</dd>
+
+          <dt><a href="#controllers">Controllers</a></dt>
+          <dd>
+            Revel organizes endpoints into Controllers. They provide easy
+            data binding and form validation.
+          </dd>
+
+          <dt><a href="#templates">Templates</a></dt>
+          <dd>Revel makes Go Templates simple to use at scale.</dd>
+
+          <dt><a href="#interceptors">Interceptors</a></dt>
+          <dd>
+            Register functionality to be called before or after actions.  They
+            can be activated per action, per Controller, or globally.
+          </dd>
+
+          <dt><a href="#plugins">Plugins</a></dt>
+          <dd>
+            Plugins allow you to reuse functionality between apps.
+          </dd>
+
+        </dl>
+
         <div class="row">
-          <div class="span4">
+          <div class="span6">
+            <h2 id="routing">Routing</h2>
             <p>
               Revel uses the
               <a href="http://www.playframework.org/documentation/1.2.4/routes#syntax">
                 original Play! routing syntax</a>. It collects all routes for an
               app in a single file, with a simple syntax for matching requests
-              and extracting arguments from URIs.
+              and extracting arguments from URIs.  Here's a commented sample...
             </p>
           </div>
-          <div class="span8">
+          <div class="span10">
             <pre>
-# Routes
+# conf/routes
 # This file defines all application routes (Higher priority routes first)
-# ~~~~
+GET    /login                 Application.Login      <b># A simple path</b>
+GET    /hotels/?              Hotels.Index           <b># Match /hotels and /hotels/ (optional trailing slash)</b>
+GET    /hotels/{id}           Hotels.Show            <b># Extract a URI argument (matching /[^/]+/)</b>
+POST   /hotels/{<[0-9]+>id}   Hotels.Save            <b># URI arg with custom regex</b>
+POST   /hotels/{id}/{action}  Hotels.{action}        <b># Automatically route some actions.</b>
+GET    /public/               staticDir:public       <b># Map /app/public resources under /public/...</b>
+*      /{controller}/{action} {controller}.{action}  <b># Catch all; Automatic URL generation</b></pre>
 
-GET     /                                       Application.Index
-GET     /hotels                                 Hotels.Index
-GET     /hotels/{id}                            Hotels.Show
-POST    /hotels/{id}/booking                    Hotels.ConfirmBooking
-POST    /bookings/{id}/cancel                   Hotels.CancelBooking
+          </div>
+        </div>
 
-# Map static resources from the /app/public folder to the /public path
-GET     /public/                                staticDir:public
+        <div class="row">
+          <div class="span6">
+            <h2 id="controllers">Controllers</h2>
+            <p>
+              All Actions are methods on a Controller.  This teaser shows a couple cool things:
+              <ul>
+                <li> <b>Data binding.</b>  Revel binds simple values and structs from
+                  the URL or form and passes them as parameters to your method.
+                  (If you prefer to access them directly from a parameter map, that's ok too!)
+                <li> <b>Validation.</b> Helpers to manage validation errors.
+                <li> <b>Flash.</b> The flash is a cookie that lives for one
+                  request, useful for error or success messages.
+                <li> <b>Session.</b> The session is a cryptographically signed cookie.
+                <li> <b>Results.</b> Redirections take advantage of reverse
+                  routing.  Template rendering makes your data available using the
+                  name of the local variable!
+              </ul>
 
-# Catch all
-*       /{controller}/{action}                  {controller}.{action}
+              Here's an example:
+            </p>
+          </div>
+
+          <div class="span10">
+            <pre class="prettyprint">
+// app/controllers/app.go
+
+type Application struct {
+	*rev.Controller
+}
+
+func (c Application) Register() rev.Result {
+	title := "Register"
+	return c.Render(title)
+}
+
+func (c Application) SaveUser(user models.User, verifyPassword string) rev.Result {
+	c.Validation.Required(verifyPassword).Key("verifyPassword")
+	c.Validation.Required(verifyPassword == user.Password).Key("verifyPassword").
+		Message("Password does not match")
+	user.Validate(c.Validation)
+
+	if c.Validation.HasErrors() {
+		c.Validation.Keep()
+		c.FlashParams()
+		return c.Redirect(Application.Register)
+	}
+
+	_, err := c.Txn.Exec("insert into User (Username, Password, Name) values (?, ?, ?)",
+		user.Username, user.Password, user.Name)
+	if err != nil {
+		panic(err)
+	}
+
+	c.Session["user"] = user.Username
+	c.Flash.Success("Welcome, " + user.Name)
+	return c.Redirect(Hotels.Index)
+}
             </pre>
           </div>
         </div>
+
+        <div class="row">
+          <div class="span6">
+            <h2 id="templates">Templates</h2>
+            <p>
+              By convention, Revel manages to integrate
+              <a href="http://golang.org/pkg/text/template/">Go Templates</a>
+              easily into the rest of the web app. Here is the template rendered
+              in the <b>Register</b> action shown above.
+            </p>
+            Note that:
+            <ul>
+              <li> Revel found it automatically using the name of the action.
+              <li> <b>field</b> is a simple helper function that returns a map
+                of validation errors and parameter values for the named field.
+                The app may inject any helper funcs that it wants.
+            </ul>
+          </div>
+
+          <div class="span10">
+            <pre class="prettyprint lang-html">{% capture teaser_template %}{% raw %}
+{{/* app/views/Application/Register.html */}}
+
+{{template "header.html" .}}
+
+<h1>Register:</h1>
+<form action="/register" method="POST">
+  {{with $field := field "user.Username" .}}
+    <p class="{{$field.ErrorClass}}">
+      <strong>Username:</strong>
+      <input type="text" name="{{$field.Name}}" size="16" value="{{$field.Value}}"> *
+      <span class="error">{{$field.Error}}</span>
+    </p>
+  {{end}}
+  {{with $field := field "user.Name" .}}
+    <p class="{{$field.ErrorClass}}">
+      <strong>Real name:</strong> <input type="text" name="{{$field.Name}}" size="16" value="{{$field.Value}}"> *
+      <span class="error">{{$field.Error}}</span>
+    </p>
+  {{end}}
+  {{with $field := field "user.Password" .}}
+    <p class="{{$field.ErrorClass}}">
+      <strong>Password:</strong> <input type="password" name="{{$field.Name}}" size="16" value="{{$field.Value}}"> *
+      <span class="error">{{$field.Error}}</span>
+    </p>
+  {{end}}
+  {{with $field := field "verifyPassword" .}}
+    <p class="{{$field.ErrorClass}}">
+      <strong>Verify password:</strong> <input type="password" name="{{$field.Name}}" size="16" value="{{$field.Value}}"> *
+      <span class="error">{{$field.Error}}</span>
+    </p>
+  {{end}}
+  <p class="buttons">
+    <input type="submit" value="Register"> <a href="/">Cancel</a>
+  </p>
+</form>
+
+{{template "footer.html" .}}{% endraw %}{% endcapture %}{{ teaser_template|escape }}</pre>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="span6">
+            <h2 id="interceptors">Interceptors</h2>
+            <p>
+              Interceptors may be registered.
+            </p>
+          </div>
+
+          <div class="span10">
+            <pre class="prettyprint">
+// app/controllers/app.go
+
+func addUser(c *rev.Controller) rev.Result {
+	if user := connected(c); user != nil {
+		c.RenderArgs["user"] = user
+	}
+	return nil
+}
+
+func init() {
+	rev.InterceptFunc(addUser, rev.BEFORE, &Application{})
+}</pre>
+          </div>
+        </div>
+
       </section>
 
       <hr>
 
       <footer>
         <p>MIT License</p>
+        <p>
+          Gopher images remixed from those produced by
+          <a href="http://www.golang.org">Go team</a>.
+        </p>
       </footer>
 
     </div> <!-- /container -->
