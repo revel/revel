@@ -184,6 +184,9 @@ func Run(mode rev.RunMode) {
 		log.Fatal(err)
 	}
 
+	watcher.Event = make(chan *fsnotify.FileEvent, 10)
+	watcher.Error = make(chan error, 10)
+
 	// Listen to all app subdirectories (except /views)
 	filepath.Walk(rev.AppPath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
