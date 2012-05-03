@@ -58,7 +58,9 @@ func ScanControllers(path string) (specs []*ControllerSpec, compileError *rev.Er
 	// Parse files within the path.
 	var pkgs map[string]*ast.Package
 	fset := token.NewFileSet()
-	pkgs, err := parser.ParseDir(fset, path, func(f os.FileInfo) bool { return !f.IsDir() }, 0)
+	pkgs, err := parser.ParseDir(fset, path, func(f os.FileInfo) bool {
+		return !f.IsDir() && !strings.HasPrefix(f.Name(), ".")
+	}, 0)
 	if err != nil {
 		if errList, ok := err.(scanner.ErrorList); ok {
 			var pos token.Position = errList[0].Pos
