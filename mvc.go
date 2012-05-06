@@ -430,8 +430,8 @@ func (f Flash) Success(msg string, args ...interface{}) {
 	}
 }
 
-func (p Params) Bind(valueType reflect.Type, key string) reflect.Value {
-	return BindKey(p, valueType, key)
+func (p Params) Bind(name string, typ reflect.Type) reflect.Value {
+	return Bind(p, name, typ)
 }
 
 // Internal bookeeping

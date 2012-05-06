@@ -7,32 +7,33 @@ import (
 	"time"
 )
 
-type keyValue struct {
-	key, value string
-}
-
-// A Binder translates between url parameters and Go data structures.
-// The caller must group together key-value pairs that correspond to a single
-// argument (e.g. an array or a struct).
+// A Binder translates between string parameters and Go data structures.
 //
 // Here is an example.
 //
 // Request:
-//   url?id=123&ol[0]=1&ol[1]=2&ul[]=str&ul[]=array&user.name=rob
+//   url?id=123&ol[0]=1&ol[1]=2&ul[]=str&ul[]=array&user.Name=rob
 // Action:
 //   Example.Action(id int, ol []int, ul []string, user User)
 // Calls:
-//   Binder(int,       keyValue[]{ {"id", "123"} })
-//   Binder([]int,     keyValue[]{ {"ol[0]", "1"}, {"ol[1]", "2"} })
-//   Binder([]string,  keyValue[]{ {"ul[]", "str"}, {"ul[]", "array"} })
-//   Binder(User,      keyValue[]{ {"user.Name", "rob"} })
+//   Binder(params, "id", int): 123
+//   Binder(params, "ol", []int): {1, 2}
+//   Binder(params, "ul", []string): {"str", "array"}
+//   Binder(params, "user", User): User{Name:"rob"}
 //
 // Note that only exported struct fields may be bound.
-//
-// valueType is the type of value that should be returned.
-// keyValues are the key/value pairs that constitute the value.
-// The Go value is returned as a reflect.Value.
-type Binder func(valueType reflect.Type, kv []keyValue) reflect.Value
+type Binder func(params map[string][]string, name string, typ reflect.Type) reflect.Value
+
+// An adapter for easily making one-key-value binders.
+func SimpleBinder(f func(value string, typ reflect.Type) reflect.Value) Binder {
+	return func(params map[string][]string, name string, typ reflect.Type) reflect.Value {
+		vals, ok := params[name]
+		if !ok || len(vals) == 0 {
+			return reflect.Zero(typ)
+		}
+		return f(vals[0], typ)
+	}
+}
 
 // These are the lookups to find a Binder for any type of data.
 // The most specific binder found will be used (Type before Kind)
@@ -44,19 +45,21 @@ var (
 // Sadly, the binder lookups can not be declared initialized -- that results in
 // an "initialization loop" compile error.
 func init() {
-	KindBinders[reflect.Int] = bindInt
-	KindBinders[reflect.Int8] = bindInt
-	KindBinders[reflect.Int16] = bindInt
-	KindBinders[reflect.Int32] = bindInt
-	KindBinders[reflect.Int64] = bindInt
+	intBinder := SimpleBinder(bindInt)
 
-	KindBinders[reflect.String] = bindStr
-	KindBinders[reflect.Bool] = bindBool
+	KindBinders[reflect.Int] = intBinder
+	KindBinders[reflect.Int8] = intBinder
+	KindBinders[reflect.Int16] = intBinder
+	KindBinders[reflect.Int32] = intBinder
+	KindBinders[reflect.Int64] = intBinder
+
+	KindBinders[reflect.String] = SimpleBinder(bindStr)
+	KindBinders[reflect.Bool] = SimpleBinder(bindBool)
 	KindBinders[reflect.Slice] = bindSlice
 	KindBinders[reflect.Struct] = bindStruct
 	KindBinders[reflect.Ptr] = bindPointer
 
-	TypeBinders[reflect.TypeOf(time.Time{})] = bindTime
+	TypeBinders[reflect.TypeOf(time.Time{})] = SimpleBinder(bindTime)
 }
 
 var (
@@ -65,14 +68,14 @@ var (
 	TimeFormats = []string{"2006-01-02", "2006-01-02 15:04"}
 )
 
-func bindStr(valueType reflect.Type, kv []keyValue) reflect.Value {
-	return reflect.ValueOf(kv[0].value)
+func bindStr(val string, typ reflect.Type) reflect.Value {
+	return reflect.ValueOf(val)
 }
 
-func bindInt(valueType reflect.Type, kv []keyValue) reflect.Value {
-	intValue, err := strconv.Atoi(kv[0].value)
+func bindInt(val string, typ reflect.Type) reflect.Value {
+	intValue, err := strconv.Atoi(val)
 	if err != nil {
-		LOG.Println("Error binding", kv[0].key, ":", err)
+		LOG.Println("BindInt:", err)
 	}
 	return reflect.ValueOf(intValue)
 }
@@ -81,9 +84,8 @@ func bindInt(valueType reflect.Type, kv []keyValue) reflect.Value {
 // "true" and "false"
 // "on" and "" (a checkbox)
 // "1" and "0" (why not)
-func bindBool(valueType reflect.Type, kv []keyValue) reflect.Value {
-	v := strings.TrimSpace(
-		strings.ToLower(kv[0].value))
+func bindBool(val string, typ reflect.Type) reflect.Value {
+	v := strings.TrimSpace(strings.ToLower(val))
 	switch v {
 	case "true", "on", "1":
 		return reflect.ValueOf(true)
@@ -94,186 +96,137 @@ func bindBool(valueType reflect.Type, kv []keyValue) reflect.Value {
 
 // Used to keep track of the index for individual keyvalues.
 type sliceValue struct {
-	hasIndex bool       // true if an explicit index was assigned
-	index    int        // Index extracted from brackets.
-	subKv    []keyValue // key suffix left over, e.g. key="x[0].name" => keySuffix=".name"
+	index int           // Index extracted from brackets.  If -1, no index was provided.
+	value reflect.Value // the bound value for this slice element.
 }
 
 // This function creates a slice of the given type, Binds each of the individual
 // elements, and then sets them to their appropriate location in the slice.
-func bindSlice(valueType reflect.Type, kvArr []keyValue) reflect.Value {
-	// Map from key prefix to sub values.
-	// e.g. ["foo[0].id", "foo[0].name", "bar[][0]"]
-	// becomes {"foo[0]": keyValue[".id", ".name"], "bar[]": keyValue["[0]"]}
-	sliceValues := make(map[string]*sliceValue)
-	numNoIndex := 0
+// If elements are provided without an explicit index, they are added (in
+// unspecified order) to the end of the slice.
+func bindSlice(params map[string][]string, name string, typ reflect.Type) reflect.Value {
+	// Collect an array of slice elements with their indexes (and the max index).
 	maxIndex := -1
-	for _, kv := range kvArr {
-		leftBracket, rightBracket := strings.Index(kv.key, "["), strings.Index(kv.key, "]")
-		if leftBracket == -1 || rightBracket == -1 {
-			LOG.Println("bindSlice: missing brackets from", kv.key)
-			return reflect.Zero(valueType)
-		}
-		index := -1
-		if rightBracket > leftBracket+1 {
-			index, _ = strconv.Atoi(kv.key[leftBracket+1 : rightBracket])
-			if index > maxIndex {
-				maxIndex = index
+	numNoIndex := 0
+	sliceValues := []sliceValue{}
+	for key, vals := range params {
+		for _, val := range vals {
+			if !strings.HasPrefix(key, name+"[") {
+				continue
 			}
-		} else {
-			numNoIndex++
-		}
 
-		// e.g. foo[0][1] breaks to prefix = "foo[0]" , suffix = "[1]"
-		prefix := kv.key[:rightBracket+1]
-		suffix := kv.key[rightBracket+1:]
-
-		kv.key = suffix
-		if sv, ok := sliceValues[prefix]; ok {
-			sv.subKv = append(sv.subKv, kv)
-			if index > sv.index {
-				sv.index = index
+			// Extract the index and add it to the sliceValues array.
+			leftBracket, rightBracket := len(name), strings.Index(key[len(name):], "]")+len(name)
+			if rightBracket == -1 {
+				continue
 			}
-		} else {
-			sliceValues[prefix] = &sliceValue{
-				hasIndex: index > -1,
-				index:    index,
-				subKv:    []keyValue{kv},
+
+			index := -1
+			if rightBracket > leftBracket+1 {
+				index, _ = strconv.Atoi(key[leftBracket+1 : rightBracket])
+				if index > maxIndex {
+					maxIndex = index
+				}
+				sliceValues = append(sliceValues, sliceValue{
+					index: index,
+					value: Bind(params, key[:rightBracket+1], typ.Elem()),
+				})
+			} else {
+				// Unindexed elements can only be direct-bound.
+				numNoIndex++
+				sliceValues = append(sliceValues, sliceValue{
+					index: -1,
+					value: SimpleBind(val, typ.Elem()),
+				})
 			}
 		}
 	}
 
-	resultArray := reflect.MakeSlice(valueType, maxIndex+1, maxIndex+1+numNoIndex)
+	resultArray := reflect.MakeSlice(typ, maxIndex+1, maxIndex+1+numNoIndex)
 	for _, sv := range sliceValues {
-		// Recursively bind the element's value.
-		elemValue := Bind(valueType.Elem(), sv.subKv)
-		if sv.hasIndex {
-			resultArray.Index(sv.index).Set(elemValue)
+		if sv.index != -1 {
+			resultArray.Index(sv.index).Set(sv.value)
 		} else {
-			resultArray = reflect.Append(resultArray, elemValue)
+			resultArray = reflect.Append(resultArray, sv.value)
 		}
 	}
 
 	return resultArray
 }
 
-func bindStruct(valueType reflect.Type, kvArr []keyValue) reflect.Value {
-	// Map from field name (e.g. key="x.name.first" => "name") to key values for that field.
-	structValues := make(map[string][]keyValue)
-	for _, kv := range kvArr {
-		// Ignore everything up to the first dot.
-		// e.g. foo.bar.baz => bar.baz
-		dot := strings.Index(kv.key, ".")
-		if dot == -1 {
-			LOG.Println("bindStruct: missing dot binding", valueType, "key", kv.key, "value", kv.value)
-			return reflect.Zero(valueType)
-		}
-		subKey := kv.key[dot+1:]
-
-		// Break subKey into prefix and suffix, on dots and brackets.
-		// e.g. bar.baz breaks to prefix = "bar" , suffix = ".baz"
-		// e.g. bar[0] breaks to prefix = "bar" , suffix = "[0]"
-		prefixLen := strings.IndexAny(subKey, ".[")
-		if prefixLen == -1 {
-			prefixLen = len(subKey)
-		}
-		prefix := subKey[:prefixLen]
-		suffix := subKey[prefixLen:]
-
-		// TODO: This part of grouping args will be shared to any callers of Bind.
-		kv.key = suffix
-		if sv, ok := structValues[prefix]; ok {
-			structValues[prefix] = append(sv, kv)
-		} else {
-			structValues[prefix] = []keyValue{kv}
-		}
-	}
-
-	result := reflect.New(valueType).Elem()
-	for fieldName, subKv := range structValues {
-		// Find the field to bind.
-		fieldValue := result.FieldByName(fieldName)
-		if !fieldValue.IsValid() {
-			LOG.Println("bindStruct: Field not found:", fieldName)
-			continue
-		}
-		if !fieldValue.CanSet() {
-			LOG.Println("bindStruct: Field not settable:", fieldName)
+func bindStruct(params map[string][]string, name string, typ reflect.Type) reflect.Value {
+	result := reflect.New(typ).Elem()
+	fieldValues := make(map[string]reflect.Value)
+	for key, _ := range params {
+		if !strings.HasPrefix(key, name+".") {
 			continue
 		}
 
-		// Bind it
-		fieldValue.Set(Bind(fieldValue.Type(), subKv))
+		// Get the name of the struct property.
+		// Strip off the prefix. e.g. foo.bar.baz => bar.baz
+		suffix := key[len(name)+1:]
+
+		// Break it on dots and brackets.
+		// e.g. bar => "bar", bar.baz => "bar", bar[0] => "bar"
+		fieldLen := strings.IndexAny(suffix, ".[")
+		if fieldLen == -1 {
+			fieldLen = len(suffix)
+		}
+		fieldName := suffix[:fieldLen]
+
+		if _, ok := fieldValues[fieldName]; !ok {
+			// Time to bind this field.  Get it and make sure we can set it.
+			fieldValue := result.FieldByName(fieldName)
+			if !fieldValue.IsValid() {
+				LOG.Println("W: bindStruct: Field not found:", fieldName)
+				continue
+			}
+			if !fieldValue.CanSet() {
+				LOG.Println("W: bindStruct: Field not settable:", fieldName)
+				continue
+			}
+			boundVal := Bind(params, key[:len(name)+1+fieldLen], fieldValue.Type())
+			fieldValue.Set(boundVal)
+			fieldValues[fieldName] = boundVal
+		}
 	}
+
 	return result
 }
 
-func bindPointer(valueType reflect.Type, kvArr []keyValue) reflect.Value {
-	return Bind(valueType.Elem(), kvArr).Addr()
+func bindPointer(params map[string][]string, name string, typ reflect.Type) reflect.Value {
+	return Bind(params, name, typ.Elem()).Addr()
 }
 
 // This expects a single keyValue.
-func bindTime(valueType reflect.Type, kvArr []keyValue) reflect.Value {
-	if len(kvArr) >= 0 {
-		timeStr := kvArr[0].value
-
-		for _, f := range TimeFormats {
-			if r, err := time.Parse(f, timeStr); err == nil {
-				return reflect.ValueOf(r)
-			}
+func bindTime(val string, typ reflect.Type) reflect.Value {
+	for _, f := range TimeFormats {
+		if r, err := time.Parse(f, val); err == nil {
+			return reflect.ValueOf(r)
 		}
 	}
-	return reflect.Zero(valueType)
+	return reflect.Zero(typ)
 }
 
 // Parse the value string into a real Go value.
 // Returns 0 values when things can not be parsed.
-func Bind(valueType reflect.Type, kv []keyValue) reflect.Value {
+func Bind(params map[string][]string, name string, typ reflect.Type) reflect.Value {
 	// If there's no data, just return the type's zero.
-	if len(kv) == 0 {
-		return reflect.Zero(valueType)
+	if len(params) == 0 {
+		return reflect.Zero(typ)
 	}
 
-	binder, ok := TypeBinders[valueType]
+	binder, ok := TypeBinders[typ]
 	if !ok {
-		binder, ok = KindBinders[valueType.Kind()]
+		binder, ok = KindBinders[typ.Kind()]
 		if !ok {
-			LOG.Println("No binder for type:", valueType)
-			return reflect.Zero(valueType)
+			LOG.Println("No binder for type:", typ)
+			return reflect.Zero(typ)
 		}
 	}
-	return binder(valueType, kv)
+	return binder(params, name, typ)
 }
 
-// Bind a particular key to a particular value type.
-func BindKey(params map[string][]string, valueType reflect.Type, key string) reflect.Value {
-	if strings.ContainsAny(key, ".[]") {
-		LOG.Println("W: Invalid parameter name:", key)
-		return reflect.Zero(valueType)
-	}
-
-	// Look through params for all key/values matching the regex 'key[.\[].*'
-	kv := []keyValue{}
-	for candidateKey, candidateValues := range params {
-		// There are two options for matching:
-		// - The candidate key is equal to the requested key
-		// - The candidate key has a prefix of the requested key, followed by a "." or "["
-		if !strings.HasPrefix(candidateKey, key) {
-			continue
-		}
-		if len(candidateKey) == len(key) {
-			kv = []keyValue{}
-			for _, v := range candidateValues {
-				kv = append(kv, keyValue{key, v})
-			}
-			return Bind(valueType, kv)
-		}
-		nextChar := candidateKey[len(key)]
-		if nextChar == '.' || nextChar == '[' {
-			for _, v := range candidateValues {
-				kv = append(kv, keyValue{candidateKey, v})
-			}
-		}
-	}
-	return Bind(valueType, kv)
+func SimpleBind(val string, typ reflect.Type) reflect.Value {
+	return Bind(map[string][]string{"": {val}}, "", typ)
 }

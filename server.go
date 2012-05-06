@@ -51,7 +51,7 @@ func handle(w http.ResponseWriter, r *http.Request) {
 	// Collect the values for the method's arguments.
 	var actualArgs []reflect.Value
 	for _, arg := range controller.MethodType.Args {
-		actualArgs = append(actualArgs, controller.Params.Bind(arg.Type, arg.Name))
+		actualArgs = append(actualArgs, controller.Params.Bind(arg.Name, arg.Type))
 	}
 
 	// Invoke the method.

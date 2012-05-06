@@ -32,7 +32,7 @@ var (
 	LOG = log.New(os.Stdout, "", log.Ldate|log.Ltime|log.Lshortfile)
 
 	// Private
-	revelInit  bool = false
+	revelInit bool = false
 	secretKey []byte
 )
 

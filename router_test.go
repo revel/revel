@@ -52,12 +52,12 @@ var routeTestCases = map[string]*Route{
 	},
 
 	"get /app/? Application.List": &Route{
-		method:      "GET",
-		path:        "/app/?",
-		action:      "Application.List",
-		pathPattern: regexp.MustCompile("/app/?$"),
-		staticDir:   "",
-		args: []*arg{},
+		method:        "GET",
+		path:          "/app/?",
+		action:        "Application.List",
+		pathPattern:   regexp.MustCompile("/app/?$"),
+		staticDir:     "",
+		args:          []*arg{},
 		actionPattern: regexp.MustCompile("Application\\.List"),
 	},
 
