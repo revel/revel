@@ -1,0 +1,44 @@
+---
+layout: godoc
+---
+<!--
+	Copyright 2009 The Go Authors. All rights reserved.
+	Use of this source code is governed by a BSD-style
+	license that can be found in the LICENSE file.
+-->
+<h1>Server</h1>
+
+
+
+	<pre>package rev
+
+<span class="comment">// Run the server.</span>
+<span class="comment">// This is called from the generated main file.</span>
+func Run(port int) {
+
+    router = LoadRoutes()
+    templateLoader = NewTemplateLoader()
+
+    go func() {
+        time.Sleep(100 * time.Millisecond)
+        LOG.Printf(&#34;Listening on port %d...&#34;, port)
+    }()
+    server := &amp;http.Server{
+        Addr:    fmt.Sprintf(&#34;:%d&#34;, port),
+        Handler: http.HandlerFunc(handle),
+    }
+
+    plugins.OnAppStart()
+
+    err := server.ListenAndServe()
+    if err != nil {
+        LOG.Fatalln(&#34;Failed to listen:&#34;, err)
+    }
+}
+</pre>
+
+
+
+
+
+

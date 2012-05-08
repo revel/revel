@@ -1,0 +1,324 @@
+---
+layout: godoc
+---
+<!--
+	Copyright 2009 The Go Authors. All rights reserved.
+	Use of this source code is governed by a BSD-style
+	license that can be found in the LICENSE file.
+-->
+<h1>Mvc</h1>
+
+
+
+	<pre>package rev
+
+type Flash struct {
+    Data, Out map[string]string
+}
+
+type Params url.Values
+
+type Session map[string]string
+
+type Request struct {
+    *http.Request
+}
+
+type Response struct {
+    Status      int
+    ContentType string
+    Headers     http.Header
+    Cookies     []*http.Cookie
+    <span class="comment">// contains filtered or unexported fields</span>
+}
+
+type Controller struct {
+    Name       string
+    Type       *ControllerType
+    MethodType *MethodType
+
+    Request  *Request
+    Response *Response
+
+    Flash      Flash                  <span class="comment">// User cookie, cleared after each request.</span>
+    Session    Session                <span class="comment">// Session, stored in cookie, signed.</span>
+    Params     Params                 <span class="comment">// URL Query parameters</span>
+    Args       map[string]interface{} <span class="comment">// Per-request scratch space.</span>
+    RenderArgs map[string]interface{} <span class="comment">// Args passed to the template.</span>
+    Validation *Validation            <span class="comment">// Data validation helpers</span>
+    Txn        *sql.Tx                <span class="comment">// Nil by default, but may be used by the app / plugins</span>
+}
+
+func NewController(w http.ResponseWriter, r *http.Request, ct *ControllerType) *Controller {
+    flash := restoreFlash(r)
+    values := r.URL.Query()
+
+    if err := r.ParseForm(); err != nil {
+        LOG.Println(&#34;Error parsing request body:&#34;, err)
+    } else {
+        for key, vals := range r.Form {
+            for _, val := range vals {
+                values.Add(key, val)
+            }
+        }
+    }
+
+    return &amp;Controller{
+        Name:    ct.Type.Name(),
+        Type:    ct,
+        Request: &amp;Request{r},
+        Response: &amp;Response{
+            Status:      200,
+            ContentType: &#34;&#34;,
+            Headers:     w.Header(),
+            out:         w,
+        },
+
+        Params:  Params(values),
+        Flash:   flash,
+        Session: restoreSession(r),
+        RenderArgs: map[string]interface{}{
+            &#34;flash&#34;: flash.Data,
+        },
+        Validation: &amp;Validation{
+            Errors: restoreValidationErrors(r),
+            keep:   false,
+        },
+    }
+}
+
+func NewAppController(w http.ResponseWriter, r *http.Request, controllerName, methodName string) (*Controller, reflect.Value) {
+    var appControllerType *ControllerType = LookupControllerType(controllerName)
+    if appControllerType == nil {
+        LOG.Printf(&#34;E: Controller %s not found: %s&#34;, controllerName, r.URL)
+        return nil, reflect.ValueOf(nil)
+    }
+
+    controller := NewController(w, r, appControllerType)
+    appControllerPtr := initNewAppController(appControllerType.Type, controller)
+
+    controller.MethodType = appControllerType.Method(methodName)
+    if controller.MethodType == nil {
+        LOG.Println(&#34;E: Failed to find method&#34;, methodName, &#34;on Controller&#34;,
+            controllerName)
+        return nil, reflect.ValueOf(nil)
+    }
+
+    return controller, appControllerPtr
+}
+
+func (c *Controller) FlashParams() {
+    for key, vals := range c.Params {
+        c.Flash.Out[key] = vals[0]
+    }
+}
+
+func (c *Controller) SetCookie(cookie *http.Cookie) {
+    http.SetCookie(c.Response.out, cookie)
+}
+
+<span class="comment">// Invoke the given method, save headers/cookies to the response, and apply the</span>
+<span class="comment">// result.  (e.g. render a template to the response)</span>
+func (c *Controller) Invoke(appControllerPtr reflect.Value, method reflect.Value, methodArgs []reflect.Value) {
+
+    defer func() {
+        if err := recover(); err != nil {
+            handleInvocationPanic(c, err)
+        }
+    }()
+
+    plugins.BeforeRequest(c)
+
+    resultValue := func() reflect.Value {
+
+        result := c.invokeInterceptors(BEFORE, appControllerPtr)
+        if result != nil {
+            return reflect.ValueOf(result)
+        }
+
+        resultValue := method.Call(methodArgs)[0]
+
+        result = c.invokeInterceptors(AFTER, appControllerPtr)
+        if result != nil {
+            return reflect.ValueOf(result)
+        }
+        return resultValue
+    }()
+
+    plugins.AfterRequest(c)
+
+    if resultValue.IsNil() {
+        return
+    }
+    result := resultValue.Interface().(Result)
+
+    <span class="comment">// Store the flash.</span>
+    var flashValue string
+    for key, value := range c.Flash.Out {
+        flashValue += &#34;\x00&#34; + key + &#34;:&#34; + value + &#34;\x00&#34;
+    }
+    c.SetCookie(&amp;http.Cookie{
+        Name:  &#34;REVEL_FLASH&#34;,
+        Value: url.QueryEscape(flashValue),
+        Path:  &#34;/&#34;,
+    })
+
+    <span class="comment">// Store the Validation errors</span>
+    var errorsValue string
+    if c.Validation.keep {
+        for _, error := range c.Validation.Errors {
+            if error.Message != &#34;&#34; {
+                errorsValue += &#34;\x00&#34; + error.Key + &#34;:&#34; + error.Message + &#34;\x00&#34;
+            }
+        }
+    }
+    c.SetCookie(&amp;http.Cookie{
+        Name:  &#34;REVEL_ERRORS&#34;,
+        Value: url.QueryEscape(errorsValue),
+        Path:  &#34;/&#34;,
+    })
+
+    <span class="comment">// Store the session (and sign it).</span>
+    var sessionValue string
+    for key, value := range c.Session {
+        sessionValue += &#34;\x00&#34; + key + &#34;:&#34; + value + &#34;\x00&#34;
+    }
+    sessionData := url.QueryEscape(sessionValue)
+    c.SetCookie(&amp;http.Cookie{
+        Name:  &#34;REVEL_SESSION&#34;,
+        Value: Sign(sessionData) + &#34;-&#34; + sessionData,
+        Path:  &#34;/&#34;,
+    })
+
+    result.Apply(c.Request, c.Response)
+}
+
+func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
+
+    pc, _, line, ok := runtime.Caller(1)
+    if !ok {
+        log.Println(&#34;Failed to get Caller information&#34;)
+        return nil
+    }
+    <span class="comment">// e.g. sample/app/controllers.(*Application).Index</span>
+    var fqViewName string = runtime.FuncForPC(pc).Name()
+    var viewName string = fqViewName[strings.LastIndex(fqViewName, &#34;.&#34;)+1 : len(fqViewName)]
+
+    template, err := templateLoader.Template(c.Name + &#34;/&#34; + viewName + &#34;.html&#34;)
+    if err != nil {
+
+        if err, ok := err.(*Error); ok {
+            c.Response.out.Write([]byte(err.Html()))
+        } else {
+            c.Response.out.Write([]byte(err.Error()))
+        }
+        return nil
+    }
+
+    if renderArgNames, ok := c.MethodType.RenderArgNames[line]; ok {
+        if len(renderArgNames) == len(extraRenderArgs) {
+            for i, extraRenderArg := range extraRenderArgs {
+                c.RenderArgs[renderArgNames[i]] = extraRenderArg
+            }
+        } else {
+            LOG.Println(len(renderArgNames), &#34;RenderArg names found for&#34;,
+                len(extraRenderArgs), &#34;extra RenderArgs&#34;)
+        }
+    } else {
+        LOG.Println(&#34;No RenderArg names found for Render call on line&#34;, line)
+    }
+
+    c.RenderArgs[&#34;errors&#34;] = c.Validation.ErrorMap()
+
+    return &amp;RenderTemplateResult{
+        Template:   template,
+        RenderArgs: c.RenderArgs,
+        Response:   c.Response,
+    }
+}
+
+<span class="comment">// Redirect to an action or to a URL.</span>
+<span class="comment">//   c.Redirect(Controller.Action)</span>
+<span class="comment">//   c.Redirect(&#34;/controller/action&#34;)</span>
+<span class="comment">//   c.Redirect(&#34;/controller/%d/action&#34;, id)</span>
+func (c *Controller) Redirect(val interface{}, args ...interface{}) Result {
+    if url, ok := val.(string); ok {
+        if len(args) == 0 {
+            return &amp;RedirectToUrlResult{url}
+        }
+        return &amp;RedirectToUrlResult{fmt.Sprintf(url, args...)}
+    }
+    return &amp;RedirectToActionResult{val}
+}
+
+func (f Flash) Error(msg string, args ...interface{}) {
+    if len(args) == 0 {
+        f.Out[&#34;error&#34;] = msg
+    } else {
+        f.Out[&#34;error&#34;] = fmt.Sprintf(msg, args...)
+    }
+}
+
+func (f Flash) Success(msg string, args ...interface{}) {
+    if len(args) == 0 {
+        f.Out[&#34;success&#34;] = msg
+    } else {
+        f.Out[&#34;success&#34;] = fmt.Sprintf(msg, args...)
+    }
+}
+
+func (p Params) Bind(name string, typ reflect.Type) reflect.Value {
+    return Bind(p, name, typ)
+}
+
+type ControllerType struct {
+    Type    reflect.Type
+    Methods []*MethodType
+}
+
+type MethodType struct {
+    Name           string
+    Args           []*MethodArg
+    RenderArgNames map[int][]string
+}
+
+type MethodArg struct {
+    Name string
+    Type reflect.Type
+}
+
+func (ct *ControllerType) Method(name string) *MethodType {
+    for _, method := range ct.Methods {
+        if method.Name == name {
+            return method
+        }
+    }
+    return nil
+}
+
+func RegisterController(c interface{}, methods []*MethodType) {
+    <span class="comment">// De-star the controller type</span>
+    <span class="comment">// (e.g. given TypeOf((*Application)(nil)), want TypeOf(Application))</span>
+    var t reflect.Type = reflect.TypeOf(c)
+    var elem reflect.Type = t.Elem()
+
+    for _, m := range methods {
+        for _, arg := range m.Args {
+            arg.Type = arg.Type.Elem()
+        }
+    }
+
+    controllers[elem.Name()] = &amp;ControllerType{Type: elem, Methods: methods}
+    log.Printf(&#34;Registered controller: %s&#34;, elem.Name())
+}
+
+func LookupControllerType(name string) *ControllerType {
+    return controllers[name]
+}
+</pre>
+
+
+
+
+
+

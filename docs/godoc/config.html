@@ -1,0 +1,124 @@
+---
+layout: godoc
+---
+<!--
+	Copyright 2009 The Go Authors. All rights reserved.
+	Use of this source code is governed by a BSD-style
+	license that can be found in the LICENSE file.
+-->
+<h1>Config</h1>
+
+	
+		<!-- The package's Name is printed as title by the top-level template -->
+                
+		
+
+		<h2 id="index">Index</h2>
+		<!-- Table of contents for API; must be named manual-nav to turn off auto nav. -->
+		<div id="manual-nav">
+			<dl>
+			
+			
+			
+			
+				
+				<dd><a href="#MergedConfig">type MergedConfig</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#LoadConfig">func LoadConfig(fname string) (*MergedConfig, error)</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#MergedConfig.Int">func (c *MergedConfig) Int(option string) (int, error)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#MergedConfig.SetSection">func (c *MergedConfig) SetSection(section string)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#MergedConfig.String">func (c *MergedConfig) String(option string) (string, error)</a></dd>
+				
+			
+			
+		</dl>
+
+		
+
+		
+			<h4>Package files</h4>
+			<p>
+			<span style="font-size:90%">
+			
+				<a href="../src/config.html">config.go</a>
+			
+			</span>
+			</p>
+		
+
+		
+		
+		
+		
+			
+			
+			<h2 id="MergedConfig">type <a href="../src/config.html?s=281:396#L1">MergedConfig</a></h2>
+			<pre>type MergedConfig struct {
+    *config.Config
+    <span class="comment">// contains filtered or unexported fields</span>
+}</pre>
+			<p>
+This handles the parsing of application.conf
+It has a &#34;preferred&#34; section that is checked first for option queries.
+If the preferred section does not have the option, the DEFAULT section is
+checked fallback.
+</p>
+
+
+			
+
+			
+
+			
+
+			
+				
+				<h3 id="LoadConfig">func <a href="../src/config.html?s=398:450#L6">LoadConfig</a></h3>
+				<pre>func LoadConfig(fname string) (*MergedConfig, error)</pre>
+				
+				
+			
+
+			
+				
+				<h3 id="MergedConfig.Int">func (*MergedConfig) <a href="../src/config.html?s=647:701#L18">Int</a></h3>
+				<pre>func (c *MergedConfig) Int(option string) (int, error)</pre>
+				
+				
+				
+			
+				
+				<h3 id="MergedConfig.SetSection">func (*MergedConfig) <a href="../src/config.html?s=571:620#L14">SetSection</a></h3>
+				<pre>func (c *MergedConfig) SetSection(section string)</pre>
+				
+				
+				
+			
+				
+				<h3 id="MergedConfig.String">func (*MergedConfig) <a href="../src/config.html?s=826:886#L25">String</a></h3>
+				<pre>func (c *MergedConfig) String(option string) (string, error)</pre>
+				
+				
+				
+			
+		
+		</div>
+	
+
+	
+
+
+
+
+
+
+
+

@@ -1,0 +1,227 @@
+---
+layout: godoc
+---
+<!--
+	Copyright 2009 The Go Authors. All rights reserved.
+	Use of this source code is governed by a BSD-style
+	license that can be found in the LICENSE file.
+-->
+<h1>Validation</h1>
+
+
+
+	<pre>package rev
+
+type ValidationError struct {
+    Message, Key string
+}
+
+<span class="comment">// Returns the Message.</span>
+func (e *ValidationError) String() string {
+    if e == nil {
+        return &#34;&#34;
+    }
+    return e.Message
+}
+
+<span class="comment">// A Validation context manages data validation and error messages.</span>
+type Validation struct {
+    Errors []*ValidationError
+    <span class="comment">// contains filtered or unexported fields</span>
+}
+
+func (v *Validation) Keep() {
+    v.keep = true
+}
+
+func (v *Validation) Clear() {
+    v.Errors = []*ValidationError{}
+}
+
+func (v *Validation) HasErrors() bool {
+    return len(v.Errors) &gt; 0
+}
+
+<span class="comment">// Return the errors mapped by key.</span>
+<span class="comment">// If there are multiple validation errors associated with a single key, the</span>
+<span class="comment">// first one &#34;wins&#34;.  (Typically the first validation will be the more basic).</span>
+func (v *Validation) ErrorMap() map[string]*ValidationError {
+    m := map[string]*ValidationError{}
+    for _, e := range v.Errors {
+        if _, ok := m[e.Key]; !ok {
+            m[e.Key] = e
+        }
+    }
+    return m
+}
+
+<span class="comment">// A ValidationResult is returned from every validation method.</span>
+<span class="comment">// It provides an indication of success, and a pointer to the Error (if any).</span>
+type ValidationResult struct {
+    Error *ValidationError
+    Ok    bool
+}
+
+func (r *ValidationResult) Key(key string) *ValidationResult {
+    if r.Error != nil {
+        r.Error.Key = key
+    }
+    return r
+}
+
+func (r *ValidationResult) Message(message string) *ValidationResult {
+    if r.Error != nil {
+        r.Error.Message = message
+    }
+    return r
+}
+
+type Check interface {
+    IsSatisfied(interface{}) bool
+    DefaultMessage() string
+}
+
+type Required struct{}
+
+func (r Required) IsSatisfied(obj interface{}) bool {
+    if obj == nil {
+        return false
+    }
+
+    if str, ok := obj.(string); ok {
+        return len(str) &gt; 0
+    }
+    if list, ok := obj.([]interface{}); ok {
+        return len(list) &gt; 0
+    }
+    if b, ok := obj.(bool); ok {
+        return b
+    }
+    if i, ok := obj.(int); ok {
+        return i &gt; 0
+    }
+    if t, ok := obj.(time.Time); ok {
+        return !t.IsZero()
+    }
+    return true
+}
+
+func (r Required) DefaultMessage() string {
+    return &#34;Required&#34;
+}
+
+<span class="comment">// Test that the argument is non-nil and non-empty (if string or list)</span>
+func (v *Validation) Required(obj interface{}) *ValidationResult {
+    return v.check(Required{}, obj)
+}
+
+type Min struct {
+    <span class="comment">// contains filtered or unexported fields</span>
+}
+
+func (m Min) IsSatisfied(obj interface{}) bool {
+    num, ok := obj.(int)
+    if ok {
+        return num &gt;= m.min
+    }
+    return false
+}
+
+func (m Min) DefaultMessage() string {
+    return fmt.Sprintln(&#34;Minimum is&#34;, m.min)
+}
+
+func (v *Validation) Min(n int, min int) *ValidationResult {
+    return v.check(Min{min}, n)
+}
+
+type Max struct {
+    <span class="comment">// contains filtered or unexported fields</span>
+}
+
+func (m Max) IsSatisfied(obj interface{}) bool {
+    num, ok := obj.(int)
+    if ok {
+        return num &lt;= m.max
+    }
+    return false
+}
+
+func (m Max) DefaultMessage() string {
+    return fmt.Sprintln(&#34;Maximum is&#34;, m.max)
+}
+
+func (v *Validation) Max(n int, max int) *ValidationResult {
+    return v.check(Max{max}, n)
+}
+
+<span class="comment">// Requires an array or string to be at least a given length.</span>
+type MinSize struct {
+    <span class="comment">// contains filtered or unexported fields</span>
+}
+
+func (m MinSize) IsSatisfied(obj interface{}) bool {
+    if arr, ok := obj.([]interface{}); ok {
+        return len(arr) &gt;= m.min
+    }
+    if str, ok := obj.(string); ok {
+        return len(str) &gt;= m.min
+    }
+    return false
+}
+
+func (m MinSize) DefaultMessage() string {
+    return fmt.Sprintln(&#34;Minimum size is&#34;, m.min)
+}
+
+func (v *Validation) MinSize(obj interface{}, min int) *ValidationResult {
+    return v.check(MinSize{min}, obj)
+}
+
+<span class="comment">// Requires an array or string to be at most a given length.</span>
+type MaxSize struct {
+    <span class="comment">// contains filtered or unexported fields</span>
+}
+
+func (m MaxSize) IsSatisfied(obj interface{}) bool {
+    if arr, ok := obj.([]interface{}); ok {
+        return len(arr) &lt;= m.max
+    }
+    if str, ok := obj.(string); ok {
+        return len(str) &lt;= m.max
+    }
+    return false
+}
+
+func (m MaxSize) DefaultMessage() string {
+    return fmt.Sprintln(&#34;Maximum size is&#34;, m.max)
+}
+
+func (v *Validation) MaxSize(obj interface{}, max int) *ValidationResult {
+    return v.check(MaxSize{max}, obj)
+}
+
+<span class="comment">// Requires a string to match a given regex.</span>
+type Match struct {
+    <span class="comment">// contains filtered or unexported fields</span>
+}
+
+func (m Match) IsSatisfied(obj interface{}) bool {
+    str := obj.(string)
+    return m.regex.MatchString(str)
+}
+
+func (m Match) DefaultMessage() string {
+    return fmt.Sprintln(&#34;Must match&#34;, m.regex)
+}
+
+func (v *Validation) Match(str string, regex *regexp.Regexp) *ValidationResult {
+    return v.check(Match{regex}, str)
+}
+</pre>
+
+
+
+
+
+

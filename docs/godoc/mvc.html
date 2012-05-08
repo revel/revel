@@ -1,0 +1,417 @@
+---
+layout: godoc
+---
+<!--
+	Copyright 2009 The Go Authors. All rights reserved.
+	Use of this source code is governed by a BSD-style
+	license that can be found in the LICENSE file.
+-->
+<h1>Mvc</h1>
+
+	
+		<!-- The package's Name is printed as title by the top-level template -->
+                
+		
+
+		<h2 id="index">Index</h2>
+		<!-- Table of contents for API; must be named manual-nav to turn off auto nav. -->
+		<div id="manual-nav">
+			<dl>
+			
+			
+			
+				
+				<dd><a href="#RegisterController">func RegisterController(c interface{}, methods []*MethodType)</a></dd>
+			
+			
+				
+				<dd><a href="#Controller">type Controller</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#NewAppController">func NewAppController(w http.ResponseWriter, r *http.Request, controllerName, methodName string) (*Controller, reflect.Value)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#NewController">func NewController(w http.ResponseWriter, r *http.Request, ct *ControllerType) *Controller</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Controller.FlashParams">func (c *Controller) FlashParams()</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Controller.Invoke">func (c *Controller) Invoke(appControllerPtr reflect.Value, method reflect.Value, methodArgs []reflect.Value)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Controller.Redirect">func (c *Controller) Redirect(val interface{}, args ...interface{}) Result</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Controller.Render">func (c *Controller) Render(extraRenderArgs ...interface{}) Result</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Controller.SetCookie">func (c *Controller) SetCookie(cookie *http.Cookie)</a></dd>
+				
+			
+				
+				<dd><a href="#ControllerType">type ControllerType</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#LookupControllerType">func LookupControllerType(name string) *ControllerType</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#ControllerType.Method">func (ct *ControllerType) Method(name string) *MethodType</a></dd>
+				
+			
+				
+				<dd><a href="#Flash">type Flash</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Flash.Error">func (f Flash) Error(msg string, args ...interface{})</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Flash.Success">func (f Flash) Success(msg string, args ...interface{})</a></dd>
+				
+			
+				
+				<dd><a href="#MethodArg">type MethodArg</a></dd>
+				
+				
+			
+				
+				<dd><a href="#MethodType">type MethodType</a></dd>
+				
+				
+			
+				
+				<dd><a href="#Params">type Params</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Params.Bind">func (p Params) Bind(name string, typ reflect.Type) reflect.Value</a></dd>
+				
+			
+				
+				<dd><a href="#Request">type Request</a></dd>
+				
+				
+			
+				
+				<dd><a href="#Response">type Response</a></dd>
+				
+				
+			
+				
+				<dd><a href="#Session">type Session</a></dd>
+				
+				
+			
+			
+		</dl>
+
+		
+
+		
+			<h4>Package files</h4>
+			<p>
+			<span style="font-size:90%">
+			
+				<a href="../src/mvc.html">mvc.go</a>
+			
+			</span>
+			</p>
+		
+
+		
+		
+		
+			
+			
+			<h2 id="RegisterController">func <a href="../src/mvc.html?s=12240:12301#L456">RegisterController</a></h2>
+			<pre>func RegisterController(c interface{}, methods []*MethodType)</pre>
+			
+			
+		
+		
+			
+			
+			<h2 id="Controller">type <a href="../src/mvc.html?s=418:1052#L26">Controller</a></h2>
+			<pre>type Controller struct {
+    Name       string
+    Type       *ControllerType
+    MethodType *MethodType
+
+    Request  *Request
+    Response *Response
+
+    Flash      Flash                  <span class="comment">// User cookie, cleared after each request.</span>
+    Session    Session                <span class="comment">// Session, stored in cookie, signed.</span>
+    Params     Params                 <span class="comment">// URL Query parameters</span>
+    Args       map[string]interface{} <span class="comment">// Per-request scratch space.</span>
+    RenderArgs map[string]interface{} <span class="comment">// Args passed to the template.</span>
+    Validation *Validation            <span class="comment">// Data validation helpers</span>
+    Txn        *sql.Tx                <span class="comment">// Nil by default, but may be used by the app / plugins</span>
+}</pre>
+			
+
+			
+
+			
+
+			
+
+			
+				
+				<h3 id="NewAppController">func <a href="../src/mvc.html?s=1982:2107#L87">NewAppController</a></h3>
+				<pre>func NewAppController(w http.ResponseWriter, r *http.Request, controllerName, methodName string) (*Controller, reflect.Value)</pre>
+				
+				
+			
+				
+				<h3 id="NewController">func <a href="../src/mvc.html?s=1054:1144#L43">NewController</a></h3>
+				<pre>func NewController(w http.ResponseWriter, r *http.Request, ct *ControllerType) *Controller</pre>
+				
+				
+			
+
+			
+				
+				<h3 id="Controller.FlashParams">func (*Controller) <a href="../src/mvc.html?s=4158:4192#L146">FlashParams</a></h3>
+				<pre>func (c *Controller) FlashParams()</pre>
+				
+				
+				
+			
+				
+				<h3 id="Controller.Invoke">func (*Controller) <a href="../src/mvc.html?s=4495:4604#L158">Invoke</a></h3>
+				<pre>func (c *Controller) Invoke(appControllerPtr reflect.Value, method reflect.Value, methodArgs []reflect.Value)</pre>
+				<p>
+Invoke the given method, save headers/cookies to the response, and apply the
+result.  (e.g. render a template to the response)
+</p>
+
+				
+				
+			
+				
+				<h3 id="Controller.Redirect">func (*Controller) <a href="../src/mvc.html?s=9692:9766#L342">Redirect</a></h3>
+				<pre>func (c *Controller) Redirect(val interface{}, args ...interface{}) Result</pre>
+				<p>
+Redirect to an action or to a URL.
+</p>
+<pre>c.Redirect(Controller.Action)
+c.Redirect(&#34;/controller/action&#34;)
+c.Redirect(&#34;/controller/%d/action&#34;, id)
+</pre>
+
+				
+				
+			
+				
+				<h3 id="Controller.Render">func (*Controller) <a href="../src/mvc.html?s=8092:8158#L291">Render</a></h3>
+				<pre>func (c *Controller) Render(extraRenderArgs ...interface{}) Result</pre>
+				
+				
+				
+			
+				
+				<h3 id="Controller.SetCookie">func (*Controller) <a href="../src/mvc.html?s=4265:4316#L152">SetCookie</a></h3>
+				<pre>func (c *Controller) SetCookie(cookie *http.Cookie)</pre>
+				
+				
+				
+			
+		
+			
+			
+			<h2 id="ControllerType">type <a href="../src/mvc.html?s=11776:11851#L429">ControllerType</a></h2>
+			<pre>type ControllerType struct {
+    Type    reflect.Type
+    Methods []*MethodType
+}</pre>
+			
+
+			
+
+			
+
+			
+
+			
+				
+				<h3 id="LookupControllerType">func <a href="../src/mvc.html?s=12756:12810#L473">LookupControllerType</a></h3>
+				<pre>func LookupControllerType(name string) *ControllerType</pre>
+				
+				
+			
+
+			
+				
+				<h3 id="ControllerType.Method">func (*ControllerType) <a href="../src/mvc.html?s=12025:12082#L445">Method</a></h3>
+				<pre>func (ct *ControllerType) Method(name string) *MethodType</pre>
+				
+				
+				
+			
+		
+			
+			
+			<h2 id="Flash">type <a href="../src/mvc.html?s=128:178#L5">Flash</a></h2>
+			<pre>type Flash struct {
+    Data, Out map[string]string
+}</pre>
+			
+
+			
+
+			
+
+			
+
+			
+
+			
+				
+				<h3 id="Flash.Error">func (Flash) <a href="../src/mvc.html?s=11326:11379#L407">Error</a></h3>
+				<pre>func (f Flash) Error(msg string, args ...interface{})</pre>
+				
+				
+				
+			
+				
+				<h3 id="Flash.Success">func (Flash) <a href="../src/mvc.html?s=11487:11542#L415">Success</a></h3>
+				<pre>func (f Flash) Success(msg string, args ...interface{})</pre>
+				
+				
+				
+			
+		
+			
+			
+			<h2 id="MethodArg">type <a href="../src/mvc.html?s=11966:12023#L440">MethodArg</a></h2>
+			<pre>type MethodArg struct {
+    Name string
+    Type reflect.Type
+}</pre>
+			
+
+			
+
+			
+
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="MethodType">type <a href="../src/mvc.html?s=11853:11964#L434">MethodType</a></h2>
+			<pre>type MethodType struct {
+    Name           string
+    Args           []*MethodArg
+    RenderArgNames map[int][]string
+}</pre>
+			
+
+			
+
+			
+
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="Params">type <a href="../src/mvc.html?s=180:202#L9">Params</a></h2>
+			<pre>type Params url.Values</pre>
+			
+
+			
+
+			
+
+			
+
+			
+
+			
+				
+				<h3 id="Params.Bind">func (Params) <a href="../src/mvc.html?s=11654:11719#L423">Bind</a></h3>
+				<pre>func (p Params) Bind(name string, typ reflect.Type) reflect.Value</pre>
+				
+				
+				
+			
+		
+			
+			
+			<h2 id="Request">type <a href="../src/mvc.html?s=236:274#L13">Request</a></h2>
+			<pre>type Request struct {
+    *http.Request
+}</pre>
+			
+
+			
+
+			
+
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="Response">type <a href="../src/mvc.html?s=276:416#L17">Response</a></h2>
+			<pre>type Response struct {
+    Status      int
+    ContentType string
+    Headers     http.Header
+    Cookies     []*http.Cookie
+    <span class="comment">// contains filtered or unexported fields</span>
+}</pre>
+			
+
+			
+
+			
+
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="Session">type <a href="../src/mvc.html?s=204:234#L11">Session</a></h2>
+			<pre>type Session map[string]string</pre>
+			
+
+			
+
+			
+
+			
+
+			
+
+			
+		
+		</div>
+	
+
+	
+
+
+
+
+
+
+
+

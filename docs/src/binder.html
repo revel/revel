@@ -1,0 +1,84 @@
+---
+layout: godoc
+---
+<!--
+	Copyright 2009 The Go Authors. All rights reserved.
+	Use of this source code is governed by a BSD-style
+	license that can be found in the LICENSE file.
+-->
+<h1>Binder</h1>
+
+
+
+	<pre>package rev
+
+<span class="comment">// A Binder translates between string parameters and Go data structures.</span>
+<span class="comment">//</span>
+<span class="comment">// Here is an example.</span>
+<span class="comment">//</span>
+<span class="comment">// Request:</span>
+<span class="comment">//   url?id=123&amp;ol[0]=1&amp;ol[1]=2&amp;ul[]=str&amp;ul[]=array&amp;user.Name=rob</span>
+<span class="comment">// Action:</span>
+<span class="comment">//   Example.Action(id int, ol []int, ul []string, user User)</span>
+<span class="comment">// Calls:</span>
+<span class="comment">//   Binder(params, &#34;id&#34;, int): 123</span>
+<span class="comment">//   Binder(params, &#34;ol&#34;, []int): {1, 2}</span>
+<span class="comment">//   Binder(params, &#34;ul&#34;, []string): {&#34;str&#34;, &#34;array&#34;}</span>
+<span class="comment">//   Binder(params, &#34;user&#34;, User): User{Name:&#34;rob&#34;}</span>
+<span class="comment">//</span>
+<span class="comment">// Note that only exported struct fields may be bound.</span>
+type Binder func(params map[string][]string, name string, typ reflect.Type) reflect.Value
+
+<span class="comment">// An adapter for easily making one-key-value binders.</span>
+func SimpleBinder(f func(value string, typ reflect.Type) reflect.Value) Binder {
+    return func(params map[string][]string, name string, typ reflect.Type) reflect.Value {
+        vals, ok := params[name]
+        if !ok || len(vals) == 0 {
+            return reflect.Zero(typ)
+        }
+        return f(vals[0], typ)
+    }
+}
+
+<span class="comment">// These are the lookups to find a Binder for any type of data.</span>
+<span class="comment">// The most specific binder found will be used (Type before Kind)</span>
+var (
+    TypeBinders = make(map[reflect.Type]Binder)
+    KindBinders = make(map[reflect.Kind]Binder)
+)
+
+var (
+    <span class="comment">// Applications can add custom time formats to this array, and they will be</span>
+    <span class="comment">// automatically attempted when binding a time.Time.</span>
+    TimeFormats = []string{&#34;2006-01-02&#34;, &#34;2006-01-02 15:04&#34;}
+)
+
+<span class="comment">// Parse the value string into a real Go value.</span>
+<span class="comment">// Returns 0 values when things can not be parsed.</span>
+func Bind(params map[string][]string, name string, typ reflect.Type) reflect.Value {
+
+    if len(params) == 0 {
+        return reflect.Zero(typ)
+    }
+
+    binder, ok := TypeBinders[typ]
+    if !ok {
+        binder, ok = KindBinders[typ.Kind()]
+        if !ok {
+            LOG.Println(&#34;No binder for type:&#34;, typ)
+            return reflect.Zero(typ)
+        }
+    }
+    return binder(params, name, typ)
+}
+
+func SimpleBind(val string, typ reflect.Type) reflect.Value {
+    return Bind(map[string][]string{&#34;&#34;: {val}}, &#34;&#34;, typ)
+}
+</pre>
+
+
+
+
+
+

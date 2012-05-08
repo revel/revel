@@ -1,0 +1,219 @@
+---
+layout: godoc
+---
+<!--
+	Copyright 2009 The Go Authors. All rights reserved.
+	Use of this source code is governed by a BSD-style
+	license that can be found in the LICENSE file.
+-->
+<h1>Plugin</h1>
+
+	
+		<!-- The package's Name is printed as title by the top-level template -->
+                
+		
+
+		<h2 id="index">Index</h2>
+		<!-- Table of contents for API; must be named manual-nav to turn off auto nav. -->
+		<div id="manual-nav">
+			<dl>
+			
+			
+			
+				
+				<dd><a href="#RegisterPlugin">func RegisterPlugin(p Plugin)</a></dd>
+			
+			
+				
+				<dd><a href="#EmptyPlugin">type EmptyPlugin</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#EmptyPlugin.AfterRequest">func (p EmptyPlugin) AfterRequest(c *Controller)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#EmptyPlugin.BeforeRequest">func (p EmptyPlugin) BeforeRequest(c *Controller)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#EmptyPlugin.OnAppStart">func (p EmptyPlugin) OnAppStart()</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#EmptyPlugin.OnException">func (p EmptyPlugin) OnException(c *Controller, err interface{})</a></dd>
+				
+			
+				
+				<dd><a href="#Plugin">type Plugin</a></dd>
+				
+				
+			
+				
+				<dd><a href="#PluginCollection">type PluginCollection</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#PluginCollection.AfterRequest">func (plugins PluginCollection) AfterRequest(c *Controller)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#PluginCollection.BeforeRequest">func (plugins PluginCollection) BeforeRequest(c *Controller)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#PluginCollection.OnAppStart">func (plugins PluginCollection) OnAppStart()</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#PluginCollection.OnException">func (plugins PluginCollection) OnException(c *Controller, err interface{})</a></dd>
+				
+			
+			
+		</dl>
+
+		
+
+		
+			<h4>Package files</h4>
+			<p>
+			<span style="font-size:90%">
+			
+				<a href="../src/plugin.html">plugin.go</a>
+			
+			</span>
+			</p>
+		
+
+		
+		
+		
+			
+			
+			<h2 id="RegisterPlugin">func <a href="../src/plugin.html?s=690:719#L13">RegisterPlugin</a></h2>
+			<pre>func RegisterPlugin(p Plugin)</pre>
+			
+			
+		
+		
+			
+			
+			<h2 id="EmptyPlugin">type <a href="../src/plugin.html?s=328:353#L2">EmptyPlugin</a></h2>
+			<pre>type EmptyPlugin struct{}</pre>
+			<p>
+It provides default (empty) implementations for all the required methods.
+</p>
+
+
+			
+
+			
+
+			
+
+			
+
+			
+				
+				<h3 id="EmptyPlugin.AfterRequest">func (EmptyPlugin) <a href="../src/plugin.html?s=491:539#L6">AfterRequest</a></h3>
+				<pre>func (p EmptyPlugin) AfterRequest(c *Controller)</pre>
+				
+				
+				
+			
+				
+				<h3 id="EmptyPlugin.BeforeRequest">func (EmptyPlugin) <a href="../src/plugin.html?s=423:472#L5">BeforeRequest</a></h3>
+				<pre>func (p EmptyPlugin) BeforeRequest(c *Controller)</pre>
+				
+				
+				
+			
+				
+				<h3 id="EmptyPlugin.OnAppStart">func (EmptyPlugin) <a href="../src/plugin.html?s=355:388#L4">OnAppStart</a></h3>
+				<pre>func (p EmptyPlugin) OnAppStart()</pre>
+				
+				
+				
+			
+				
+				<h3 id="EmptyPlugin.OnException">func (EmptyPlugin) <a href="../src/plugin.html?s=559:623#L7">OnException</a></h3>
+				<pre>func (p EmptyPlugin) OnException(c *Controller, err interface{})</pre>
+				
+				
+				
+			
+		
+			
+			
+			<h2 id="Plugin">type <a href="../src/plugin.html?s=106:249#L1">Plugin</a></h2>
+			<pre>type Plugin interface {
+    OnAppStart()
+    BeforeRequest(c *Controller)
+    AfterRequest(c *Controller)
+    OnException(c *Controller, err interface{})
+}</pre>
+			<p>
+An plugin that allows the user to inject behavior at various points in the request cycle.
+</p>
+
+
+			
+
+			
+
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="PluginCollection">type <a href="../src/plugin.html?s=628:658#L9">PluginCollection</a></h2>
+			<pre>type PluginCollection []Plugin</pre>
+			
+
+			
+
+			
+
+			
+
+			
+
+			
+				
+				<h3 id="PluginCollection.AfterRequest">func (PluginCollection) <a href="../src/plugin.html?s=973:1032#L29">AfterRequest</a></h3>
+				<pre>func (plugins PluginCollection) AfterRequest(c *Controller)</pre>
+				
+				
+				
+			
+				
+				<h3 id="PluginCollection.BeforeRequest">func (PluginCollection) <a href="../src/plugin.html?s=854:914#L23">BeforeRequest</a></h3>
+				<pre>func (plugins PluginCollection) BeforeRequest(c *Controller)</pre>
+				
+				
+				
+			
+				
+				<h3 id="PluginCollection.OnAppStart">func (PluginCollection) <a href="../src/plugin.html?s=755:799#L17">OnAppStart</a></h3>
+				<pre>func (plugins PluginCollection) OnAppStart()</pre>
+				
+				
+				
+			
+				
+				<h3 id="PluginCollection.OnException">func (PluginCollection) <a href="../src/plugin.html?s=1090:1165#L35">OnException</a></h3>
+				<pre>func (plugins PluginCollection) OnException(c *Controller, err interface{})</pre>
+				
+				
+				
+			
+		
+		</div>
+	
+
+	
+
+
+
+
+
+
+
+

@@ -1,0 +1,69 @@
+---
+layout: godoc
+---
+<!--
+	Copyright 2009 The Go Authors. All rights reserved.
+	Use of this source code is governed by a BSD-style
+	license that can be found in the LICENSE file.
+-->
+<h1>Errors</h1>
+
+
+
+	<pre>package rev
+
+<span class="comment">// An error description, used as an argument to the error template.</span>
+type Error struct {
+    SourceType               string   <span class="comment">// The type of source that failed to build.</span>
+    Title, Path, Description string   <span class="comment">// Description of the error, as presented to the user.</span>
+    Line, Column             int      <span class="comment">// Where the error was encountered.</span>
+    SourceLines              []string <span class="comment">// The entire source file, split into lines.</span>
+    MetaError                string   <span class="comment">// Error that occurred producing the error page.</span>
+}
+
+func (e Error) Error() string {
+    return e.Description
+}
+
+<span class="comment">// Returns a snippet of the source around where the error occurred.</span>
+func (e *Error) ContextSource() []sourceLine {
+    if e.SourceLines == nil {
+        return nil
+    }
+    start := (e.Line - 1) - 5
+    if start &lt; 0 {
+        start = 0
+    }
+    end := (e.Line - 1) + 5
+    if end &gt; len(e.SourceLines) {
+        end = len(e.SourceLines)
+    }
+
+    var lines []sourceLine = make([]sourceLine, end-start)
+    for i, src := range e.SourceLines[start:end] {
+        fileLine := start + i + 1
+        lines[i] = sourceLine{src, fileLine, fileLine == e.Line}
+    }
+    return lines
+}
+
+func (e *Error) Html() string {
+    var b bytes.Buffer
+    RenderError(&amp;b, &amp;e)
+    return b.String()
+}
+
+func RenderError(buffer io.Writer, data interface{}) {
+    if errorTemplate == nil {
+        errorTemplate = template.Must(template.ParseFiles(
+            path.Join(RevelTemplatePath, &#34;500.html&#34;)))
+    }
+    errorTemplate.Execute(buffer, &amp;data)
+}
+</pre>
+
+
+
+
+
+

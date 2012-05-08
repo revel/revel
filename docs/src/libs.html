@@ -1,0 +1,28 @@
+---
+layout: godoc
+---
+<!--
+	Copyright 2009 The Go Authors. All rights reserved.
+	Use of this source code is governed by a BSD-style
+	license that can be found in the LICENSE file.
+-->
+<h1>Libs</h1>
+
+
+
+	<pre>package rev
+
+<span class="comment">// Sign a given string with the app-configured secret key.</span>
+<span class="comment">// Return the signature in base64 (URLEncoding).</span>
+func Sign(message string) string {
+    mac := hmac.New(sha1.New, secretKey)
+    io.WriteString(mac, message)
+    return hex.EncodeToString(mac.Sum(nil))
+}
+</pre>
+
+
+
+
+
+

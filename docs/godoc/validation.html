@@ -1,0 +1,563 @@
+---
+layout: godoc
+---
+<!--
+	Copyright 2009 The Go Authors. All rights reserved.
+	Use of this source code is governed by a BSD-style
+	license that can be found in the LICENSE file.
+-->
+<h1>Validation</h1>
+
+	
+		<!-- The package's Name is printed as title by the top-level template -->
+                
+		
+
+		<h2 id="index">Index</h2>
+		<!-- Table of contents for API; must be named manual-nav to turn off auto nav. -->
+		<div id="manual-nav">
+			<dl>
+			
+			
+			
+			
+				
+				<dd><a href="#Check">type Check</a></dd>
+				
+				
+			
+				
+				<dd><a href="#Match">type Match</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Match.DefaultMessage">func (m Match) DefaultMessage() string</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Match.IsSatisfied">func (m Match) IsSatisfied(obj interface{}) bool</a></dd>
+				
+			
+				
+				<dd><a href="#Max">type Max</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Max.DefaultMessage">func (m Max) DefaultMessage() string</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Max.IsSatisfied">func (m Max) IsSatisfied(obj interface{}) bool</a></dd>
+				
+			
+				
+				<dd><a href="#MaxSize">type MaxSize</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#MaxSize.DefaultMessage">func (m MaxSize) DefaultMessage() string</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#MaxSize.IsSatisfied">func (m MaxSize) IsSatisfied(obj interface{}) bool</a></dd>
+				
+			
+				
+				<dd><a href="#Min">type Min</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Min.DefaultMessage">func (m Min) DefaultMessage() string</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Min.IsSatisfied">func (m Min) IsSatisfied(obj interface{}) bool</a></dd>
+				
+			
+				
+				<dd><a href="#MinSize">type MinSize</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#MinSize.DefaultMessage">func (m MinSize) DefaultMessage() string</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#MinSize.IsSatisfied">func (m MinSize) IsSatisfied(obj interface{}) bool</a></dd>
+				
+			
+				
+				<dd><a href="#Required">type Required</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Required.DefaultMessage">func (r Required) DefaultMessage() string</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Required.IsSatisfied">func (r Required) IsSatisfied(obj interface{}) bool</a></dd>
+				
+			
+				
+				<dd><a href="#Validation">type Validation</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Validation.Clear">func (v *Validation) Clear()</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Validation.ErrorMap">func (v *Validation) ErrorMap() map[string]*ValidationError</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Validation.HasErrors">func (v *Validation) HasErrors() bool</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Validation.Keep">func (v *Validation) Keep()</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Validation.Match">func (v *Validation) Match(str string, regex *regexp.Regexp) *ValidationResult</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Validation.Max">func (v *Validation) Max(n int, max int) *ValidationResult</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Validation.MaxSize">func (v *Validation) MaxSize(obj interface{}, max int) *ValidationResult</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Validation.Min">func (v *Validation) Min(n int, min int) *ValidationResult</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Validation.MinSize">func (v *Validation) MinSize(obj interface{}, min int) *ValidationResult</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Validation.Required">func (v *Validation) Required(obj interface{}) *ValidationResult</a></dd>
+				
+			
+				
+				<dd><a href="#ValidationError">type ValidationError</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#ValidationError.String">func (e *ValidationError) String() string</a></dd>
+				
+			
+				
+				<dd><a href="#ValidationResult">type ValidationResult</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#ValidationResult.Key">func (r *ValidationResult) Key(key string) *ValidationResult</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#ValidationResult.Message">func (r *ValidationResult) Message(message string) *ValidationResult</a></dd>
+				
+			
+			
+		</dl>
+
+		
+
+		
+			<h4>Package files</h4>
+			<p>
+			<span style="font-size:90%">
+			
+				<a href="../src/validation.html">validation.go</a>
+			
+			</span>
+			</p>
+		
+
+		
+		
+		
+		
+			
+			
+			<h2 id="Check">type <a href="../src/validation.html?s=1397:1477#L63">Check</a></h2>
+			<pre>type Check interface {
+    IsSatisfied(interface{}) bool
+    DefaultMessage() string
+}</pre>
+			
+
+			
+
+			
+
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="Match">type <a href="../src/validation.html?s=3842:3885#L189">Match</a></h2>
+			<pre>type Match struct {
+    <span class="comment">// contains filtered or unexported fields</span>
+}</pre>
+			<p>
+Requires a string to match a given regex.
+</p>
+
+
+			
+
+			
+
+			
+
+			
+
+			
+				
+				<h3 id="Match.DefaultMessage">func (Match) <a href="../src/validation.html?s=3995:4033#L198">DefaultMessage</a></h3>
+				<pre>func (m Match) DefaultMessage() string</pre>
+				
+				
+				
+			
+				
+				<h3 id="Match.IsSatisfied">func (Match) <a href="../src/validation.html?s=3887:3935#L193">IsSatisfied</a></h3>
+				<pre>func (m Match) IsSatisfied(obj interface{}) bool</pre>
+				
+				
+				
+			
+		
+			
+			
+			<h2 id="Max">type <a href="../src/validation.html?s=2455:2483#L122">Max</a></h2>
+			<pre>type Max struct {
+    <span class="comment">// contains filtered or unexported fields</span>
+}</pre>
+			
+
+			
+
+			
+
+			
+
+			
+
+			
+				
+				<h3 id="Max.DefaultMessage">func (Max) <a href="../src/validation.html?s=2607:2643#L134">DefaultMessage</a></h3>
+				<pre>func (m Max) DefaultMessage() string</pre>
+				
+				
+				
+			
+				
+				<h3 id="Max.IsSatisfied">func (Max) <a href="../src/validation.html?s=2485:2531#L126">IsSatisfied</a></h3>
+				<pre>func (m Max) IsSatisfied(obj interface{}) bool</pre>
+				
+				
+				
+			
+		
+			
+			
+			<h2 id="MaxSize">type <a href="../src/validation.html?s=3352:3384#L166">MaxSize</a></h2>
+			<pre>type MaxSize struct {
+    <span class="comment">// contains filtered or unexported fields</span>
+}</pre>
+			<p>
+Requires an array or string to be at most a given length.
+</p>
+
+
+			
+
+			
+
+			
+
+			
+
+			
+				
+				<h3 id="MaxSize.DefaultMessage">func (MaxSize) <a href="../src/validation.html?s=3591:3631#L180">DefaultMessage</a></h3>
+				<pre>func (m MaxSize) DefaultMessage() string</pre>
+				
+				
+				
+			
+				
+				<h3 id="MaxSize.IsSatisfied">func (MaxSize) <a href="../src/validation.html?s=3386:3436#L170">IsSatisfied</a></h3>
+				<pre>func (m MaxSize) IsSatisfied(obj interface{}) bool</pre>
+				
+				
+				
+			
+		
+			
+			
+			<h2 id="Min">type <a href="../src/validation.html?s=2126:2154#L102">Min</a></h2>
+			<pre>type Min struct {
+    <span class="comment">// contains filtered or unexported fields</span>
+}</pre>
+			
+
+			
+
+			
+
+			
+
+			
+
+			
+				
+				<h3 id="Min.DefaultMessage">func (Min) <a href="../src/validation.html?s=2278:2314#L114">DefaultMessage</a></h3>
+				<pre>func (m Min) DefaultMessage() string</pre>
+				
+				
+				
+			
+				
+				<h3 id="Min.IsSatisfied">func (Min) <a href="../src/validation.html?s=2156:2202#L106">IsSatisfied</a></h3>
+				<pre>func (m Min) IsSatisfied(obj interface{}) bool</pre>
+				
+				
+				
+			
+		
+			
+			
+			<h2 id="MinSize">type <a href="../src/validation.html?s=2846:2878#L143">MinSize</a></h2>
+			<pre>type MinSize struct {
+    <span class="comment">// contains filtered or unexported fields</span>
+}</pre>
+			<p>
+Requires an array or string to be at least a given length.
+</p>
+
+
+			
+
+			
+
+			
+
+			
+
+			
+				
+				<h3 id="MinSize.DefaultMessage">func (MinSize) <a href="../src/validation.html?s=3085:3125#L157">DefaultMessage</a></h3>
+				<pre>func (m MinSize) DefaultMessage() string</pre>
+				
+				
+				
+			
+				
+				<h3 id="MinSize.IsSatisfied">func (MinSize) <a href="../src/validation.html?s=2880:2930#L147">IsSatisfied</a></h3>
+				<pre>func (m MinSize) IsSatisfied(obj interface{}) bool</pre>
+				
+				
+				
+			
+		
+			
+			
+			<h2 id="Required">type <a href="../src/validation.html?s=1479:1501#L68">Required</a></h2>
+			<pre>type Required struct{}</pre>
+			
+
+			
+
+			
+
+			
+
+			
+
+			
+				
+				<h3 id="Required.DefaultMessage">func (Required) <a href="../src/validation.html?s=1886:1927#L93">DefaultMessage</a></h3>
+				<pre>func (r Required) DefaultMessage() string</pre>
+				
+				
+				
+			
+				
+				<h3 id="Required.IsSatisfied">func (Required) <a href="../src/validation.html?s=1503:1554#L70">IsSatisfied</a></h3>
+				<pre>func (r Required) IsSatisfied(obj interface{}) bool</pre>
+				
+				
+				
+			
+		
+			
+			
+			<h2 id="Validation">type <a href="../src/validation.html?s=291:357#L12">Validation</a></h2>
+			<pre>type Validation struct {
+    Errors []*ValidationError
+    <span class="comment">// contains filtered or unexported fields</span>
+}</pre>
+			<p>
+A Validation context manages data validation and error messages.
+</p>
+
+
+			
+
+			
+
+			
+
+			
+
+			
+				
+				<h3 id="Validation.Clear">func (*Validation) <a href="../src/validation.html?s=407:435#L21">Clear</a></h3>
+				<pre>func (v *Validation) Clear()</pre>
+				
+				
+				
+			
+				
+				<h3 id="Validation.ErrorMap">func (*Validation) <a href="../src/validation.html?s=735:794#L32">ErrorMap</a></h3>
+				<pre>func (v *Validation) ErrorMap() map[string]*ValidationError</pre>
+				<p>
+Return the errors mapped by key.
+If there are multiple validation errors associated with a single key, the
+first one &#34;wins&#34;.  (Typically the first validation will be the more basic).
+</p>
+
+				
+				
+			
+				
+				<h3 id="Validation.HasErrors">func (*Validation) <a href="../src/validation.html?s=474:511#L25">HasErrors</a></h3>
+				<pre>func (v *Validation) HasErrors() bool</pre>
+				
+				
+				
+			
+				
+				<h3 id="Validation.Keep">func (*Validation) <a href="../src/validation.html?s=359:386#L17">Keep</a></h3>
+				<pre>func (v *Validation) Keep()</pre>
+				
+				
+				
+			
+				
+				<h3 id="Validation.Match">func (*Validation) <a href="../src/validation.html?s=4083:4161#L202">Match</a></h3>
+				<pre>func (v *Validation) Match(str string, regex *regexp.Regexp) *ValidationResult</pre>
+				
+				
+				
+			
+				
+				<h3 id="Validation.Max">func (*Validation) <a href="../src/validation.html?s=2691:2749#L138">Max</a></h3>
+				<pre>func (v *Validation) Max(n int, max int) *ValidationResult</pre>
+				
+				
+				
+			
+				
+				<h3 id="Validation.MaxSize">func (*Validation) <a href="../src/validation.html?s=3684:3756#L184">MaxSize</a></h3>
+				<pre>func (v *Validation) MaxSize(obj interface{}, max int) *ValidationResult</pre>
+				
+				
+				
+			
+				
+				<h3 id="Validation.Min">func (*Validation) <a href="../src/validation.html?s=2362:2420#L118">Min</a></h3>
+				<pre>func (v *Validation) Min(n int, min int) *ValidationResult</pre>
+				
+				
+				
+			
+				
+				<h3 id="Validation.MinSize">func (*Validation) <a href="../src/validation.html?s=3178:3250#L161">MinSize</a></h3>
+				<pre>func (v *Validation) MinSize(obj interface{}, min int) *ValidationResult</pre>
+				
+				
+				
+			
+				
+				<h3 id="Validation.Required">func (*Validation) <a href="../src/validation.html?s=2023:2087#L98">Required</a></h3>
+				<pre>func (v *Validation) Required(obj interface{}) *ValidationResult</pre>
+				<p>
+Test that the argument is non-nil and non-empty (if string or list)
+</p>
+
+				
+				
+			
+		
+			
+			
+			<h2 id="ValidationError">type <a href="../src/validation.html?s=50:102#L1">ValidationError</a></h2>
+			<pre>type ValidationError struct {
+    Message, Key string
+}</pre>
+			
+
+			
+
+			
+
+			
+
+			
+
+			
+				
+				<h3 id="ValidationError.String">func (*ValidationError) <a href="../src/validation.html?s=128:169#L4">String</a></h3>
+				<pre>func (e *ValidationError) String() string</pre>
+				<p>
+Returns the Message.
+</p>
+
+				
+				
+			
+		
+			
+			
+			<h2 id="ValidationResult">type <a href="../src/validation.html?s=1071:1139#L44">ValidationResult</a></h2>
+			<pre>type ValidationResult struct {
+    Error *ValidationError
+    Ok    bool
+}</pre>
+			<p>
+A ValidationResult is returned from every validation method.
+It provides an indication of success, and a pointer to the Error (if any).
+</p>
+
+
+			
+
+			
+
+			
+
+			
+
+			
+				
+				<h3 id="ValidationResult.Key">func (*ValidationResult) <a href="../src/validation.html?s=1141:1201#L49">Key</a></h3>
+				<pre>func (r *ValidationResult) Key(key string) *ValidationResult</pre>
+				
+				
+				
+			
+				
+				<h3 id="ValidationResult.Message">func (*ValidationResult) <a href="../src/validation.html?s=1261:1329#L56">Message</a></h3>
+				<pre>func (r *ValidationResult) Message(message string) *ValidationResult</pre>
+				
+				
+				
+			
+		
+		</div>
+	
+
+	
+
+
+
+
+
+
+
+

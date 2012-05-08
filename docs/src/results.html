@@ -1,0 +1,79 @@
+---
+layout: godoc
+---
+<!--
+	Copyright 2009 The Go Authors. All rights reserved.
+	Use of this source code is governed by a BSD-style
+	license that can be found in the LICENSE file.
+-->
+<h1>Results</h1>
+
+
+
+	<pre>package rev
+
+type Result interface {
+    Apply(req *Request, resp *Response)
+}
+
+<span class="comment">// Action methods return this result to request a template be rendered.</span>
+type RenderTemplateResult struct {
+    Template   Template
+    RenderArgs map[string]interface{}
+    Response   *Response
+}
+
+func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
+    <span class="comment">// Render the template into a temporary buffer, to see if there was an error</span>
+    <span class="comment">// rendering the template.  If not, then copy it into the response buffer.</span>
+    <span class="comment">// TODO: It seems a shame to make a copy of everything, but if we don&#39;t,</span>
+    <span class="comment">// template errors result in unpredictable HTML for error pages.</span>
+    var b bytes.Buffer
+    err := r.Template.Render(&amp;b, r.RenderArgs)
+    if err != nil {
+        line, description := parseTemplateError(err)
+        compileError := Error{
+            Title:       &#34;Template Execution Error&#34;,
+            Path:        r.Template.Name(),
+            Description: description,
+            Line:        line,
+            SourceLines: r.Template.Content(),
+            SourceType:  &#34;template&#34;,
+        }
+        resp.out.Write([]byte(compileError.Html()))
+        return
+    }
+
+    b.WriteTo(resp.out)
+}
+
+type RedirectToUrlResult struct {
+    <span class="comment">// contains filtered or unexported fields</span>
+}
+
+func (r *RedirectToUrlResult) Apply(req *Request, resp *Response) {
+    resp.Headers.Set(&#34;Location&#34;, r.url)
+    resp.out.WriteHeader(302)
+}
+
+type RedirectToActionResult struct {
+    <span class="comment">// contains filtered or unexported fields</span>
+}
+
+func (r *RedirectToActionResult) Apply(req *Request, resp *Response) {
+    url, err := getRedirectUrl(r.val)
+    if err != nil {
+        LOG.Println(&#34;Couldn&#39;t resolve redirect:&#34;, err.Error())
+        resp.out.WriteHeader(500)
+        return
+    }
+    resp.Headers.Set(&#34;Location&#34;, url)
+    resp.out.WriteHeader(302)
+}
+</pre>
+
+
+
+
+
+

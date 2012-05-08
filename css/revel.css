@@ -23,3 +23,11 @@ body {
   padding-top:200px;
   padding-bottom:150px;
 }
+
+/* Prefer horizontal scroll to wrapping code */
+pre {
+  white-space:pre;
+  word-wrap:normal;
+  word-break:normal;
+  overflow-x:scroll;
+}

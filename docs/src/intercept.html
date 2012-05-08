@@ -1,0 +1,125 @@
+---
+layout: godoc
+---
+<!--
+	Copyright 2009 The Go Authors. All rights reserved.
+	Use of this source code is governed by a BSD-style
+	license that can be found in the LICENSE file.
+-->
+<h1>Intercept</h1>
+
+
+
+	<pre>package rev
+
+<span class="comment">// An &#34;interceptor&#34; is a function that is invoked by the framework at a</span>
+<span class="comment">// designated time (BEFORE or AFTER) an action invcation.</span>
+<span class="comment">//</span>
+<span class="comment">// Since an interceptor may be used across many user Controllers, it is a</span>
+<span class="comment">// function that takes the base Controller, rather than a method on a user</span>
+<span class="comment">// controller.</span>
+<span class="comment">//</span>
+<span class="comment">// An interceptor may optionally return a Result (instead of nil).  Depending on</span>
+<span class="comment">// when the interceptor was invoked, the response is different:</span>
+<span class="comment">// 1. BEFORE:  No further interceptors are invoked, and neither is the action.</span>
+<span class="comment">// 2. AFTER: Further interceptors are still run.</span>
+<span class="comment">// In all cases, any returned Result will take the place of any existing Result.</span>
+<span class="comment">// But in the BEFORE case, that returned Result is guaranteed to be final, while</span>
+<span class="comment">// in the AFTER case it is possible that a further interceptor could emit its</span>
+<span class="comment">// own Result.</span>
+<span class="comment">//</span>
+<span class="comment">// Interceptors are called in the order that they are added.</span>
+<span class="comment">//</span>
+<span class="comment">// ***</span>
+<span class="comment">//</span>
+<span class="comment">// Two types of interceptors are provided: Funcs and Methods</span>
+<span class="comment">//</span>
+<span class="comment">// Func Interceptors may apply to any / all Controllers.</span>
+<span class="comment">//</span>
+<span class="comment">//   func example(*rev.Controller) rev.Result</span>
+<span class="comment">//</span>
+<span class="comment">// Method Interceptors are provided so that properties can be set on application</span>
+<span class="comment">// controllers.</span>
+<span class="comment">//</span>
+<span class="comment">//   func (c AppController) example() rev.Result</span>
+<span class="comment">//   func (c *AppController) example() rev.Result</span>
+<span class="comment">//</span>
+type InterceptorFunc func(*Controller) Result
+type InterceptorMethod interface{}
+type InterceptTime int
+
+const (
+    BEFORE InterceptTime = iota
+    AFTER
+)
+
+type InterceptTarget int
+
+const (
+    ALL_CONTROLLERS InterceptTarget = iota
+)
+
+type Interception struct {
+    When InterceptTime
+    <span class="comment">// contains filtered or unexported fields</span>
+}
+
+<span class="comment">// Perform the given interception.</span>
+<span class="comment">// val is a pointer to the App Controller.</span>
+func (i Interception) Invoke(val reflect.Value) reflect.Value {
+    var arg reflect.Value
+    if i.function == nil {
+
+        arg = findTarget(val, i.target)
+    } else {
+
+        for val.Type() != controllerPtrType {
+            if val.Kind() == reflect.Ptr {
+                val = val.Elem()
+            }
+            val = val.Field(0)
+        }
+        arg = val
+    }
+
+    vals := i.callable.Call([]reflect.Value{arg})
+    return vals[0]
+}
+
+<span class="comment">// Install a general interceptor.</span>
+<span class="comment">// This can be applied to any Controller.</span>
+<span class="comment">// It must have the signature of:</span>
+<span class="comment">//   func example(c *rev.Controller) rev.Result</span>
+func InterceptFunc(intc InterceptorFunc, when InterceptTime, target interface{}) {
+    interceptors = append(interceptors, &amp;Interception{
+        When:         when,
+        function:     intc,
+        callable:     reflect.ValueOf(intc),
+        target:       reflect.TypeOf(target),
+        interceptAll: target == ALL_CONTROLLERS,
+    })
+}
+
+<span class="comment">// Install an interceptor method that applies to its own Controller.</span>
+<span class="comment">//   func (c AppController) example() rev.Result</span>
+<span class="comment">//   func (c *AppController) example() rev.Result</span>
+func InterceptMethod(intc InterceptorMethod, when InterceptTime) {
+    methodType := reflect.TypeOf(intc)
+    if methodType.Kind() != reflect.Func || methodType.NumOut() != 1 || methodType.NumIn() != 1 {
+        log.Fatalln(&#34;Interceptor method should have signature like&#34;,
+            &#34;&#39;func (c *AppController) example() rev.Result&#39; but was&#34;, methodType)
+    }
+    interceptors = append(interceptors, &amp;Interception{
+        When:     when,
+        method:   intc,
+        callable: reflect.ValueOf(intc),
+        target:   methodType.In(0),
+    })
+}
+</pre>
+
+
+
+
+
+

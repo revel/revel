@@ -1,0 +1,156 @@
+---
+layout: godoc
+---
+<!--
+	Copyright 2009 The Go Authors. All rights reserved.
+	Use of this source code is governed by a BSD-style
+	license that can be found in the LICENSE file.
+-->
+<h1>Util</h1>
+
+	
+		<!-- The package's Name is printed as title by the top-level template -->
+                
+		
+
+		<h2 id="index">Index</h2>
+		<!-- Table of contents for API; must be named manual-nav to turn off auto nav. -->
+		<div id="manual-nav">
+			<dl>
+			
+			
+			
+				
+				<dd><a href="#ContainsString">func ContainsString(list []string, target string) bool</a></dd>
+			
+				
+				<dd><a href="#ExecuteTemplate">func ExecuteTemplate(tmpl ExecutableTemplate, data interface{}) string</a></dd>
+			
+				
+				<dd><a href="#FindMethod">func FindMethod(recvType reflect.Type, funcVal *reflect.Value) *reflect.Method</a></dd>
+			
+				
+				<dd><a href="#MustReadLines">func MustReadLines(filename string) []string</a></dd>
+			
+				
+				<dd><a href="#ParseKeyValueCookie">func ParseKeyValueCookie(val string, cb func(key, val string))</a></dd>
+			
+				
+				<dd><a href="#ReadLines">func ReadLines(filename string) ([]string, error)</a></dd>
+			
+			
+				
+				<dd><a href="#ExecutableTemplate">type ExecutableTemplate</a></dd>
+				
+				
+			
+			
+		</dl>
+
+		
+
+		
+			<h4>Package files</h4>
+			<p>
+			<span style="font-size:90%">
+			
+				<a href="../src/util.html">util.go</a>
+			
+			</span>
+			</p>
+		
+
+		
+		
+		
+			
+			
+			<h2 id="ContainsString">func <a href="../src/util.html?s=863:917#L33">ContainsString</a></h2>
+			<pre>func ContainsString(list []string, target string) bool</pre>
+			
+			
+		
+			
+			
+			<h2 id="ExecuteTemplate">func <a href="../src/util.html?s=282:352#L9">ExecuteTemplate</a></h2>
+			<pre>func ExecuteTemplate(tmpl ExecutableTemplate, data interface{}) string</pre>
+			<p>
+Execute a template and returns the result as a string.
+</p>
+
+			
+		
+			
+			
+			<h2 id="FindMethod">func <a href="../src/util.html?s=1074:1152#L43">FindMethod</a></h2>
+			<pre>func FindMethod(recvType reflect.Type, funcVal *reflect.Value) *reflect.Method</pre>
+			<p>
+Return the reflect.Method, given a Receiver type and Func value.
+</p>
+
+			
+		
+			
+			
+			<h2 id="MustReadLines">func <a href="../src/util.html?s=489:533#L16">MustReadLines</a></h2>
+			<pre>func MustReadLines(filename string) []string</pre>
+			<p>
+Reads the lines of the given file.  Panics in the case of error.
+</p>
+
+			
+		
+			
+			
+			<h2 id="ParseKeyValueCookie">func <a href="../src/util.html?s=1577:1639#L60">ParseKeyValueCookie</a></h2>
+			<pre>func ParseKeyValueCookie(val string, cb func(key, val string))</pre>
+			<p>
+Takes the raw (escaped) cookie value and parses out key values.
+</p>
+
+			
+		
+			
+			
+			<h2 id="ReadLines">func <a href="../src/util.html?s=681:730#L25">ReadLines</a></h2>
+			<pre>func ReadLines(filename string) ([]string, error)</pre>
+			<p>
+Reads the lines of the given file.  Panics in the case of error.
+</p>
+
+			
+		
+		
+			
+			
+			<h2 id="ExecutableTemplate">type <a href="../src/util.html?s=146:222#L4">ExecutableTemplate</a></h2>
+			<pre>type ExecutableTemplate interface {
+    Execute(io.Writer, interface{}) error
+}</pre>
+			<p>
+Add some more methods to the default Template.
+</p>
+
+
+			
+
+			
+
+			
+
+			
+
+			
+		
+		</div>
+	
+
+	
+
+
+
+
+
+
+
+

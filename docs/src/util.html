@@ -1,0 +1,81 @@
+---
+layout: godoc
+---
+<!--
+	Copyright 2009 The Go Authors. All rights reserved.
+	Use of this source code is governed by a BSD-style
+	license that can be found in the LICENSE file.
+-->
+<h1>Util</h1>
+
+
+
+	<pre>package rev
+
+<span class="comment">// Add some more methods to the default Template.</span>
+type ExecutableTemplate interface {
+    Execute(io.Writer, interface{}) error
+}
+
+<span class="comment">// Execute a template and returns the result as a string.</span>
+func ExecuteTemplate(tmpl ExecutableTemplate, data interface{}) string {
+    var b bytes.Buffer
+    tmpl.Execute(&amp;b, data)
+    return b.String()
+}
+
+<span class="comment">// Reads the lines of the given file.  Panics in the case of error.</span>
+func MustReadLines(filename string) []string {
+    r, err := ReadLines(filename)
+    if err != nil {
+        panic(err)
+    }
+    return r
+}
+
+<span class="comment">// Reads the lines of the given file.  Panics in the case of error.</span>
+func ReadLines(filename string) ([]string, error) {
+    bytes, err := ioutil.ReadFile(filename)
+    if err != nil {
+        return nil, err
+    }
+    return strings.Split(string(bytes), &#34;\n&#34;), nil
+}
+
+func ContainsString(list []string, target string) bool {
+    for _, el := range list {
+        if el == target {
+            return true
+        }
+    }
+    return false
+}
+
+<span class="comment">// Return the reflect.Method, given a Receiver type and Func value.</span>
+func FindMethod(recvType reflect.Type, funcVal *reflect.Value) *reflect.Method {
+
+    for i := 0; i &lt; recvType.NumMethod(); i++ {
+        method := recvType.Method(i)
+        if method.Func == *funcVal {
+            return &amp;method
+        }
+    }
+    return nil
+}
+
+<span class="comment">// Takes the raw (escaped) cookie value and parses out key values.</span>
+func ParseKeyValueCookie(val string, cb func(key, val string)) {
+    val, _ = url.QueryUnescape(val)
+    if matches := cookieKeyValueParser.FindAllStringSubmatch(val, -1); matches != nil {
+        for _, match := range matches {
+            cb(match[1], match[2])
+        }
+    }
+}
+</pre>
+
+
+
+
+
+

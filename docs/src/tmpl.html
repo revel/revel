@@ -1,0 +1,192 @@
+---
+layout: godoc
+---
+<!--
+	Copyright 2009 The Go Authors. All rights reserved.
+	Use of this source code is governed by a BSD-style
+	license that can be found in the LICENSE file.
+-->
+<h1>Tmpl</h1>
+
+
+
+	<pre>package rev
+
+<span class="comment">// This object handles loading and parsing of templates.</span>
+<span class="comment">// Everything below the application&#39;s views directory is treated as a template.</span>
+type TemplateLoader struct {
+    <span class="comment">// contains filtered or unexported fields</span>
+}
+
+type Template interface {
+    Name() string
+    Content() []string
+    Render(wr io.Writer, arg interface{}) error
+}
+
+type Field struct {
+    Name, Value string
+    Error       *ValidationError
+}
+
+func (f *Field) ErrorClass() string {
+    if f.Error != nil {
+        return &#34;hasError&#34;
+    }
+    return &#34;&#34;
+}
+
+<span class="comment">// Return &#34;checked&#34; if this field.Value matches the provided value</span>
+func (f *Field) Checked(val string) string {
+    if f.Value == val {
+        return &#34;checked&#34;
+    }
+    return &#34;&#34;
+}
+
+var (
+    <span class="comment">// The functions available for use in the templates.</span>
+    Funcs = map[string]interface{}{
+        &#34;url&#34;: ReverseUrl,
+        &#34;eq&#34;:  func(a, b interface{}) bool { return a == b },
+        &#34;field&#34;: func(name string, renderArgs map[string]interface{}) *Field {
+            value, _ := renderArgs[&#34;flash&#34;].(map[string]string)[name]
+            err, _ := renderArgs[&#34;errors&#34;].(map[string]*ValidationError)[name]
+            return &amp;Field{
+                Name:  name,
+                Value: value,
+                Error: err,
+            }
+        },
+        &#34;option&#34;: func(f *Field, val, label string) template.HTML {
+            selected := &#34;&#34;
+            if f.Value == val {
+                selected = &#34; selected&#34;
+            }
+            return template.HTML(
+                fmt.Sprintf(`&lt;option value=&#34;%s&#34;%s&gt;%s&lt;/option&gt;`, val, selected, label))
+        },
+        &#34;radio&#34;: func(f *Field, val string) template.HTML {
+            checked := &#34;&#34;
+            if f.Value == val {
+                checked = &#34; checked&#34;
+            }
+            return template.HTML(
+                fmt.Sprintf(`&lt;input type=&#34;radio&#34; name=&#34;%s&#34; value=&#34;%s&#34;%s&gt;`, f.Name, val, checked))
+        },
+    }
+)
+
+func NewTemplateLoader() *TemplateLoader {
+
+    watcher, err := fsnotify.NewWatcher()
+    if err != nil {
+        LOG.Fatal(err)
+    }
+
+    watcher.Event = make(chan *fsnotify.FileEvent, 10)
+    watcher.Error = make(chan error, 10)
+
+    filepath.Walk(ViewsPath, func(path string, info os.FileInfo, err error) error {
+        if err != nil {
+            LOG.Println(&#34;Error walking views:&#34;, err)
+            return nil
+        }
+        if info.IsDir() {
+            err = watcher.Watch(path)
+            if err != nil {
+                LOG.Println(&#34;Failed to watch&#34;, path, &#34;:&#34;, err)
+            }
+        }
+        return nil
+    })
+
+    loader := &amp;TemplateLoader{
+        watcher: watcher,
+    }
+    loader.refresh()
+    return loader
+}
+
+func (loader *TemplateLoader) Template(name string) (Template, error) {
+
+    refresh := false
+    for {
+        select {
+        case ev := &lt;-loader.watcher.Event:
+
+            if !strings.HasPrefix(path.Base(ev.Name), &#34;.&#34;) {
+                refresh = true
+            }
+            continue
+        case &lt;-loader.watcher.Error:
+            continue
+        default:
+
+        }
+        break
+    }
+
+    if refresh {
+        loader.refresh()
+    }
+
+    if loader.compileError != nil {
+        return nil, loader.compileError
+    }
+
+    tmpl := loader.templateSet.Lookup(name)
+    if tmpl == nil {
+        return nil, errors.New(fmt.Sprintf(&#34;Template %s not found.\n&#34;, name))
+    }
+    return GoTemplate{tmpl, loader}, nil
+}
+
+<span class="comment">// Adapter for Go Templates.</span>
+type GoTemplate struct {
+    *template.Template
+    <span class="comment">// contains filtered or unexported fields</span>
+}
+
+<span class="comment">// return a &#39;rev.Template&#39; from Go&#39;s template.</span>
+func (gotmpl GoTemplate) Render(wr io.Writer, arg interface{}) error {
+    return gotmpl.Execute(wr, arg)
+}
+
+func (gotmpl GoTemplate) Content() []string {
+    content, _ := gotmpl.loader.getTemplateContent(gotmpl.Name())
+    return content
+}
+
+<span class="comment">// Return a url capable of invoking a given controller method:</span>
+<span class="comment">// &#34;Application.ShowApp 123&#34; =&gt; &#34;/app/123&#34;</span>
+func ReverseUrl(args ...interface{}) string {
+    if len(args) == 0 {
+        LOG.Println(&#34;Warning: no arguments provided to url function&#34;)
+        return &#34;#&#34;
+    }
+
+    action := args[0].(string)
+    actionSplit := strings.Split(action, &#34;.&#34;)
+    var ctrl, meth string
+    if len(actionSplit) != 2 {
+        LOG.Println(&#34;Warning: Must provide Controller.Method for reverse router.&#34;)
+        return &#34;#&#34;
+    }
+    ctrl, meth = actionSplit[0], actionSplit[1]
+    controllerType := LookupControllerType(ctrl)
+    methodType := controllerType.Method(meth)
+    argsByName := make(map[string]string)
+    for i, argValue := range args[1:] {
+        argsByName[methodType.Args[i].Name] = fmt.Sprintf(&#34;%s&#34;, argValue)
+    }
+
+    return router.Reverse(args[0].(string), argsByName).Url
+}
+</pre>
+
+
+
+
+
+

@@ -1,0 +1,161 @@
+---
+layout: godoc
+---
+<!--
+	Copyright 2009 The Go Authors. All rights reserved.
+	Use of this source code is governed by a BSD-style
+	license that can be found in the LICENSE file.
+-->
+<h1>Binder</h1>
+
+	
+		<!-- The package's Name is printed as title by the top-level template -->
+                
+		
+
+		<h2 id="index">Index</h2>
+		<!-- Table of contents for API; must be named manual-nav to turn off auto nav. -->
+		<div id="manual-nav">
+			<dl>
+			
+			
+				<dd><a href="#variables">Variables</a></dd>
+			
+			
+				
+				<dd><a href="#Bind">func Bind(params map[string][]string, name string, typ reflect.Type) reflect.Value</a></dd>
+			
+				
+				<dd><a href="#SimpleBind">func SimpleBind(val string, typ reflect.Type) reflect.Value</a></dd>
+			
+			
+				
+				<dd><a href="#Binder">type Binder</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#SimpleBinder">func SimpleBinder(f func(value string, typ reflect.Type) reflect.Value) Binder</a></dd>
+				
+				
+			
+			
+		</dl>
+
+		
+
+		
+			<h4>Package files</h4>
+			<p>
+			<span style="font-size:90%">
+			
+				<a href="../src/binder.html">binder.go</a>
+			
+			</span>
+			</p>
+		
+
+		
+		
+			<h2 id="variables">Variables</h2>
+			
+				<pre>var (
+    TypeBinders = make(map[reflect.Type]Binder)
+    KindBinders = make(map[reflect.Kind]Binder)
+)</pre>
+				<p>
+These are the lookups to find a Binder for any type of data.
+The most specific binder found will be used (Type before Kind)
+</p>
+
+			
+				<pre>var (
+    <span class="comment">// Applications can add custom time formats to this array, and they will be</span>
+    <span class="comment">// automatically attempted when binding a time.Time.</span>
+    TimeFormats = []string{&#34;2006-01-02&#34;, &#34;2006-01-02 15:04&#34;}
+)</pre>
+				
+			
+		
+		
+			
+			
+			<h2 id="Bind">func <a href="../src/binder.html?s=6240:6322#L203">Bind</a></h2>
+			<pre>func Bind(params map[string][]string, name string, typ reflect.Type) reflect.Value</pre>
+			<p>
+Parse the value string into a real Go value.
+Returns 0 values when things can not be parsed.
+</p>
+
+			
+		
+			
+			
+			<h2 id="SimpleBind">func <a href="../src/binder.html?s=6639:6698#L220">SimpleBind</a></h2>
+			<pre>func SimpleBind(val string, typ reflect.Type) reflect.Value</pre>
+			
+			
+		
+		
+			
+			
+			<h2 id="Binder">type <a href="../src/binder.html?s=570:659#L15">Binder</a></h2>
+			<pre>type Binder func(params map[string][]string, name string, typ reflect.Type) reflect.Value</pre>
+			<p>
+A Binder translates between string parameters and Go data structures.
+</p>
+<p>
+Here is an example.
+</p>
+<p>
+Request:
+</p>
+<pre>url?id=123&amp;ol[0]=1&amp;ol[1]=2&amp;ul[]=str&amp;ul[]=array&amp;user.Name=rob
+</pre>
+<p>
+Action:
+</p>
+<pre>Example.Action(id int, ol []int, ul []string, user User)
+</pre>
+<p>
+Calls:
+</p>
+<pre>Binder(params, &#34;id&#34;, int): 123
+Binder(params, &#34;ol&#34;, []int): {1, 2}
+Binder(params, &#34;ul&#34;, []string): {&#34;str&#34;, &#34;array&#34;}
+Binder(params, &#34;user&#34;, User): User{Name:&#34;rob&#34;}
+</pre>
+<p>
+Note that only exported struct fields may be bound.
+</p>
+
+
+			
+
+			
+
+			
+
+			
+				
+				<h3 id="SimpleBinder">func <a href="../src/binder.html?s=716:794#L18">SimpleBinder</a></h3>
+				<pre>func SimpleBinder(f func(value string, typ reflect.Type) reflect.Value) Binder</pre>
+				<p>
+An adapter for easily making one-key-value binders.
+</p>
+
+				
+			
+
+			
+		
+		</div>
+	
+
+	
+
+
+
+
+
+
+
+

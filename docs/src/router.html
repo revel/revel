@@ -1,0 +1,267 @@
+---
+layout: godoc
+---
+<!--
+	Copyright 2009 The Go Authors. All rights reserved.
+	Use of this source code is governed by a BSD-style
+	license that can be found in the LICENSE file.
+-->
+<h1>Router</h1>
+
+
+
+	<pre>package rev
+
+type Route struct {
+    <span class="comment">// contains filtered or unexported fields</span>
+}
+
+type RouteMatch struct {
+    Action         string            <span class="comment">// e.g. Application.ShowApp</span>
+    ControllerName string            <span class="comment">// e.g. Application</span>
+    MethodName     string            <span class="comment">// e.g. ShowApp</span>
+    Params         map[string]string <span class="comment">// e.g. {id: 123}</span>
+    StaticFilename string
+}
+
+<span class="comment">// Prepares the route to be used in matching.</span>
+func NewRoute(method, path, action string) (r *Route) {
+    r = &amp;Route{
+        method: strings.ToUpper(method),
+        path:   path,
+        action: action,
+    }
+
+    if strings.HasPrefix(r.action, &#34;staticDir:&#34;) {
+        if r.method != &#34;*&#34; &amp;&amp; r.method != &#34;GET&#34; {
+            LOG.Print(&#34;W: Static route only supports GET&#34;)
+            return
+        }
+
+        if !strings.HasSuffix(r.path, &#34;/&#34;) {
+            LOG.Printf(&#34;W: The path for staticDir must end with / (%s)&#34;, r.path)
+            r.path = r.path + &#34;/&#34;
+        }
+
+        r.pathPattern = regexp.MustCompile(&#34;^&#34; + r.path + &#34;(.*)$&#34;)
+        r.staticDir = r.action[len(&#34;staticDir:&#34;):]
+
+        return
+    }
+
+    if !strings.HasPrefix(r.path, &#34;/&#34;) {
+        LOG.Print(&#34;E: Absolute URL required.&#34;)
+        return
+    }
+
+    normPath := nakedPathParamRegex.ReplaceAllStringFunc(r.path, func(m string) string {
+        var argMatches []string = nakedPathParamRegex.FindStringSubmatch(m)
+        return &#34;{&lt;[^/]+&gt;&#34; + argMatches[1] + &#34;}&#34;
+    })
+
+    r.args = make([]*arg, 0, 3)
+    for i, m := range argsPattern.FindAllStringSubmatch(normPath, -1) {
+        r.args = append(r.args, &amp;arg{
+            name:       string(m[2]),
+            index:      i,
+            constraint: regexp.MustCompile(string(m[1])),
+        })
+    }
+
+    pathPatternStr := argsPattern.ReplaceAllStringFunc(normPath, func(m string) string {
+        var argMatches []string = argsPattern.FindStringSubmatch(m)
+        return &#34;(?P&lt;&#34; + argMatches[2] + &#34;&gt;&#34; + argMatches[1] + &#34;)&#34;
+    })
+    r.pathPattern = regexp.MustCompile(pathPatternStr + &#34;$&#34;)
+
+    <span class="comment">// Handle action</span>
+    var actionPatternStr string = strings.Replace(r.action, &#34;.&#34;, `\.`, -1)
+    for _, arg := range r.args {
+        var argName string = &#34;{&#34; + arg.name + &#34;}&#34;
+        if argIndex := strings.Index(actionPatternStr, argName); argIndex != -1 {
+            actionPatternStr = strings.Replace(actionPatternStr, argName,
+                &#34;(?P&lt;&#34;+arg.name+&#34;&gt;&#34;+arg.constraint.String()+&#34;)&#34;, -1)
+            r.actionArgs = append(r.actionArgs, arg.name)
+        }
+    }
+    r.actionPattern = regexp.MustCompile(actionPatternStr)
+    return
+}
+
+<span class="comment">// Return nil if no match.</span>
+func (r *Route) Match(method string, reqPath string) *RouteMatch {
+
+    if r.method != &#34;*&#34; &amp;&amp; method != r.method &amp;&amp; !(method == &#34;HEAD&#34; &amp;&amp; r.method == &#34;GET&#34;) {
+        return nil
+    }
+
+    <span class="comment">// Check the Path</span>
+    var matches []string = r.pathPattern.FindStringSubmatch(reqPath)
+    if matches == nil {
+        return nil
+    }
+
+    if r.staticDir != &#34;&#34; {
+        return &amp;RouteMatch{
+            StaticFilename: path.Join(BasePath, r.staticDir, matches[1]),
+        }
+    }
+
+    params := make(map[string]string)
+    for i, m := range matches[1:] {
+        params[r.pathPattern.SubexpNames()[i+1]] = m
+    }
+
+    action := r.action
+    if strings.Contains(action, &#34;{&#34;) {
+        for key, value := range params {
+            action = strings.Replace(action, &#34;{&#34;+key+&#34;}&#34;, value, -1)
+        }
+    }
+
+    actionSplit := strings.Split(action, &#34;.&#34;)
+    if len(actionSplit) != 2 {
+        LOG.Printf(&#34;E: Failed to split action: %s&#34;, r.action)
+        return nil
+    }
+
+    return &amp;RouteMatch{
+        Action:         action,
+        ControllerName: actionSplit[0],
+        MethodName:     actionSplit[1],
+        Params:         params,
+    }
+}
+
+type Router struct {
+    <span class="comment">// contains filtered or unexported fields</span>
+}
+
+func (router *Router) Route(req *http.Request) *RouteMatch {
+    for _, route := range router.routes {
+        if m := route.Match(req.Method, req.URL.Path); m != nil {
+            return m
+        }
+    }
+    return nil
+}
+
+<span class="comment">// Load the routes file.</span>
+func LoadRoutes() *Router {
+
+    contentBytes, err := ioutil.ReadFile(path.Join(BasePath, &#34;conf&#34;, &#34;routes&#34;))
+    if err != nil {
+        LOG.Fatalln(&#34;Failed to load routes file:&#34;, err)
+    }
+    content := string(contentBytes)
+    return NewRouter(content)
+}
+
+func NewRouter(routesConf string) *Router {
+    router := new(Router)
+    routes := make([]*Route, 0, 10)
+
+    for _, line := range strings.Split(routesConf, &#34;\n&#34;) {
+        line = strings.TrimSpace(line)
+        if len(line) == 0 || line[0] == &#39;#&#39; {
+            continue
+        }
+
+        method, path, action, found := parseRouteLine(line)
+        if !found {
+            continue
+        }
+
+        route := NewRoute(method, path, action)
+        routes = append(routes, route)
+    }
+
+    router.routes = routes
+    return router
+}
+
+type ActionDefinition struct {
+    Host, Method, Url, Action string
+    Star                      bool
+    Args                      map[string]string
+}
+
+func (a *ActionDefinition) String() string {
+    return a.Url
+}
+
+func (router *Router) Reverse(action string, argValues map[string]string) *ActionDefinition {
+
+NEXT_ROUTE:
+
+    for _, route := range router.routes {
+        if route.actionPattern == nil {
+            continue
+        }
+
+        var matches []string = route.actionPattern.FindStringSubmatch(action)
+        if len(matches) == 0 {
+            continue
+        }
+
+        for i, match := range matches[1:] {
+            argValues[route.actionPattern.SubexpNames()[i+1]] = match
+        }
+
+        routeArgs := make(map[string]*arg)
+        for _, arg := range route.args {
+            routeArgs[arg.name] = arg
+        }
+
+        for argKey, argValue := range argValues {
+            arg, ok := routeArgs[argKey]
+            if ok &amp;&amp; !arg.constraint.MatchString(argValue) {
+                continue NEXT_ROUTE
+            }
+        }
+
+        <span class="comment">// Build up the URL.</span>
+        var queryValues url.Values = make(url.Values)
+        path := route.path
+        for argKey, argValue := range argValues {
+            if _, ok := routeArgs[argKey]; ok {
+
+                path = regexp.MustCompile(`\{(&lt;[^&gt;]+&gt;)?`+regexp.QuoteMeta(argKey)+`\}`).
+                    ReplaceAllString(path, url.QueryEscape(string(argValue)))
+            } else {
+
+                queryValues.Set(argKey, argValue)
+            }
+        }
+
+        url := path
+        if len(queryValues) &gt; 0 {
+            url += &#34;?&#34; + queryValues.Encode()
+        }
+
+        method := route.method
+        star := false
+        if route.method == &#34;*&#34; {
+            method = &#34;GET&#34;
+            star = true
+        }
+
+        return &amp;ActionDefinition{
+            Url:    url,
+            Method: method,
+            Star:   star,
+            Action: action,
+            Args:   argValues,
+            Host:   &#34;TODO&#34;,
+        }
+    }
+    LOG.Println(&#34;Failed to find reverse route:&#34;, action, argValues)
+    return nil
+}
+</pre>
+
+
+
+
+
+

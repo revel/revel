@@ -1,0 +1,182 @@
+---
+layout: godoc
+---
+<!--
+	Copyright 2009 The Go Authors. All rights reserved.
+	Use of this source code is governed by a BSD-style
+	license that can be found in the LICENSE file.
+-->
+<h1>Results</h1>
+
+	
+		<!-- The package's Name is printed as title by the top-level template -->
+                
+		
+
+		<h2 id="index">Index</h2>
+		<!-- Table of contents for API; must be named manual-nav to turn off auto nav. -->
+		<div id="manual-nav">
+			<dl>
+			
+			
+			
+			
+				
+				<dd><a href="#RedirectToActionResult">type RedirectToActionResult</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#RedirectToActionResult.Apply">func (r *RedirectToActionResult) Apply(req *Request, resp *Response)</a></dd>
+				
+			
+				
+				<dd><a href="#RedirectToUrlResult">type RedirectToUrlResult</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#RedirectToUrlResult.Apply">func (r *RedirectToUrlResult) Apply(req *Request, resp *Response)</a></dd>
+				
+			
+				
+				<dd><a href="#RenderTemplateResult">type RenderTemplateResult</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#RenderTemplateResult.Apply">func (r *RenderTemplateResult) Apply(req *Request, resp *Response)</a></dd>
+				
+			
+				
+				<dd><a href="#Result">type Result</a></dd>
+				
+				
+			
+			
+		</dl>
+
+		
+
+		
+			<h4>Package files</h4>
+			<p>
+			<span style="font-size:90%">
+			
+				<a href="../src/results.html">results.go</a>
+			
+			</span>
+			</p>
+		
+
+		
+		
+		
+		
+			
+			
+			<h2 id="RedirectToActionResult">type <a href="../src/results.html?s=1290:1345#L43">RedirectToActionResult</a></h2>
+			<pre>type RedirectToActionResult struct {
+    <span class="comment">// contains filtered or unexported fields</span>
+}</pre>
+			
+
+			
+
+			
+
+			
+
+			
+
+			
+				
+				<h3 id="RedirectToActionResult.Apply">func (*RedirectToActionResult) <a href="../src/results.html?s=1347:1415#L47">Apply</a></h3>
+				<pre>func (r *RedirectToActionResult) Apply(req *Request, resp *Response)</pre>
+				
+				
+				
+			
+		
+			
+			
+			<h2 id="RedirectToUrlResult">type <a href="../src/results.html?s=1106:1153#L34">RedirectToUrlResult</a></h2>
+			<pre>type RedirectToUrlResult struct {
+    <span class="comment">// contains filtered or unexported fields</span>
+}</pre>
+			
+
+			
+
+			
+
+			
+
+			
+
+			
+				
+				<h3 id="RedirectToUrlResult.Apply">func (*RedirectToUrlResult) <a href="../src/results.html?s=1155:1220#L38">Apply</a></h3>
+				<pre>func (r *RedirectToUrlResult) Apply(req *Request, resp *Response)</pre>
+				
+				
+				
+			
+		
+			
+			
+			<h2 id="RenderTemplateResult">type <a href="../src/results.html?s=191:305#L4">RenderTemplateResult</a></h2>
+			<pre>type RenderTemplateResult struct {
+    Template   Template
+    RenderArgs map[string]interface{}
+    Response   *Response
+}</pre>
+			<p>
+Action methods return this result to request a template be rendered.
+</p>
+
+
+			
+
+			
+
+			
+
+			
+
+			
+				
+				<h3 id="RenderTemplateResult.Apply">func (*RenderTemplateResult) <a href="../src/results.html?s=307:373#L10">Apply</a></h3>
+				<pre>func (r *RenderTemplateResult) Apply(req *Request, resp *Response)</pre>
+				
+				
+				
+			
+		
+			
+			
+			<h2 id="Result">type <a href="../src/results.html?s=55:117#L1">Result</a></h2>
+			<pre>type Result interface {
+    Apply(req *Request, resp *Response)
+}</pre>
+			
+
+			
+
+			
+
+			
+
+			
+
+			
+		
+		</div>
+	
+
+	
+
+
+
+
+
+
+
+

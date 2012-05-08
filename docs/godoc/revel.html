@@ -1,0 +1,125 @@
+---
+layout: godoc
+---
+<!--
+	Copyright 2009 The Go Authors. All rights reserved.
+	Use of this source code is governed by a BSD-style
+	license that can be found in the LICENSE file.
+-->
+<h1>Revel</h1>
+
+	
+		<!-- The package's Name is printed as title by the top-level template -->
+                
+		
+
+		<h2 id="index">Index</h2>
+		<!-- Table of contents for API; must be named manual-nav to turn off auto nav. -->
+		<div id="manual-nav">
+			<dl>
+			
+			
+				<dd><a href="#variables">Variables</a></dd>
+			
+			
+				
+				<dd><a href="#CheckInit">func CheckInit()</a></dd>
+			
+				
+				<dd><a href="#Init">func Init(importPath string, mode RunMode)</a></dd>
+			
+			
+				
+				<dd><a href="#RunMode">type RunMode</a></dd>
+				
+				
+			
+			
+		</dl>
+
+		
+
+		
+			<h4>Package files</h4>
+			<p>
+			<span style="font-size:90%">
+			
+				<a href="../src/revel.html">revel.go</a>
+			
+			</span>
+			</p>
+		
+
+		
+		
+			<h2 id="variables">Variables</h2>
+			
+				<pre>var (
+    <span class="comment">// App details</span>
+    AppName    string <span class="comment">// e.g. &#34;sample&#34;</span>
+    BasePath   string <span class="comment">// e.g. &#34;/Users/robfig/gocode/src/revel/sample&#34;</span>
+    AppPath    string <span class="comment">// e.g. &#34;/Users/robfig/gocode/src/revel/sample/app&#34;</span>
+    ViewsPath  string <span class="comment">// e.g. &#34;/Users/robfig/gocode/src/revel/sample/app/views&#34;</span>
+    ImportPath string <span class="comment">// e.g. &#34;revel/sample&#34;</span>
+
+    Config  *MergedConfig
+    AppMode RunMode
+
+    <span class="comment">// Revel installation details</span>
+    RevelTemplatePath string <span class="comment">// e.g. &#34;/Users/robfig/gocode/src/revel/templates&#34;</span>
+
+    LOG = log.New(os.Stdout, &#34;&#34;, log.Ldate|log.Ltime|log.Lshortfile)
+)</pre>
+				
+			
+		
+		
+			
+			
+			<h2 id="CheckInit">func <a href="../src/revel.html?s=1816:1832#L67">CheckInit</a></h2>
+			<pre>func CheckInit()</pre>
+			
+			
+		
+			
+			
+			<h2 id="Init">func <a href="../src/revel.html?s=757:799#L29">Init</a></h2>
+			<pre>func Init(importPath string, mode RunMode)</pre>
+			
+			
+		
+		
+			
+			
+			<h2 id="RunMode">type <a href="../src/revel.html?s=75:94#L1">RunMode</a></h2>
+			<pre>type RunMode string</pre>
+			
+
+			
+				<pre>const (
+    DEV  RunMode = &#34;dev&#34;
+    PROD         = &#34;prod&#34;
+)</pre>
+				
+			
+
+			
+
+			
+
+			
+
+			
+		
+		</div>
+	
+
+	
+
+
+
+
+
+
+
+

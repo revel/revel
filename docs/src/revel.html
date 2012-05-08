@@ -1,0 +1,86 @@
+---
+layout: godoc
+---
+<!--
+	Copyright 2009 The Go Authors. All rights reserved.
+	Use of this source code is governed by a BSD-style
+	license that can be found in the LICENSE file.
+-->
+<h1>Revel</h1>
+
+
+
+	<pre>package rev
+
+type RunMode string
+
+const (
+    DEV  RunMode = &#34;dev&#34;
+    PROD         = &#34;prod&#34;
+)
+
+var (
+    <span class="comment">// App details</span>
+    AppName    string <span class="comment">// e.g. &#34;sample&#34;</span>
+    BasePath   string <span class="comment">// e.g. &#34;/Users/robfig/gocode/src/revel/sample&#34;</span>
+    AppPath    string <span class="comment">// e.g. &#34;/Users/robfig/gocode/src/revel/sample/app&#34;</span>
+    ViewsPath  string <span class="comment">// e.g. &#34;/Users/robfig/gocode/src/revel/sample/app/views&#34;</span>
+    ImportPath string <span class="comment">// e.g. &#34;revel/sample&#34;</span>
+
+    Config  *MergedConfig
+    AppMode RunMode
+
+    <span class="comment">// Revel installation details</span>
+    RevelTemplatePath string <span class="comment">// e.g. &#34;/Users/robfig/gocode/src/revel/templates&#34;</span>
+
+    LOG = log.New(os.Stdout, &#34;&#34;, log.Ldate|log.Ltime|log.Lshortfile)
+)
+
+func Init(importPath string, mode RunMode) {
+
+    pkg, err := build.Import(importPath, &#34;&#34;, build.FindOnly)
+    if err != nil {
+        log.Fatalf(&#34;Failed to import&#34;, importPath, &#34;with error&#34;, err)
+    }
+    BasePath = pkg.Dir
+    if BasePath == &#34;&#34; {
+        log.Fatalf(&#34;Failed to find code.  Did you pass the import path?&#34;)
+    }
+    AppName = filepath.Base(BasePath)
+    AppPath = path.Join(BasePath, &#34;app&#34;)
+    ViewsPath = path.Join(AppPath, &#34;views&#34;)
+    ImportPath = importPath
+
+    revelPkg, err := build.Import(&#34;github.com/robfig/revel&#34;, &#34;&#34;, build.FindOnly)
+    if err != nil {
+        log.Fatalf(&#34;Failed to find revel code.&#34;)
+    }
+    RevelTemplatePath = path.Join(revelPkg.Dir, &#34;templates&#34;)
+
+    Config, err = LoadConfig(
+        path.Join(BasePath, &#34;conf&#34;, &#34;app.conf&#34;))
+    if err != nil {
+        log.Fatalln(&#34;Failed to load app.conf:&#34;, err)
+    }
+    Config.SetSection(string(mode))
+    secretStr, err := Config.String(&#34;app.secret&#34;)
+    if err != nil {
+        log.Fatalln(&#34;No app.secret provided.&#34;)
+    }
+    secretKey = []byte(secretStr)
+
+    revelInit = true
+}
+
+func CheckInit() {
+    if !revelInit {
+        panic(&#34;Revel has not been initialized!&#34;)
+    }
+}
+</pre>
+
+
+
+
+
+

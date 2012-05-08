@@ -1,0 +1,128 @@
+---
+layout: godoc
+---
+<!--
+	Copyright 2009 The Go Authors. All rights reserved.
+	Use of this source code is governed by a BSD-style
+	license that can be found in the LICENSE file.
+-->
+<h1>Errors</h1>
+
+	
+		<!-- The package's Name is printed as title by the top-level template -->
+                
+		
+
+		<h2 id="index">Index</h2>
+		<!-- Table of contents for API; must be named manual-nav to turn off auto nav. -->
+		<div id="manual-nav">
+			<dl>
+			
+			
+			
+				
+				<dd><a href="#RenderError">func RenderError(buffer io.Writer, data interface{})</a></dd>
+			
+			
+				
+				<dd><a href="#Error">type Error</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Error.ContextSource">func (e *Error) ContextSource() []sourceLine</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Error.Error">func (e Error) Error() string</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Error.Html">func (e *Error) Html() string</a></dd>
+				
+			
+			
+		</dl>
+
+		
+
+		
+			<h4>Package files</h4>
+			<p>
+			<span style="font-size:90%">
+			
+				<a href="../src/errors.html">errors.go</a>
+			
+			</span>
+			</p>
+		
+
+		
+		
+		
+			
+			
+			<h2 id="RenderError">func <a href="../src/errors.html?s=1385:1437#L50">RenderError</a></h2>
+			<pre>func RenderError(buffer io.Writer, data interface{})</pre>
+			
+			
+		
+		
+			
+			
+			<h2 id="Error">type <a href="../src/errors.html?s=133:558#L1">Error</a></h2>
+			<pre>type Error struct {
+    SourceType               string   <span class="comment">// The type of source that failed to build.</span>
+    Title, Path, Description string   <span class="comment">// Description of the error, as presented to the user.</span>
+    Line, Column             int      <span class="comment">// Where the error was encountered.</span>
+    SourceLines              []string <span class="comment">// The entire source file, split into lines.</span>
+    MetaError                string   <span class="comment">// Error that occurred producing the error page.</span>
+}</pre>
+			<p>
+An error description, used as an argument to the error template.
+</p>
+
+
+			
+
+			
+
+			
+
+			
+
+			
+				
+				<h3 id="Error.ContextSource">func (*Error) <a href="../src/errors.html?s=806:850#L21">ContextSource</a></h3>
+				<pre>func (e *Error) ContextSource() []sourceLine</pre>
+				<p>
+Returns a snippet of the source around where the error occurred.
+</p>
+
+				
+				
+			
+				
+				<h3 id="Error.Error">func (Error) <a href="../src/errors.html?s=681:710#L16">Error</a></h3>
+				<pre>func (e Error) Error() string</pre>
+				
+				
+				
+			
+				
+				<h3 id="Error.Html">func (*Error) <a href="../src/errors.html?s=1290:1319#L44">Html</a></h3>
+				<pre>func (e *Error) Html() string</pre>
+				
+				
+				
+			
+		
+		</div>
+	
+
+	
+
+
+
+
+
+
+
+

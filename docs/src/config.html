@@ -1,0 +1,55 @@
+---
+layout: godoc
+---
+<!--
+	Copyright 2009 The Go Authors. All rights reserved.
+	Use of this source code is governed by a BSD-style
+	license that can be found in the LICENSE file.
+-->
+<h1>Config</h1>
+
+
+
+	<pre>package rev
+
+<span class="comment">// This handles the parsing of application.conf</span>
+<span class="comment">// It has a &#34;preferred&#34; section that is checked first for option queries.</span>
+<span class="comment">// If the preferred section does not have the option, the DEFAULT section is</span>
+<span class="comment">// checked fallback.</span>
+type MergedConfig struct {
+    *config.Config
+    <span class="comment">// contains filtered or unexported fields</span>
+}
+
+func LoadConfig(fname string) (*MergedConfig, error) {
+    conf, err := config.ReadDefault(fname)
+    if err != nil {
+        return nil, err
+    }
+    return &amp;MergedConfig{conf, &#34;&#34;}, nil
+}
+
+func (c *MergedConfig) SetSection(section string) {
+    c.section = section
+}
+
+func (c *MergedConfig) Int(option string) (int, error) {
+    if r, err := c.Config.Int(c.section, option); err == nil {
+        return r, nil
+    }
+    return c.Config.Int(&#34;DEFAULT&#34;, option)
+}
+
+func (c *MergedConfig) String(option string) (string, error) {
+    if r, err := c.Config.String(c.section, option); err == nil {
+        return r, nil
+    }
+    return c.Config.String(&#34;DEFAULT&#34;, option)
+}
+</pre>
+
+
+
+
+
+
