@@ -7,7 +7,7 @@ import (
 	"path"
 )
 
-// A compilation error, used as an argument to the CompileError.html template.
+// An error description, used as an argument to the error template.
 type Error struct {
 	SourceType               string   // The type of source that failed to build.
 	Title, Path, Description string   // Description of the error, as presented to the user.

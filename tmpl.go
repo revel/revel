@@ -54,7 +54,7 @@ func (f *Field) Checked(val string) string {
 
 var (
 	// The functions available for use in the templates.
-	tmplFuncs = map[string]interface{}{
+	Funcs = map[string]interface{}{
 		"url": ReverseUrl,
 		"eq":  func(a, b interface{}) bool { return a == b },
 		"field": func(name string, renderArgs map[string]interface{}) *Field {
@@ -146,7 +146,7 @@ func (loader *TemplateLoader) refresh() {
 		fileStr := string(fileBytes)
 		if templateSet == nil {
 			templateSet, err = template.New(templateName).
-				Funcs(tmplFuncs).
+				Funcs(Funcs).
 				Parse(fileStr)
 		} else {
 			_, err = templateSet.New(templateName).Parse(fileStr)
