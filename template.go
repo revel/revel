@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/howeyc/fsnotify"
+	"html"
 	"html/template"
 	"io"
 	"io/ioutil"
@@ -71,16 +72,16 @@ var (
 			if f.Value == val {
 				selected = " selected"
 			}
-			return template.HTML(
-				fmt.Sprintf(`<option value="%s"%s>%s</option>`, val, selected, label))
+			return template.HTML(fmt.Sprintf(`<option value="%s"%s>%s</option>`,
+				html.EscapeString(val), selected, html.EscapeString(label)))
 		},
 		"radio": func(f *Field, val string) template.HTML {
 			checked := ""
 			if f.Value == val {
 				checked = " checked"
 			}
-			return template.HTML(
-				fmt.Sprintf(`<input type="radio" name="%s" value="%s"%s>`, f.Name, val, checked))
+			return template.HTML(fmt.Sprintf(`<input type="radio" name="%s" value="%s"%s>`,
+				html.EscapeString(f.Name), html.EscapeString(val), checked))
 		},
 	}
 )
