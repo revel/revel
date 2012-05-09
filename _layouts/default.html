@@ -239,7 +239,7 @@ func (c Application) SaveUser(user models.User, verifyPassword string) rev.Resul
           </div>
 
           <div class="span10">
-            <pre class="prettyprint lang-html">{% capture teaser_template %}{% raw %}
+            <pre class="prettyprint lang-html">{% raw %}
 {{/* app/views/Application/Register.html */}}
 
 {{template "header.html" .}}
@@ -276,7 +276,7 @@ func (c Application) SaveUser(user models.User, verifyPassword string) rev.Resul
   </p>
 </form>
 
-{{template "footer.html" .}}{% endraw %}{% endcapture %}{{ teaser_template|escape }}</pre>
+{{template "footer.html" .}}{% endraw %}</pre>
           </div>
         </div>
 
