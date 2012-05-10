@@ -1,6 +1,7 @@
 package rev
 
 import (
+	"code.google.com/p/go.net/websocket"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -8,11 +9,27 @@ import (
 	"time"
 )
 
-var router *Router
-var templateLoader *TemplateLoader
+var (
+	router         *Router
+	templateLoader *TemplateLoader
 
-// This method handles all http requests.
+	websocketType = reflect.TypeOf((*websocket.Conn)(nil))
+)
+
+// This method handles all requests.  It dispatches to handleInternal after
+// handling / adapting websocket connections.
 func handle(w http.ResponseWriter, r *http.Request) {
+	if r.Header.Get("Upgrade") == "websocket" {
+		websocket.Handler(func(ws *websocket.Conn) {
+			r.Method = "WS"
+			handleInternal(w, r, ws)
+		}).ServeHTTP(w, r)
+	} else {
+		handleInternal(w, r, nil)
+	}
+}
+
+func handleInternal(w http.ResponseWriter, r *http.Request, ws *websocket.Conn) {
 	// TODO: StaticPathsCache
 
 	// Figure out the Controller/Action
@@ -51,7 +68,14 @@ func handle(w http.ResponseWriter, r *http.Request) {
 	// Collect the values for the method's arguments.
 	var actualArgs []reflect.Value
 	for _, arg := range controller.MethodType.Args {
-		actualArgs = append(actualArgs, controller.Params.Bind(arg.Name, arg.Type))
+		// If they accept a websocket connection, treat that arg specially.
+		var boundArg reflect.Value
+		if arg.Type == websocketType {
+			boundArg = reflect.ValueOf(ws)
+		} else {
+			boundArg = controller.Params.Bind(arg.Name, arg.Type)
+		}
+		actualArgs = append(actualArgs, boundArg)
 	}
 
 	// Invoke the method.

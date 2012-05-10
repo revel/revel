@@ -14,6 +14,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/howeyc/fsnotify"
+	"github.com/robfig/revel"
 	"go/build"
 	"io"
 	"log"
@@ -25,7 +26,6 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
-	"github.com/robfig/revel"
 	"regexp"
 	"strconv"
 	"strings"
@@ -85,17 +85,18 @@ func main() {
 // - else, send proxy (NotifyReady = true)
 
 type harnessProxy struct {
+	serverHost    string
 	proxy         *httputil.ReverseProxy
 	NotifyRequest chan bool  // Strobed on every request.
 	NotifyReady   chan error // Strobed when request may proceed.
 }
 
-func (hp *harnessProxy) ServeHTTP(wr http.ResponseWriter, req *http.Request) {
+func (hp *harnessProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// First, poll to see if there's a pending error in NotifyReady
 	select {
 	case err := <-hp.NotifyReady:
 		if err != nil {
-			serveError(wr, req, err)
+			serveError(w, r, err)
 		}
 	default:
 		// Usually do nothing.
@@ -107,12 +108,56 @@ func (hp *harnessProxy) ServeHTTP(wr http.ResponseWriter, req *http.Request) {
 
 	// If an error was returned, create the page and show it to the user.
 	if err != nil {
-		serveError(wr, req, err)
+		serveError(w, r, err)
 		return
 	}
 
 	// Reverse proxy the request.
-	hp.proxy.ServeHTTP(wr, req)
+	// (Need special code for websockets, courtesy of bradfitz)
+	if r.Header.Get("Upgrade") == "websocket" {
+		proxyWebsocket(w, r, hp.serverHost)
+	} else {
+		hp.proxy.ServeHTTP(w, r)
+	}
+}
+
+// ReverseProxy doesn't work with websocket requests.
+// This function copies data between websocket client and server until one side
+// closes the connection.
+func proxyWebsocket(w http.ResponseWriter, r *http.Request, host string) {
+	d, err := net.Dial("tcp", host)
+	if err != nil {
+		http.Error(w, "Error contacting backend server.", 500)
+		log.Printf("Error dialing websocket backend %s: %v", host, err)
+		return
+	}
+	hj, ok := w.(http.Hijacker)
+	if !ok {
+		http.Error(w, "Not a hijacker?", 500)
+		return
+	}
+	nc, _, err := hj.Hijack()
+	if err != nil {
+		log.Printf("Hijack error: %v", err)
+		return
+	}
+	defer nc.Close()
+	defer d.Close()
+
+	err = r.Write(d)
+	if err != nil {
+		log.Printf("Error copying request to target: %v", err)
+		return
+	}
+
+	errc := make(chan error, 2)
+	cp := func(dst io.Writer, src io.Reader) {
+		_, err := io.Copy(dst, src)
+		errc <- err
+	}
+	go cp(d, nc)
+	go cp(nc, d)
+	<-errc
 }
 
 func serveError(wr http.ResponseWriter, req *http.Request, err error) {
@@ -131,6 +176,7 @@ func serveError(wr http.ResponseWriter, req *http.Request, err error) {
 func startReverseProxy(port int) *harnessProxy {
 	serverUrl, _ := url.ParseRequestURI(fmt.Sprintf("http://localhost:%d", port))
 	reverseProxy := &harnessProxy{
+		serverHost:    serverUrl.String()[len("http://"):],
 		proxy:         httputil.NewSingleHostReverseProxy(serverUrl),
 		NotifyRequest: make(chan bool),
 		NotifyReady:   make(chan error),
@@ -273,7 +319,7 @@ func rebuild(port int) (compileError *rev.Error) {
 		"AppName":     rev.AppName,
 		"Controllers": controllerSpecs,
 		"ImportPaths": uniqueImportPaths(controllerSpecs),
-		"RunMode": rev.AppMode,
+		"RunMode":     rev.AppMode,
 	})
 
 	// Terminate the server if it's already running.
