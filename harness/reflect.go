@@ -4,13 +4,13 @@ package harness
 // It catalogs the controllers, their methods, and their arguments.
 
 import (
+	"github.com/robfig/revel"
 	"go/ast"
 	"go/parser"
 	"go/scanner"
 	"go/token"
 	"log"
 	"os"
-	"github.com/robfig/revel"
 	"strings"
 	"unicode"
 )
@@ -270,14 +270,19 @@ func appendMethod(fset *token.FileSet, mm methodMap, decl ast.Decl, pkgName stri
 	for _, field := range funcDecl.Type.Params.List {
 		for _, name := range field.Names {
 			typeName := ExprName(field.Type)
+
+			// Figure out the Import Path for this field, if any.
 			importPath := ""
-			dotIndex := strings.Index(typeName, ".")
-			isExported := unicode.IsUpper([]rune(typeName)[0])
+			baseTypeName := strings.TrimLeft(typeName, "*")
+			dotIndex := strings.Index(baseTypeName, ".")
+			isExported := unicode.IsUpper([]rune(baseTypeName)[0])
 			if dotIndex == -1 && isExported {
-				typeName = pkgName + "." + typeName
+				// Fully-qualify types defined in that package.
+				// (Need to add back the stars that we trimmed, too)
+				typeName = pkgName + "." + baseTypeName
 			} else if dotIndex != -1 {
-				// The type comes from may come from an imported package.
-				argPkgName := typeName[:dotIndex]
+				// The type comes from an imported package.
+				argPkgName := baseTypeName[:dotIndex]
 				if importPath, ok = imports[argPkgName]; !ok {
 					log.Println("Failed to find import for arg of type:", typeName)
 				}
