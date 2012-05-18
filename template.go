@@ -58,6 +58,11 @@ var (
 	Funcs = map[string]interface{}{
 		"url": ReverseUrl,
 		"eq":  func(a, b interface{}) bool { return a == b },
+		// TODO: Why doesn't it allow me to use a func with 0 return values?
+		"set": func(key string, value interface{}, renderArgs map[string]interface{}) template.HTML {
+			renderArgs[key] = value
+			return template.HTML("")
+		},
 		"field": func(name string, renderArgs map[string]interface{}) *Field {
 			value, _ := renderArgs["flash"].(map[string]string)[name]
 			err, _ := renderArgs["errors"].(map[string]*ValidationError)[name]
