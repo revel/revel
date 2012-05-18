@@ -146,9 +146,28 @@ func (loader *TemplateLoader) refresh() {
 		templateName := path[len(ViewsPath)+1:]
 		fileStr := string(fileBytes)
 		if templateSet == nil {
-			templateSet, err = template.New(templateName).
-				Funcs(Funcs).
-				Parse(fileStr)
+			// Create the template set.  This panics if any of the funcs do not
+			// conform to expectations, so we wrap it in a func and handle those
+			// panics by serving an error page.
+			var funcError *Error
+			func() {
+				defer func() {
+					if err := recover(); err != nil {
+						funcError = &Error{
+							Title:       "Panic (Template Loader)",
+							Description: fmt.Sprintln(err),
+						}
+					}
+				}()
+				templateSet, err = template.New(templateName).
+					Funcs(Funcs).
+					Parse(fileStr)
+			}()
+
+			if funcError != nil {
+				return funcError
+			}
+
 		} else {
 			_, err = templateSet.New(templateName).Parse(fileStr)
 		}
