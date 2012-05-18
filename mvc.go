@@ -321,8 +321,18 @@ func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
 		return nil
 	}
 
+	// Determine what method we are in.
+	// (e.g. the invoked controller method might have delegated to another method)
+	methodType := c.MethodType
+	if methodType.Name != viewName {
+		methodType = c.Type.Method(viewName)
+		if methodType == nil {
+			return nil
+		}
+	}
+
 	// Get the extra RenderArgs passed in.
-	if renderArgNames, ok := c.MethodType.RenderArgNames[line]; ok {
+	if renderArgNames, ok := methodType.RenderArgNames[line]; ok {
 		if len(renderArgNames) == len(extraRenderArgs) {
 			for i, extraRenderArg := range extraRenderArgs {
 				c.RenderArgs[renderArgNames[i]] = extraRenderArg
@@ -332,7 +342,8 @@ func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
 				len(extraRenderArgs), "extra RenderArgs")
 		}
 	} else {
-		LOG.Println("No RenderArg names found for Render call on line", line)
+		LOG.Println("No RenderArg names found for Render call on line", line,
+			"(Method", methodType, ", ViewName", viewName, ")")
 	}
 
 	// Add Validation errors to RenderArgs.
