@@ -352,8 +352,11 @@ func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
 	return &RenderTemplateResult{
 		Template:   template,
 		RenderArgs: c.RenderArgs,
-		Response:   c.Response,
 	}
+}
+
+func (c *Controller) RenderJson(o interface{}) Result {
+	return RenderJsonResult{o}
 }
 
 // Redirect to an action or to a URL.

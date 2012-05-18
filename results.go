@@ -2,6 +2,7 @@ package rev
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"reflect"
 )
@@ -14,7 +15,6 @@ type Result interface {
 type RenderTemplateResult struct {
 	Template   Template
 	RenderArgs map[string]interface{}
-	Response   *Response
 }
 
 func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
@@ -39,6 +39,28 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
 	}
 
 	b.WriteTo(resp.out)
+}
+
+type RenderJsonResult struct {
+	obj interface{}
+}
+
+func (r RenderJsonResult) Apply(req *Request, resp *Response) {
+	var b []byte
+	var err error
+	if AppMode == DEV {
+		b, err = json.MarshalIndent(r.obj, "", "  ")
+	} else {
+		b, err = json.Marshal(r.obj)
+	}
+
+	if err != nil {
+		// TODO: Make pretty error page a result, and create / render one here.
+		resp.out.Write([]byte(err.Error()))
+		return
+	}
+
+	resp.out.Write(b)
 }
 
 type RedirectToUrlResult struct {
