@@ -30,7 +30,7 @@ type Response struct {
 	Headers     http.Header
 	Cookies     []*http.Cookie
 
-	out http.ResponseWriter
+	Out http.ResponseWriter
 }
 
 type Controller struct {
@@ -73,7 +73,7 @@ func NewController(w http.ResponseWriter, r *http.Request, ct *ControllerType) *
 			Status:      200,
 			ContentType: "",
 			Headers:     w.Header(),
-			out:         w,
+			Out:         w,
 		},
 
 		Params:  Params(values),
@@ -160,7 +160,7 @@ func (c *Controller) FlashParams() {
 }
 
 func (c *Controller) SetCookie(cookie *http.Cookie) {
-	http.SetCookie(c.Response.out, cookie)
+	http.SetCookie(c.Response.Out, cookie)
 }
 
 // Invoke the given method, save headers/cookies to the response, and apply the
@@ -256,8 +256,8 @@ func handleInvocationPanic(c *Controller, err interface{}) {
 	if appFrame == -1 {
 		// How embarassing.
 		LOG.Println(err, "\n", stack)
-		c.Response.out.WriteHeader(500)
-		c.Response.out.Write([]byte(stack))
+		c.Response.Out.WriteHeader(500)
+		c.Response.Out.Write([]byte(stack))
 		return
 	}
 	stackElement := stack[appFrame : appFrame+strings.Index(stack[appFrame:], "\n")]
@@ -274,8 +274,8 @@ func handleInvocationPanic(c *Controller, err interface{}) {
 	if err != nil {
 		description = fmt.Sprintln(err)
 	}
-	c.Response.out.WriteHeader(500)
-	c.Response.out.Write([]byte((&Error{
+	c.Response.Out.WriteHeader(500)
+	c.Response.Out.Write([]byte((&Error{
 		Title:       "Panic",
 		Path:        filename[len(BasePath):],
 		Line:        line,
@@ -314,9 +314,9 @@ func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
 	if err != nil {
 		// TODO: Instead of writing output directly, return an error Result
 		if prettyErr, ok := err.(*Error); ok {
-			c.Response.out.Write([]byte(prettyErr.Html()))
+			c.Response.Out.Write([]byte(prettyErr.Html()))
 		} else {
-			c.Response.out.Write([]byte(err.Error()))
+			c.Response.Out.Write([]byte(err.Error()))
 		}
 		return nil
 	}

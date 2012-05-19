@@ -162,21 +162,19 @@ The basic workflow is already working, as you can see in the sample app.
 - application.conf
 - "Production mode"
 - Handle panics -- it shows the bottom line of app source in the trace.
+- Websockets
 
 ## TODO
 
 There is a large list of things left to do.
 
 - SSL
-- Change install procedure to "go get" instead of "git clone"
 - Render other content types.
 - Return different return codes.
-- Support streaming response (e.g. should be able to fetch a file, and stream the bytes back to the client) -- return c.Chan(c) or c.Stream(reader)
 - app/views/errors/{404,500}.html
 - Jobs
 - Plugins
 - Modules
-- Websockets
 - Compiled assets (e.g. LESS, Coffee)
 - Logging
 - ORM?
@@ -185,19 +183,11 @@ There is a large list of things left to do.
 - Testing tools
 - Command line tool support for initializing the default project layout.
 - Performance testing / tuning
-- godoc cleanup / break into a bunch of packages?
 - AppEngine support
 - HOCON library for application.conf
-- Sample with a rich client side app
-  - Accepting / Returning JSON
 - .routes.Application.Method
-- User provided template funcs
 - Multipart forms / file uploads
-- Extract 'field' template helper
 - Extract default error messages to resource file
-- Examples: Regular web page, JSON return, streaming return, comet, websocket
-- Clean up stack traces
-- Allow access to requestwriter and make it easy to get Revel out of the way when necessary
 - Make it not hard to do this: https://gist.github.com/2328236
 - BigDecimal replacement (for currency / that works with MySQL)
 - Fixtures

@@ -32,6 +32,7 @@ select BookingId, UserId, HotelId, CheckInDate, CheckOutDate,
 		panic(err)
 	}
 	defer rows.Close()
+
 	var bookings []*models.Booking
 	var checkInDate, checkOutDate string
 	for rows.Next() {

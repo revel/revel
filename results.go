@@ -34,11 +34,11 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
 			SourceLines: r.Template.Content(),
 			SourceType:  "template",
 		}
-		resp.out.Write([]byte(compileError.Html()))
+		resp.Out.Write([]byte(compileError.Html()))
 		return
 	}
 
-	b.WriteTo(resp.out)
+	b.WriteTo(resp.Out)
 }
 
 type RenderJsonResult struct {
@@ -56,11 +56,11 @@ func (r RenderJsonResult) Apply(req *Request, resp *Response) {
 
 	if err != nil {
 		// TODO: Make pretty error page a result, and create / render one here.
-		resp.out.Write([]byte(err.Error()))
+		resp.Out.Write([]byte(err.Error()))
 		return
 	}
 
-	resp.out.Write(b)
+	resp.Out.Write(b)
 }
 
 type RedirectToUrlResult struct {
@@ -69,7 +69,7 @@ type RedirectToUrlResult struct {
 
 func (r *RedirectToUrlResult) Apply(req *Request, resp *Response) {
 	resp.Headers.Set("Location", r.url)
-	resp.out.WriteHeader(302)
+	resp.Out.WriteHeader(302)
 }
 
 type RedirectToActionResult struct {
@@ -80,11 +80,11 @@ func (r *RedirectToActionResult) Apply(req *Request, resp *Response) {
 	url, err := getRedirectUrl(r.val)
 	if err != nil {
 		LOG.Println("Couldn't resolve redirect:", err.Error())
-		resp.out.WriteHeader(500)
+		resp.Out.WriteHeader(500)
 		return
 	}
 	resp.Headers.Set("Location", url)
-	resp.out.WriteHeader(302)
+	resp.Out.WriteHeader(302)
 }
 
 func getRedirectUrl(item interface{}) (string, error) {
