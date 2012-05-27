@@ -7,12 +7,6 @@ import (
 	"github.com/robfig/revel"
 )
 
-// This plugin manages transaction-per-request for any controllers that embed
-// GorpController.
-type GorpController struct {
-	*rev.Controller
-}
-
 var (
 	db *sql.DB
 )
@@ -113,6 +107,9 @@ func (p DbPlugin) AfterRequest(c *rev.Controller) {
 }
 
 func (p DbPlugin) OnException(c *rev.Controller, err interface{}) {
+	if c.Txn == nil {
+		return
+	}
 	if err := c.Txn.Rollback(); err != nil {
 		if err != sql.ErrTxDone {
 			panic(err)

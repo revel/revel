@@ -10,8 +10,8 @@ import (
 )
 
 var (
-	router         *Router
-	templateLoader *TemplateLoader
+	router             *Router
+	MainTemplateLoader *TemplateLoader
 
 	websocketType = reflect.TypeOf((*websocket.Conn)(nil))
 )
@@ -89,9 +89,8 @@ func Run(port int) {
 	// Load the routes
 	// TODO: Watch the routes file for changes, and reload.
 	router = LoadRoutes()
-	templateLoader = NewTemplateLoader()
+	MainTemplateLoader = NewTemplateLoader(ViewsPath, RevelTemplatePath)
 
-	// Now that we know all the Controllers, start the server.
 	go func() {
 		time.Sleep(100 * time.Millisecond)
 		LOG.Printf("Listening on port %d...", port)

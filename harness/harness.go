@@ -91,12 +91,16 @@ type harnessProxy struct {
 	NotifyReady   chan error // Strobed when request may proceed.
 }
 
+func renderError(w http.ResponseWriter, r *http.Request, err error) {
+	rev.ErrorResult{err}.Apply(&rev.Request{r}, &rev.Response{Out: w})
+}
+
 func (hp *harnessProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// First, poll to see if there's a pending error in NotifyReady
 	select {
 	case err := <-hp.NotifyReady:
 		if err != nil {
-			serveError(w, r, err)
+			renderError(w, r, err)
 		}
 	default:
 		// Usually do nothing.
@@ -108,7 +112,7 @@ func (hp *harnessProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// If an error was returned, create the page and show it to the user.
 	if err != nil {
-		serveError(w, r, err)
+		renderError(w, r, err)
 		return
 	}
 
@@ -160,19 +164,6 @@ func proxyWebsocket(w http.ResponseWriter, r *http.Request, host string) {
 	<-errc
 }
 
-func serveError(wr http.ResponseWriter, req *http.Request, err error) {
-	switch e := err.(type) {
-	case *rev.Error:
-		rev.RenderError(wr, e)
-	default:
-		rev.RenderError(wr, map[string]string{
-			"Title":       "Unexpected error",
-			"Path":        "(unknown)",
-			"Description": "An unexpected error occurred: " + err.Error(),
-		})
-	}
-}
-
 func startReverseProxy(port int) *harnessProxy {
 	serverUrl, _ := url.ParseRequestURI(fmt.Sprintf("http://localhost:%d", port))
 	reverseProxy := &harnessProxy{
@@ -217,6 +208,12 @@ func Run(mode rev.RunMode) {
 		cmd.Wait()
 		return
 	}
+
+	// Get a template loader to render errors.
+	// Prefer the app's views/errors directory, and fall back to the stock error pages.
+	rev.MainTemplateLoader = rev.NewTemplateLoader(
+		rev.ViewsPath,
+		rev.RevelTemplatePath)
 
 	// Get a port on which to run the application
 	port := getFreePort()
@@ -420,6 +417,8 @@ func getFreePort() (port int) {
 	return port
 }
 
+// Looks through all the method args and returns a set of unique import paths
+// that cover all the method arg types.
 func uniqueImportPaths(specs []*ControllerSpec) (paths []string) {
 	importPathMap := make(map[string]bool)
 	for _, spec := range specs {

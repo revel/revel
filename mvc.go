@@ -274,14 +274,13 @@ func handleInvocationPanic(c *Controller, err interface{}) {
 	if err != nil {
 		description = fmt.Sprintln(err)
 	}
-	c.Response.Out.WriteHeader(500)
-	c.Response.Out.Write([]byte((&Error{
+	ErrorResult{&Error{
 		Title:       "Panic",
 		Path:        filename[len(BasePath):],
 		Line:        line,
 		Description: description,
 		SourceLines: MustReadLines(filename),
-	}).Html()))
+	}}.Apply(c.Request, c.Response)
 }
 
 func (c *Controller) invokeInterceptors(when InterceptTime, appControllerPtr reflect.Value) Result {
@@ -310,15 +309,9 @@ func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
 	var viewName string = fqViewName[strings.LastIndex(fqViewName, ".")+1 : len(fqViewName)]
 
 	// Get the Template.
-	template, err := templateLoader.Template(c.Name + "/" + viewName + ".html")
+	template, err := MainTemplateLoader.Template(c.Name + "/" + viewName + ".html")
 	if err != nil {
-		// TODO: Instead of writing output directly, return an error Result
-		if prettyErr, ok := err.(*Error); ok {
-			c.Response.Out.Write([]byte(prettyErr.Html()))
-		} else {
-			c.Response.Out.Write([]byte(err.Error()))
-		}
-		return nil
+		return ErrorResult{err}
 	}
 
 	// Determine what method we are in.
@@ -327,7 +320,10 @@ func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
 	if methodType.Name != viewName {
 		methodType = c.Type.Method(viewName)
 		if methodType == nil {
-			return nil
+			return ErrorResult{fmt.Errorf(
+				"No Method %s in Controller %s when loading the view."+
+					" (delegating Render is only supported within the same controller)",
+				viewName, c.Name)}
 		}
 	}
 

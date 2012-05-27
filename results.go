@@ -4,11 +4,77 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"reflect"
 )
 
 type Result interface {
 	Apply(req *Request, resp *Response)
+}
+
+// If AppMode is DEV, this result renders a friendly error page.
+// TODO: If AppMode is PROD, this result renders the app 500 page.
+type ErrorResult struct {
+	error
+}
+
+func (r ErrorResult) Apply(req *Request, resp *Response) {
+	// Get the error template.
+	var err error
+	tmpl, err := MainTemplateLoader.Template("errors/500.html")
+
+	// This func shows a plaintext error message, in case the template rendering
+	// doesn't work.
+	showPlaintext := func(err error) {
+		PlaintextErrorResult{fmt.Errorf("Server Error:\n%s\n\n"+
+			"Additionally, an error occurred when rendering the error page:\n%s",
+			r, err)}.Apply(req, resp)
+	}
+
+	if tmpl == nil {
+		showPlaintext(err)
+		return
+	}
+
+	// If it's not a revel error, wrap it in one.
+	var revelError *Error
+	switch e := r.error.(type) {
+	case *Error:
+		revelError = e
+	case error:
+		revelError = &Error{
+			Title:       "Server Error",
+			Description: e.Error(),
+		}
+	}
+
+	if revelError == nil {
+		panic("no error provided")
+	}
+
+	// Render it.
+	var b bytes.Buffer
+	err = tmpl.Render(&b, revelError)
+
+	// If there was an error, print it in plain text.
+	if err != nil {
+		showPlaintext(err)
+		return
+	}
+
+	// TODO: Allow other error codes.
+	resp.Out.WriteHeader(500)
+	b.WriteTo(resp.Out)
+}
+
+type PlaintextErrorResult struct {
+	error
+}
+
+// This method is used when the template loader or error template is not available.
+func (r PlaintextErrorResult) Apply(req *Request, resp *Response) {
+	resp.Out.WriteHeader(500)
+	resp.Out.Write([]byte(r.Error()))
 }
 
 // Action methods return this result to request a template be rendered.
@@ -26,7 +92,7 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
 	err := r.Template.Render(&b, r.RenderArgs)
 	if err != nil {
 		line, description := parseTemplateError(err)
-		compileError := Error{
+		compileError := &Error{
 			Title:       "Template Execution Error",
 			Path:        r.Template.Name(),
 			Description: description,
@@ -34,7 +100,7 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
 			SourceLines: r.Template.Content(),
 			SourceType:  "template",
 		}
-		resp.Out.Write([]byte(compileError.Html()))
+		ErrorResult{compileError}.Apply(req, resp)
 		return
 	}
 
@@ -55,8 +121,7 @@ func (r RenderJsonResult) Apply(req *Request, resp *Response) {
 	}
 
 	if err != nil {
-		// TODO: Make pretty error page a result, and create / render one here.
-		resp.Out.Write([]byte(err.Error()))
+		ErrorResult{err}.Apply(req, resp)
 		return
 	}
 
@@ -80,7 +145,7 @@ func (r *RedirectToActionResult) Apply(req *Request, resp *Response) {
 	url, err := getRedirectUrl(r.val)
 	if err != nil {
 		LOG.Println("Couldn't resolve redirect:", err.Error())
-		resp.Out.WriteHeader(500)
+		ErrorResult{err}.Apply(req, resp)
 		return
 	}
 	resp.Headers.Set("Location", url)

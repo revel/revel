@@ -1,11 +1,6 @@
 package rev
 
-import (
-	"bytes"
-	"html/template"
-	"io"
-	"path"
-)
+import "fmt"
 
 // An error description, used as an argument to the error template.
 type Error struct {
@@ -23,8 +18,26 @@ type sourceLine struct {
 	IsError bool
 }
 
-func (e Error) Error() string {
-	return e.Description
+// Construct a plaintext version of the error, taking account that fields are optionally set.
+// Returns e.g. Compilation Error (in views/header.html:51): expected right delim in end; got "}"
+func (e *Error) Error() string {
+	loc := ""
+	if e.Path != "" {
+		line := ""
+		if e.Line != 0 {
+			line = fmt.Sprintf(":%d", e.Line)
+		}
+		loc = fmt.Sprintf("(in %s%s)", e.Path, line)
+	}
+	header := loc
+	if e.Title != "" {
+		if loc != "" {
+			header = fmt.Sprintf("%s %s: ", e.Title, loc)
+		} else {
+			header = fmt.Sprintf("%s: ", e.Title)
+		}
+	}
+	return fmt.Sprintf("%s%s", header, e.Description)
 }
 
 // Returns a snippet of the source around where the error occurred.
@@ -47,20 +60,4 @@ func (e *Error) ContextSource() []sourceLine {
 		lines[i] = sourceLine{src, fileLine, fileLine == e.Line}
 	}
 	return lines
-}
-
-var errorTemplate *template.Template
-
-func (e *Error) Html() string {
-	var b bytes.Buffer
-	RenderError(&b, &e)
-	return b.String()
-}
-
-func RenderError(buffer io.Writer, data interface{}) {
-	if errorTemplate == nil {
-		errorTemplate = template.Must(template.ParseFiles(
-			path.Join(RevelTemplatePath, "500.html")))
-	}
-	errorTemplate.Execute(buffer, &data)
 }

@@ -1,4 +1,4 @@
-// The command line tool for running Play apps.
+// The command line tool for running Revel apps.
 package main
 
 import (

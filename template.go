@@ -1,7 +1,6 @@
 package rev
 
 import (
-	"errors"
 	"fmt"
 	"github.com/howeyc/fsnotify"
 	"html"
@@ -25,6 +24,10 @@ type TemplateLoader struct {
 	templateSet *template.Template
 	// If an error was encountered parsing the templates, it is stored here.
 	compileError *Error
+	// Paths to search for templates, in priority order.
+	paths []string
+	// Map from template name to the path from whence it was loaded.
+	templatePaths map[string]string
 }
 
 type Template interface {
@@ -91,7 +94,7 @@ var (
 	}
 )
 
-func NewTemplateLoader() *TemplateLoader {
+func NewTemplateLoader(paths ...string) *TemplateLoader {
 	// Watch all directories under /views
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
@@ -104,102 +107,121 @@ func NewTemplateLoader() *TemplateLoader {
 	watcher.Event = make(chan *fsnotify.FileEvent, 10)
 	watcher.Error = make(chan error, 10)
 
-	// Walk through all files / directories under /views.
+	// Walk through all files / directories under the template directories.
 	// - Add each directory to the watcher.
-	filepath.Walk(ViewsPath, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			LOG.Println("Error walking views:", err)
-			return nil
-		}
-		if info.IsDir() {
-			err = watcher.Watch(path)
+	for _, p := range paths {
+		filepath.Walk(p, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
-				LOG.Println("Failed to watch", path, ":", err)
+				LOG.Println("Error walking path:", err)
+				return nil
 			}
-		}
-		return nil
-	})
+			if info.IsDir() {
+				err = watcher.Watch(path)
+				if err != nil {
+					LOG.Println("Failed to watch", path, ":", err)
+				}
+			}
+			return nil
+		})
+	}
 
 	loader := &TemplateLoader{
 		watcher: watcher,
+		paths:   paths,
 	}
 	loader.refresh()
 	return loader
 }
 
-// This scans the views directory and parses all templates.
+// This scans the views directory and parses all templates as Go Templates.
 // If a template fails to parse, the error is set on the loader.
-// (It's awkward to refresh a single Go Template )
+// (It's awkward to refresh a single Go Template)
 func (loader *TemplateLoader) refresh() {
 	LOG.Println("Refresh")
 	loader.compileError = nil
+	loader.templatePaths = map[string]string{}
+
+	// Walk through the template loader's paths and build up a template set.
 	var templateSet *template.Template = nil
-	walkErr := filepath.Walk(ViewsPath, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			LOG.Println("error walking views:", err)
-			return nil
-		}
-		if info.IsDir() {
-			return nil
-		}
-		fileBytes, err := ioutil.ReadFile(path)
-		if err != nil {
-			LOG.Println("Failed reading file:", path)
-			return nil
-		}
+	for _, basePath := range loader.paths {
 
-		templateName := path[len(ViewsPath)+1:]
-		fileStr := string(fileBytes)
-		if templateSet == nil {
-			// Create the template set.  This panics if any of the funcs do not
-			// conform to expectations, so we wrap it in a func and handle those
-			// panics by serving an error page.
-			var funcError *Error
-			func() {
-				defer func() {
-					if err := recover(); err != nil {
-						funcError = &Error{
-							Title:       "Panic (Template Loader)",
-							Description: fmt.Sprintln(err),
+		// Walk only returns an error if the template loader is completely unusable
+		// (namely, if one of the Funcs does not have an acceptable signature).
+		funcErr := filepath.Walk(basePath, func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				LOG.Println("error walking templates:", err)
+				return nil
+			}
+
+			// Walk into directories.
+			if info.IsDir() {
+				return nil
+			}
+
+			// If we already loaded a template of this name, skip it.
+			templateName := path[len(basePath)+1:]
+			if _, ok := loader.templatePaths[templateName]; ok {
+				return nil
+			}
+			loader.templatePaths[templateName] = path
+
+			fileBytes, err := ioutil.ReadFile(path)
+			if err != nil {
+				LOG.Println("Failed reading file:", path)
+				return nil
+			}
+
+			fileStr := string(fileBytes)
+			if templateSet == nil {
+				// Create the template set.  This panics if any of the funcs do not
+				// conform to expectations, so we wrap it in a func and handle those
+				// panics by serving an error page.
+				var funcError *Error
+				func() {
+					defer func() {
+						if err := recover(); err != nil {
+							funcError = &Error{
+								Title:       "Panic (Template Loader)",
+								Description: fmt.Sprintln(err),
+							}
 						}
-					}
+					}()
+					templateSet = template.New(templateName).Funcs(Funcs)
+					_, err = templateSet.Parse(fileStr)
 				}()
-				templateSet, err = template.New(templateName).
-					Funcs(Funcs).
-					Parse(fileStr)
-			}()
 
-			if funcError != nil {
-				return funcError
+				if funcError != nil {
+					return funcError
+				}
+
+			} else {
+				_, err = templateSet.New(templateName).Parse(fileStr)
 			}
 
-		} else {
-			_, err = templateSet.New(templateName).Parse(fileStr)
-		}
-
-		if err != nil {
-			line, description := parseTemplateError(err)
-			return &Error{
-				Title:       "Template Compilation Error",
-				Path:        templateName,
-				Description: description,
-				Line:        line,
-				SourceLines: strings.Split(fileStr, "\n"),
+			// Store / report the first error encountered.
+			if err != nil && loader.compileError == nil {
+				line, description := parseTemplateError(err)
+				loader.compileError = &Error{
+					Title:       "Template Compilation Error",
+					Path:        templateName,
+					Description: description,
+					Line:        line,
+					SourceLines: strings.Split(fileStr, "\n"),
+				}
+				LOG.Printf("Template compilation error (In %s around line %d):\n%s",
+					templateName, line, description)
 			}
-		}
-		return nil
-	})
+			return nil
+		})
 
-	if walkErr != nil {
-		// There was an error parsing a template.
-		// Log it to the console and return a friendly HTML error page.
-		err := walkErr.(*Error)
-		LOG.Printf("Template compilation error (In %s around line %d):\n%s",
-			err.Path, err.Line, err.Description)
-		loader.compileError = err
-		return
+		// If there was an error with the Funcs, set it at return immediately.
+		if funcErr != nil {
+			loader.compileError = funcErr.(*Error)
+			return
+		}
 	}
 
+	// Note: compileError may or may not be set.
 	loader.templateSet = templateSet
 }
 
@@ -218,10 +240,15 @@ func parseTemplateError(err error) (line int, description string) {
 	return line, description
 }
 
-func (loader *TemplateLoader) getTemplateContent(name string) ([]string, error) {
-	return ReadLines(path.Join(ViewsPath, name))
-}
-
+// Return the Template with the given name.  The name is the template's path
+// relative to a template loader root.
+//
+// An Error is returned if there was any problem with any of the templates.  (In
+// this case, if a template is returned, it may still be usable.)
+//
+// TODO: Might be better to separate out the watching from the template loader.
+// Then the server could be aware when it's refreshing, and query for new
+// template errors at that time.
 func (loader *TemplateLoader) Template(name string) (Template, error) {
 	// First, check to see if the watcher saw any changes.
 	// Pull all pending events / errors from the watcher.
@@ -247,17 +274,29 @@ func (loader *TemplateLoader) Template(name string) (Template, error) {
 		loader.refresh()
 	}
 
-	// If there was an error refreshing the templates, return it.
-	if loader.compileError != nil {
-		return nil, loader.compileError
-	}
-
 	// Look up and return the template.
 	tmpl := loader.templateSet.Lookup(name)
 	if tmpl == nil {
-		return nil, errors.New(fmt.Sprintf("Template %s not found.\n", name))
+
+		// Probably there is a compileError set, but if not, set one saying that it
+		// wasn't found.
+		var err error = loader.compileError
+		if err == nil {
+			err = fmt.Errorf("Template %s not found.", name)
+		}
+
+		return nil, err
 	}
-	return GoTemplate{tmpl, loader}, nil
+
+	// This is necessary.
+	// If a nil loader.compileError is returned directly, a caller testing against
+	// nil will get the wrong result.  Something to do with casting *Error to error.
+	var err error
+	if loader.compileError != nil {
+		err = loader.compileError
+	}
+
+	return GoTemplate{tmpl, loader}, err
 }
 
 // Adapter for Go Templates.
@@ -272,7 +311,7 @@ func (gotmpl GoTemplate) Render(wr io.Writer, arg interface{}) error {
 }
 
 func (gotmpl GoTemplate) Content() []string {
-	content, _ := gotmpl.loader.getTemplateContent(gotmpl.Name())
+	content, _ := ReadLines(gotmpl.loader.templatePaths[gotmpl.Name()])
 	return content
 }
 
