@@ -66,6 +66,14 @@ var (
 			renderArgs[key] = value
 			return template.HTML("")
 		},
+		"append": func(key string, value interface{}, renderArgs map[string]interface{}) template.HTML {
+			if renderArgs[key] == nil {
+				renderArgs[key] = []interface{}{value}
+			} else {
+				renderArgs[key] = append(renderArgs[key].([]interface{}), value)
+			}
+			return template.HTML("")
+		},
 		"field": func(name string, renderArgs map[string]interface{}) *Field {
 			value, _ := renderArgs["flash"].(map[string]string)[name]
 			err, _ := renderArgs["errors"].(map[string]*ValidationError)[name]
