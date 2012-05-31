@@ -38,7 +38,6 @@ func TestNewAppController(t *testing.T) {
 	for gen, structs := range GENERATIONS {
 		for _, st := range structs {
 			typ := reflect.TypeOf(st)
-			t.Log("Type: " + typ.String())
 			val := initNewAppController(typ, controller)
 
 			// Drill into the embedded fields to get to the Controller.
@@ -95,12 +94,12 @@ Content-Type: text/plain
 
 content1
 --A
-Content-Disposition: form-data; name="file2"; filename="test.txt"
+Content-Disposition: form-data; name="file2[]"; filename="test.txt"
 Content-Type: text/plain
 
 content2
 --A
-Content-Disposition: form-data; name="file2"; filename="favicon.ico"
+Content-Disposition: form-data; name="file2[]"; filename="favicon.ico"
 Content-Type: image/x-icon
 
 xyz
@@ -131,7 +130,7 @@ var (
 	}
 	expectedFiles = map[string][]fh{
 		"file1":    {fh{"test.txt", []byte("content1")}},
-		"file2":    {fh{"test.txt", []byte("content2")}, fh{"favicon.ico", []byte("xyz")}},
+		"file2[]":  {fh{"test.txt", []byte("content2")}, fh{"favicon.ico", []byte("xyz")}},
 		"file3[0]": {fh{"test.txt", []byte("content3")}},
 		"file3[1]": {fh{"favicon.ico", []byte("zzz")}},
 	}

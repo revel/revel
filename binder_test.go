@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"reflect"
+	"sort"
 	"testing"
 	"time"
 )
@@ -137,32 +138,41 @@ func TestBinder(t *testing.T) {
 	}
 
 	// Files
-	for k, fhs := range expectedFiles {
-		// Skip file2 for now.
-		if k == "file2" {
-			continue
-		}
 
-		t.Logf("New Test. Key: %s", k)
+	// Get the keys in sorted order to make the expectation right.
+	keys := []string{}
+	for k, _ := range expectedFiles {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	expectedBoundFiles := make(map[string][]fh)
+	for _, k := range keys {
+		fhs := expectedFiles[k]
+		k := nextKey(k)
+		expectedBoundFiles[k] = append(expectedBoundFiles[k], fhs...)
+	}
+
+	for k, fhs := range expectedBoundFiles {
+
 		if len(fhs) == 1 {
 			// Test binding single files to: *os.File, []byte, io.Reader, io.ReadSeeker
 			for _, binding := range fileBindings {
 				typ := reflect.TypeOf(binding.val).Elem()
-				t.Logf("Binding: %s", typ)
 				actual := Bind(params, k, typ)
-				if !actual.IsValid() {
+				if !actual.IsValid() || (actual.Kind() == reflect.Interface && actual.IsNil()) {
 					t.Errorf("%s (%s) - Returned nil.", k, typ)
 					continue
 				}
 				returns := reflect.ValueOf(binding.f).Call([]reflect.Value{actual})
 				valEq(t, k, returns[0], reflect.ValueOf(fhs[0].content))
 			}
+
 		} else {
 			// Test binding multi to:
 			// []*os.File, [][]byte, []io.Reader, []io.ReadSeeker
 			for _, binding := range fileBindings {
 				typ := reflect.TypeOf(binding.arrval)
-				t.Logf("Binding: %s", typ)
 				actual := Bind(params, k, typ)
 				if actual.Len() != len(fhs) {
 					t.Fatalf("%s (%s) - Number of files: (expected) %d != %d (actual)",

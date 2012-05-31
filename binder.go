@@ -29,7 +29,7 @@ import (
 type Binder func(params Params, name string, typ reflect.Type) reflect.Value
 
 // An adapter for easily making one-key-value binders.
-func SimpleBinder(f func(value string, typ reflect.Type) reflect.Value) Binder {
+func ValueBinder(f func(value string, typ reflect.Type) reflect.Value) Binder {
 	return func(params Params, name string, typ reflect.Type) reflect.Value {
 		vals, ok := params.Values[name]
 		if !ok || len(vals) == 0 {
@@ -49,7 +49,7 @@ var (
 // Sadly, the binder lookups can not be declared initialized -- that results in
 // an "initialization loop" compile error.
 func init() {
-	intBinder := SimpleBinder(bindInt)
+	intBinder := ValueBinder(bindInt)
 
 	KindBinders[reflect.Int] = intBinder
 	KindBinders[reflect.Int8] = intBinder
@@ -57,13 +57,13 @@ func init() {
 	KindBinders[reflect.Int32] = intBinder
 	KindBinders[reflect.Int64] = intBinder
 
-	KindBinders[reflect.String] = SimpleBinder(bindStr)
-	KindBinders[reflect.Bool] = SimpleBinder(bindBool)
+	KindBinders[reflect.String] = ValueBinder(bindStr)
+	KindBinders[reflect.Bool] = ValueBinder(bindBool)
 	KindBinders[reflect.Slice] = bindSlice
 	KindBinders[reflect.Struct] = bindStruct
 	KindBinders[reflect.Ptr] = bindPointer
 
-	TypeBinders[reflect.TypeOf(time.Time{})] = SimpleBinder(bindTime)
+	TypeBinders[reflect.TypeOf(time.Time{})] = ValueBinder(bindTime)
 
 	// Uploads
 	TypeBinders[reflect.TypeOf(&os.File{})] = bindFile
@@ -110,22 +110,6 @@ type sliceValue struct {
 	value reflect.Value // the bound value for this slice element.
 }
 
-// Given the name of the variable being bound, and the full key of the element, return the index.
-// e.g. ("field", "field[2]") => 2.  ("field", "field[]") => -1
-func getIndex(name, key string) (int, int) {
-	// Extract the index and add it to the sliceValues array.
-	leftBracket, rightBracket := len(name), strings.Index(key[len(name):], "]")+len(name)
-	if leftBracket == -1 {
-		return -1, -1
-	}
-
-	index := -1
-	if rightBracket > leftBracket+1 {
-		index, _ = strconv.Atoi(key[leftBracket+1 : rightBracket])
-	}
-	return index, rightBracket + 1
-}
-
 // This function creates a slice of the given type, Binds each of the individual
 // elements, and then sets them to their appropriate location in the slice.
 // If elements are provided without an explicit index, they are added (in
@@ -135,50 +119,58 @@ func bindSlice(params Params, name string, typ reflect.Type) reflect.Value {
 	maxIndex := -1
 	numNoIndex := 0
 	sliceValues := []sliceValue{}
+
+	// Factor out the common slice logic (between form values and files).
+	processElement := func(key string, vals []string, files []*multipart.FileHeader) {
+		if !strings.HasPrefix(key, name+"[") {
+			return
+		}
+
+		// Extract the index, and the index where a sub-key starts. (e.g. field[0].subkey)
+		index := -1
+		leftBracket, rightBracket := len(name), strings.Index(key[len(name):], "]")+len(name)
+		if rightBracket > leftBracket+1 {
+			index, _ = strconv.Atoi(key[leftBracket+1 : rightBracket])
+		}
+		subKeyIndex := rightBracket + 1
+
+		// Handle the indexed case.
+		if index > -1 {
+			if index > maxIndex {
+				maxIndex = index
+			}
+			sliceValues = append(sliceValues, sliceValue{
+				index: index,
+				value: Bind(params, key[:subKeyIndex], typ.Elem()),
+			})
+			return
+		}
+
+		// It's an un-indexed element.  (e.g. element[])
+		numNoIndex += len(vals) + len(files)
+		for _, val := range vals {
+			// Unindexed values can only be direct-bound.
+			sliceValues = append(sliceValues, sliceValue{
+				index: -1,
+				value: BindValue(val, typ.Elem()),
+			})
+		}
+
+		for _, fileHeader := range files {
+			sliceValues = append(sliceValues, sliceValue{
+				index: -1,
+				value: BindFile(fileHeader, typ.Elem()),
+			})
+		}
+	}
+
 	for key, vals := range params.Values {
-		if !strings.HasPrefix(key, name+"[") {
-			continue
-		}
-
-		index, subKeyIndex := getIndex(name, key)
-		if index != -1 {
-			if index > maxIndex {
-				maxIndex = index
-			}
-			sliceValues = append(sliceValues, sliceValue{
-				index: index,
-				value: Bind(params, key[:subKeyIndex], typ.Elem()),
-			})
-		} else {
-			for _, val := range vals {
-				// Unindexed elements can only be direct-bound.
-				numNoIndex++
-				sliceValues = append(sliceValues, sliceValue{
-					index: -1,
-					value: SimpleBind(val, typ.Elem()),
-				})
-			}
-		}
+		processElement(key, vals, nil)
+	}
+	for key, fileHeaders := range params.Files {
+		processElement(key, nil, fileHeaders)
 	}
 
-	for key, _ := range params.Files {
-		if !strings.HasPrefix(key, name+"[") {
-			continue
-		}
-
-		index, subKeyIndex := getIndex(name, key)
-		if index != -1 {
-			if index > maxIndex {
-				maxIndex = index
-			}
-			sliceValues = append(sliceValues, sliceValue{
-				index: index,
-				value: Bind(params, key[:subKeyIndex], typ.Elem()),
-			})
-		}
-
-		// TODO: Support unindexed files
-	}
 	resultArray := reflect.MakeSlice(typ, maxIndex+1, maxIndex+1+numNoIndex)
 	for _, sv := range sliceValues {
 		if sv.index != -1 {
@@ -189,6 +181,16 @@ func bindSlice(params Params, name string, typ reflect.Type) reflect.Value {
 	}
 
 	return resultArray
+}
+
+// Break on dots and brackets.
+// e.g. bar => "bar", bar.baz => "bar", bar[0] => "bar"
+func nextKey(key string) string {
+	fieldLen := strings.IndexAny(key, ".[")
+	if fieldLen == -1 {
+		return key
+	}
+	return key[:fieldLen]
 }
 
 func bindStruct(params Params, name string, typ reflect.Type) reflect.Value {
@@ -202,14 +204,8 @@ func bindStruct(params Params, name string, typ reflect.Type) reflect.Value {
 		// Get the name of the struct property.
 		// Strip off the prefix. e.g. foo.bar.baz => bar.baz
 		suffix := key[len(name)+1:]
-
-		// Break it on dots and brackets.
-		// e.g. bar => "bar", bar.baz => "bar", bar[0] => "bar"
-		fieldLen := strings.IndexAny(suffix, ".[")
-		if fieldLen == -1 {
-			fieldLen = len(suffix)
-		}
-		fieldName := suffix[:fieldLen]
+		fieldName := nextKey(suffix)
+		fieldLen := len(fieldName)
 
 		if _, ok := fieldValues[fieldName]; !ok {
 			// Time to bind this field.  Get it and make sure we can set it.
@@ -333,6 +329,10 @@ func Bind(params Params, name string, typ reflect.Type) reflect.Value {
 	return binder(params, name, typ)
 }
 
-func SimpleBind(val string, typ reflect.Type) reflect.Value {
+func BindValue(val string, typ reflect.Type) reflect.Value {
 	return Bind(Params{Values: map[string][]string{"": {val}}}, "", typ)
+}
+
+func BindFile(fileHeader *multipart.FileHeader, typ reflect.Type) reflect.Value {
+	return Bind(Params{Files: map[string][]*multipart.FileHeader{"": {fileHeader}}}, "", typ)
 }
