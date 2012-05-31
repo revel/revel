@@ -1,6 +1,10 @@
 package rev
 
 import (
+	"io"
+	"io/ioutil"
+	"mime/multipart"
+	"os"
 	"reflect"
 	"strconv"
 	"strings"
@@ -22,12 +26,12 @@ import (
 //   Binder(params, "user", User): User{Name:"rob"}
 //
 // Note that only exported struct fields may be bound.
-type Binder func(params map[string][]string, name string, typ reflect.Type) reflect.Value
+type Binder func(params Params, name string, typ reflect.Type) reflect.Value
 
 // An adapter for easily making one-key-value binders.
 func SimpleBinder(f func(value string, typ reflect.Type) reflect.Value) Binder {
-	return func(params map[string][]string, name string, typ reflect.Type) reflect.Value {
-		vals, ok := params[name]
+	return func(params Params, name string, typ reflect.Type) reflect.Value {
+		vals, ok := params.Values[name]
 		if !ok || len(vals) == 0 {
 			return reflect.Zero(typ)
 		}
@@ -60,6 +64,12 @@ func init() {
 	KindBinders[reflect.Ptr] = bindPointer
 
 	TypeBinders[reflect.TypeOf(time.Time{})] = SimpleBinder(bindTime)
+
+	// Uploads
+	TypeBinders[reflect.TypeOf(&os.File{})] = bindFile
+	TypeBinders[reflect.TypeOf([]byte{})] = bindByteArray
+	TypeBinders[reflect.TypeOf((*io.Reader)(nil)).Elem()] = bindReadSeeker
+	TypeBinders[reflect.TypeOf((*io.ReadSeeker)(nil)).Elem()] = bindReadSeeker
 }
 
 var (
@@ -100,38 +110,47 @@ type sliceValue struct {
 	value reflect.Value // the bound value for this slice element.
 }
 
+// Given the name of the variable being bound, and the full key of the element, return the index.
+// e.g. ("field", "field[2]") => 2.  ("field", "field[]") => -1
+func getIndex(name, key string) (int, int) {
+	// Extract the index and add it to the sliceValues array.
+	leftBracket, rightBracket := len(name), strings.Index(key[len(name):], "]")+len(name)
+	if leftBracket == -1 {
+		return -1, -1
+	}
+
+	index := -1
+	if rightBracket > leftBracket+1 {
+		index, _ = strconv.Atoi(key[leftBracket+1 : rightBracket])
+	}
+	return index, rightBracket + 1
+}
+
 // This function creates a slice of the given type, Binds each of the individual
 // elements, and then sets them to their appropriate location in the slice.
 // If elements are provided without an explicit index, they are added (in
 // unspecified order) to the end of the slice.
-func bindSlice(params map[string][]string, name string, typ reflect.Type) reflect.Value {
+func bindSlice(params Params, name string, typ reflect.Type) reflect.Value {
 	// Collect an array of slice elements with their indexes (and the max index).
 	maxIndex := -1
 	numNoIndex := 0
 	sliceValues := []sliceValue{}
-	for key, vals := range params {
-		for _, val := range vals {
-			if !strings.HasPrefix(key, name+"[") {
-				continue
-			}
+	for key, vals := range params.Values {
+		if !strings.HasPrefix(key, name+"[") {
+			continue
+		}
 
-			// Extract the index and add it to the sliceValues array.
-			leftBracket, rightBracket := len(name), strings.Index(key[len(name):], "]")+len(name)
-			if rightBracket == -1 {
-				continue
+		index, subKeyIndex := getIndex(name, key)
+		if index != -1 {
+			if index > maxIndex {
+				maxIndex = index
 			}
-
-			index := -1
-			if rightBracket > leftBracket+1 {
-				index, _ = strconv.Atoi(key[leftBracket+1 : rightBracket])
-				if index > maxIndex {
-					maxIndex = index
-				}
-				sliceValues = append(sliceValues, sliceValue{
-					index: index,
-					value: Bind(params, key[:rightBracket+1], typ.Elem()),
-				})
-			} else {
+			sliceValues = append(sliceValues, sliceValue{
+				index: index,
+				value: Bind(params, key[:subKeyIndex], typ.Elem()),
+			})
+		} else {
+			for _, val := range vals {
 				// Unindexed elements can only be direct-bound.
 				numNoIndex++
 				sliceValues = append(sliceValues, sliceValue{
@@ -142,6 +161,24 @@ func bindSlice(params map[string][]string, name string, typ reflect.Type) reflec
 		}
 	}
 
+	for key, _ := range params.Files {
+		if !strings.HasPrefix(key, name+"[") {
+			continue
+		}
+
+		index, subKeyIndex := getIndex(name, key)
+		if index != -1 {
+			if index > maxIndex {
+				maxIndex = index
+			}
+			sliceValues = append(sliceValues, sliceValue{
+				index: index,
+				value: Bind(params, key[:subKeyIndex], typ.Elem()),
+			})
+		}
+
+		// TODO: Support unindexed files
+	}
 	resultArray := reflect.MakeSlice(typ, maxIndex+1, maxIndex+1+numNoIndex)
 	for _, sv := range sliceValues {
 		if sv.index != -1 {
@@ -154,10 +191,10 @@ func bindSlice(params map[string][]string, name string, typ reflect.Type) reflec
 	return resultArray
 }
 
-func bindStruct(params map[string][]string, name string, typ reflect.Type) reflect.Value {
+func bindStruct(params Params, name string, typ reflect.Type) reflect.Value {
 	result := reflect.New(typ).Elem()
 	fieldValues := make(map[string]reflect.Value)
-	for key, _ := range params {
+	for key, _ := range params.Values {
 		if !strings.HasPrefix(key, name+".") {
 			continue
 		}
@@ -194,7 +231,7 @@ func bindStruct(params map[string][]string, name string, typ reflect.Type) refle
 	return result
 }
 
-func bindPointer(params map[string][]string, name string, typ reflect.Type) reflect.Value {
+func bindPointer(params Params, name string, typ reflect.Type) reflect.Value {
 	return Bind(params, name, typ.Elem()).Addr()
 }
 
@@ -208,12 +245,81 @@ func bindTime(val string, typ reflect.Type) reflect.Value {
 	return reflect.Zero(typ)
 }
 
+// Helper that returns an upload of the given name, or nil.
+func getMultipartFile(params Params, name string) multipart.File {
+	for _, fileHeader := range params.Files[name] {
+		file, err := fileHeader.Open()
+		if err == nil {
+			return file
+		}
+		LOG.Println("W: Failed to open uploaded file", name, ":", err)
+	}
+	return nil
+}
+
+func bindFile(params Params, name string, typ reflect.Type) reflect.Value {
+	reader := getMultipartFile(params, name)
+	if reader == nil {
+		return reflect.Zero(typ)
+	}
+
+	// If it's already stored in a temp file, just return that.
+	if osFile, ok := reader.(*os.File); ok {
+		return reflect.ValueOf(osFile)
+	}
+
+	// Otherwise, have to store it.
+	tmpFile, err := ioutil.TempFile("", "revel-upload")
+	if err != nil {
+		LOG.Println("W: Failed to create a temp file to store upload:", err)
+		return reflect.Zero(typ)
+	}
+
+	_, err = io.Copy(tmpFile, reader)
+	if err != nil {
+		LOG.Println("W: Failed to copy upload to temp file:", err)
+		return reflect.Zero(typ)
+	}
+
+	_, err = tmpFile.Seek(0, 0)
+	if err != nil {
+		LOG.Println("W: Failed to seek to beginning of temp file:", err)
+		return reflect.Zero(typ)
+	}
+
+	return reflect.ValueOf(tmpFile)
+}
+
+func bindByteArray(params Params, name string, typ reflect.Type) reflect.Value {
+	if reader := getMultipartFile(params, name); reader != nil {
+		b, err := ioutil.ReadAll(reader)
+		if err == nil {
+			return reflect.ValueOf(b)
+		}
+		LOG.Println("Warning: Error reading uploaded file contents:", err)
+	}
+	return reflect.Zero(typ)
+}
+
+func bindReader(params Params, name string, typ reflect.Type) reflect.Value {
+	if reader := getMultipartFile(params, name); reader != nil {
+		return reflect.ValueOf(reader.(io.Reader))
+	}
+	return reflect.Zero(typ)
+}
+
+func bindReadSeeker(params Params, name string, typ reflect.Type) reflect.Value {
+	if reader := getMultipartFile(params, name); reader != nil {
+		return reflect.ValueOf(reader.(io.ReadSeeker))
+	}
+	return reflect.Zero(typ)
+}
+
 // Parse the value string into a real Go value.
 // Returns 0 values when things can not be parsed.
-func Bind(params map[string][]string, name string, typ reflect.Type) reflect.Value {
-	// If there's no data, just return the type's zero.
-	if len(params) == 0 {
-		return reflect.Zero(typ)
+func Bind(params Params, name string, typ reflect.Type) reflect.Value {
+	if typ == nil {
+		return reflect.ValueOf(nil)
 	}
 
 	binder, ok := TypeBinders[typ]
@@ -228,5 +334,5 @@ func Bind(params map[string][]string, name string, typ reflect.Type) reflect.Val
 }
 
 func SimpleBind(val string, typ reflect.Type) reflect.Value {
-	return Bind(map[string][]string{"": {val}}, "", typ)
+	return Bind(Params{Values: map[string][]string{"": {val}}}, "", typ)
 }

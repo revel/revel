@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"mime/multipart"
 	"net/http"
 	"net/url"
 	"reflect"
@@ -12,16 +13,31 @@ import (
 	"strings"
 )
 
+// Flash represents a cookie that gets overwritten on each request.
+// It allows data to be stored across one page at a time.
+// This is commonly used to implement success or error messages.
+// e.g. the Post/Redirect/Get pattern: http://en.wikipedia.org/wiki/Post/Redirect/Get
 type Flash struct {
 	Data, Out map[string]string
 }
 
-type Params url.Values
+// These provide a unified view of the request params.
+// Includes:
+// - URL query string
+// - Form values
+// - File uploads
+type Params struct {
+	url.Values
+	Files map[string][]*multipart.FileHeader
+}
 
+// A signed cookie (and thus limited to 4kb in size).
+// Restriction: Keys may not have a colon in them.
 type Session map[string]string
 
 type Request struct {
 	*http.Request
+	ContentType string
 }
 
 type Response struct {
@@ -51,24 +67,14 @@ type Controller struct {
 }
 
 func NewController(w http.ResponseWriter, r *http.Request, ct *ControllerType) *Controller {
+	revReq := NewRequest(r)
 	flash := restoreFlash(r)
-	values := r.URL.Query()
-
-	// Add form values to params.
-	if err := r.ParseForm(); err != nil {
-		LOG.Println("Error parsing request body:", err)
-	} else {
-		for key, vals := range r.Form {
-			for _, val := range vals {
-				values.Add(key, val)
-			}
-		}
-	}
+	params := ParseParams(revReq)
 
 	return &Controller{
 		Name:    ct.Type.Name(),
 		Type:    ct,
-		Request: &Request{r},
+		Request: revReq,
 		Response: &Response{
 			Status:      200,
 			ContentType: "",
@@ -76,7 +82,7 @@ func NewController(w http.ResponseWriter, r *http.Request, ct *ControllerType) *
 			Out:         w,
 		},
 
-		Params:  Params(values),
+		Params:  params,
 		Flash:   flash,
 		Session: restoreSession(r),
 		RenderArgs: map[string]interface{}{
@@ -87,6 +93,10 @@ func NewController(w http.ResponseWriter, r *http.Request, ct *ControllerType) *
 			keep:   false,
 		},
 	}
+}
+
+func NewRequest(r *http.Request) *Request {
+	return &Request{r, ContentType(r)}
 }
 
 var (
@@ -154,7 +164,7 @@ func initNewAppController(appControllerType reflect.Type, c *Controller) reflect
 }
 
 func (c *Controller) FlashParams() {
-	for key, vals := range c.Params {
+	for key, vals := range c.Params.Values {
 		c.Flash.Out[key] = vals[0]
 	}
 }
@@ -440,8 +450,57 @@ func (f Flash) Success(msg string, args ...interface{}) {
 	}
 }
 
+func ParseParams(req *Request) Params {
+	var files map[string][]*multipart.FileHeader
+
+	// Always want the url parameters.
+	values := req.URL.Query()
+
+	// Parse the body depending on the content type.
+	switch req.ContentType {
+	case "application/x-www-form-urlencoded":
+		// Typical form.
+		if err := req.ParseForm(); err != nil {
+			LOG.Println("Error parsing request body:", err)
+		} else {
+			for key, vals := range req.Form {
+				for _, val := range vals {
+					values.Add(key, val)
+				}
+			}
+		}
+
+	case "multipart/form-data":
+		// Multipart form.
+		// TODO: Extract the multipart form param so app can set it.
+		if err := req.ParseMultipartForm(32 << 20 /* 32 MB */); err != nil {
+			LOG.Println("Error parsing request body:", err)
+		} else {
+			for key, vals := range req.MultipartForm.Value {
+				for _, val := range vals {
+					values.Add(key, val)
+				}
+			}
+			files = req.MultipartForm.File
+		}
+	}
+
+	return Params{values, files}
+}
+
 func (p Params) Bind(name string, typ reflect.Type) reflect.Value {
 	return Bind(p, name, typ)
+}
+
+// Get the content type.
+// e.g. From "multipart/form-data; boundary=--" to "multipart/form-data"
+// If none is specified, returns "text/html" by default.
+func ContentType(req *http.Request) string {
+	contentType := req.Header.Get("Content-Type")
+	if contentType == "" {
+		return "text/html"
+	}
+	return strings.ToLower(strings.TrimSpace(strings.Split(contentType, ";")[0]))
 }
 
 // Internal bookeeping

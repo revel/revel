@@ -2,6 +2,9 @@ package rev
 
 import (
 	"fmt"
+	"io"
+	"io/ioutil"
+	"os"
 	"reflect"
 	"testing"
 	"time"
@@ -111,11 +114,70 @@ func init() {
 	TimeFormats = append(TimeFormats, "01/02/2006")
 }
 
+// Types that files may be bound to, and a func that can read the content from
+// that type.
+// TODO: Is there any way to create a slice, given only the element Type?
+var fileBindings = []struct{ val, arrval, f interface{} }{
+	{(**os.File)(nil), []*os.File{}, ioutil.ReadAll},
+	{(*[]byte)(nil), [][]byte{}, func(b []byte) []byte { return b }},
+	{(*io.Reader)(nil), []io.Reader{}, ioutil.ReadAll},
+	{(*io.ReadSeeker)(nil), []io.ReadSeeker{}, ioutil.ReadAll},
+}
+
 func TestBinder(t *testing.T) {
+	// Reuse the mvc_test.go multipart request to test the binder.
+	params := ParseParams(NewRequest(getMultipartRequest()))
+	params.Values = PARAMS
+
+	// Values
 	for k, v := range binderTestCases {
-		actual := Bind(PARAMS, k, reflect.TypeOf(v))
+		actual := Bind(params, k, reflect.TypeOf(v))
 		expected := reflect.ValueOf(v)
 		valEq(t, k, actual, expected)
+	}
+
+	// Files
+	for k, fhs := range expectedFiles {
+		// Skip file2 for now.
+		if k == "file2" {
+			continue
+		}
+
+		t.Logf("New Test. Key: %s", k)
+		if len(fhs) == 1 {
+			// Test binding single files to: *os.File, []byte, io.Reader, io.ReadSeeker
+			for _, binding := range fileBindings {
+				typ := reflect.TypeOf(binding.val).Elem()
+				t.Logf("Binding: %s", typ)
+				actual := Bind(params, k, typ)
+				if !actual.IsValid() {
+					t.Errorf("%s (%s) - Returned nil.", k, typ)
+					continue
+				}
+				returns := reflect.ValueOf(binding.f).Call([]reflect.Value{actual})
+				valEq(t, k, returns[0], reflect.ValueOf(fhs[0].content))
+			}
+		} else {
+			// Test binding multi to:
+			// []*os.File, [][]byte, []io.Reader, []io.ReadSeeker
+			for _, binding := range fileBindings {
+				typ := reflect.TypeOf(binding.arrval)
+				t.Logf("Binding: %s", typ)
+				actual := Bind(params, k, typ)
+				if actual.Len() != len(fhs) {
+					t.Fatalf("%s (%s) - Number of files: (expected) %d != %d (actual)",
+						k, typ, len(fhs), actual.Len())
+				}
+				for i, _ := range fhs {
+					returns := reflect.ValueOf(binding.f).Call([]reflect.Value{actual.Index(i)})
+					if !returns[0].IsValid() {
+						t.Errorf("%s (%s) - Returned nil.", k, typ)
+						continue
+					}
+					valEq(t, k, returns[0], reflect.ValueOf(fhs[i].content))
+				}
+			}
+		}
 	}
 }
 

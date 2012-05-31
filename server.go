@@ -62,7 +62,7 @@ func handleInternal(w http.ResponseWriter, r *http.Request, ws *websocket.Conn) 
 
 	// Add the route Params to the Request Params.
 	for key, value := range route.Params {
-		url.Values(controller.Params).Add(key, value)
+		url.Values(controller.Params.Values).Add(key, value)
 	}
 
 	// Collect the values for the method's arguments.

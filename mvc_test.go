@@ -1,7 +1,10 @@
 package rev
 
 import (
+	"bytes"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"reflect"
 	"testing"
 )
@@ -36,7 +39,6 @@ func TestNewAppController(t *testing.T) {
 		for _, st := range structs {
 			typ := reflect.TypeOf(st)
 			t.Log("Type: " + typ.String())
-			fmt.Println("Type: " + typ.String())
 			val := initNewAppController(typ, controller)
 
 			// Drill into the embedded fields to get to the Controller.
@@ -68,5 +70,101 @@ func TestNewAppController2(t *testing.T) {
 	val := initNewAppController(reflect.TypeOf(PNP{}), &Controller{Name: "Test"})
 	if val.Interface().(*PNP).PN.P.Controller.Name != "Test" {
 		t.Error("PNP not initialized.")
+	}
+}
+
+// Params: Testing Multipart forms
+
+const (
+	MULTIPART_BOUNDARY  = "A"
+	MULTIPART_FORM_DATA = `--A
+Content-Disposition: form-data; name="text1"
+
+data1
+--A
+Content-Disposition: form-data; name="text2"
+
+data2
+--A
+Content-Disposition: form-data; name="text2"
+
+data3
+--A
+Content-Disposition: form-data; name="file1"; filename="test.txt"
+Content-Type: text/plain
+
+content1
+--A
+Content-Disposition: form-data; name="file2"; filename="test.txt"
+Content-Type: text/plain
+
+content2
+--A
+Content-Disposition: form-data; name="file2"; filename="favicon.ico"
+Content-Type: image/x-icon
+
+xyz
+--A
+Content-Disposition: form-data; name="file3[0]"; filename="test.txt"
+Content-Type: text/plain
+
+content3
+--A
+Content-Disposition: form-data; name="file3[1]"; filename="favicon.ico"
+Content-Type: image/x-icon
+
+zzz
+--A--
+`
+)
+
+// The values represented by the form data.
+type fh struct {
+	filename string
+	content  []byte
+}
+
+var (
+	expectedValues = map[string][]string{
+		"text1": {"data1"},
+		"text2": {"data2", "data3"},
+	}
+	expectedFiles = map[string][]fh{
+		"file1":    {fh{"test.txt", []byte("content1")}},
+		"file2":    {fh{"test.txt", []byte("content2")}, fh{"favicon.ico", []byte("xyz")}},
+		"file3[0]": {fh{"test.txt", []byte("content3")}},
+		"file3[1]": {fh{"favicon.ico", []byte("zzz")}},
+	}
+)
+
+func getMultipartRequest() *http.Request {
+	req, _ := http.NewRequest("POST", "http://localhost/path",
+		bytes.NewBufferString(MULTIPART_FORM_DATA))
+	req.Header.Set(
+		"Content-Type", fmt.Sprintf("multipart/form-data; boundary=%s", MULTIPART_BOUNDARY))
+	req.Header.Set(
+		"Content-Length", fmt.Sprintf("%d", len(MULTIPART_FORM_DATA)))
+	return req
+}
+
+func TestMultipartForm(t *testing.T) {
+	params := ParseParams(NewRequest(getMultipartRequest()))
+
+	if !reflect.DeepEqual(expectedValues, map[string][]string(params.Values)) {
+		t.Errorf("Param values: (expected) %v != %v (actual)",
+			expectedValues, map[string][]string(params.Values))
+	}
+
+	actualFiles := make(map[string][]fh)
+	for key, fileHeaders := range params.Files {
+		for _, fileHeader := range fileHeaders {
+			file, _ := fileHeader.Open()
+			content, _ := ioutil.ReadAll(file)
+			actualFiles[key] = append(actualFiles[key], fh{fileHeader.Filename, content})
+		}
+	}
+
+	if !reflect.DeepEqual(expectedFiles, actualFiles) {
+		t.Errorf("Param files: (expected) %v != %v (actual)", expectedFiles, actualFiles)
 	}
 }
