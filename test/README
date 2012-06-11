@@ -1,0 +1,4 @@
+To test Revel hosted under the "/revel/.." path (as it is actually hosted):
+- cd to this directory
+- python -m SimpleHTTPServer . 8080
+- open http://localhost:8080/revel
