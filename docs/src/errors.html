@@ -21,8 +21,26 @@ type Error struct {
     MetaError                string   <span class="comment">// Error that occurred producing the error page.</span>
 }
 
-func (e Error) Error() string {
-    return e.Description
+<span class="comment">// Construct a plaintext version of the error, taking account that fields are optionally set.</span>
+<span class="comment">// Returns e.g. Compilation Error (in views/header.html:51): expected right delim in end; got &#34;}&#34;</span>
+func (e *Error) Error() string {
+    loc := &#34;&#34;
+    if e.Path != &#34;&#34; {
+        line := &#34;&#34;
+        if e.Line != 0 {
+            line = fmt.Sprintf(&#34;:%d&#34;, e.Line)
+        }
+        loc = fmt.Sprintf(&#34;(in %s%s)&#34;, e.Path, line)
+    }
+    header := loc
+    if e.Title != &#34;&#34; {
+        if loc != &#34;&#34; {
+            header = fmt.Sprintf(&#34;%s %s: &#34;, e.Title, loc)
+        } else {
+            header = fmt.Sprintf(&#34;%s: &#34;, e.Title)
+        }
+    }
+    return fmt.Sprintf(&#34;%s%s&#34;, header, e.Description)
 }
 
 <span class="comment">// Returns a snippet of the source around where the error occurred.</span>
@@ -45,20 +63,6 @@ func (e *Error) ContextSource() []sourceLine {
         lines[i] = sourceLine{src, fileLine, fileLine == e.Line}
     }
     return lines
-}
-
-func (e *Error) Html() string {
-    var b bytes.Buffer
-    RenderError(&amp;b, &amp;e)
-    return b.String()
-}
-
-func RenderError(buffer io.Writer, data interface{}) {
-    if errorTemplate == nil {
-        errorTemplate = template.Must(template.ParseFiles(
-            path.Join(RevelTemplatePath, &#34;500.html&#34;)))
-    }
-    errorTemplate.Execute(buffer, &amp;data)
 }
 </pre>
 

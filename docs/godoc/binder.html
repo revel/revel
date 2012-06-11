@@ -23,17 +23,20 @@ layout: godoc
 			
 			
 				
-				<dd><a href="#Bind">func Bind(params map[string][]string, name string, typ reflect.Type) reflect.Value</a></dd>
+				<dd><a href="#Bind">func Bind(params Params, name string, typ reflect.Type) reflect.Value</a></dd>
 			
 				
-				<dd><a href="#SimpleBind">func SimpleBind(val string, typ reflect.Type) reflect.Value</a></dd>
+				<dd><a href="#BindFile">func BindFile(fileHeader *multipart.FileHeader, typ reflect.Type) reflect.Value</a></dd>
+			
+				
+				<dd><a href="#BindValue">func BindValue(val string, typ reflect.Type) reflect.Value</a></dd>
 			
 			
 				
 				<dd><a href="#Binder">type Binder</a></dd>
 				
 					
-					<dd>&nbsp; &nbsp; <a href="#SimpleBinder">func SimpleBinder(f func(value string, typ reflect.Type) reflect.Value) Binder</a></dd>
+					<dd>&nbsp; &nbsp; <a href="#ValueBinder">func ValueBinder(f func(value string, typ reflect.Type) reflect.Value) Binder</a></dd>
 				
 				
 			
@@ -78,8 +81,8 @@ The most specific binder found will be used (Type before Kind)
 		
 			
 			
-			<h2 id="Bind">func <a href="../src/binder.html?s=6240:6322#L203">Bind</a></h2>
-			<pre>func Bind(params map[string][]string, name string, typ reflect.Type) reflect.Value</pre>
+			<h2 id="Bind">func <a href="../src/binder.html?s=9049:9118#L306">Bind</a></h2>
+			<pre>func Bind(params Params, name string, typ reflect.Type) reflect.Value</pre>
 			<p>
 Parse the value string into a real Go value.
 Returns 0 values when things can not be parsed.
@@ -89,16 +92,23 @@ Returns 0 values when things can not be parsed.
 		
 			
 			
-			<h2 id="SimpleBind">func <a href="../src/binder.html?s=6639:6698#L220">SimpleBind</a></h2>
-			<pre>func SimpleBind(val string, typ reflect.Type) reflect.Value</pre>
+			<h2 id="BindFile">func <a href="../src/binder.html?s=9513:9592#L326">BindFile</a></h2>
+			<pre>func BindFile(fileHeader *multipart.FileHeader, typ reflect.Type) reflect.Value</pre>
+			
+			
+		
+			
+			
+			<h2 id="BindValue">func <a href="../src/binder.html?s=9379:9437#L322">BindValue</a></h2>
+			<pre>func BindValue(val string, typ reflect.Type) reflect.Value</pre>
 			
 			
 		
 		
 			
 			
-			<h2 id="Binder">type <a href="../src/binder.html?s=570:659#L15">Binder</a></h2>
-			<pre>type Binder func(params map[string][]string, name string, typ reflect.Type) reflect.Value</pre>
+			<h2 id="Binder">type <a href="../src/binder.html?s=613:689#L19">Binder</a></h2>
+			<pre>type Binder func(params Params, name string, typ reflect.Type) reflect.Value</pre>
 			<p>
 A Binder translates between string parameters and Go data structures.
 </p>
@@ -136,8 +146,8 @@ Note that only exported struct fields may be bound.
 
 			
 				
-				<h3 id="SimpleBinder">func <a href="../src/binder.html?s=716:794#L18">SimpleBinder</a></h3>
-				<pre>func SimpleBinder(f func(value string, typ reflect.Type) reflect.Value) Binder</pre>
+				<h3 id="ValueBinder">func <a href="../src/binder.html?s=746:823#L22">ValueBinder</a></h3>
+				<pre>func ValueBinder(f func(value string, typ reflect.Type) reflect.Value) Binder</pre>
 				<p>
 An adapter for easily making one-key-value binders.
 </p>

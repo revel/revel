@@ -12,16 +12,31 @@ layout: godoc
 
 	<pre>package rev
 
+<span class="comment">// Flash represents a cookie that gets overwritten on each request.</span>
+<span class="comment">// It allows data to be stored across one page at a time.</span>
+<span class="comment">// This is commonly used to implement success or error messages.</span>
+<span class="comment">// e.g. the Post/Redirect/Get pattern: http://en.wikipedia.org/wiki/Post/Redirect/Get</span>
 type Flash struct {
     Data, Out map[string]string
 }
 
-type Params url.Values
+<span class="comment">// These provide a unified view of the request params.</span>
+<span class="comment">// Includes:</span>
+<span class="comment">// - URL query string</span>
+<span class="comment">// - Form values</span>
+<span class="comment">// - File uploads</span>
+type Params struct {
+    url.Values
+    Files map[string][]*multipart.FileHeader
+}
 
+<span class="comment">// A signed cookie (and thus limited to 4kb in size).</span>
+<span class="comment">// Restriction: Keys may not have a colon in them.</span>
 type Session map[string]string
 
 type Request struct {
     *http.Request
+    ContentType string
 }
 
 type Response struct {
@@ -29,7 +44,8 @@ type Response struct {
     ContentType string
     Headers     http.Header
     Cookies     []*http.Cookie
-    <span class="comment">// contains filtered or unexported fields</span>
+
+    Out http.ResponseWriter
 }
 
 type Controller struct {
@@ -50,31 +66,22 @@ type Controller struct {
 }
 
 func NewController(w http.ResponseWriter, r *http.Request, ct *ControllerType) *Controller {
+    revReq := NewRequest(r)
     flash := restoreFlash(r)
-    values := r.URL.Query()
-
-    if err := r.ParseForm(); err != nil {
-        LOG.Println(&#34;Error parsing request body:&#34;, err)
-    } else {
-        for key, vals := range r.Form {
-            for _, val := range vals {
-                values.Add(key, val)
-            }
-        }
-    }
+    params := ParseParams(revReq)
 
     return &amp;Controller{
         Name:    ct.Type.Name(),
         Type:    ct,
-        Request: &amp;Request{r},
+        Request: revReq,
         Response: &amp;Response{
             Status:      200,
             ContentType: &#34;&#34;,
             Headers:     w.Header(),
-            out:         w,
+            Out:         w,
         },
 
-        Params:  Params(values),
+        Params:  params,
         Flash:   flash,
         Session: restoreSession(r),
         RenderArgs: map[string]interface{}{
@@ -85,6 +92,10 @@ func NewController(w http.ResponseWriter, r *http.Request, ct *ControllerType) *
             keep:   false,
         },
     }
+}
+
+func NewRequest(r *http.Request) *Request {
+    return &amp;Request{r, ContentType(r)}
 }
 
 func NewAppController(w http.ResponseWriter, r *http.Request, controllerName, methodName string) (*Controller, reflect.Value) {
@@ -108,13 +119,13 @@ func NewAppController(w http.ResponseWriter, r *http.Request, controllerName, me
 }
 
 func (c *Controller) FlashParams() {
-    for key, vals := range c.Params {
+    for key, vals := range c.Params.Values {
         c.Flash.Out[key] = vals[0]
     }
 }
 
 func (c *Controller) SetCookie(cookie *http.Cookie) {
-    http.SetCookie(c.Response.out, cookie)
+    http.SetCookie(c.Response.Out, cookie)
 }
 
 <span class="comment">// Invoke the given method, save headers/cookies to the response, and apply the</span>
@@ -204,18 +215,23 @@ func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
     var fqViewName string = runtime.FuncForPC(pc).Name()
     var viewName string = fqViewName[strings.LastIndex(fqViewName, &#34;.&#34;)+1 : len(fqViewName)]
 
-    template, err := templateLoader.Template(c.Name + &#34;/&#34; + viewName + &#34;.html&#34;)
+    template, err := MainTemplateLoader.Template(c.Name + &#34;/&#34; + viewName + &#34;.html&#34;)
     if err != nil {
-
-        if err, ok := err.(*Error); ok {
-            c.Response.out.Write([]byte(err.Html()))
-        } else {
-            c.Response.out.Write([]byte(err.Error()))
-        }
-        return nil
+        return ErrorResult{err}
     }
 
-    if renderArgNames, ok := c.MethodType.RenderArgNames[line]; ok {
+    methodType := c.MethodType
+    if methodType.Name != viewName {
+        methodType = c.Type.Method(viewName)
+        if methodType == nil {
+            return ErrorResult{fmt.Errorf(
+                &#34;No Method %s in Controller %s when loading the view.&#34;+
+                    &#34; (delegating Render is only supported within the same controller)&#34;,
+                viewName, c.Name)}
+        }
+    }
+
+    if renderArgNames, ok := methodType.RenderArgNames[line]; ok {
         if len(renderArgNames) == len(extraRenderArgs) {
             for i, extraRenderArg := range extraRenderArgs {
                 c.RenderArgs[renderArgNames[i]] = extraRenderArg
@@ -225,7 +241,8 @@ func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
                 len(extraRenderArgs), &#34;extra RenderArgs&#34;)
         }
     } else {
-        LOG.Println(&#34;No RenderArg names found for Render call on line&#34;, line)
+        LOG.Println(&#34;No RenderArg names found for Render call on line&#34;, line,
+            &#34;(Method&#34;, methodType, &#34;, ViewName&#34;, viewName, &#34;)&#34;)
     }
 
     c.RenderArgs[&#34;errors&#34;] = c.Validation.ErrorMap()
@@ -233,8 +250,11 @@ func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
     return &amp;RenderTemplateResult{
         Template:   template,
         RenderArgs: c.RenderArgs,
-        Response:   c.Response,
     }
+}
+
+func (c *Controller) RenderJson(o interface{}) Result {
+    return RenderJsonResult{o}
 }
 
 <span class="comment">// Redirect to an action or to a URL.</span>
@@ -267,8 +287,54 @@ func (f Flash) Success(msg string, args ...interface{}) {
     }
 }
 
+func ParseParams(req *Request) Params {
+    var files map[string][]*multipart.FileHeader
+
+    values := req.URL.Query()
+
+    switch req.ContentType {
+    case &#34;application/x-www-form-urlencoded&#34;:
+
+        if err := req.ParseForm(); err != nil {
+            LOG.Println(&#34;Error parsing request body:&#34;, err)
+        } else {
+            for key, vals := range req.Form {
+                for _, val := range vals {
+                    values.Add(key, val)
+                }
+            }
+        }
+
+    case &#34;multipart/form-data&#34;:
+
+        if err := req.ParseMultipartForm(32 &lt;&lt; 20); err != nil {
+            LOG.Println(&#34;Error parsing request body:&#34;, err)
+        } else {
+            for key, vals := range req.MultipartForm.Value {
+                for _, val := range vals {
+                    values.Add(key, val)
+                }
+            }
+            files = req.MultipartForm.File
+        }
+    }
+
+    return Params{values, files}
+}
+
 func (p Params) Bind(name string, typ reflect.Type) reflect.Value {
     return Bind(p, name, typ)
+}
+
+<span class="comment">// Get the content type.</span>
+<span class="comment">// e.g. From &#34;multipart/form-data; boundary=--&#34; to &#34;multipart/form-data&#34;</span>
+<span class="comment">// If none is specified, returns &#34;text/html&#34; by default.</span>
+func ContentType(req *http.Request) string {
+    contentType := req.Header.Get(&#34;Content-Type&#34;)
+    if contentType == &#34;&#34; {
+        return &#34;text/html&#34;
+    }
+    return strings.ToLower(strings.TrimSpace(strings.Split(contentType, &#34;;&#34;)[0]))
 }
 
 type ControllerType struct {

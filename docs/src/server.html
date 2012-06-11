@@ -12,12 +12,16 @@ layout: godoc
 
 	<pre>package rev
 
+var (
+    MainTemplateLoader *TemplateLoader
+)
+
 <span class="comment">// Run the server.</span>
 <span class="comment">// This is called from the generated main file.</span>
 func Run(port int) {
 
     router = LoadRoutes()
-    templateLoader = NewTemplateLoader()
+    MainTemplateLoader = NewTemplateLoader(ViewsPath, RevelTemplatePath)
 
     go func() {
         time.Sleep(100 * time.Millisecond)

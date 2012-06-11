@@ -16,11 +16,71 @@ type Result interface {
     Apply(req *Request, resp *Response)
 }
 
+<span class="comment">// If AppMode is DEV, this result renders a friendly error page.</span>
+<span class="comment">// TODO: If AppMode is PROD, this result renders the app 500 page.</span>
+type ErrorResult struct {
+    <span class="comment">// contains filtered or unexported fields</span>
+}
+
+func (r ErrorResult) Apply(req *Request, resp *Response) {
+    <span class="comment">// Get the error template.</span>
+    var err error
+    tmpl, err := MainTemplateLoader.Template(&#34;errors/500.html&#34;)
+
+    showPlaintext := func(err error) {
+        PlaintextErrorResult{fmt.Errorf(&#34;Server Error:\n%s\n\n&#34;+
+            &#34;Additionally, an error occurred when rendering the error page:\n%s&#34;,
+            r, err)}.Apply(req, resp)
+    }
+
+    if tmpl == nil {
+        showPlaintext(err)
+        return
+    }
+
+    <span class="comment">// If it&#39;s not a revel error, wrap it in one.</span>
+    var revelError *Error
+    switch e := r.error.(type) {
+    case *Error:
+        revelError = e
+    case error:
+        revelError = &amp;Error{
+            Title:       &#34;Server Error&#34;,
+            Description: e.Error(),
+        }
+    }
+
+    if revelError == nil {
+        panic(&#34;no error provided&#34;)
+    }
+
+    <span class="comment">// Render it.</span>
+    var b bytes.Buffer
+    err = tmpl.Render(&amp;b, revelError)
+
+    if err != nil {
+        showPlaintext(err)
+        return
+    }
+
+    resp.Out.WriteHeader(500)
+    b.WriteTo(resp.Out)
+}
+
+type PlaintextErrorResult struct {
+    <span class="comment">// contains filtered or unexported fields</span>
+}
+
+<span class="comment">// This method is used when the template loader or error template is not available.</span>
+func (r PlaintextErrorResult) Apply(req *Request, resp *Response) {
+    resp.Out.WriteHeader(500)
+    resp.Out.Write([]byte(r.Error()))
+}
+
 <span class="comment">// Action methods return this result to request a template be rendered.</span>
 type RenderTemplateResult struct {
     Template   Template
     RenderArgs map[string]interface{}
-    Response   *Response
 }
 
 func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
@@ -32,7 +92,7 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
     err := r.Template.Render(&amp;b, r.RenderArgs)
     if err != nil {
         line, description := parseTemplateError(err)
-        compileError := Error{
+        compileError := &amp;Error{
             Title:       &#34;Template Execution Error&#34;,
             Path:        r.Template.Name(),
             Description: description,
@@ -40,11 +100,32 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
             SourceLines: r.Template.Content(),
             SourceType:  &#34;template&#34;,
         }
-        resp.out.Write([]byte(compileError.Html()))
+        ErrorResult{compileError}.Apply(req, resp)
         return
     }
 
-    b.WriteTo(resp.out)
+    b.WriteTo(resp.Out)
+}
+
+type RenderJsonResult struct {
+    <span class="comment">// contains filtered or unexported fields</span>
+}
+
+func (r RenderJsonResult) Apply(req *Request, resp *Response) {
+    var b []byte
+    var err error
+    if AppMode == DEV {
+        b, err = json.MarshalIndent(r.obj, &#34;&#34;, &#34;  &#34;)
+    } else {
+        b, err = json.Marshal(r.obj)
+    }
+
+    if err != nil {
+        ErrorResult{err}.Apply(req, resp)
+        return
+    }
+
+    resp.Out.Write(b)
 }
 
 type RedirectToUrlResult struct {
@@ -53,7 +134,7 @@ type RedirectToUrlResult struct {
 
 func (r *RedirectToUrlResult) Apply(req *Request, resp *Response) {
     resp.Headers.Set(&#34;Location&#34;, r.url)
-    resp.out.WriteHeader(302)
+    resp.Out.WriteHeader(302)
 }
 
 type RedirectToActionResult struct {
@@ -64,11 +145,11 @@ func (r *RedirectToActionResult) Apply(req *Request, resp *Response) {
     url, err := getRedirectUrl(r.val)
     if err != nil {
         LOG.Println(&#34;Couldn&#39;t resolve redirect:&#34;, err.Error())
-        resp.out.WriteHeader(500)
+        ErrorResult{err}.Apply(req, resp)
         return
     }
     resp.Headers.Set(&#34;Location&#34;, url)
-    resp.out.WriteHeader(302)
+    resp.Out.WriteHeader(302)
 }
 </pre>
 

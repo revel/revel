@@ -22,6 +22,22 @@ layout: godoc
 			
 			
 				
+				<dd><a href="#ErrorResult">type ErrorResult</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#ErrorResult.Apply">func (r ErrorResult) Apply(req *Request, resp *Response)</a></dd>
+				
+			
+				
+				<dd><a href="#PlaintextErrorResult">type PlaintextErrorResult</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#PlaintextErrorResult.Apply">func (r PlaintextErrorResult) Apply(req *Request, resp *Response)</a></dd>
+				
+			
+				
 				<dd><a href="#RedirectToActionResult">type RedirectToActionResult</a></dd>
 				
 				
@@ -35,6 +51,14 @@ layout: godoc
 				
 					
 					<dd>&nbsp; &nbsp; <a href="#RedirectToUrlResult.Apply">func (r *RedirectToUrlResult) Apply(req *Request, resp *Response)</a></dd>
+				
+			
+				
+				<dd><a href="#RenderJsonResult">type RenderJsonResult</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#RenderJsonResult.Apply">func (r RenderJsonResult) Apply(req *Request, resp *Response)</a></dd>
 				
 			
 				
@@ -72,7 +96,64 @@ layout: godoc
 		
 			
 			
-			<h2 id="RedirectToActionResult">type <a href="../src/results.html?s=1290:1345#L43">RedirectToActionResult</a></h2>
+			<h2 id="ErrorResult">type <a href="../src/results.html?s=275:309#L7">ErrorResult</a></h2>
+			<pre>type ErrorResult struct {
+    <span class="comment">// contains filtered or unexported fields</span>
+}</pre>
+			<p>
+If AppMode is DEV, this result renders a friendly error page.
+TODO: If AppMode is PROD, this result renders the app 500 page.
+</p>
+
+
+			
+
+			
+
+			
+
+			
+
+			
+				
+				<h3 id="ErrorResult.Apply">func (ErrorResult) <a href="../src/results.html?s=311:367#L11">Apply</a></h3>
+				<pre>func (r ErrorResult) Apply(req *Request, resp *Response)</pre>
+				
+				
+				
+			
+		
+			
+			
+			<h2 id="PlaintextErrorResult">type <a href="../src/results.html?s=1374:1417#L60">PlaintextErrorResult</a></h2>
+			<pre>type PlaintextErrorResult struct {
+    <span class="comment">// contains filtered or unexported fields</span>
+}</pre>
+			
+
+			
+
+			
+
+			
+
+			
+
+			
+				
+				<h3 id="PlaintextErrorResult.Apply">func (PlaintextErrorResult) <a href="../src/results.html?s=1503:1568#L65">Apply</a></h3>
+				<pre>func (r PlaintextErrorResult) Apply(req *Request, resp *Response)</pre>
+				<p>
+This method is used when the template loader or error template is not available.
+</p>
+
+				
+				
+			
+		
+			
+			
+			<h2 id="RedirectToActionResult">type <a href="../src/results.html?s=3130:3185#L130">RedirectToActionResult</a></h2>
 			<pre>type RedirectToActionResult struct {
     <span class="comment">// contains filtered or unexported fields</span>
 }</pre>
@@ -88,7 +169,7 @@ layout: godoc
 
 			
 				
-				<h3 id="RedirectToActionResult.Apply">func (*RedirectToActionResult) <a href="../src/results.html?s=1347:1415#L47">Apply</a></h3>
+				<h3 id="RedirectToActionResult.Apply">func (*RedirectToActionResult) <a href="../src/results.html?s=3187:3255#L134">Apply</a></h3>
 				<pre>func (r *RedirectToActionResult) Apply(req *Request, resp *Response)</pre>
 				
 				
@@ -97,7 +178,7 @@ layout: godoc
 		
 			
 			
-			<h2 id="RedirectToUrlResult">type <a href="../src/results.html?s=1106:1153#L34">RedirectToUrlResult</a></h2>
+			<h2 id="RedirectToUrlResult">type <a href="../src/results.html?s=2946:2993#L121">RedirectToUrlResult</a></h2>
 			<pre>type RedirectToUrlResult struct {
     <span class="comment">// contains filtered or unexported fields</span>
 }</pre>
@@ -113,7 +194,7 @@ layout: godoc
 
 			
 				
-				<h3 id="RedirectToUrlResult.Apply">func (*RedirectToUrlResult) <a href="../src/results.html?s=1155:1220#L38">Apply</a></h3>
+				<h3 id="RedirectToUrlResult.Apply">func (*RedirectToUrlResult) <a href="../src/results.html?s=2995:3060#L125">Apply</a></h3>
 				<pre>func (r *RedirectToUrlResult) Apply(req *Request, resp *Response)</pre>
 				
 				
@@ -122,11 +203,35 @@ layout: godoc
 		
 			
 			
-			<h2 id="RenderTemplateResult">type <a href="../src/results.html?s=191:305#L4">RenderTemplateResult</a></h2>
+			<h2 id="RenderJsonResult">type <a href="../src/results.html?s=2601:2650#L100">RenderJsonResult</a></h2>
+			<pre>type RenderJsonResult struct {
+    <span class="comment">// contains filtered or unexported fields</span>
+}</pre>
+			
+
+			
+
+			
+
+			
+
+			
+
+			
+				
+				<h3 id="RenderJsonResult.Apply">func (RenderJsonResult) <a href="../src/results.html?s=2652:2713#L104">Apply</a></h3>
+				<pre>func (r RenderJsonResult) Apply(req *Request, resp *Response)</pre>
+				
+				
+				
+			
+		
+			
+			
+			<h2 id="RenderTemplateResult">type <a href="../src/results.html?s=1708:1800#L71">RenderTemplateResult</a></h2>
 			<pre>type RenderTemplateResult struct {
     Template   Template
     RenderArgs map[string]interface{}
-    Response   *Response
 }</pre>
 			<p>
 Action methods return this result to request a template be rendered.
@@ -143,7 +248,7 @@ Action methods return this result to request a template be rendered.
 
 			
 				
-				<h3 id="RenderTemplateResult.Apply">func (*RenderTemplateResult) <a href="../src/results.html?s=307:373#L10">Apply</a></h3>
+				<h3 id="RenderTemplateResult.Apply">func (*RenderTemplateResult) <a href="../src/results.html?s=1802:1868#L76">Apply</a></h3>
 				<pre>func (r *RenderTemplateResult) Apply(req *Request, resp *Response)</pre>
 				
 				
@@ -152,7 +257,7 @@ Action methods return this result to request a template be rendered.
 		
 			
 			
-			<h2 id="Result">type <a href="../src/results.html?s=55:117#L1">Result</a></h2>
+			<h2 id="Result">type <a href="../src/results.html?s=79:141#L1">Result</a></h2>
 			<pre>type Result interface {
     Apply(req *Request, resp *Response)
 }</pre>
