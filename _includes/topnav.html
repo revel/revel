@@ -1,17 +1,20 @@
+{% capture root %}{% if root %}{{ root }}{% else %}../{% endif %}{% endcapture %}
     <div class="navbar" style="margin:0 auto 2px auto;">
       <div class="navbar-inner">
         <div class="container">
           <a class="brand" href="/index.html">
-            <img class="revel-hat-img" src="/img/revelhat.png" height="40" width="87">
+            <img class="revel-hat-img"
+                 src="{{ root }}img/revelhat.png"
+                 height="40" width="87">
           </a>
           <div class="nav-collapse">
             <ul class="nav">
               <li {% if page.layout == 'tutorial' %}class="active"{% endif %}>
-                <a href="/tutorial/index.html">Tutorial</a></li>
+                <a href="{{ root }}tutorial/index.html">Tutorial</a></li>
               <li {% if page.layout == 'manual' %}class="active"{% endif %}>
-                <a href="/manual/index.html">Manual</a></li>
+                <a href="{{ root }}manual/index.html">Manual</a></li>
               <li {% if page.layout == 'samples' %}class="active"{% endif %}>
-                <a href="/samples/index.html">Samples</a></li>
+                <a href="{{ root }}samples/index.html">Samples</a></li>
             </ul>
           </div>
         </div>
