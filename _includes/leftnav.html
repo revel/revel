@@ -1,0 +1,14 @@
+<div class="leftnav">
+  <ul class="nav nav-list">
+{% for group in site.manualnav %}
+    <li class="nav-header">{{ group.name }}</li>
+  {% for node in group.articles %}
+    {% if page.url == node.url %}
+      <li class="active"><a href="{{node.url}}">{{node.title}}</a></li>
+    {% else %}
+      <li><a href="{{node.url}}">{{node.title}}</a></li>
+    {% endif %}
+  {% endfor %}
+{% endfor %}
+  </ul>
+</div>

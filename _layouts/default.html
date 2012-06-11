@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Revel</title>
-    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/journal.min.css" rel="stylesheet">
     <link href="css/bootstrap-responsive.min.css" rel="stylesheet">
     <link href="css/revel.css" rel="stylesheet">
     <link href="css/prettify.css" type="text/css" rel="stylesheet" />
@@ -13,6 +13,10 @@
   </head>
 
   <body onload="prettyPrint()">
+    <a href="https://github.com/robfig/revel"><img style="position: absolute; top: 0; right: 0; border: 0; z-index:1000;" src="img/forkme_right_orange_ff7600.png" alt="Fork me on GitHub"></a>
+
+    {% include topnav.html %}
+
     <header class="hero-unit">
       <div class="container">
         <div class="row" style="margin-left:-50px;">
@@ -36,19 +40,20 @@
           <p>
             Edit, save, and refresh.  Revel compiles your code and templates for
             you, so you don't miss a beat.  Code doesn't compile?  It gives you a
-            <a href="#">helpful description</a>.
+            <a href="img/CompilationError.png">helpful description</a>.
+            Run-time code panic?  Revel <a href="img/Panic.png">has you
+            covered</a>.
           </p>
         </div>
         <div class="span4">
-          <h2>Simplicity</h2>
+          <h2>Simplicity Optional</h2>
           <p>
-            Revel provides a comprehensive toolkit for making web apps.  From
-            configuring interceptors and plugins to bread and butter like form
-            validation, Revel makes it as convenient as possible.
+            Revel tries to provide a comprehensive toolkit for making everyday
+            web apps.
           </p>
           <p>
-            Don't want to use the helpers?  Revel gets out of the way and gives
-            you direct access to the request/response.
+            Don't want to use some of the helpers?  Revel gets out of the way
+            and gives you direct access to the underlying request and response.
           </p>
         </div>
         <div class="span4">
@@ -99,6 +104,12 @@
         </div>
       </section>
 
+      <section id="development">
+        <div class="page-header">
+          <h1>Development Status <small>Early adopters only.  Pull requests welcome.</small></h1>
+        </div>
+      </section>
+
       <section id="teaser">
         <div class="page-header">
           <h1>Teaser</h1>
@@ -128,7 +139,8 @@
 
           <dt><a href="#plugins">Plugins</a></dt>
           <dd>
-            Plugins allow you to reuse functionality between apps.
+            More general functionality (e.g. transaction management) can be
+            implemented with Plugins.
           </dd>
 
         </dl>
@@ -152,6 +164,7 @@ GET    /login                 Application.Login      <b># A simple path</b>
 GET    /hotels/?              Hotels.Index           <b># Match /hotels and /hotels/ (optional trailing slash)</b>
 GET    /hotels/{id}           Hotels.Show            <b># Extract a URI argument (matching /[^/]+/)</b>
 POST   /hotels/{<[0-9]+>id}   Hotels.Save            <b># URI arg with custom regex</b>
+WS     /hotels/{id}/feed      Hotels.Feed            <b># WebSockets.</b>
 POST   /hotels/{id}/{action}  Hotels.{action}        <b># Automatically route some actions.</b>
 GET    /public/               staticDir:public       <b># Map /app/public resources under /public/...</b>
 *      /{controller}/{action} {controller}.{action}  <b># Catch all; Automatic URL generation</b></pre>
@@ -170,8 +183,9 @@ GET    /public/               staticDir:public       <b># Map /app/public resour
                   (If you prefer to access them directly from a parameter map, that's ok too!)
                 <li> <b>Validation.</b> Helpers to manage validation errors.
                 <li> <b>Flash.</b> The flash is a cookie that lives for one
-                  request, useful for error or success messages.
-                <li> <b>Session.</b> The session is a cryptographically signed cookie.
+                  request (errors, success messages, etc).
+                <li> <b>Session.</b> The session is a cryptographically signed
+                  cookie, exposed as a <code>map[string]string</code>.
                 <li> <b>Results.</b> Redirections take advantage of reverse
                   routing.  Template rendering makes your data available using the
                   name of the local variable!
@@ -226,8 +240,8 @@ func (c Application) SaveUser(user models.User, verifyPassword string) rev.Resul
             <p>
               By convention, Revel manages to integrate
               <a href="http://golang.org/pkg/text/template/">Go Templates</a>
-              easily into the rest of the web app. Here is the template rendered
-              in the <b>Register</b> action shown above.
+              easily into the rest of the web app. Here is part of the template
+              rendered in the <b>Register</b> action shown above.
             </p>
             Note that:
             <ul>
@@ -235,6 +249,10 @@ func (c Application) SaveUser(user models.User, verifyPassword string) rev.Resul
               <li> <b>field</b> is a simple helper function that returns a map
                 of validation errors and parameter values for the named field.
                 The app may inject any helper funcs that it wants.
+              <li> The <b>title</b> variable is available in the template as if
+                it had been explicitly put in the RenderArgs.  (It's used in
+                <a href="http://github.com/robfig/revel/samples/booking/app/views/header.html">
+                  header.html</a> in this case)
             </ul>
           </div>
 
@@ -253,24 +271,9 @@ func (c Application) SaveUser(user models.User, verifyPassword string) rev.Resul
       <span class="error">{{$field.Error}}</span>
     </p>
   {{end}}
-  {{with $field := field "user.Name" .}}
-    <p class="{{$field.ErrorClass}}">
-      <strong>Real name:</strong> <input type="text" name="{{$field.Name}}" size="16" value="{{$field.Value}}"> *
-      <span class="error">{{$field.Error}}</span>
-    </p>
-  {{end}}
-  {{with $field := field "user.Password" .}}
-    <p class="{{$field.ErrorClass}}">
-      <strong>Password:</strong> <input type="password" name="{{$field.Name}}" size="16" value="{{$field.Value}}"> *
-      <span class="error">{{$field.Error}}</span>
-    </p>
-  {{end}}
-  {{with $field := field "verifyPassword" .}}
-    <p class="{{$field.ErrorClass}}">
-      <strong>Verify password:</strong> <input type="password" name="{{$field.Name}}" size="16" value="{{$field.Value}}"> *
-      <span class="error">{{$field.Error}}</span>
-    </p>
-  {{end}}
+
+  {{/* other fields */}}
+
   <p class="buttons">
     <input type="submit" value="Register"> <a href="/">Cancel</a>
   </p>
@@ -284,7 +287,8 @@ func (c Application) SaveUser(user models.User, verifyPassword string) rev.Resul
           <div class="span6">
             <h2 id="interceptors">Interceptors</h2>
             <p>
-              Interceptors may be registered.
+              Interceptors are useful for checking pre-conditions (e.g. that the
+              user is logged in) and for cleaning up afterwards.
             </p>
           </div>
 
@@ -292,11 +296,15 @@ func (c Application) SaveUser(user models.User, verifyPassword string) rev.Resul
             <pre class="prettyprint">
 // app/controllers/app.go
 
-func addUser(c *rev.Controller) rev.Result {
+// This interceptor loads the user (using a helper).
+// If it's nil, the user isn't logged in so it redirects them to the login page.
+// Otherwise, it adds the user to the render context.
+func checkLogin(c *rev.Controller) rev.Result {
 	if user := connected(c); user != nil {
 		c.RenderArgs["user"] = user
+	} else {
+		return c.Redirect(Application.Login)
 	}
-	return nil
 }
 
 func init() {
@@ -305,6 +313,103 @@ func init() {
           </div>
         </div>
 
+        <div class="row">
+          <div class="span6">
+            <h2 id="plugins">Plugins</h2>
+            <p>
+              Any class that meets the Plugin interface may be registered.
+            </p>
+            <pre class="prettyprint">
+type Plugin interface {
+	OnAppStart()
+	BeforeRequest(c *Controller)
+	AfterRequest(c *Controller)
+	OnException(c *Controller, err interface{})
+}</pre>
+            <p>
+              An empty implementation is provided; clients can embed that and
+              then implement only the hook of interest.  More hooks will be
+              added as they are found useful.
+            </p>
+            <p>
+              The booking sample app uses a plugin to manage its SQLite
+              database.
+            </p>
+          </div>
+
+          <div class="span10">
+            <pre class="prettyprint">
+// app/controllers/db.go
+
+import (
+	_ "github.com/mattn/go-sqlite3"
+	"github.com/robfig/revel"
+)
+
+var (
+	db *sql.DB
+)
+
+type DbPlugin struct {
+	rev.EmptyPlugin
+}
+
+func (p DbPlugin) OnAppStart() {
+	db, _ = sql.Open("sqlite3", ":memory:")
+
+	// Create tables and insert some records.
+	db.Exec(`
+create table User (
+  UserId   integer primary key autoincrement,
+  Username varchar(20),
+  Password varchar(20),
+  Name varchar(100))`)
+	db.Exec("insert into User (Username, Password, Name)" +
+		" values ('demo', 'demo', 'Demo User')")
+}
+
+// Start a new transaction for each request.
+func (p DbPlugin) BeforeRequest(c *rev.Controller) {
+	txn, _ := db.Begin()
+	c.Txn = txn
+}
+
+// Commit the transaction at the conclusion.
+func (p DbPlugin) AfterRequest(c *rev.Controller) {
+	c.Txn.Commit()
+	c.Txn = nil
+}
+
+// Rollback in the case of exception.
+func (p DbPlugin) OnException(c *rev.Controller, err interface{}) {
+	c.Txn.Rollback()
+}
+
+func init() {
+	rev.RegisterPlugin(DbPlugin{})
+}
+            </pre>
+          </div>
+
+      </section>
+
+      <section id="wishlist">
+        <div class="page-header">
+          <h1>Wishlist</h1>
+        </div>
+        <p>
+          There are some areas that could benefit from some TLC.
+        </p>
+        <ul>
+          <li> <b>ORM</b> -- A good ORM would make simple things simple.
+            (Presently users can integrate something manually using a Plugin.)
+            (e.g. <a href="http://github.com/coopernurse/gorp">gorp</a>)
+          <li> <b>Reverse routing</b> -- A typesafe reverse router (usable from
+            Controllers and Templates).
+          <li> <b>Modules</b> -- Modules that share functionality across Revel
+            apps.  A module repository that anyone can contribute to and install from.
+          <li> <b>Testing</b> -- Tools to make it simple to test your web app.
+        </ul>
       </section>
 
       <hr>

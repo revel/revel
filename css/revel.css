@@ -31,3 +31,96 @@ pre {
   word-break:normal;
   overflow-x:scroll;
 }
+
+#header {
+  position: absolute;
+  width: 100%;
+  min-width: 940px;
+  top: 0;
+  height: 60px;
+  border-bottom: 1px solid #322;
+  opacity:0.5;
+  -webkit-box-shadow: rgba(0, 0, 0, 0.2) 0 2px 4px;
+  -moz-box-shadow: rgba(0, 0, 0, 0.2) 0 2px 4px;
+  box-shadow: rgba(0, 0, 0, 0.2) 0 2px 4px;
+}
+
+#header #wrapper {
+  width: 940px;
+  margin: 0 auto;
+  position: relative;
+}
+
+#header #nav {
+  width: 900px;
+  height: 65px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+#header #nav li {
+  margin: 0 40px;
+  font-size:28px;
+  line-height: 26px;
+  display: inline;
+}
+
+#header #nav li.active a {
+  font-weight:bold;
+  color:#eee !important;
+}
+
+a {
+  color: #0088cc;
+  text-decoration: none;
+}
+
+a:hover {
+  color: #005580;
+  text-decoration: underline;
+}
+
+.navbar .container {
+  width: 940px;
+}
+
+@media (min-width: 768px) and (max-width: 979px) {
+  .navbar .container {
+    width: 724px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .navbar .container {
+    width: 1170px;
+  }
+}
+
+.leftnav {
+  border-right: 1px solid #eee;
+  padding-top: 15px;
+}
+
+.brand {
+  padding: 5px 20px 7px !important;
+}
+
+.navbar .nav > li > a {
+  padding-top: 29px !important;
+  padding-bottom: 5px !important;
+}
+
+.navbar-inner {
+  min-height: 0 !important;
+  height: 55px !important;
+}
+
+
+.nav-list > .active > a, .nav-list > .active > a:hover {
+  background-color: #999 !important;
+}
+
+.navbar .nav .active > a, .navbar .nav .active > a:hover {
+  color: #fff !important;
+  background-color: #999 !important;
+}

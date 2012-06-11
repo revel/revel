@@ -18,3 +18,4 @@ module Jekyll
 end
 
 Liquid::Template.register_tag('raw', Jekyll::RawTag)
+Liquid::Template.register_tag('literal', Jekyll::RawTag)

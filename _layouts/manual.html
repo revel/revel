@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Revel</title>
+    <link href="../css/journal.min.css" rel="stylesheet">
+    <link href="../css/bootstrap-responsive.css" rel="stylesheet">
+    <link href="../css/revel.css" rel="stylesheet">
+    <link href="../css/prettify.css" type="text/css" rel="stylesheet" />
+    <script src="../js/prettify.js" type="text/javascript"></script>
+    <script src="../js/lang-go-rich.js" type="text/javascript"></script>
+  </head>
+
+  <body onload="prettyPrint()">
+
+    {% include topnav.html %}
+
+    <div class="container">
+      <div class="row">
+        <div class="span2">
+          {% assign layout = 'manual' %}
+          {% include leftnav.html %}
+        </div>
+
+        <div class="span10">
+          <div class="page-header">
+            <h1>{{ page.title }}</h1>
+          </div>
+          {{ content }}
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

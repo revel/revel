@@ -1,0 +1,83 @@
+safe: true
+lsi: false
+pygments: true
+
+manualnav:
+-
+  name: Overview
+  articles:
+  -
+    title: Introduction
+    url: /manual/index.html
+  -
+    title: Concepts
+    url: /manual/concepts.html
+  -
+    title: Organization
+    url: /manual/organization.html
+  -
+    title: Development Cycle
+    url: /manual/devcycle.html
+  -
+    title: How Revel Works
+    url: /manual/howrevelworks.html
+-
+  name: Controllers
+  articles:
+  -
+    title: Overview
+    url: /manual/overview.html
+  -
+    title: Routing
+    url: /manual/routing.html
+  -
+    title: Binding Parameters
+    url: /manual/binding.html
+  -
+    title: Validation
+    url: /manual/validation.html
+  -
+    title: Session / Flash
+    url: /manual/interceptors.html
+  -
+    title: Results
+    url: /manual/results.html
+  -
+    title: Templates
+    url: /manual/templates.html
+  -
+    title: Interceptors
+    url: /manual/interceptors.html
+-
+  name: Operational
+  articles:
+  -
+    title: Logging
+    url: /manual/logging.html
+  -
+    title: Deployment
+    url: /manual/deployment.html
+-
+  name: Advanced
+  articles:
+  -
+    title: Websockets
+    url: /manual/websockets.html
+-
+  name: Reference
+  articles:
+  -
+    title: app.conf
+    url: /manual/appconf.html
+  -
+    title: Command line tool
+    url: /manual/cmd.html
+  -
+    title: Template functions
+    url: /manual/template-funcs.html
+  -
+    title: Validation functions
+    url: /manual/validation-funcs.html
+  -
+    title: Godoc
+    url: /docs/godoc/index.html
