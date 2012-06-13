@@ -1,19 +1,13 @@
 ---
-layout: default
-root: ./
+root: .
 ---
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Revel</title>
-    <link href="css/journal.min.css" rel="stylesheet">
-    <link href="css/bootstrap-responsive.min.css" rel="stylesheet">
-    <link href="css/revel.css" rel="stylesheet">
-    <link href="css/prettify.css" type="text/css" rel="stylesheet" />
-    <script src="js/prettify.js" type="text/javascript"></script>
-    <script src="js/lang-go-rich.js" type="text/javascript"></script>
+    {% include head.html %}
+    <link href="{{ page.root }}/css/prettify.css" type="text/css" rel="stylesheet" />
+    <script src="{{ page.root }}/js/prettify.js" type="text/javascript"></script>
+    <script src="{{ page.root }}/js/lang-go-rich.js" type="text/javascript"></script>
   </head>
 
   <body onload="prettyPrint()">
@@ -162,7 +156,7 @@ root: ./
               and extracting arguments from URIs.  Here's a commented sample...
             </p>
           </div>
-          <div class="span10">
+          <div class="span12">
             <pre>
 # conf/routes
 # This file defines all application routes (Higher priority routes first)
@@ -201,7 +195,7 @@ GET    /public/               staticDir:public       <b># Map /app/public resour
             </p>
           </div>
 
-          <div class="span10">
+          <div class="span12">
             <pre class="prettyprint lang-go">
 // app/controllers/app.go
 
@@ -262,7 +256,7 @@ func (c Application) SaveUser(user models.User, verifyPassword string) rev.Resul
             </ul>
           </div>
 
-          <div class="span10">
+          <div class="span12">
             <pre class="prettyprint lang-html">{% capture teaser_template %}{% literal %}
 {{/* app/views/Application/Register.html */}}
 
@@ -298,7 +292,7 @@ func (c Application) SaveUser(user models.User, verifyPassword string) rev.Resul
             </p>
           </div>
 
-          <div class="span10">
+          <div class="span12">
             <pre class="prettyprint">
 // app/controllers/app.go
 
@@ -343,7 +337,7 @@ type Plugin interface {
             </p>
           </div>
 
-          <div class="span10">
+          <div class="span12">
             <pre class="prettyprint">
 // app/controllers/db.go
 

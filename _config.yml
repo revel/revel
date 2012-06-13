@@ -78,6 +78,3 @@ manualnav:
   -
     title: Validation functions
     url: /manual/validation-funcs.html
-  -
-    title: Godoc
-    url: /docs/godoc/index.html
