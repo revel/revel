@@ -124,3 +124,7 @@ a:hover {
   color: #fff !important;
   background-color: #999 !important;
 }
+
+.navbar .nav li a {
+  font-size: 16px;
+}
