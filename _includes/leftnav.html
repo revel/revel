@@ -1,12 +1,13 @@
 <div class="leftnav">
   <ul class="nav nav-list">
-{% for group in site.manualnav %}
+{% for group in page.nav %}
     <li class="nav-header">{{ group.name }}</li>
   {% for node in group.articles %}
-    {% if page.url == node.url %}
-      <li class="active"><a href="{{node.url}}">{{node.title}}</a></li>
+    {% capture node_url %}{{ node.url|prepend:'/manual/' }}{% endcapture %}
+    {% if page.url == node_url %}
+      <li class="active"><a href="{{ root }}/manual/{{node.url}}">{{node.title}}</a></li>
     {% else %}
-      <li><a href="{{node.url}}">{{node.title}}</a></li>
+      <li><a href="{{ root }}/manual/{{node.url}}">{{node.title}}</a></li>
     {% endif %}
   {% endfor %}
 {% endfor %}

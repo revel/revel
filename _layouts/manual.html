@@ -1,5 +1,81 @@
 ---
 root: ..
+nav:
+-
+  name: Overview
+  articles:
+  -
+    title: Introduction
+    url: index.html
+  -
+    title: Concepts
+    url: concepts.html
+  -
+    title: Organization
+    url: organization.html
+  -
+    title: Development Cycle
+    url: devcycle.html
+  -
+    title: How Revel Works
+    url: howrevelworks.html
+-
+  name: Controllers
+  articles:
+  -
+    title: Overview
+    url: overview.html
+  -
+    title: Routing
+    url: routing.html
+  -
+    title: Binding Parameters
+    url: binding.html
+  -
+    title: Validation
+    url: validation.html
+  -
+    title: Session / Flash
+    url: interceptors.html
+  -
+    title: Results
+    url: results.html
+  -
+    title: Templates
+    url: templates.html
+  -
+    title: Interceptors
+    url: interceptors.html
+-
+  name: Operational
+  articles:
+  -
+    title: Logging
+    url: logging.html
+  -
+    title: Deployment
+    url: deployment.html
+-
+  name: Advanced
+  articles:
+  -
+    title: Websockets
+    url: websockets.html
+-
+  name: Reference
+  articles:
+  -
+    title: app.conf
+    url: appconf.html
+  -
+    title: Command line tool
+    url: cmd.html
+  -
+    title: Template functions
+    url: template-funcs.html
+  -
+    title: Validation functions
+    url: validation-funcs.html
 ---
 <!DOCTYPE html>
 <html lang="en">
@@ -17,7 +93,6 @@ root: ..
     <div class="container">
       <div class="row">
         <div class="span2">
-          {% assign layout = 'manual' %}
           {% include leftnav.html %}
         </div>
 

@@ -1,7 +1,6 @@
 ---
 title: Introduction
 layout: manual
-group: Overview
 ---
 
 This manual documents aspects of the Revel framework.
