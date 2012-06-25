@@ -41,7 +41,7 @@ Revel requires:
 - All controllers are under `app/controllers`
 
 Beyond that, the application may organize its code however it wishes.  Revel
-will watch all directories under `app/` for changes and rebuild the app when it
+will watch all directories under `app/` and rebuild the app when it
 notices any changes.  Any dependencies outside of `app/` will not be watched for
 changes -- it is the developer's responsibility to recompile when necessary.
 
