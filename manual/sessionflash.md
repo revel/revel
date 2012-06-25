@@ -68,3 +68,4 @@ Walking through this example:
 It uses two convenience functions:
 1. `Flash.Success(message string)` is an abbreviation of Flash.Out\["success"] = message
 2. `Flash.Error(message string)` is an abbreviation of Flash.Out\["error"] = message
+
