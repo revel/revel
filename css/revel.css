@@ -128,3 +128,13 @@ a:hover {
 .navbar .nav li a {
   font-size: 16px;
 }
+
+code {
+  color: #a14;
+  background: 0;
+  border: 0;
+}
+
+a code {
+  color: #08C;
+}
