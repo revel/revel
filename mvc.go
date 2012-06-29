@@ -59,7 +59,7 @@ type Controller struct {
 
 	Flash      Flash                  // User cookie, cleared after each request.
 	Session    Session                // Session, stored in cookie, signed.
-	Params     Params                 // URL Query parameters
+	Params     Params                 // Parameters from URL and form (including multipart).
 	Args       map[string]interface{} // Per-request scratch space.
 	RenderArgs map[string]interface{} // Args passed to the template.
 	Validation *Validation            // Data validation helpers

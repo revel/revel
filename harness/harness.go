@@ -92,7 +92,9 @@ type harnessProxy struct {
 }
 
 func renderError(w http.ResponseWriter, r *http.Request, err error) {
-	rev.ErrorResult{err}.Apply(&rev.Request{r}, &rev.Response{Out: w})
+	rev.ErrorResult{err}.Apply(
+		&rev.Request{Request:r},
+		&rev.Response{Out: w})
 }
 
 func (hp *harnessProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {

@@ -110,19 +110,19 @@ func (v *Validation) Required(obj interface{}) *ValidationResult {
 }
 
 type Min struct {
-	min int
+	Min int
 }
 
 func (m Min) IsSatisfied(obj interface{}) bool {
 	num, ok := obj.(int)
 	if ok {
-		return num >= m.min
+		return num >= m.Min
 	}
 	return false
 }
 
 func (m Min) DefaultMessage() string {
-	return fmt.Sprintln("Minimum is", m.min)
+	return fmt.Sprintln("Minimum is", m.Min)
 }
 
 func (v *Validation) Min(n int, min int) *ValidationResult {
@@ -130,19 +130,19 @@ func (v *Validation) Min(n int, min int) *ValidationResult {
 }
 
 type Max struct {
-	max int
+	Max int
 }
 
 func (m Max) IsSatisfied(obj interface{}) bool {
 	num, ok := obj.(int)
 	if ok {
-		return num <= m.max
+		return num <= m.Max
 	}
 	return false
 }
 
 func (m Max) DefaultMessage() string {
-	return fmt.Sprintln("Maximum is", m.max)
+	return fmt.Sprintln("Maximum is", m.Max)
 }
 
 func (v *Validation) Max(n int, max int) *ValidationResult {
@@ -151,21 +151,21 @@ func (v *Validation) Max(n int, max int) *ValidationResult {
 
 // Requires an array or string to be at least a given length.
 type MinSize struct {
-	min int
+	Min int
 }
 
 func (m MinSize) IsSatisfied(obj interface{}) bool {
 	if arr, ok := obj.([]interface{}); ok {
-		return len(arr) >= m.min
+		return len(arr) >= m.Min
 	}
 	if str, ok := obj.(string); ok {
-		return len(str) >= m.min
+		return len(str) >= m.Min
 	}
 	return false
 }
 
 func (m MinSize) DefaultMessage() string {
-	return fmt.Sprintln("Minimum size is", m.min)
+	return fmt.Sprintln("Minimum size is", m.Min)
 }
 
 func (v *Validation) MinSize(obj interface{}, min int) *ValidationResult {
@@ -174,21 +174,21 @@ func (v *Validation) MinSize(obj interface{}, min int) *ValidationResult {
 
 // Requires an array or string to be at most a given length.
 type MaxSize struct {
-	max int
+	Max int
 }
 
 func (m MaxSize) IsSatisfied(obj interface{}) bool {
 	if arr, ok := obj.([]interface{}); ok {
-		return len(arr) <= m.max
+		return len(arr) <= m.Max
 	}
 	if str, ok := obj.(string); ok {
-		return len(str) <= m.max
+		return len(str) <= m.Max
 	}
 	return false
 }
 
 func (m MaxSize) DefaultMessage() string {
-	return fmt.Sprintln("Maximum size is", m.max)
+	return fmt.Sprintln("Maximum size is", m.Max)
 }
 
 func (v *Validation) MaxSize(obj interface{}, max int) *ValidationResult {
@@ -197,16 +197,16 @@ func (v *Validation) MaxSize(obj interface{}, max int) *ValidationResult {
 
 // Requires a string to match a given regex.
 type Match struct {
-	regex *regexp.Regexp
+	Regexp *regexp.Regexp
 }
 
 func (m Match) IsSatisfied(obj interface{}) bool {
 	str := obj.(string)
-	return m.regex.MatchString(str)
+	return m.Regexp.MatchString(str)
 }
 
 func (m Match) DefaultMessage() string {
-	return fmt.Sprintln("Must match", m.regex)
+	return fmt.Sprintln("Must match", m.Regexp)
 }
 
 func (v *Validation) Match(str string, regex *regexp.Regexp) *ValidationResult {
@@ -230,3 +230,17 @@ func (v *Validation) check(chk Check, obj interface{}) *ValidationResult {
 		Error: err,
 	}
 }
+
+// Apply a group of Checks to a field, in order, and return the ValidationResult
+// from the first Check that fails, or the last one that succeeds.
+func (v *Validation) Check(obj interface{}, checks ...Check) *ValidationResult {
+	var result *ValidationResult
+	for _, check := range checks {
+		result = v.check(check, obj)
+		if !result.Ok {
+			return result
+		}
+	}
+	return result
+}
+

@@ -36,9 +36,11 @@ func (b Booking) Validate(v *rev.Validation) {
 		Key("booking.CardNumber").
 		Message("Credit card number must be numeric and 16 digits")
 
-	v.Required(b.NameOnCard).Key("booking.NameOnCard")
-	v.MinSize(b.NameOnCard, 3).Key("booking.NameOnCard")
-	v.MaxSize(b.NameOnCard, 70).Key("booking.NameOnCard")
+	v.Check(b.NameOnCard,
+		rev.Required{},
+		rev.MinSize{3},
+		rev.MaxSize{70},
+	).Key("booking.NameOnCard")
 }
 
 func (b Booking) Total() int {

@@ -152,13 +152,13 @@ func (c Hotels) ConfirmBooking(id int, booking models.Booking) rev.Result {
 	booking.User = connected(c.Controller)
 	booking.Validate(c.Validation)
 
-	if c.Validation.HasErrors() || c.Params["revise"] != nil {
+	if c.Validation.HasErrors() || c.Params.Get("revise") != "" {
 		c.Validation.Keep()
 		c.FlashParams()
 		return c.Redirect("/hotels/%d/booking", id)
 	}
 
-	if c.Params["confirm"] != nil {
+	if c.Params.Get("confirm") != "" {
 		result, err := c.Txn.Exec(`
 insert into Booking (
   UserId, HotelId, CheckInDate, CheckOutDate,
