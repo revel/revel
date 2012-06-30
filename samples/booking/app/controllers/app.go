@@ -46,14 +46,12 @@ func (c Application) Index() rev.Result {
 	if connected(c.Controller) != nil {
 		return c.Redirect(Hotels.Index)
 	}
-	title := "Home"
 	c.Flash.Error("Please log in first")
-	return c.Render(title)
+	return c.Render()
 }
 
 func (c Application) Register() rev.Result {
-	title := "Register"
-	return c.Render(title)
+	return c.Render()
 }
 
 func (c Application) SaveUser(user models.User, verifyPassword string) rev.Result {

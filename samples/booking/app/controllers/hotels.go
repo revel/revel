@@ -22,7 +22,6 @@ type Hotels struct {
 }
 
 func (c Hotels) Index() rev.Result {
-	title := "Search"
 	rows, err := c.Txn.Query(`
 select BookingId, UserId, HotelId, CheckInDate, CheckOutDate,
        CardNumber, NameOnCard, CardExpMonth, CardExpYear, Smoking, Beds
@@ -51,11 +50,10 @@ select BookingId, UserId, HotelId, CheckInDate, CheckOutDate,
 		b.Hotel = c.loadHotelById(b.HotelId)
 	}
 
-	return c.Render(title, bookings)
+	return c.Render(bookings)
 }
 
 func (c Hotels) List(search string, size, page int) rev.Result {
-	title := "List"
 	if page == 0 {
 		page = 1
 	}
@@ -77,7 +75,7 @@ select HotelId, Name, Address, City, State, Zip, Country, Price
  limit ?, ?`, "%"+search+"%", "%"+search+"%", (page-1)*size, size))
 	}
 
-	return c.Render(title, hotels, search, size, page, nextPage)
+	return c.Render(hotels, search, size, page, nextPage)
 }
 
 func loadHotels(rows *sql.Rows, err error) []*models.Hotel {
@@ -114,7 +112,7 @@ func (c Hotels) Show(id int) rev.Result {
 	hotel := c.loadHotelById(id)
 	if hotel == nil {
 		title = "Not found"
-		// 	return c.NotFound("Hotel does not exist")
+		// 	TODO: return c.NotFound("Hotel does not exist")
 	} else {
 		title = hotel.Name
 	}
@@ -122,8 +120,7 @@ func (c Hotels) Show(id int) rev.Result {
 }
 
 func (c Hotels) Settings() rev.Result {
-	title := "Settings"
-	return c.Render(title)
+	return c.Render()
 }
 
 func (c Hotels) SaveSettings(password, verifyPassword string) rev.Result {
