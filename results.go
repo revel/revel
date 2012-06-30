@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"reflect"
 )
 
@@ -62,8 +63,7 @@ func (r ErrorResult) Apply(req *Request, resp *Response) {
 		return
 	}
 
-	// TODO: Allow other error codes.
-	resp.Out.WriteHeader(500)
+	resp.WriteHeader(http.StatusInternalServerError)
 	b.WriteTo(resp.Out)
 }
 
@@ -73,7 +73,7 @@ type PlaintextErrorResult struct {
 
 // This method is used when the template loader or error template is not available.
 func (r PlaintextErrorResult) Apply(req *Request, resp *Response) {
-	resp.Out.WriteHeader(500)
+	resp.WriteHeader(http.StatusInternalServerError)
 	resp.Out.Write([]byte(r.Error()))
 }
 
@@ -104,6 +104,7 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
 		return
 	}
 
+	resp.WriteHeader(200)
 	b.WriteTo(resp.Out)
 }
 
@@ -134,7 +135,7 @@ type RedirectToUrlResult struct {
 
 func (r *RedirectToUrlResult) Apply(req *Request, resp *Response) {
 	resp.Headers.Set("Location", r.url)
-	resp.Out.WriteHeader(302)
+	resp.WriteHeader(http.StatusFound)
 }
 
 type RedirectToActionResult struct {
@@ -149,7 +150,7 @@ func (r *RedirectToActionResult) Apply(req *Request, resp *Response) {
 		return
 	}
 	resp.Headers.Set("Location", url)
-	resp.Out.WriteHeader(302)
+	resp.WriteHeader(http.StatusFound)
 }
 
 func getRedirectUrl(item interface{}) (string, error) {

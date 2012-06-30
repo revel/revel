@@ -76,7 +76,7 @@ func NewController(w http.ResponseWriter, r *http.Request, ct *ControllerType) *
 		Type:    ct,
 		Request: revReq,
 		Response: &Response{
-			Status:      200,
+			Status:      0,
 			ContentType: "",
 			Headers:     w.Header(),
 			Out:         w,
@@ -501,6 +501,17 @@ func ContentType(req *http.Request) string {
 		return "text/html"
 	}
 	return strings.ToLower(strings.TrimSpace(strings.Split(contentType, ";")[0]))
+}
+
+// Write the header (for now, just the status code).
+// The status may be set directly by the application (c.Response.Status = 501).
+// if it isn't, then fall back to the provided status code.
+func (resp *Response) WriteHeader(defaultStatusCode int) {
+	status := resp.Status
+	if status == 0 {
+		status = defaultStatusCode
+	}
+	resp.Out.WriteHeader(status)
 }
 
 // Internal bookeeping
