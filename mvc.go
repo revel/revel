@@ -361,8 +361,40 @@ func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
 	}
 }
 
+// Uses encoding/json.Marshal to return JSON to the client.
 func (c *Controller) RenderJson(o interface{}) Result {
 	return RenderJsonResult{o}
+}
+
+// Uses encoding/xml.Marshal to return XML to the client.
+func (c *Controller) RenderXml(o interface{}) Result {
+	return RenderXmlResult{o}
+}
+
+// Render plaintext in response, printf style.
+func (c *Controller) RenderText(text string, objs ...interface{}) Result {
+	finalText := text
+	if len(objs) > 0 {
+		finalText = fmt.Sprintf(text, objs)
+	}
+	return &RenderTextResult{finalText}
+}
+
+// Render a "todo" indicating that the action isn't done yet.
+func (c *Controller) Todo() Result {
+	c.Response.Status = http.StatusNotImplemented
+	return ErrorResult{&Error{
+			Title:       "TODO",
+			Description: "This action is not implemented",
+	}}
+}
+
+func (c *Controller) NotFound(msg string) Result {
+	c.Response.Status = http.StatusNotFound
+	return ErrorResult{&Error{
+			Title:       "Not Found",
+			Description: msg,
+	}}
 }
 
 // Redirect to an action or to a URL.
@@ -506,12 +538,15 @@ func ContentType(req *http.Request) string {
 // Write the header (for now, just the status code).
 // The status may be set directly by the application (c.Response.Status = 501).
 // if it isn't, then fall back to the provided status code.
-func (resp *Response) WriteHeader(defaultStatusCode int) {
-	status := resp.Status
-	if status == 0 {
-		status = defaultStatusCode
+func (resp *Response) WriteHeader(defaultStatusCode int, defaultContentType string) {
+	if resp.Status == 0 {
+		resp.Status = defaultStatusCode
 	}
-	resp.Out.WriteHeader(status)
+	if resp.ContentType == "" {
+		resp.ContentType = defaultContentType
+	}
+	resp.Headers.Set("Content-Type", resp.ContentType)
+	resp.Out.WriteHeader(resp.Status)
 }
 
 // Internal bookeeping

@@ -3,6 +3,7 @@ package rev
 import (
 	"bytes"
 	"encoding/json"
+	"encoding/xml"
 	"errors"
 	"fmt"
 	"net/http"
@@ -63,7 +64,7 @@ func (r ErrorResult) Apply(req *Request, resp *Response) {
 		return
 	}
 
-	resp.WriteHeader(http.StatusInternalServerError)
+	resp.WriteHeader(http.StatusInternalServerError, "text/html")
 	b.WriteTo(resp.Out)
 }
 
@@ -73,7 +74,7 @@ type PlaintextErrorResult struct {
 
 // This method is used when the template loader or error template is not available.
 func (r PlaintextErrorResult) Apply(req *Request, resp *Response) {
-	resp.WriteHeader(http.StatusInternalServerError)
+	resp.WriteHeader(http.StatusInternalServerError, "text/plain")
 	resp.Out.Write([]byte(r.Error()))
 }
 
@@ -104,7 +105,7 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
 		return
 	}
 
-	resp.WriteHeader(200)
+	resp.WriteHeader(http.StatusOK, "text/html")
 	b.WriteTo(resp.Out)
 }
 
@@ -126,7 +127,40 @@ func (r RenderJsonResult) Apply(req *Request, resp *Response) {
 		return
 	}
 
+	resp.WriteHeader(http.StatusOK, "application/json")
 	resp.Out.Write(b)
+}
+
+type RenderXmlResult struct {
+	obj interface{}
+}
+
+func (r RenderXmlResult) Apply(req *Request, resp *Response) {
+	var b []byte
+	var err error
+	// TODO: Extract indent to app.conf
+	if AppMode == DEV {
+		b, err = xml.MarshalIndent(r.obj, "", "  ")
+	} else {
+		b, err = xml.Marshal(r.obj)
+	}
+
+	if err != nil {
+		ErrorResult{err}.Apply(req, resp)
+		return
+	}
+
+	resp.WriteHeader(http.StatusOK, "application/xml")
+	resp.Out.Write(b)
+}
+
+type RenderTextResult struct {
+	text string
+}
+
+func (r RenderTextResult) Apply(req *Request, resp *Response) {
+	resp.WriteHeader(http.StatusOK, "text/plain")
+	resp.Out.Write([]byte(r.text))
 }
 
 type RedirectToUrlResult struct {
@@ -135,7 +169,7 @@ type RedirectToUrlResult struct {
 
 func (r *RedirectToUrlResult) Apply(req *Request, resp *Response) {
 	resp.Headers.Set("Location", r.url)
-	resp.WriteHeader(http.StatusFound)
+	resp.WriteHeader(http.StatusFound, "")
 }
 
 type RedirectToActionResult struct {
@@ -150,7 +184,7 @@ func (r *RedirectToActionResult) Apply(req *Request, resp *Response) {
 		return
 	}
 	resp.Headers.Set("Location", url)
-	resp.WriteHeader(http.StatusFound)
+	resp.WriteHeader(http.StatusFound, "")
 }
 
 func getRedirectUrl(item interface{}) (string, error) {
