@@ -7,6 +7,8 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/url"
+	"os"
+	"path/filepath"
 	"reflect"
 	"runtime"
 	"runtime/debug"
@@ -43,7 +45,6 @@ type Request struct {
 type Response struct {
 	Status      int
 	ContentType string
-	Headers     http.Header
 	Cookies     []*http.Cookie
 
 	Out http.ResponseWriter
@@ -78,7 +79,6 @@ func NewController(w http.ResponseWriter, r *http.Request, ct *ControllerType) *
 		Response: &Response{
 			Status:      0,
 			ContentType: "",
-			Headers:     w.Header(),
 			Out:         w,
 		},
 
@@ -384,17 +384,36 @@ func (c *Controller) RenderText(text string, objs ...interface{}) Result {
 func (c *Controller) Todo() Result {
 	c.Response.Status = http.StatusNotImplemented
 	return ErrorResult{&Error{
-			Title:       "TODO",
-			Description: "This action is not implemented",
+		Title:       "TODO",
+		Description: "This action is not implemented",
 	}}
 }
 
 func (c *Controller) NotFound(msg string) Result {
 	c.Response.Status = http.StatusNotFound
 	return ErrorResult{&Error{
-			Title:       "Not Found",
-			Description: msg,
+		Title:       "Not Found",
+		Description: msg,
 	}}
+}
+
+// Return a file, either displayed inline or downloaded as an attachment.
+// The name and size are taken from the file info.
+func (c *Controller) RenderFile(file *os.File, delivery ContentDisposition) Result {
+	var length int64 = -1
+	fileInfo, err := file.Stat()
+	if err != nil {
+		LOG.Println(err)
+	}
+	if fileInfo != nil {
+		length = fileInfo.Size()
+	}
+	return &BinaryResult{
+		Reader:   file,
+		Name:     filepath.Base(file.Name()),
+		Length:   length,
+		Delivery: delivery,
+	}
 }
 
 // Redirect to an action or to a URL.
@@ -545,7 +564,7 @@ func (resp *Response) WriteHeader(defaultStatusCode int, defaultContentType stri
 	if resp.ContentType == "" {
 		resp.ContentType = defaultContentType
 	}
-	resp.Headers.Set("Content-Type", resp.ContentType)
+	resp.Out.Header().Set("Content-Type", resp.ContentType)
 	resp.Out.WriteHeader(resp.Status)
 }
 

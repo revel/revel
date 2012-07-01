@@ -6,6 +6,7 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"reflect"
 )
@@ -163,12 +164,40 @@ func (r RenderTextResult) Apply(req *Request, resp *Response) {
 	resp.Out.Write([]byte(r.text))
 }
 
+type ContentDisposition string
+
+var (
+	Attachment ContentDisposition = "attachment"
+	Inline     ContentDisposition = "inline"
+)
+
+type BinaryResult struct {
+	Reader   io.Reader
+	Name     string
+	Length   int64
+	Delivery ContentDisposition
+}
+
+func (r *BinaryResult) Apply(req *Request, resp *Response) {
+	disposition := string(r.Delivery)
+	if r.Name != "" {
+		disposition += fmt.Sprintf("; filename=%s;", r.Name)
+	}
+	resp.Out.Header().Set("Content-Disposition", disposition)
+
+	if r.Length != -1 {
+		resp.Out.Header().Set("Content-Length", fmt.Sprintf("%d", r.Length))
+	}
+	resp.WriteHeader(http.StatusOK, ContentTypeByFilename(r.Name))
+	io.Copy(resp.Out, r.Reader)
+}
+
 type RedirectToUrlResult struct {
 	url string
 }
 
 func (r *RedirectToUrlResult) Apply(req *Request, resp *Response) {
-	resp.Headers.Set("Location", r.url)
+	resp.Out.Header().Set("Location", r.url)
 	resp.WriteHeader(http.StatusFound, "")
 }
 
@@ -183,7 +212,7 @@ func (r *RedirectToActionResult) Apply(req *Request, resp *Response) {
 		ErrorResult{err}.Apply(req, resp)
 		return
 	}
-	resp.Headers.Set("Location", url)
+	resp.Out.Header().Set("Location", url)
 	resp.WriteHeader(http.StatusFound, "")
 }
 

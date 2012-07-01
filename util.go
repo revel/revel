@@ -5,6 +5,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/url"
+	"path"
 	"reflect"
 	"regexp"
 	"strings"
@@ -74,4 +75,47 @@ func ParseKeyValueCookie(val string, cb func(key, val string)) {
 			cb(match[1], match[2])
 		}
 	}
+}
+
+const DefaultFileContentType = "application/octet-stream"
+
+var mimeConfig *MergedConfig
+
+// Load mime-types.conf on init.
+func loadMimeConfig() {
+	var err error
+	println("Running")
+	mimeConfig, err = LoadConfig(path.Join(RevelPath, "conf", "mime-types.conf"))
+	if err != nil {
+		LOG.Fatalln("Failed to load mime type config:", err)
+	}
+}
+
+func init() {
+	InitHooks = append(InitHooks, loadMimeConfig)
+}
+
+// Returns a MIME content type based on the filename's extension.
+// If no appropriate one is found, returns "application/octet-stream" by default.
+// Additionally, specifies the charset as UTF-8 for text/* types.
+func ContentTypeByFilename(filename string) string {
+	dot := strings.LastIndex(filename, ".")
+	if dot == -1 || dot+1 >= len(filename) {
+		return DefaultFileContentType
+	}
+
+	extension := filename[dot+1:]
+	contentType, err := mimeConfig.String(extension)
+	if contentType == "" {
+		if err != nil {
+			LOG.Println(err)
+		}
+		return DefaultFileContentType
+	}
+
+	if strings.HasPrefix(contentType, "text/") {
+		return contentType + "; charset=utf-8"
+	}
+
+	return contentType
 }

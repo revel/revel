@@ -27,9 +27,13 @@ var (
 	AppMode RunMode // DEV or PROD
 
 	// Revel installation details
+	RevelPath         string // e.g. "/Users/robfig/gocode/src/revel"
 	RevelTemplatePath string // e.g. "/Users/robfig/gocode/src/revel/templates"
 
 	LOG = log.New(os.Stdout, "", log.Ldate|log.Ltime|log.Lshortfile)
+
+	// Revel runs every function in this array after init.
+	InitHooks []func()
 
 	// Private
 	revelInit bool = false
@@ -56,11 +60,11 @@ func Init(importPath string, mode RunMode) {
 	if err != nil {
 		log.Fatalf("Failed to find revel code.")
 	}
-	RevelTemplatePath = path.Join(revelPkg.Dir, "templates")
+	RevelPath = revelPkg.Dir
+	RevelTemplatePath = path.Join(RevelPath, "templates")
 
 	// Load application.conf
-	Config, err = LoadConfig(
-		path.Join(BasePath, "conf", "app.conf"))
+	Config, err = LoadConfig(path.Join(BasePath, "conf", "app.conf"))
 	if err != nil {
 		log.Fatalln("Failed to load app.conf:", err)
 	}
@@ -70,6 +74,10 @@ func Init(importPath string, mode RunMode) {
 		log.Fatalln("No app.secret provided.")
 	}
 	secretKey = []byte(secretStr)
+
+	for _, hook := range InitHooks {
+		hook()
+	}
 
 	revelInit = true
 }
