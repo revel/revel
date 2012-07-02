@@ -52,7 +52,7 @@ func handleInternal(w http.ResponseWriter, r *http.Request, ws *websocket.Conn) 
 		return
 	}
 
-	var method reflect.Value = appControllerPtr.MethodByName(route.MethodName)
+	var method reflect.Value = appControllerPtr.MethodByName(controller.MethodType.Name)
 	if !method.IsValid() {
 		LOG.Printf("E: Function %s not found on Controller %s",
 			route.MethodName, route.ControllerName)

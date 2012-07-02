@@ -599,6 +599,7 @@ type MethodType struct {
 	Name           string
 	Args           []*MethodArg
 	RenderArgNames map[int][]string
+	lowerName      string
 }
 
 type MethodArg struct {
@@ -606,9 +607,11 @@ type MethodArg struct {
 	Type reflect.Type
 }
 
+// Searches for a given exported method (case insensitive)
 func (ct *ControllerType) Method(name string) *MethodType {
+	lowerName := strings.ToLower(name)
 	for _, method := range ct.Methods {
-		if method.Name == name {
+		if method.lowerName == lowerName {
 			return method
 		}
 	}
@@ -617,6 +620,7 @@ func (ct *ControllerType) Method(name string) *MethodType {
 
 var controllers = make(map[string]*ControllerType)
 
+// Register a Controller and its Methods with Revel.
 func RegisterController(c interface{}, methods []*MethodType) {
 	// De-star the controller type
 	// (e.g. given TypeOf((*Application)(nil)), want TypeOf(Application))
@@ -625,15 +629,16 @@ func RegisterController(c interface{}, methods []*MethodType) {
 
 	// De-star all of the method arg types too.
 	for _, m := range methods {
+		m.lowerName = strings.ToLower(m.Name)
 		for _, arg := range m.Args {
 			arg.Type = arg.Type.Elem()
 		}
 	}
 
-	controllers[elem.Name()] = &ControllerType{Type: elem, Methods: methods}
-	log.Printf("Registered controller: %s", elem.Name())
+	controllers[strings.ToLower(elem.Name())] = &ControllerType{Type: elem, Methods: methods}
+	LOG.Printf("Registered controller: %s", elem.Name())
 }
 
 func LookupControllerType(name string) *ControllerType {
-	return controllers[name]
+	return controllers[strings.ToLower(name)]
 }
