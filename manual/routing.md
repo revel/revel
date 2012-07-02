@@ -108,17 +108,25 @@ directory layout)
 	*      /{controller}/{action} {controller}.{action}
 
 URL argument extraction can also be used to determine the invoked action.
+Matching to controllers and actions is **case insensitive**.
 
-The first example route would effect the following routes:
+The first example route line would effect the following routes:
 
-	/hotels/1/Show    => Hotels.Show
-	/hotels/2/Details => Hotels.Details
+	/hotels/1/show    => Hotels.Show
+	/hotels/2/details => Hotels.Details
 
 Similarly, the second example may be used to access any action in the
 application:
 
-	/Application/Login => Application.Login
+	/application/login => Application.Login
+	/users/list        => Users.List
+
+Since matching to controllers and actions is case insensitive, the following
+routes would also work:
+
+	/APPLICATION/LOGIN => Application.Login
 	/Users/List        => Users.List
 
 Using auto-routing as a catch-all (e.g. last route in the file) is useful for
 quickly hooking up actions to non-vanity URLs.
+
