@@ -84,7 +84,6 @@ var mimeConfig *MergedConfig
 // Load mime-types.conf on init.
 func loadMimeConfig() {
 	var err error
-	println("Running")
 	mimeConfig, err = LoadConfig(path.Join(RevelPath, "conf", "mime-types.conf"))
 	if err != nil {
 		LOG.Fatalln("Failed to load mime type config:", err)

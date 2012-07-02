@@ -30,7 +30,8 @@ type Flash struct {
 // - File uploads
 type Params struct {
 	url.Values
-	Files map[string][]*multipart.FileHeader
+	Files    map[string][]*multipart.FileHeader
+	tmpFiles []*os.File // Temp files used during the request.
 }
 
 // A signed cookie (and thus limited to 4kb in size).
@@ -60,7 +61,7 @@ type Controller struct {
 
 	Flash      Flash                  // User cookie, cleared after each request.
 	Session    Session                // Session, stored in cookie, signed.
-	Params     Params                 // Parameters from URL and form (including multipart).
+	Params     *Params                // Parameters from URL and form (including multipart).
 	Args       map[string]interface{} // Per-request scratch space.
 	RenderArgs map[string]interface{} // Args passed to the template.
 	Validation *Validation            // Data validation helpers
@@ -177,9 +178,28 @@ func (c *Controller) SetCookie(cookie *http.Cookie) {
 // result.  (e.g. render a template to the response)
 func (c *Controller) Invoke(appControllerPtr reflect.Value, method reflect.Value, methodArgs []reflect.Value) {
 
+	// Handle panics.
 	defer func() {
 		if err := recover(); err != nil {
 			handleInvocationPanic(c, err)
+		}
+	}()
+
+	// Clean up from the request.
+	defer func() {
+		// Delete temp files.
+		if c.Request.MultipartForm != nil {
+			err := c.Request.MultipartForm.RemoveAll()
+			if err != nil {
+				LOG.Println("Error removing temporary files:", err)
+			}
+		}
+
+		for _, tmpFile := range c.Params.tmpFiles {
+			err := os.Remove(tmpFile.Name())
+			if err != nil {
+				LOG.Println("W: Could not remove upload temp file:", err)
+			}
 		}
 	}()
 
@@ -403,7 +423,7 @@ func (c *Controller) RenderFile(file *os.File, delivery ContentDisposition) Resu
 	var length int64 = -1
 	fileInfo, err := file.Stat()
 	if err != nil {
-		LOG.Println(err)
+		LOG.Println("RenderFile error:", err)
 	}
 	if fileInfo != nil {
 		length = fileInfo.Size()
@@ -501,7 +521,7 @@ func (f Flash) Success(msg string, args ...interface{}) {
 	}
 }
 
-func ParseParams(req *Request) Params {
+func ParseParams(req *Request) *Params {
 	var files map[string][]*multipart.FileHeader
 
 	// Always want the url parameters.
@@ -536,10 +556,10 @@ func ParseParams(req *Request) Params {
 		}
 	}
 
-	return Params{values, files}
+	return &Params{Values: values, Files: files}
 }
 
-func (p Params) Bind(name string, typ reflect.Type) reflect.Value {
+func (p *Params) Bind(name string, typ reflect.Type) reflect.Value {
 	return Bind(p, name, typ)
 }
 

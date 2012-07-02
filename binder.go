@@ -26,11 +26,11 @@ import (
 //   Binder(params, "user", User): User{Name:"rob"}
 //
 // Note that only exported struct fields may be bound.
-type Binder func(params Params, name string, typ reflect.Type) reflect.Value
+type Binder func(params *Params, name string, typ reflect.Type) reflect.Value
 
 // An adapter for easily making one-key-value binders.
 func ValueBinder(f func(value string, typ reflect.Type) reflect.Value) Binder {
-	return func(params Params, name string, typ reflect.Type) reflect.Value {
+	return func(params *Params, name string, typ reflect.Type) reflect.Value {
 		vals, ok := params.Values[name]
 		if !ok || len(vals) == 0 {
 			return reflect.Zero(typ)
@@ -114,7 +114,7 @@ type sliceValue struct {
 // elements, and then sets them to their appropriate location in the slice.
 // If elements are provided without an explicit index, they are added (in
 // unspecified order) to the end of the slice.
-func bindSlice(params Params, name string, typ reflect.Type) reflect.Value {
+func bindSlice(params *Params, name string, typ reflect.Type) reflect.Value {
 	// Collect an array of slice elements with their indexes (and the max index).
 	maxIndex := -1
 	numNoIndex := 0
@@ -193,7 +193,7 @@ func nextKey(key string) string {
 	return key[:fieldLen]
 }
 
-func bindStruct(params Params, name string, typ reflect.Type) reflect.Value {
+func bindStruct(params *Params, name string, typ reflect.Type) reflect.Value {
 	result := reflect.New(typ).Elem()
 	fieldValues := make(map[string]reflect.Value)
 	for key, _ := range params.Values {
@@ -227,7 +227,7 @@ func bindStruct(params Params, name string, typ reflect.Type) reflect.Value {
 	return result
 }
 
-func bindPointer(params Params, name string, typ reflect.Type) reflect.Value {
+func bindPointer(params *Params, name string, typ reflect.Type) reflect.Value {
 	return Bind(params, name, typ.Elem()).Addr()
 }
 
@@ -242,7 +242,7 @@ func bindTime(val string, typ reflect.Type) reflect.Value {
 }
 
 // Helper that returns an upload of the given name, or nil.
-func getMultipartFile(params Params, name string) multipart.File {
+func getMultipartFile(params *Params, name string) multipart.File {
 	for _, fileHeader := range params.Files[name] {
 		file, err := fileHeader.Open()
 		if err == nil {
@@ -253,7 +253,7 @@ func getMultipartFile(params Params, name string) multipart.File {
 	return nil
 }
 
-func bindFile(params Params, name string, typ reflect.Type) reflect.Value {
+func bindFile(params *Params, name string, typ reflect.Type) reflect.Value {
 	reader := getMultipartFile(params, name)
 	if reader == nil {
 		return reflect.Zero(typ)
@@ -271,6 +271,9 @@ func bindFile(params Params, name string, typ reflect.Type) reflect.Value {
 		return reflect.Zero(typ)
 	}
 
+	// Register it to be deleted after the request is done.
+	params.tmpFiles = append(params.tmpFiles, tmpFile)
+
 	_, err = io.Copy(tmpFile, reader)
 	if err != nil {
 		LOG.Println("W: Failed to copy upload to temp file:", err)
@@ -286,7 +289,7 @@ func bindFile(params Params, name string, typ reflect.Type) reflect.Value {
 	return reflect.ValueOf(tmpFile)
 }
 
-func bindByteArray(params Params, name string, typ reflect.Type) reflect.Value {
+func bindByteArray(params *Params, name string, typ reflect.Type) reflect.Value {
 	if reader := getMultipartFile(params, name); reader != nil {
 		b, err := ioutil.ReadAll(reader)
 		if err == nil {
@@ -297,14 +300,14 @@ func bindByteArray(params Params, name string, typ reflect.Type) reflect.Value {
 	return reflect.Zero(typ)
 }
 
-func bindReader(params Params, name string, typ reflect.Type) reflect.Value {
+func bindReader(params *Params, name string, typ reflect.Type) reflect.Value {
 	if reader := getMultipartFile(params, name); reader != nil {
 		return reflect.ValueOf(reader.(io.Reader))
 	}
 	return reflect.Zero(typ)
 }
 
-func bindReadSeeker(params Params, name string, typ reflect.Type) reflect.Value {
+func bindReadSeeker(params *Params, name string, typ reflect.Type) reflect.Value {
 	if reader := getMultipartFile(params, name); reader != nil {
 		return reflect.ValueOf(reader.(io.ReadSeeker))
 	}
@@ -313,7 +316,7 @@ func bindReadSeeker(params Params, name string, typ reflect.Type) reflect.Value 
 
 // Parse the value string into a real Go value.
 // Returns 0 values when things can not be parsed.
-func Bind(params Params, name string, typ reflect.Type) reflect.Value {
+func Bind(params *Params, name string, typ reflect.Type) reflect.Value {
 	if typ == nil {
 		return reflect.ValueOf(nil)
 	}
@@ -330,9 +333,9 @@ func Bind(params Params, name string, typ reflect.Type) reflect.Value {
 }
 
 func BindValue(val string, typ reflect.Type) reflect.Value {
-	return Bind(Params{Values: map[string][]string{"": {val}}}, "", typ)
+	return Bind(&Params{Values: map[string][]string{"": {val}}}, "", typ)
 }
 
 func BindFile(fileHeader *multipart.FileHeader, typ reflect.Type) reflect.Value {
-	return Bind(Params{Files: map[string][]*multipart.FileHeader{"": {fileHeader}}}, "", typ)
+	return Bind(&Params{Files: map[string][]*multipart.FileHeader{"": {fileHeader}}}, "", typ)
 }
