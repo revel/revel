@@ -92,9 +92,7 @@ type harnessProxy struct {
 }
 
 func renderError(w http.ResponseWriter, r *http.Request, err error) {
-	rev.ErrorResult{err}.Apply(
-		&rev.Request{Request:r},
-		&rev.Response{Out: w})
+	rev.RenderError(rev.NewRequest(r), rev.NewResponse(w), err)
 }
 
 func (hp *harnessProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -199,7 +197,7 @@ var (
 	DoNotWatch = []string{"tmp", "views"}
 )
 
-func Run(mode rev.RunMode) {
+func Run(mode string) {
 
 	// If we are in prod mode, just build and run the application.
 	if mode == rev.PROD {
@@ -318,7 +316,7 @@ func rebuild(port int) (compileError *rev.Error) {
 		"AppName":     rev.AppName,
 		"Controllers": controllerSpecs,
 		"ImportPaths": uniqueImportPaths(controllerSpecs),
-		"RunMode":     rev.AppMode,
+		"RunMode":     rev.RunMode,
 	})
 
 	// Terminate the server if it's already running.

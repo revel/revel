@@ -12,9 +12,9 @@ import (
 // the expected Route object.
 var routeTestCases = map[string]*Route{
 	"get / Application.Index": &Route{
-		method:        "GET",
-		path:          "/",
-		action:        "Application.Index",
+		Method:        "GET",
+		Path:          "/",
+		Action:        "Application.Index",
 		pathPattern:   regexp.MustCompile("/$"),
 		staticDir:     "",
 		args:          []*arg{},
@@ -22,9 +22,9 @@ var routeTestCases = map[string]*Route{
 	},
 
 	"post /app/{id} Application.SaveApp": &Route{
-		method:      "POST",
-		path:        "/app/{id}",
-		action:      "Application.SaveApp",
+		Method:      "POST",
+		Path:        "/app/{id}",
+		Action:      "Application.SaveApp",
 		pathPattern: regexp.MustCompile("/app/(?P<id>[^/]+)$"),
 		staticDir:   "",
 		args: []*arg{
@@ -37,9 +37,9 @@ var routeTestCases = map[string]*Route{
 	},
 
 	"post /app/{<[0-9]+>id} Application.SaveApp": &Route{
-		method:      "POST",
-		path:        "/app/{<[0-9]+>id}",
-		action:      "Application.SaveApp",
+		Method:      "POST",
+		Path:        "/app/{<[0-9]+>id}",
+		Action:      "Application.SaveApp",
 		pathPattern: regexp.MustCompile("/app/(?P<id>[0-9]+)$"),
 		staticDir:   "",
 		args: []*arg{
@@ -52,9 +52,9 @@ var routeTestCases = map[string]*Route{
 	},
 
 	"get /app/? Application.List": &Route{
-		method:        "GET",
-		path:          "/app/?",
-		action:        "Application.List",
+		Method:        "GET",
+		Path:          "/app/?",
+		Action:        "Application.List",
 		pathPattern:   regexp.MustCompile("/app/?$"),
 		staticDir:     "",
 		args:          []*arg{},
@@ -62,9 +62,9 @@ var routeTestCases = map[string]*Route{
 	},
 
 	"GET /public/ staticDir:www": &Route{
-		method:        "GET",
-		path:          "/public/",
-		action:        "staticDir:www",
+		Method:        "GET",
+		Path:          "/public/",
+		Action:        "staticDir:www",
 		pathPattern:   regexp.MustCompile("^/public/(.*)$"),
 		staticDir:     "www",
 		args:          []*arg{},
@@ -72,9 +72,9 @@ var routeTestCases = map[string]*Route{
 	},
 
 	"* /apps/{id}/{action} Application.{action}": &Route{
-		method:      "*",
-		path:        "/apps/{id}/{action}",
-		action:      "Application.{action}",
+		Method:      "*",
+		Path:        "/apps/{id}/{action}",
+		Action:      "Application.{action}",
 		pathPattern: regexp.MustCompile("/apps/(?P<id>[^/]+)/(?P<action>[^/]+)$"),
 		staticDir:   "",
 		args: []*arg{
@@ -88,13 +88,12 @@ var routeTestCases = map[string]*Route{
 			},
 		},
 		actionPattern: regexp.MustCompile("Application\\.(?P<action>[^/]+)"),
-		actionArgs:    []string{"action"},
 	},
 
 	"* /{controller}/{action} {controller}.{action}": &Route{
-		method:      "*",
-		path:        "/{controller}/{action}",
-		action:      "{controller}.{action}",
+		Method:      "*",
+		Path:        "/{controller}/{action}",
+		Action:      "{controller}.{action}",
 		pathPattern: regexp.MustCompile("/(?P<controller>[^/]+)/(?P<action>[^/]+)$"),
 		staticDir:   "",
 		args: []*arg{
@@ -108,7 +107,6 @@ var routeTestCases = map[string]*Route{
 			},
 		},
 		actionPattern: regexp.MustCompile("(?P<controller>[^/]+)\\.(?P<action>[^/]+)"),
-		actionArgs:    []string{"controller", "action"},
 	},
 }
 
@@ -121,9 +119,9 @@ func TestComputeRoute(t *testing.T) {
 			continue
 		}
 		actual := NewRoute(method, path, action)
-		eq(t, "Method", actual.method, expected.method)
-		eq(t, "Path", actual.path, expected.path)
-		eq(t, "Action", actual.action, expected.action)
+		eq(t, "Method", actual.Method, expected.Method)
+		eq(t, "Path", actual.Path, expected.Path)
+		eq(t, "Action", actual.Action, expected.Action)
 		eq(t, "pathPattern", fmt.Sprint(actual.pathPattern), fmt.Sprint(expected.pathPattern))
 		eq(t, "staticDir", actual.staticDir, expected.staticDir)
 		eq(t, "len(args)", len(actual.args), len(expected.args))
@@ -135,8 +133,6 @@ func TestComputeRoute(t *testing.T) {
 			eq(t, "arg.constraint", arg.constraint.String(), expected.args[i].constraint.String())
 		}
 		eq(t, "actionPattern", fmt.Sprint(actual.actionPattern), fmt.Sprint(expected.actionPattern))
-		eq(t, "len(actionArgs)", len(actual.actionArgs), len(expected.actionArgs))
-		eq(t, "actionArgs", fmt.Sprint(actual.actionArgs), fmt.Sprint(expected.actionArgs))
 		if t.Failed() {
 			t.Fatal("Failed on route:", routeLine)
 		}

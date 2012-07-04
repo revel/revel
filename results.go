@@ -15,26 +15,43 @@ type Result interface {
 	Apply(req *Request, resp *Response)
 }
 
-// If AppMode is DEV, this result renders a friendly error page.
-// TODO: If AppMode is PROD, this result renders the app 500 page.
+// This result handles all kinds of error codes (500, 404, ..).
+// It renders the relevant error page (errors/CODE.format, e.g. errors/500.json).
+// If RunMode is "dev", this results in a friendly error page.
 type ErrorResult struct {
+	RenderArgs map[string]interface{}
 	error
 }
 
 func (r ErrorResult) Apply(req *Request, resp *Response) {
+	format := req.Format
+	status := resp.Status
+	if status == 0 {
+		status = http.StatusInternalServerError
+	}
+
+	contentType := ContentTypeByFilename("xxx." + format)
+	if contentType == DefaultFileContentType {
+		contentType = "text/plain"
+	}
+
 	// Get the error template.
 	var err error
-	tmpl, err := MainTemplateLoader.Template("errors/500.html")
+	templatePath := fmt.Sprintf("errors/%d.%s", status, format)
+	tmpl, err := MainTemplateLoader.Template(templatePath)
 
 	// This func shows a plaintext error message, in case the template rendering
 	// doesn't work.
 	showPlaintext := func(err error) {
 		PlaintextErrorResult{fmt.Errorf("Server Error:\n%s\n\n"+
 			"Additionally, an error occurred when rendering the error page:\n%s",
-			r, err)}.Apply(req, resp)
+			r.error, err)}.Apply(req, resp)
 	}
 
 	if tmpl == nil {
+		if err == nil {
+			err = fmt.Errorf("Couldn't find template %s", templatePath)
+		}
 		showPlaintext(err)
 		return
 	}
@@ -55,9 +72,13 @@ func (r ErrorResult) Apply(req *Request, resp *Response) {
 		panic("no error provided")
 	}
 
+	r.RenderArgs["RunMode"] = RunMode
+	r.RenderArgs["Error"] = revelError
+	r.RenderArgs["Router"] = MainRouter
+
 	// Render it.
 	var b bytes.Buffer
-	err = tmpl.Render(&b, revelError)
+	err = tmpl.Render(&b, r.RenderArgs)
 
 	// If there was an error, print it in plain text.
 	if err != nil {
@@ -65,7 +86,7 @@ func (r ErrorResult) Apply(req *Request, resp *Response) {
 		return
 	}
 
-	resp.WriteHeader(http.StatusInternalServerError, "text/html")
+	resp.WriteHeader(status, contentType)
 	b.WriteTo(resp.Out)
 }
 
@@ -102,7 +123,7 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
 			SourceLines: r.Template.Content(),
 			SourceType:  "template",
 		}
-		ErrorResult{compileError}.Apply(req, resp)
+		ErrorResult{r.RenderArgs, compileError}.Apply(req, resp)
 		return
 	}
 
@@ -117,14 +138,14 @@ type RenderJsonResult struct {
 func (r RenderJsonResult) Apply(req *Request, resp *Response) {
 	var b []byte
 	var err error
-	if AppMode == DEV {
+	if RunMode == DEV {
 		b, err = json.MarshalIndent(r.obj, "", "  ")
 	} else {
 		b, err = json.Marshal(r.obj)
 	}
 
 	if err != nil {
-		ErrorResult{err}.Apply(req, resp)
+		ErrorResult{error: err}.Apply(req, resp)
 		return
 	}
 
@@ -140,14 +161,14 @@ func (r RenderXmlResult) Apply(req *Request, resp *Response) {
 	var b []byte
 	var err error
 	// TODO: Extract indent to app.conf
-	if AppMode == DEV {
+	if RunMode == DEV {
 		b, err = xml.MarshalIndent(r.obj, "", "  ")
 	} else {
 		b, err = xml.Marshal(r.obj)
 	}
 
 	if err != nil {
-		ErrorResult{err}.Apply(req, resp)
+		ErrorResult{error: err}.Apply(req, resp)
 		return
 	}
 
@@ -209,7 +230,7 @@ func (r *RedirectToActionResult) Apply(req *Request, resp *Response) {
 	url, err := getRedirectUrl(r.val)
 	if err != nil {
 		LOG.Println("Couldn't resolve redirect:", err.Error())
-		ErrorResult{err}.Apply(req, resp)
+		ErrorResult{error: err}.Apply(req, resp)
 		return
 	}
 	resp.Out.Header().Set("Location", url)
@@ -238,7 +259,7 @@ func getRedirectUrl(item interface{}) (string, error) {
 			recvType = recvType.Elem()
 		}
 		action := recvType.Name() + "." + method.Name
-		actionDef := router.Reverse(action, make(map[string]string))
+		actionDef := MainRouter.Reverse(action, make(map[string]string))
 		if actionDef == nil {
 			return "", errors.New("no route for action " + action)
 		}

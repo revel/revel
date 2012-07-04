@@ -1,0 +1,4 @@
+{
+	type:   "{{js .Error.Title}}",
+	message: "{{js .Error.Description}}"
+}

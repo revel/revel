@@ -98,6 +98,14 @@ var (
 			return template.HTML(fmt.Sprintf(`<input type="radio" name="%s" value="%s"%s>`,
 				html.EscapeString(f.Name), html.EscapeString(val), checked))
 		},
+
+		// Pads the given string with &nbsp;'s up to the given width.
+		"pad": func(str string, width int) template.HTML {
+			if len(str) >= width {
+				return template.HTML(html.EscapeString(str))
+			}
+			return template.HTML(html.EscapeString(str) + strings.Repeat("&nbsp;", width-len(str)))
+		},
 	}
 )
 
@@ -287,8 +295,10 @@ func (loader *TemplateLoader) Template(name string) (Template, error) {
 
 		// Probably there is a compileError set, but if not, set one saying that it
 		// wasn't found.
-		var err error = loader.compileError
-		if err == nil {
+		var err error
+		if loader.compileError != nil {
+			err = loader.compileError
+		} else {
 			err = fmt.Errorf("Template %s not found.", name)
 		}
 
@@ -349,5 +359,5 @@ func ReverseUrl(args ...interface{}) string {
 		argsByName[methodType.Args[i].Name] = fmt.Sprintf("%s", argValue)
 	}
 
-	return router.Reverse(args[0].(string), argsByName).Url
+	return MainRouter.Reverse(args[0].(string), argsByName).Url
 }

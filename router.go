@@ -10,14 +10,13 @@ import (
 )
 
 type Route struct {
-	method string // e.g. GET
-	path   string // e.g. /app/{id}
-	action string // e.g. Application.ShowApp
+	Method string // e.g. GET
+	Path   string // e.g. /app/{id}
+	Action string // e.g. Application.ShowApp
 
 	pathPattern   *regexp.Regexp // for matching the url path
 	staticDir     string         // e.g. "public" from action "staticDir:public"
 	args          []*arg         // e.g. {id} from path /app/{id}
-	actionArgs    []string
 	actionPattern *regexp.Regexp
 }
 
@@ -42,32 +41,32 @@ var argsPattern *regexp.Regexp = regexp.MustCompile(`\{<(?P<pattern>[^>]+)>(?P<v
 // Prepares the route to be used in matching.
 func NewRoute(method, path, action string) (r *Route) {
 	r = &Route{
-		method: strings.ToUpper(method),
-		path:   path,
-		action: action,
+		Method: strings.ToUpper(method),
+		Path:   path,
+		Action: action,
 	}
 
 	// Handle static routes
-	if strings.HasPrefix(r.action, "staticDir:") {
-		if r.method != "*" && r.method != "GET" {
+	if strings.HasPrefix(r.Action, "staticDir:") {
+		if r.Method != "*" && r.Method != "GET" {
 			LOG.Print("W: Static route only supports GET")
 			return
 		}
 
-		if !strings.HasSuffix(r.path, "/") {
-			LOG.Printf("W: The path for staticDir must end with / (%s)", r.path)
-			r.path = r.path + "/"
+		if !strings.HasSuffix(r.Path, "/") {
+			LOG.Printf("W: The path for staticDir must end with / (%s)", r.Path)
+			r.Path = r.Path + "/"
 		}
 
-		r.pathPattern = regexp.MustCompile("^" + r.path + "(.*)$")
-		r.staticDir = r.action[len("staticDir:"):]
+		r.pathPattern = regexp.MustCompile("^" + r.Path + "(.*)$")
+		r.staticDir = r.Action[len("staticDir:"):]
 		// TODO: staticFile:
 		return
 	}
 
 	// URL pattern
 	// TODO: Support non-absolute paths
-	if !strings.HasPrefix(r.path, "/") {
+	if !strings.HasPrefix(r.Path, "/") {
 		LOG.Print("E: Absolute URL required.")
 		return
 	}
@@ -76,7 +75,7 @@ func NewRoute(method, path, action string) (r *Route) {
 
 	// Convert path arguments with unspecified regexes to standard form.
 	// e.g. "/customer/{id}" => "/customer/{<[^/]+>id}
-	normPath := nakedPathParamRegex.ReplaceAllStringFunc(r.path, func(m string) string {
+	normPath := nakedPathParamRegex.ReplaceAllStringFunc(r.Path, func(m string) string {
 		var argMatches []string = nakedPathParamRegex.FindStringSubmatch(m)
 		return "{<[^/]+>" + argMatches[1] + "}"
 	})
@@ -100,13 +99,12 @@ func NewRoute(method, path, action string) (r *Route) {
 	r.pathPattern = regexp.MustCompile(pathPatternStr + "$")
 
 	// Handle action
-	var actionPatternStr string = strings.Replace(r.action, ".", `\.`, -1)
+	var actionPatternStr string = strings.Replace(r.Action, ".", `\.`, -1)
 	for _, arg := range r.args {
 		var argName string = "{" + arg.name + "}"
 		if argIndex := strings.Index(actionPatternStr, argName); argIndex != -1 {
 			actionPatternStr = strings.Replace(actionPatternStr, argName,
 				"(?P<"+arg.name+">"+arg.constraint.String()+")", -1)
-			r.actionArgs = append(r.actionArgs, arg.name)
 		}
 	}
 	r.actionPattern = regexp.MustCompile(actionPatternStr)
@@ -116,7 +114,7 @@ func NewRoute(method, path, action string) (r *Route) {
 // Return nil if no match.
 func (r *Route) Match(method string, reqPath string) *RouteMatch {
 	// Check the Method
-	if r.method != "*" && method != r.method && !(method == "HEAD" && r.method == "GET") {
+	if r.Method != "*" && method != r.Method && !(method == "HEAD" && r.Method == "GET") {
 		return nil
 	}
 
@@ -140,7 +138,7 @@ func (r *Route) Match(method string, reqPath string) *RouteMatch {
 	}
 
 	// If the action is variablized, replace into it with the captured args.
-	action := r.action
+	action := r.Action
 	if strings.Contains(action, "{") {
 		for key, value := range params {
 			action = strings.Replace(action, "{"+key+"}", value, -1)
@@ -150,7 +148,7 @@ func (r *Route) Match(method string, reqPath string) *RouteMatch {
 	// Split the action into controller and method
 	actionSplit := strings.Split(action, ".")
 	if len(actionSplit) != 2 {
-		LOG.Printf("E: Failed to split action: %s", r.action)
+		LOG.Printf("E: Failed to split action: %s", r.Action)
 		return nil
 	}
 
@@ -163,11 +161,11 @@ func (r *Route) Match(method string, reqPath string) *RouteMatch {
 }
 
 type Router struct {
-	routes []*Route
+	Routes []*Route
 }
 
 func (router *Router) Route(req *http.Request) *RouteMatch {
-	for _, route := range router.routes {
+	for _, route := range router.Routes {
 		if m := route.Match(req.Method, req.URL.Path); m != nil {
 			return m
 		}
@@ -225,7 +223,7 @@ func NewRouter(routesConf string) *Router {
 		routes = append(routes, route)
 	}
 
-	router.routes = routes
+	router.Routes = routes
 	return router
 }
 
@@ -243,7 +241,7 @@ func (router *Router) Reverse(action string, argValues map[string]string) *Actio
 
 NEXT_ROUTE:
 	// Loop through the routes.
-	for _, route := range router.routes {
+	for _, route := range router.Routes {
 		if route.actionPattern == nil {
 			continue
 		}
@@ -273,7 +271,7 @@ NEXT_ROUTE:
 
 		// Build up the URL.
 		var queryValues url.Values = make(url.Values)
-		path := route.path
+		path := route.Path
 		for argKey, argValue := range argValues {
 			if _, ok := routeArgs[argKey]; ok {
 				// If this arg goes into the path, put it in.
@@ -291,9 +289,9 @@ NEXT_ROUTE:
 			url += "?" + queryValues.Encode()
 		}
 
-		method := route.method
+		method := route.Method
 		star := false
-		if route.method == "*" {
+		if route.Method == "*" {
 			method = "GET"
 			star = true
 		}

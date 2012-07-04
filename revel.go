@@ -8,11 +8,9 @@ import (
 	"path/filepath"
 )
 
-type RunMode string
-
 const (
-	DEV  RunMode = "dev"
-	PROD         = "prod"
+	DEV  = "dev"
+	PROD = "prod"
 )
 
 var (
@@ -24,7 +22,7 @@ var (
 	ImportPath string // e.g. "revel/sample"
 
 	Config  *MergedConfig
-	AppMode RunMode // DEV or PROD
+	RunMode string // DEV or PROD
 
 	// Revel installation details
 	RevelPath         string // e.g. "/Users/robfig/gocode/src/revel"
@@ -36,11 +34,13 @@ var (
 	InitHooks []func()
 
 	// Private
-	revelInit bool = false
+	revelInit bool
 	secretKey []byte
 )
 
-func Init(importPath string, mode RunMode) {
+func Init(importPath string, mode string) {
+	RunMode = mode
+
 	// Find the user's app path.
 	pkg, err := build.Import(importPath, "", build.FindOnly)
 	if err != nil {

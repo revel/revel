@@ -41,12 +41,12 @@ type Session map[string]string
 type Request struct {
 	*http.Request
 	ContentType string
+	Format      string // "html", "xml", "json", or "text"
 }
 
 type Response struct {
 	Status      int
 	ContentType string
-	Cookies     []*http.Cookie
 
 	Out http.ResponseWriter
 }
@@ -68,36 +68,39 @@ type Controller struct {
 	Txn        *sql.Tx                // Nil by default, but may be used by the app / plugins
 }
 
-func NewController(w http.ResponseWriter, r *http.Request, ct *ControllerType) *Controller {
-	revReq := NewRequest(r)
-	flash := restoreFlash(r)
-	params := ParseParams(revReq)
+func NewController(req *Request, resp *Response, ct *ControllerType) *Controller {
+	flash := restoreFlash(req.Request)
+	params := ParseParams(req)
 
 	return &Controller{
-		Name:    ct.Type.Name(),
-		Type:    ct,
-		Request: revReq,
-		Response: &Response{
-			Status:      0,
-			ContentType: "",
-			Out:         w,
-		},
-
-		Params:  params,
-		Flash:   flash,
-		Session: restoreSession(r),
+		Name:     ct.Type.Name(),
+		Type:     ct,
+		Request:  req,
+		Response: resp,
+		Params:   params,
+		Flash:    flash,
+		Session:  restoreSession(req.Request),
 		RenderArgs: map[string]interface{}{
-			"flash": flash.Data,
+			"RunMode": RunMode,
+			"flash":   flash.Data,
 		},
 		Validation: &Validation{
-			Errors: restoreValidationErrors(r),
+			Errors: restoreValidationErrors(req.Request),
 			keep:   false,
 		},
 	}
 }
 
 func NewRequest(r *http.Request) *Request {
-	return &Request{r, ContentType(r)}
+	return &Request{
+		Request:     r,
+		ContentType: ResolveContentType(r),
+		Format:      ResolveFormat(r),
+	}
+}
+
+func NewResponse(w http.ResponseWriter) *Response {
+	return &Response{Out: w}
 }
 
 var (
@@ -105,14 +108,14 @@ var (
 	controllerPtrType = reflect.TypeOf(&Controller{})
 )
 
-func NewAppController(w http.ResponseWriter, r *http.Request, controllerName, methodName string) (*Controller, reflect.Value) {
+func NewAppController(req *Request, resp *Response, controllerName, methodName string) (*Controller, reflect.Value) {
 	var appControllerType *ControllerType = LookupControllerType(controllerName)
 	if appControllerType == nil {
-		LOG.Printf("E: Controller %s not found: %s", controllerName, r.URL)
+		LOG.Printf("E: Controller %s not found: %s", controllerName, req.URL)
 		return nil, reflect.ValueOf(nil)
 	}
 
-	controller := NewController(w, r, appControllerType)
+	controller := NewController(req, resp, appControllerType)
 	appControllerPtr := initNewAppController(appControllerType.Type, controller)
 
 	// Set the method being called.
@@ -304,13 +307,14 @@ func handleInvocationPanic(c *Controller, err interface{}) {
 	if err != nil {
 		description = fmt.Sprintln(err)
 	}
-	ErrorResult{&Error{
+
+	c.RenderError(&Error{
 		Title:       "Panic",
 		Path:        filename[len(BasePath):],
 		Line:        line,
 		Description: description,
 		SourceLines: MustReadLines(filename),
-	}}.Apply(c.Request, c.Response)
+	}).Apply(c.Request, c.Response)
 }
 
 func (c *Controller) invokeInterceptors(when InterceptTime, appControllerPtr reflect.Value) Result {
@@ -327,6 +331,14 @@ func (c *Controller) invokeInterceptors(when InterceptTime, appControllerPtr ref
 	return result
 }
 
+func (c *Controller) RenderError(err error) Result {
+	return ErrorResult{c.RenderArgs, err}
+}
+
+func RenderError(req *Request, resp *Response, err error) {
+	stubController(req, resp).RenderError(err).Apply(req, resp)
+}
+
 func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
 	// Get the calling function name.
 	pc, _, line, ok := runtime.Caller(1)
@@ -341,7 +353,7 @@ func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
 	// Get the Template.
 	template, err := MainTemplateLoader.Template(c.Name + "/" + viewName + ".html")
 	if err != nil {
-		return ErrorResult{err}
+		return c.RenderError(err)
 	}
 
 	// Determine what method we are in.
@@ -350,10 +362,10 @@ func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
 	if methodType.Name != viewName {
 		methodType = c.Type.Method(viewName)
 		if methodType == nil {
-			return ErrorResult{fmt.Errorf(
+			return c.RenderError(fmt.Errorf(
 				"No Method %s in Controller %s when loading the view."+
 					" (delegating Render is only supported within the same controller)",
-				viewName, c.Name)}
+				viewName, c.Name))
 		}
 	}
 
@@ -403,18 +415,33 @@ func (c *Controller) RenderText(text string, objs ...interface{}) Result {
 // Render a "todo" indicating that the action isn't done yet.
 func (c *Controller) Todo() Result {
 	c.Response.Status = http.StatusNotImplemented
-	return ErrorResult{&Error{
+	return c.RenderError(&Error{
 		Title:       "TODO",
 		Description: "This action is not implemented",
-	}}
+	})
 }
 
 func (c *Controller) NotFound(msg string) Result {
 	c.Response.Status = http.StatusNotFound
-	return ErrorResult{&Error{
+	return c.RenderError(&Error{
 		Title:       "Not Found",
 		Description: msg,
-	}}
+	})
+}
+
+// This function is useful if there is no relevant Controller available.
+// It writes the 404 response immediately.
+func NotFound(req *Request, resp *Response, msg string) {
+	stubController(req, resp).NotFound(msg).Apply(req, resp)
+}
+
+func stubController(req *Request, resp *Response) *Controller {
+	return &Controller{
+		Response: resp,
+		RenderArgs: map[string]interface{}{
+			"RunMode": RunMode,
+		},
+	}
 }
 
 // Return a file, either displayed inline or downloaded as an attachment.
@@ -566,12 +593,34 @@ func (p *Params) Bind(name string, typ reflect.Type) reflect.Value {
 // Get the content type.
 // e.g. From "multipart/form-data; boundary=--" to "multipart/form-data"
 // If none is specified, returns "text/html" by default.
-func ContentType(req *http.Request) string {
+func ResolveContentType(req *http.Request) string {
 	contentType := req.Header.Get("Content-Type")
 	if contentType == "" {
 		return "text/html"
 	}
 	return strings.ToLower(strings.TrimSpace(strings.Split(contentType, ";")[0]))
+}
+
+func ResolveFormat(req *http.Request) string {
+	accept := req.Header.Get("accept")
+
+	switch {
+	case accept == "",
+		strings.HasPrefix(accept, "*/*"),
+		strings.Contains(accept, "application/xhtml"),
+		strings.Contains(accept, "text/html"):
+		return "html"
+	case strings.Contains(accept, "application/xml"),
+		strings.Contains(accept, "text/xml"):
+		return "xml"
+	case strings.Contains(accept, "text/plain"):
+		return "txt"
+	case strings.Contains(accept, "application/json"),
+		strings.Contains(accept, "text/javascript"):
+		return "json"
+	}
+
+	return "html"
 }
 
 // Write the header (for now, just the status code).

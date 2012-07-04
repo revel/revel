@@ -1,0 +1,15 @@
+{{.Error.Title}}
+{{.Error.Description}}
+
+{{if eq .RunMode "dev"}}
+{{with .Error}}
+{{if .Path}}
+----------
+In {{.Path}} {{if .Line}}(around line {{.Line}}){{end}}
+
+{{range .ContextSource}}
+{{if .IsError}}>{{else}} {{end}} {{.Line}}: {{.Source}}{{end}}
+
+{{end}}
+{{end}}
+{{end}}

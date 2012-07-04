@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	router             *Router
+	MainRouter         *Router
 	MainTemplateLoader *TemplateLoader
 
 	websocketType = reflect.TypeOf((*websocket.Conn)(nil))
@@ -31,11 +31,12 @@ func handle(w http.ResponseWriter, r *http.Request) {
 
 func handleInternal(w http.ResponseWriter, r *http.Request, ws *websocket.Conn) {
 	// TODO: StaticPathsCache
+	req, resp := NewRequest(r), NewResponse(w)
 
 	// Figure out the Controller/Action
-	var route *RouteMatch = router.Route(r)
+	var route *RouteMatch = MainRouter.Route(r)
 	if route == nil {
-		http.NotFound(w, r)
+		NotFound(req, resp, "No matching route found")
 		return
 	}
 
@@ -46,9 +47,9 @@ func handleInternal(w http.ResponseWriter, r *http.Request, ws *websocket.Conn) 
 	}
 
 	// Construct the controller and get the method to call.
-	controller, appControllerPtr := NewAppController(w, r, route.ControllerName, route.MethodName)
+	controller, appControllerPtr := NewAppController(req, resp, route.ControllerName, route.MethodName)
 	if controller == nil {
-		http.NotFound(w, r)
+		NotFound(req, resp, fmt.Sprintln("No matching action found:", route.Action))
 		return
 	}
 
@@ -56,7 +57,7 @@ func handleInternal(w http.ResponseWriter, r *http.Request, ws *websocket.Conn) 
 	if !method.IsValid() {
 		LOG.Printf("E: Function %s not found on Controller %s",
 			route.MethodName, route.ControllerName)
-		http.NotFound(w, r)
+		NotFound(req, resp, fmt.Sprintln("No matching action found:", route.Action))
 		return
 	}
 
@@ -88,7 +89,7 @@ func handleInternal(w http.ResponseWriter, r *http.Request, ws *websocket.Conn) 
 func Run(port int) {
 	// Load the routes
 	// TODO: Watch the routes file for changes, and reload.
-	router = LoadRoutes()
+	MainRouter = LoadRoutes()
 	MainTemplateLoader = NewTemplateLoader(ViewsPath, RevelTemplatePath)
 
 	go func() {
