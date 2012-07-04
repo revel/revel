@@ -339,6 +339,19 @@ func RenderError(req *Request, resp *Response, err error) {
 	stubController(req, resp).RenderError(err).Apply(req, resp)
 }
 
+// Render a template corresponding to the calling Controller method.
+// Arguments will be added to c.RenderArgs prior to rendering the template.
+// They are keyed on their local identifier.
+//
+// For example:
+//
+//     func (c Users) ShowUser(id int) rev.Result {
+//     	 user := loadUser(id)
+//     	 return c.Render(user)
+//     }
+//
+// This action will render views/Users/ShowUser.html, passing in an extra
+// key-value "user": (User).
 func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
 	// Get the calling function name.
 	pc, _, line, ok := runtime.Caller(1)
@@ -349,12 +362,6 @@ func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
 	// e.g. sample/app/controllers.(*Application).Index
 	var fqViewName string = runtime.FuncForPC(pc).Name()
 	var viewName string = fqViewName[strings.LastIndex(fqViewName, ".")+1 : len(fqViewName)]
-
-	// Get the Template.
-	template, err := MainTemplateLoader.Template(c.Name + "/" + viewName + ".html")
-	if err != nil {
-		return c.RenderError(err)
-	}
 
 	// Determine what method we are in.
 	// (e.g. the invoked controller method might have delegated to another method)
@@ -382,6 +389,19 @@ func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
 	} else {
 		LOG.Println("No RenderArg names found for Render call on line", line,
 			"(Method", methodType, ", ViewName", viewName, ")")
+	}
+
+	return c.RenderTemplate(c.Name + "/" + viewName + ".html")
+}
+
+// A less magical way to render a template.
+// Renders the given template, using the current RenderArgs.
+func (c *Controller) RenderTemplate(templatePath string) Result {
+
+	// Get the Template.
+	template, err := MainTemplateLoader.Template(templatePath)
+	if err != nil {
+		return c.RenderError(err)
 	}
 
 	// Add Validation errors to RenderArgs.
