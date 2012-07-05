@@ -86,14 +86,14 @@ func handleInternal(w http.ResponseWriter, r *http.Request, ws *websocket.Conn) 
 
 // Run the server.
 // This is called from the generated main file.
-func Run(port int) {
+func Run(address string, port int) {
 	// Load the routes
 	// TODO: Watch the routes file for changes, and reload.
 	MainRouter = LoadRoutes()
 	MainTemplateLoader = NewTemplateLoader(ViewsPath, RevelTemplatePath)
 
 	server := &http.Server{
-		Addr:    fmt.Sprintf(":%d", port),
+		Addr:    fmt.Sprintf("%s:%d", address, port),
 		Handler: http.HandlerFunc(handle),
 	}
 

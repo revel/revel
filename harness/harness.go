@@ -43,6 +43,7 @@ import (
 )
 
 var (
+	addr *string = flag.String("addr", "", "Address to listen on")
 	port *int = flag.Int("port", 0, "Port")
 	importPath *string = flag.String("importPath", "", "Path to the app.")
 
@@ -71,7 +72,7 @@ func main() {
 			{{end}}
 		})
 	{{end}}
-	rev.Run(*port)
+	rev.Run(*addr, *port)
 }
 `
 
@@ -161,6 +162,7 @@ func proxyWebsocket(w http.ResponseWriter, r *http.Request, host string) {
 	<-errc
 }
 
+// Return a reverse proxy that forwards requests to the given port.
 func startReverseProxy(port int) *harnessProxy {
 	serverUrl, _ := url.ParseRequestURI(fmt.Sprintf("http://localhost:%d", port))
 	reverseProxy := &harnessProxy{
@@ -170,9 +172,10 @@ func startReverseProxy(port int) *harnessProxy {
 		NotifyReady:   make(chan error),
 	}
 	go func() {
+		appAddr := getAppAddress()
 		appPort := getAppPort()
-		rev.INFO.Println("Listening on port", appPort)
-		err := http.ListenAndServe(fmt.Sprintf(":%d", appPort), reverseProxy)
+		rev.INFO.Printf("Listening on %s:%d", appAddr, appPort)
+		err := http.ListenAndServe(fmt.Sprintf("%s:%d", appAddr, appPort), reverseProxy)
 		if err != nil {
 			rev.ERROR.Fatalln("Failed to start reverse proxy:", err)
 		}
@@ -180,13 +183,24 @@ func startReverseProxy(port int) *harnessProxy {
 	return reverseProxy
 }
 
+// Return port that the app should listen on.
+// 9000 by default.
 func getAppPort() int {
 	port, err := rev.Config.Int("http.port")
 	if err != nil {
-		rev.ERROR.Println("Parsing http.port failed:", err)
 		return 9000
 	}
 	return port
+}
+
+// Return address that the app should listen on.
+// Wildcard by default.
+func getAppAddress() string {
+	addr, err := rev.Config.String("http.addr")
+	if err != nil {
+		return ""
+	}
+	return addr
 }
 
 var (
@@ -199,7 +213,7 @@ func Run(mode string) {
 	// If we are in prod mode, just build and run the application.
 	if mode == rev.PROD {
 		rev.INFO.Println("Building...")
-		if err := rebuild(getAppPort()); err != nil {
+		if err := rebuild(getAppAddress(), getAppPort()); err != nil {
 			rev.ERROR.Fatalln(err)
 		}
 		cmd.Wait()
@@ -212,7 +226,7 @@ func Run(mode string) {
 		rev.ViewsPath,
 		rev.RevelTemplatePath)
 
-	// Get a port on which to run the application
+	// Get a random port on which to run the application
 	port := getFreePort()
 
 	// Run a reverse proxy to it.
@@ -287,7 +301,7 @@ func Run(mode string) {
 		// There has been a change to the app and a new request is pending.
 		// Rebuild it and send the "ready" signal.
 		rev.TRACE.Println("Rebuild")
-		err := rebuild(port)
+		err := rebuild("", port)
 		if err != nil {
 			rev.ERROR.Println(err.Error())
 			proxy.NotifyReady <- err
@@ -301,7 +315,7 @@ func Run(mode string) {
 var cmd *exec.Cmd
 
 // Rebuild the Revel application and run it on the given port.
-func rebuild(port int) (compileError *rev.Error) {
+func rebuild(addr string, port int) (compileError *rev.Error) {
 	controllerSpecs, compileError := ScanControllers(path.Join(rev.AppPath, "controllers"))
 	if compileError != nil {
 		return compileError
@@ -360,6 +374,7 @@ func rebuild(port int) (compileError *rev.Error) {
 	}
 	binName := path.Join(pkg.BinDir, rev.AppName)
 	buildCmd := exec.Command(goPath, "build", "-o", binName, path.Join(rev.ImportPath, "app", "tmp"))
+	rev.TRACE.Println("Exec build:", buildCmd.Path, buildCmd.Args)
 	output, err := buildCmd.CombinedOutput()
 
 	// If we failed to build, parse the error message.
@@ -369,8 +384,10 @@ func rebuild(port int) (compileError *rev.Error) {
 
 	// Run the server, via tmp/main.go.
 	cmd = exec.Command(binName,
+		fmt.Sprintf("-addr=%s", addr),
 		fmt.Sprintf("-port=%d", port),
 		fmt.Sprintf("-importPath=%s", rev.ImportPath))
+	rev.TRACE.Println("Exec app:", cmd.Path, cmd.Args)
 	listeningWriter := startupListeningWriter{os.Stdout, make(chan bool)}
 	cmd.Stdout = listeningWriter
 	cmd.Stderr = os.Stderr
