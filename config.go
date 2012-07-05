@@ -34,7 +34,20 @@ func (c *MergedConfig) Int(option string) (int, error) {
 
 func (c *MergedConfig) String(option string) (string, error) {
 	if r, err := c.Config.String(c.section, option); err == nil {
-		return r, nil
+		return stripQuotes(r), nil
 	}
-	return c.Config.String("DEFAULT", option)
+	r, err := c.Config.String("DEFAULT", option)
+	return stripQuotes(r), err
+}
+
+func stripQuotes(s string) string {
+	if s == "" {
+		return s
+	}
+
+	if s[0] == '"' && s[len(s) - 1] == '"' {
+		return s[1:len(s)-1]
+	}
+
+	return s
 }
