@@ -3,7 +3,6 @@ package rev
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	"mime/multipart"
 	"net/http"
 	"net/url"
@@ -111,7 +110,7 @@ var (
 func NewAppController(req *Request, resp *Response, controllerName, methodName string) (*Controller, reflect.Value) {
 	var appControllerType *ControllerType = LookupControllerType(controllerName)
 	if appControllerType == nil {
-		LOG.Printf("E: Controller %s not found: %s", controllerName, req.URL)
+		INFO.Printf("Controller %s not found: %s", controllerName, req.URL)
 		return nil, reflect.ValueOf(nil)
 	}
 
@@ -121,7 +120,7 @@ func NewAppController(req *Request, resp *Response, controllerName, methodName s
 	// Set the method being called.
 	controller.MethodType = appControllerType.Method(methodName)
 	if controller.MethodType == nil {
-		LOG.Println("E: Failed to find method", methodName, "on Controller",
+		INFO.Println("Failed to find method", methodName, "on Controller",
 			controllerName)
 		return nil, reflect.ValueOf(nil)
 	}
@@ -194,14 +193,14 @@ func (c *Controller) Invoke(appControllerPtr reflect.Value, method reflect.Value
 		if c.Request.MultipartForm != nil {
 			err := c.Request.MultipartForm.RemoveAll()
 			if err != nil {
-				LOG.Println("Error removing temporary files:", err)
+				WARN.Println("Error removing temporary files:", err)
 			}
 		}
 
 		for _, tmpFile := range c.Params.tmpFiles {
 			err := os.Remove(tmpFile.Name())
 			if err != nil {
-				LOG.Println("W: Could not remove upload temp file:", err)
+				WARN.Println("Could not remove upload temp file:", err)
 			}
 		}
 	}()
@@ -288,7 +287,7 @@ func handleInvocationPanic(c *Controller, err interface{}) {
 	appFrame := strings.Index(stack, BasePath)
 	if appFrame == -1 {
 		// How embarassing.
-		LOG.Println(err, "\n", stack)
+		ERROR.Println(err, "\n", stack)
 		c.Response.Out.WriteHeader(500)
 		c.Response.Out.Write([]byte(stack))
 		return
@@ -300,7 +299,7 @@ func handleInvocationPanic(c *Controller, err interface{}) {
 	fmt.Sscan(stackElement[colonIndex+1:], &line)
 
 	// Log the trace starting at the app frame.
-	LOG.Println(err, "\n", stack[appFrame:])
+	ERROR.Println(err, "\n", stack[appFrame:])
 
 	// Show an error page.
 	description := "Unspecified error"
@@ -356,7 +355,7 @@ func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
 	// Get the calling function name.
 	pc, _, line, ok := runtime.Caller(1)
 	if !ok {
-		log.Println("Failed to get Caller information")
+		ERROR.Println("Failed to get Caller information")
 		return nil
 	}
 	// e.g. sample/app/controllers.(*Application).Index
@@ -383,11 +382,11 @@ func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
 				c.RenderArgs[renderArgNames[i]] = extraRenderArg
 			}
 		} else {
-			LOG.Println(len(renderArgNames), "RenderArg names found for",
+			ERROR.Println(len(renderArgNames), "RenderArg names found for",
 				len(extraRenderArgs), "extra RenderArgs")
 		}
 	} else {
-		LOG.Println("No RenderArg names found for Render call on line", line,
+		ERROR.Println("No RenderArg names found for Render call on line", line,
 			"(Method", methodType, ", ViewName", viewName, ")")
 	}
 
@@ -470,7 +469,7 @@ func (c *Controller) RenderFile(file *os.File, delivery ContentDisposition) Resu
 	var length int64 = -1
 	fileInfo, err := file.Stat()
 	if err != nil {
-		LOG.Println("RenderFile error:", err)
+		WARN.Println("RenderFile error:", err)
 	}
 	if fileInfo != nil {
 		length = fileInfo.Size()
@@ -541,7 +540,7 @@ func restoreSession(req *http.Request) Session {
 
 	// Verify the signature.
 	if Sign(data) != sig {
-		LOG.Println("Session cookie signature failed")
+		INFO.Println("Session cookie signature failed")
 		return Session(session)
 	}
 
@@ -579,7 +578,7 @@ func ParseParams(req *Request) *Params {
 	case "application/x-www-form-urlencoded":
 		// Typical form.
 		if err := req.ParseForm(); err != nil {
-			LOG.Println("Error parsing request body:", err)
+			WARN.Println("Error parsing request body:", err)
 		} else {
 			for key, vals := range req.Form {
 				for _, val := range vals {
@@ -592,7 +591,7 @@ func ParseParams(req *Request) *Params {
 		// Multipart form.
 		// TODO: Extract the multipart form param so app can set it.
 		if err := req.ParseMultipartForm(32 << 20 /* 32 MB */); err != nil {
-			LOG.Println("Error parsing request body:", err)
+			WARN.Println("Error parsing request body:", err)
 		} else {
 			for key, vals := range req.MultipartForm.Value {
 				for _, val := range vals {
@@ -705,7 +704,7 @@ func RegisterController(c interface{}, methods []*MethodType) {
 	}
 
 	controllers[strings.ToLower(elem.Name())] = &ControllerType{Type: elem, Methods: methods}
-	LOG.Printf("Registered controller: %s", elem.Name())
+	TRACE.Printf("Registered controller: %s", elem.Name())
 }
 
 func LookupControllerType(name string) *ControllerType {

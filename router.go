@@ -49,12 +49,12 @@ func NewRoute(method, path, action string) (r *Route) {
 	// Handle static routes
 	if strings.HasPrefix(r.Action, "staticDir:") {
 		if r.Method != "*" && r.Method != "GET" {
-			LOG.Print("W: Static route only supports GET")
+			WARN.Print("Static route only supports GET")
 			return
 		}
 
 		if !strings.HasSuffix(r.Path, "/") {
-			LOG.Printf("W: The path for staticDir must end with / (%s)", r.Path)
+			WARN.Printf("The path for staticDir must end with / (%s)", r.Path)
 			r.Path = r.Path + "/"
 		}
 
@@ -67,7 +67,7 @@ func NewRoute(method, path, action string) (r *Route) {
 	// URL pattern
 	// TODO: Support non-absolute paths
 	if !strings.HasPrefix(r.Path, "/") {
-		LOG.Print("E: Absolute URL required.")
+		ERROR.Print("Absolute URL required.")
 		return
 	}
 
@@ -148,7 +148,7 @@ func (r *Route) Match(method string, reqPath string) *RouteMatch {
 	// Split the action into controller and method
 	actionSplit := strings.Split(action, ".")
 	if len(actionSplit) != 2 {
-		LOG.Printf("E: Failed to split action: %s", r.Action)
+		ERROR.Printf("Failed to split action: %s", r.Action)
 		return nil
 	}
 
@@ -187,7 +187,7 @@ func LoadRoutes() *Router {
 	// Get the routes file content.
 	contentBytes, err := ioutil.ReadFile(path.Join(BasePath, "conf", "routes"))
 	if err != nil {
-		LOG.Fatalln("Failed to load routes file:", err)
+		ERROR.Fatalln("Failed to load routes file:", err)
 	}
 	content := string(contentBytes)
 	return NewRouter(content)
@@ -305,6 +305,6 @@ NEXT_ROUTE:
 			Host:   "TODO",
 		}
 	}
-	LOG.Println("Failed to find reverse route:", action, argValues)
+	ERROR.Println("Failed to find reverse route:", action, argValues)
 	return nil
 }

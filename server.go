@@ -55,7 +55,7 @@ func handleInternal(w http.ResponseWriter, r *http.Request, ws *websocket.Conn) 
 
 	var method reflect.Value = appControllerPtr.MethodByName(controller.MethodType.Name)
 	if !method.IsValid() {
-		LOG.Printf("E: Function %s not found on Controller %s",
+		WARN.Printf("Function %s not found on Controller %s",
 			route.MethodName, route.ControllerName)
 		NotFound(req, resp, fmt.Sprintln("No matching action found:", route.Action))
 		return
@@ -92,10 +92,6 @@ func Run(port int) {
 	MainRouter = LoadRoutes()
 	MainTemplateLoader = NewTemplateLoader(ViewsPath, RevelTemplatePath)
 
-	go func() {
-		time.Sleep(100 * time.Millisecond)
-		LOG.Printf("Listening on port %d...", port)
-	}()
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":%d", port),
 		Handler: http.HandlerFunc(handle),
@@ -103,8 +99,10 @@ func Run(port int) {
 
 	plugins.OnAppStart()
 
-	err := server.ListenAndServe()
-	if err != nil {
-		LOG.Fatalln("Failed to listen:", err)
-	}
+	go func() {
+		time.Sleep(100 * time.Millisecond)
+		fmt.Printf("Listening on port %d...\n", port)
+	}()
+
+	ERROR.Fatalln("Failed to listen:", server.ListenAndServe())
 }

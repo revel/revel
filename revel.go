@@ -2,6 +2,7 @@ package rev
 
 import (
 	"go/build"
+	"io"
 	"log"
 	"os"
 	"path"
@@ -28,7 +29,11 @@ var (
 	RevelPath         string // e.g. "/Users/robfig/gocode/src/revel"
 	RevelTemplatePath string // e.g. "/Users/robfig/gocode/src/revel/templates"
 
-	LOG = log.New(os.Stdout, "", log.Ldate|log.Ltime|log.Lshortfile)
+	DEFAULT = log.New(os.Stderr, "", log.Ldate|log.Ltime|log.Lshortfile)
+	TRACE   = DEFAULT
+	INFO    = DEFAULT
+	WARN    = DEFAULT
+	ERROR   = DEFAULT
 
 	// Revel runs every function in this array after init.
 	InitHooks []func()
@@ -37,6 +42,10 @@ var (
 	revelInit bool
 	secretKey []byte
 )
+
+func init() {
+	log.SetFlags(DEFAULT.Flags())
+}
 
 func Init(importPath string, mode string) {
 	RunMode = mode
@@ -68,18 +77,70 @@ func Init(importPath string, mode string) {
 	if err != nil {
 		log.Fatalln("Failed to load app.conf:", err)
 	}
-	Config.SetSection(string(mode))
+	Config.SetSection(mode)
 	secretStr, err := Config.String("app.secret")
 	if err != nil {
 		log.Fatalln("No app.secret provided.")
 	}
 	secretKey = []byte(secretStr)
 
+	// Configure logging.
+	TRACE = getLogger("trace")
+	INFO = getLogger("info")
+	WARN = getLogger("warn")
+	ERROR = getLogger("error")
+
 	for _, hook := range InitHooks {
 		hook()
 	}
 
 	revelInit = true
+}
+
+// Create a logger using log.* directives in app.conf plus the current settings
+// on the default logger.
+func getLogger(name string) *log.Logger {
+	var logger *log.Logger
+
+	// Create a logger with the requested output. (default to stderr)
+	output, err := Config.String("log." + name + ".output")
+	if err != nil {
+		output = "stderr"
+	}
+
+	switch output {
+	case "stdout":
+		logger = newLogger(os.Stdout)
+	case "stderr":
+		logger = newLogger(os.Stderr)
+	default:
+		if output == "off" {
+			output = os.DevNull
+		}
+
+		file, err := os.OpenFile(output, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+		if err != nil {
+			log.Fatalln("Failed to open log file", output, ":", err)
+		}
+		logger = newLogger(file)
+	}
+
+	// Set the prefix / flags.
+	flags, err := Config.Int("log." + name + ".flags")
+	if err == nil {
+		logger.SetFlags(flags)
+	}
+
+	prefix, err := Config.String("log." + name + ".prefix")
+	if err == nil {
+		logger.SetPrefix(prefix)
+	}
+
+	return logger
+}
+
+func newLogger(wr io.Writer) *log.Logger {
+	return log.New(wr, DEFAULT.Prefix(), DEFAULT.Flags())
 }
 
 func CheckInit() {

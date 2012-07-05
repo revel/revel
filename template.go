@@ -113,7 +113,7 @@ func NewTemplateLoader(paths ...string) *TemplateLoader {
 	// Watch all directories under /views
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		LOG.Fatal(err)
+		ERROR.Fatal(err)
 	}
 
 	// Replace the unbuffered Event channel with a buffered one.
@@ -127,13 +127,13 @@ func NewTemplateLoader(paths ...string) *TemplateLoader {
 	for _, p := range paths {
 		filepath.Walk(p, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
-				LOG.Println("Error walking path:", err)
+				ERROR.Println("Error walking path:", err)
 				return nil
 			}
 			if info.IsDir() {
 				err = watcher.Watch(path)
 				if err != nil {
-					LOG.Println("Failed to watch", path, ":", err)
+					ERROR.Println("Failed to watch", path, ":", err)
 				}
 			}
 			return nil
@@ -152,7 +152,7 @@ func NewTemplateLoader(paths ...string) *TemplateLoader {
 // If a template fails to parse, the error is set on the loader.
 // (It's awkward to refresh a single Go Template)
 func (loader *TemplateLoader) refresh() {
-	LOG.Println("Refresh")
+	TRACE.Println("Refresh")
 	loader.compileError = nil
 	loader.templatePaths = map[string]string{}
 
@@ -164,7 +164,7 @@ func (loader *TemplateLoader) refresh() {
 		// (namely, if one of the Funcs does not have an acceptable signature).
 		funcErr := filepath.Walk(basePath, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
-				LOG.Println("error walking templates:", err)
+				ERROR.Println("error walking templates:", err)
 				return nil
 			}
 
@@ -182,7 +182,7 @@ func (loader *TemplateLoader) refresh() {
 
 			fileBytes, err := ioutil.ReadFile(path)
 			if err != nil {
-				LOG.Println("Failed reading file:", path)
+				ERROR.Println("Failed reading file:", path)
 				return nil
 			}
 
@@ -223,7 +223,7 @@ func (loader *TemplateLoader) refresh() {
 					Line:        line,
 					SourceLines: strings.Split(fileStr, "\n"),
 				}
-				LOG.Printf("Template compilation error (In %s around line %d):\n%s",
+				ERROR.Printf("Template compilation error (In %s around line %d):\n%s",
 					templateName, line, description)
 			}
 			return nil
@@ -248,7 +248,7 @@ func parseTemplateError(err error) (line int, description string) {
 	if i != nil {
 		line, err = strconv.Atoi(description[i[0]+1 : i[1]-1])
 		if err != nil {
-			LOG.Println("Failed to parse line number from error message:", err)
+			ERROR.Println("Failed to parse line number from error message:", err)
 		}
 		description = description[i[1]+1:]
 	}
@@ -340,7 +340,7 @@ func (gotmpl GoTemplate) Content() []string {
 // "Application.ShowApp 123" => "/app/123"
 func ReverseUrl(args ...interface{}) string {
 	if len(args) == 0 {
-		LOG.Println("Warning: no arguments provided to url function")
+		ERROR.Println("Warning: no arguments provided to url function")
 		return "#"
 	}
 
@@ -348,7 +348,7 @@ func ReverseUrl(args ...interface{}) string {
 	actionSplit := strings.Split(action, ".")
 	var ctrl, meth string
 	if len(actionSplit) != 2 {
-		LOG.Println("Warning: Must provide Controller.Method for reverse router.")
+		ERROR.Println("Warning: Must provide Controller.Method for reverse router.")
 		return "#"
 	}
 	ctrl, meth = actionSplit[0], actionSplit[1]

@@ -17,7 +17,6 @@ import (
 	"github.com/robfig/revel"
 	"go/build"
 	"io"
-	"log"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -32,9 +31,7 @@ import (
 	"text/template"
 )
 
-const REGISTER_CONTROLLERS = `
-// target: {{.AppName}}
-package main
+const REGISTER_CONTROLLERS = `package main
 
 import (
 	"flag"
@@ -54,7 +51,7 @@ var (
 )
 
 func main() {
-	rev.LOG.Println("Running revel server")
+	rev.INFO.Println("Running revel server")
 	flag.Parse()
 	rev.Init(*importPath, "{{.RunMode}}")
 	{{range $i, $c := .Controllers}}
@@ -132,7 +129,7 @@ func proxyWebsocket(w http.ResponseWriter, r *http.Request, host string) {
 	d, err := net.Dial("tcp", host)
 	if err != nil {
 		http.Error(w, "Error contacting backend server.", 500)
-		log.Printf("Error dialing websocket backend %s: %v", host, err)
+		rev.ERROR.Printf("Error dialing websocket backend %s: %v", host, err)
 		return
 	}
 	hj, ok := w.(http.Hijacker)
@@ -142,7 +139,7 @@ func proxyWebsocket(w http.ResponseWriter, r *http.Request, host string) {
 	}
 	nc, _, err := hj.Hijack()
 	if err != nil {
-		log.Printf("Hijack error: %v", err)
+		rev.ERROR.Printf("Hijack error: %v", err)
 		return
 	}
 	defer nc.Close()
@@ -150,7 +147,7 @@ func proxyWebsocket(w http.ResponseWriter, r *http.Request, host string) {
 
 	err = r.Write(d)
 	if err != nil {
-		log.Printf("Error copying request to target: %v", err)
+		rev.ERROR.Printf("Error copying request to target: %v", err)
 		return
 	}
 
@@ -174,10 +171,10 @@ func startReverseProxy(port int) *harnessProxy {
 	}
 	go func() {
 		appPort := getAppPort()
-		log.Println("Listening on port", appPort)
+		rev.INFO.Println("Listening on port", appPort)
 		err := http.ListenAndServe(fmt.Sprintf(":%d", appPort), reverseProxy)
 		if err != nil {
-			log.Fatalln("Failed to start reverse proxy:", err)
+			rev.ERROR.Fatalln("Failed to start reverse proxy:", err)
 		}
 	}()
 	return reverseProxy
@@ -186,7 +183,7 @@ func startReverseProxy(port int) *harnessProxy {
 func getAppPort() int {
 	port, err := rev.Config.Int("http.port")
 	if err != nil {
-		log.Println("Parsing http.port failed:", err)
+		rev.ERROR.Println("Parsing http.port failed:", err)
 		return 9000
 	}
 	return port
@@ -201,9 +198,9 @@ func Run(mode string) {
 
 	// If we are in prod mode, just build and run the application.
 	if mode == rev.PROD {
-		log.Println("Building...")
+		rev.INFO.Println("Building...")
 		if err := rebuild(getAppPort()); err != nil {
-			log.Fatalln(err)
+			rev.ERROR.Fatalln(err)
 		}
 		cmd.Wait()
 		return
@@ -224,7 +221,7 @@ func Run(mode string) {
 	// Listen for changes to the user app.
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		log.Fatal(err)
+		rev.ERROR.Fatal(err)
 	}
 
 	watcher.Event = make(chan *fsnotify.FileEvent, 10)
@@ -233,7 +230,7 @@ func Run(mode string) {
 	// Listen to all app subdirectories (except /views)
 	filepath.Walk(rev.AppPath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			rev.LOG.Println("error walking app:", err)
+			rev.ERROR.Println("error walking app:", err)
 			return nil
 		}
 		if info.IsDir() {
@@ -241,9 +238,9 @@ func Run(mode string) {
 				return filepath.SkipDir
 			}
 			err = watcher.Watch(path)
-			rev.LOG.Println("Watching:", path)
+			rev.TRACE.Println("Watching:", path)
 			if err != nil {
-				rev.LOG.Println("Failed to watch", path, ":", err)
+				rev.ERROR.Println("Failed to watch", path, ":", err)
 			}
 		}
 		return nil
@@ -270,12 +267,12 @@ func Run(mode string) {
 			case ev := <-watcher.Event:
 				// Ignore changes to dot-files.
 				if !strings.HasPrefix(path.Base(ev.Name), ".") {
-					log.Println(ev)
+					rev.TRACE.Println(ev)
 					dirty = true
 				}
 				continue
 			case err = <-watcher.Error:
-				log.Println("Inotify error:", err)
+				rev.TRACE.Println("Inotify error:", err)
 				continue
 			case _ = <-proxy.NotifyRequest:
 				if !dirty {
@@ -289,10 +286,10 @@ func Run(mode string) {
 
 		// There has been a change to the app and a new request is pending.
 		// Rebuild it and send the "ready" signal.
-		log.Println("Rebuild")
+		rev.TRACE.Println("Rebuild")
 		err := rebuild(port)
 		if err != nil {
-			log.Println(err.Error())
+			rev.ERROR.Println(err.Error())
 			proxy.NotifyReady <- err
 			continue
 		}
@@ -321,10 +318,10 @@ func rebuild(port int) (compileError *rev.Error) {
 
 	// Terminate the server if it's already running.
 	if cmd != nil && (cmd.ProcessState == nil || !cmd.ProcessState.Exited()) {
-		log.Println("Killing revel server pid", cmd.Process.Pid)
+		rev.TRACE.Println("Killing revel server pid", cmd.Process.Pid)
 		err := cmd.Process.Kill()
 		if err != nil {
-			log.Fatalln("Failed to kill revel server:", err)
+			rev.ERROR.Fatalln("Failed to kill revel server:", err)
 		}
 	}
 
@@ -332,34 +329,34 @@ func rebuild(port int) (compileError *rev.Error) {
 	tmpPath := path.Join(rev.AppPath, "tmp")
 	err := os.RemoveAll(tmpPath)
 	if err != nil {
-		log.Println("Failed to remove tmp dir:", err)
+		rev.ERROR.Println("Failed to remove tmp dir:", err)
 	}
 	err = os.Mkdir(tmpPath, 0777)
 	if err != nil {
-		log.Fatalf("Failed to make tmp directory: %v", err)
+		rev.ERROR.Fatalf("Failed to make tmp directory: %v", err)
 	}
 
 	// Create the new file
 	controllersFile, err := os.Create(path.Join(tmpPath, "main.go"))
 	if err != nil {
-		log.Fatalf("Failed to create main.go: %v", err)
+		rev.ERROR.Fatalf("Failed to create main.go: %v", err)
 	}
 	_, err = controllersFile.WriteString(registerControllerSource)
 	if err != nil {
-		log.Fatalf("Failed to write to main.go: %v", err)
+		rev.ERROR.Fatalf("Failed to write to main.go: %v", err)
 	}
 
 	// Build the user program (all code under app).
 	// It relies on the user having "go" installed.
 	goPath, err := exec.LookPath("go")
 	if err != nil {
-		log.Fatalf("Go executable not found in PATH.")
+		rev.ERROR.Fatalf("Go executable not found in PATH.")
 	}
 
 	ctx := build.Default
 	pkg, err := ctx.Import(rev.ImportPath, "", build.FindOnly)
 	if err != nil {
-		log.Fatalf("Failure importing", rev.ImportPath)
+		rev.ERROR.Fatalf("Failure importing", rev.ImportPath)
 	}
 	binName := path.Join(pkg.BinDir, rev.AppName)
 	buildCmd := exec.Command(goPath, "build", "-o", binName, path.Join(rev.ImportPath, "app", "tmp"))
@@ -379,7 +376,7 @@ func rebuild(port int) (compileError *rev.Error) {
 	cmd.Stderr = os.Stderr
 	err = cmd.Start()
 	if err != nil {
-		log.Fatalln("Error running:", err)
+		rev.ERROR.Fatalln("Error running:", err)
 	}
 
 	<-listeningWriter.notifyReady
@@ -406,13 +403,13 @@ func (w startupListeningWriter) Write(p []byte) (n int, err error) {
 func getFreePort() (port int) {
 	conn, err := net.Listen("tcp", ":0")
 	if err != nil {
-		log.Fatal(err)
+		rev.ERROR.Fatal(err)
 	}
 
 	port = conn.Addr().(*net.TCPAddr).Port
 	err = conn.Close()
 	if err != nil {
-		log.Fatal(err)
+		rev.ERROR.Fatal(err)
 	}
 	return port
 }
@@ -445,7 +442,7 @@ func newCompileError(output []byte) *rev.Error {
 	errorMatch := regexp.MustCompile(`(?m)^([^:#]+):(\d+):(\d+:)? (.*)$`).
 		FindSubmatch(output)
 	if errorMatch == nil {
-		log.Println("Failed to parse build errors:\n", string(output))
+		rev.ERROR.Println("Failed to parse build errors:\n", string(output))
 		return &rev.Error{
 			SourceType:  "Go code",
 			Title:       "Go Compilation Error",
@@ -471,7 +468,7 @@ func newCompileError(output []byte) *rev.Error {
 	fileStr, err := rev.ReadLines(absFilename)
 	if err != nil {
 		compileError.MetaError = absFilename + ": " + err.Error()
-		log.Println(compileError.MetaError)
+		rev.ERROR.Println(compileError.MetaError)
 		return compileError
 	}
 

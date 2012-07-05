@@ -150,7 +150,7 @@ func appendStruct(specs []*ControllerSpec, pkg *ast.Package, decl ast.Decl) []*C
 	}
 
 	if len(genDecl.Specs) != 1 {
-		rev.LOG.Printf("Surprising: Decl does not have 1 Spec: %v", genDecl)
+		rev.TRACE.Printf("Surprising: Decl does not have 1 Spec: %v", genDecl)
 		return specs
 	}
 

@@ -86,7 +86,7 @@ func loadMimeConfig() {
 	var err error
 	mimeConfig, err = LoadConfig(path.Join(RevelPath, "conf", "mime-types.conf"))
 	if err != nil {
-		LOG.Fatalln("Failed to load mime type config:", err)
+		ERROR.Fatalln("Failed to load mime type config:", err)
 	}
 }
 
@@ -107,7 +107,7 @@ func ContentTypeByFilename(filename string) string {
 	contentType, err := mimeConfig.String(extension)
 	if contentType == "" {
 		if err != nil {
-			LOG.Println(err)
+			WARN.Println(err)
 		}
 		return DefaultFileContentType
 	}

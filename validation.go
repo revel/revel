@@ -243,4 +243,3 @@ func (v *Validation) Check(obj interface{}, checks ...Check) *ValidationResult {
 	}
 	return result
 }
-

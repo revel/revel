@@ -85,7 +85,7 @@ func bindStr(val string, typ reflect.Type) reflect.Value {
 func bindInt(val string, typ reflect.Type) reflect.Value {
 	intValue, err := strconv.Atoi(val)
 	if err != nil {
-		LOG.Println("BindInt:", err)
+		WARN.Println("BindInt:", err)
 	}
 	return reflect.ValueOf(intValue)
 }
@@ -211,11 +211,11 @@ func bindStruct(params *Params, name string, typ reflect.Type) reflect.Value {
 			// Time to bind this field.  Get it and make sure we can set it.
 			fieldValue := result.FieldByName(fieldName)
 			if !fieldValue.IsValid() {
-				LOG.Println("W: bindStruct: Field not found:", fieldName)
+				WARN.Println("W: bindStruct: Field not found:", fieldName)
 				continue
 			}
 			if !fieldValue.CanSet() {
-				LOG.Println("W: bindStruct: Field not settable:", fieldName)
+				WARN.Println("W: bindStruct: Field not settable:", fieldName)
 				continue
 			}
 			boundVal := Bind(params, key[:len(name)+1+fieldLen], fieldValue.Type())
@@ -248,7 +248,7 @@ func getMultipartFile(params *Params, name string) multipart.File {
 		if err == nil {
 			return file
 		}
-		LOG.Println("W: Failed to open uploaded file", name, ":", err)
+		WARN.Println("Failed to open uploaded file", name, ":", err)
 	}
 	return nil
 }
@@ -267,7 +267,7 @@ func bindFile(params *Params, name string, typ reflect.Type) reflect.Value {
 	// Otherwise, have to store it.
 	tmpFile, err := ioutil.TempFile("", "revel-upload")
 	if err != nil {
-		LOG.Println("W: Failed to create a temp file to store upload:", err)
+		WARN.Println("Failed to create a temp file to store upload:", err)
 		return reflect.Zero(typ)
 	}
 
@@ -276,13 +276,13 @@ func bindFile(params *Params, name string, typ reflect.Type) reflect.Value {
 
 	_, err = io.Copy(tmpFile, reader)
 	if err != nil {
-		LOG.Println("W: Failed to copy upload to temp file:", err)
+		WARN.Println("Failed to copy upload to temp file:", err)
 		return reflect.Zero(typ)
 	}
 
 	_, err = tmpFile.Seek(0, 0)
 	if err != nil {
-		LOG.Println("W: Failed to seek to beginning of temp file:", err)
+		WARN.Println("Failed to seek to beginning of temp file:", err)
 		return reflect.Zero(typ)
 	}
 
@@ -295,7 +295,7 @@ func bindByteArray(params *Params, name string, typ reflect.Type) reflect.Value 
 		if err == nil {
 			return reflect.ValueOf(b)
 		}
-		LOG.Println("Warning: Error reading uploaded file contents:", err)
+		WARN.Println("Error reading uploaded file contents:", err)
 	}
 	return reflect.Zero(typ)
 }
@@ -325,7 +325,7 @@ func Bind(params *Params, name string, typ reflect.Type) reflect.Value {
 	if !ok {
 		binder, ok = KindBinders[typ.Kind()]
 		if !ok {
-			LOG.Println("No binder for type:", typ)
+			WARN.Println("No binder for type:", typ)
 			return reflect.Zero(typ)
 		}
 	}
