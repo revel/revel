@@ -53,7 +53,7 @@ func Init(importPath string, mode string) {
 	// Find the user's app path.
 	pkg, err := build.Import(importPath, "", build.FindOnly)
 	if err != nil {
-		log.Fatalf("Failed to import", importPath, "with error", err)
+		log.Fatalln("Failed to import", importPath, "with error:", err)
 	}
 	BasePath = pkg.Dir
 	if BasePath == "" {
