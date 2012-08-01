@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"path"
 	"reflect"
 	"time"
 )
@@ -12,6 +13,7 @@ import (
 var (
 	MainRouter         *Router
 	MainTemplateLoader *TemplateLoader
+	MainWatcher        *Watcher
 
 	websocketType = reflect.TypeOf((*websocket.Conn)(nil))
 )
@@ -32,6 +34,14 @@ func handle(w http.ResponseWriter, r *http.Request) {
 func handleInternal(w http.ResponseWriter, r *http.Request, ws *websocket.Conn) {
 	// TODO: StaticPathsCache
 	req, resp := NewRequest(r), NewResponse(w)
+
+	if MainWatcher != nil {
+		err := MainWatcher.Notify()
+		if err != nil {
+			RenderError(req, resp, err)
+			return
+		}
+	}
 
 	// Figure out the Controller/Action
 	var route *RouteMatch = MainRouter.Route(r)
@@ -87,10 +97,15 @@ func handleInternal(w http.ResponseWriter, r *http.Request, ws *websocket.Conn) 
 // Run the server.
 // This is called from the generated main file.
 func Run(address string, port int) {
-	// Load the routes
-	// TODO: Watch the routes file for changes, and reload.
-	MainRouter = LoadRoutes()
+	routePath := path.Join(BasePath, "conf", "routes")
+
+	MainRouter = LoadRoutes(routePath)
 	MainTemplateLoader = NewTemplateLoader(ViewsPath, RevelTemplatePath)
+
+	if RunMode == DEV {
+		MainWatcher = NewWatcher()
+		MainWatcher.Listen(MainTemplateLoader, []string{ViewsPath, RevelTemplatePath}, []string{})
+	}
 
 	server := &http.Server{
 		Addr:    fmt.Sprintf("%s:%d", address, port),

@@ -183,9 +183,9 @@ var routePattern *regexp.Regexp = regexp.MustCompile(
 		"(.*/[^ ]*) +([^ (]+)(.+)?( *)$")
 
 // Load the routes file.
-func LoadRoutes() *Router {
+func LoadRoutes(routePath string) *Router {
 	// Get the routes file content.
-	contentBytes, err := ioutil.ReadFile(path.Join(BasePath, "conf", "routes"))
+	contentBytes, err := ioutil.ReadFile(routePath)
 	if err != nil {
 		ERROR.Fatalln("Failed to load routes file:", err)
 	}

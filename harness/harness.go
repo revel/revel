@@ -13,7 +13,6 @@ package harness
 import (
 	"bytes"
 	"fmt"
-	"github.com/howeyc/fsnotify"
 	"github.com/robfig/revel"
 	"go/build"
 	"io"
@@ -27,7 +26,6 @@ import (
 	"path/filepath"
 	"regexp"
 	"strconv"
-	"strings"
 	"text/template"
 )
 
@@ -76,39 +74,24 @@ func main() {
 }
 `
 
-// Reverse proxy requests to the application server.
-// On each request, proxy sends (NotifyRequest = true)
-// If code change has been detected in app:
-// - app is rebuilt and restarted, send proxy (NotifyReady = true)
-// - else, send proxy (NotifyReady = true)
-
+// harnessProxy reverse proxies requests to the application server.
+// It builds / runs / rebuilds / restarts the server when code is changed.
 type harnessProxy struct {
-	serverHost    string
-	proxy         *httputil.ReverseProxy
-	NotifyRequest chan bool  // Strobed on every request.
-	NotifyReady   chan error // Strobed when request may proceed.
+	serverHost string
+	port       int
+	proxy      *httputil.ReverseProxy
 }
 
 func renderError(w http.ResponseWriter, r *http.Request, err error) {
 	rev.RenderError(rev.NewRequest(r), rev.NewResponse(w), err)
 }
 
+// ServeHTTP handles all requests.
+// It checks for changes to app, rebuilds if necessary, and forwards the request.
 func (hp *harnessProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// First, poll to see if there's a pending error in NotifyReady
-	select {
-	case err := <-hp.NotifyReady:
-		if err != nil {
-			renderError(w, r, err)
-		}
-	default:
-		// Usually do nothing.
-	}
-
-	// Notify that a request is coming through, and wait for the go-ahead.
-	hp.NotifyRequest <- true
-	err := <-hp.NotifyReady
-
-	// If an error was returned, create the page and show it to the user.
+	// Flush any change events and rebuild app if necessary.
+	// Render an error page if the rebuild / restart failed.
+	err := watcher.Notify()
 	if err != nil {
 		renderError(w, r, err)
 		return
@@ -123,9 +106,8 @@ func (hp *harnessProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// ReverseProxy doesn't work with websocket requests.
-// This function copies data between websocket client and server until one side
-// closes the connection.
+// proxyWebsocket copies data between websocket client and server until one side
+// closes the connection.  (ReverseProxy doesn't work with websocket requests.)
 func proxyWebsocket(w http.ResponseWriter, r *http.Request, host string) {
 	d, err := net.Dial("tcp", host)
 	if err != nil {
@@ -163,24 +145,14 @@ func proxyWebsocket(w http.ResponseWriter, r *http.Request, host string) {
 }
 
 // Return a reverse proxy that forwards requests to the given port.
-func startReverseProxy(port int) *harnessProxy {
+func NewHarness(port int) *harnessProxy {
 	serverUrl, _ := url.ParseRequestURI(fmt.Sprintf("http://localhost:%d", port))
-	reverseProxy := &harnessProxy{
-		serverHost:    serverUrl.String()[len("http://"):],
-		proxy:         httputil.NewSingleHostReverseProxy(serverUrl),
-		NotifyRequest: make(chan bool),
-		NotifyReady:   make(chan error),
+	harness := &harnessProxy{
+		port:       port,
+		serverHost: serverUrl.String()[len("http://"):],
+		proxy:      httputil.NewSingleHostReverseProxy(serverUrl),
 	}
-	go func() {
-		appAddr := getAppAddress()
-		appPort := getAppPort()
-		rev.INFO.Printf("Listening on %s:%d", appAddr, appPort)
-		err := http.ListenAndServe(fmt.Sprintf("%s:%d", appAddr, appPort), reverseProxy)
-		if err != nil {
-			rev.ERROR.Fatalln("Failed to start reverse proxy:", err)
-		}
-	}()
-	return reverseProxy
+	return harness
 }
 
 // Return port that the app should listen on.
@@ -204,6 +176,8 @@ func getAppAddress() string {
 }
 
 var (
+	watcher *rev.Watcher
+
 	// Will not watch directories with these names (or their subdirectories)
 	DoNotWatch = []string{"tmp", "views"}
 )
@@ -230,38 +204,10 @@ func Run(mode string) {
 	port := getFreePort()
 
 	// Run a reverse proxy to it.
-	proxy := startReverseProxy(port)
+	harness := NewHarness(port)
+	harness.Refresh()
 
-	// Listen for changes to the user app.
-	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		rev.ERROR.Fatal(err)
-	}
-
-	watcher.Event = make(chan *fsnotify.FileEvent, 10)
-	watcher.Error = make(chan error, 10)
-
-	// Listen to all app subdirectories (except /views)
-	filepath.Walk(rev.AppPath, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			rev.ERROR.Println("error walking app:", err)
-			return nil
-		}
-		if info.IsDir() {
-			if rev.ContainsString(DoNotWatch, info.Name()) {
-				return filepath.SkipDir
-			}
-			err = watcher.Watch(path)
-			rev.TRACE.Println("Watching:", path)
-			if err != nil {
-				rev.ERROR.Println("Failed to watch", path, ":", err)
-			}
-		}
-		return nil
-	})
-
-	// Define an exit handler that kills the revel server (since it won't die on
-	// its own, if the harness exits)
+	// If the harness exits, be sure to kill the app server.
 	defer func() {
 		if cmd != nil {
 			cmd.Process.Kill()
@@ -269,53 +215,27 @@ func Run(mode string) {
 		}
 	}()
 
-	// Start the listen / rebuild loop.
-	var dirty bool = true
-	for {
-		err = nil
+	watcher = rev.NewWatcher()
+	watcher.Listen(harness, []string{rev.AppPath}, DoNotWatch)
 
-		// It spins in this loop for each inotify change, and each request.
-		// If there is a request after an inotify change, it breaks out to rebuild.
-		for {
-			select {
-			case ev := <-watcher.Event:
-				// Ignore changes to dot-files.
-				if !strings.HasPrefix(path.Base(ev.Name), ".") {
-					rev.TRACE.Println(ev)
-					dirty = true
-				}
-				continue
-			case err = <-watcher.Error:
-				rev.TRACE.Println("Inotify error:", err)
-				continue
-			case _ = <-proxy.NotifyRequest:
-				if !dirty {
-					proxy.NotifyReady <- nil
-					continue
-				}
-			}
-
-			break
-		}
-
-		// There has been a change to the app and a new request is pending.
-		// Rebuild it and send the "ready" signal.
-		rev.TRACE.Println("Rebuild")
-		err := rebuild("", port)
-		if err != nil {
-			rev.ERROR.Println(err.Error())
-			proxy.NotifyReady <- err
-			continue
-		}
-		dirty = false
-		proxy.NotifyReady <- nil
+	appAddr := getAppAddress()
+	appPort := getAppPort()
+	rev.INFO.Printf("Listening on %s:%d", appAddr, appPort)
+	err := http.ListenAndServe(fmt.Sprintf("%s:%d", appAddr, appPort), harness)
+	if err != nil {
+		rev.ERROR.Fatalln("Failed to start reverse proxy:", err)
 	}
+}
+
+func (h *harnessProxy) Refresh() *rev.Error {
+	return rebuild("", h.port)
 }
 
 var cmd *exec.Cmd
 
 // Rebuild the Revel application and run it on the given port.
 func rebuild(addr string, port int) (compileError *rev.Error) {
+	rev.TRACE.Println("Rebuild")
 	controllerSpecs, compileError := ScanControllers(path.Join(rev.AppPath, "controllers"))
 	if compileError != nil {
 		return compileError

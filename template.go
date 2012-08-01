@@ -2,13 +2,11 @@ package rev
 
 import (
 	"fmt"
-	"github.com/howeyc/fsnotify"
 	"html"
 	"html/template"
 	"io"
 	"io/ioutil"
 	"os"
-	"path"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -18,8 +16,6 @@ import (
 // This object handles loading and parsing of templates.
 // Everything below the application's views directory is treated as a template.
 type TemplateLoader struct {
-	// This watcher watches the views tree for changes.
-	watcher *fsnotify.Watcher
 	// This is the set of all templates under views
 	templateSet *template.Template
 	// If an error was encountered parsing the templates, it is stored here.
@@ -110,48 +106,17 @@ var (
 )
 
 func NewTemplateLoader(paths ...string) *TemplateLoader {
-	// Watch all directories under /views
-	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		ERROR.Fatal(err)
-	}
-
-	// Replace the unbuffered Event channel with a buffered one.
-	// Otherwise multiple change events only come out one at a time, across
-	// multiple page views.
-	watcher.Event = make(chan *fsnotify.FileEvent, 10)
-	watcher.Error = make(chan error, 10)
-
-	// Walk through all files / directories under the template directories.
-	// - Add each directory to the watcher.
-	for _, p := range paths {
-		filepath.Walk(p, func(path string, info os.FileInfo, err error) error {
-			if err != nil {
-				ERROR.Println("Error walking path:", err)
-				return nil
-			}
-			if info.IsDir() {
-				err = watcher.Watch(path)
-				if err != nil {
-					ERROR.Println("Failed to watch", path, ":", err)
-				}
-			}
-			return nil
-		})
-	}
-
 	loader := &TemplateLoader{
-		watcher: watcher,
-		paths:   paths,
+		paths: paths,
 	}
-	loader.refresh()
+	loader.Refresh()
 	return loader
 }
 
 // This scans the views directory and parses all templates as Go Templates.
 // If a template fails to parse, the error is set on the loader.
 // (It's awkward to refresh a single Go Template)
-func (loader *TemplateLoader) refresh() {
+func (loader *TemplateLoader) Refresh() *Error {
 	TRACE.Println("Refresh")
 	loader.compileError = nil
 	loader.templatePaths = map[string]string{}
@@ -229,15 +194,16 @@ func (loader *TemplateLoader) refresh() {
 			return nil
 		})
 
-		// If there was an error with the Funcs, set it at return immediately.
+		// If there was an error with the Funcs, set it and return immediately.
 		if funcErr != nil {
 			loader.compileError = funcErr.(*Error)
-			return
+			return loader.compileError
 		}
 	}
 
 	// Note: compileError may or may not be set.
 	loader.templateSet = templateSet
+	return loader.compileError
 }
 
 // Parse the line, and description from an error message like:
@@ -260,50 +226,9 @@ func parseTemplateError(err error) (line int, description string) {
 //
 // An Error is returned if there was any problem with any of the templates.  (In
 // this case, if a template is returned, it may still be usable.)
-//
-// TODO: Might be better to separate out the watching from the template loader.
-// Then the server could be aware when it's refreshing, and query for new
-// template errors at that time.
 func (loader *TemplateLoader) Template(name string) (Template, error) {
-	// First, check to see if the watcher saw any changes.
-	// Pull all pending events / errors from the watcher.
-	refresh := false
-	for {
-		select {
-		case ev := <-loader.watcher.Event:
-			// Ignore changes to dotfiles.
-			if !strings.HasPrefix(path.Base(ev.Name), ".") {
-				refresh = true
-			}
-			continue
-		case <-loader.watcher.Error:
-			continue
-		default:
-			// No events left to pull
-		}
-		break
-	}
-
-	// If we got a qualifying event, refresh the templates.
-	if refresh {
-		loader.refresh()
-	}
-
 	// Look up and return the template.
 	tmpl := loader.templateSet.Lookup(name)
-	if tmpl == nil {
-
-		// Probably there is a compileError set, but if not, set one saying that it
-		// wasn't found.
-		var err error
-		if loader.compileError != nil {
-			err = loader.compileError
-		} else {
-			err = fmt.Errorf("Template %s not found.", name)
-		}
-
-		return nil, err
-	}
 
 	// This is necessary.
 	// If a nil loader.compileError is returned directly, a caller testing against
@@ -311,6 +236,10 @@ func (loader *TemplateLoader) Template(name string) (Template, error) {
 	var err error
 	if loader.compileError != nil {
 		err = loader.compileError
+	}
+
+	if tmpl == nil && err == nil {
+		return nil, fmt.Errorf("Template %s not found.", name)
 	}
 
 	return GoTemplate{tmpl, loader}, err
