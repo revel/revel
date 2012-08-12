@@ -98,13 +98,13 @@ func handleInternal(w http.ResponseWriter, r *http.Request, ws *websocket.Conn) 
 // This is called from the generated main file.
 func Run(address string, port int) {
 	routePath := path.Join(BasePath, "conf", "routes")
-
-	MainRouter = LoadRoutes(routePath)
+	MainRouter = NewRouter(routePath)
 	MainTemplateLoader = NewTemplateLoader(ViewsPath, RevelTemplatePath)
 
 	if RunMode == DEV {
 		MainWatcher = NewWatcher()
-		MainWatcher.Listen(MainTemplateLoader, []string{ViewsPath, RevelTemplatePath}, []string{})
+		MainWatcher.Listen(MainTemplateLoader, ViewsPath, RevelTemplatePath)
+		MainWatcher.Listen(MainRouter, routePath)
 	}
 
 	server := &http.Server{

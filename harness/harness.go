@@ -16,6 +16,8 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"os"
+	"strings"
 )
 
 var (
@@ -77,6 +79,14 @@ func (h *Harness) Refresh() *rev.Error {
 	return rebuild("", h.port)
 }
 
+func (h *Harness) WatchDir(info os.FileInfo) bool {
+	return !rev.ContainsString(doNotWatch, info.Name())
+}
+
+func (h *Harness) WatchFile(filename string) bool {
+	return strings.HasSuffix(filename, ".go")
+}
+
 func (h *Harness) Run() {
 	// If the harness exits, be sure to kill the app server.
 	defer func() {
@@ -86,10 +96,8 @@ func (h *Harness) Run() {
 		}
 	}()
 
-	h.Refresh()
-
 	watcher = rev.NewWatcher()
-	watcher.Listen(h, []string{rev.AppPath}, doNotWatch)
+	watcher.Listen(h, rev.AppPath)
 
 	appAddr := getAppAddress()
 	appPort := getAppPort()

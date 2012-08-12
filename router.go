@@ -1,6 +1,7 @@
 package rev
 
 import (
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -34,9 +35,10 @@ type arg struct {
 	constraint *regexp.Regexp
 }
 
-// TODO: Use exp/regexp and named groups e.g. (?P<name>a)
-var nakedPathParamRegex *regexp.Regexp = regexp.MustCompile(`\{([a-zA-Z_][a-zA-Z_0-9]*)\}`)
-var argsPattern *regexp.Regexp = regexp.MustCompile(`\{<(?P<pattern>[^>]+)>(?P<var>[a-zA-Z_0-9]+)\}`)
+var (
+	nakedPathParamRegex = regexp.MustCompile(`\{([a-zA-Z_][a-zA-Z_0-9]*)\}`)
+	argsPattern         = regexp.MustCompile(`\{<(?P<pattern>[^>]+)>(?P<var>[a-zA-Z_0-9]+)\}`)
+)
 
 // Prepares the route to be used in matching.
 func NewRoute(method, path, action string) (r *Route) {
@@ -162,12 +164,101 @@ func (r *Route) Match(method string, reqPath string) *RouteMatch {
 
 type Router struct {
 	Routes []*Route
+	path   string
 }
 
 func (router *Router) Route(req *http.Request) *RouteMatch {
 	for _, route := range router.Routes {
 		if m := route.Match(req.Method, req.URL.Path); m != nil {
 			return m
+		}
+	}
+	return nil
+}
+
+// Refresh re-reads the routes file and re-calculates the routing table.
+// Returns an error if a specified action could not be found.
+func (router *Router) Refresh() *Error {
+	// Get the routes file content.
+	contentBytes, err := ioutil.ReadFile(router.path)
+	if err != nil {
+		return &Error{
+			Title:       "Failed to load routes file",
+			Description: err.Error(),
+		}
+	}
+
+	return router.parse(string(contentBytes), true)
+}
+
+// parse takes the content of a routes file and turns it into the routing table.
+func (router *Router) parse(content string, validate bool) *Error {
+	routes := make([]*Route, 0, 10)
+
+	// For each line..
+	for n, line := range strings.Split(content, "\n") {
+		line = strings.TrimSpace(line)
+		if len(line) == 0 || line[0] == '#' {
+			continue
+		}
+
+		method, path, action, found := parseRouteLine(line)
+		if !found {
+			continue
+		}
+
+		route := NewRoute(method, path, action)
+		routes = append(routes, route)
+
+		if validate {
+			if err := router.validate(route); err != nil {
+				err.Path = router.path
+				err.Line = n + 1
+				err.SourceLines = strings.Split(content, "\n")
+				return err
+			}
+		}
+	}
+
+	router.Routes = routes
+	return nil
+}
+
+// Check that every specified action exists.
+func (router *Router) validate(route *Route) *Error {
+	// Skip static routes
+	if route.staticDir != "" {
+		return nil
+	}
+
+	// Skip variable routes.
+	if strings.ContainsAny(route.Action, "{}") {
+		return nil
+	}
+
+	// We should be able to load the action.
+	parts := strings.Split(route.Action, ".")
+	if len(parts) != 2 {
+		return &Error{
+			Title: "Route validation error",
+			Description: fmt.Sprintf("Expected two parts (Controller.Action), but got %d: %s",
+				len(parts), route.Action),
+		}
+	}
+
+	ct := LookupControllerType(parts[0])
+	if ct == nil {
+		return &Error{
+			Title:       "Route validation error",
+			Description: "Unrecognized controller: " + parts[0],
+		}
+	}
+
+	mt := ct.Method(parts[1])
+	if mt == nil {
+		return &Error{
+			Title:       "Route validation error",
+			Description: "Unrecognized method: " + parts[1],
 		}
 	}
 	return nil
@@ -182,17 +273,6 @@ var routePattern *regexp.Regexp = regexp.MustCompile(
 		"[(]?([^)]*)(\\))? +" +
 		"(.*/[^ ]*) +([^ (]+)(.+)?( *)$")
 
-// Load the routes file.
-func LoadRoutes(routePath string) *Router {
-	// Get the routes file content.
-	contentBytes, err := ioutil.ReadFile(routePath)
-	if err != nil {
-		ERROR.Fatalln("Failed to load routes file:", err)
-	}
-	content := string(contentBytes)
-	return NewRouter(content)
-}
-
 func parseRouteLine(line string) (method, path, action string, found bool) {
 	var matches []string = routePattern.FindStringSubmatch(line)
 	if matches == nil {
@@ -203,28 +283,10 @@ func parseRouteLine(line string) (method, path, action string, found bool) {
 	return
 }
 
-func NewRouter(routesConf string) *Router {
-	router := new(Router)
-	routes := make([]*Route, 0, 10)
-
-	// For each line..
-	for _, line := range strings.Split(routesConf, "\n") {
-		line = strings.TrimSpace(line)
-		if len(line) == 0 || line[0] == '#' {
-			continue
-		}
-
-		method, path, action, found := parseRouteLine(line)
-		if !found {
-			continue
-		}
-
-		route := NewRoute(method, path, action)
-		routes = append(routes, route)
+func NewRouter(routesPath string) *Router {
+	return &Router{
+		path: routesPath,
 	}
-
-	router.Routes = routes
-	return router
 }
 
 type ActionDefinition struct {

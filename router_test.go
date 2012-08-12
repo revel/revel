@@ -204,7 +204,8 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 }
 
 func TestRouteMatches(t *testing.T) {
-	router := NewRouter(TEST_ROUTES)
+	router := NewRouter("")
+	router.parse(TEST_ROUTES, false)
 	for req, expected := range routeMatchTestCases {
 		actual := router.Route(req)
 		if !eq(t, "Found route", actual != nil, expected != nil) {
@@ -270,7 +271,8 @@ var reverseRoutingTestCases = map[*ReverseRouteArgs]*ActionDefinition{
 }
 
 func TestReverseRouting(t *testing.T) {
-	router := NewRouter(TEST_ROUTES)
+	router := NewRouter("")
+	router.parse(TEST_ROUTES, false)
 	for routeArgs, expected := range reverseRoutingTestCases {
 		actual := router.Reverse(routeArgs.action, routeArgs.args)
 		if !eq(t, "Found route", actual != nil, expected != nil) {
