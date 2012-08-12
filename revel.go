@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 )
 
 const (
@@ -51,6 +52,7 @@ func Init(importPath string, mode string) {
 	RunMode = mode
 
 	// Find the user's app path.
+	importPath = strings.TrimRight(importPath, "/")
 	pkg, err := build.Import(importPath, "", build.FindOnly)
 	if err != nil {
 		log.Fatalln("Failed to import", importPath, "with error:", err)
