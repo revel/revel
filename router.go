@@ -147,6 +147,13 @@ func (r *Route) Match(method string, reqPath string) *RouteMatch {
 		}
 	}
 
+	// Special handling for explicit 404's.
+	if action == "404" {
+		return &RouteMatch{
+			Action: "404",
+		}
+	}
+
 	// Split the action into controller and method
 	actionSplit := strings.Split(action, ".")
 	if len(actionSplit) != 2 {
@@ -233,6 +240,11 @@ func (router *Router) validate(route *Route) *Error {
 
 	// Skip variable routes.
 	if strings.ContainsAny(route.Action, "{}") {
+		return nil
+	}
+
+	// Skip 404s
+	if route.Action == "404" {
 		return nil
 	}
 

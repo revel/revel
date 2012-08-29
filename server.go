@@ -50,6 +50,12 @@ func handleInternal(w http.ResponseWriter, r *http.Request, ws *websocket.Conn) 
 		return
 	}
 
+	// The route may want to explicitly return a 404.
+	if route.Action == "404" {
+		NotFound(req, resp, "(intentionally)")
+		return
+	}
+
 	// Dispatch the static files first.
 	if route.StaticFilename != "" {
 		http.ServeFile(w, r, route.StaticFilename)

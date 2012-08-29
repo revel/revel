@@ -148,7 +148,9 @@ GET  /app/{id}               Application.Show
 POST /app/{id}               Application.Save
 
 GET  /public/                staticDir:www
-*    /{controller}/{action} {controller}.{action}
+*    /{controller}/{action}  {controller}.{action}
+
+GET  /favicon.ico            404
 `
 
 var routeMatchTestCases = map[*http.Request]*RouteMatch{
@@ -199,6 +201,17 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 		ControllerName: "Implicit",
 		MethodName:     "Route",
 		Params:         map[string]string{"controller": "Implicit", "action": "Route"},
+		StaticFilename: "",
+	},
+
+	&http.Request{
+		Method: "GET",
+		URL:    &url.URL{Path: "/favicon.ico"},
+	}: &RouteMatch{
+		ControllerName: "",
+		MethodName:     "",
+		Action:         "404",
+		Params:         map[string]string{},
 		StaticFilename: "",
 	},
 }
