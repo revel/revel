@@ -1,0 +1,63 @@
+<style type="text/css">
+	html, body {
+		margin: 0;
+		padding: 0;
+		font-family: Helvetica, Arial, Sans;
+		background: #EEEEEE;
+	}
+	.block {
+		padding: 20px;
+		border-bottom: 1px solid #aaa;
+	}
+	#header h1 {
+		font-weight: normal;
+		font-size: 28px;
+		margin: 0;
+	}
+	#more {
+		color: #666;
+		font-size: 80%;
+		border: none;
+	}
+	#header {
+		background: #FFFFCC;
+	}
+	#header p {
+		color: #333;
+	}
+	#routes {
+		background: #f6f6f6;
+	}
+	#routes h2 {
+		font-weight: normal;
+		font-size: 18px;
+		margin: 0 0 10px 0;
+	}
+	#routes ol {
+
+	}
+	#routes li {
+		font-size: 14px;
+		font-family: monospace;
+		color: #333;
+	}
+</style>
+
+<div id="header" class="block">
+	{{with .Error}}
+	<h1>
+		{{.Title}}
+	</h1>
+	<p>
+		{{.Description}}
+	</p>
+	{{end}}
+</div>
+<div id="routes" class="block">
+	<h2>These routes have been tried, in this order :</h2>
+	<ol>
+		{{range .Router.Routes}}
+			<li>{{pad .Method 10}}{{pad .Path 50}}{{.Action}}</li>
+		{{end}}
+	</ol>
+</div>

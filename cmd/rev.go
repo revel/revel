@@ -4,12 +4,31 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
+	"io"
 	"os"
-
-	"github.com/robfig/revel"
-	"github.com/robfig/revel/harness"
+	"strings"
+	"text/template"
 )
+
+// Cribbed from the genius organization of the "go" command.
+type Command struct {
+	Run                    func(args []string)
+	UsageLine, Short, Long string
+}
+
+func (cmd *Command) Name() string {
+	name := cmd.UsageLine
+	i := strings.Index(name, " ")
+	if i >= 0 {
+		name = name[:i]
+	}
+	return name
+}
+
+var commands = []*Command{
+	cmdRun,
+	cmdNew,
+}
 
 func main() {
 	fmt.Fprintf(os.Stdout, header)
@@ -17,31 +36,55 @@ func main() {
 	flag.Parse()
 	args := flag.Args()
 
-	if len(args) < 1 || len(args) > 2 || args[0] == "help" {
+	if len(args) < 1 || args[0] == "help" {
+		if len(args) > 1 {
+			for _, cmd := range commands {
+				if cmd.Name() == args[1] {
+					tmpl(os.Stdout, helpTemplate, cmd)
+					return
+				}
+			}
+		}
 		usage()
 	}
 
-	mode := rev.DEV
-	if len(args) == 2 && args[1] == "prod" {
-		mode = rev.PROD
+	for _, cmd := range commands {
+		if cmd.Name() == args[0] {
+			cmd.Run(args[1:])
+			return
+		}
 	}
 
-	// Find and parse app.conf
-	rev.Init(args[0], mode)
-	log.Printf("Running app (%s): %s (%s)\n", mode, rev.AppName, rev.BasePath)
-
-	harness.Run(mode)
+	fmt.Fprintf(os.Stderr, "~ unknown command %q\nRun 'rev help' for usage.\n", args[0])
 }
 
 const header = `~
-~ revel! http://www.github.com/robfig/revel
+~ revel! http://robfig.github.com/revel
 ~
 `
 
-const usageText = `~ Usage: rev import_path [mode]
+const usageTemplate = `~ usage: rev command [arguments]
+~
+~ The commands are:
+~{{range .}}
+~    {{.Name | printf "%-11s"}} {{.Short}}{{end}}
+~
+~ Use "rev help [command]" for more information.
+`
+
+var helpTemplate = `~ usage: rev {{.UsageLine}}
+{{.Long}}
 `
 
 func usage() {
-	fmt.Fprintf(os.Stderr, usageText)
+	tmpl(os.Stderr, usageTemplate, commands)
 	os.Exit(2)
+}
+
+func tmpl(w io.Writer, text string, data interface{}) {
+	t := template.New("top")
+	template.Must(t.Parse(text))
+	if err := t.Execute(w, data); err != nil {
+		panic(err)
+	}
 }
