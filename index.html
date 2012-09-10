@@ -309,7 +309,7 @@ func checkLogin(c *rev.Controller) rev.Result {
 }
 
 func init() {
-	rev.InterceptFunc(addUser, rev.BEFORE, &Application{})
+	rev.InterceptFunc(checkLogin, rev.BEFORE, &Application{})
 }</pre>
           </div>
         </div>
