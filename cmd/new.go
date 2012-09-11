@@ -36,7 +36,7 @@ var (
 
 func newApp(args []string) {
 	if len(args) == 0 {
-		errorf("~ No path given\n")
+		errorf("~ No path given.\nRun 'rev help new' for usage.\n")
 	}
 	_, err := os.Open(args[0])
 	if err == nil {

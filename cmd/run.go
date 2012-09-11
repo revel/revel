@@ -28,7 +28,7 @@ func init() {
 
 func runApp(args []string) {
 	if len(args) == 0 {
-		errorf("~ No import path given\n")
+		errorf("~ No import path given.\nRun 'rev help run' for usage.\n")
 	}
 
 	// TODO: Why can't it be any arbitrary string again?
