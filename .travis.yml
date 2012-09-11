@@ -1,16 +1,1 @@
-language: erlang # wither art thou, Go?
-
-install:
- - hg clone -r go1 https://code.google.com/p/go $HOME/go
- - cd $HOME/go/src && ./make.bash
- - mkdir -p $HOME/src || true
- - mkdir -p $HOME/bin || true
- - mkdir -p $HOME/pkg || true
- - export GOPATH=$HOME
- - export PATH=$PATH:$HOME/go/bin
- - go get -v github.com/robfig/revel
- - ln -s $HOME/builds/robfig/revel $HOME/src/github.com/robfig/revel
-
-script:
- - cd $HOME/src/github.com/robfig/revel && go build -v .
- - cd $HOME/src/github.com/robfig/revel && go test -v .
+language: go
