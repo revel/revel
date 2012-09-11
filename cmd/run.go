@@ -27,6 +27,10 @@ func init() {
 }
 
 func runApp(args []string) {
+	if len(args) == 0 {
+		errorf("~ No import path given\n")
+	}
+
 	// TODO: Why can't it be any arbitrary string again?
 	mode := rev.DEV
 	if len(args) == 2 && args[1] == rev.PROD {
