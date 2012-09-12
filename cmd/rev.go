@@ -55,7 +55,12 @@ func main() {
 		}
 	}
 
-	fmt.Fprintf(os.Stderr, "~ unknown command %q\nRun 'rev help' for usage.\n", args[0])
+	errorf("~ unknown command %q\nRun 'rev help' for usage.\n", args[0])
+}
+
+func errorf(format string, args ...interface{}) {
+	fmt.Fprintf(os.Stderr, format, args...)
+	os.Exit(1)
 }
 
 const header = `~
