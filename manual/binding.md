@@ -129,7 +129,7 @@ type User struct {
 The SQL standard time formats ["2006-01-02", "2006-01-02 15:04"] are built in.
 
 More may be added by the application, using
-[the official pattern](http://www.golang.org/pkg/time/#Constants).  Simply add
+[the official pattern](http://golang.org/pkg/time/#constants).  Simply add
 the pattern to recognize to the `TimeFormats` variable, like this:
 
 <pre class="prettyprint lang-go">
@@ -147,7 +147,7 @@ File uploads may be bound to any of the following types:
 * io.ReadSeeker
 
 This is a wrapper around the upload handling provided by
-[Go's multipart package](http://www.golang.org/pkg/net/multipart).  The bytes
+[Go's multipart package](http://golang.org/pkg/mime/multipart/).  The bytes
 stay in memory unless they exceed a threshold (10MB by default), in which case
 they are written to a temp file.
 
