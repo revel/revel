@@ -147,7 +147,7 @@ File uploads may be bound to any of the following types:
 * io.ReadSeeker
 
 This is a wrapper around the upload handling provided by
-[Go's multipart package](http://www.golang.org/pkg/net/multipart).  The bytes
+[Go's multipart package](http://golang.org/pkg/mime/multipart/).  The bytes
 stay in memory unless they exceed a threshold (10MB by default), in which case
 they are written to a temp file.
 
