@@ -5,7 +5,7 @@
 	</head>
 	<body>
 		{{if eq .RunMode "dev"}}
-		{{template "500-dev.html" .}}
+		{{template "errors/500-dev.html" .}}
 		{{else}}
 		<h1>Oops, an error occured</h1>
 		<p>
