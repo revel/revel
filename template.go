@@ -109,7 +109,6 @@ func NewTemplateLoader(paths ...string) *TemplateLoader {
 	loader := &TemplateLoader{
 		paths: paths,
 	}
-	loader.Refresh()
 	return loader
 }
 
