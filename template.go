@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strconv"
 	"strings"
 )
@@ -140,6 +141,9 @@ func (loader *TemplateLoader) Refresh() *Error {
 
 			// If we already loaded a template of this name, skip it.
 			templateName := path[len(basePath)+1:]
+			if runtime.GOOS == "windows" {
+				templateName = strings.Replace(templateName, `\`, `/`, -1)
+			}
 			if _, ok := loader.templatePaths[templateName]; ok {
 				return nil
 			}
