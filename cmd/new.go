@@ -38,9 +38,10 @@ func newApp(args []string) {
 	if len(args) == 0 {
 		errorf("~ No path given.\nRun 'rev help new' for usage.\n")
 	}
+
 	_, err := os.Open(args[0])
 	if err == nil {
-		fmt.Fprintf(os.Stderr, "~ Abort: Directory %s already exists.", args[0])
+		fmt.Fprintf(os.Stderr, "~ Abort: Directory %s already exists.\n", args[0])
 		return
 	}
 
