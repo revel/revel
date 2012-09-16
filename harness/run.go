@@ -13,6 +13,7 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strconv"
 	"text/template"
 )
@@ -88,6 +89,7 @@ func rebuild(addr string, port int) (compileError *rev.Error) {
 
 	// Create the new file
 	controllersFile, err := os.Create(path.Join(tmpPath, "main.go"))
+	defer controllersFile.Close()
 	if err != nil {
 		rev.ERROR.Fatalf("Failed to create main.go: %v", err)
 	}
@@ -109,6 +111,9 @@ func rebuild(addr string, port int) (compileError *rev.Error) {
 		rev.ERROR.Fatalf("Failure importing", rev.ImportPath)
 	}
 	binName := path.Join(pkg.BinDir, rev.AppName)
+	if runtime.GOOS == "windows" {
+		binName += ".exe"
+	}
 	buildCmd := exec.Command(goPath, "build", "-o", binName, path.Join(rev.ImportPath, "app", "tmp"))
 	rev.TRACE.Println("Exec build:", buildCmd.Path, buildCmd.Args)
 	output, err := buildCmd.CombinedOutput()
