@@ -134,6 +134,13 @@ func (loader *TemplateLoader) Refresh() *Error {
 
 			// Walk into directories.
 			if info.IsDir() {
+				if !loader.WatchDir(info) {
+					return filepath.SkipDir
+				}
+				return nil
+			}
+
+			if !loader.WatchFile(info.Name()) {
 				return nil
 			}
 
@@ -206,6 +213,16 @@ func (loader *TemplateLoader) Refresh() *Error {
 	// Note: compileError may or may not be set.
 	loader.templateSet = templateSet
 	return loader.compileError
+}
+
+func (loader *TemplateLoader) WatchDir(info os.FileInfo) bool {
+	// Watch all directories, except the ones starting with a dot.
+	return !strings.HasPrefix(info.Name(), ".")
+}
+
+func (loader *TemplateLoader) WatchFile(basename string) bool {
+	// Watch all files, except the ones starting with a dot.
+	return !strings.HasPrefix(basename, ".")
 }
 
 // Parse the line, and description from an error message like:
