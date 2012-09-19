@@ -92,7 +92,7 @@ func (r Required) IsSatisfied(obj interface{}) bool {
 		return b
 	}
 	if i, ok := obj.(int); ok {
-		return i > 0
+		return i != 0
 	}
 	if t, ok := obj.(time.Time); ok {
 		return !t.IsZero()
