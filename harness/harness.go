@@ -64,6 +64,7 @@ func NewHarness() *Harness {
 	rev.MainTemplateLoader = rev.NewTemplateLoader(
 		rev.ViewsPath,
 		rev.RevelTemplatePath)
+	rev.MainTemplateLoader.Refresh()
 
 	port := getFreePort()
 	serverUrl, _ := url.ParseRequestURI(fmt.Sprintf("http://localhost:%d", port))
