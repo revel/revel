@@ -22,13 +22,10 @@ var (
 	cmd *exec.Cmd // The app server cmd
 )
 
-// Run the Revel program in a given RunMode.
-// If RunMode is PROD, it builds and runs the app directly.
-// Otherwise, it instantiates a proxy (harness) that watches for changes and
-// rebuilds as necessary.
-func Run(mode string) {
+// Run the Revel program, optionally using the harness.
+func Run(useHarness bool) {
 	// If we are in prod mode, just build and run the application.
-	if mode == rev.PROD {
+	if ! useHarness {
 		rev.INFO.Println("Building...")
 		if err := rebuild(getAppAddress(), getAppPort()); err != nil {
 			rev.ERROR.Fatalln(err)
@@ -160,21 +157,13 @@ func (w startupListeningWriter) Write(p []byte) (n int, err error) {
 // Return port that the app should listen on.
 // 9000 by default.
 func getAppPort() int {
-	port, err := rev.Config.Int("http.port")
-	if err != nil {
-		return 9000
-	}
-	return port
+	return rev.Config.IntDefault("http.port", 9000)
 }
 
 // Return address that the app should listen on.
 // Wildcard by default.
 func getAppAddress() string {
-	addr, err := rev.Config.String("http.addr")
-	if err != nil {
-		return ""
-	}
-	return addr
+	return rev.Config.StringDefault("http.addr", "")
 }
 
 // Find an unused port

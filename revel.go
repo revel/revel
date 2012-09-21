@@ -10,11 +10,6 @@ import (
 	"strings"
 )
 
-const (
-	DEV  = "dev"
-	PROD = "prod"
-)
-
 var (
 	// App details
 	AppName    string // e.g. "sample"
@@ -24,7 +19,7 @@ var (
 	ImportPath string // e.g. "revel/sample"
 
 	Config  *MergedConfig
-	RunMode string // DEV or PROD
+	RunMode string // Application-defined (by default, "dev" or "prod")
 
 	// Revel installation details
 	RevelPath         string // e.g. "/Users/robfig/gocode/src/revel"
@@ -80,8 +75,8 @@ func Init(importPath string, mode string) {
 		log.Fatalln("Failed to load app.conf:", err)
 	}
 	Config.SetSection(mode)
-	secretStr, err := Config.String("app.secret")
-	if err != nil {
+	secretStr := Config.StringDefault("app.secret", "")
+	if secretStr == "" {
 		log.Fatalln("No app.secret provided.")
 	}
 	secretKey = []byte(secretStr)
@@ -105,10 +100,7 @@ func getLogger(name string) *log.Logger {
 	var logger *log.Logger
 
 	// Create a logger with the requested output. (default to stderr)
-	output, err := Config.String("log." + name + ".output")
-	if err != nil {
-		output = "stderr"
-	}
+	output := Config.StringDefault("log." + name + ".output", "stderr")
 
 	switch output {
 	case "stdout":
@@ -128,13 +120,13 @@ func getLogger(name string) *log.Logger {
 	}
 
 	// Set the prefix / flags.
-	flags, err := Config.Int("log." + name + ".flags")
-	if err == nil {
+	flags, found := Config.Int("log." + name + ".flags")
+	if found {
 		logger.SetFlags(flags)
 	}
 
-	prefix, err := Config.String("log." + name + ".prefix")
-	if err == nil {
+	prefix, found := Config.String("log." + name + ".prefix")
+	if found {
 		logger.SetPrefix(prefix)
 	}
 

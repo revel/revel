@@ -104,11 +104,8 @@ func ContentTypeByFilename(filename string) string {
 	}
 
 	extension := filename[dot+1:]
-	contentType, err := mimeConfig.String(extension)
+	contentType := mimeConfig.StringDefault(extension, "")
 	if contentType == "" {
-		if err != nil {
-			WARN.Println(err)
-		}
 		return DefaultFileContentType
 	}
 

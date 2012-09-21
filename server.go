@@ -107,9 +107,9 @@ func Run(address string, port int) {
 	MainRouter = NewRouter(routePath)
 	MainTemplateLoader = NewTemplateLoader(ViewsPath, RevelTemplatePath)
 
-	// If DEV mode, create a watcher for templates and routes.
+	// If desired (or by default), create a watcher for templates and routes.
 	// The watcher calls Refresh() on things on the first request.
-	if RunMode == DEV {
+	if Config.BoolDefault("server.watcher", true) {
 		MainWatcher = NewWatcher()
 		MainWatcher.Listen(MainTemplateLoader, ViewsPath, RevelTemplatePath)
 		MainWatcher.Listen(MainRouter, routePath)

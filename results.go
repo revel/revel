@@ -138,7 +138,7 @@ type RenderJsonResult struct {
 func (r RenderJsonResult) Apply(req *Request, resp *Response) {
 	var b []byte
 	var err error
-	if RunMode == DEV {
+	if Config.BoolDefault("results.pretty", false) {
 		b, err = json.MarshalIndent(r.obj, "", "  ")
 	} else {
 		b, err = json.Marshal(r.obj)
@@ -160,8 +160,7 @@ type RenderXmlResult struct {
 func (r RenderXmlResult) Apply(req *Request, resp *Response) {
 	var b []byte
 	var err error
-	// TODO: Extract indent to app.conf
-	if RunMode == DEV {
+	if Config.BoolDefault("results.pretty", false) {
 		b, err = xml.MarshalIndent(r.obj, "", "  ")
 	} else {
 		b, err = xml.Marshal(r.obj)
