@@ -25,7 +25,7 @@ var (
 // Run the Revel program, optionally using the harness.
 func Run(useHarness bool) {
 	// If we are in prod mode, just build and run the application.
-	if ! useHarness {
+	if !useHarness {
 		rev.INFO.Println("Building...")
 		if err := rebuild(getAppAddress(), getAppPort()); err != nil {
 			rev.ERROR.Fatalln(err)

@@ -74,6 +74,10 @@ func Init(importPath string, mode string) {
 	if err != nil {
 		log.Fatalln("Failed to load app.conf:", err)
 	}
+	// Ensure that the selected runmode appears in app.conf.
+	if !Config.HasSection(mode) {
+		log.Fatalln("app.conf: No mode found:", mode)
+	}
 	Config.SetSection(mode)
 	secretStr := Config.StringDefault("app.secret", "")
 	if secretStr == "" {
@@ -100,7 +104,7 @@ func getLogger(name string) *log.Logger {
 	var logger *log.Logger
 
 	// Create a logger with the requested output. (default to stderr)
-	output := Config.StringDefault("log." + name + ".output", "stderr")
+	output := Config.StringDefault("log."+name+".output", "stderr")
 
 	switch output {
 	case "stdout":
