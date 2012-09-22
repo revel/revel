@@ -10,20 +10,28 @@ import (
 	"strings"
 )
 
+const (
+	REVEL_IMPORT_PATH = "github.com/robfig/revel"
+)
+
 var (
 	// App details
 	AppName    string // e.g. "sample"
-	BasePath   string // e.g. "/Users/robfig/gocode/src/revel/sample"
-	AppPath    string // e.g. "/Users/robfig/gocode/src/revel/sample/app"
-	ViewsPath  string // e.g. "/Users/robfig/gocode/src/revel/sample/app/views"
-	ImportPath string // e.g. "revel/sample"
+	BasePath   string // e.g. "/Users/robfig/gocode/src/corp/sample"
+	AppPath    string // e.g. "/Users/robfig/gocode/src/corp/sample/app"
+	ViewsPath  string // e.g. "/Users/robfig/gocode/src/corp/sample/app/views"
+	ImportPath string // e.g. "corp/sample"
 
 	Config  *MergedConfig
 	RunMode string // Application-defined (by default, "dev" or "prod")
 
 	// Revel installation details
-	RevelPath         string // e.g. "/Users/robfig/gocode/src/revel"
-	RevelTemplatePath string // e.g. "/Users/robfig/gocode/src/revel/templates"
+	RevelPath string // e.g. "/Users/robfig/gocode/src/revel"
+
+	// Where to look for templates and configuration.
+	// Ordered by priority.  (Earlier paths take precedence over later paths.)
+	ConfPaths     []string
+	TemplatePaths []string
 
 	DEFAULT = log.New(os.Stderr, "", log.Ldate|log.Ltime|log.Lshortfile)
 	TRACE   = DEFAULT
@@ -43,38 +51,48 @@ func init() {
 	log.SetFlags(DEFAULT.Flags())
 }
 
-func Init(importPath string, mode string) {
+// Init initializes Revel -- it provides paths for getting around the app.
+//
+// Params:
+//   mode - the run mode, which determines which app.conf settings are used.
+//   importPath - the Go import path of the application.
+//   srcPath - the path to the source directory, containing Revel and the app.
+//     If not specified (""), then a functioning Go installation is required.
+func Init(mode, importPath, srcPath string) {
+	// Ignore trailing slashes.
+	ImportPath = strings.TrimRight(importPath, "/")
 	RunMode = mode
 
-	// Find the user's app path.
-	importPath = strings.TrimRight(importPath, "/")
-	pkg, err := build.Import(importPath, "", build.FindOnly)
-	if err != nil {
-		log.Fatalln("Failed to import", importPath, "with error:", err)
+	if srcPath == "" {
+		srcPath = findSrcPath(importPath)
 	}
-	BasePath = pkg.Dir
-	if BasePath == "" {
-		log.Fatalf("Failed to find code.  Did you pass the import path?")
-	}
-	AppName = filepath.Base(BasePath)
+
+	RevelPath = path.Join(srcPath, filepath.FromSlash(REVEL_IMPORT_PATH))
+	BasePath = path.Join(srcPath, filepath.FromSlash(importPath))
 	AppPath = path.Join(BasePath, "app")
 	ViewsPath = path.Join(AppPath, "views")
-	ImportPath = importPath
 
-	// Find the provided resources.
-	revelPkg, err := build.Import("github.com/robfig/revel", "", build.FindOnly)
-	if err != nil {
-		log.Fatalf("Failed to find revel code.")
+	ConfPaths = []string{
+		path.Join(BasePath, "conf"),
+		path.Join(RevelPath, "conf"),
 	}
-	RevelPath = revelPkg.Dir
-	RevelTemplatePath = path.Join(RevelPath, "templates")
 
-	// Load application.conf
-	Config, err = LoadConfig(path.Join(BasePath, "conf", "app.conf"))
-	if err != nil {
+	TemplatePaths = []string{
+		ViewsPath,
+		path.Join(RevelPath, "templates"),
+	}
+
+	// Load app.conf
+	var err error
+	Config, err = LoadConfig("app.conf")
+	if err != nil || Config == nil {
 		log.Fatalln("Failed to load app.conf:", err)
 	}
 	// Ensure that the selected runmode appears in app.conf.
+	// If empty string is passed as the mode, treat it as "DEFAULT"
+	if mode == "" {
+		mode = defaultSection
+	}
 	if !Config.HasSection(mode) {
 		log.Fatalln("app.conf: No mode found:", mode)
 	}
@@ -84,6 +102,8 @@ func Init(importPath string, mode string) {
 		log.Fatalln("No app.secret provided.")
 	}
 	secretKey = []byte(secretStr)
+
+	AppName = Config.StringDefault("app.name", "(not set)")
 
 	// Configure logging.
 	TRACE = getLogger("trace")
@@ -139,6 +159,28 @@ func getLogger(name string) *log.Logger {
 
 func newLogger(wr io.Writer) *log.Logger {
 	return log.New(wr, DEFAULT.Prefix(), DEFAULT.Flags())
+}
+
+// findSrcPath uses the "go/build" package to find the source root.
+func findSrcPath(importPath string) string {
+	appPkg, err := build.Import(importPath, "", build.FindOnly)
+	if err != nil {
+		log.Fatalln("Failed to import", importPath, "with error:", err)
+	}
+
+	revelPkg, err := build.Import(REVEL_IMPORT_PATH, "", build.FindOnly)
+	if err != nil {
+		log.Fatalln("Failed to find Revel with error:", err)
+	}
+
+	// Find the source path from each, and ensure they are equal.
+	if revelPkg.SrcRoot != appPkg.SrcRoot {
+		log.Fatalln("Revel must be installed in the same GOPATH as your app."+
+			"\nRevel source root:", revelPkg.SrcRoot,
+			"\nApp source root:", appPkg.SrcRoot)
+	}
+
+	return appPkg.SrcRoot
 }
 
 func CheckInit() {

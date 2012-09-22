@@ -1,7 +1,9 @@
 package rev
 
 import (
+	"errors"
 	"github.com/kless/goconfig/config"
+	"path"
 )
 
 // This handles the parsing of application.conf
@@ -13,12 +15,18 @@ type MergedConfig struct {
 	section string // Check this section first, then fall back to DEFAULT
 }
 
-func LoadConfig(fname string) (*MergedConfig, error) {
-	conf, err := config.ReadDefault(fname)
-	if err != nil {
-		return nil, err
+func LoadConfig(confName string) (*MergedConfig, error) {
+	var err error
+	for _, confPath := range ConfPaths {
+		conf, err := config.ReadDefault(path.Join(confPath, confName))
+		if err == nil {
+			return &MergedConfig{conf, ""}, nil
+		}
 	}
-	return &MergedConfig{conf, ""}, nil
+	if err == nil {
+		err = errors.New("not found")
+	}
+	return nil, err
 }
 
 // The top-level keys are in a section called "DEFAULT".  The DEFAULT is used as

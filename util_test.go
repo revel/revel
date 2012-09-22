@@ -1,6 +1,10 @@
 package rev
 
-import "testing"
+import (
+	"path"
+	"path/filepath"
+	"testing"
+)
 
 func TestContentTypeByFilename(t *testing.T) {
 	testCases := map[string]string{
@@ -9,6 +13,11 @@ func TestContentTypeByFilename(t *testing.T) {
 		"helloworld.":   "application/octet-stream",
 		"helloworld":    "application/octet-stream",
 		"hello.world.c": "text/x-c; charset=utf-8",
+	}
+	ConfPaths = []string{path.Join(
+		findSrcPath(REVEL_IMPORT_PATH),
+		filepath.FromSlash(REVEL_IMPORT_PATH),
+		"conf"),
 	}
 	loadMimeConfig()
 	for filename, expected := range testCases {

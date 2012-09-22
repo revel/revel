@@ -5,7 +5,6 @@ import (
 	"io"
 	"io/ioutil"
 	"net/url"
-	"path"
 	"reflect"
 	"regexp"
 	"strings"
@@ -84,7 +83,7 @@ var mimeConfig *MergedConfig
 // Load mime-types.conf on init.
 func loadMimeConfig() {
 	var err error
-	mimeConfig, err = LoadConfig(path.Join(RevelPath, "conf", "mime-types.conf"))
+	mimeConfig, err = LoadConfig("mime-types.conf")
 	if err != nil {
 		ERROR.Fatalln("Failed to load mime type config:", err)
 	}

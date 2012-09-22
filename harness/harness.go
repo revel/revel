@@ -13,6 +13,8 @@ package harness
 import (
 	"fmt"
 	"github.com/robfig/revel"
+	"io"
+	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -61,9 +63,7 @@ func (hp *Harness) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func NewHarness() *Harness {
 	// Get a template loader to render errors.
 	// Prefer the app's views/errors directory, and fall back to the stock error pages.
-	rev.MainTemplateLoader = rev.NewTemplateLoader(
-		rev.ViewsPath,
-		rev.RevelTemplatePath)
+	rev.MainTemplateLoader = rev.NewTemplateLoader(rev.TemplatePaths)
 	rev.MainTemplateLoader.Refresh()
 
 	port := getFreePort()
@@ -76,8 +76,15 @@ func NewHarness() *Harness {
 	return harness
 }
 
+// Rebuild the Revel application and run it on the given port.
 func (h *Harness) Refresh() *rev.Error {
-	return rebuild("", h.port)
+	rev.TRACE.Println("Rebuild")
+	binName, err := Build()
+	if err != nil {
+		return err
+	}
+	start(binName, "", h.port)
+	return nil
 }
 
 func (h *Harness) WatchDir(info os.FileInfo) bool {
@@ -107,4 +114,42 @@ func (h *Harness) Run() {
 	if err != nil {
 		rev.ERROR.Fatalln("Failed to start reverse proxy:", err)
 	}
+}
+
+// proxyWebsocket copies data between websocket client and server until one side
+// closes the connection.  (ReverseProxy doesn't work with websocket requests.)
+func proxyWebsocket(w http.ResponseWriter, r *http.Request, host string) {
+	d, err := net.Dial("tcp", host)
+	if err != nil {
+		http.Error(w, "Error contacting backend server.", 500)
+		rev.ERROR.Printf("Error dialing websocket backend %s: %v", host, err)
+		return
+	}
+	hj, ok := w.(http.Hijacker)
+	if !ok {
+		http.Error(w, "Not a hijacker?", 500)
+		return
+	}
+	nc, _, err := hj.Hijack()
+	if err != nil {
+		rev.ERROR.Printf("Hijack error: %v", err)
+		return
+	}
+	defer nc.Close()
+	defer d.Close()
+
+	err = r.Write(d)
+	if err != nil {
+		rev.ERROR.Printf("Error copying request to target: %v", err)
+		return
+	}
+
+	errc := make(chan error, 2)
+	cp := func(dst io.Writer, src io.Reader) {
+		_, err := io.Copy(dst, src)
+		errc <- err
+	}
+	go cp(d, nc)
+	go cp(nc, d)
+	<-errc
 }

@@ -37,8 +37,9 @@ func runApp(args []string) {
 	}
 
 	// Find and parse app.conf
-	rev.Init(args[0], mode)
-	log.Printf("Running app (%s): %s (%s)\n", mode, rev.AppName, rev.BasePath)
+	rev.Init(mode, args[0], "")
+	log.Printf("Running %s (%s) in %s mode\n", rev.AppName, rev.ImportPath, mode)
+	rev.TRACE.Println("Base path:", rev.BasePath)
 
-	harness.Run(rev.Config.BoolDefault("server.watcher", true))
+	harness.StartApp(rev.Config.BoolDefault("server.watcher", true))
 }

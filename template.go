@@ -105,7 +105,7 @@ var (
 	}
 )
 
-func NewTemplateLoader(paths ...string) *TemplateLoader {
+func NewTemplateLoader(paths []string) *TemplateLoader {
 	loader := &TemplateLoader{
 		paths: paths,
 	}

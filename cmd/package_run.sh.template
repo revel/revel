@@ -1,0 +1,7 @@
+#!/bin/bash #!/bin/sh
+#!/bin/bash
+pushd `dirname $0` > /dev/null
+SCRIPTPATH=`pwd`
+popd > /dev/null
+chmod u+x $SCRIPTPATH/{{.BinName}}
+$SCRIPTPATH/{{.BinName}} -importPath {{.ImportPath}} -srcPath $SCRIPTPATH -runMode prod

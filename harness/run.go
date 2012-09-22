@@ -7,7 +7,6 @@ import (
 	"go/build"
 	"io"
 	"net"
-	"net/http"
 	"os"
 	"os/exec"
 	"path"
@@ -23,13 +22,15 @@ var (
 )
 
 // Run the Revel program, optionally using the harness.
-func Run(useHarness bool) {
+func StartApp(useHarness bool) {
 	// If we are in prod mode, just build and run the application.
 	if !useHarness {
 		rev.INFO.Println("Building...")
-		if err := rebuild(getAppAddress(), getAppPort()); err != nil {
+		binName, err := Build()
+		if err != nil {
 			rev.ERROR.Fatalln(err)
 		}
+		start(binName, getAppAddress(), getAppPort())
 		cmd.Wait()
 		return
 	}
@@ -47,12 +48,15 @@ func Run(useHarness bool) {
 	harness.Run()
 }
 
-// Rebuild the Revel application and run it on the given port.
-func rebuild(addr string, port int) (compileError *rev.Error) {
-	rev.TRACE.Println("Rebuild")
+// Build the app:
+// 1. Generate the the main.go file.
+// 2. Run the appropriate "go build" command.
+// Requires that rev.Init has been called previously.
+// Returns the path to the built binary, and an error if there was a problem building it.
+func Build() (binaryPath string, compileError *rev.Error) {
 	controllerSpecs, compileError := ScanControllers(path.Join(rev.AppPath, "controllers"))
 	if compileError != nil {
-		return compileError
+		return "", compileError
 	}
 
 	tmpl := template.New("RegisterControllers")
@@ -61,7 +65,6 @@ func rebuild(addr string, port int) (compileError *rev.Error) {
 		"AppName":     rev.AppName,
 		"Controllers": controllerSpecs,
 		"ImportPaths": uniqueImportPaths(controllerSpecs),
-		"RunMode":     rev.RunMode,
 	})
 
 	// Terminate the server if it's already running.
@@ -117,25 +120,31 @@ func rebuild(addr string, port int) (compileError *rev.Error) {
 
 	// If we failed to build, parse the error message.
 	if err != nil {
-		return newCompileError(output)
+		return "", newCompileError(output)
 	}
 
+	return binName, nil
+}
+
+// Start the application server, waiting until it has started up.
+// Panics if startup fails.
+func start(binName, addr string, port int) {
 	// Run the server, via tmp/main.go.
 	cmd = exec.Command(binName,
-		fmt.Sprintf("-addr=%s", addr),
 		fmt.Sprintf("-port=%d", port),
-		fmt.Sprintf("-importPath=%s", rev.ImportPath))
+		fmt.Sprintf("-importPath=%s", rev.ImportPath),
+		fmt.Sprintf("-runMode=%s", rev.RunMode),
+	)
 	rev.TRACE.Println("Exec app:", cmd.Path, cmd.Args)
 	listeningWriter := startupListeningWriter{os.Stdout, make(chan bool)}
 	cmd.Stdout = listeningWriter
 	cmd.Stderr = os.Stderr
-	err = cmd.Start()
+	err := cmd.Start()
 	if err != nil {
 		rev.ERROR.Fatalln("Error running:", err)
 	}
 
 	<-listeningWriter.notifyReady
-	return nil
 }
 
 // A io.Writer that copies to the destination, and listens for "Listening on.."
@@ -243,44 +252,6 @@ func newCompileError(output []byte) *rev.Error {
 	return compileError
 }
 
-// proxyWebsocket copies data between websocket client and server until one side
-// closes the connection.  (ReverseProxy doesn't work with websocket requests.)
-func proxyWebsocket(w http.ResponseWriter, r *http.Request, host string) {
-	d, err := net.Dial("tcp", host)
-	if err != nil {
-		http.Error(w, "Error contacting backend server.", 500)
-		rev.ERROR.Printf("Error dialing websocket backend %s: %v", host, err)
-		return
-	}
-	hj, ok := w.(http.Hijacker)
-	if !ok {
-		http.Error(w, "Not a hijacker?", 500)
-		return
-	}
-	nc, _, err := hj.Hijack()
-	if err != nil {
-		rev.ERROR.Printf("Hijack error: %v", err)
-		return
-	}
-	defer nc.Close()
-	defer d.Close()
-
-	err = r.Write(d)
-	if err != nil {
-		rev.ERROR.Printf("Error copying request to target: %v", err)
-		return
-	}
-
-	errc := make(chan error, 2)
-	cp := func(dst io.Writer, src io.Reader) {
-		_, err := io.Copy(dst, src)
-		errc <- err
-	}
-	go cp(d, nc)
-	go cp(nc, d)
-	<-errc
-}
-
 const REGISTER_CONTROLLERS = `package main
 
 import (
@@ -293,9 +264,10 @@ import (
 )
 
 var (
-	addr *string = flag.String("addr", "", "Address to listen on")
-	port *int = flag.Int("port", 0, "Port")
-	importPath *string = flag.String("importPath", "", "Path to the app.")
+	runMode    *string = flag.String("runMode", "", "Run mode.")
+	port       *int    = flag.Int("port", 0, "By default, read from app.conf")
+	importPath *string = flag.String("importPath", "", "Go Import Path for the app.")
+	srcPath    *string = flag.String("srcPath", "", "Path to the source root.")
 
 	// So compiler won't complain if the generated code doesn't reference reflect package...
 	_ = reflect.Invalid
@@ -304,7 +276,7 @@ var (
 func main() {
 	rev.INFO.Println("Running revel server")
 	flag.Parse()
-	rev.Init(*importPath, "{{.RunMode}}")
+	rev.Init(*runMode, *importPath, *srcPath)
 	{{range $i, $c := .Controllers}}
 	rev.RegisterController((*{{.PackageName}}.{{.StructName}})(nil),
 		[]*rev.MethodType{
@@ -322,6 +294,6 @@ func main() {
 			{{end}}
 		})
 	{{end}}
-	rev.Run(*addr, *port)
+	rev.Run(*port)
 }
 `

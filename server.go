@@ -102,17 +102,22 @@ func handleInternal(w http.ResponseWriter, r *http.Request, ws *websocket.Conn) 
 
 // Run the server.
 // This is called from the generated main file.
-func Run(address string, port int) {
-	routePath := path.Join(BasePath, "conf", "routes")
-	MainRouter = NewRouter(routePath)
-	MainTemplateLoader = NewTemplateLoader(ViewsPath, RevelTemplatePath)
+// If port is non-zero, use that.  Else, read the port from app.conf.
+func Run(port int) {
+	address := Config.StringDefault("http.addr", "")
+	if port == 0 {
+		port = Config.IntDefault("http.port", 9000)
+	}
+
+	MainRouter = NewRouter(path.Join(BasePath, "conf", "routes"))
+	MainTemplateLoader = NewTemplateLoader(TemplatePaths)
 
 	// If desired (or by default), create a watcher for templates and routes.
 	// The watcher calls Refresh() on things on the first request.
 	if Config.BoolDefault("server.watcher", true) {
 		MainWatcher = NewWatcher()
-		MainWatcher.Listen(MainTemplateLoader, ViewsPath, RevelTemplatePath)
-		MainWatcher.Listen(MainRouter, routePath)
+		MainWatcher.Listen(MainTemplateLoader, MainTemplateLoader.paths...)
+		MainWatcher.Listen(MainRouter, MainRouter.path)
 	} else {
 		// Else, call refresh on them directly.
 		MainTemplateLoader.Refresh()
