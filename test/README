@@ -5,4 +5,4 @@ In this directory
 - open http://localhost:8080/revel
 
 In revel/
-- jekyll --pygments --no-lsi --safe test/revel
+- jekyll --auto --pygments --no-lsi --safe test/revel
