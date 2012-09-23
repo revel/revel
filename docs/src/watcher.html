@@ -1,0 +1,151 @@
+---
+layout: godoc
+---
+<!--
+	Copyright 2009 The Go Authors. All rights reserved.
+	Use of this source code is governed by a BSD-style
+	license that can be found in the LICENSE file.
+-->
+<h1>Watcher</h1>
+
+
+
+	<pre>package rev
+
+<span class="comment">// Listener is an interface for receivers of filesystem events.</span>
+type Listener interface {
+    <span class="comment">// Refresh is invoked by the watcher on relevant filesystem events.</span>
+    <span class="comment">// If the listener returns an error, it is served to the user on the current request.</span>
+    Refresh() *Error
+}
+
+<span class="comment">// DiscerningListener allows the receiver to selectively watch files.</span>
+type DiscerningListener interface {
+    Listener
+    WatchDir(info os.FileInfo) bool
+    WatchFile(basename string) bool
+}
+
+<span class="comment">// Watcher allows listeners to register to be notified of changes under a given</span>
+<span class="comment">// directory.</span>
+type Watcher struct {
+
+}
+
+func NewWatcher() *Watcher {
+    return &amp;Watcher{
+        forceRefresh: true,
+        lastError:    -1,
+    }
+}
+
+<span class="comment">// Listen registers for events within the given root directories (recursively).</span>
+func (w *Watcher) Listen(listener Listener, roots ...string) {
+    watcher, err := fsnotify.NewWatcher()
+    if err != nil {
+        ERROR.Fatal(err)
+    }
+
+    <span class="comment">// Replace the unbuffered Event channel with a buffered one.</span>
+    <span class="comment">// Otherwise multiple change events only come out one at a time, across</span>
+    <span class="comment">// multiple page views.  (There appears no way to &#34;pump&#34; the events out of</span>
+    <span class="comment">// the watcher)</span>
+    watcher.Event = make(chan *fsnotify.FileEvent, 100)
+    watcher.Error = make(chan error, 10)
+
+    <span class="comment">// Walk through all files / directories under the root, adding each to watcher.</span>
+    for _, p := range roots {
+        fi, err := os.Stat(p)
+        if err != nil {
+            ERROR.Println(&#34;Failed to stat watched path&#34;, p, &#34;:&#34;, err)
+            continue
+        }
+
+        <span class="comment">// If it is a file, watch that specific file.</span>
+        if !fi.IsDir() {
+            err = watcher.Watch(p)
+            if err != nil {
+                ERROR.Println(&#34;Failed to watch&#34;, p, &#34;:&#34;, err)
+            }
+            TRACE.Println(&#34;Watching:&#34;, p)
+            continue
+        }
+
+        <span class="comment">// Else, walk the directory tree.</span>
+        filepath.Walk(p, func(path string, info os.FileInfo, err error) error {
+            if err != nil {
+                ERROR.Println(&#34;Error walking path:&#34;, err)
+                return nil
+            }
+
+            if info.IsDir() {
+                if dl, ok := listener.(DiscerningListener); ok {
+                    if !dl.WatchDir(info) {
+                        return filepath.SkipDir
+                    }
+                }
+
+                err = watcher.Watch(path)
+                if err != nil {
+                    ERROR.Println(&#34;Failed to watch&#34;, path, &#34;:&#34;, err)
+                }
+                TRACE.Println(&#34;Watching:&#34;, path)
+            }
+            return nil
+        })
+    }
+
+    w.watchers = append(w.watchers, watcher)
+    w.listeners = append(w.listeners, listener)
+}
+
+<span class="comment">// Notify causes the watcher to forward any change events to listeners.</span>
+<span class="comment">// It returns the first (if any) error returned.</span>
+func (w *Watcher) Notify() *Error {
+    for i, watcher := range w.watchers {
+        listener := w.listeners[i]
+
+        <span class="comment">// Pull all pending events / errors from the watcher.</span>
+        refresh := false
+        for {
+            select {
+            case ev := &lt;-watcher.Event:
+                <span class="comment">// Ignore changes to dotfiles.</span>
+                if !strings.HasPrefix(path.Base(ev.Name), &#34;.&#34;) {
+                    if dl, ok := listener.(DiscerningListener); ok {
+                        if !dl.WatchFile(ev.Name) {
+                            continue
+                        }
+                    }
+
+                    refresh = true
+                }
+                continue
+            case &lt;-watcher.Error:
+                continue
+            default:
+                <span class="comment">// No events left to pull</span>
+            }
+            break
+        }
+
+        if w.forceRefresh || refresh || w.lastError == i {
+            err := listener.Refresh()
+            if err != nil {
+                w.lastError = i
+                return err
+            }
+        }
+    }
+
+    w.forceRefresh = false
+    w.lastError = -1
+    return nil
+}
+</pre>
+
+
+
+
+
+

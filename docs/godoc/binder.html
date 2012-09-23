@@ -23,7 +23,7 @@ layout: godoc
 			
 			
 				
-				<dd><a href="#Bind">func Bind(params Params, name string, typ reflect.Type) reflect.Value</a></dd>
+				<dd><a href="#Bind">func Bind(params *Params, name string, typ reflect.Type) reflect.Value</a></dd>
 			
 				
 				<dd><a href="#BindFile">func BindFile(fileHeader *multipart.FileHeader, typ reflect.Type) reflect.Value</a></dd>
@@ -81,8 +81,8 @@ The most specific binder found will be used (Type before Kind)
 		
 			
 			
-			<h2 id="Bind">func <a href="../src/binder.html?s=9049:9118#L306">Bind</a></h2>
-			<pre>func Bind(params Params, name string, typ reflect.Type) reflect.Value</pre>
+			<h2 id="Bind">func <a href="../src/binder.html?s=9156:9226#L309">Bind</a></h2>
+			<pre>func Bind(params *Params, name string, typ reflect.Type) reflect.Value</pre>
 			<p>
 Parse the value string into a real Go value.
 Returns 0 values when things can not be parsed.
@@ -92,14 +92,14 @@ Returns 0 values when things can not be parsed.
 		
 			
 			
-			<h2 id="BindFile">func <a href="../src/binder.html?s=9513:9592#L326">BindFile</a></h2>
+			<h2 id="BindFile">func <a href="../src/binder.html?s=9623:9702#L329">BindFile</a></h2>
 			<pre>func BindFile(fileHeader *multipart.FileHeader, typ reflect.Type) reflect.Value</pre>
 			
 			
 		
 			
 			
-			<h2 id="BindValue">func <a href="../src/binder.html?s=9379:9437#L322">BindValue</a></h2>
+			<h2 id="BindValue">func <a href="../src/binder.html?s=9488:9546#L325">BindValue</a></h2>
 			<pre>func BindValue(val string, typ reflect.Type) reflect.Value</pre>
 			
 			
@@ -107,8 +107,8 @@ Returns 0 values when things can not be parsed.
 		
 			
 			
-			<h2 id="Binder">type <a href="../src/binder.html?s=613:689#L19">Binder</a></h2>
-			<pre>type Binder func(params Params, name string, typ reflect.Type) reflect.Value</pre>
+			<h2 id="Binder">type <a href="../src/binder.html?s=613:690#L19">Binder</a></h2>
+			<pre>type Binder func(params *Params, name string, typ reflect.Type) reflect.Value</pre>
 			<p>
 A Binder translates between string parameters and Go data structures.
 </p>
@@ -146,7 +146,7 @@ Note that only exported struct fields may be bound.
 
 			
 				
-				<h3 id="ValueBinder">func <a href="../src/binder.html?s=746:823#L22">ValueBinder</a></h3>
+				<h3 id="ValueBinder">func <a href="../src/binder.html?s=747:824#L22">ValueBinder</a></h3>
 				<pre>func ValueBinder(f func(value string, typ reflect.Type) reflect.Value) Binder</pre>
 				<p>
 An adapter for easily making one-key-value binders.

@@ -27,11 +27,11 @@ layout: godoc
 <span class="comment">//   Binder(params, &#34;user&#34;, User): User{Name:&#34;rob&#34;}</span>
 <span class="comment">//</span>
 <span class="comment">// Note that only exported struct fields may be bound.</span>
-type Binder func(params Params, name string, typ reflect.Type) reflect.Value
+type Binder func(params *Params, name string, typ reflect.Type) reflect.Value
 
 <span class="comment">// An adapter for easily making one-key-value binders.</span>
 func ValueBinder(f func(value string, typ reflect.Type) reflect.Value) Binder {
-    return func(params Params, name string, typ reflect.Type) reflect.Value {
+    return func(params *Params, name string, typ reflect.Type) reflect.Value {
         vals, ok := params.Values[name]
         if !ok || len(vals) == 0 {
             return reflect.Zero(typ)
@@ -55,7 +55,7 @@ var (
 
 <span class="comment">// Parse the value string into a real Go value.</span>
 <span class="comment">// Returns 0 values when things can not be parsed.</span>
-func Bind(params Params, name string, typ reflect.Type) reflect.Value {
+func Bind(params *Params, name string, typ reflect.Type) reflect.Value {
     if typ == nil {
         return reflect.ValueOf(nil)
     }
@@ -64,7 +64,7 @@ func Bind(params Params, name string, typ reflect.Type) reflect.Value {
     if !ok {
         binder, ok = KindBinders[typ.Kind()]
         if !ok {
-            LOG.Println(&#34;No binder for type:&#34;, typ)
+            WARN.Println(&#34;No binder for type:&#34;, typ)
             return reflect.Zero(typ)
         }
     }
@@ -72,11 +72,11 @@ func Bind(params Params, name string, typ reflect.Type) reflect.Value {
 }
 
 func BindValue(val string, typ reflect.Type) reflect.Value {
-    return Bind(Params{Values: map[string][]string{&#34;&#34;: {val}}}, &#34;&#34;, typ)
+    return Bind(&amp;Params{Values: map[string][]string{&#34;&#34;: {val}}}, &#34;&#34;, typ)
 }
 
 func BindFile(fileHeader *multipart.FileHeader, typ reflect.Type) reflect.Value {
-    return Bind(Params{Files: map[string][]*multipart.FileHeader{&#34;&#34;: {fileHeader}}}, &#34;&#34;, typ)
+    return Bind(&amp;Params{Files: map[string][]*multipart.FileHeader{&#34;&#34;: {fileHeader}}}, &#34;&#34;, typ)
 }
 </pre>
 

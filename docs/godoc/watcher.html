@@ -1,0 +1,174 @@
+---
+layout: godoc
+---
+<!--
+	Copyright 2009 The Go Authors. All rights reserved.
+	Use of this source code is governed by a BSD-style
+	license that can be found in the LICENSE file.
+-->
+<h1>Watcher</h1>
+
+	
+		<!-- The package's Name is printed as title by the top-level template -->
+                
+		
+
+		<h2 id="index">Index</h2>
+		<!-- Table of contents for API; must be named manual-nav to turn off auto nav. -->
+		<div id="manual-nav">
+			<dl>
+			
+			
+			
+			
+				
+				<dd><a href="#DiscerningListener">type DiscerningListener</a></dd>
+				
+				
+			
+				
+				<dd><a href="#Listener">type Listener</a></dd>
+				
+				
+			
+				
+				<dd><a href="#Watcher">type Watcher</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#NewWatcher">func NewWatcher() *Watcher</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Watcher.Listen">func (w *Watcher) Listen(listener Listener, roots ...string)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Watcher.Notify">func (w *Watcher) Notify() *Error</a></dd>
+				
+			
+			
+		</dl>
+
+		
+
+		
+			<h4>Package files</h4>
+			<p>
+			<span style="font-size:90%">
+			
+				<a href="../src/watcher.html">watcher.go</a>
+			
+			</span>
+			</p>
+		
+
+		
+		
+		
+		
+			
+			
+			<h2 id="DiscerningListener">type <a href="../src/watcher.html?s=434:547#L9">DiscerningListener</a></h2>
+			<pre>type DiscerningListener interface {
+    Listener
+    WatchDir(info os.FileInfo) bool
+    WatchFile(basename string) bool
+}</pre>
+			<p>
+DiscerningListener allows the receiver to selectively watch files.
+</p>
+
+
+			
+
+			
+
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="Listener">type <a href="../src/watcher.html?s=161:362#L2">Listener</a></h2>
+			<pre>type Listener interface {
+    <span class="comment">// Refresh is invoked by the watcher on relevant filesystem events.</span>
+    <span class="comment">// If the listener returns an error, it is served to the user on the current request.</span>
+    Refresh() *Error
+}</pre>
+			<p>
+Listener is an interface for receivers of filesystem events.
+</p>
+
+
+			
+
+			
+
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="Watcher">type <a href="../src/watcher.html?s=643:809#L17">Watcher</a></h2>
+			<pre>type Watcher struct {
+    <span class="comment">// contains filtered or unexported fields</span>
+}</pre>
+			<p>
+Watcher allows listeners to register to be notified of changes under a given
+directory.
+</p>
+
+
+			
+
+			
+
+			
+
+			
+				
+				<h3 id="NewWatcher">func <a href="../src/watcher.html?s=811:837#L25">NewWatcher</a></h3>
+				<pre>func NewWatcher() *Watcher</pre>
+				
+				
+			
+
+			
+				
+				<h3 id="Watcher.Listen">func (*Watcher) <a href="../src/watcher.html?s=986:1046#L33">Listen</a></h3>
+				<pre>func (w *Watcher) Listen(listener Listener, roots ...string)</pre>
+				<p>
+Listen registers for events within the given root directories (recursively).
+</p>
+
+				
+				
+			
+				
+				<h3 id="Watcher.Notify">func (*Watcher) <a href="../src/watcher.html?s=2622:2655#L94">Notify</a></h3>
+				<pre>func (w *Watcher) Notify() *Error</pre>
+				<p>
+Notify causes the watcher to forward any change events to listeners.
+It returns the first (if any) error returned.
+</p>
+
+				
+				
+			
+		
+		</div>
+	
+
+	
+
+
+
+
+
+
+
+

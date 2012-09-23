@@ -27,7 +27,7 @@ func (e *ValidationError) String() string {
 <span class="comment">// A Validation context manages data validation and error messages.</span>
 type Validation struct {
     Errors []*ValidationError
-    <span class="comment">// contains filtered or unexported fields</span>
+
 }
 
 func (v *Validation) Keep() {
@@ -98,7 +98,7 @@ func (r Required) IsSatisfied(obj interface{}) bool {
         return b
     }
     if i, ok := obj.(int); ok {
-        return i &gt; 0
+        return i != 0
     }
     if t, ok := obj.(time.Time); ok {
         return !t.IsZero()
@@ -116,19 +116,19 @@ func (v *Validation) Required(obj interface{}) *ValidationResult {
 }
 
 type Min struct {
-    <span class="comment">// contains filtered or unexported fields</span>
+    Min int
 }
 
 func (m Min) IsSatisfied(obj interface{}) bool {
     num, ok := obj.(int)
     if ok {
-        return num &gt;= m.min
+        return num &gt;= m.Min
     }
     return false
 }
 
 func (m Min) DefaultMessage() string {
-    return fmt.Sprintln(&#34;Minimum is&#34;, m.min)
+    return fmt.Sprintln(&#34;Minimum is&#34;, m.Min)
 }
 
 func (v *Validation) Min(n int, min int) *ValidationResult {
@@ -136,19 +136,19 @@ func (v *Validation) Min(n int, min int) *ValidationResult {
 }
 
 type Max struct {
-    <span class="comment">// contains filtered or unexported fields</span>
+    Max int
 }
 
 func (m Max) IsSatisfied(obj interface{}) bool {
     num, ok := obj.(int)
     if ok {
-        return num &lt;= m.max
+        return num &lt;= m.Max
     }
     return false
 }
 
 func (m Max) DefaultMessage() string {
-    return fmt.Sprintln(&#34;Maximum is&#34;, m.max)
+    return fmt.Sprintln(&#34;Maximum is&#34;, m.Max)
 }
 
 func (v *Validation) Max(n int, max int) *ValidationResult {
@@ -157,21 +157,21 @@ func (v *Validation) Max(n int, max int) *ValidationResult {
 
 <span class="comment">// Requires an array or string to be at least a given length.</span>
 type MinSize struct {
-    <span class="comment">// contains filtered or unexported fields</span>
+    Min int
 }
 
 func (m MinSize) IsSatisfied(obj interface{}) bool {
     if arr, ok := obj.([]interface{}); ok {
-        return len(arr) &gt;= m.min
+        return len(arr) &gt;= m.Min
     }
     if str, ok := obj.(string); ok {
-        return len(str) &gt;= m.min
+        return len(str) &gt;= m.Min
     }
     return false
 }
 
 func (m MinSize) DefaultMessage() string {
-    return fmt.Sprintln(&#34;Minimum size is&#34;, m.min)
+    return fmt.Sprintln(&#34;Minimum size is&#34;, m.Min)
 }
 
 func (v *Validation) MinSize(obj interface{}, min int) *ValidationResult {
@@ -180,21 +180,21 @@ func (v *Validation) MinSize(obj interface{}, min int) *ValidationResult {
 
 <span class="comment">// Requires an array or string to be at most a given length.</span>
 type MaxSize struct {
-    <span class="comment">// contains filtered or unexported fields</span>
+    Max int
 }
 
 func (m MaxSize) IsSatisfied(obj interface{}) bool {
     if arr, ok := obj.([]interface{}); ok {
-        return len(arr) &lt;= m.max
+        return len(arr) &lt;= m.Max
     }
     if str, ok := obj.(string); ok {
-        return len(str) &lt;= m.max
+        return len(str) &lt;= m.Max
     }
     return false
 }
 
 func (m MaxSize) DefaultMessage() string {
-    return fmt.Sprintln(&#34;Maximum size is&#34;, m.max)
+    return fmt.Sprintln(&#34;Maximum size is&#34;, m.Max)
 }
 
 func (v *Validation) MaxSize(obj interface{}, max int) *ValidationResult {
@@ -203,20 +203,33 @@ func (v *Validation) MaxSize(obj interface{}, max int) *ValidationResult {
 
 <span class="comment">// Requires a string to match a given regex.</span>
 type Match struct {
-    <span class="comment">// contains filtered or unexported fields</span>
+    Regexp *regexp.Regexp
 }
 
 func (m Match) IsSatisfied(obj interface{}) bool {
     str := obj.(string)
-    return m.regex.MatchString(str)
+    return m.Regexp.MatchString(str)
 }
 
 func (m Match) DefaultMessage() string {
-    return fmt.Sprintln(&#34;Must match&#34;, m.regex)
+    return fmt.Sprintln(&#34;Must match&#34;, m.Regexp)
 }
 
 func (v *Validation) Match(str string, regex *regexp.Regexp) *ValidationResult {
     return v.check(Match{regex}, str)
+}
+
+<span class="comment">// Apply a group of Checks to a field, in order, and return the ValidationResult</span>
+<span class="comment">// from the first Check that fails, or the last one that succeeds.</span>
+func (v *Validation) Check(obj interface{}, checks ...Check) *ValidationResult {
+    var result *ValidationResult
+    for _, check := range checks {
+        result = v.check(check, obj)
+        if !result.Ok {
+            return result
+        }
+    }
+    return result
 }
 </pre>
 

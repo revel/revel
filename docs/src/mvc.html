@@ -28,6 +28,7 @@ type Flash struct {
 type Params struct {
     url.Values
     Files map[string][]*multipart.FileHeader
+
 }
 
 <span class="comment">// A signed cookie (and thus limited to 4kb in size).</span>
@@ -37,13 +38,12 @@ type Session map[string]string
 type Request struct {
     *http.Request
     ContentType string
+    Format      string <span class="comment">// &#34;html&#34;, &#34;xml&#34;, &#34;json&#34;, or &#34;text&#34;</span>
 }
 
 type Response struct {
     Status      int
     ContentType string
-    Headers     http.Header
-    Cookies     []*http.Cookie
 
     Out http.ResponseWriter
 }
@@ -58,59 +58,62 @@ type Controller struct {
 
     Flash      Flash                  <span class="comment">// User cookie, cleared after each request.</span>
     Session    Session                <span class="comment">// Session, stored in cookie, signed.</span>
-    Params     Params                 <span class="comment">// URL Query parameters</span>
+    Params     *Params                <span class="comment">// Parameters from URL and form (including multipart).</span>
     Args       map[string]interface{} <span class="comment">// Per-request scratch space.</span>
     RenderArgs map[string]interface{} <span class="comment">// Args passed to the template.</span>
     Validation *Validation            <span class="comment">// Data validation helpers</span>
     Txn        *sql.Tx                <span class="comment">// Nil by default, but may be used by the app / plugins</span>
 }
 
-func NewController(w http.ResponseWriter, r *http.Request, ct *ControllerType) *Controller {
-    revReq := NewRequest(r)
-    flash := restoreFlash(r)
-    params := ParseParams(revReq)
+func NewController(req *Request, resp *Response, ct *ControllerType) *Controller {
+    flash := restoreFlash(req.Request)
+    params := ParseParams(req)
 
     return &amp;Controller{
-        Name:    ct.Type.Name(),
-        Type:    ct,
-        Request: revReq,
-        Response: &amp;Response{
-            Status:      200,
-            ContentType: &#34;&#34;,
-            Headers:     w.Header(),
-            Out:         w,
-        },
-
-        Params:  params,
-        Flash:   flash,
-        Session: restoreSession(r),
+        Name:     ct.Type.Name(),
+        Type:     ct,
+        Request:  req,
+        Response: resp,
+        Params:   params,
+        Flash:    flash,
+        Session:  restoreSession(req.Request),
         RenderArgs: map[string]interface{}{
-            &#34;flash&#34;: flash.Data,
+            &#34;RunMode&#34;: RunMode,
+            &#34;flash&#34;:   flash.Data,
         },
         Validation: &amp;Validation{
-            Errors: restoreValidationErrors(r),
+            Errors: restoreValidationErrors(req.Request),
             keep:   false,
         },
     }
 }
 
 func NewRequest(r *http.Request) *Request {
-    return &amp;Request{r, ContentType(r)}
+    return &amp;Request{
+        Request:     r,
+        ContentType: ResolveContentType(r),
+        Format:      ResolveFormat(r),
+    }
 }
 
-func NewAppController(w http.ResponseWriter, r *http.Request, controllerName, methodName string) (*Controller, reflect.Value) {
+func NewResponse(w http.ResponseWriter) *Response {
+    return &amp;Response{Out: w}
+}
+
+func NewAppController(req *Request, resp *Response, controllerName, methodName string) (*Controller, reflect.Value) {
     var appControllerType *ControllerType = LookupControllerType(controllerName)
     if appControllerType == nil {
-        LOG.Printf(&#34;E: Controller %s not found: %s&#34;, controllerName, r.URL)
+        INFO.Printf(&#34;Controller %s not found: %s&#34;, controllerName, req.URL)
         return nil, reflect.ValueOf(nil)
     }
 
-    controller := NewController(w, r, appControllerType)
+    controller := NewController(req, resp, appControllerType)
     appControllerPtr := initNewAppController(appControllerType.Type, controller)
 
+    <span class="comment">// Set the method being called.</span>
     controller.MethodType = appControllerType.Method(methodName)
     if controller.MethodType == nil {
-        LOG.Println(&#34;E: Failed to find method&#34;, methodName, &#34;on Controller&#34;,
+        INFO.Println(&#34;Failed to find method&#34;, methodName, &#34;on Controller&#34;,
             controllerName)
         return nil, reflect.ValueOf(nil)
     }
@@ -132,23 +135,46 @@ func (c *Controller) SetCookie(cookie *http.Cookie) {
 <span class="comment">// result.  (e.g. render a template to the response)</span>
 func (c *Controller) Invoke(appControllerPtr reflect.Value, method reflect.Value, methodArgs []reflect.Value) {
 
+    <span class="comment">// Handle panics.</span>
     defer func() {
         if err := recover(); err != nil {
             handleInvocationPanic(c, err)
         }
     }()
 
+    <span class="comment">// Clean up from the request.</span>
+    defer func() {
+        <span class="comment">// Delete temp files.</span>
+        if c.Request.MultipartForm != nil {
+            err := c.Request.MultipartForm.RemoveAll()
+            if err != nil {
+                WARN.Println(&#34;Error removing temporary files:&#34;, err)
+            }
+        }
+
+        for _, tmpFile := range c.Params.tmpFiles {
+            err := os.Remove(tmpFile.Name())
+            if err != nil {
+                WARN.Println(&#34;Could not remove upload temp file:&#34;, err)
+            }
+        }
+    }()
+
+    <span class="comment">// Run the plugins.</span>
     plugins.BeforeRequest(c)
 
+    <span class="comment">// Calculate the Result by running the interceptors and the action.</span>
     resultValue := func() reflect.Value {
-
+        <span class="comment">// Call the BEFORE interceptors</span>
         result := c.invokeInterceptors(BEFORE, appControllerPtr)
         if result != nil {
             return reflect.ValueOf(result)
         }
 
+        <span class="comment">// Invoke the action.</span>
         resultValue := method.Call(methodArgs)[0]
 
+        <span class="comment">// Call the AFTER interceptors</span>
         result = c.invokeInterceptors(AFTER, appControllerPtr)
         if result != nil {
             return reflect.ValueOf(result)
@@ -201,50 +227,84 @@ func (c *Controller) Invoke(appControllerPtr reflect.Value, method reflect.Value
         Path:  &#34;/&#34;,
     })
 
+    <span class="comment">// Apply the result, which generally results in the ResponseWriter getting written.</span>
     result.Apply(c.Request, c.Response)
 }
 
-func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
+func (c *Controller) RenderError(err error) Result {
+    return ErrorResult{c.RenderArgs, err}
+}
 
+func RenderError(req *Request, resp *Response, err error) {
+    stubController(req, resp).RenderError(err).Apply(req, resp)
+}
+
+<span class="comment">// Render a template corresponding to the calling Controller method.</span>
+<span class="comment">// Arguments will be added to c.RenderArgs prior to rendering the template.</span>
+<span class="comment">// They are keyed on their local identifier.</span>
+<span class="comment">//</span>
+<span class="comment">// For example:</span>
+<span class="comment">//</span>
+<span class="comment">//     func (c Users) ShowUser(id int) rev.Result {</span>
+<span class="comment">//     	 user := loadUser(id)</span>
+<span class="comment">//     	 return c.Render(user)</span>
+<span class="comment">//     }</span>
+<span class="comment">//</span>
+<span class="comment">// This action will render views/Users/ShowUser.html, passing in an extra</span>
+<span class="comment">// key-value &#34;user&#34;: (User).</span>
+func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
+    <span class="comment">// Get the calling function name.</span>
     pc, _, line, ok := runtime.Caller(1)
     if !ok {
-        log.Println(&#34;Failed to get Caller information&#34;)
+        ERROR.Println(&#34;Failed to get Caller information&#34;)
         return nil
     }
     <span class="comment">// e.g. sample/app/controllers.(*Application).Index</span>
     var fqViewName string = runtime.FuncForPC(pc).Name()
     var viewName string = fqViewName[strings.LastIndex(fqViewName, &#34;.&#34;)+1 : len(fqViewName)]
 
-    template, err := MainTemplateLoader.Template(c.Name + &#34;/&#34; + viewName + &#34;.html&#34;)
-    if err != nil {
-        return ErrorResult{err}
-    }
-
+    <span class="comment">// Determine what method we are in.</span>
+    <span class="comment">// (e.g. the invoked controller method might have delegated to another method)</span>
     methodType := c.MethodType
     if methodType.Name != viewName {
         methodType = c.Type.Method(viewName)
         if methodType == nil {
-            return ErrorResult{fmt.Errorf(
+            return c.RenderError(fmt.Errorf(
                 &#34;No Method %s in Controller %s when loading the view.&#34;+
                     &#34; (delegating Render is only supported within the same controller)&#34;,
-                viewName, c.Name)}
+                viewName, c.Name))
         }
     }
 
+    <span class="comment">// Get the extra RenderArgs passed in.</span>
     if renderArgNames, ok := methodType.RenderArgNames[line]; ok {
         if len(renderArgNames) == len(extraRenderArgs) {
             for i, extraRenderArg := range extraRenderArgs {
                 c.RenderArgs[renderArgNames[i]] = extraRenderArg
             }
         } else {
-            LOG.Println(len(renderArgNames), &#34;RenderArg names found for&#34;,
+            ERROR.Println(len(renderArgNames), &#34;RenderArg names found for&#34;,
                 len(extraRenderArgs), &#34;extra RenderArgs&#34;)
         }
     } else {
-        LOG.Println(&#34;No RenderArg names found for Render call on line&#34;, line,
+        ERROR.Println(&#34;No RenderArg names found for Render call on line&#34;, line,
             &#34;(Method&#34;, methodType, &#34;, ViewName&#34;, viewName, &#34;)&#34;)
     }
 
+    return c.RenderTemplate(c.Name + &#34;/&#34; + viewName + &#34;.html&#34;)
+}
+
+<span class="comment">// A less magical way to render a template.</span>
+<span class="comment">// Renders the given template, using the current RenderArgs.</span>
+func (c *Controller) RenderTemplate(templatePath string) Result {
+
+    <span class="comment">// Get the Template.</span>
+    template, err := MainTemplateLoader.Template(templatePath)
+    if err != nil {
+        return c.RenderError(err)
+    }
+
+    <span class="comment">// Add Validation errors to RenderArgs.</span>
     c.RenderArgs[&#34;errors&#34;] = c.Validation.ErrorMap()
 
     return &amp;RenderTemplateResult{
@@ -253,8 +313,65 @@ func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
     }
 }
 
+<span class="comment">// Uses encoding/json.Marshal to return JSON to the client.</span>
 func (c *Controller) RenderJson(o interface{}) Result {
     return RenderJsonResult{o}
+}
+
+<span class="comment">// Uses encoding/xml.Marshal to return XML to the client.</span>
+func (c *Controller) RenderXml(o interface{}) Result {
+    return RenderXmlResult{o}
+}
+
+<span class="comment">// Render plaintext in response, printf style.</span>
+func (c *Controller) RenderText(text string, objs ...interface{}) Result {
+    finalText := text
+    if len(objs) &gt; 0 {
+        finalText = fmt.Sprintf(text, objs)
+    }
+    return &amp;RenderTextResult{finalText}
+}
+
+<span class="comment">// Render a &#34;todo&#34; indicating that the action isn&#39;t done yet.</span>
+func (c *Controller) Todo() Result {
+    c.Response.Status = http.StatusNotImplemented
+    return c.RenderError(&amp;Error{
+        Title:       &#34;TODO&#34;,
+        Description: &#34;This action is not implemented&#34;,
+    })
+}
+
+func (c *Controller) NotFound(msg string) Result {
+    c.Response.Status = http.StatusNotFound
+    return c.RenderError(&amp;Error{
+        Title:       &#34;Not Found&#34;,
+        Description: msg,
+    })
+}
+
+<span class="comment">// This function is useful if there is no relevant Controller available.</span>
+<span class="comment">// It writes the 404 response immediately.</span>
+func NotFound(req *Request, resp *Response, msg string) {
+    stubController(req, resp).NotFound(msg).Apply(req, resp)
+}
+
+<span class="comment">// Return a file, either displayed inline or downloaded as an attachment.</span>
+<span class="comment">// The name and size are taken from the file info.</span>
+func (c *Controller) RenderFile(file *os.File, delivery ContentDisposition) Result {
+    var length int64 = -1
+    fileInfo, err := file.Stat()
+    if err != nil {
+        WARN.Println(&#34;RenderFile error:&#34;, err)
+    }
+    if fileInfo != nil {
+        length = fileInfo.Size()
+    }
+    return &amp;BinaryResult{
+        Reader:   file,
+        Name:     filepath.Base(file.Name()),
+        Length:   length,
+        Delivery: delivery,
+    }
 }
 
 <span class="comment">// Redirect to an action or to a URL.</span>
@@ -287,16 +404,18 @@ func (f Flash) Success(msg string, args ...interface{}) {
     }
 }
 
-func ParseParams(req *Request) Params {
+func ParseParams(req *Request) *Params {
     var files map[string][]*multipart.FileHeader
 
+    <span class="comment">// Always want the url parameters.</span>
     values := req.URL.Query()
 
+    <span class="comment">// Parse the body depending on the content type.</span>
     switch req.ContentType {
     case &#34;application/x-www-form-urlencoded&#34;:
-
+        <span class="comment">// Typical form.</span>
         if err := req.ParseForm(); err != nil {
-            LOG.Println(&#34;Error parsing request body:&#34;, err)
+            WARN.Println(&#34;Error parsing request body:&#34;, err)
         } else {
             for key, vals := range req.Form {
                 for _, val := range vals {
@@ -306,9 +425,10 @@ func ParseParams(req *Request) Params {
         }
 
     case &#34;multipart/form-data&#34;:
-
-        if err := req.ParseMultipartForm(32 &lt;&lt; 20); err != nil {
-            LOG.Println(&#34;Error parsing request body:&#34;, err)
+        <span class="comment">// Multipart form.</span>
+        <span class="comment">// TODO: Extract the multipart form param so app can set it.</span>
+        if err := req.ParseMultipartForm(32 &lt;&lt; 20 <span class="comment">/* 32 MB */</span>); err != nil {
+            WARN.Println(&#34;Error parsing request body:&#34;, err)
         } else {
             for key, vals := range req.MultipartForm.Value {
                 for _, val := range vals {
@@ -319,23 +439,61 @@ func ParseParams(req *Request) Params {
         }
     }
 
-    return Params{values, files}
+    return &amp;Params{Values: values, Files: files}
 }
 
-func (p Params) Bind(name string, typ reflect.Type) reflect.Value {
+func (p *Params) Bind(name string, typ reflect.Type) reflect.Value {
     return Bind(p, name, typ)
 }
 
 <span class="comment">// Get the content type.</span>
 <span class="comment">// e.g. From &#34;multipart/form-data; boundary=--&#34; to &#34;multipart/form-data&#34;</span>
 <span class="comment">// If none is specified, returns &#34;text/html&#34; by default.</span>
-func ContentType(req *http.Request) string {
+func ResolveContentType(req *http.Request) string {
     contentType := req.Header.Get(&#34;Content-Type&#34;)
     if contentType == &#34;&#34; {
         return &#34;text/html&#34;
     }
     return strings.ToLower(strings.TrimSpace(strings.Split(contentType, &#34;;&#34;)[0]))
 }
+
+func ResolveFormat(req *http.Request) string {
+    accept := req.Header.Get(&#34;accept&#34;)
+
+    switch {
+    case accept == &#34;&#34;,
+        strings.HasPrefix(accept, &#34;*/*&#34;),
+        strings.Contains(accept, &#34;application/xhtml&#34;),
+        strings.Contains(accept, &#34;text/html&#34;):
+        return &#34;html&#34;
+    case strings.Contains(accept, &#34;application/xml&#34;),
+        strings.Contains(accept, &#34;text/xml&#34;):
+        return &#34;xml&#34;
+    case strings.Contains(accept, &#34;text/plain&#34;):
+        return &#34;txt&#34;
+    case strings.Contains(accept, &#34;application/json&#34;),
+        strings.Contains(accept, &#34;text/javascript&#34;):
+        return &#34;json&#34;
+    }
+
+    return &#34;html&#34;
+}
+
+<span class="comment">// Write the header (for now, just the status code).</span>
+<span class="comment">// The status may be set directly by the application (c.Response.Status = 501).</span>
+<span class="comment">// if it isn&#39;t, then fall back to the provided status code.</span>
+func (resp *Response) WriteHeader(defaultStatusCode int, defaultContentType string) {
+    if resp.Status == 0 {
+        resp.Status = defaultStatusCode
+    }
+    if resp.ContentType == &#34;&#34; {
+        resp.ContentType = defaultContentType
+    }
+    resp.Out.Header().Set(&#34;Content-Type&#34;, resp.ContentType)
+    resp.Out.WriteHeader(resp.Status)
+}
+
+<span class="comment">// Internal bookeeping</span>
 
 type ControllerType struct {
     Type    reflect.Type
@@ -346,6 +504,7 @@ type MethodType struct {
     Name           string
     Args           []*MethodArg
     RenderArgNames map[int][]string
+
 }
 
 type MethodArg struct {
@@ -353,33 +512,38 @@ type MethodArg struct {
     Type reflect.Type
 }
 
+<span class="comment">// Searches for a given exported method (case insensitive)</span>
 func (ct *ControllerType) Method(name string) *MethodType {
+    lowerName := strings.ToLower(name)
     for _, method := range ct.Methods {
-        if method.Name == name {
+        if method.lowerName == lowerName {
             return method
         }
     }
     return nil
 }
 
+<span class="comment">// Register a Controller and its Methods with Revel.</span>
 func RegisterController(c interface{}, methods []*MethodType) {
     <span class="comment">// De-star the controller type</span>
     <span class="comment">// (e.g. given TypeOf((*Application)(nil)), want TypeOf(Application))</span>
     var t reflect.Type = reflect.TypeOf(c)
     var elem reflect.Type = t.Elem()
 
+    <span class="comment">// De-star all of the method arg types too.</span>
     for _, m := range methods {
+        m.lowerName = strings.ToLower(m.Name)
         for _, arg := range m.Args {
             arg.Type = arg.Type.Elem()
         }
     }
 
-    controllers[elem.Name()] = &amp;ControllerType{Type: elem, Methods: methods}
-    log.Printf(&#34;Registered controller: %s&#34;, elem.Name())
+    controllers[strings.ToLower(elem.Name())] = &amp;ControllerType{Type: elem, Methods: methods}
+    TRACE.Printf(&#34;Registered controller: %s&#34;, elem.Name())
 }
 
 func LookupControllerType(name string) *ControllerType {
-    return controllers[name]
+    return controllers[strings.ToLower(name)]
 }
 </pre>
 

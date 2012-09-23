@@ -18,6 +18,8 @@ layout: godoc
 		<div id="manual-nav">
 			<dl>
 			
+				<dd><a href="#constants">Constants</a></dd>
+			
 			
 				<dd><a href="#variables">Variables</a></dd>
 			
@@ -26,13 +28,8 @@ layout: godoc
 				<dd><a href="#CheckInit">func CheckInit()</a></dd>
 			
 				
-				<dd><a href="#Init">func Init(importPath string, mode RunMode)</a></dd>
+				<dd><a href="#Init">func Init(mode, importPath, srcPath string)</a></dd>
 			
-			
-				
-				<dd><a href="#RunMode">type RunMode</a></dd>
-				
-				
 			
 			
 		</dl>
@@ -51,24 +48,44 @@ layout: godoc
 		
 
 		
+			<h2 id="constants">Constants</h2>
+			
+				<pre>const (
+    REVEL_IMPORT_PATH = &#34;github.com/robfig/revel&#34;
+)</pre>
+				
+			
+		
 		
 			<h2 id="variables">Variables</h2>
 			
 				<pre>var (
     <span class="comment">// App details</span>
     AppName    string <span class="comment">// e.g. &#34;sample&#34;</span>
-    BasePath   string <span class="comment">// e.g. &#34;/Users/robfig/gocode/src/revel/sample&#34;</span>
-    AppPath    string <span class="comment">// e.g. &#34;/Users/robfig/gocode/src/revel/sample/app&#34;</span>
-    ViewsPath  string <span class="comment">// e.g. &#34;/Users/robfig/gocode/src/revel/sample/app/views&#34;</span>
-    ImportPath string <span class="comment">// e.g. &#34;revel/sample&#34;</span>
+    BasePath   string <span class="comment">// e.g. &#34;/Users/robfig/gocode/src/corp/sample&#34;</span>
+    AppPath    string <span class="comment">// e.g. &#34;/Users/robfig/gocode/src/corp/sample/app&#34;</span>
+    ViewsPath  string <span class="comment">// e.g. &#34;/Users/robfig/gocode/src/corp/sample/app/views&#34;</span>
+    ImportPath string <span class="comment">// e.g. &#34;corp/sample&#34;</span>
 
     Config  *MergedConfig
-    AppMode RunMode
+    RunMode string <span class="comment">// Application-defined (by default, &#34;dev&#34; or &#34;prod&#34;)</span>
 
     <span class="comment">// Revel installation details</span>
-    RevelTemplatePath string <span class="comment">// e.g. &#34;/Users/robfig/gocode/src/revel/templates&#34;</span>
+    RevelPath string <span class="comment">// e.g. &#34;/Users/robfig/gocode/src/revel&#34;</span>
 
-    LOG = log.New(os.Stdout, &#34;&#34;, log.Ldate|log.Ltime|log.Lshortfile)
+    <span class="comment">// Where to look for templates and configuration.</span>
+    <span class="comment">// Ordered by priority.  (Earlier paths take precedence over later paths.)</span>
+    ConfPaths     []string
+    TemplatePaths []string
+
+    DEFAULT = log.New(os.Stderr, &#34;&#34;, log.Ldate|log.Ltime|log.Lshortfile)
+    TRACE   = DEFAULT
+    INFO    = DEFAULT
+    WARN    = DEFAULT
+    ERROR   = DEFAULT
+
+    <span class="comment">// Revel runs every function in this array after init.</span>
+    InitHooks []func()
 )</pre>
 				
 			
@@ -76,40 +93,29 @@ layout: godoc
 		
 			
 			
-			<h2 id="CheckInit">func <a href="../src/revel.html?s=1816:1832#L67">CheckInit</a></h2>
+			<h2 id="CheckInit">func <a href="../src/revel.html?s=4707:4723#L177">CheckInit</a></h2>
 			<pre>func CheckInit()</pre>
 			
 			
 		
 			
 			
-			<h2 id="Init">func <a href="../src/revel.html?s=757:799#L29">Init</a></h2>
-			<pre>func Init(importPath string, mode RunMode)</pre>
-			
+			<h2 id="Init">func <a href="../src/revel.html?s=1560:1603#L52">Init</a></h2>
+			<pre>func Init(mode, importPath, srcPath string)</pre>
+			<p>
+Init initializes Revel -- it provides paths for getting around the app.
+</p>
+<p>
+Params:
+</p>
+<pre>mode - the run mode, which determines which app.conf settings are used.
+importPath - the Go import path of the application.
+srcPath - the path to the source directory, containing Revel and the app.
+  If not specified (&#34;&#34;), then a functioning Go installation is required.
+</pre>
+
 			
 		
-		
-			
-			
-			<h2 id="RunMode">type <a href="../src/revel.html?s=75:94#L1">RunMode</a></h2>
-			<pre>type RunMode string</pre>
-			
-
-			
-				<pre>const (
-    DEV  RunMode = &#34;dev&#34;
-    PROD         = &#34;prod&#34;
-)</pre>
-				
-			
-
-			
-
-			
-
-			
-
-			
 		
 		</div>
 	

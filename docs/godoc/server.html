@@ -19,6 +19,8 @@ layout: godoc
 			<dl>
 			
 			
+				<dd><a href="#variables">Variables</a></dd>
+			
 			
 				
 				<dd><a href="#Run">func Run(port int)</a></dd>
@@ -42,14 +44,25 @@ layout: godoc
 
 		
 		
+			<h2 id="variables">Variables</h2>
+			
+				<pre>var (
+    MainRouter         *Router
+    MainTemplateLoader *TemplateLoader
+    MainWatcher        *Watcher
+)</pre>
+				
+			
+		
 		
 			
 			
-			<h2 id="Run">func <a href="../src/server.html?s=2237:2255#L78">Run</a></h2>
+			<h2 id="Run">func <a href="../src/server.html?s=2801:2819#L96">Run</a></h2>
 			<pre>func Run(port int)</pre>
 			<p>
 Run the server.
 This is called from the generated main file.
+If port is non-zero, use that.  Else, read the port from app.conf.
 </p>
 
 			

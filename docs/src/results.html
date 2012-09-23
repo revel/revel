@@ -16,24 +16,43 @@ type Result interface {
     Apply(req *Request, resp *Response)
 }
 
-<span class="comment">// If AppMode is DEV, this result renders a friendly error page.</span>
-<span class="comment">// TODO: If AppMode is PROD, this result renders the app 500 page.</span>
+<span class="comment">// This result handles all kinds of error codes (500, 404, ..).</span>
+<span class="comment">// It renders the relevant error page (errors/CODE.format, e.g. errors/500.json).</span>
+<span class="comment">// If RunMode is &#34;dev&#34;, this results in a friendly error page.</span>
 type ErrorResult struct {
-    <span class="comment">// contains filtered or unexported fields</span>
+    RenderArgs map[string]interface{}
+
 }
 
 func (r ErrorResult) Apply(req *Request, resp *Response) {
+    format := req.Format
+    status := resp.Status
+    if status == 0 {
+        status = http.StatusInternalServerError
+    }
+
+    contentType := ContentTypeByFilename(&#34;xxx.&#34; + format)
+    if contentType == DefaultFileContentType {
+        contentType = &#34;text/plain&#34;
+    }
+
     <span class="comment">// Get the error template.</span>
     var err error
-    tmpl, err := MainTemplateLoader.Template(&#34;errors/500.html&#34;)
+    templatePath := fmt.Sprintf(&#34;errors/%d.%s&#34;, status, format)
+    tmpl, err := MainTemplateLoader.Template(templatePath)
 
+    <span class="comment">// This func shows a plaintext error message, in case the template rendering</span>
+    <span class="comment">// doesn&#39;t work.</span>
     showPlaintext := func(err error) {
         PlaintextErrorResult{fmt.Errorf(&#34;Server Error:\n%s\n\n&#34;+
             &#34;Additionally, an error occurred when rendering the error page:\n%s&#34;,
-            r, err)}.Apply(req, resp)
+            r.error, err)}.Apply(req, resp)
     }
 
     if tmpl == nil {
+        if err == nil {
+            err = fmt.Errorf(&#34;Couldn&#39;t find template %s&#34;, templatePath)
+        }
         showPlaintext(err)
         return
     }
@@ -54,26 +73,31 @@ func (r ErrorResult) Apply(req *Request, resp *Response) {
         panic(&#34;no error provided&#34;)
     }
 
+    r.RenderArgs[&#34;RunMode&#34;] = RunMode
+    r.RenderArgs[&#34;Error&#34;] = revelError
+    r.RenderArgs[&#34;Router&#34;] = MainRouter
+
     <span class="comment">// Render it.</span>
     var b bytes.Buffer
-    err = tmpl.Render(&amp;b, revelError)
+    err = tmpl.Render(&amp;b, r.RenderArgs)
 
+    <span class="comment">// If there was an error, print it in plain text.</span>
     if err != nil {
         showPlaintext(err)
         return
     }
 
-    resp.Out.WriteHeader(500)
+    resp.WriteHeader(status, contentType)
     b.WriteTo(resp.Out)
 }
 
 type PlaintextErrorResult struct {
-    <span class="comment">// contains filtered or unexported fields</span>
+
 }
 
 <span class="comment">// This method is used when the template loader or error template is not available.</span>
 func (r PlaintextErrorResult) Apply(req *Request, resp *Response) {
-    resp.Out.WriteHeader(500)
+    resp.WriteHeader(http.StatusInternalServerError, &#34;text/plain&#34;)
     resp.Out.Write([]byte(r.Error()))
 }
 
@@ -100,56 +124,117 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
             SourceLines: r.Template.Content(),
             SourceType:  &#34;template&#34;,
         }
-        ErrorResult{compileError}.Apply(req, resp)
+        ErrorResult{r.RenderArgs, compileError}.Apply(req, resp)
         return
     }
 
+    resp.WriteHeader(http.StatusOK, &#34;text/html&#34;)
     b.WriteTo(resp.Out)
 }
 
 type RenderJsonResult struct {
-    <span class="comment">// contains filtered or unexported fields</span>
+
 }
 
 func (r RenderJsonResult) Apply(req *Request, resp *Response) {
     var b []byte
     var err error
-    if AppMode == DEV {
+    if Config.BoolDefault(&#34;results.pretty&#34;, false) {
         b, err = json.MarshalIndent(r.obj, &#34;&#34;, &#34;  &#34;)
     } else {
         b, err = json.Marshal(r.obj)
     }
 
     if err != nil {
-        ErrorResult{err}.Apply(req, resp)
+        ErrorResult{error: err}.Apply(req, resp)
         return
     }
 
+    resp.WriteHeader(http.StatusOK, &#34;application/json&#34;)
     resp.Out.Write(b)
 }
 
+type RenderXmlResult struct {
+
+}
+
+func (r RenderXmlResult) Apply(req *Request, resp *Response) {
+    var b []byte
+    var err error
+    if Config.BoolDefault(&#34;results.pretty&#34;, false) {
+        b, err = xml.MarshalIndent(r.obj, &#34;&#34;, &#34;  &#34;)
+    } else {
+        b, err = xml.Marshal(r.obj)
+    }
+
+    if err != nil {
+        ErrorResult{error: err}.Apply(req, resp)
+        return
+    }
+
+    resp.WriteHeader(http.StatusOK, &#34;application/xml&#34;)
+    resp.Out.Write(b)
+}
+
+type RenderTextResult struct {
+
+}
+
+func (r RenderTextResult) Apply(req *Request, resp *Response) {
+    resp.WriteHeader(http.StatusOK, &#34;text/plain&#34;)
+    resp.Out.Write([]byte(r.text))
+}
+
+type ContentDisposition string
+
+var (
+    Attachment ContentDisposition = &#34;attachment&#34;
+    Inline     ContentDisposition = &#34;inline&#34;
+)
+
+type BinaryResult struct {
+    Reader   io.Reader
+    Name     string
+    Length   int64
+    Delivery ContentDisposition
+}
+
+func (r *BinaryResult) Apply(req *Request, resp *Response) {
+    disposition := string(r.Delivery)
+    if r.Name != &#34;&#34; {
+        disposition += fmt.Sprintf(&#34;; filename=%s;&#34;, r.Name)
+    }
+    resp.Out.Header().Set(&#34;Content-Disposition&#34;, disposition)
+
+    if r.Length != -1 {
+        resp.Out.Header().Set(&#34;Content-Length&#34;, fmt.Sprintf(&#34;%d&#34;, r.Length))
+    }
+    resp.WriteHeader(http.StatusOK, ContentTypeByFilename(r.Name))
+    io.Copy(resp.Out, r.Reader)
+}
+
 type RedirectToUrlResult struct {
-    <span class="comment">// contains filtered or unexported fields</span>
+
 }
 
 func (r *RedirectToUrlResult) Apply(req *Request, resp *Response) {
-    resp.Headers.Set(&#34;Location&#34;, r.url)
-    resp.Out.WriteHeader(302)
+    resp.Out.Header().Set(&#34;Location&#34;, r.url)
+    resp.WriteHeader(http.StatusFound, &#34;&#34;)
 }
 
 type RedirectToActionResult struct {
-    <span class="comment">// contains filtered or unexported fields</span>
+
 }
 
 func (r *RedirectToActionResult) Apply(req *Request, resp *Response) {
     url, err := getRedirectUrl(r.val)
     if err != nil {
-        LOG.Println(&#34;Couldn&#39;t resolve redirect:&#34;, err.Error())
-        ErrorResult{err}.Apply(req, resp)
+        ERROR.Println(&#34;Couldn&#39;t resolve redirect:&#34;, err.Error())
+        ErrorResult{error: err}.Apply(req, resp)
         return
     }
-    resp.Headers.Set(&#34;Location&#34;, url)
-    resp.Out.WriteHeader(302)
+    resp.Out.Header().Set(&#34;Location&#34;, url)
+    resp.WriteHeader(http.StatusFound, &#34;&#34;)
 }
 </pre>
 

@@ -13,31 +13,48 @@ layout: godoc
 	<pre>package rev
 
 var (
+    MainRouter         *Router
     MainTemplateLoader *TemplateLoader
+    MainWatcher        *Watcher
 )
 
 <span class="comment">// Run the server.</span>
 <span class="comment">// This is called from the generated main file.</span>
+<span class="comment">// If port is non-zero, use that.  Else, read the port from app.conf.</span>
 func Run(port int) {
+    address := Config.StringDefault(&#34;http.addr&#34;, &#34;&#34;)
+    if port == 0 {
+        port = Config.IntDefault(&#34;http.port&#34;, 9000)
+    }
 
-    router = LoadRoutes()
-    MainTemplateLoader = NewTemplateLoader(ViewsPath, RevelTemplatePath)
+    MainRouter = NewRouter(path.Join(BasePath, &#34;conf&#34;, &#34;routes&#34;))
+    MainTemplateLoader = NewTemplateLoader(TemplatePaths)
 
-    go func() {
-        time.Sleep(100 * time.Millisecond)
-        LOG.Printf(&#34;Listening on port %d...&#34;, port)
-    }()
+    <span class="comment">// If desired (or by default), create a watcher for templates and routes.</span>
+    <span class="comment">// The watcher calls Refresh() on things on the first request.</span>
+    if Config.BoolDefault(&#34;server.watcher&#34;, true) {
+        MainWatcher = NewWatcher()
+        MainWatcher.Listen(MainTemplateLoader, MainTemplateLoader.paths...)
+        MainWatcher.Listen(MainRouter, MainRouter.path)
+    } else {
+        <span class="comment">// Else, call refresh on them directly.</span>
+        MainTemplateLoader.Refresh()
+        MainRouter.Refresh()
+    }
+
     server := &amp;http.Server{
-        Addr:    fmt.Sprintf(&#34;:%d&#34;, port),
+        Addr:    fmt.Sprintf(&#34;%s:%d&#34;, address, port),
         Handler: http.HandlerFunc(handle),
     }
 
     plugins.OnAppStart()
 
-    err := server.ListenAndServe()
-    if err != nil {
-        LOG.Fatalln(&#34;Failed to listen:&#34;, err)
-    }
+    go func() {
+        time.Sleep(100 * time.Millisecond)
+        fmt.Printf(&#34;Listening on port %d...\n&#34;, port)
+    }()
+
+    ERROR.Fatalln(&#34;Failed to listen:&#34;, server.ListenAndServe())
 }
 </pre>
 

@@ -53,7 +53,8 @@ func ContainsString(list []string, target string) bool {
 
 <span class="comment">// Return the reflect.Method, given a Receiver type and Func value.</span>
 func FindMethod(recvType reflect.Type, funcVal *reflect.Value) *reflect.Method {
-
+    <span class="comment">// It is not possible to get the name of the method from the Func.</span>
+    <span class="comment">// Instead, compare it to each method of the Controller.</span>
     for i := 0; i &lt; recvType.NumMethod(); i++ {
         method := recvType.Method(i)
         if method.Func == *funcVal {
@@ -71,6 +72,30 @@ func ParseKeyValueCookie(val string, cb func(key, val string)) {
             cb(match[1], match[2])
         }
     }
+}
+
+const DefaultFileContentType = &#34;application/octet-stream&#34;
+
+<span class="comment">// Returns a MIME content type based on the filename&#39;s extension.</span>
+<span class="comment">// If no appropriate one is found, returns &#34;application/octet-stream&#34; by default.</span>
+<span class="comment">// Additionally, specifies the charset as UTF-8 for text/* types.</span>
+func ContentTypeByFilename(filename string) string {
+    dot := strings.LastIndex(filename, &#34;.&#34;)
+    if dot == -1 || dot+1 &gt;= len(filename) {
+        return DefaultFileContentType
+    }
+
+    extension := filename[dot+1:]
+    contentType := mimeConfig.StringDefault(extension, &#34;&#34;)
+    if contentType == &#34;&#34; {
+        return DefaultFileContentType
+    }
+
+    if strings.HasPrefix(contentType, &#34;text/&#34;) {
+        return contentType + &#34;; charset=utf-8&#34;
+    }
+
+    return contentType
 }
 </pre>
 

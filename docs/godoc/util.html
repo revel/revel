@@ -18,10 +18,15 @@ layout: godoc
 		<div id="manual-nav">
 			<dl>
 			
+				<dd><a href="#constants">Constants</a></dd>
+			
 			
 			
 				
 				<dd><a href="#ContainsString">func ContainsString(list []string, target string) bool</a></dd>
+			
+				
+				<dd><a href="#ContentTypeByFilename">func ContentTypeByFilename(filename string) string</a></dd>
 			
 				
 				<dd><a href="#ExecuteTemplate">func ExecuteTemplate(tmpl ExecutableTemplate, data interface{}) string</a></dd>
@@ -61,6 +66,12 @@ layout: godoc
 		
 
 		
+			<h2 id="constants">Constants</h2>
+			
+				<pre>const DefaultFileContentType = &#34;application/octet-stream&#34;</pre>
+				
+			
+		
 		
 		
 			
@@ -68,6 +79,18 @@ layout: godoc
 			<h2 id="ContainsString">func <a href="../src/util.html?s=863:917#L33">ContainsString</a></h2>
 			<pre>func ContainsString(list []string, target string) bool</pre>
 			
+			
+		
+			
+			
+			<h2 id="ContentTypeByFilename">func <a href="../src/util.html?s=2398:2448#L89">ContentTypeByFilename</a></h2>
+			<pre>func ContentTypeByFilename(filename string) string</pre>
+			<p>
+Returns a MIME content type based on the filename&#39;s extension.
+If no appropriate one is found, returns &#34;application/octet-stream&#34; by default.
+Additionally, specifies the charset as UTF-8 for text/* types.
+</p>
+
 			
 		
 			

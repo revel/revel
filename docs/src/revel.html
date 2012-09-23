@@ -12,62 +12,102 @@ layout: godoc
 
 	<pre>package rev
 
-type RunMode string
-
 const (
-    DEV  RunMode = &#34;dev&#34;
-    PROD         = &#34;prod&#34;
+    REVEL_IMPORT_PATH = &#34;github.com/robfig/revel&#34;
 )
 
 var (
     <span class="comment">// App details</span>
     AppName    string <span class="comment">// e.g. &#34;sample&#34;</span>
-    BasePath   string <span class="comment">// e.g. &#34;/Users/robfig/gocode/src/revel/sample&#34;</span>
-    AppPath    string <span class="comment">// e.g. &#34;/Users/robfig/gocode/src/revel/sample/app&#34;</span>
-    ViewsPath  string <span class="comment">// e.g. &#34;/Users/robfig/gocode/src/revel/sample/app/views&#34;</span>
-    ImportPath string <span class="comment">// e.g. &#34;revel/sample&#34;</span>
+    BasePath   string <span class="comment">// e.g. &#34;/Users/robfig/gocode/src/corp/sample&#34;</span>
+    AppPath    string <span class="comment">// e.g. &#34;/Users/robfig/gocode/src/corp/sample/app&#34;</span>
+    ViewsPath  string <span class="comment">// e.g. &#34;/Users/robfig/gocode/src/corp/sample/app/views&#34;</span>
+    ImportPath string <span class="comment">// e.g. &#34;corp/sample&#34;</span>
 
     Config  *MergedConfig
-    AppMode RunMode
+    RunMode string <span class="comment">// Application-defined (by default, &#34;dev&#34; or &#34;prod&#34;)</span>
 
     <span class="comment">// Revel installation details</span>
-    RevelTemplatePath string <span class="comment">// e.g. &#34;/Users/robfig/gocode/src/revel/templates&#34;</span>
+    RevelPath string <span class="comment">// e.g. &#34;/Users/robfig/gocode/src/revel&#34;</span>
 
-    LOG = log.New(os.Stdout, &#34;&#34;, log.Ldate|log.Ltime|log.Lshortfile)
+    <span class="comment">// Where to look for templates and configuration.</span>
+    <span class="comment">// Ordered by priority.  (Earlier paths take precedence over later paths.)</span>
+    ConfPaths     []string
+    TemplatePaths []string
+
+    DEFAULT = log.New(os.Stderr, &#34;&#34;, log.Ldate|log.Ltime|log.Lshortfile)
+    TRACE   = DEFAULT
+    INFO    = DEFAULT
+    WARN    = DEFAULT
+    ERROR   = DEFAULT
+
+    <span class="comment">// Revel runs every function in this array after init.</span>
+    InitHooks []func()
 )
 
-func Init(importPath string, mode RunMode) {
+<span class="comment">// Init initializes Revel -- it provides paths for getting around the app.</span>
+<span class="comment">//</span>
+<span class="comment">// Params:</span>
+<span class="comment">//   mode - the run mode, which determines which app.conf settings are used.</span>
+<span class="comment">//   importPath - the Go import path of the application.</span>
+<span class="comment">//   srcPath - the path to the source directory, containing Revel and the app.</span>
+<span class="comment">//     If not specified (&#34;&#34;), then a functioning Go installation is required.</span>
+func Init(mode, importPath, srcPath string) {
+    <span class="comment">// Ignore trailing slashes.</span>
+    ImportPath = strings.TrimRight(importPath, &#34;/&#34;)
+    RunMode = mode
 
-    pkg, err := build.Import(importPath, &#34;&#34;, build.FindOnly)
-    if err != nil {
-        log.Fatalf(&#34;Failed to import&#34;, importPath, &#34;with error&#34;, err)
+    if srcPath == &#34;&#34; {
+        srcPath = findSrcPath(importPath)
     }
-    BasePath = pkg.Dir
-    if BasePath == &#34;&#34; {
-        log.Fatalf(&#34;Failed to find code.  Did you pass the import path?&#34;)
-    }
-    AppName = filepath.Base(BasePath)
+
+    RevelPath = path.Join(srcPath, filepath.FromSlash(REVEL_IMPORT_PATH))
+    BasePath = path.Join(srcPath, filepath.FromSlash(importPath))
     AppPath = path.Join(BasePath, &#34;app&#34;)
     ViewsPath = path.Join(AppPath, &#34;views&#34;)
-    ImportPath = importPath
 
-    revelPkg, err := build.Import(&#34;github.com/robfig/revel&#34;, &#34;&#34;, build.FindOnly)
-    if err != nil {
-        log.Fatalf(&#34;Failed to find revel code.&#34;)
+    ConfPaths = []string{
+        path.Join(BasePath, &#34;conf&#34;),
+        path.Join(RevelPath, &#34;conf&#34;),
     }
-    RevelTemplatePath = path.Join(revelPkg.Dir, &#34;templates&#34;)
 
-    Config, err = LoadConfig(
-        path.Join(BasePath, &#34;conf&#34;, &#34;app.conf&#34;))
-    if err != nil {
+    TemplatePaths = []string{
+        ViewsPath,
+        path.Join(RevelPath, &#34;templates&#34;),
+    }
+
+    <span class="comment">// Load app.conf</span>
+    var err error
+    Config, err = LoadConfig(&#34;app.conf&#34;)
+    if err != nil || Config == nil {
         log.Fatalln(&#34;Failed to load app.conf:&#34;, err)
     }
-    Config.SetSection(string(mode))
-    secretStr, err := Config.String(&#34;app.secret&#34;)
-    if err != nil {
+    <span class="comment">// Ensure that the selected runmode appears in app.conf.</span>
+    <span class="comment">// If empty string is passed as the mode, treat it as &#34;DEFAULT&#34;</span>
+    if mode == &#34;&#34; {
+        mode = config.DEFAULT_SECTION
+    }
+    if !Config.HasSection(mode) {
+        log.Fatalln(&#34;app.conf: No mode found:&#34;, mode)
+    }
+    Config.SetSection(mode)
+    secretStr := Config.StringDefault(&#34;app.secret&#34;, &#34;&#34;)
+    if secretStr == &#34;&#34; {
         log.Fatalln(&#34;No app.secret provided.&#34;)
     }
     secretKey = []byte(secretStr)
+
+    AppName = Config.StringDefault(&#34;app.name&#34;, &#34;(not set)&#34;)
+
+    <span class="comment">// Configure logging.</span>
+    TRACE = getLogger(&#34;trace&#34;)
+    INFO = getLogger(&#34;info&#34;)
+    WARN = getLogger(&#34;warn&#34;)
+    ERROR = getLogger(&#34;error&#34;)
+
+    for _, hook := range InitHooks {
+        hook()
+    }
 
     revelInit = true
 }
