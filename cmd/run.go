@@ -9,17 +9,17 @@ import (
 var cmdRun = &Command{
 	UsageLine: "run [import path] [run mode]",
 	Short:     "run a Revel application",
-	Long: `~
-~ Run the Revel web application named by the given import path.
-~
-~ For example, to run the chat room sample application:
-~
-~     rev run github.com/robfig/revel/samples/chat
-~
-~ The run mode is used to select which set of app.conf configuration should
-~ apply and may be used to determine logic in the application itself.
-~
-~ Run mode defaults to "dev".`,
+	Long: `
+Run the Revel web application named by the given import path.
+
+For example, to run the chat room sample application:
+
+    revel run github.com/robfig/revel/samples/chat dev
+
+The run mode is used to select which set of app.conf configuration should
+apply and may be used to determine logic in the application itself.
+
+Run mode defaults to "dev".`,
 }
 
 func init() {
@@ -28,7 +28,7 @@ func init() {
 
 func runApp(args []string) {
 	if len(args) == 0 {
-		errorf("~ No import path given.\nRun 'rev help run' for usage.\n")
+		errorf("No import path given.\nRun 'revel help run' for usage.\n")
 	}
 
 	mode := "dev"

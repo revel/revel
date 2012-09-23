@@ -68,7 +68,7 @@ func main() {
 		}
 	}
 
-	errorf("~ unknown command %q\nRun 'rev help' for usage.\n", args[0])
+	errorf("unknown command %q\nRun 'revel help' for usage.\n", args[0])
 }
 
 func errorf(format string, args ...interface{}) {
@@ -81,16 +81,16 @@ const header = `~
 ~
 `
 
-const usageTemplate = `~ usage: rev command [arguments]
-~
-~ The commands are:
-~{{range .}}
-~    {{.Name | printf "%-11s"}} {{.Short}}{{end}}
-~
-~ Use "rev help [command]" for more information.
+const usageTemplate = `usage: revel command [arguments]
+
+The commands are:
+{{range .}}
+    {{.Name | printf "%-11s"}} {{.Short}}{{end}}
+
+Use "revel help [command]" for more information.
 `
 
-var helpTemplate = `~ usage: rev {{.UsageLine}}
+var helpTemplate = `usage: revel {{.UsageLine}}
 {{.Long}}
 `
 

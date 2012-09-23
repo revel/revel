@@ -13,14 +13,14 @@ import (
 var cmdPackage = &Command{
 	UsageLine: "package [import path]",
 	Short:     "package a Revel application (e.g. for deployment)",
-	Long: `~
-~ Package the Revel web application named by the given import path.
-~ This allows it to be deployed and run on a machine that lacks a Go installation.
-~
-~ For example:
-~
-~     rev package github.com/robfig/revel/samples/chat
-~`,
+	Long: `
+Package the Revel web application named by the given import path.
+This allows it to be deployed and run on a machine that lacks a Go installation.
+
+For example:
+
+    revel package github.com/robfig/revel/samples/chat
+`,
 }
 
 func init() {
@@ -74,5 +74,5 @@ func packageApp(args []string) {
 	// Create the zip file.
 	zipName := mustZipDir(rev.AppName+".zip", tmpDir)
 
-	fmt.Println("~ Your archive is ready:", zipName)
+	fmt.Println("Your archive is ready:", zipName)
 }

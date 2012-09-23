@@ -12,14 +12,16 @@ import (
 var cmdNew = &Command{
 	UsageLine: "new [path]",
 	Short:     "create a skeleton Revel application",
-	Long: `~
-~ New creates a few files to get a new Revel application running quickly.
-~
-~ It puts all of the files in the given directory, taking the final element in
-~ the path to be the app name.
-~
-~ For example:
-~   rev new github.com/robfig/chatapp`,
+	Long: `
+New creates a few files to get a new Revel application running quickly.
+
+It puts all of the files in the given directory, taking the final element in
+the path to be the app name.
+
+For example:
+
+    revel new path/to/chatapp
+`,
 }
 
 func init() {
@@ -33,18 +35,18 @@ var (
 
 func newApp(args []string) {
 	if len(args) == 0 {
-		errorf("~ No path given.\nRun 'rev help new' for usage.\n")
+		errorf("No path given.\nRun 'revel help new' for usage.\n")
 	}
 
 	_, err := os.Open(args[0])
 	if err == nil {
-		fmt.Fprintf(os.Stderr, "~ Abort: Directory %s already exists.\n", args[0])
+		fmt.Fprintf(os.Stderr, "Abort: Directory %s already exists.\n", args[0])
 		return
 	}
 
 	revelPkg, err := build.Import("github.com/robfig/revel", "", build.FindOnly)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "~ Failed to find revel code.")
+		fmt.Fprintln(os.Stderr, "Failed to find revel code.")
 		return
 	}
 
@@ -59,7 +61,7 @@ func newApp(args []string) {
 		"Secret":  genSecret(),
 	})
 
-	fmt.Fprintln(os.Stdout, "~ Your application is ready:\n~   ", appDir)
+	fmt.Fprintln(os.Stdout, "Your application is ready:\n  ", appDir)
 }
 
 const alphaNumeric = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
