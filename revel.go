@@ -1,6 +1,7 @@
 package rev
 
 import (
+	"github.com/robfig/goconfig/config"
 	"go/build"
 	"io"
 	"log"
@@ -91,7 +92,7 @@ func Init(mode, importPath, srcPath string) {
 	// Ensure that the selected runmode appears in app.conf.
 	// If empty string is passed as the mode, treat it as "DEFAULT"
 	if mode == "" {
-		mode = defaultSection
+		mode = config.DEFAULT_SECTION
 	}
 	if !Config.HasSection(mode) {
 		log.Fatalln("app.conf: No mode found:", mode)
