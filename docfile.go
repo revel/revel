@@ -1,3 +1,6 @@
+// This program generates per-file godoc.
+//
+// go run docfile.go -templates ~/Dropbox/Public/revel/docs/godoc -out ~/Dropbox/Public/revel/docs  ~/code/gocode/src/github.com/robfig/revel/*.go
 package main
 
 import (
