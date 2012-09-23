@@ -3,9 +3,29 @@ title: Command-line Tool
 layout: manual
 ---
 
-Presently the command-line tool can only run your application in `prod` or `dev`
-mode.  It will soon do more.
+## Build and Run
 
-	~ Usage: rev import_path [mode]
+You must build the command line tool in order to use Revel.  From the root of
+your GOPATH:
 
-**Note:** It requires the Go import path, rather than the disk path.
+	$ go build -o bin/revel github.com/robfig/revel/cmd
+
+Now run it:
+
+	$ bin/revel
+	~
+	~ revel! http://robfig.github.com/revel
+	~
+	usage: revel command [arguments]
+
+	The commands are:
+
+	    run         run a Revel application
+	    new         create a skeleton Revel application
+	    clean       clean a Revel application's temp files
+	    package     package a Revel application (e.g. for deployment)
+
+	Use "revel help [command]" for more information.
+
+Please refer to the tool's built-in help functionality for information on the
+individual commands.
