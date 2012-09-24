@@ -225,8 +225,9 @@ func (c Application) SaveUser(user models.User, verifyPassword string) rev.Resul
 		return c.Redirect(Application.Register)
 	}
 
-	_, err := c.Txn.Exec("insert into User (Username, Password, Name) values (?, ?, ?)",
-		user.Username, user.Password, user.Name)
+	bcryptPassword, _ := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	_, err := c.Txn.Exec("insert into User (Username, HashedPassword, Name) values (?, ?, ?)",
+		user.Username, bcryptPassword, user.Name)
 	if err != nil {
 		panic(err)
 	}
@@ -365,12 +366,15 @@ func (p DbPlugin) OnAppStart() {
 	// Create tables and insert some records.
 	db.Exec(`
 create table User (
-  UserId   integer primary key autoincrement,
-  Username varchar(20),
-  Password varchar(20),
-  Name varchar(100))`)
-	db.Exec("insert into User (Username, Password, Name)" +
-		" values ('demo', 'demo', 'Demo User')")
+  UserId         integer primary key autoincrement,
+  Username       varchar(20),
+  HashedPassword blob,
+  Name           varchar(100))`)
+
+	bcryptPassword, _ := bcrypt.GenerateFromPassword(
+		[]byte("demo"), bcrypt.DefaultCost)
+	db.Exec("insert into User (Username, HashedPassword, Name)" +
+		" values ('demo', ?, 'Demo User')", bcryptPassword)
 }
 
 // Start a new transaction for each request.
