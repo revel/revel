@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"code.google.com/p/go.crypto/bcrypt"
 	"github.com/robfig/revel"
 	"github.com/robfig/revel/samples/booking/app/models"
 )
@@ -17,25 +18,29 @@ func connected(c *rev.Controller) *models.User {
 		return c.RenderArgs["user"].(*models.User)
 	}
 	if username, ok := c.Session["user"]; ok {
-		rows, err := c.Txn.Query(`
-select UserId, Password, Name
-  from User where Username = :Username`, username)
-		if err != nil {
-			panic(err)
-		}
-		defer rows.Close()
-		if !rows.Next() {
-			return nil
-		}
-
-		user := &models.User{Username: username}
-		err = rows.Scan(&user.UserId, &user.Password, &user.Name)
-		if err != nil {
-			panic(err)
-		}
-		return user
+		return getUser(c, username)
 	}
 	return nil
+}
+
+func getUser(c *rev.Controller, username string) *models.User {
+	rows, err := c.Txn.Query(`
+select UserId, HashedPassword, Name
+  from User where Username = :Username`, username)
+	if err != nil {
+		panic(err)
+	}
+	defer rows.Close()
+	if !rows.Next() {
+		return nil
+	}
+
+	user := &models.User{Username: username}
+	err = rows.Scan(&user.UserId, &user.HashedPassword, &user.Name)
+	if err != nil {
+		panic(err)
+	}
+	return user
 }
 
 type Application struct {
@@ -66,8 +71,11 @@ func (c Application) SaveUser(user models.User, verifyPassword string) rev.Resul
 		return c.Redirect(Application.Register)
 	}
 
-	_, err := c.Txn.Exec("insert into User (Username, Password, Name) values (?, ?, ?)",
-		user.Username, user.Password, user.Name)
+	bcryptPassword, _ := bcrypt.GenerateFromPassword(
+		[]byte(user.Password), bcrypt.DefaultCost)
+	_, err := c.Txn.Exec(
+		"insert into User (Username, HashedPassword, Name) values (?, ?, ?)",
+		user.Username, bcryptPassword, user.Name)
 	if err != nil {
 		panic(err)
 	}
@@ -78,14 +86,9 @@ func (c Application) SaveUser(user models.User, verifyPassword string) rev.Resul
 }
 
 func (c Application) Login(username, password string) rev.Result {
-	rows, err := c.Txn.Query(
-		"select 1 from User where Username = ? and Password = ?",
-		username, password)
-	if err != nil {
-		panic(err)
-	}
-	defer rows.Close()
-	if rows.Next() {
+	user := getUser(c.Controller, username)
+	err := bcrypt.CompareHashAndPassword(user.HashedPassword, []byte(password))
+	if err == nil {
 		c.Session["user"] = username
 		c.Flash.Success("Welcome, " + username)
 		return c.Redirect(Hotels.Index)

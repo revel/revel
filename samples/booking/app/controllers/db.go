@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"code.google.com/p/go.crypto/bcrypt"
 	"database/sql"
 	"fmt"
 	_ "github.com/mattn/go-sqlite3"
@@ -26,16 +27,18 @@ func (p DbPlugin) OnAppStart() {
 	// Create tables
 	_, err = db.Exec(`
 create table User (
-  UserId   integer primary key autoincrement,
-  Username varchar(20),
-  Password varchar(20),
-  Name varchar(100))`)
+  UserId         integer primary key autoincrement,
+  Username       varchar(20),
+  HashedPassword blob,
+  Name           varchar(100))`)
 	if err != nil {
 		panic(err)
 	}
 
-	_, err = db.Exec("insert into User (Username, Password, Name)" +
-		" values ('demo', 'demo', 'Demo User')")
+	bcryptPassword, _ := bcrypt.GenerateFromPassword(
+		[]byte("demo"), bcrypt.DefaultCost)
+	_, err = db.Exec("insert into User (Username, HashedPassword, Name)"+
+		" values ('demo', ?, 'Demo User')", bcryptPassword)
 	if err != nil {
 		panic(err)
 	}

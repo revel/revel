@@ -9,6 +9,7 @@ import (
 type User struct {
 	UserId                   int
 	Username, Password, Name string
+	HashedPassword []byte
 }
 
 func (u *User) String() string {
