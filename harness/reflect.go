@@ -386,6 +386,8 @@ func ExprName(expr ast.Expr) string {
 		return ExprName(t.X) + "." + ExprName(t.Sel)
 	case *ast.StarExpr:
 		return "*" + ExprName(t.X)
+	case *ast.ArrayType:
+		return "[]" + ExprName(t.Elt)
 	default:
 		ast.Print(nil, expr)
 		panic("Failed to generate name for field.")
