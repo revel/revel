@@ -1,6 +1,7 @@
 package main
 
 import (
+        "github.com/robfig/goconfig/config"
 	"github.com/robfig/revel"
 	"github.com/robfig/revel/harness"
 	"log"
@@ -32,12 +33,18 @@ func runApp(args []string) {
 	}
 
 	mode := "dev"
-	if len(args) == 2 {
+	if len(args) >= 2 {
 		mode = args[1]
 	}
 
 	// Find and parse app.conf
 	rev.Init(mode, args[0], "")
+
+	if len(args) == 3 {
+                // change http.port config
+                rev.Config.AddOption(config.DEFAULT_SECTION, "http.port", args[2])
+	}
+ 
 	log.Printf("Running %s (%s) in %s mode\n", rev.AppName, rev.ImportPath, mode)
 	rev.TRACE.Println("Base path:", rev.BasePath)
 
