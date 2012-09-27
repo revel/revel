@@ -20,7 +20,10 @@ Loggers may be configured in [app.conf](appconf.html).  Here is an example:
 	log.error.output = stderr
 
 	log.trace.prefix = "TRACE "
-	log.trace.prefix = "INFO  "
+	log.info.prefix  = "INFO  "
+
+	log.trace.flags  = 10
+	log.info.flags   = 10
 
 	[prod]
 	log.trace.output = off
@@ -39,7 +42,11 @@ In **prod** mode:
 * **info** and **trace** logs are ignored.
 * both warnings and errors are appended to the **log/sampleapp.log** file.
 
+To specify logger flags, you must calculate the flag value from
+[the flag constants](http://www.golang.org/pkg/log/#constants).  For example, to
+the format `01:23:23 /a/b/c/d.go:23 Message` requires the flags
+`Ltime | Llongfile = 2 | 8 = 10`.
+
 Areas for development:
 
 * Revel should create the log directory if it does not already exist.
-* Revel should have support for specifying flags.
