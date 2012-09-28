@@ -6,7 +6,7 @@ layout: manual
 Revel provides built-in functionality for validating parameters.  There are a couple parts:
 * A Validation context collects and manages validation errors (keys and messages).
 * Helper functions that check data and put errors into the context.
-* A template function that retries error messages from the Validation context by key.
+* A template function that gets error messages from the Validation context by key.
 
 ## Inline Error Messages
 
@@ -112,4 +112,3 @@ func (c MyApp) SaveUser(username string) rev.Result {
 	...
 
 {% endliteral %}
-

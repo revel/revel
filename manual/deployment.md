@@ -27,4 +27,4 @@ A typical deployment would look like this:
 
 Areas for development:
 * Cross-compilation (e.g. develop on OSX, deploy on Linux).
-* A [Heruku BuildPack](https://devcenter.heroku.com/articles/buildpacks).
+* A [Heroku BuildPack](https://devcenter.heroku.com/articles/buildpacks).

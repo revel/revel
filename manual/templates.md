@@ -50,6 +50,8 @@ Example:
 
 	{{set "title" "Basic Chat room" .}}
 
+	<h1>{{.title}}</h1>
+
 {% endliteral %}
 
 ### append
@@ -61,6 +63,10 @@ Example:
 {% literal %}
 
 	{{append "moreScripts" "js/jquery-ui-1.7.2.custom.min.js" .}}
+
+    {{range .moreStyles}}
+      <link rel="stylesheet" type="text/css" href="/public/{{.}}">
+    {{end}}
 
 {% endliteral %}
 
@@ -195,4 +201,3 @@ func init() {
 }
 </pre>
 {% endliteral %}
-
