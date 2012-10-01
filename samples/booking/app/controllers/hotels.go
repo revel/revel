@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"code.google.com/p/go.crypto/bcrypt"
 	"database/sql"
 	"fmt"
 	"github.com/robfig/revel"
@@ -124,17 +125,21 @@ func (c Hotels) Settings() rev.Result {
 }
 
 func (c Hotels) SaveSettings(password, verifyPassword string) rev.Result {
-	user := connected(c.Controller)
-	user.Password = password
-	user.Validate(c.Validation)
-	c.Validation.Required(verifyPassword).Message("VerifyPassword is required")
-	c.Validation.Required(password == verifyPassword).Message("Your password doesn't match")
+	models.ValidatePassword(c.Validation, password).Key("password")
+	c.Validation.Required(verifyPassword).
+		Key("verifyPassword").
+		Message("Please verify your password")
+	c.Validation.Required(password == verifyPassword).
+		Key("verifyPassword").
+		Message("Your password doesn't match")
 	if c.Validation.HasErrors() {
 		c.Validation.Keep()
 		return c.Redirect(Hotels.Settings)
 	}
-	_, err := c.Txn.Exec("update User set Password = ? where UserId = ?",
-		password, user.UserId)
+
+	bcryptPassword, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	_, err := c.Txn.Exec("update User set HashedPassword = ? where UserId = ?",
+		bcryptPassword, connected(c.Controller).UserId)
 	if err != nil {
 		panic(err)
 	}
