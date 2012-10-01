@@ -22,8 +22,8 @@ func (c MyApp) SaveUser(username string) rev.Result {
 
 	if c.Validation.HasErrors() {
 		// Store the validation errors in the flash context and redirect.
-		c.Validation.Flash()
-		c.Params.Flash()
+		c.Validation.Keep()
+		c.FlashParams()
 		return c.Redirect(Hotels.Settings)
 	}
 
@@ -84,8 +84,8 @@ func (c MyApp) SaveUser(username string) rev.Result {
 
 	if c.Validation.HasErrors() {
 		// Store the validation errors in the flash context and redirect.
-		c.Validation.Flash()
-		c.Params.Flash()
+		c.Validation.Keep()
+		c.FlashParams()
 		return c.Redirect(Hotels.Settings)
 	}
 

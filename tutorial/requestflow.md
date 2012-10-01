@@ -162,4 +162,4 @@ Refresh the page and you should see your Hawaiian greeting.
 
 ![A Hawaiian greeting](../img/AlohaWorld.png)
 
-**Next: Set up persistence for your application. (TODO)**
+**Next: [Make a simple Hello World application](firstapp.html).**
