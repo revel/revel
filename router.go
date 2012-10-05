@@ -282,8 +282,8 @@ func (router *Router) validate(route *Route) *Error {
 // 5: action
 var routePattern *regexp.Regexp = regexp.MustCompile(
 	"(?i)^(GET|POST|PUT|DELETE|OPTIONS|HEAD|WS|\\*)" +
-		"[(]?([^)]*)(\\))? +" +
-		"(.*/[^ ]*) +([^ (]+)(.+)?( *)$")
+		"[(]?([^)]*)(\\))?[ \t]+" +
+		"(.*/[^ \t]*)[ \t]+([^ \t(]+)(.+)?([ \t]*)$")
 
 func parseRouteLine(line string) (method, path, action string, found bool) {
 	var matches []string = routePattern.FindStringSubmatch(line)
