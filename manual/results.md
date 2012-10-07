@@ -12,17 +12,17 @@ type Result interface {
 }
 </pre>
 
-[`rev.Controller`](../docs/godoc/mvc.html#Controller) provides a number of
+[`rev.Controller`](../docs/godoc/mvc.html#Controller) provides a couple
 methods to produce Results:
 * Render(...) - render a template
+* RenderJson, RenderXml - serialize a structure to json or xml.
 * Redirect(...) - redirect to another action or URL
 
-**Note:** Actions that write to the response themselves should return a `nil` result to
-indicate that Revel should take no action.
+Additionally, the developer may define their own `rev.Result` and return that.
 
 ## Render
 
-Called within an action "Controller.Action",
+Called within an action (e.g. "Controller.Action"),
 [`mvc.Controller.Render`](../docs/godoc/mvc.html#Controller.Render) does two things:
 1. Adds all arguments to the controller's RenderArgs, using their local identifier as the key.
 2. Executes the template "views/Controller/Action.html", passing in the controller's "RenderArgs" as the data map.
@@ -47,13 +47,18 @@ handled as a local variable anyway.
   called from Actions.
 
 
-## RenderJson
+## RenderJson / RenderXml
 
 The application may call
-[`RenderJson`](../docs/godoc/mvc.html#Controller.RenderJson) and pass in any Go
+[`RenderJson`](../docs/godoc/mvc.html#Controller.RenderJson) or
+[`RenderXml`](../docs/godoc/mvc.html#Controller.RenderXml) and pass in any Go
 type (usually a struct).  Revel will serialize it using
-[`json.Marshal`](http://www.golang.org/pkg/encoding/json/#Marshal) (or
-MarshalIndent in development).
+[`json.Marshal`](http://www.golang.org/pkg/encoding/json/#Marshal) or
+[`xml.Marshal`](http://www.golang.org/pkg/encoding/xml/#Marshal).
+
+If `results.pretty=true` in `app.conf`, serialization will be done using
+`MarshalIndent` instead, to produce nicely indented output for human
+consumption.
 
 ## Redirect
 
@@ -74,5 +79,37 @@ This form is necessary to pass arguments.
 
 It returns a 302 (Temporary Redirect) status code.
 
+## Adding your own Result
 
-**TODO:** Status codes
+Here is an example of adding a simple Result.
+
+Create this type:
+
+<pre class="prettyprint lang-go">
+type Html string
+
+func (r Html) Apply(req *Request, resp *Response) {
+	resp.WriteHeader(http.StatusOK, "text/html")
+	resp.Out.Write([]byte(r))
+}
+</pre>
+
+Then use it in an action:
+
+<pre class="prettyprint lang-go">{% capture html %}
+func (c *Application) Action() rev.Result {
+	return Html("<html><body>Hello World</body></html>")
+}{% endcapture %}{{ html|escape }}
+</pre>
+
+## Status Codes
+
+Each Result will set a status code by default.  You can override the default
+status code by setting one yourself:
+
+<pre class="prettyprint lang-go">
+func (c *Application) CreateEntity() rev.Result {
+	c.Response.Status = 201
+	return c.Render()
+}
+</pre>
