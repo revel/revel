@@ -31,9 +31,13 @@ Here are the contents of the app:
 ## Installation
 
 This app uses [go-sqlite3](https://github.com/mattn/go-sqlite3), which wraps the
-C library.  See the
-[README](https://github.com/mattn/go-sqlite3/blob/master/README.mkd) for
-instructions if your system does not already have the necessary libraries.
+C library.  To install:
+
+1. Install Homebrew ( http://mxcl.github.com/homebrew/ ):
+>	`ruby <(curl -fsSkL raw.github.com/mxcl/homebrew/go)`
+
+2. Install pkg-config and sqlite3:
+>	`brew install pkgconfig sqlite3`
 
 Once you have SQLite installed, it should be possible to run the booking app as
 usual:
