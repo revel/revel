@@ -1,7 +1,7 @@
 package rev
 
 import (
-	"github.com/howeyc/fsnotify"
+	"github.com/robfig/fsnotify"
 	"os"
 	"path"
 	"path/filepath"
