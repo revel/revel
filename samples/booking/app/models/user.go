@@ -26,14 +26,18 @@ func (u *User) Validate(v *rev.Validation) {
 		rev.Match{userRegex},
 	).Key("user.Username")
 
-	v.Check(u.Password,
-		rev.Required{},
-		rev.MaxSize{15},
-		rev.MinSize{5},
-	).Key("user.Password")
+	ValidatePassword(v, u.Password).Key("user.Password")
 
 	v.Check(u.Name,
 		rev.Required{},
 		rev.MaxSize{100},
 	).Key("user.Name")
+}
+
+func ValidatePassword(v *rev.Validation, password string) *rev.ValidationResult {
+	return v.Check(password,
+		rev.Required{},
+		rev.MaxSize{15},
+		rev.MinSize{5},
+	)
 }

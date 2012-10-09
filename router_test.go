@@ -147,8 +147,8 @@ GET  /                       Application.Index
 GET  /app/{id}               Application.Show
 POST /app/{id}               Application.Save
 
-GET  /public/                staticDir:www
-*    /{controller}/{action}  {controller}.{action}
+GET	/public/	                staticDir:www
+*		/{controller}/{action}		{controller}.{action}
 
 GET  /favicon.ico            404
 `
