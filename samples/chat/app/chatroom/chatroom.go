@@ -86,6 +86,7 @@ func chatroom() {
 			for ch := subscribers.Front(); ch != nil; ch = ch.Next() {
 				if ch.Value.(chan Event) == unsub {
 					subscribers.Remove(ch)
+					break
 				}
 			}
 		}
