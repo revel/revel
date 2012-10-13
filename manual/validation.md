@@ -15,10 +15,10 @@ This example demonstrates field validation with inline error messages.
 <pre class="prettyprint lang-go">
 func (c MyApp) SaveUser(username string) rev.Result {
 	// Username (required) must be between 4 and 15 letters (inclusive).
-	c.Validation.Required(username).Key("username")
-	c.Validation.MaxSize(username, 15).Key("username")
-	c.Validation.MinSize(username, 4).Key("username")
-	c.Validation.Match(username, regexp.MustCompile("^\\w*$")).Key("username")
+	c.Validation.Required(username)
+	c.Validation.MaxSize(username, 15)
+	c.Validation.MinSize(username, 4)
+	c.Validation.Match(username, regexp.MustCompile("^\\w*$"))
 
 	if c.Validation.HasErrors() {
 		// Store the validation errors in the flash context and redirect.
@@ -35,7 +35,8 @@ func (c MyApp) SaveUser(username string) rev.Result {
 Step by step:
 1. Evaluate four different conditions on `username` (Required, MinSize, MaxSize, Match).
 2. Each evaluation returns a [ValidationResult](../docs/godoc/validation.html#ValidationResult). Failed ValidationResults are stored in the Validation context.
-4. Set the key `username` for the errors, so they can be looked up later.
+3. As part of building the app, Revel records the name of the variable being
+validated, and uses that as the default key in the validation context (to be looked up later).
 4. `Validation.HasErrors()` returns true if the the context is non-empty.
 5. `Validation.Keep()` tells Revel to serialize the ValidationErrors to the Flash cookie.
 6. Revel returns a redirect to the Hotels.Settings action.
