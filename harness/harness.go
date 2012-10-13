@@ -20,11 +20,14 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"sync/atomic"
 )
 
 var (
 	watcher    *rev.Watcher
 	doNotWatch = []string{"tmp", "views"}
+
+	lastRequestHadError int32
 )
 
 // Harness reverse proxies requests to the application server.
@@ -42,13 +45,20 @@ func renderError(w http.ResponseWriter, r *http.Request, err error) {
 // ServeHTTP handles all requests.
 // It checks for changes to app, rebuilds if necessary, and forwards the request.
 func (hp *Harness) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// Don't rebuild the app for favicon requests.
+	if lastRequestHadError > 0 && r.URL.Path == "/favicon.ico" {
+		return
+	}
+
 	// Flush any change events and rebuild app if necessary.
 	// Render an error page if the rebuild / restart failed.
 	err := watcher.Notify()
 	if err != nil {
+		atomic.CompareAndSwapInt32(&lastRequestHadError, 0, 1)
 		renderError(w, r, err)
 		return
 	}
+	atomic.CompareAndSwapInt32(&lastRequestHadError, 1, 0)
 
 	// Reverse proxy the request.
 	// (Need special code for websockets, courtesy of bradfitz)
