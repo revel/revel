@@ -26,21 +26,20 @@ type Booking struct {
 
 // TODO: Make an interface for Validate() and then validation can pass in the
 // key prefix ("booking.")
-func (b Booking) Validate(v *rev.Validation) {
-	v.Required(b.User).Key("booking.User")
-	v.Required(b.Hotel).Key("booking.Hotel")
-	v.Required(b.CheckInDate).Key("booking.CheckInDate")
-	v.Required(b.CheckOutDate).Key("booking.CheckOutDate")
+func (booking Booking) Validate(v *rev.Validation) {
+	v.Required(booking.User)
+	v.Required(booking.Hotel)
+	v.Required(booking.CheckInDate)
+	v.Required(booking.CheckOutDate)
 
-	v.Match(b.CardNumber, regexp.MustCompile(`\d{16}`)).
-		Key("booking.CardNumber").
+	v.Match(booking.CardNumber, regexp.MustCompile(`\d{16}`)).
 		Message("Credit card number must be numeric and 16 digits")
 
-	v.Check(b.NameOnCard,
+	v.Check(booking.NameOnCard,
 		rev.Required{},
 		rev.MinSize{3},
 		rev.MaxSize{70},
-	).Key("booking.NameOnCard")
+	)
 }
 
 func (b Booking) Total() int {

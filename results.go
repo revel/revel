@@ -131,6 +131,15 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
 	b.WriteTo(resp.Out)
 }
 
+type RenderHtmlResult struct {
+	html string
+}
+
+func (r RenderHtmlResult) Apply(req *Request, resp *Response) {
+	resp.WriteHeader(http.StatusOK, "text/html")
+	resp.Out.Write([]byte(r.html))
+}
+
 type RenderJsonResult struct {
 	obj interface{}
 }

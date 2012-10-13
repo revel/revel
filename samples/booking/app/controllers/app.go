@@ -60,8 +60,8 @@ func (c Application) Register() rev.Result {
 }
 
 func (c Application) SaveUser(user models.User, verifyPassword string) rev.Result {
-	c.Validation.Required(verifyPassword).Key("verifyPassword")
-	c.Validation.Required(verifyPassword == user.Password).Key("verifyPassword").
+	c.Validation.Required(verifyPassword)
+	c.Validation.Required(verifyPassword == user.Password).
 		Message("Password does not match")
 	user.Validate(c.Validation)
 

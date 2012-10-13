@@ -18,20 +18,21 @@ func (u *User) String() string {
 
 var userRegex = regexp.MustCompile("^\\w*$")
 
-func (u *User) Validate(v *rev.Validation) {
-	v.Check(u.Username,
+func (user *User) Validate(v *rev.Validation) {
+	v.Check(user.Username,
 		rev.Required{},
 		rev.MaxSize{15},
 		rev.MinSize{4},
 		rev.Match{userRegex},
-	).Key("user.Username")
+	)
 
-	ValidatePassword(v, u.Password).Key("user.Password")
+	ValidatePassword(v, user.Password).
+		Key("user.Password")
 
-	v.Check(u.Name,
+	v.Check(user.Name,
 		rev.Required{},
 		rev.MaxSize{100},
-	).Key("user.Name")
+	)
 }
 
 func ValidatePassword(v *rev.Validation, password string) *rev.ValidationResult {

@@ -11,23 +11,40 @@ import (
 	"go/token"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 	"unicode"
 )
 
+// SourceInfo is the top-level struct containing all extracted information
+// about the app source code, used to generate main.go.
+type SourceInfo struct {
+	// ControllerSpecs lists specs for all structs found under
+	// app/controllers/... that embed (directly or indirectly) rev.Controller.
+	ControllerSpecs []*ControllerSpec
+	// ValidationKeys provides a two-level lookup.  The keys are:
+	// 1. The fully-qualified function name, 
+	//    e.g. "github.com/robfig/revel/samples/chat/app/controllers.(*Application).Action"
+	// 2. Within that func's file, the line number of the (overall) expression statement.
+	//    e.g. the line returned from runtime.Caller()
+	// The result of the lookup the name of variable being validated.
+	ValidationKeys map[string]map[int]string
+}
+
 type ControllerSpec struct {
-	PackageName string
-	StructName  string
-	ImportPath  string
+	PackageName string // e.g. "controllers"
+	StructName  string // e.g. "Application"
+	ImportPath  string // e.g. "github.com/robfig/revel/samples/chat/app/controllers"
 	MethodSpecs []*MethodSpec
 
 	// Used internally to identify controllers that indirectly embed *rev.Controller.
 	embeddedTypes []*embeddedTypeName
 }
 
-// This is a description of a call to c.Render(..)
+// methodCall describes a call to c.Render(..)
 // It documents the argument names used, in order to propagate them to RenderArgs.
-type renderCall struct {
+type methodCall struct {
+	Path  string // e.g. "myapp/app/controllers.(*Application).Action"
 	Line  int
 	Names []string
 }
@@ -35,7 +52,7 @@ type renderCall struct {
 type MethodSpec struct {
 	Name        string        // Name of the method, e.g. "Index"
 	Args        []*MethodArg  // Argument descriptors
-	RenderCalls []*renderCall // Descriptions of Render() invocations from this Method.
+	RenderCalls []*methodCall // Descriptions of Render() invocations from this Method.
 }
 
 type MethodArg struct {
@@ -52,66 +69,163 @@ type embeddedTypeName struct {
 // receiver.
 type methodMap map[string][]*MethodSpec
 
-// Parse the app directory and return a list of the controller types found.
+// Parse the app controllers directory and return a list of the controller types found.
 // Returns a CompileError if the parsing fails.
-func ScanControllers(path string) (specs []*ControllerSpec, compileError *rev.Error) {
-	// Parse files within the path.
-	var pkgs map[string]*ast.Package
-	fset := token.NewFileSet()
-	pkgs, err := parser.ParseDir(fset, path, func(f os.FileInfo) bool {
-		return !f.IsDir() && !strings.HasPrefix(f.Name(), ".")
-	}, 0)
-	if err != nil {
-		if errList, ok := err.(scanner.ErrorList); ok {
-			var pos token.Position = errList[0].Pos
-			return nil, &rev.Error{
-				SourceType:  ".go source",
-				Title:       "Go Compilation Error",
-				Path:        pos.Filename,
-				Description: errList[0].Msg,
-				Line:        pos.Line,
-				Column:      pos.Column,
-				SourceLines: rev.MustReadLines(pos.Filename),
-			}
+func ProcessSource() (*SourceInfo, *rev.Error) {
+	var (
+		root       = rev.AppPath
+		importBase = rev.BasePath
+
+		srcInfo      *SourceInfo
+		compileError *rev.Error
+	)
+
+	// Start walking the directory tree.
+	filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			log.Println("Error scanning app source:", err)
+			return nil
 		}
-		ast.Print(nil, err)
-		log.Fatalf("Failed to parse dir: %s", err)
+
+		if !info.IsDir() {
+			return nil
+		}
+
+		if info.Name() == "tmp" {
+			return nil
+		}
+
+		// Get the import path of the package.
+		pkgImportPath := rev.ImportPath + "/" + filepath.ToSlash(path[len(importBase)+1:])
+
+		// Parse files within the path.
+		var pkgs map[string]*ast.Package
+		fset := token.NewFileSet()
+		pkgs, err = parser.ParseDir(fset, path, func(f os.FileInfo) bool {
+			return !f.IsDir() && !strings.HasPrefix(f.Name(), ".") && strings.HasSuffix(f.Name(), ".go")
+		}, 0)
+		if err != nil {
+			if errList, ok := err.(scanner.ErrorList); ok {
+				var pos token.Position = errList[0].Pos
+				compileError = &rev.Error{
+					SourceType:  ".go source",
+					Title:       "Go Compilation Error",
+					Path:        pos.Filename,
+					Description: errList[0].Msg,
+					Line:        pos.Line,
+					Column:      pos.Column,
+					SourceLines: rev.MustReadLines(pos.Filename),
+				}
+				return compileError
+			}
+			ast.Print(nil, err)
+			log.Fatalf("Failed to parse dir: %s", err)
+		}
+
+		// Skip "main" packages.
+		delete(pkgs, "main")
+
+		// If there is no code in this directory, skip it.
+		if len(pkgs) == 0 {
+			return nil
+		}
+
+		// There should be only one package in this directory.
+		if len(pkgs) > 1 {
+			log.Println("Most unexpected! Multiple packages in a single directory:", pkgs)
+		}
+
+		var pkg *ast.Package
+		for _, v := range pkgs {
+			pkg = v
+		}
+
+		srcInfo = appendSourceInfo(srcInfo, processPackage(fset, pkgImportPath, pkg))
+		return nil
+	})
+
+	return srcInfo, compileError
+}
+
+func appendSourceInfo(srcInfo1, srcInfo2 *SourceInfo) *SourceInfo {
+	if srcInfo1 == nil {
+		return srcInfo2
 	}
 
-	// For each package... (often only "controllers")
-	for _, pkg := range pkgs {
-		var structSpecs []*ControllerSpec
-		methodSpecs := make(methodMap)
+	srcInfo1.ControllerSpecs = append(srcInfo1.ControllerSpecs, srcInfo2.ControllerSpecs...)
+	for k, v := range srcInfo2.ValidationKeys {
+		if _, ok := srcInfo1.ValidationKeys[k]; ok {
+			log.Println("Key conflict when scanning validation calls:", k)
+			continue
+		}
+		srcInfo1.ValidationKeys[k] = v
+	}
+	return srcInfo1
+}
 
-		// For each source file in the package...
-		for _, file := range pkg.Files {
+func processPackage(fset *token.FileSet, pkgImportPath string, pkg *ast.Package) *SourceInfo {
+	var structSpecs []*ControllerSpec
+	validationKeys := make(map[string]map[int]string)
+	methodSpecs := make(methodMap)
+	scanControllers := strings.HasSuffix(pkgImportPath, "/controllers") ||
+		strings.Contains(pkgImportPath, "/controllers/")
 
-			// Imports maps the package key to the full import path.
-			// e.g. import "sample/app/models" => "models": "sample/app/models"
-			imports := map[string]string{}
+	// For each source file in the package...
+	for _, file := range pkg.Files {
 
-			// For each declaration in the source file...
-			for _, decl := range file.Decls {
+		// Imports maps the package key to the full import path.
+		// e.g. import "sample/app/models" => "models": "sample/app/models"
+		imports := map[string]string{}
 
+		// For each declaration in the source file...
+		for _, decl := range file.Decls {
+
+			if scanControllers {
 				// Match and add both structs and methods
 				addImports(imports, decl)
 				structSpecs = appendStruct(structSpecs, pkg, decl)
-				appendMethod(fset, methodSpecs, decl, pkg.Name, imports)
+				appendAction(fset, methodSpecs, decl, pkg.Name, imports)
+			}
+
+			// If this is a func, scan it for validation calls.
+			if funcDecl, ok := decl.(*ast.FuncDecl); ok {
+				// ast.Print(nil, funcDecl)
+				lineKeys := getValidationKeys(fset, funcDecl)
+				if len(lineKeys) > 0 {
+					validationKeys[pkgImportPath+"."+getFuncName(funcDecl)] = lineKeys
+				}
 			}
 		}
-
-		// Filter the struct specs to just the ones that embed rev.Controller.
-		structSpecs = filterControllers(structSpecs)
-
-		// Add the method specs to them.
-		for _, spec := range structSpecs {
-			spec.MethodSpecs = methodSpecs[spec.StructName]
-		}
-
-		// Add the prepared ControllerSpecs to the list.
-		specs = append(specs, structSpecs...)
 	}
-	return
+
+	// Filter the struct specs to just the ones that embed rev.Controller.
+	structSpecs = filterControllers(structSpecs)
+
+	// Add the method specs to them.
+	for _, spec := range structSpecs {
+		spec.MethodSpecs = methodSpecs[spec.StructName]
+	}
+
+	return &SourceInfo{
+		ControllerSpecs: structSpecs,
+		ValidationKeys:  validationKeys,
+	}
+}
+
+// getFuncName returns a name for this func or method declaration.
+// e.g. "(*Application).SayHello" for a method, "SayHello" for a func.
+func getFuncName(funcDecl *ast.FuncDecl) string {
+	prefix := ""
+	if funcDecl.Recv != nil {
+		recvType := funcDecl.Recv.List[0].Type
+		if recvStarType, ok := recvType.(*ast.StarExpr); ok {
+			prefix = "(*" + recvStarType.X.(*ast.Ident).Name + ")"
+		} else {
+			prefix = recvType.(*ast.Ident).Name
+		}
+		prefix += "."
+	}
+	return prefix + funcDecl.Name.Name
 }
 
 func addImports(imports map[string]string, decl ast.Decl) {
@@ -221,7 +335,7 @@ func appendStruct(specs []*ControllerSpec, pkg *ast.Package, decl ast.Decl) []*C
 // If decl is a Method declaration, it is summarized and added to the array
 // underneath its receiver type.
 // e.g. "Login" => {MethodSpec, MethodSpec, ..}
-func appendMethod(fset *token.FileSet, mm methodMap, decl ast.Decl, pkgName string, imports map[string]string) {
+func appendAction(fset *token.FileSet, mm methodMap, decl ast.Decl, pkgName string, imports map[string]string) {
 	// Func declaration?
 	funcDecl, ok := decl.(*ast.FuncDecl)
 	if !ok {
@@ -234,7 +348,7 @@ func appendMethod(fset *token.FileSet, mm methodMap, decl ast.Decl, pkgName stri
 	}
 
 	// Is it public?
-	if !unicode.IsUpper([]rune(funcDecl.Name.Name)[0]) {
+	if !funcDecl.Name.IsExported() {
 		return
 	}
 
@@ -251,15 +365,6 @@ func appendMethod(fset *token.FileSet, mm methodMap, decl ast.Decl, pkgName stri
 	}
 	if selExpr.Sel.Name != "Result" {
 		return
-	}
-
-	// Get the receiver type, "dereferencing" it if necessary
-	var recvTypeName string
-	var recvType ast.Expr = funcDecl.Recv.List[0].Type
-	if recvStarType, ok := recvType.(*ast.StarExpr); ok {
-		recvTypeName = recvStarType.X.(*ast.Ident).Name
-	} else {
-		recvTypeName = recvType.(*ast.Ident).Name
 	}
 
 	method := &MethodSpec{
@@ -298,7 +403,7 @@ func appendMethod(fset *token.FileSet, mm methodMap, decl ast.Decl, pkgName stri
 
 	// Add a description of the calls to Render from the method.
 	// Inspect every node (e.g. always return true).
-	method.RenderCalls = []*renderCall{}
+	method.RenderCalls = []*methodCall{}
 	ast.Inspect(funcDecl.Body, func(node ast.Node) bool {
 		// Is it a function call?
 		callExpr, ok := node.(*ast.CallExpr)
@@ -320,7 +425,7 @@ func appendMethod(fset *token.FileSet, mm methodMap, decl ast.Decl, pkgName stri
 
 		// Add this call's args to the renderArgs.
 		pos := fset.Position(callExpr.Rparen)
-		renderCall := &renderCall{
+		methodCall := &methodCall{
 			Line:  pos.Line,
 			Names: []string{},
 		}
@@ -330,13 +435,120 @@ func appendMethod(fset *token.FileSet, mm methodMap, decl ast.Decl, pkgName stri
 				log.Println("Unnamed argument to Render call:", pos)
 				continue
 			}
-			renderCall.Names = append(renderCall.Names, argIdent.Name)
+			methodCall.Names = append(methodCall.Names, argIdent.Name)
 		}
-		method.RenderCalls = append(method.RenderCalls, renderCall)
+		method.RenderCalls = append(method.RenderCalls, methodCall)
 		return true
 	})
 
+	var recvTypeName string
+	var recvType ast.Expr = funcDecl.Recv.List[0].Type
+	if recvStarType, ok := recvType.(*ast.StarExpr); ok {
+		recvTypeName = recvStarType.X.(*ast.Ident).Name
+	} else {
+		recvTypeName = recvType.(*ast.Ident).Name
+	}
+
 	mm[recvTypeName] = append(mm[recvTypeName], method)
+}
+
+// Scan app source code for calls to X.Y(), where X is of type *Validation.
+//
+// Recognize these scenarios:
+// - "Y" = "Validation" and is a member of the receiver.  
+//   (The common case for inline validation)
+// - "X" is passed in to the func as a parameter. 
+//   (For structs implementing Validated)
+//
+// The line number to which a validation call is attributed is that of the
+// surrounding ExprStmt.  This is so that it matches what runtime.Callers()
+// reports.
+//
+// The end result is that we can set the default validation key for each call to
+// be the same as the local variable.
+func getValidationKeys(fset *token.FileSet, funcDecl *ast.FuncDecl) map[int]string {
+	var (
+		lineKeys     = make(map[int]string)
+		lastExprLine = 0
+
+		// Check the func parameters and the receiver's members for the *rev.Validation type.
+		validationParam = getValidationParameter(funcDecl)
+	)
+
+	ast.Inspect(funcDecl.Body, func(node ast.Node) bool {
+		if expr, ok := node.(*ast.ExprStmt); ok {
+			lastExprLine = fset.Position(expr.End()).Line
+			return true
+		}
+
+		// e.g. c.Validation.Required(arg) or v.Required(arg)
+		callExpr, ok := node.(*ast.CallExpr)
+		if !ok {
+			return true
+		}
+
+		// e.g. c.Validation.Required or v.Required
+		funcSelector, ok := callExpr.Fun.(*ast.SelectorExpr)
+		if !ok {
+			return true
+		}
+
+		switch x := funcSelector.X.(type) {
+		case *ast.SelectorExpr: // e.g. c.Validation
+			if x.Sel.Name != "Validation" {
+				return true
+			}
+
+		case *ast.Ident: // e.g. v
+			if validationParam == nil || x.Obj != validationParam {
+				return true
+			}
+
+		default:
+			return true
+		}
+
+		if len(callExpr.Args) == 0 {
+			return true
+		}
+
+		// If the argument is a binary expression, take the first expression.
+		// (e.g. c.Validation.Required(myName != ""))
+		arg := callExpr.Args[0]
+		if binExpr, ok := arg.(*ast.BinaryExpr); ok {
+			arg = binExpr.X
+		}
+
+		lineKeys[lastExprLine] = ExprName(arg)
+		return true
+	})
+
+	return lineKeys
+}
+
+// Check to see if there is a *rev.Validation as an argument.
+func getValidationParameter(funcDecl *ast.FuncDecl) *ast.Object {
+	for _, field := range funcDecl.Type.Params.List {
+		starExpr, ok := field.Type.(*ast.StarExpr) // e.g. *rev.Validation
+		if !ok {
+			continue
+		}
+
+		selExpr, ok := starExpr.X.(*ast.SelectorExpr) // e.g. rev.Validation
+		if !ok {
+			continue
+		}
+
+		xIdent, ok := selExpr.X.(*ast.Ident) // e.g. rev
+		if !ok {
+			continue
+		}
+
+		if xIdent.Name == "rev" && selExpr.Sel.Name == "Validation" {
+			return field.Names[0].Obj
+		}
+	}
+	return nil
 }
 
 func (s *ControllerSpec) SimpleName() string {

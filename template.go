@@ -144,11 +144,13 @@ func (loader *TemplateLoader) Refresh() *Error {
 				return nil
 			}
 
-			// If we already loaded a template of this name, skip it.
+			// Convert template names to use forward slashes, even on Windows.
 			templateName := path[len(basePath)+1:]
 			if os.PathSeparator == '\\' {
 				templateName = strings.Replace(templateName, `\`, `/`, -1)
 			}
+
+			// If we already loaded a template of this name, skip it.
 			if _, ok := loader.templatePaths[templateName]; ok {
 				return nil
 			}

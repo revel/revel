@@ -3,6 +3,7 @@ package rev
 import (
 	"fmt"
 	"regexp"
+	"runtime"
 	"time"
 )
 
@@ -106,7 +107,7 @@ func (r Required) DefaultMessage() string {
 
 // Test that the argument is non-nil and non-empty (if string or list)
 func (v *Validation) Required(obj interface{}) *ValidationResult {
-	return v.check(Required{}, obj)
+	return v.apply(Required{}, obj)
 }
 
 type Min struct {
@@ -126,7 +127,7 @@ func (m Min) DefaultMessage() string {
 }
 
 func (v *Validation) Min(n int, min int) *ValidationResult {
-	return v.check(Min{min}, n)
+	return v.apply(Min{min}, n)
 }
 
 type Max struct {
@@ -146,7 +147,7 @@ func (m Max) DefaultMessage() string {
 }
 
 func (v *Validation) Max(n int, max int) *ValidationResult {
-	return v.check(Max{max}, n)
+	return v.apply(Max{max}, n)
 }
 
 // Requires an array or string to be at least a given length.
@@ -169,7 +170,7 @@ func (m MinSize) DefaultMessage() string {
 }
 
 func (v *Validation) MinSize(obj interface{}, min int) *ValidationResult {
-	return v.check(MinSize{min}, obj)
+	return v.apply(MinSize{min}, obj)
 }
 
 // Requires an array or string to be at most a given length.
@@ -192,7 +193,7 @@ func (m MaxSize) DefaultMessage() string {
 }
 
 func (v *Validation) MaxSize(obj interface{}, max int) *ValidationResult {
-	return v.check(MaxSize{max}, obj)
+	return v.apply(MaxSize{max}, obj)
 }
 
 // Requires a string to match a given regex.
@@ -210,17 +211,29 @@ func (m Match) DefaultMessage() string {
 }
 
 func (v *Validation) Match(str string, regex *regexp.Regexp) *ValidationResult {
-	return v.check(Match{regex}, str)
+	return v.apply(Match{regex}, str)
 }
 
-func (v *Validation) check(chk Check, obj interface{}) *ValidationResult {
+func (v *Validation) apply(chk Check, obj interface{}) *ValidationResult {
 	if chk.IsSatisfied(obj) {
 		return &ValidationResult{Ok: true}
+	}
+
+	// Get the default key.
+	var key string
+	if pc, _, line, ok := runtime.Caller(2); ok {
+		f := runtime.FuncForPC(pc)
+		if defaultKeys, ok := DefaultValidationKeys[f.Name()]; ok {
+			key = defaultKeys[line]
+		}
+	} else {
+		INFO.Println("Failed to get Caller information to look up Validation key")
 	}
 
 	// Add the error to the validation context.
 	err := &ValidationError{
 		Message: chk.DefaultMessage(),
+		Key:     key,
 	}
 	v.Errors = append(v.Errors, err)
 
@@ -236,10 +249,16 @@ func (v *Validation) check(chk Check, obj interface{}) *ValidationResult {
 func (v *Validation) Check(obj interface{}, checks ...Check) *ValidationResult {
 	var result *ValidationResult
 	for _, check := range checks {
-		result = v.check(check, obj)
+		result = v.apply(check, obj)
 		if !result.Ok {
 			return result
 		}
 	}
 	return result
 }
+
+// Register default validation keys for all calls to Controller.Validation.Func().
+// Map from (package).func => (line => name of first arg to Validation func)
+// E.g. "myapp/controllers.helper" or "myapp/controllers.(*Application).Action"
+// This is set on initialization in the generated main.go file.
+var DefaultValidationKeys map[string]map[int]string

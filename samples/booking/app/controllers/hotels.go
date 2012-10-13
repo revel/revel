@@ -125,12 +125,10 @@ func (c Hotels) Settings() rev.Result {
 }
 
 func (c Hotels) SaveSettings(password, verifyPassword string) rev.Result {
-	models.ValidatePassword(c.Validation, password).Key("password")
+	models.ValidatePassword(c.Validation, password)
 	c.Validation.Required(verifyPassword).
-		Key("verifyPassword").
 		Message("Please verify your password")
-	c.Validation.Required(password == verifyPassword).
-		Key("verifyPassword").
+	c.Validation.Required(verifyPassword == password).
 		Message("Your password doesn't match")
 	if c.Validation.HasErrors() {
 		c.Validation.Keep()

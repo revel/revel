@@ -54,7 +54,7 @@ func StartApp(useHarness bool) {
 // Requires that rev.Init has been called previously.
 // Returns the path to the built binary, and an error if there was a problem building it.
 func Build() (binaryPath string, compileError *rev.Error) {
-	controllerSpecs, compileError := ScanControllers(path.Join(rev.AppPath, "controllers"))
+	sourceInfo, compileError := ProcessSource()
 	if compileError != nil {
 		return "", compileError
 	}
@@ -62,9 +62,10 @@ func Build() (binaryPath string, compileError *rev.Error) {
 	tmpl := template.New("RegisterControllers")
 	tmpl = template.Must(tmpl.Parse(REGISTER_CONTROLLERS))
 	var registerControllerSource string = rev.ExecuteTemplate(tmpl, map[string]interface{}{
-		"AppName":     rev.AppName,
-		"Controllers": controllerSpecs,
-		"ImportPaths": uniqueImportPaths(controllerSpecs),
+		"AppName":        rev.AppName,
+		"Controllers":    sourceInfo.ControllerSpecs,
+		"ValidationKeys": sourceInfo.ValidationKeys,
+		"ImportPaths":    uniqueImportPaths(sourceInfo.ControllerSpecs),
 	})
 
 	// Terminate the server if it's already running.
@@ -108,7 +109,7 @@ func Build() (binaryPath string, compileError *rev.Error) {
 	ctx := build.Default
 	pkg, err := ctx.Import(rev.ImportPath, "", build.FindOnly)
 	if err != nil {
-		rev.ERROR.Fatalf("Failure importing", rev.ImportPath)
+		rev.ERROR.Fatalln("Failure importing", rev.ImportPath)
 	}
 	binName := path.Join(pkg.BinDir, rev.AppName)
 	if runtime.GOOS == "windows" {
@@ -294,6 +295,12 @@ func main() {
 			{{end}}
 		})
 	{{end}}
+	rev.DefaultValidationKeys = map[string]map[int]string{ {{range $path, $lines := .ValidationKeys}}
+		"{{$path}}": { {{range $line, $key := $lines}}
+			{{$line}}: "{{$key}}",{{end}}
+		},{{end}}
+	}
+
 	rev.Run(*port)
 }
 `
