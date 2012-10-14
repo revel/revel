@@ -19,6 +19,8 @@ import (
 
 var (
 	cmd *exec.Cmd // The app server cmd
+	importErrorPattern = regexp.MustCompile(
+		"import \"([^\"]+)\": cannot find package")
 )
 
 // Run the Revel program, optionally using the harness.
@@ -115,16 +117,45 @@ func Build() (binaryPath string, compileError *rev.Error) {
 	if runtime.GOOS == "windows" {
 		binName += ".exe"
 	}
-	buildCmd := exec.Command(goPath, "build", "-o", binName, path.Join(rev.ImportPath, "app", "tmp"))
-	rev.TRACE.Println("Exec build:", buildCmd.Path, buildCmd.Args)
-	output, err := buildCmd.CombinedOutput()
 
-	// If we failed to build, parse the error message.
-	if err != nil {
-		return "", newCompileError(output)
+	gotten := make(map[string]struct{})
+	for {
+		buildCmd := exec.Command(goPath, "build", "-o", binName, path.Join(rev.ImportPath, "app", "tmp"))
+		rev.TRACE.Println("Exec:", buildCmd.Args)
+		output, err := buildCmd.CombinedOutput()
+
+		// If the build succeeded, we're done.
+		if err == nil {
+			return binName, nil
+		}
+		rev.TRACE.Println(string(output))
+
+		// See if it was an import error that we can go get.
+		matches := importErrorPattern.FindStringSubmatch(string(output))
+		if matches == nil {
+			return "", newCompileError(output)
+		}
+
+		// Ensure we haven't already tried to go get it.
+		pkgName := matches[1]
+		if _, alreadyTried := gotten[pkgName]; alreadyTried {
+			return "", newCompileError(output)
+		}
+		gotten[pkgName] = struct{}{}
+
+		// Execute "go get <pkg>"
+		getCmd := exec.Command(goPath, "get", pkgName)
+		rev.TRACE.Println("Exec:", getCmd.Args)
+		getOutput, err := getCmd.CombinedOutput()
+		if err != nil {
+			rev.TRACE.Println(string(getOutput))
+			return "", newCompileError(output)
+		}
+
+		// Success getting the import, attempt to build again.
 	}
-
-	return binName, nil
+	rev.ERROR.Fatalf("Not reachable")
+	return "", nil
 }
 
 // Start the application server, waiting until it has started up.
