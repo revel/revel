@@ -107,28 +107,48 @@ type RenderTemplateResult struct {
 }
 
 func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
+	// If "result staging" is on..
 	// Render the template into a temporary buffer, to see if there was an error
 	// rendering the template.  If not, then copy it into the response buffer.
-	// TODO: It seems a shame to make a copy of everything, but if we don't,
-	// template errors result in unpredictable HTML for error pages.
-	var b bytes.Buffer
-	err := r.Template.Render(&b, r.RenderArgs)
-	if err != nil {
-		line, description := parseTemplateError(err)
-		compileError := &Error{
-			Title:       "Template Execution Error",
-			Path:        r.Template.Name(),
-			Description: description,
-			Line:        line,
-			SourceLines: r.Template.Content(),
-			SourceType:  "template",
+	// Otherwise, template render errors may result in unpredictable HTML (and
+	// would carry a 200 status code)
+	if Config.BoolDefault("results.staging", true) {
+		// Handle panics when rendering templates.
+		defer func() {
+			if err := recover(); err != nil {
+				ERROR.Println(err)
+				PlaintextErrorResult{fmt.Errorf("Template Execution Panic in %s:\n%s",
+					r.Template.Name(), err)}.Apply(req, resp)
+			}
+		}()
+
+		var b bytes.Buffer
+		err := r.Template.Render(&b, r.RenderArgs)
+		if err != nil {
+			line, description := parseTemplateError(err)
+			compileError := &Error{
+				Title:       "Template Execution Error",
+				Path:        r.Template.Name(),
+				Description: description,
+				Line:        line,
+				SourceLines: r.Template.Content(),
+				SourceType:  "template",
+			}
+			ErrorResult{r.RenderArgs, compileError}.Apply(req, resp)
+			return
 		}
-		ErrorResult{r.RenderArgs, compileError}.Apply(req, resp)
+
+		resp.WriteHeader(http.StatusOK, "text/html")
+		b.WriteTo(resp.Out)
 		return
 	}
 
+	// Else, write the status, render, and hope for the best.
 	resp.WriteHeader(http.StatusOK, "text/html")
-	b.WriteTo(resp.Out)
+	err := r.Template.Render(resp.Out, r.RenderArgs)
+	if err != nil {
+		ERROR.Println("Failed to render template", r.Template.Name(), "\n", err)
+	}
 }
 
 type RenderHtmlResult struct {

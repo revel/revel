@@ -5,6 +5,7 @@ http.port=9000
 
 [dev]
 results.pretty=true
+results.staging=true
 server.watcher=true
 
 log.trace.output = off
@@ -14,6 +15,7 @@ log.error.output = stderr
 
 [prod]
 results.pretty=false
+results.staging=false
 server.watcher=false
 
 log.trace.output = off
