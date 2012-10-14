@@ -240,7 +240,7 @@ func (c *Controller) Invoke(appControllerPtr reflect.Value, method reflect.Value
 		flashValue += "\x00" + key + ":" + value + "\x00"
 	}
 	c.SetCookie(&http.Cookie{
-		Name:  "REVEL_FLASH",
+		Name:  COOKIE_PREFIX + "_FLASH",
 		Value: url.QueryEscape(flashValue),
 		Path:  "/",
 	})
@@ -255,7 +255,7 @@ func (c *Controller) Invoke(appControllerPtr reflect.Value, method reflect.Value
 		}
 	}
 	c.SetCookie(&http.Cookie{
-		Name:  "REVEL_ERRORS",
+		Name:  COOKIE_PREFIX + "_ERRORS",
 		Value: url.QueryEscape(errorsValue),
 		Path:  "/",
 	})
@@ -267,7 +267,7 @@ func (c *Controller) Invoke(appControllerPtr reflect.Value, method reflect.Value
 	}
 	sessionData := url.QueryEscape(sessionValue)
 	c.SetCookie(&http.Cookie{
-		Name:  "REVEL_SESSION",
+		Name:  COOKIE_PREFIX + "_SESSION",
 		Value: Sign(sessionData) + "-" + sessionData,
 		Path:  "/",
 	})
@@ -502,7 +502,7 @@ func restoreFlash(req *http.Request) Flash {
 		Data: make(map[string]string),
 		Out:  make(map[string]string),
 	}
-	if cookie, err := req.Cookie("REVEL_FLASH"); err == nil {
+	if cookie, err := req.Cookie(COOKIE_PREFIX + "_FLASH"); err == nil {
 		ParseKeyValueCookie(cookie.Value, func(key, val string) {
 			flash.Data[key] = val
 		})
@@ -513,7 +513,7 @@ func restoreFlash(req *http.Request) Flash {
 // Restore Validation.Errors from a request.
 func restoreValidationErrors(req *http.Request) []*ValidationError {
 	errors := make([]*ValidationError, 0, 5)
-	if cookie, err := req.Cookie("REVEL_ERRORS"); err == nil {
+	if cookie, err := req.Cookie(COOKIE_PREFIX + "_ERRORS"); err == nil {
 		ParseKeyValueCookie(cookie.Value, func(key, val string) {
 			errors = append(errors, &ValidationError{
 				Key:     key,
@@ -526,7 +526,7 @@ func restoreValidationErrors(req *http.Request) []*ValidationError {
 
 func restoreSession(req *http.Request) Session {
 	session := make(map[string]string)
-	cookie, err := req.Cookie("REVEL_SESSION")
+	cookie, err := req.Cookie(COOKIE_PREFIX + "_SESSION")
 	if err != nil {
 		return Session(session)
 	}
@@ -654,6 +654,14 @@ func (resp *Response) WriteHeader(defaultStatusCode int, defaultContentType stri
 	}
 	resp.Out.Header().Set("Content-Type", resp.ContentType)
 	resp.Out.WriteHeader(resp.Status)
+}
+
+var COOKIE_PREFIX string
+
+func init() {
+	InitHooks = append(InitHooks, func() {
+		COOKIE_PREFIX = Config.StringDefault("session.cookie", "REVEL")
+	})
 }
 
 // Internal bookeeping
