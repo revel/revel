@@ -1,0 +1,12 @@
+# Routes
+# This file defines all application routes (Higher priority routes first)
+# ~~~~
+
+# Uncomment this default route to start !
+GET			/							Application.Index
+
+# Map static resources from the app/public folder to /public
+GET			/public						staticDir:public
+
+# Catch all
+*			/{controller}/{action}		{controller}.{action}

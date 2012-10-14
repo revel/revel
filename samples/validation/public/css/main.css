@@ -1,0 +1,46 @@
+body {
+	font-family: Arial, Sans;
+	font-size: 90%;
+	width: 800px;
+	margin: 1em auto;
+}
+
+fieldset {
+	border: 1px solid #888;
+	margin-bottom: 1em;
+}
+
+legend {
+	font-weight: bold;
+}
+
+label {
+	display: block;
+	width: 200px;
+	float: left;
+	cursor: pointer;
+}
+
+input[type=text], input[type=password] {
+	border: 1px solid #aaa;
+	float: left;
+	margin-right: 5px;
+}
+
+.field {
+	clear: both;
+	margin-bottom: 2px;
+}
+
+.infos {
+	color: #666;
+	margin-bottom: 5px;
+}
+
+.error {
+	color: #c00;
+}
+
+.hasError {
+	background: pink;
+}

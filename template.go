@@ -13,6 +13,8 @@ import (
 	"strings"
 )
 
+const ERROR_CLASS = "hasError"
+
 // This object handles loading and parsing of templates.
 // Everything below the application's views directory is treated as a template.
 type TemplateLoader struct {
@@ -39,7 +41,7 @@ type Field struct {
 
 func (f *Field) ErrorClass() string {
 	if f.Error != nil {
-		return "hasError"
+		return ERROR_CLASS
 	}
 	return ""
 }
@@ -101,6 +103,19 @@ var (
 				return template.HTML(html.EscapeString(str))
 			}
 			return template.HTML(html.EscapeString(str) + strings.Repeat("&nbsp;", width-len(str)))
+		},
+
+		"errorClass": func(name string, renderArgs map[string]interface{}) template.HTML {
+			errorMap, ok := renderArgs["errors"].(map[string]*ValidationError)
+			if !ok {
+				WARN.Println("Called 'errorClass' without 'errors' in the render args.")
+				return template.HTML("")
+			}
+			valError, ok := errorMap[name]
+			if !ok || valError == nil {
+				return template.HTML("")
+			}
+			return template.HTML(ERROR_CLASS)
 		},
 	}
 )

@@ -150,6 +150,24 @@ func (v *Validation) Max(n int, max int) *ValidationResult {
 	return v.apply(Max{max}, n)
 }
 
+// Requires an integer to be within Min, Max inclusive.
+type Range struct {
+	Min
+	Max
+}
+
+func (r Range) IsSatisfied(obj interface{}) bool {
+	return r.Min.IsSatisfied(obj) && r.Max.IsSatisfied(obj)
+}
+
+func (r Range) DefaultMessage() string {
+	return fmt.Sprintln("Range is", r.Min.Min, "to", r.Max.Max)
+}
+
+func (v *Validation) Range(n, min, max int) *ValidationResult {
+	return v.apply(Range{Min{min}, Max{max}}, n)
+}
+
 // Requires an array or string to be at least a given length.
 type MinSize struct {
 	Min int
@@ -212,6 +230,20 @@ func (m Match) DefaultMessage() string {
 
 func (v *Validation) Match(str string, regex *regexp.Regexp) *ValidationResult {
 	return v.apply(Match{regex}, str)
+}
+
+var emailPattern = regexp.MustCompile("[\\w!#$%&'*+/=?^_`{|}~-]+(?:\\.[\\w!#$%&'*+/=?^_`{|}~-]+)*@(?:[\\w](?:[\\w-]*[\\w])?\\.)+[a-zA-Z0-9](?:[\\w-]*[\\w])?")
+
+type Email struct {
+	Match
+}
+
+func (e Email) DefaultMessage() string {
+	return fmt.Sprintln("Must be a valid email address")
+}
+
+func (v *Validation) Email(str string) *ValidationResult {
+	return v.apply(Email{Match{emailPattern}}, str)
 }
 
 func (v *Validation) apply(chk Check, obj interface{}) *ValidationResult {
