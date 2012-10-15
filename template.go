@@ -56,7 +56,7 @@ func (f *Field) Checked(val string) string {
 
 var (
 	// The functions available for use in the templates.
-	Funcs = map[string]interface{}{
+	TemplateFuncs = map[string]interface{}{
 		"url": ReverseUrl,
 		"eq":  func(a, b interface{}) bool { return a == b },
 		"set": func(key string, value interface{}, renderArgs map[string]interface{}) template.HTML {
@@ -118,6 +118,8 @@ var (
 			return template.HTML(ERROR_CLASS)
 		},
 	}
+
+	Funcs = TemplateFuncs
 )
 
 func NewTemplateLoader(paths []string) *TemplateLoader {
@@ -140,7 +142,7 @@ func (loader *TemplateLoader) Refresh() *Error {
 	for _, basePath := range loader.paths {
 
 		// Walk only returns an error if the template loader is completely unusable
-		// (namely, if one of the Funcs does not have an acceptable signature).
+		// (namely, if one of the TemplateFuncs does not have an acceptable signature).
 		funcErr := filepath.Walk(basePath, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				ERROR.Println("error walking templates:", err)
@@ -192,7 +194,7 @@ func (loader *TemplateLoader) Refresh() *Error {
 							}
 						}
 					}()
-					templateSet = template.New(templateName).Funcs(Funcs)
+					templateSet = template.New(templateName).Funcs(TemplateFuncs)
 					_, err = templateSet.Parse(fileStr)
 				}()
 

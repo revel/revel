@@ -19,6 +19,7 @@ import (
 
 var (
 	cmd *exec.Cmd // The app server cmd
+
 	importErrorPattern = regexp.MustCompile(
 		"import \"([^\"]+)\": cannot find package")
 )
