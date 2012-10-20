@@ -90,27 +90,31 @@ For example, here is the routine to validate a booking, from
 [models/booking.go](https://github.com/robfig/revel/blob/master/samples/booking/app/models/booking.go):
 
 <pre class="prettyprint lang-go">
-func (b Booking) Validate(v *rev.Validation) {
-	v.Required(b.User).Key("booking.User")
-	v.Required(b.Hotel).Key("booking.Hotel")
-	v.Required(b.CheckInDate).Key("booking.CheckInDate")
-	v.Required(b.CheckOutDate).Key("booking.CheckOutDate")
+func (booking Booking) Validate(v *rev.Validation) {
+	v.Required(booking.User)
+	v.Required(booking.Hotel)
+	v.Required(booking.CheckInDate)
+	v.Required(booking.CheckOutDate)
 
 	v.Match(b.CardNumber, regexp.MustCompile(`\d{16}`)).
-		Key("booking.CardNumber").
 		Message("Credit card number must be numeric and 16 digits")
 
-	v.Check(b.NameOnCard,
+	v.Check(booking.NameOnCard,
 		rev.Required{},
 		rev.MinSize{3},
 		rev.MaxSize{70},
-	).Key("booking.NameOnCard")
+	)
 }
 </pre>
 
-Each validation check includes a key for that property.  This means that the
+Revel applies the validation and records errors using the name of the
+validated variable (unless overridden).  For example, `booking.CheckInDate` is
+required; if it evaluates to the zero date, Revel stores a `ValidationError` in
+the validation context under the key "booking.CheckInDate".
+
+Subsequently, the
 [Hotels/Book.html](https://github.com/robfig/revel/blob/master/samples/booking/app/views/Hotels/Book.html)
-template can easily access them:
+template can easily access them using the **field** helper:
 
 <pre class="prettyprint lang-go">{% capture tmpl %}{% literal %}
   {{with $field := field "booking.CheckInDate" .}}
