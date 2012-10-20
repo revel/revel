@@ -114,6 +114,10 @@ title: The Revel Web Framework for Go
 				<p>
 					Development is still very early.  Expect to get your hands dirty.
 				</p>
+				<p style="font-weight:bold;">
+					Join <a href="https://groups.google.com/group/revel-framework-announce">our
+					announcement list</a> to get notified for new releases.
+				</p>
       </section>
 
       <section id="teaser">
@@ -215,8 +219,8 @@ func (c Application) Register() rev.Result {
 }
 
 func (c Application) SaveUser(user models.User, verifyPassword string) rev.Result {
-	c.Validation.Required(verifyPassword).Key("verifyPassword")
-	c.Validation.Required(verifyPassword == user.Password).Key("verifyPassword").
+	c.Validation.Required(verifyPassword)
+	c.Validation.Required(verifyPassword == user.Password)
 		Message("Password does not match")
 	user.Validate(c.Validation)
 
