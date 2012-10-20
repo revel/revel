@@ -1,2 +1,2 @@
 @echo off
-{{.BinName}} -importPath {{.ImportPath}} -srcPath %CD% -runMode prod
+{{.BinName}} -importPath {{.ImportPath}} -srcPath %CD%\src -runMode prod

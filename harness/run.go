@@ -65,7 +65,6 @@ func Build() (binaryPath string, compileError *rev.Error) {
 	tmpl := template.New("RegisterControllers")
 	tmpl = template.Must(tmpl.Parse(REGISTER_CONTROLLERS))
 	var registerControllerSource string = rev.ExecuteTemplate(tmpl, map[string]interface{}{
-		"AppName":        rev.AppName,
 		"Controllers":    sourceInfo.ControllerSpecs,
 		"ValidationKeys": sourceInfo.ValidationKeys,
 		"ImportPaths":    uniqueImportPaths(sourceInfo.ControllerSpecs),
@@ -114,7 +113,7 @@ func Build() (binaryPath string, compileError *rev.Error) {
 	if err != nil {
 		rev.ERROR.Fatalln("Failure importing", rev.ImportPath)
 	}
-	binName := path.Join(pkg.BinDir, rev.AppName)
+	binName := path.Join(pkg.BinDir, path.Base(rev.BasePath))
 	if runtime.GOOS == "windows" {
 		binName += ".exe"
 	}

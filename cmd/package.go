@@ -40,8 +40,10 @@ func packageApp(args []string) {
 	panicOnError(reverr, "Failed to build")
 
 	// Start collecting stuff in a temp directory.
-	tmpDir, err := ioutil.TempDir("", rev.AppName)
+	tmpDir, err := ioutil.TempDir("", path.Base(rev.BasePath))
 	panicOnError(err, "Failed to get temp dir")
+
+	srcPath := path.Join(tmpDir, "src")
 
 	// Included are:
 	// - run scripts
@@ -50,11 +52,11 @@ func packageApp(args []string) {
 	// - app
 
 	// Revel and the app are in a directory structure mirroring import path
-	tmpRevelPath := path.Join(tmpDir, filepath.FromSlash(rev.REVEL_IMPORT_PATH))
+	tmpRevelPath := path.Join(srcPath, filepath.FromSlash(rev.REVEL_IMPORT_PATH))
 	mustCopyFile(path.Join(tmpDir, filepath.Base(binName)), binName)
 	mustCopyDir(path.Join(tmpRevelPath, "conf"), path.Join(rev.RevelPath, "conf"), nil)
 	mustCopyDir(path.Join(tmpRevelPath, "templates"), path.Join(rev.RevelPath, "templates"), nil)
-	mustCopyDir(path.Join(tmpDir, filepath.FromSlash(appImportPath)), rev.BasePath, nil)
+	mustCopyDir(path.Join(srcPath, filepath.FromSlash(appImportPath)), rev.BasePath, nil)
 
 	tmplData := map[string]interface{}{
 		"BinName":    filepath.Base(binName),
@@ -72,7 +74,7 @@ func packageApp(args []string) {
 		tmplData)
 
 	// Create the zip file.
-	zipName := mustZipDir(rev.AppName+".zip", tmpDir)
+	zipName := mustZipDir(path.Base(rev.BasePath)+".zip", tmpDir)
 
 	fmt.Println("Your archive is ready:", zipName)
 }
