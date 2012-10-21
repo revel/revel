@@ -20,6 +20,19 @@ methods to produce Results:
 
 Additionally, the developer may define their own `rev.Result` and return that.
 
+### Setting the Status Code / Content Type
+
+Each built-in Result has a default Status Code and Content Type.  To override
+those defaults, simply set those properties on the response:
+
+<pre class="prettyprint lang-go">
+func (c Application) Action() rev.Result {
+	c.Response.Status = http.StatusTeapot
+	c.Response.ContentType = "application/dishware"
+	return c.Render()
+}
+</pre>
+
 ## Render
 
 Called within an action (e.g. "Controller.Action"),

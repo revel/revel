@@ -63,7 +63,7 @@ The following data types are supported out of the box:
 * Slices of any supported type
 * Structs
 * time.Time for dates and times
-* \*os.File, []byte, io.Reader, io.ReadSeeker for file uploads
+* \*os.File, \[\]byte, io.Reader, io.ReadSeeker for file uploads
 
 The following sections describe the syntax for these types.  It is also useful
 to refer to [the source code](../docs/src/binder.html) if more detail is required.
@@ -142,7 +142,7 @@ func init() {
 
 File uploads may be bound to any of the following types:
 * *os.File
-* []byte
+* \[\]byte
 * io.Reader
 * io.ReadSeeker
 
