@@ -50,6 +50,14 @@ func (v *Validation) ErrorMap() map[string]*ValidationError {
 	return m
 }
 
+// Add an error to the validation context.
+func (v *Validation) Error(message string, args... interface{}) *ValidationResult {
+	return (&ValidationResult{
+		Ok: false,
+		Error: &ValidationError{},
+	}).Message(message, args)
+}
+
 // A ValidationResult is returned from every validation method.
 // It provides an indication of success, and a pointer to the Error (if any).
 type ValidationResult struct {
@@ -64,9 +72,13 @@ func (r *ValidationResult) Key(key string) *ValidationResult {
 	return r
 }
 
-func (r *ValidationResult) Message(message string) *ValidationResult {
+func (r *ValidationResult) Message(message string, args... interface{}) *ValidationResult {
 	if r.Error != nil {
-		r.Error.Message = message
+		if len(args) == 0 {
+			r.Error.Message = message
+		} else {
+			r.Error.Message = fmt.Sprintf(message, args)
+		}
 	}
 	return r
 }
@@ -212,6 +224,29 @@ func (m MaxSize) DefaultMessage() string {
 
 func (v *Validation) MaxSize(obj interface{}, max int) *ValidationResult {
 	return v.apply(MaxSize{max}, obj)
+}
+
+// Requires an array or string to be exactly a given length.
+type Length struct {
+	N int
+}
+
+func (s Length) IsSatisfied(obj interface{}) bool {
+	if arr, ok := obj.([]interface{}); ok {
+		return len(arr) == s.N
+	}
+	if str, ok := obj.(string); ok {
+		return len(str) == s.N
+	}
+	return false
+}
+
+func (s Length) DefaultMessage() string {
+	return fmt.Sprintln("Required length is", s.N)
+}
+
+func (v *Validation) Length(obj interface{}, n int) *ValidationResult {
+	return v.apply(Length{n}, obj)
 }
 
 // Requires a string to match a given regex.
