@@ -23,7 +23,7 @@ type SourceInfo struct {
 	// app/controllers/... that embed (directly or indirectly) rev.Controller.
 	ControllerSpecs []*ControllerSpec
 	// ValidationKeys provides a two-level lookup.  The keys are:
-	// 1. The fully-qualified function name, 
+	// 1. The fully-qualified function name,
 	//    e.g. "github.com/robfig/revel/samples/chat/app/controllers.(*Application).Action"
 	// 2. Within that func's file, the line number of the (overall) expression statement.
 	//    e.g. the line returned from runtime.Caller()
@@ -455,9 +455,9 @@ func appendAction(fset *token.FileSet, mm methodMap, decl ast.Decl, pkgName stri
 // Scan app source code for calls to X.Y(), where X is of type *Validation.
 //
 // Recognize these scenarios:
-// - "Y" = "Validation" and is a member of the receiver.  
+// - "Y" = "Validation" and is a member of the receiver.
 //   (The common case for inline validation)
-// - "X" is passed in to the func as a parameter. 
+// - "X" is passed in to the func as a parameter.
 //   (For structs implementing Validated)
 //
 // The line number to which a validation call is attributed is that of the
@@ -517,6 +517,11 @@ func getValidationKeys(fset *token.FileSet, funcDecl *ast.FuncDecl) map[int]stri
 		arg := callExpr.Args[0]
 		if binExpr, ok := arg.(*ast.BinaryExpr); ok {
 			arg = binExpr.X
+		}
+
+		// If it's a literal, skip it.
+		if _, ok = arg.(*ast.BasicLit); ok {
+			return true
 		}
 
 		lineKeys[lastExprLine] = ExprName(arg)
@@ -601,8 +606,8 @@ func ExprName(expr ast.Expr) string {
 	case *ast.ArrayType:
 		return "[]" + ExprName(t.Elt)
 	default:
+		log.Println("Failed to generate name for field.")
 		ast.Print(nil, expr)
-		panic("Failed to generate name for field.")
 	}
 	return ""
 }
