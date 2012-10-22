@@ -8,6 +8,9 @@ Revel provides built-in functionality for validating parameters.  There are a co
 * Helper functions that check data and put errors into the context.
 * A template function that gets error messages from the Validation context by key.
 
+Take a look at the validation [sample app](../samples/validation.html) for some
+in-depth examples.
+
 ## Inline Error Messages
 
 This example demonstrates field validation with inline error messages.

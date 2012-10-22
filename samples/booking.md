@@ -31,7 +31,7 @@ Here are the contents of the app:
 ## Installation
 
 This app uses [go-sqlite3](https://github.com/mattn/go-sqlite3), which wraps the
-C library.  To install:
+C library.  To install (OSX):
 
 1. Install Homebrew ( http://mxcl.github.com/homebrew/ ):
 >	`ruby <(curl -fsSkL raw.github.com/mxcl/homebrew/go)`
