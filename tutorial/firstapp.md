@@ -34,7 +34,7 @@ That makes sense.  Add the action to **app/controllers/app.go**:
 Next, we have to create the view.  Create a file
 **app/views/Application/Hello.html**, with this content:
 
-	{{set "title" "Home" .}}
+	{{set . "title" "Home"}}
 	{{template "header.html" .}}
 
 	<h1>Hello {{.myName}}</h1>

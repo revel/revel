@@ -48,7 +48,7 @@ Example:
 
 {% literal %}
 
-	{{set "title" "Basic Chat room" .}}
+	{{set . "title" "Basic Chat room"}}
 
 	<h1>{{.title}}</h1>
 
@@ -62,7 +62,7 @@ Example:
 
 {% literal %}
 
-	{{append "moreScripts" "js/jquery-ui-1.7.2.custom.min.js" .}}
+	{{append . "moreScripts" "js/jquery-ui-1.7.2.custom.min.js"}}
 
     {{range .moreStyles}}
       <link rel="stylesheet" type="text/css" href="/public/{{.}}">
@@ -181,9 +181,9 @@ And templates that include it look like this:
 
 {% literal %}
 
-	{{set title "Hotels" .}}
-	{{append "moreStyles" "ui-lightness/jquery-ui-1.7.2.custom.css" .}}
-	{{append "moreScripts" "js/jquery-ui-1.7.2.custom.min.js" .}}
+	{{set . title "Hotels"}}
+	{{append . "moreStyles" "ui-lightness/jquery-ui-1.7.2.custom.css"}}
+	{{append . "moreScripts" "js/jquery-ui-1.7.2.custom.min.js"}}
 	{{template "header.html" .}}
 
 {% endliteral %}

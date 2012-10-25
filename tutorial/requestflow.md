@@ -50,7 +50,7 @@ renders it as a [Go template](http://www.golang.org/pkg/html/template).
 
 {% literal %}
 
-	{{set "title" "Home" .}}
+	{{set . "title" "Home"}}
 	{{template "header.html" .}}
 
 	<h1>Your Application Is Ready</h1>
