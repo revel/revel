@@ -59,11 +59,11 @@ var (
 	TemplateFuncs = map[string]interface{}{
 		"url": ReverseUrl,
 		"eq":  func(a, b interface{}) bool { return a == b },
-		"set": func(key string, value interface{}, renderArgs map[string]interface{}) template.HTML {
+		"set": func(renderArgs map[string]interface{}, key string, value interface{}) template.HTML {
 			renderArgs[key] = value
 			return template.HTML("")
 		},
-		"append": func(key string, value interface{}, renderArgs map[string]interface{}) template.HTML {
+		"append": func(renderArgs map[string]interface{}, key string, value interface{}) template.HTML {
 			if renderArgs[key] == nil {
 				renderArgs[key] = []interface{}{value}
 			} else {
