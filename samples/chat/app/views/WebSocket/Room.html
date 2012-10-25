@@ -49,7 +49,7 @@
 <script type="text/javascript">
 
   // Create a socket
-  var socket = new WebSocket('ws://127.0.0.1:9000/websocket/room/socket?user={{.user}}')
+  var socket = new WebSocket('ws://'+window.location.host+'/websocket/room/socket?user={{.user}}')
 
   // Display a message
   var display = function(event) {
