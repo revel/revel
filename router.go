@@ -157,7 +157,7 @@ func (r *Route) Match(method string, reqPath string) *RouteMatch {
 	// Split the action into controller and method
 	actionSplit := strings.Split(action, ".")
 	if len(actionSplit) != 2 {
-		ERROR.Printf("Failed to split action: %s", r.Action)
+		ERROR.Printf("Failed to split action: %s (matching route: %s)", action, r.Action)
 		return nil
 	}
 
