@@ -22,6 +22,7 @@ var (
 	AppPath    string // e.g. "/Users/robfig/gocode/src/corp/sample/app"
 	ViewsPath  string // e.g. "/Users/robfig/gocode/src/corp/sample/app/views"
 	ImportPath string // e.g. "corp/sample"
+	SourcePath string // e.g. "/Users/robfig/gocode/src"
 
 	Config  *MergedConfig
 	RunMode string // Application-defined (by default, "dev" or "prod")
@@ -33,6 +34,8 @@ var (
 	// Ordered by priority.  (Earlier paths take precedence over later paths.)
 	ConfPaths     []string
 	TemplatePaths []string
+
+	ModulePaths []string
 
 	DEFAULT = log.New(os.Stderr, "", log.Ldate|log.Ltime|log.Lshortfile)
 	TRACE   = DEFAULT
@@ -62,14 +65,15 @@ func init() {
 func Init(mode, importPath, srcPath string) {
 	// Ignore trailing slashes.
 	ImportPath = strings.TrimRight(importPath, "/")
+	SourcePath = strings.TrimRight(srcPath, "/")
 	RunMode = mode
 
-	if srcPath == "" {
-		srcPath = findSrcPath(importPath)
+	if SourcePath == "" {
+		SourcePath = findSrcPath(importPath)
 	}
 
-	RevelPath = path.Join(srcPath, filepath.FromSlash(REVEL_IMPORT_PATH))
-	BasePath = path.Join(srcPath, filepath.FromSlash(importPath))
+	RevelPath = path.Join(SourcePath, filepath.FromSlash(REVEL_IMPORT_PATH))
+	BasePath = path.Join(SourcePath, filepath.FromSlash(importPath))
 	AppPath = path.Join(BasePath, "app")
 	ViewsPath = path.Join(AppPath, "views")
 
@@ -111,6 +115,8 @@ func Init(mode, importPath, srcPath string) {
 	INFO = getLogger("info")
 	WARN = getLogger("warn")
 	ERROR = getLogger("error")
+
+	loadModules()
 
 	for _, hook := range InitHooks {
 		hook()
@@ -182,6 +188,38 @@ func findSrcPath(importPath string) string {
 	}
 
 	return appPkg.SrcRoot
+}
+
+func loadModules() {
+	for _, root := range []string{RevelPath, BasePath} {
+		moduleDirPath := path.Join(root, "modules")
+		moduleDir, err := os.Open(moduleDirPath)
+		if err != nil {
+			if !os.IsNotExist(err) {
+				ERROR.Print("Error stat'ing path ", moduleDirPath, ":", err)
+			}
+			continue
+		}
+		defer moduleDir.Close()
+
+		names, err := moduleDir.Readdirnames(0)
+		if err != nil {
+			ERROR.Print("Error listing dir ", moduleDirPath, ":", err)
+			continue
+		}
+
+		for _, moduleName := range names {
+			addModule(path.Join(moduleDirPath, moduleName))
+		}
+	}
+}
+
+func addModule(modulePath string) {
+	ModulePaths = append(ModulePaths, modulePath)
+	if viewsPath := path.Join(modulePath, "app", "views"); DirExists(viewsPath) {
+		TemplatePaths = append(TemplatePaths, viewsPath)
+	}
+	INFO.Print("Loaded module ", path.Base(modulePath))
 }
 
 func CheckInit() {

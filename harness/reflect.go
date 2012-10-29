@@ -75,75 +75,79 @@ type methodMap map[string][]*MethodSpec
 // Parse the app controllers directory and return a list of the controller types found.
 // Returns a CompileError if the parsing fails.
 func ProcessSource() (*SourceInfo, *rev.Error) {
-	root := rev.BasePath
+	roots := append([]string{rev.BasePath}, rev.ModulePaths...)
 	var (
 		srcInfo      *SourceInfo
 		compileError *rev.Error
 	)
 
-	// Start walking the directory tree.
-	filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			log.Println("Error scanning app source:", err)
-			return nil
-		}
+	for _, root := range roots {
 
-		if !info.IsDir() || path == root {
-			return nil
-		}
-
-		if info.Name() == "tmp" {
-			return nil
-		}
-
-		// Get the import path of the package.
-		pkgImportPath := rev.ImportPath + "/" + filepath.ToSlash(path[len(root)+1:])
-
-		// Parse files within the path.
-		var pkgs map[string]*ast.Package
-		fset := token.NewFileSet()
-		pkgs, err = parser.ParseDir(fset, path, func(f os.FileInfo) bool {
-			return !f.IsDir() && !strings.HasPrefix(f.Name(), ".") && strings.HasSuffix(f.Name(), ".go")
-		}, 0)
-		if err != nil {
-			if errList, ok := err.(scanner.ErrorList); ok {
-				var pos token.Position = errList[0].Pos
-				compileError = &rev.Error{
-					SourceType:  ".go source",
-					Title:       "Go Compilation Error",
-					Path:        pos.Filename,
-					Description: errList[0].Msg,
-					Line:        pos.Line,
-					Column:      pos.Column,
-					SourceLines: rev.MustReadLines(pos.Filename),
-				}
-				return compileError
+		// Start walking the directory tree.
+		filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				log.Println("Error scanning app source:", err)
+				return nil
 			}
-			ast.Print(nil, err)
-			log.Fatalf("Failed to parse dir: %s", err)
-		}
 
-		// Skip "main" packages.
-		delete(pkgs, "main")
+			if !info.IsDir() || path == root {
+				return nil
+			}
 
-		// If there is no code in this directory, skip it.
-		if len(pkgs) == 0 {
+			if info.Name() == "tmp" {
+				return nil
+			}
+
+			// Get the import path of the package.
+			pkgImportPath := filepath.ToSlash(path[len(rev.SourcePath)+1:])
+			log.Println(pkgImportPath)
+
+			// Parse files within the path.
+			var pkgs map[string]*ast.Package
+			fset := token.NewFileSet()
+			pkgs, err = parser.ParseDir(fset, path, func(f os.FileInfo) bool {
+				return !f.IsDir() && !strings.HasPrefix(f.Name(), ".") && strings.HasSuffix(f.Name(), ".go")
+			}, 0)
+			if err != nil {
+				if errList, ok := err.(scanner.ErrorList); ok {
+					var pos token.Position = errList[0].Pos
+					compileError = &rev.Error{
+						SourceType:  ".go source",
+						Title:       "Go Compilation Error",
+						Path:        pos.Filename,
+						Description: errList[0].Msg,
+						Line:        pos.Line,
+						Column:      pos.Column,
+						SourceLines: rev.MustReadLines(pos.Filename),
+					}
+					return compileError
+				}
+				ast.Print(nil, err)
+				log.Fatalf("Failed to parse dir: %s", err)
+			}
+
+			// Skip "main" packages.
+			delete(pkgs, "main")
+
+			// If there is no code in this directory, skip it.
+			if len(pkgs) == 0 {
+				return nil
+			}
+
+			// There should be only one package in this directory.
+			if len(pkgs) > 1 {
+				log.Println("Most unexpected! Multiple packages in a single directory:", pkgs)
+			}
+
+			var pkg *ast.Package
+			for _, v := range pkgs {
+				pkg = v
+			}
+
+			srcInfo = appendSourceInfo(srcInfo, processPackage(fset, pkgImportPath, pkg))
 			return nil
-		}
-
-		// There should be only one package in this directory.
-		if len(pkgs) > 1 {
-			log.Println("Most unexpected! Multiple packages in a single directory:", pkgs)
-		}
-
-		var pkg *ast.Package
-		for _, v := range pkgs {
-			pkg = v
-		}
-
-		srcInfo = appendSourceInfo(srcInfo, processPackage(fset, pkgImportPath, pkg))
-		return nil
-	})
+		})
+	}
 
 	return srcInfo, compileError
 }
