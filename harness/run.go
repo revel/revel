@@ -65,9 +65,11 @@ func Build() (binaryPath string, compileError *rev.Error) {
 	tmpl := template.New("RegisterControllers")
 	tmpl = template.Must(tmpl.Parse(REGISTER_CONTROLLERS))
 	var registerControllerSource string = rev.ExecuteTemplate(tmpl, map[string]interface{}{
-		"Controllers":    sourceInfo.ControllerSpecs,
-		"ValidationKeys": sourceInfo.ValidationKeys,
-		"ImportPaths":    uniqueImportPaths(sourceInfo.ControllerSpecs),
+		"Controllers":     sourceInfo.ControllerSpecs,
+		"ValidationKeys":  sourceInfo.ValidationKeys,
+		"ImportPaths":     uniqueImportPaths(sourceInfo),
+		"UnitTests":       sourceInfo.UnitTests,
+		"FunctionalTests": sourceInfo.FunctionalTests,
 	})
 
 	// Terminate the server if it's already running.
@@ -224,14 +226,17 @@ func getFreePort() (port int) {
 
 // Looks through all the method args and returns a set of unique import paths
 // that cover all the method arg types.
-func uniqueImportPaths(specs []*ControllerSpec) (paths []string) {
+func uniqueImportPaths(src *SourceInfo) (paths []string) {
 	importPathMap := make(map[string]bool)
-	for _, spec := range specs {
-		importPathMap[spec.ImportPath] = true
-		for _, methSpec := range spec.MethodSpecs {
-			for _, methArg := range methSpec.Args {
-				if methArg.ImportPath != "" {
-					importPathMap[methArg.ImportPath] = true
+	typeArrays := [][]*TypeInfo{src.ControllerSpecs, src.UnitTests, src.FunctionalTests}
+	for _, specs := range typeArrays {
+		for _, spec := range specs {
+			importPathMap[spec.ImportPath] = true
+			for _, methSpec := range spec.MethodSpecs {
+				for _, methArg := range methSpec.Args {
+					if methArg.ImportPath != "" {
+						importPathMap[methArg.ImportPath] = true
+					}
 				}
 			}
 		}
@@ -290,10 +295,8 @@ import (
 	"flag"
 	"reflect"
 	"github.com/robfig/revel"
-	{{range .ImportPaths}}
-  "{{.}}"
-  {{end}}
-)
+	{{range .ImportPaths}}"{{.}}"
+	{{end}})
 
 var (
 	runMode    *string = flag.String("runMode", "", "Run mode.")
@@ -330,6 +333,12 @@ func main() {
 		"{{$path}}": { {{range $line, $key := $lines}}
 			{{$line}}: "{{$key}}",{{end}}
 		},{{end}}
+	}
+	rev.UnitTests = []interface{}{ {{range .UnitTests}}
+		(*{{.PackageName}}.{{.StructName}})(nil),{{end}}
+	}
+	rev.FunctionalTests = []interface{}{ {{range .FunctionalTests}}
+		(*{{.PackageName}}.{{.StructName}})(nil),{{end}}
 	}
 
 	rev.Run(*port)

@@ -19,9 +19,9 @@ import (
 // SourceInfo is the top-level struct containing all extracted information
 // about the app source code, used to generate main.go.
 type SourceInfo struct {
-	// ControllerSpecs lists specs for all structs found under
+	// ControllerSpecs lists type info for all structs found under
 	// app/controllers/... that embed (directly or indirectly) rev.Controller.
-	ControllerSpecs []*ControllerSpec
+	ControllerSpecs []*TypeInfo
 	// ValidationKeys provides a two-level lookup.  The keys are:
 	// 1. The fully-qualified function name,
 	//    e.g. "github.com/robfig/revel/samples/chat/app/controllers.(*Application).Action"
@@ -29,9 +29,12 @@ type SourceInfo struct {
 	//    e.g. the line returned from runtime.Caller()
 	// The result of the lookup the name of variable being validated.
 	ValidationKeys map[string]map[int]string
+	// UnitTests and FunctionalTests list the types that constitute the app test suite.
+	UnitTests, FunctionalTests []*TypeInfo
 }
 
-type ControllerSpec struct {
+// TypeInfo summarizes information about a struct type in the app source code.
+type TypeInfo struct {
 	PackageName string // e.g. "controllers"
 	StructName  string // e.g. "Application"
 	ImportPath  string // e.g. "github.com/robfig/revel/samples/chat/app/controllers"
@@ -72,10 +75,8 @@ type methodMap map[string][]*MethodSpec
 // Parse the app controllers directory and return a list of the controller types found.
 // Returns a CompileError if the parsing fails.
 func ProcessSource() (*SourceInfo, *rev.Error) {
+	root := rev.BasePath
 	var (
-		root       = rev.AppPath
-		importBase = rev.BasePath
-
 		srcInfo      *SourceInfo
 		compileError *rev.Error
 	)
@@ -87,7 +88,7 @@ func ProcessSource() (*SourceInfo, *rev.Error) {
 			return nil
 		}
 
-		if !info.IsDir() {
+		if !info.IsDir() || path == root {
 			return nil
 		}
 
@@ -96,7 +97,7 @@ func ProcessSource() (*SourceInfo, *rev.Error) {
 		}
 
 		// Get the import path of the package.
-		pkgImportPath := rev.ImportPath + "/" + filepath.ToSlash(path[len(importBase)+1:])
+		pkgImportPath := rev.ImportPath + "/" + filepath.ToSlash(path[len(root)+1:])
 
 		// Parse files within the path.
 		var pkgs map[string]*ast.Package
@@ -153,6 +154,8 @@ func appendSourceInfo(srcInfo1, srcInfo2 *SourceInfo) *SourceInfo {
 	}
 
 	srcInfo1.ControllerSpecs = append(srcInfo1.ControllerSpecs, srcInfo2.ControllerSpecs...)
+	srcInfo1.UnitTests = append(srcInfo1.UnitTests, srcInfo2.UnitTests...)
+	srcInfo1.FunctionalTests = append(srcInfo1.FunctionalTests, srcInfo2.FunctionalTests...)
 	for k, v := range srcInfo2.ValidationKeys {
 		if _, ok := srcInfo1.ValidationKeys[k]; ok {
 			log.Println("Key conflict when scanning validation calls:", k)
@@ -164,11 +167,13 @@ func appendSourceInfo(srcInfo1, srcInfo2 *SourceInfo) *SourceInfo {
 }
 
 func processPackage(fset *token.FileSet, pkgImportPath string, pkg *ast.Package) *SourceInfo {
-	var structSpecs []*ControllerSpec
+	var structSpecs []*TypeInfo
 	validationKeys := make(map[string]map[int]string)
 	methodSpecs := make(methodMap)
 	scanControllers := strings.HasSuffix(pkgImportPath, "/controllers") ||
 		strings.Contains(pkgImportPath, "/controllers/")
+	scanTests := strings.HasSuffix(pkgImportPath, "/tests") ||
+		strings.Contains(pkgImportPath, "/tests/")
 
 	// For each source file in the package...
 	for _, file := range pkg.Files {
@@ -183,13 +188,14 @@ func processPackage(fset *token.FileSet, pkgImportPath string, pkg *ast.Package)
 			if scanControllers {
 				// Match and add both structs and methods
 				addImports(imports, decl)
-				structSpecs = appendStruct(structSpecs, pkg, decl)
+				structSpecs = appendStruct(structSpecs, pkgImportPath, pkg, decl)
 				appendAction(fset, methodSpecs, decl, pkg.Name, imports)
+			} else if scanTests {
+				structSpecs = appendStruct(structSpecs, pkgImportPath, pkg, decl)
 			}
 
 			// If this is a func, scan it for validation calls.
 			if funcDecl, ok := decl.(*ast.FuncDecl); ok {
-				// ast.Print(nil, funcDecl)
 				lineKeys := getValidationKeys(fset, funcDecl)
 				if len(lineKeys) > 0 {
 					validationKeys[pkgImportPath+"."+getFuncName(funcDecl)] = lineKeys
@@ -199,16 +205,18 @@ func processPackage(fset *token.FileSet, pkgImportPath string, pkg *ast.Package)
 	}
 
 	// Filter the struct specs to just the ones that embed rev.Controller.
-	structSpecs = filterControllers(structSpecs)
+	controllerSpecs := findTypesThatEmbed("rev.Controller", structSpecs)
 
 	// Add the method specs to them.
-	for _, spec := range structSpecs {
+	for _, spec := range controllerSpecs {
 		spec.MethodSpecs = methodSpecs[spec.StructName]
 	}
 
 	return &SourceInfo{
-		ControllerSpecs: structSpecs,
+		ControllerSpecs: controllerSpecs,
 		ValidationKeys:  validationKeys,
+		UnitTests:       findTypesThatEmbed("rev.UnitTest", structSpecs),
+		FunctionalTests: findTypesThatEmbed("rev.FunctionalTest", structSpecs),
 	}
 }
 
@@ -252,35 +260,21 @@ func addImports(imports map[string]string, decl ast.Decl) {
 
 // If this Decl is a struct type definition, it is summarized and added to specs.
 // Else, specs is returned unchanged.
-func appendStruct(specs []*ControllerSpec, pkg *ast.Package, decl ast.Decl) []*ControllerSpec {
+func appendStruct(specs []*TypeInfo, pkgImportPath string, pkg *ast.Package, decl ast.Decl) []*TypeInfo {
 	// Filter out non-Struct type declarations.
-	genDecl, ok := decl.(*ast.GenDecl)
-	if !ok {
+	spec, found := getStructTypeDecl(decl)
+	if !found {
 		return specs
 	}
-
-	if genDecl.Tok != token.TYPE {
-		return specs
-	}
-
-	if len(genDecl.Specs) != 1 {
-		rev.TRACE.Printf("Surprising: Decl does not have 1 Spec: %v", genDecl)
-		return specs
-	}
-
-	spec := genDecl.Specs[0].(*ast.TypeSpec)
-	structType, ok := spec.Type.(*ast.StructType)
-	if !ok {
-		return specs
-	}
+	structType := spec.Type.(*ast.StructType)
 
 	// At this point we know it's a type declaration for a struct.
 	// Fill in the rest of the info by diving into the fields.
 	// Add it provisionally to the Controller list -- it's later filtered using field info.
-	controllerSpec := &ControllerSpec{
+	controllerSpec := &TypeInfo{
 		PackageName: pkg.Name,
 		StructName:  spec.Name.Name,
-		ImportPath:  rev.ImportPath + "/app/" + pkg.Name,
+		ImportPath:  pkgImportPath,
 	}
 
 	for _, field := range structType.Fields.List {
@@ -556,7 +550,7 @@ func getValidationParameter(funcDecl *ast.FuncDecl) *ast.Object {
 	return nil
 }
 
-func (s *ControllerSpec) SimpleName() string {
+func (s *TypeInfo) SimpleName() string {
 	return s.PackageName + "." + s.StructName
 }
 
@@ -564,10 +558,35 @@ func (s *embeddedTypeName) SimpleName() string {
 	return s.PackageName + "." + s.StructName
 }
 
-// Remove any types that do not (directly or indirectly) embed *rev.Controller.
-func filterControllers(specs []*ControllerSpec) (filtered []*ControllerSpec) {
-	// Do a search in the "embedded type graph", starting with rev.Controller.
-	nodeQueue := []string{"rev.Controller"}
+// getStructTypeDecl checks if the given decl is a type declaration for a
+// struct.  If so, the TypeSpec is returned.
+func getStructTypeDecl(decl ast.Decl) (spec *ast.TypeSpec, found bool) {
+	genDecl, ok := decl.(*ast.GenDecl)
+	if !ok {
+		return
+	}
+
+	if genDecl.Tok != token.TYPE {
+		return
+	}
+
+	if len(genDecl.Specs) != 1 {
+		rev.TRACE.Printf("Surprising: Decl does not have 1 Spec: %v", genDecl)
+		return
+	}
+
+	spec = genDecl.Specs[0].(*ast.TypeSpec)
+	if _, ok := spec.Type.(*ast.StructType); ok {
+		found = true
+	}
+
+	return
+}
+
+// Returnall types that (directly or indirectly) embed the target type.
+func findTypesThatEmbed(targetType string, specs []*TypeInfo) (filtered []*TypeInfo) {
+	// Do a search in the "embedded type graph", starting with the target type.
+	nodeQueue := []string{targetType}
 	for len(nodeQueue) > 0 {
 		controllerSimpleName := nodeQueue[0]
 		nodeQueue = nodeQueue[1:]
