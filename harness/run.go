@@ -25,7 +25,9 @@ var (
 )
 
 // Run the Revel program, optionally using the harness.
-func StartApp(useHarness bool) {
+// If the Harness is not used to manage the program, it is returned to the caller.
+// (e.g. the return value is nil if useHarness is true, else it is the running program)
+func StartApp(useHarness bool) *exec.Cmd {
 	// If we are in prod mode, just build and run the application.
 	if !useHarness {
 		rev.INFO.Println("Building...")
@@ -34,8 +36,7 @@ func StartApp(useHarness bool) {
 			rev.ERROR.Fatalln(err)
 		}
 		start(binName, getAppAddress(), getAppPort())
-		cmd.Wait()
-		return
+		return cmd
 	}
 
 	// If the harness exits, be sure to kill the app server.
@@ -49,6 +50,7 @@ func StartApp(useHarness bool) {
 	// Run a reverse proxy to it.
 	harness := NewHarness()
 	harness.Run()
+	return nil
 }
 
 // Build the app:
@@ -294,9 +296,9 @@ const REGISTER_CONTROLLERS = `package main
 import (
 	"flag"
 	"reflect"
-	"github.com/robfig/revel"
-	{{range .ImportPaths}}"{{.}}"
-	{{end}})
+	"github.com/robfig/revel"{{range .ImportPaths}}
+	"{{.}}"{{end}}
+)
 
 var (
 	runMode    *string = flag.String("runMode", "", "Run mode.")

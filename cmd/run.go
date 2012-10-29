@@ -41,5 +41,8 @@ func runApp(args []string) {
 	log.Printf("Running %s (%s) in %s mode\n", rev.AppName, rev.ImportPath, mode)
 	rev.TRACE.Println("Base path:", rev.BasePath)
 
-	harness.StartApp(rev.Config.BoolDefault("server.watcher", true))
+	cmd := harness.StartApp(rev.Config.BoolDefault("server.watcher", true))
+	if cmd != nil {
+		cmd.Wait()
+	}
 }
