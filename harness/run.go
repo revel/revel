@@ -69,7 +69,7 @@ func Build() (binaryPath string, compileError *rev.Error) {
 	var registerControllerSource string = rev.ExecuteTemplate(tmpl, map[string]interface{}{
 		"Controllers":     sourceInfo.ControllerSpecs,
 		"ValidationKeys":  sourceInfo.ValidationKeys,
-		"ImportPaths":     uniqueImportPaths(sourceInfo),
+		"ImportPaths":     calcImportAliases(sourceInfo),
 		"UnitTests":       sourceInfo.UnitTests,
 		"FunctionalTests": sourceInfo.FunctionalTests,
 	})
@@ -228,27 +228,56 @@ func getFreePort() (port int) {
 
 // Looks through all the method args and returns a set of unique import paths
 // that cover all the method arg types.
-func uniqueImportPaths(src *SourceInfo) (paths []string) {
-	importPathMap := make(map[string]bool)
+// Additionally, assign package aliases when necessary to resolve ambiguity.
+func calcImportAliases(src *SourceInfo) map[string]string {
+	aliases := make(map[string]string)
 	typeArrays := [][]*TypeInfo{src.ControllerSpecs, src.UnitTests, src.FunctionalTests}
 	for _, specs := range typeArrays {
 		for _, spec := range specs {
-			importPathMap[spec.ImportPath] = true
+			getOrAddAlias(aliases, spec.ImportPath, spec.PackageName)
+
 			for _, methSpec := range spec.MethodSpecs {
 				for _, methArg := range methSpec.Args {
-					if methArg.ImportPath != "" {
-						importPathMap[methArg.ImportPath] = true
+					if methArg.ImportPath == "" {
+						continue
 					}
+
+					getOrAddAlias(aliases, methArg.ImportPath, methArg.TypeExpr.PkgName)
 				}
 			}
 		}
 	}
 
-	for importPath := range importPathMap {
-		paths = append(paths, importPath)
-	}
+	return aliases
+}
 
-	return
+func getOrAddAlias(aliases map[string]string, importPath, pkgName string) string {
+	alias, ok := aliases[importPath]
+	if ok {
+		return alias
+	}
+	alias = makePackageAlias(aliases, pkgName)
+	aliases[importPath] = alias
+	return alias
+}
+
+func makePackageAlias(aliases map[string]string, pkgName string) string {
+	i := 0
+	alias := pkgName
+	for containsValue(aliases, alias) {
+		alias = fmt.Sprintf("%s%d", pkgName, i)
+		i++
+	}
+	return alias
+}
+
+func containsValue(m map[string]string, val string) bool {
+	for _, v := range m {
+		if v == val {
+			return true
+		}
+	}
+	return false
 }
 
 // Parse the output of the "go build" command.
@@ -296,8 +325,8 @@ const REGISTER_CONTROLLERS = `package main
 import (
 	"flag"
 	"reflect"
-	"github.com/robfig/revel"{{range .ImportPaths}}
-	"{{.}}"{{end}}
+	"github.com/robfig/revel"{{range $k, $v := $.ImportPaths}}
+	{{$v}} "{{$k}}"{{end}}
 )
 
 var (
@@ -315,13 +344,13 @@ func main() {
 	flag.Parse()
 	rev.Init(*runMode, *importPath, *srcPath)
 	{{range $i, $c := .Controllers}}
-	rev.RegisterController((*{{.PackageName}}.{{.StructName}})(nil),
+	rev.RegisterController((*{{index $.ImportPaths .ImportPath}}.{{.StructName}})(nil),
 		[]*rev.MethodType{
 			{{range .MethodSpecs}}&rev.MethodType{
 				Name: "{{.Name}}",
 				Args: []*rev.MethodArg{ {{range .Args}}
-					&rev.MethodArg{Name: "{{.Name}}", Type: reflect.TypeOf((*{{.TypeName}})(nil)) },{{end}}
-			  },
+					&rev.MethodArg{Name: "{{.Name}}", Type: reflect.TypeOf((*{{index $.ImportPaths .ImportPath | .TypeExpr.TypeName}})(nil)) },{{end}}
+				},
 				RenderArgNames: map[int][]string{ {{range .RenderCalls}}
 					{{.Line}}: []string{ {{range .Names}}
 						"{{.}}",{{end}}
@@ -337,10 +366,10 @@ func main() {
 		},{{end}}
 	}
 	rev.UnitTests = []interface{}{ {{range .UnitTests}}
-		(*{{.PackageName}}.{{.StructName}})(nil),{{end}}
+		(*{{index $.ImportPaths .ImportPath}}.{{.StructName}})(nil),{{end}}
 	}
 	rev.FunctionalTests = []interface{}{ {{range .FunctionalTests}}
-		(*{{.PackageName}}.{{.StructName}})(nil),{{end}}
+		(*{{index $.ImportPaths .ImportPath}}.{{.StructName}})(nil),{{end}}
 	}
 
 	rev.Run(*port)
