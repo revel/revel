@@ -121,3 +121,12 @@ func DirExists(filename string) bool {
 	fileInfo, err := os.Stat(filename)
 	return err == nil && fileInfo.IsDir()
 }
+
+func FirstNonEmpty(strs ...string) string {
+	for _, str := range strs {
+		if len(str) > 0 {
+			return str
+		}
+	}
+	return ""
+}

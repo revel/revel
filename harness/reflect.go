@@ -35,7 +35,6 @@ type SourceInfo struct {
 
 // TypeInfo summarizes information about a struct type in the app source code.
 type TypeInfo struct {
-	PackageName string // e.g. "controllers"
 	StructName  string // e.g. "Application"
 	ImportPath  string // e.g. "github.com/robfig/revel/samples/chat/app/controllers"
 	MethodSpecs []*MethodSpec
@@ -59,13 +58,13 @@ type MethodSpec struct {
 }
 
 type MethodArg struct {
-	Name       string // Name of the argument.
-	TypeName   string // The name of the type, e.g. "int", "*pkg.UserType"
-	ImportPath string // If the arg is of an imported type, this is the import path.
+	Name       string   // Name of the argument.
+	TypeExpr   TypeExpr // The name of the type, e.g. "int", "*pkg.UserType"
+	ImportPath string   // If the arg is of an imported type, this is the import path.
 }
 
 type embeddedTypeName struct {
-	PackageName, StructName string
+	ImportPath, StructName string
 }
 
 // Maps a controller simple name (e.g. "Login") to the methods for which it is a
@@ -100,7 +99,6 @@ func ProcessSource() (*SourceInfo, *rev.Error) {
 
 			// Get the import path of the package.
 			pkgImportPath := filepath.ToSlash(path[len(rev.SourcePath)+1:])
-			log.Println(pkgImportPath)
 
 			// Parse files within the path.
 			var pkgs map[string]*ast.Package
@@ -178,6 +176,7 @@ func processPackage(fset *token.FileSet, pkgImportPath string, pkg *ast.Package)
 		strings.Contains(pkgImportPath, "/controllers/")
 	scanTests := strings.HasSuffix(pkgImportPath, "/tests") ||
 		strings.Contains(pkgImportPath, "/tests/")
+	log.Println(pkgImportPath, "=>", pkg.Imports)
 
 	// For each source file in the package...
 	for _, file := range pkg.Files {
@@ -193,7 +192,7 @@ func processPackage(fset *token.FileSet, pkgImportPath string, pkg *ast.Package)
 				// Match and add both structs and methods
 				addImports(imports, decl)
 				structSpecs = appendStruct(structSpecs, pkgImportPath, pkg, decl)
-				appendAction(fset, methodSpecs, decl, pkg.Name, imports)
+				appendAction(fset, methodSpecs, decl, pkgImportPath, pkg.Name, imports)
 			} else if scanTests {
 				structSpecs = appendStruct(structSpecs, pkgImportPath, pkg, decl)
 			}
@@ -209,7 +208,7 @@ func processPackage(fset *token.FileSet, pkgImportPath string, pkg *ast.Package)
 	}
 
 	// Filter the struct specs to just the ones that embed rev.Controller.
-	controllerSpecs := findTypesThatEmbed("rev.Controller", structSpecs)
+	controllerSpecs := findTypesThatEmbed("github.com/robfig/revel.Controller", structSpecs)
 
 	// Add the method specs to them.
 	for _, spec := range controllerSpecs {
@@ -219,8 +218,8 @@ func processPackage(fset *token.FileSet, pkgImportPath string, pkg *ast.Package)
 	return &SourceInfo{
 		ControllerSpecs: controllerSpecs,
 		ValidationKeys:  validationKeys,
-		UnitTests:       findTypesThatEmbed("rev.UnitTest", structSpecs),
-		FunctionalTests: findTypesThatEmbed("rev.FunctionalTest", structSpecs),
+		UnitTests:       findTypesThatEmbed("github.com/robfig/revel.UnitTest", structSpecs),
+		FunctionalTests: findTypesThatEmbed("github.com/robfig/revel.FunctionalTest", structSpecs),
 	}
 }
 
@@ -276,9 +275,8 @@ func appendStruct(specs []*TypeInfo, pkgImportPath string, pkg *ast.Package, dec
 	// Fill in the rest of the info by diving into the fields.
 	// Add it provisionally to the Controller list -- it's later filtered using field info.
 	controllerSpec := &TypeInfo{
-		PackageName: pkg.Name,
-		StructName:  spec.Name.Name,
-		ImportPath:  pkgImportPath,
+		StructName: spec.Name.Name,
+		ImportPath: pkgImportPath,
 	}
 
 	for _, field := range structType.Fields.List {
@@ -322,8 +320,8 @@ func appendStruct(specs []*TypeInfo, pkgImportPath string, pkg *ast.Package, dec
 		}
 
 		controllerSpec.embeddedTypes = append(controllerSpec.embeddedTypes, &embeddedTypeName{
-			PackageName: pkgName,
-			StructName:  typeName,
+			ImportPath: pkgImportPath,
+			StructName: typeName,
 		})
 	}
 
@@ -333,7 +331,7 @@ func appendStruct(specs []*TypeInfo, pkgImportPath string, pkg *ast.Package, dec
 // If decl is a Method declaration, it is summarized and added to the array
 // underneath its receiver type.
 // e.g. "Login" => {MethodSpec, MethodSpec, ..}
-func appendAction(fset *token.FileSet, mm methodMap, decl ast.Decl, pkgName string, imports map[string]string) {
+func appendAction(fset *token.FileSet, mm methodMap, decl ast.Decl, pkgImportPath, pkgName string, imports map[string]string) {
 	// Func declaration?
 	funcDecl, ok := decl.(*ast.FuncDecl)
 	if !ok {
@@ -372,29 +370,16 @@ func appendAction(fset *token.FileSet, mm methodMap, decl ast.Decl, pkgName stri
 	// Add a description of the arguments to the method.
 	for _, field := range funcDecl.Type.Params.List {
 		for _, name := range field.Names {
-			typeName := ExprName(field.Type)
-
-			// Figure out the Import Path for this field, if any.
-			importPath := ""
-			baseTypeName := strings.TrimLeft(typeName, "*")
-			dotIndex := strings.Index(baseTypeName, ".")
-			isExported := unicode.IsUpper([]rune(baseTypeName)[0])
-			if dotIndex == -1 && isExported {
-				// Fully-qualify types defined in that package.
-				// (Need to add back the stars that we trimmed, too)
-				typeName = pkgName + "." + baseTypeName
-			} else if dotIndex != -1 {
-				// The type comes from an imported package.
-				argPkgName := baseTypeName[:dotIndex]
-				if importPath, ok = imports[argPkgName]; !ok {
-					log.Println("Failed to find import for arg of type:", typeName)
-				}
+			typeExpr := NewTypeExpr(pkgName, field.Type)
+			importPath, ok := imports[typeExpr.PkgName]
+			if !ok {
+				log.Println("Failed to find import for arg of type:", typeExpr.TypeName(""))
 			}
-
 			method.Args = append(method.Args, &MethodArg{
-				Name:       name.Name,
-				TypeName:   typeName,
-				ImportPath: importPath,
+				Name:        name.Name,
+				TypeExpr:    typeExpr,
+				ImportPath:  importPath,
+				PackageName: pkgName,
 			})
 		}
 	}
@@ -522,7 +507,7 @@ func getValidationKeys(fset *token.FileSet, funcDecl *ast.FuncDecl) map[int]stri
 			return true
 		}
 
-		lineKeys[lastExprLine] = ExprName(arg)
+		lineKeys[lastExprLine] = NewTypeExpr("", arg).TypeName("")
 		return true
 	})
 
@@ -555,11 +540,11 @@ func getValidationParameter(funcDecl *ast.FuncDecl) *ast.Object {
 }
 
 func (s *TypeInfo) SimpleName() string {
-	return s.PackageName + "." + s.StructName
+	return s.ImportPath + "." + s.StructName
 }
 
 func (s *embeddedTypeName) SimpleName() string {
-	return s.PackageName + "." + s.StructName
+	return s.ImportPath + "." + s.StructName
 }
 
 // getStructTypeDecl checks if the given decl is a type declaration for a
@@ -615,22 +600,70 @@ func findTypesThatEmbed(targetType string, specs []*TypeInfo) (filtered []*TypeI
 	return
 }
 
+// TypeExpr provides a type name that may be rewritten to use a package name.
+type TypeExpr struct {
+	Expr     string // The unqualified type expression, e.g. "[]*MyType"
+	PkgName  string // The default package idenifier
+	pkgIndex int    // The index where the package identifier should be inserted.
+}
+
+// TypeName returns the fully-qualified type name for this expression.
+// The caller may optionally specify a package name to override the default.
+func (e TypeExpr) TypeName(packageOverride string) string {
+	pkgName := rev.FirstNonEmpty(pkgOverride, pkgName)
+	if pkgName == "" {
+		return e.Expr
+	}
+	return e.Expr[:pkgIndex] + pkgName + "." + e.Expr[pkgIndex:]
+}
+
 // This returns the syntactic expression for referencing this type in Go.
-// One complexity is that package-local types have to be fully-qualified.
-// For example, if the type is "Hello", then it really means "pkg.Hello".
-func ExprName(expr ast.Expr) string {
+func NewTypeExpr(pkgName string, expr ast.Expr) TypeExpr {
 	switch t := expr.(type) {
 	case *ast.Ident:
-		return t.Name
+		if IsBuiltinType(t.Name) {
+			pkgName = ""
+		}
+		return TypeExpr{t.Name, pkgName, 0}
 	case *ast.SelectorExpr:
-		return ExprName(t.X) + "." + ExprName(t.Sel)
+		return TypeExpr{t.Sel, t.X, 0}
 	case *ast.StarExpr:
-		return "*" + ExprName(t.X)
+		e := NewTypeExpr(pkgName, t.X)
+		return TypeExpr{"*" + e.Expr, e.PkgName, e.pkgIndex + 1}
 	case *ast.ArrayType:
-		return "[]" + ExprName(t.Elt)
+		e := NewTypeExpr(pkgName, t.X)
+		return TypeExpr{"[]" + e.Expr, e.PkgName, e.pkgIndex + 2}
 	default:
 		log.Println("Failed to generate name for field.")
 		ast.Print(nil, expr)
 	}
 	return ""
+}
+
+var _BUILTIN_TYPES = map[string]struct{}{
+	"bool":       struct{}{},
+	"byte":       struct{}{},
+	"complex128": struct{}{},
+	"complex64":  struct{}{},
+	"error":      struct{}{},
+	"float32":    struct{}{},
+	"float64":    struct{}{},
+	"int":        struct{}{},
+	"int16":      struct{}{},
+	"int32":      struct{}{},
+	"int64":      struct{}{},
+	"int8":       struct{}{},
+	"rune":       struct{}{},
+	"string":     struct{}{},
+	"uint":       struct{}{},
+	"uint16":     struct{}{},
+	"uint32":     struct{}{},
+	"uint64":     struct{}{},
+	"uint8":      struct{}{},
+	"uintptr":    struct{}{},
+}
+
+func IsBuiltinType(name string) bool {
+	_, ok := _BUILTIN_TYPES[name]
+	return ok
 }
