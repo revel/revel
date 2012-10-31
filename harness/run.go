@@ -59,7 +59,7 @@ func StartApp(useHarness bool) *exec.Cmd {
 // Requires that rev.Init has been called previously.
 // Returns the path to the built binary, and an error if there was a problem building it.
 func Build() (binaryPath string, compileError *rev.Error) {
-	sourceInfo, compileError := ProcessSource()
+	sourceInfo, compileError := ProcessSource(rev.CodePaths)
 	if compileError != nil {
 		return "", compileError
 	}

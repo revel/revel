@@ -124,6 +124,7 @@ func Run(port int) {
 		// Else, call refresh on them directly.
 		MainTemplateLoader.Refresh()
 		MainRouter.Refresh()
+		plugins.OnRoutesLoaded(MainRouter)
 	}
 
 	Server = &http.Server{

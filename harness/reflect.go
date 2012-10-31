@@ -74,8 +74,7 @@ type methodMap map[string][]*MethodSpec
 
 // Parse the app controllers directory and return a list of the controller types found.
 // Returns a CompileError if the parsing fails.
-func ProcessSource() (*SourceInfo, *rev.Error) {
-	roots := append([]string{rev.BasePath}, rev.ModulePaths...)
+func ProcessSource(roots []string) (*SourceInfo, *rev.Error) {
 	var (
 		srcInfo      *SourceInfo
 		compileError *rev.Error
@@ -90,7 +89,7 @@ func ProcessSource() (*SourceInfo, *rev.Error) {
 				return nil
 			}
 
-			if !info.IsDir() || path == root || info.Name() == "tmp" {
+			if !info.IsDir() || info.Name() == "tmp" {
 				return nil
 			}
 

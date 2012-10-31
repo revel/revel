@@ -276,6 +276,21 @@ func (c *Controller) Invoke(appControllerPtr reflect.Value, method reflect.Value
 	result.Apply(c.Request, c.Response)
 }
 
+// Return an index of the first relevant stack frame, or -1 if none were found.
+func findRelevantStackFrame(stack string) int {
+	frame := -1
+
+	// The modules can not call the app code (or each other), so if they are
+	// in the trace it must be closer to the root than the app frame.
+	for _, module := range Modules {
+		frame = strings.Index(stack, module.Path)
+		if frame != -1 {
+			return frame
+		}
+	}
+	return strings.Index(stack, BasePath)
+}
+
 // This function handles a panic in an action invocation.
 // It cleans up the stack trace, logs it, and displays an error page.
 func handleInvocationPanic(c *Controller, err interface{}) {
@@ -284,22 +299,23 @@ func handleInvocationPanic(c *Controller, err interface{}) {
 	// Parse the filename and line from the originating line of app code.
 	// /Users/robfig/code/gocode/src/revel/samples/booking/app/controllers/hotels.go:191 (0x44735)
 	stack := string(debug.Stack())
-	appFrame := strings.Index(stack, BasePath)
-	if appFrame == -1 {
+	frame := findRelevantStackFrame(stack)
+
+	if frame == -1 {
 		// How embarassing.
 		ERROR.Println(err, "\n", stack)
 		c.Response.Out.WriteHeader(500)
 		c.Response.Out.Write([]byte(stack))
 		return
 	}
-	stackElement := stack[appFrame : appFrame+strings.Index(stack[appFrame:], "\n")]
+	stackElement := stack[frame : frame+strings.Index(stack[frame:], "\n")]
 	colonIndex := strings.LastIndex(stackElement, ":")
 	filename := stackElement[:colonIndex]
 	var line int
 	fmt.Sscan(stackElement[colonIndex+1:], &line)
 
 	// Log the trace starting at the app frame.
-	ERROR.Println(err, "\n", stack[appFrame:])
+	ERROR.Println(err, "\n", stack[frame:])
 
 	// Show an error page.
 	description := "Unspecified error"

@@ -32,10 +32,11 @@ var (
 
 	// Where to look for templates and configuration.
 	// Ordered by priority.  (Earlier paths take precedence over later paths.)
+	CodePaths     []string
 	ConfPaths     []string
 	TemplatePaths []string
 
-	ModulePaths []string
+	Modules []Module
 
 	DEFAULT = log.New(os.Stderr, "", log.Ldate|log.Ltime|log.Lshortfile)
 	TRACE   = DEFAULT
@@ -76,6 +77,8 @@ func Init(mode, importPath, srcPath string) {
 	BasePath = path.Join(SourcePath, filepath.FromSlash(importPath))
 	AppPath = path.Join(BasePath, "app")
 	ViewsPath = path.Join(AppPath, "views")
+
+	CodePaths = []string{AppPath}
 
 	ConfPaths = []string{
 		path.Join(BasePath, "conf"),
@@ -190,36 +193,41 @@ func findSrcPath(importPath string) string {
 	return appPkg.SrcRoot
 }
 
+type Module struct {
+	Name, ImportPath, Path string
+}
+
 func loadModules() {
-	for _, root := range []string{RevelPath, BasePath} {
-		moduleDirPath := path.Join(root, "modules")
-		moduleDir, err := os.Open(moduleDirPath)
-		if err != nil {
-			if !os.IsNotExist(err) {
-				ERROR.Print("Error stat'ing path ", moduleDirPath, ":", err)
-			}
-			continue
-		}
-		defer moduleDir.Close()
-
-		names, err := moduleDir.Readdirnames(0)
-		if err != nil {
-			ERROR.Print("Error listing dir ", moduleDirPath, ":", err)
+	for _, key := range Config.Options("module.") {
+		moduleImportPath := Config.StringDefault(key, "")
+		if moduleImportPath == "" {
 			continue
 		}
 
-		for _, moduleName := range names {
-			addModule(path.Join(moduleDirPath, moduleName))
+		modPkg, err := build.Import(moduleImportPath, "", build.FindOnly)
+		if err != nil {
+			log.Fatalln("Failed to load module.  Import of", moduleImportPath, "failed:", err)
 		}
+
+		addModule(key[len("module."):], moduleImportPath, modPkg.Dir)
 	}
 }
 
-func addModule(modulePath string) {
-	ModulePaths = append(ModulePaths, modulePath)
+func addModule(name, importPath, modulePath string) {
+	Modules = append(Modules, Module{Name: name, ImportPath: importPath, Path: modulePath})
+	if codePath := path.Join(modulePath, "app"); DirExists(codePath) {
+		CodePaths = append(CodePaths, codePath)
+	}
 	if viewsPath := path.Join(modulePath, "app", "views"); DirExists(viewsPath) {
 		TemplatePaths = append(TemplatePaths, viewsPath)
 	}
 	INFO.Print("Loaded module ", path.Base(modulePath))
+
+	// Hack: There is presently no way for the testrunner module to add the
+	// "test" subdirectory to the CodePaths.  So this does it instead.
+	if importPath == "github.com/robfig/revel/modules/testrunner" {
+		CodePaths = append(CodePaths, path.Join(BasePath, "tests"))
+	}
 }
 
 func CheckInit() {
