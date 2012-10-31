@@ -22,12 +22,18 @@ type DiscerningListener interface {
 	WatchFile(basename string) bool
 }
 
+// Auditor gets notified each time a listener gets refreshed.
+type Auditor interface {
+	OnRefresh(listener Listener)
+}
+
 // Watcher allows listeners to register to be notified of changes under a given
 // directory.
 type Watcher struct {
 	// Parallel arrays of watcher/listener pairs.
 	watchers     []*fsnotify.Watcher
 	listeners    []Listener
+	auditor      Auditor
 	forceRefresh bool
 	lastError    int
 }
@@ -134,6 +140,9 @@ func (w *Watcher) Notify() *Error {
 			if err != nil {
 				w.lastError = i
 				return err
+			}
+			if w.auditor != nil {
+				w.auditor.OnRefresh(listener)
 			}
 		}
 	}
