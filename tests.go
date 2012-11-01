@@ -18,7 +18,7 @@ type FunctionalTest struct {
 
 var (
 	UnitTests       []interface{}
-	FunctionalTests []interface{}
+	FunctionalTests []interface{} // Array of structs that embed FunctionalTest
 )
 
 func (t FunctionalTest) GetPath(url string) {

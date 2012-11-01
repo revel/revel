@@ -19,7 +19,6 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"os"
-	"path"
 	"strings"
 	"sync/atomic"
 )
@@ -116,9 +115,8 @@ func (h *Harness) Run() {
 	}()
 
 	watcher = rev.NewWatcher()
-	watcher.Listen(h, rev.AppPath)
-	for _, module := range rev.Modules {
-		watcher.Listen(h, path.Join(module.Path, "app"))
+	for _, codePath := range rev.CodePaths {
+		watcher.Listen(h, codePath)
 	}
 
 	appAddr := getAppAddress()

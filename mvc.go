@@ -278,17 +278,15 @@ func (c *Controller) Invoke(appControllerPtr reflect.Value, method reflect.Value
 
 // Return an index of the first relevant stack frame, or -1 if none were found.
 func findRelevantStackFrame(stack string) int {
-	frame := -1
-
-	// The modules can not call the app code (or each other), so if they are
-	// in the trace it must be closer to the root than the app frame.
+	if frame := strings.Index(stack, BasePath); frame != -1 {
+		return frame
+	}
 	for _, module := range Modules {
-		frame = strings.Index(stack, module.Path)
-		if frame != -1 {
+		if frame := strings.Index(stack, module.Path); frame != -1 {
 			return frame
 		}
 	}
-	return strings.Index(stack, BasePath)
+	return -1
 }
 
 // This function handles a panic in an action invocation.

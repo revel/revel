@@ -9,6 +9,8 @@ results.pretty=true
 results.staging=true
 server.watcher=true
 
+module.testrunner = github.com/robfig/revel/modules/testrunner
+
 log.trace.output = off
 log.info.output  = stderr
 log.warn.output  = stderr
@@ -18,6 +20,8 @@ log.error.output = stderr
 results.pretty=false
 results.staging=false
 server.watcher=false
+
+module.testrunner = 
 
 log.trace.output = off
 log.info.output  = off
