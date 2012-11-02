@@ -6,6 +6,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"sync"
 )
 
 // Listener is an interface for receivers of filesystem events.
@@ -36,6 +37,7 @@ type Watcher struct {
 	auditor      Auditor
 	forceRefresh bool
 	lastError    int
+	notifyMutex  sync.Mutex
 }
 
 func NewWatcher() *Watcher {
@@ -108,6 +110,10 @@ func (w *Watcher) Listen(listener Listener, roots ...string) {
 // Notify causes the watcher to forward any change events to listeners.
 // It returns the first (if any) error returned.
 func (w *Watcher) Notify() *Error {
+	// Serialize Notify() calls.
+	w.notifyMutex.Lock()
+	defer w.notifyMutex.Unlock()
+
 	for i, watcher := range w.watchers {
 		listener := w.listeners[i]
 
