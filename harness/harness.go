@@ -115,9 +115,7 @@ func (h *Harness) Run() {
 	}()
 
 	watcher = rev.NewWatcher()
-	for _, codePath := range rev.CodePaths {
-		watcher.Listen(h, codePath)
-	}
+	watcher.Listen(h, rev.CodePaths...)
 
 	appAddr := getAppAddress()
 	appPort := getAppPort()
