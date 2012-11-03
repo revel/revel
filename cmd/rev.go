@@ -59,6 +59,7 @@ func main() {
 				// This panic was not expected / logged.
 				panic(err)
 			}
+			os.Exit(1)
 		}
 	}()
 
@@ -73,8 +74,12 @@ func main() {
 }
 
 func errorf(format string, args ...interface{}) {
+	// Ensure the user's command prompt starts on the next line.
+	if !strings.HasSuffix(format, "\n") {
+		format += "\n"
+	}
 	fmt.Fprintf(os.Stderr, format, args...)
-	os.Exit(1)
+	panic(LoggedError{}) // Panic instead of os.Exit so that deferred will run.
 }
 
 const header = `~
