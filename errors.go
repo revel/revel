@@ -1,6 +1,10 @@
 package rev
 
-import "fmt"
+import (
+	"fmt"
+	"runtime/debug"
+	"strings"
+)
 
 // An error description, used as an argument to the error template.
 type Error struct {
@@ -8,6 +12,7 @@ type Error struct {
 	Title, Path, Description string   // Description of the error, as presented to the user.
 	Line, Column             int      // Where the error was encountered.
 	SourceLines              []string // The entire source file, split into lines.
+	Stack                    string   // The raw stack trace string from debug.Stack().
 	MetaError                string   // Error that occurred producing the error page.
 }
 
@@ -16,6 +21,40 @@ type sourceLine struct {
 	Source  string
 	Line    int
 	IsError bool
+}
+
+// Find the deepest stack from in uesr code and provide a code listing of
+// that, on the line that eventually triggered the panic.  Returns nil if no
+// relevant stack frame can be found.
+func NewErrorFromPanic(err interface{}) *Error {
+
+	// Parse the filename and line from the originating line of app code.
+	// /Users/robfig/code/gocode/src/revel/samples/booking/app/controllers/hotels.go:191 (0x44735)
+	stack := string(debug.Stack())
+	frame, basePath := findRelevantStackFrame(stack)
+	if frame == -1 {
+		return nil
+	}
+
+	stackElement := stack[frame : frame+strings.Index(stack[frame:], "\n")]
+	colonIndex := strings.LastIndex(stackElement, ":")
+	filename := stackElement[:colonIndex]
+	var line int
+	fmt.Sscan(stackElement[colonIndex+1:], &line)
+
+	// Show an error page.
+	description := "Unspecified error"
+	if err != nil {
+		description = fmt.Sprintln(err)
+	}
+	return &Error{
+		Title:       "Panic",
+		Path:        filename[len(basePath):],
+		Line:        line,
+		Description: description,
+		SourceLines: MustReadLines(filename),
+		Stack:       stack,
+	}
 }
 
 // Construct a plaintext version of the error, taking account that fields are optionally set.
@@ -60,4 +99,18 @@ func (e *Error) ContextSource() []sourceLine {
 		lines[i] = sourceLine{src, fileLine, fileLine == e.Line}
 	}
 	return lines
+}
+
+// Return the character index of the first relevant stack frame, or -1 if none were found.
+// Additionally it returns the base path of the tree in which the identified code resides.
+func findRelevantStackFrame(stack string) (int, string) {
+	if frame := strings.Index(stack, BasePath); frame != -1 {
+		return frame, BasePath
+	}
+	for _, module := range Modules {
+		if frame := strings.Index(stack, module.Path); frame != -1 {
+			return frame, module.Path
+		}
+	}
+	return -1, ""
 }
