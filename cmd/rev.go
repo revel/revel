@@ -30,7 +30,7 @@ var commands = []*Command{
 	cmdNew,
 	cmdClean,
 	cmdPackage,
-	cmdAutoTest,
+	cmdTest,
 }
 
 func main() {

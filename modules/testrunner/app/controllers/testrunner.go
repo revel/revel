@@ -1,11 +1,14 @@
 package controllers
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/robfig/revel"
 	"github.com/robfig/revel/modules/testrunner/app"
+	"html"
+	"html/template"
 	"reflect"
-	"runtime/debug"
+	"strings"
 )
 
 type TestRunner struct {
@@ -19,44 +22,85 @@ type TestSuiteDesc struct {
 
 type TestDesc struct {
 	Name string
-	// TODO: Add comment as description here.
+}
+
+type TestSuiteResult struct {
+	Name    string
+	Passed  bool
+	Results []TestResult
 }
 
 type TestResult struct {
-	Success      bool
-	ErrorMessage string
-	Stack        string
+	Name      string
+	Passed    bool
+	ErrorHtml template.HTML
 }
 
+var NONE = []reflect.Value{}
+
 func (c TestRunner) Index() rev.Result {
-	var functionalTestSuites []TestSuiteDesc
-	for _, testSuite := range rev.FunctionalTests {
-		functionalTestSuites = append(functionalTestSuites, DescribeSuite(testSuite))
+	var testSuites []TestSuiteDesc
+	for _, testSuite := range rev.TestSuites {
+		testSuites = append(testSuites, DescribeSuite(testSuite))
 	}
-	return c.Render(functionalTestSuites)
+	return c.Render(testSuites)
 }
 
 // Run runs a single test, given by the argument. 
 func (c TestRunner) Run(suite, test string) rev.Result {
-	var result TestResult
-	for _, testSuite := range rev.FunctionalTests {
+	result := TestResult{Name: test}
+	for _, testSuite := range rev.TestSuites {
 		t := reflect.TypeOf(testSuite).Elem()
-		if t.Name() == suite {
-			v := reflect.New(t)
-			func() {
-				defer func() {
-					if err := recover(); err != nil {
-						result.ErrorMessage = fmt.Sprint(err)
-						result.Stack = string(debug.Stack())
-					}
-				}()
-				v.MethodByName(test).Call([]reflect.Value{})
-				result.Success = true
-			}()
-			break
+		if t.Name() != suite {
+			continue
 		}
+
+		// Found the suite, create a new instance and run the named method.
+		v := reflect.New(t)
+		func() {
+			defer func() {
+				if err := recover(); err != nil {
+					error := rev.NewErrorFromPanic(err)
+					if error == nil {
+						result.ErrorHtml = template.HTML(html.EscapeString(fmt.Sprint(err)))
+					} else {
+						var buffer bytes.Buffer
+						tmpl, _ := rev.MainTemplateLoader.Template("TestRunner/FailureDetail.html")
+						tmpl.Render(&buffer, error)
+						result.ErrorHtml = template.HTML(buffer.String())
+					}
+				}
+			}()
+
+			// Initialize the test suite with a NewTestSuite()
+			testSuiteInstance := v.Elem().FieldByName("TestSuite")
+			testSuiteInstance.Set(reflect.ValueOf(rev.NewTestSuite()))
+
+			// Call Before(), call the test, and call After().
+			if m := v.MethodByName("Before"); m.IsValid() {
+				m.Call(NONE)
+			}
+			v.MethodByName(test).Call(NONE)
+			if m := v.MethodByName("After"); m.IsValid() {
+				m.Call(NONE)
+			}
+
+			// No panic means success.
+			result.Passed = true
+		}()
+		break
 	}
 	return c.RenderJson(result)
+}
+
+// List returns a JSON list of test suites and tests.
+// Used by the "test" command line tool.
+func (c TestRunner) List() rev.Result {
+	var testSuites []TestSuiteDesc
+	for _, testSuite := range rev.TestSuites {
+		testSuites = append(testSuites, DescribeSuite(testSuite))
+	}
+	return c.RenderJson(testSuites)
 }
 
 func DescribeSuite(testSuite interface{}) TestSuiteDesc {
@@ -76,7 +120,11 @@ func DescribeSuite(testSuite interface{}) TestSuiteDesc {
 		m := t.Method(i)
 		mt := m.Type
 		_, isSuperMethod := superMethodNameSet[m.Name]
-		if mt.NumIn() == 1 && mt.NumOut() == 0 && mt.In(0) == t && !isSuperMethod {
+		if mt.NumIn() == 1 &&
+			mt.NumOut() == 0 &&
+			mt.In(0) == t &&
+			!isSuperMethod &&
+			strings.HasPrefix(m.Name, "Test") {
 			tests = append(tests, TestDesc{m.Name})
 		}
 	}

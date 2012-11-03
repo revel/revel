@@ -2,28 +2,67 @@ package rev
 
 import (
 	"fmt"
-	"go/ast"
+	"io"
 	"io/ioutil"
 	"net/http"
-	"reflect"
+	"net/url"
+	"strings"
 )
 
-type UnitTest struct{}
-
-type FunctionalTest struct {
-	Client       http.Client
+type TestSuite struct {
+	Client       *http.Client
 	Response     *http.Response
 	ResponseBody []byte
 }
 
-var (
-	UnitTests       []interface{}
-	FunctionalTests []interface{} // Array of structs that embed FunctionalTest
-)
+var TestSuites []interface{} // Array of structs that embed TestSuite
 
-func (t FunctionalTest) GetPath(url string) {
+// NewTestSuite returns an initialized TestSuite ready for use. It is invoked
+// by the test harness to initialize the embedded field in application tests.
+func NewTestSuite() TestSuite {
+	return TestSuite{Client: &http.Client{}}
+}
+
+// Return the base URL of the server, e.g. "http://127.0.0.1:8557"
+func (t *TestSuite) BaseUrl() string {
+	if Server.Addr[0] == ':' {
+		return "http://127.0.0.1" + Server.Addr
+	}
+	return "http://" + Server.Addr
+}
+
+// Issue a GET request to the given path and store the result in Request and
+// RequestBody.
+func (t *TestSuite) Get(path string) {
+	req, err := http.NewRequest("GET", t.BaseUrl()+path, nil)
+	if err != nil {
+		panic(err)
+	}
+	t.MakeRequest(req)
+}
+
+// Issue a POST request to the given path, sending the given Content-Type and
+// data, and store the result in Request and RequestBody.  "data" may be nil.
+func (t *TestSuite) Post(path string, contentType string, reader io.Reader) {
+	req, err := http.NewRequest("POST", t.BaseUrl()+path, reader)
+	if err != nil {
+		panic(err)
+	}
+	req.Header.Set("Content-Type", contentType)
+	t.MakeRequest(req)
+}
+
+// Issue a POST request to the given path as a form post of the given key and
+// values, and store the result in Request and RequestBody.  
+func (t *TestSuite) PostForm(path string, data url.Values) {
+	t.Post(path, "application/x-www-form-urlencoded", strings.NewReader(data.Encode()))
+}
+
+// Issue any request and read the response. If successful, the caller may
+// examine the Response and ResponseBody properties.
+func (t *TestSuite) MakeRequest(req *http.Request) {
 	var err error
-	if t.Response, err = t.Client.Get(Server.Addr + url); err != nil {
+	if t.Response, err = t.Client.Do(req); err != nil {
 		panic(err)
 	}
 	if t.ResponseBody, err = ioutil.ReadAll(t.Response.Body); err != nil {
@@ -31,48 +70,37 @@ func (t FunctionalTest) GetPath(url string) {
 	}
 }
 
-func (t FunctionalTest) AssertOk() {
+func (t *TestSuite) AssertOk() {
 	t.AssertStatus(http.StatusOK)
 }
 
-func (t FunctionalTest) AssertStatus(status int) {
+func (t *TestSuite) AssertNotFound() {
+	t.AssertStatus(http.StatusNotFound)
+}
+
+func (t *TestSuite) AssertStatus(status int) {
 	if t.Response.StatusCode != status {
 		panic(fmt.Errorf("Status: (expected) %d != %d (actual)", status, t.Response.StatusCode))
 	}
 }
 
-func (t FunctionalTest) AssertContentType(contentType string) {
-	rct := t.Response.Header.Get("Content-Type")
-	if rct != contentType {
-		panic(fmt.Errorf("Content Type: (expected) %d != %d (actual)", contentType, rct))
+func (t *TestSuite) AssertContentType(contentType string) {
+	t.AssertHeader("Content-Type", contentType)
+}
+
+func (t *TestSuite) AssertHeader(name, value string) {
+	actual := t.Response.Header.Get(name)
+	if actual != value {
+		panic(fmt.Errorf("Header %s: (expected) %s != %s (actual)", name, value, actual))
 	}
 }
 
-// Run every method on the given value that meets the following criteria:
-// 1. It takes no parameters.
-// 2. It returns no values.
-// 3. It is exported.
-func RunTestSuite(suite interface{}) (succeeded, failed int) {
-	v := reflect.ValueOf(suite)
-	t := v.Type()
-	fmt.Println("Functional test suite:", t.Name())
-	for i := 0; i < t.NumMethod(); i++ {
-		m := t.Method(i)
-		if ast.IsExported(m.Name) && m.Type.NumIn() == 0 && m.Type.NumOut() == 0 {
-			fmt.Println(m.Name)
-			func() {
-				defer func() {
-					if err := recover(); err != nil {
-						fmt.Println("Fail:", err)
-						failed++
-					} else {
-						succeeded++
-					}
-				}()
-				m.Func.Call([]reflect.Value{v})
-			}()
-			fmt.Println("OK")
-		}
+func (t *TestSuite) Assert(exp bool) {
+	t.Assertf(exp, "Assertion failed")
+}
+
+func (t *TestSuite) Assertf(exp bool, formatStr string, args ...interface{}) {
+	if !exp {
+		panic(fmt.Errorf(formatStr, args))
 	}
-	return
 }

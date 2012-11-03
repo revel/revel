@@ -29,8 +29,8 @@ type SourceInfo struct {
 	//    e.g. the line returned from runtime.Caller()
 	// The result of the lookup the name of variable being validated.
 	ValidationKeys map[string]map[int]string
-	// UnitTests and FunctionalTests list the types that constitute the app test suite.
-	UnitTests, FunctionalTests []*TypeInfo
+	// TestSuites list the types that constitute the set of application tests.
+	TestSuites []*TypeInfo
 }
 
 // TypeInfo summarizes information about a struct type in the app source code.
@@ -152,8 +152,7 @@ func appendSourceInfo(srcInfo1, srcInfo2 *SourceInfo) *SourceInfo {
 	}
 
 	srcInfo1.ControllerSpecs = append(srcInfo1.ControllerSpecs, srcInfo2.ControllerSpecs...)
-	srcInfo1.UnitTests = append(srcInfo1.UnitTests, srcInfo2.UnitTests...)
-	srcInfo1.FunctionalTests = append(srcInfo1.FunctionalTests, srcInfo2.FunctionalTests...)
+	srcInfo1.TestSuites = append(srcInfo1.TestSuites, srcInfo2.TestSuites...)
 	for k, v := range srcInfo2.ValidationKeys {
 		if _, ok := srcInfo1.ValidationKeys[k]; ok {
 			log.Println("Key conflict when scanning validation calls:", k)
@@ -214,8 +213,7 @@ func processPackage(fset *token.FileSet, pkgImportPath, pkgPath string, pkg *ast
 	return &SourceInfo{
 		ControllerSpecs: controllerSpecs,
 		ValidationKeys:  validationKeys,
-		UnitTests:       findTypesThatEmbed("github.com/robfig/revel.UnitTest", structSpecs),
-		FunctionalTests: findTypesThatEmbed("github.com/robfig/revel.FunctionalTest", structSpecs),
+		TestSuites:      findTypesThatEmbed("github.com/robfig/revel.TestSuite", structSpecs),
 	}
 }
 

@@ -67,11 +67,10 @@ func Build() (binaryPath string, compileError *rev.Error) {
 	tmpl := template.New("RegisterControllers")
 	tmpl = template.Must(tmpl.Parse(REGISTER_CONTROLLERS))
 	var registerControllerSource string = rev.ExecuteTemplate(tmpl, map[string]interface{}{
-		"Controllers":     sourceInfo.ControllerSpecs,
-		"ValidationKeys":  sourceInfo.ValidationKeys,
-		"ImportPaths":     calcImportAliases(sourceInfo),
-		"UnitTests":       sourceInfo.UnitTests,
-		"FunctionalTests": sourceInfo.FunctionalTests,
+		"Controllers":    sourceInfo.ControllerSpecs,
+		"ValidationKeys": sourceInfo.ValidationKeys,
+		"ImportPaths":    calcImportAliases(sourceInfo),
+		"TestSuites":     sourceInfo.TestSuites,
 	})
 
 	// Terminate the server if it's already running.
@@ -231,7 +230,7 @@ func getFreePort() (port int) {
 // Additionally, assign package aliases when necessary to resolve ambiguity.
 func calcImportAliases(src *SourceInfo) map[string]string {
 	aliases := make(map[string]string)
-	typeArrays := [][]*TypeInfo{src.ControllerSpecs, src.UnitTests, src.FunctionalTests}
+	typeArrays := [][]*TypeInfo{src.ControllerSpecs, src.TestSuites}
 	for _, specs := range typeArrays {
 		for _, spec := range specs {
 			getOrAddAlias(aliases, spec.ImportPath, spec.PackageName)
@@ -365,10 +364,7 @@ func main() {
 			{{$line}}: "{{$key}}",{{end}}
 		},{{end}}
 	}
-	rev.UnitTests = []interface{}{ {{range .UnitTests}}
-		(*{{index $.ImportPaths .ImportPath}}.{{.StructName}})(nil),{{end}}
-	}
-	rev.FunctionalTests = []interface{}{ {{range .FunctionalTests}}
+	rev.TestSuites = []interface{}{ {{range .TestSuites}}
 		(*{{index $.ImportPaths .ImportPath}}.{{.StructName}})(nil),{{end}}
 	}
 
