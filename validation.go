@@ -51,9 +51,9 @@ func (v *Validation) ErrorMap() map[string]*ValidationError {
 }
 
 // Add an error to the validation context.
-func (v *Validation) Error(message string, args... interface{}) *ValidationResult {
+func (v *Validation) Error(message string, args ...interface{}) *ValidationResult {
 	return (&ValidationResult{
-		Ok: false,
+		Ok:    false,
 		Error: &ValidationError{},
 	}).Message(message, args)
 }
@@ -72,7 +72,7 @@ func (r *ValidationResult) Key(key string) *ValidationResult {
 	return r
 }
 
-func (r *ValidationResult) Message(message string, args... interface{}) *ValidationResult {
+func (r *ValidationResult) Message(message string, args ...interface{}) *ValidationResult {
 	if r.Error != nil {
 		if len(args) == 0 {
 			r.Error.Message = message

@@ -280,40 +280,17 @@ func (c *Controller) Invoke(appControllerPtr reflect.Value, method reflect.Value
 // It cleans up the stack trace, logs it, and displays an error page.
 func handleInvocationPanic(c *Controller, err interface{}) {
 	plugins.OnException(c, err)
-
-	// Parse the filename and line from the originating line of app code.
-	// /Users/robfig/code/gocode/src/revel/samples/booking/app/controllers/hotels.go:191 (0x44735)
 	stack := string(debug.Stack())
-	appFrame := strings.Index(stack, BasePath)
-	if appFrame == -1 {
-		// How embarassing.
-		ERROR.Println(err, "\n", stack)
+	ERROR.Println(err, "\n", stack)
+
+	error := NewErrorFromPanic(err)
+	if error == nil {
 		c.Response.Out.WriteHeader(500)
 		c.Response.Out.Write([]byte(stack))
 		return
 	}
-	stackElement := stack[appFrame : appFrame+strings.Index(stack[appFrame:], "\n")]
-	colonIndex := strings.LastIndex(stackElement, ":")
-	filename := stackElement[:colonIndex]
-	var line int
-	fmt.Sscan(stackElement[colonIndex+1:], &line)
 
-	// Log the trace starting at the app frame.
-	ERROR.Println(err, "\n", stack[appFrame:])
-
-	// Show an error page.
-	description := "Unspecified error"
-	if err != nil {
-		description = fmt.Sprintln(err)
-	}
-
-	c.RenderError(&Error{
-		Title:       "Panic",
-		Path:        filename[len(BasePath):],
-		Line:        line,
-		Description: description,
-		SourceLines: MustReadLines(filename),
-	}).Apply(c.Request, c.Response)
+	c.RenderError(error).Apply(c.Request, c.Response)
 }
 
 func (c *Controller) invokeInterceptors(when InterceptTime, appControllerPtr reflect.Value) Result {

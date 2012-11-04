@@ -14,6 +14,7 @@ var (
 	MainRouter         *Router
 	MainTemplateLoader *TemplateLoader
 	MainWatcher        *Watcher
+	Server             *http.Server
 
 	websocketType = reflect.TypeOf((*websocket.Conn)(nil))
 )
@@ -116,15 +117,17 @@ func Run(port int) {
 	// The watcher calls Refresh() on things on the first request.
 	if Config.BoolDefault("server.watcher", true) {
 		MainWatcher = NewWatcher()
+		MainWatcher.auditor = PluginNotifier{plugins}
 		MainWatcher.Listen(MainTemplateLoader, MainTemplateLoader.paths...)
 		MainWatcher.Listen(MainRouter, MainRouter.path)
 	} else {
 		// Else, call refresh on them directly.
 		MainTemplateLoader.Refresh()
 		MainRouter.Refresh()
+		plugins.OnRoutesLoaded(MainRouter)
 	}
 
-	server := &http.Server{
+	Server = &http.Server{
 		Addr:    fmt.Sprintf("%s:%d", address, port),
 		Handler: http.HandlerFunc(handle),
 	}
@@ -136,5 +139,17 @@ func Run(port int) {
 		fmt.Printf("Listening on port %d...\n", port)
 	}()
 
-	ERROR.Fatalln("Failed to listen:", server.ListenAndServe())
+	ERROR.Fatalln("Failed to listen:", Server.ListenAndServe())
+}
+
+// The PluginNotifier glues the watcher and the plugin collection together.
+// It audits refreshes and invokes the appropriate method to inform the plugins.
+type PluginNotifier struct {
+	plugins PluginCollection
+}
+
+func (pn PluginNotifier) OnRefresh(l Listener) {
+	if l == MainRouter {
+		pn.plugins.OnRoutesLoaded(MainRouter)
+	}
 }

@@ -6,6 +6,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"sync"
 )
 
 // Listener is an interface for receivers of filesystem events.
@@ -22,14 +23,21 @@ type DiscerningListener interface {
 	WatchFile(basename string) bool
 }
 
+// Auditor gets notified each time a listener gets refreshed.
+type Auditor interface {
+	OnRefresh(listener Listener)
+}
+
 // Watcher allows listeners to register to be notified of changes under a given
 // directory.
 type Watcher struct {
 	// Parallel arrays of watcher/listener pairs.
 	watchers     []*fsnotify.Watcher
 	listeners    []Listener
+	auditor      Auditor
 	forceRefresh bool
 	lastError    int
+	notifyMutex  sync.Mutex
 }
 
 func NewWatcher() *Watcher {
@@ -102,6 +110,10 @@ func (w *Watcher) Listen(listener Listener, roots ...string) {
 // Notify causes the watcher to forward any change events to listeners.
 // It returns the first (if any) error returned.
 func (w *Watcher) Notify() *Error {
+	// Serialize Notify() calls.
+	w.notifyMutex.Lock()
+	defer w.notifyMutex.Unlock()
+
 	for i, watcher := range w.watchers {
 		listener := w.listeners[i]
 
@@ -134,6 +146,9 @@ func (w *Watcher) Notify() *Error {
 			if err != nil {
 				w.lastError = i
 				return err
+			}
+			if w.auditor != nil {
+				w.auditor.OnRefresh(listener)
 			}
 		}
 	}

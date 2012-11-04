@@ -33,6 +33,7 @@ var (
 // Harness reverse proxies requests to the application server.
 // It builds / runs / rebuilds / restarts the server when code is changed.
 type Harness struct {
+	app        *App
 	serverHost string
 	port       int
 	proxy      *httputil.ReverseProxy
@@ -87,14 +88,20 @@ func NewHarness() *Harness {
 }
 
 // Rebuild the Revel application and run it on the given port.
-func (h *Harness) Refresh() *rev.Error {
-	rev.TRACE.Println("Rebuild")
-	binName, err := Build()
-	if err != nil {
-		return err
+func (h *Harness) Refresh() (err *rev.Error) {
+	if h.app != nil {
+		h.app.Kill()
 	}
-	start(binName, "", h.port)
-	return nil
+
+	rev.TRACE.Println("Rebuild")
+	h.app, err = Build()
+	if err != nil {
+		return
+	}
+
+	h.app.Port = h.port
+	h.app.Cmd().Start()
+	return
 }
 
 func (h *Harness) WatchDir(info os.FileInfo) bool {
@@ -105,25 +112,32 @@ func (h *Harness) WatchFile(filename string) bool {
 	return strings.HasSuffix(filename, ".go")
 }
 
+// Run the harness, which listens for requests and proxies them to the app
+// server, which it runs and rebuilds as necessary.
 func (h *Harness) Run() {
-	// If the harness exits, be sure to kill the app server.
-	defer func() {
-		if cmd != nil {
-			cmd.Process.Kill()
-			cmd = nil
-		}
-	}()
-
 	watcher = rev.NewWatcher()
-	watcher.Listen(h, rev.AppPath)
+	watcher.Listen(h, rev.CodePaths...)
 
-	appAddr := getAppAddress()
-	appPort := getAppPort()
-	rev.INFO.Printf("Listening on %s:%d", appAddr, appPort)
-	err := http.ListenAndServe(fmt.Sprintf("%s:%d", appAddr, appPort), h)
+	rev.INFO.Printf("Listening on %s:%d", rev.HttpAddr, rev.HttpPort)
+	err := http.ListenAndServe(fmt.Sprintf("%s:%d", rev.HttpAddr, rev.HttpPort), h)
 	if err != nil {
 		rev.ERROR.Fatalln("Failed to start reverse proxy:", err)
 	}
+}
+
+// Find an unused port
+func getFreePort() (port int) {
+	conn, err := net.Listen("tcp", ":0")
+	if err != nil {
+		rev.ERROR.Fatal(err)
+	}
+
+	port = conn.Addr().(*net.TCPAddr).Port
+	err = conn.Close()
+	if err != nil {
+		rev.ERROR.Fatal(err)
+	}
+	return port
 }
 
 // proxyWebsocket copies data between websocket client and server until one side

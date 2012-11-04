@@ -128,8 +128,25 @@ func (r *Route) Match(method string, reqPath string) *RouteMatch {
 
 	// If it's a static file request..
 	if r.staticDir != "" {
+		// Check if it is specifying a module.. if so, look there instead.
+		// This is a tenative syntax: "staticDir:moduleName:(directory)"
+		var basePath, dirName string
+		if i := strings.Index(r.staticDir, ":"); i != -1 {
+			moduleName, dirName := r.staticDir[:i], r.staticDir[i+1:]
+			for _, module := range Modules {
+				if module.Name == moduleName {
+					basePath = path.Join(module.Path, dirName)
+				}
+			}
+			if basePath == "" {
+				ERROR.Print("No such module found: ", moduleName)
+				basePath = BasePath
+			}
+		} else {
+			basePath, dirName = BasePath, r.staticDir
+		}
 		return &RouteMatch{
-			StaticFilename: path.Join(BasePath, r.staticDir, matches[1]),
+			StaticFilename: path.Join(basePath, dirName, matches[1]),
 		}
 	}
 

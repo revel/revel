@@ -4,14 +4,15 @@ import (
 	"errors"
 	"github.com/robfig/goconfig/config"
 	"path"
+	"strings"
 )
 
-// This handles the parsing of application.conf
+// This handles the parsing of app.conf
 // It has a "preferred" section that is checked first for option queries.
 // If the preferred section does not have the option, the DEFAULT section is
 // checked fallback.
 type MergedConfig struct {
-	*config.Config
+	config  *config.Config
 	section string // Check this section first, then fall back to DEFAULT
 }
 
@@ -34,7 +35,7 @@ func (c *MergedConfig) SetSection(section string) {
 }
 
 func (c *MergedConfig) Int(option string) (result int, found bool) {
-	result, err := c.Config.Int(c.section, option)
+	result, err := c.config.Int(c.section, option)
 	if err == nil {
 		return result, true
 	}
@@ -55,7 +56,7 @@ func (c *MergedConfig) IntDefault(option string, dfault int) int {
 }
 
 func (c *MergedConfig) Bool(option string) (result, found bool) {
-	result, err := c.Config.Bool(c.section, option)
+	result, err := c.config.Bool(c.section, option)
 	if err == nil {
 		return result, true
 	}
@@ -76,7 +77,7 @@ func (c *MergedConfig) BoolDefault(option string, dfault bool) bool {
 }
 
 func (c *MergedConfig) String(option string) (result string, found bool) {
-	if r, err := c.Config.String(c.section, option); err == nil {
+	if r, err := c.config.String(c.section, option); err == nil {
 		return stripQuotes(r), true
 	}
 	return "", false
@@ -87,6 +88,23 @@ func (c *MergedConfig) StringDefault(option, dfault string) string {
 		return r
 	}
 	return dfault
+}
+
+func (c *MergedConfig) HasSection(section string) bool {
+	return c.config.HasSection(section)
+}
+
+// Options returns all configuration option keys.
+// If a prefix is provided, then that is applied as a filter.
+func (c *MergedConfig) Options(prefix string) []string {
+	var options []string
+	keys, _ := c.config.Options(c.section)
+	for _, key := range keys {
+		if strings.HasPrefix(key, prefix) {
+			options = append(options, key)
+		}
+	}
+	return options
 }
 
 // Helpers

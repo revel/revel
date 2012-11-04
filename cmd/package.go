@@ -36,7 +36,7 @@ func packageApp(args []string) {
 	appImportPath := args[0]
 	rev.Init("", appImportPath, "")
 
-	binName, reverr := harness.Build()
+	app, reverr := harness.Build()
 	panicOnError(reverr, "Failed to build")
 
 	// Start collecting stuff in a temp directory.
@@ -53,13 +53,13 @@ func packageApp(args []string) {
 
 	// Revel and the app are in a directory structure mirroring import path
 	tmpRevelPath := path.Join(srcPath, filepath.FromSlash(rev.REVEL_IMPORT_PATH))
-	mustCopyFile(path.Join(tmpDir, filepath.Base(binName)), binName)
+	mustCopyFile(path.Join(tmpDir, filepath.Base(app.BinaryPath)), app.BinaryPath)
 	mustCopyDir(path.Join(tmpRevelPath, "conf"), path.Join(rev.RevelPath, "conf"), nil)
 	mustCopyDir(path.Join(tmpRevelPath, "templates"), path.Join(rev.RevelPath, "templates"), nil)
 	mustCopyDir(path.Join(srcPath, filepath.FromSlash(appImportPath)), rev.BasePath, nil)
 
 	tmplData := map[string]interface{}{
-		"BinName":    filepath.Base(binName),
+		"BinName":    filepath.Base(app.BinaryPath),
 		"ImportPath": appImportPath,
 	}
 
