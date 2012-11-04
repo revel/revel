@@ -105,9 +105,9 @@ func handleInternal(w http.ResponseWriter, r *http.Request, ws *websocket.Conn) 
 // This is called from the generated main file.
 // If port is non-zero, use that.  Else, read the port from app.conf.
 func Run(port int) {
-	address := Config.StringDefault("http.addr", "")
+	address := HttpAddr
 	if port == 0 {
-		port = Config.IntDefault("http.port", 9000)
+		port = HttpPort
 	}
 
 	MainRouter = NewRouter(path.Join(BasePath, "conf", "routes"))
