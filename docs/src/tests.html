@@ -1,0 +1,116 @@
+---
+layout: godoc
+---
+<!--
+	Copyright 2009 The Go Authors. All rights reserved.
+	Use of this source code is governed by a BSD-style
+	license that can be found in the LICENSE file.
+-->
+<h1>Tests</h1>
+
+
+
+	<pre>package rev
+
+type TestSuite struct {
+    Client       *http.Client
+    Response     *http.Response
+    ResponseBody []byte
+}
+
+var TestSuites []interface{} <span class="comment">// Array of structs that embed TestSuite</span>
+
+<span class="comment">// NewTestSuite returns an initialized TestSuite ready for use. It is invoked</span>
+<span class="comment">// by the test harness to initialize the embedded field in application tests.</span>
+func NewTestSuite() TestSuite {
+    return TestSuite{Client: &amp;http.Client{}}
+}
+
+<span class="comment">// Return the base URL of the server, e.g. &#34;http://127.0.0.1:8557&#34;</span>
+func (t *TestSuite) BaseUrl() string {
+    if Server.Addr[0] == &#39;:&#39; {
+        return &#34;http://127.0.0.1&#34; + Server.Addr
+    }
+    return &#34;http://&#34; + Server.Addr
+}
+
+<span class="comment">// Issue a GET request to the given path and store the result in Request and</span>
+<span class="comment">// RequestBody.</span>
+func (t *TestSuite) Get(path string) {
+    req, err := http.NewRequest(&#34;GET&#34;, t.BaseUrl()+path, nil)
+    if err != nil {
+        panic(err)
+    }
+    t.MakeRequest(req)
+}
+
+<span class="comment">// Issue a POST request to the given path, sending the given Content-Type and</span>
+<span class="comment">// data, and store the result in Request and RequestBody.  &#34;data&#34; may be nil.</span>
+func (t *TestSuite) Post(path string, contentType string, reader io.Reader) {
+    req, err := http.NewRequest(&#34;POST&#34;, t.BaseUrl()+path, reader)
+    if err != nil {
+        panic(err)
+    }
+    req.Header.Set(&#34;Content-Type&#34;, contentType)
+    t.MakeRequest(req)
+}
+
+<span class="comment">// Issue a POST request to the given path as a form post of the given key and</span>
+<span class="comment">// values, and store the result in Request and RequestBody.  </span>
+func (t *TestSuite) PostForm(path string, data url.Values) {
+    t.Post(path, &#34;application/x-www-form-urlencoded&#34;, strings.NewReader(data.Encode()))
+}
+
+<span class="comment">// Issue any request and read the response. If successful, the caller may</span>
+<span class="comment">// examine the Response and ResponseBody properties.</span>
+func (t *TestSuite) MakeRequest(req *http.Request) {
+    var err error
+    if t.Response, err = t.Client.Do(req); err != nil {
+        panic(err)
+    }
+    if t.ResponseBody, err = ioutil.ReadAll(t.Response.Body); err != nil {
+        panic(err)
+    }
+}
+
+func (t *TestSuite) AssertOk() {
+    t.AssertStatus(http.StatusOK)
+}
+
+func (t *TestSuite) AssertNotFound() {
+    t.AssertStatus(http.StatusNotFound)
+}
+
+func (t *TestSuite) AssertStatus(status int) {
+    if t.Response.StatusCode != status {
+        panic(fmt.Errorf(&#34;Status: (expected) %d != %d (actual)&#34;, status, t.Response.StatusCode))
+    }
+}
+
+func (t *TestSuite) AssertContentType(contentType string) {
+    t.AssertHeader(&#34;Content-Type&#34;, contentType)
+}
+
+func (t *TestSuite) AssertHeader(name, value string) {
+    actual := t.Response.Header.Get(name)
+    if actual != value {
+        panic(fmt.Errorf(&#34;Header %s: (expected) %s != %s (actual)&#34;, name, value, actual))
+    }
+}
+
+func (t *TestSuite) Assert(exp bool) {
+    t.Assertf(exp, &#34;Assertion failed&#34;)
+}
+
+func (t *TestSuite) Assertf(exp bool, formatStr string, args ...interface{}) {
+    if !exp {
+        panic(fmt.Errorf(formatStr, args))
+    }
+}
+</pre>
+
+
+
+
+
+

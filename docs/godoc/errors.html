@@ -24,6 +24,9 @@ layout: godoc
 				
 				<dd><a href="#Error">type Error</a></dd>
 				
+					
+					<dd>&nbsp; &nbsp; <a href="#NewErrorFromPanic">func NewErrorFromPanic(err interface{}) *Error</a></dd>
+				
 				
 					
 					<dd>&nbsp; &nbsp; <a href="#Error.ContextSource">func (e *Error) ContextSource() []sourceLine</a></dd>
@@ -54,12 +57,13 @@ layout: godoc
 		
 			
 			
-			<h2 id="Error">type <a href="../src/errors.html?s=95:520#L1">Error</a></h2>
+			<h2 id="Error">type <a href="../src/errors.html?s=128:638#L1">Error</a></h2>
 			<pre>type Error struct {
     SourceType               string   <span class="comment">// The type of source that failed to build.</span>
     Title, Path, Description string   <span class="comment">// Description of the error, as presented to the user.</span>
     Line, Column             int      <span class="comment">// Where the error was encountered.</span>
     SourceLines              []string <span class="comment">// The entire source file, split into lines.</span>
+    Stack                    string   <span class="comment">// The raw stack trace string from debug.Stack().</span>
     MetaError                string   <span class="comment">// Error that occurred producing the error page.</span>
 }</pre>
 			<p>
@@ -74,10 +78,21 @@ An error description, used as an argument to the error template.
 			
 
 			
+				
+				<h3 id="NewErrorFromPanic">func <a href="../src/errors.html?s=950:996#L19">NewErrorFromPanic</a></h3>
+				<pre>func NewErrorFromPanic(err interface{}) *Error</pre>
+				<p>
+Find the deepest stack from in uesr code and provide a code listing of
+that, on the line that eventually triggered the panic.  Returns nil if no
+relevant stack frame can be found.
+</p>
+
+				
+			
 
 			
 				
-				<h3 id="Error.ContextSource">func (*Error) <a href="../src/errors.html?s=1303:1347#L34">ContextSource</a></h3>
+				<h3 id="Error.ContextSource">func (*Error) <a href="../src/errors.html?s=2482:2526#L73">ContextSource</a></h3>
 				<pre>func (e *Error) ContextSource() []sourceLine</pre>
 				<p>
 Returns a snippet of the source around where the error occurred.
@@ -87,7 +102,7 @@ Returns a snippet of the source around where the error occurred.
 				
 			
 				
-				<h3 id="Error.Error">func (*Error) <a href="../src/errors.html?s=835:865#L13">Error</a></h3>
+				<h3 id="Error.Error">func (*Error) <a href="../src/errors.html?s=2014:2044#L52">Error</a></h3>
 				<pre>func (e *Error) Error() string</pre>
 				<p>
 Construct a plaintext version of the error, taking account that fields are optionally set.

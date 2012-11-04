@@ -16,6 +16,7 @@ var (
     MainRouter         *Router
     MainTemplateLoader *TemplateLoader
     MainWatcher        *Watcher
+    Server             *http.Server
 )
 
 <span class="comment">// Run the server.</span>
@@ -30,19 +31,19 @@ func Run(port int) {
     MainRouter = NewRouter(path.Join(BasePath, &#34;conf&#34;, &#34;routes&#34;))
     MainTemplateLoader = NewTemplateLoader(TemplatePaths)
 
-    <span class="comment">// If desired (or by default), create a watcher for templates and routes.</span>
-    <span class="comment">// The watcher calls Refresh() on things on the first request.</span>
     if Config.BoolDefault(&#34;server.watcher&#34;, true) {
         MainWatcher = NewWatcher()
+        MainWatcher.auditor = PluginNotifier{plugins}
         MainWatcher.Listen(MainTemplateLoader, MainTemplateLoader.paths...)
         MainWatcher.Listen(MainRouter, MainRouter.path)
     } else {
-        <span class="comment">// Else, call refresh on them directly.</span>
+
         MainTemplateLoader.Refresh()
         MainRouter.Refresh()
+        plugins.OnRoutesLoaded(MainRouter)
     }
 
-    server := &amp;http.Server{
+    Server = &amp;http.Server{
         Addr:    fmt.Sprintf(&#34;%s:%d&#34;, address, port),
         Handler: http.HandlerFunc(handle),
     }
@@ -54,7 +55,19 @@ func Run(port int) {
         fmt.Printf(&#34;Listening on port %d...\n&#34;, port)
     }()
 
-    ERROR.Fatalln(&#34;Failed to listen:&#34;, server.ListenAndServe())
+    ERROR.Fatalln(&#34;Failed to listen:&#34;, Server.ListenAndServe())
+}
+
+<span class="comment">// The PluginNotifier glues the watcher and the plugin collection together.</span>
+<span class="comment">// It audits refreshes and invokes the appropriate method to inform the plugins.</span>
+type PluginNotifier struct {
+    <span class="comment">// contains filtered or unexported fields</span>
+}
+
+func (pn PluginNotifier) OnRefresh(l Listener) {
+    if l == MainRouter {
+        pn.plugins.OnRoutesLoaded(MainRouter)
+    }
 }
 </pre>
 

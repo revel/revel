@@ -16,7 +16,7 @@ type Route struct {
     Method string <span class="comment">// e.g. GET</span>
     Path   string <span class="comment">// e.g. /app/{id}</span>
     Action string <span class="comment">// e.g. Application.ShowApp</span>
-
+    <span class="comment">// contains filtered or unexported fields</span>
 }
 
 type RouteMatch struct {
@@ -35,7 +35,6 @@ func NewRoute(method, path, action string) (r *Route) {
         Action: action,
     }
 
-    <span class="comment">// Handle static routes</span>
     if strings.HasPrefix(r.Action, &#34;staticDir:&#34;) {
         if r.Method != &#34;*&#34; &amp;&amp; r.Method != &#34;GET&#34; {
             WARN.Print(&#34;Static route only supports GET&#34;)
@@ -49,27 +48,20 @@ func NewRoute(method, path, action string) (r *Route) {
 
         r.pathPattern = regexp.MustCompile(&#34;^&#34; + r.Path + &#34;(.*)$&#34;)
         r.staticDir = r.Action[len(&#34;staticDir:&#34;):]
-        <span class="comment">// TODO: staticFile:</span>
+
         return
     }
 
-    <span class="comment">// URL pattern</span>
-    <span class="comment">// TODO: Support non-absolute paths</span>
     if !strings.HasPrefix(r.Path, &#34;/&#34;) {
         ERROR.Print(&#34;Absolute URL required.&#34;)
         return
     }
 
-    <span class="comment">// Handle embedded arguments</span>
-
-    <span class="comment">// Convert path arguments with unspecified regexes to standard form.</span>
-    <span class="comment">// e.g. &#34;/customer/{id}&#34; =&gt; &#34;/customer/{&lt;[^/]+&gt;id}</span>
     normPath := nakedPathParamRegex.ReplaceAllStringFunc(r.Path, func(m string) string {
         var argMatches []string = nakedPathParamRegex.FindStringSubmatch(m)
         return &#34;{&lt;[^/]+&gt;&#34; + argMatches[1] + &#34;}&#34;
     })
 
-    <span class="comment">// Go through the arguments</span>
     r.args = make([]*arg, 0, 3)
     for i, m := range argsPattern.FindAllStringSubmatch(normPath, -1) {
         r.args = append(r.args, &amp;arg{
@@ -79,8 +71,6 @@ func NewRoute(method, path, action string) (r *Route) {
         })
     }
 
-    <span class="comment">// Now assemble the entire path regex, including the embedded parameters.</span>
-    <span class="comment">// e.g. /app/{&lt;[^/]+&gt;id} =&gt; /app/(?P&lt;id&gt;[^/]+)</span>
     pathPatternStr := argsPattern.ReplaceAllStringFunc(normPath, func(m string) string {
         var argMatches []string = argsPattern.FindStringSubmatch(m)
         return &#34;(?P&lt;&#34; + argMatches[2] + &#34;&gt;&#34; + argMatches[1] + &#34;)&#34;
@@ -102,7 +92,7 @@ func NewRoute(method, path, action string) (r *Route) {
 
 <span class="comment">// Return nil if no match.</span>
 func (r *Route) Match(method string, reqPath string) *RouteMatch {
-    <span class="comment">// Check the Method</span>
+
     if r.Method != &#34;*&#34; &amp;&amp; method != r.Method &amp;&amp; !(method == &#34;HEAD&#34; &amp;&amp; r.Method == &#34;GET&#34;) {
         return nil
     }
@@ -113,20 +103,34 @@ func (r *Route) Match(method string, reqPath string) *RouteMatch {
         return nil
     }
 
-    <span class="comment">// If it&#39;s a static file request..</span>
     if r.staticDir != &#34;&#34; {
+        <span class="comment">// Check if it is specifying a module.. if so, look there instead.</span>
+        <span class="comment">// This is a tenative syntax: &#34;staticDir:moduleName:(directory)&#34;</span>
+        var basePath, dirName string
+        if i := strings.Index(r.staticDir, &#34;:&#34;); i != -1 {
+            moduleName, dirName := r.staticDir[:i], r.staticDir[i+1:]
+            for _, module := range Modules {
+                if module.Name == moduleName {
+                    basePath = path.Join(module.Path, dirName)
+                }
+            }
+            if basePath == &#34;&#34; {
+                ERROR.Print(&#34;No such module found: &#34;, moduleName)
+                basePath = BasePath
+            }
+        } else {
+            basePath, dirName = BasePath, r.staticDir
+        }
         return &amp;RouteMatch{
-            StaticFilename: path.Join(BasePath, r.staticDir, matches[1]),
+            StaticFilename: path.Join(basePath, dirName, matches[1]),
         }
     }
 
-    <span class="comment">// Figure out the Param names.</span>
     params := make(map[string]string)
     for i, m := range matches[1:] {
         params[r.pathPattern.SubexpNames()[i+1]] = m
     }
 
-    <span class="comment">// If the action is variablized, replace into it with the captured args.</span>
     action := r.Action
     if strings.Contains(action, &#34;{&#34;) {
         for key, value := range params {
@@ -134,17 +138,15 @@ func (r *Route) Match(method string, reqPath string) *RouteMatch {
         }
     }
 
-    <span class="comment">// Special handling for explicit 404&#39;s.</span>
     if action == &#34;404&#34; {
         return &amp;RouteMatch{
             Action: &#34;404&#34;,
         }
     }
 
-    <span class="comment">// Split the action into controller and method</span>
     actionSplit := strings.Split(action, &#34;.&#34;)
     if len(actionSplit) != 2 {
-        ERROR.Printf(&#34;Failed to split action: %s&#34;, r.Action)
+        ERROR.Printf(&#34;Failed to split action: %s (matching route: %s)&#34;, action, r.Action)
         return nil
     }
 
@@ -158,7 +160,7 @@ func (r *Route) Match(method string, reqPath string) *RouteMatch {
 
 type Router struct {
     Routes []*Route
-
+    <span class="comment">// contains filtered or unexported fields</span>
 }
 
 func (router *Router) Route(req *http.Request) *RouteMatch {
@@ -173,7 +175,7 @@ func (router *Router) Route(req *http.Request) *RouteMatch {
 <span class="comment">// Refresh re-reads the routes file and re-calculates the routing table.</span>
 <span class="comment">// Returns an error if a specified action could not be found.</span>
 func (router *Router) Refresh() *Error {
-    <span class="comment">// Get the routes file content.</span>
+
     contentBytes, err := ioutil.ReadFile(router.path)
     if err != nil {
         return &amp;Error{
@@ -204,7 +206,7 @@ func (a *ActionDefinition) String() string {
 func (router *Router) Reverse(action string, argValues map[string]string) *ActionDefinition {
 
 NEXT_ROUTE:
-    <span class="comment">// Loop through the routes.</span>
+
     for _, route := range router.Routes {
         if route.actionPattern == nil {
             continue
@@ -219,13 +221,11 @@ NEXT_ROUTE:
             argValues[route.actionPattern.SubexpNames()[i+1]] = match
         }
 
-        <span class="comment">// Create a lookup for the route args.</span>
         routeArgs := make(map[string]*arg)
         for _, arg := range route.args {
             routeArgs[arg.name] = arg
         }
 
-        <span class="comment">// Enforce the constraints on the arg values.</span>
         for argKey, argValue := range argValues {
             arg, ok := routeArgs[argKey]
             if ok &amp;&amp; !arg.constraint.MatchString(argValue) {
@@ -238,16 +238,15 @@ NEXT_ROUTE:
         path := route.Path
         for argKey, argValue := range argValues {
             if _, ok := routeArgs[argKey]; ok {
-                <span class="comment">// If this arg goes into the path, put it in.</span>
+
                 path = regexp.MustCompile(`\{(&lt;[^&gt;]+&gt;)?`+regexp.QuoteMeta(argKey)+`\}`).
                     ReplaceAllString(path, url.QueryEscape(string(argValue)))
             } else {
-                <span class="comment">// Else, add it to the query string.</span>
+
                 queryValues.Set(argKey, argValue)
             }
         }
 
-        <span class="comment">// Calculate the final URL and Method</span>
         url := path
         if len(queryValues) &gt; 0 {
             url += &#34;?&#34; + queryValues.Encode()

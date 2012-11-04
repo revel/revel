@@ -40,6 +40,9 @@ layout: godoc
 					
 					<dd>&nbsp; &nbsp; <a href="#EmptyPlugin.OnException">func (p EmptyPlugin) OnException(c *Controller, err interface{})</a></dd>
 				
+					
+					<dd>&nbsp; &nbsp; <a href="#EmptyPlugin.OnRoutesLoaded">func (p EmptyPlugin) OnRoutesLoaded(router *Router)</a></dd>
+				
 			
 				
 				<dd><a href="#Plugin">type Plugin</a></dd>
@@ -61,6 +64,9 @@ layout: godoc
 				
 					
 					<dd>&nbsp; &nbsp; <a href="#PluginCollection.OnException">func (plugins PluginCollection) OnException(c *Controller, err interface{})</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#PluginCollection.OnRoutesLoaded">func (plugins PluginCollection) OnRoutesLoaded(router *Router)</a></dd>
 				
 			
 			
@@ -84,7 +90,7 @@ layout: godoc
 		
 			
 			
-			<h2 id="RegisterPlugin">func <a href="../src/plugin.html?s=690:719#L13">RegisterPlugin</a></h2>
+			<h2 id="RegisterPlugin">func <a href="../src/plugin.html?s=790:819#L15">RegisterPlugin</a></h2>
 			<pre>func RegisterPlugin(p Plugin)</pre>
 			
 			
@@ -92,7 +98,7 @@ layout: godoc
 		
 			
 			
-			<h2 id="EmptyPlugin">type <a href="../src/plugin.html?s=328:353#L2">EmptyPlugin</a></h2>
+			<h2 id="EmptyPlugin">type <a href="../src/plugin.html?s=360:385#L3">EmptyPlugin</a></h2>
 			<pre>type EmptyPlugin struct{}</pre>
 			<p>
 It provides default (empty) implementations for all the required methods.
@@ -109,29 +115,36 @@ It provides default (empty) implementations for all the required methods.
 
 			
 				
-				<h3 id="EmptyPlugin.AfterRequest">func (EmptyPlugin) <a href="../src/plugin.html?s=491:539#L6">AfterRequest</a></h3>
+				<h3 id="EmptyPlugin.AfterRequest">func (EmptyPlugin) <a href="../src/plugin.html?s=591:639#L8">AfterRequest</a></h3>
 				<pre>func (p EmptyPlugin) AfterRequest(c *Controller)</pre>
 				
 				
 				
 			
 				
-				<h3 id="EmptyPlugin.BeforeRequest">func (EmptyPlugin) <a href="../src/plugin.html?s=423:472#L5">BeforeRequest</a></h3>
+				<h3 id="EmptyPlugin.BeforeRequest">func (EmptyPlugin) <a href="../src/plugin.html?s=523:572#L7">BeforeRequest</a></h3>
 				<pre>func (p EmptyPlugin) BeforeRequest(c *Controller)</pre>
 				
 				
 				
 			
 				
-				<h3 id="EmptyPlugin.OnAppStart">func (EmptyPlugin) <a href="../src/plugin.html?s=355:388#L4">OnAppStart</a></h3>
+				<h3 id="EmptyPlugin.OnAppStart">func (EmptyPlugin) <a href="../src/plugin.html?s=387:420#L5">OnAppStart</a></h3>
 				<pre>func (p EmptyPlugin) OnAppStart()</pre>
 				
 				
 				
 			
 				
-				<h3 id="EmptyPlugin.OnException">func (EmptyPlugin) <a href="../src/plugin.html?s=559:623#L7">OnException</a></h3>
+				<h3 id="EmptyPlugin.OnException">func (EmptyPlugin) <a href="../src/plugin.html?s=659:723#L9">OnException</a></h3>
 				<pre>func (p EmptyPlugin) OnException(c *Controller, err interface{})</pre>
+				
+				
+				
+			
+				
+				<h3 id="EmptyPlugin.OnRoutesLoaded">func (EmptyPlugin) <a href="../src/plugin.html?s=455:506#L6">OnRoutesLoaded</a></h3>
+				<pre>func (p EmptyPlugin) OnRoutesLoaded(router *Router)</pre>
 				
 				
 				
@@ -139,9 +152,10 @@ It provides default (empty) implementations for all the required methods.
 		
 			
 			
-			<h2 id="Plugin">type <a href="../src/plugin.html?s=106:249#L1">Plugin</a></h2>
+			<h2 id="Plugin">type <a href="../src/plugin.html?s=106:281#L1">Plugin</a></h2>
 			<pre>type Plugin interface {
     OnAppStart()
+    OnRoutesLoaded(router *Router)
     BeforeRequest(c *Controller)
     AfterRequest(c *Controller)
     OnException(c *Controller, err interface{})
@@ -163,7 +177,7 @@ An plugin that allows the user to inject behavior at various points in the reque
 		
 			
 			
-			<h2 id="PluginCollection">type <a href="../src/plugin.html?s=628:658#L9">PluginCollection</a></h2>
+			<h2 id="PluginCollection">type <a href="../src/plugin.html?s=728:758#L11">PluginCollection</a></h2>
 			<pre>type PluginCollection []Plugin</pre>
 			
 
@@ -177,29 +191,36 @@ An plugin that allows the user to inject behavior at various points in the reque
 
 			
 				
-				<h3 id="PluginCollection.AfterRequest">func (PluginCollection) <a href="../src/plugin.html?s=973:1032#L29">AfterRequest</a></h3>
+				<h3 id="PluginCollection.AfterRequest">func (PluginCollection) <a href="../src/plugin.html?s=1200:1259#L37">AfterRequest</a></h3>
 				<pre>func (plugins PluginCollection) AfterRequest(c *Controller)</pre>
 				
 				
 				
 			
 				
-				<h3 id="PluginCollection.BeforeRequest">func (PluginCollection) <a href="../src/plugin.html?s=854:914#L23">BeforeRequest</a></h3>
+				<h3 id="PluginCollection.BeforeRequest">func (PluginCollection) <a href="../src/plugin.html?s=1081:1141#L31">BeforeRequest</a></h3>
 				<pre>func (plugins PluginCollection) BeforeRequest(c *Controller)</pre>
 				
 				
 				
 			
 				
-				<h3 id="PluginCollection.OnAppStart">func (PluginCollection) <a href="../src/plugin.html?s=755:799#L17">OnAppStart</a></h3>
+				<h3 id="PluginCollection.OnAppStart">func (PluginCollection) <a href="../src/plugin.html?s=855:899#L19">OnAppStart</a></h3>
 				<pre>func (plugins PluginCollection) OnAppStart()</pre>
 				
 				
 				
 			
 				
-				<h3 id="PluginCollection.OnException">func (PluginCollection) <a href="../src/plugin.html?s=1090:1165#L35">OnException</a></h3>
+				<h3 id="PluginCollection.OnException">func (PluginCollection) <a href="../src/plugin.html?s=1317:1392#L43">OnException</a></h3>
 				<pre>func (plugins PluginCollection) OnException(c *Controller, err interface{})</pre>
+				
+				
+				
+			
+				
+				<h3 id="PluginCollection.OnRoutesLoaded">func (PluginCollection) <a href="../src/plugin.html?s=954:1016#L25">OnRoutesLoaded</a></h3>
+				<pre>func (plugins PluginCollection) OnRoutesLoaded(router *Router)</pre>
 				
 				
 				

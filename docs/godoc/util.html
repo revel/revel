@@ -29,10 +29,16 @@ layout: godoc
 				<dd><a href="#ContentTypeByFilename">func ContentTypeByFilename(filename string) string</a></dd>
 			
 				
+				<dd><a href="#DirExists">func DirExists(filename string) bool</a></dd>
+			
+				
 				<dd><a href="#ExecuteTemplate">func ExecuteTemplate(tmpl ExecutableTemplate, data interface{}) string</a></dd>
 			
 				
 				<dd><a href="#FindMethod">func FindMethod(recvType reflect.Type, funcVal *reflect.Value) *reflect.Method</a></dd>
+			
+				
+				<dd><a href="#FirstNonEmpty">func FirstNonEmpty(strs ...string) string</a></dd>
 			
 				
 				<dd><a href="#MustReadLines">func MustReadLines(filename string) []string</a></dd>
@@ -76,14 +82,14 @@ layout: godoc
 		
 			
 			
-			<h2 id="ContainsString">func <a href="../src/util.html?s=863:917#L33">ContainsString</a></h2>
+			<h2 id="ContainsString">func <a href="../src/util.html?s=869:923#L34">ContainsString</a></h2>
 			<pre>func ContainsString(list []string, target string) bool</pre>
 			
 			
 		
 			
 			
-			<h2 id="ContentTypeByFilename">func <a href="../src/util.html?s=2398:2448#L89">ContentTypeByFilename</a></h2>
+			<h2 id="ContentTypeByFilename">func <a href="../src/util.html?s=2404:2454#L90">ContentTypeByFilename</a></h2>
 			<pre>func ContentTypeByFilename(filename string) string</pre>
 			<p>
 Returns a MIME content type based on the filename&#39;s extension.
@@ -95,7 +101,17 @@ Additionally, specifies the charset as UTF-8 for text/* types.
 		
 			
 			
-			<h2 id="ExecuteTemplate">func <a href="../src/util.html?s=282:352#L9">ExecuteTemplate</a></h2>
+			<h2 id="DirExists">func <a href="../src/util.html?s=2908:2944#L110">DirExists</a></h2>
+			<pre>func DirExists(filename string) bool</pre>
+			<p>
+DirExists returns true if the given path exists and is a directory.
+</p>
+
+			
+		
+			
+			
+			<h2 id="ExecuteTemplate">func <a href="../src/util.html?s=288:358#L10">ExecuteTemplate</a></h2>
 			<pre>func ExecuteTemplate(tmpl ExecutableTemplate, data interface{}) string</pre>
 			<p>
 Execute a template and returns the result as a string.
@@ -105,7 +121,7 @@ Execute a template and returns the result as a string.
 		
 			
 			
-			<h2 id="FindMethod">func <a href="../src/util.html?s=1074:1152#L43">FindMethod</a></h2>
+			<h2 id="FindMethod">func <a href="../src/util.html?s=1080:1158#L44">FindMethod</a></h2>
 			<pre>func FindMethod(recvType reflect.Type, funcVal *reflect.Value) *reflect.Method</pre>
 			<p>
 Return the reflect.Method, given a Receiver type and Func value.
@@ -115,7 +131,14 @@ Return the reflect.Method, given a Receiver type and Func value.
 		
 			
 			
-			<h2 id="MustReadLines">func <a href="../src/util.html?s=489:533#L16">MustReadLines</a></h2>
+			<h2 id="FirstNonEmpty">func <a href="../src/util.html?s=3025:3066#L115">FirstNonEmpty</a></h2>
+			<pre>func FirstNonEmpty(strs ...string) string</pre>
+			
+			
+		
+			
+			
+			<h2 id="MustReadLines">func <a href="../src/util.html?s=495:539#L17">MustReadLines</a></h2>
 			<pre>func MustReadLines(filename string) []string</pre>
 			<p>
 Reads the lines of the given file.  Panics in the case of error.
@@ -125,7 +148,7 @@ Reads the lines of the given file.  Panics in the case of error.
 		
 			
 			
-			<h2 id="ParseKeyValueCookie">func <a href="../src/util.html?s=1577:1639#L60">ParseKeyValueCookie</a></h2>
+			<h2 id="ParseKeyValueCookie">func <a href="../src/util.html?s=1583:1645#L61">ParseKeyValueCookie</a></h2>
 			<pre>func ParseKeyValueCookie(val string, cb func(key, val string))</pre>
 			<p>
 Takes the raw (escaped) cookie value and parses out key values.
@@ -135,7 +158,7 @@ Takes the raw (escaped) cookie value and parses out key values.
 		
 			
 			
-			<h2 id="ReadLines">func <a href="../src/util.html?s=681:730#L25">ReadLines</a></h2>
+			<h2 id="ReadLines">func <a href="../src/util.html?s=687:736#L26">ReadLines</a></h2>
 			<pre>func ReadLines(filename string) ([]string, error)</pre>
 			<p>
 Reads the lines of the given file.  Panics in the case of error.
@@ -146,7 +169,7 @@ Reads the lines of the given file.  Panics in the case of error.
 		
 			
 			
-			<h2 id="ExecutableTemplate">type <a href="../src/util.html?s=146:222#L4">ExecutableTemplate</a></h2>
+			<h2 id="ExecutableTemplate">type <a href="../src/util.html?s=152:228#L5">ExecutableTemplate</a></h2>
 			<pre>type ExecutableTemplate interface {
     Execute(io.Writer, interface{}) error
 }</pre>

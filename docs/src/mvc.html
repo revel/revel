@@ -28,7 +28,7 @@ type Flash struct {
 type Params struct {
     url.Values
     Files map[string][]*multipart.FileHeader
-
+    <span class="comment">// contains filtered or unexported fields</span>
 }
 
 <span class="comment">// A signed cookie (and thus limited to 4kb in size).</span>
@@ -110,7 +110,6 @@ func NewAppController(req *Request, resp *Response, controllerName, methodName s
     controller := NewController(req, resp, appControllerType)
     appControllerPtr := initNewAppController(appControllerType.Type, controller)
 
-    <span class="comment">// Set the method being called.</span>
     controller.MethodType = appControllerType.Method(methodName)
     if controller.MethodType == nil {
         INFO.Println(&#34;Failed to find method&#34;, methodName, &#34;on Controller&#34;,
@@ -135,16 +134,14 @@ func (c *Controller) SetCookie(cookie *http.Cookie) {
 <span class="comment">// result.  (e.g. render a template to the response)</span>
 func (c *Controller) Invoke(appControllerPtr reflect.Value, method reflect.Value, methodArgs []reflect.Value) {
 
-    <span class="comment">// Handle panics.</span>
     defer func() {
         if err := recover(); err != nil {
             handleInvocationPanic(c, err)
         }
     }()
 
-    <span class="comment">// Clean up from the request.</span>
     defer func() {
-        <span class="comment">// Delete temp files.</span>
+
         if c.Request.MultipartForm != nil {
             err := c.Request.MultipartForm.RemoveAll()
             if err != nil {
@@ -160,21 +157,17 @@ func (c *Controller) Invoke(appControllerPtr reflect.Value, method reflect.Value
         }
     }()
 
-    <span class="comment">// Run the plugins.</span>
     plugins.BeforeRequest(c)
 
-    <span class="comment">// Calculate the Result by running the interceptors and the action.</span>
     resultValue := func() reflect.Value {
-        <span class="comment">// Call the BEFORE interceptors</span>
+
         result := c.invokeInterceptors(BEFORE, appControllerPtr)
         if result != nil {
             return reflect.ValueOf(result)
         }
 
-        <span class="comment">// Invoke the action.</span>
         resultValue := method.Call(methodArgs)[0]
 
-        <span class="comment">// Call the AFTER interceptors</span>
         result = c.invokeInterceptors(AFTER, appControllerPtr)
         if result != nil {
             return reflect.ValueOf(result)
@@ -195,7 +188,7 @@ func (c *Controller) Invoke(appControllerPtr reflect.Value, method reflect.Value
         flashValue += &#34;\x00&#34; + key + &#34;:&#34; + value + &#34;\x00&#34;
     }
     c.SetCookie(&amp;http.Cookie{
-        Name:  &#34;REVEL_FLASH&#34;,
+        Name:  COOKIE_PREFIX + &#34;_FLASH&#34;,
         Value: url.QueryEscape(flashValue),
         Path:  &#34;/&#34;,
     })
@@ -210,7 +203,7 @@ func (c *Controller) Invoke(appControllerPtr reflect.Value, method reflect.Value
         }
     }
     c.SetCookie(&amp;http.Cookie{
-        Name:  &#34;REVEL_ERRORS&#34;,
+        Name:  COOKIE_PREFIX + &#34;_ERRORS&#34;,
         Value: url.QueryEscape(errorsValue),
         Path:  &#34;/&#34;,
     })
@@ -222,12 +215,11 @@ func (c *Controller) Invoke(appControllerPtr reflect.Value, method reflect.Value
     }
     sessionData := url.QueryEscape(sessionValue)
     c.SetCookie(&amp;http.Cookie{
-        Name:  &#34;REVEL_SESSION&#34;,
+        Name:  COOKIE_PREFIX + &#34;_SESSION&#34;,
         Value: Sign(sessionData) + &#34;-&#34; + sessionData,
         Path:  &#34;/&#34;,
     })
 
-    <span class="comment">// Apply the result, which generally results in the ResponseWriter getting written.</span>
     result.Apply(c.Request, c.Response)
 }
 
@@ -253,7 +245,7 @@ func RenderError(req *Request, resp *Response, err error) {
 <span class="comment">// This action will render views/Users/ShowUser.html, passing in an extra</span>
 <span class="comment">// key-value &#34;user&#34;: (User).</span>
 func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
-    <span class="comment">// Get the calling function name.</span>
+
     pc, _, line, ok := runtime.Caller(1)
     if !ok {
         ERROR.Println(&#34;Failed to get Caller information&#34;)
@@ -263,8 +255,6 @@ func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
     var fqViewName string = runtime.FuncForPC(pc).Name()
     var viewName string = fqViewName[strings.LastIndex(fqViewName, &#34;.&#34;)+1 : len(fqViewName)]
 
-    <span class="comment">// Determine what method we are in.</span>
-    <span class="comment">// (e.g. the invoked controller method might have delegated to another method)</span>
     methodType := c.MethodType
     if methodType.Name != viewName {
         methodType = c.Type.Method(viewName)
@@ -276,7 +266,6 @@ func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
         }
     }
 
-    <span class="comment">// Get the extra RenderArgs passed in.</span>
     if renderArgNames, ok := methodType.RenderArgNames[line]; ok {
         if len(renderArgNames) == len(extraRenderArgs) {
             for i, extraRenderArg := range extraRenderArgs {
@@ -298,13 +287,11 @@ func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
 <span class="comment">// Renders the given template, using the current RenderArgs.</span>
 func (c *Controller) RenderTemplate(templatePath string) Result {
 
-    <span class="comment">// Get the Template.</span>
     template, err := MainTemplateLoader.Template(templatePath)
     if err != nil {
         return c.RenderError(err)
     }
 
-    <span class="comment">// Add Validation errors to RenderArgs.</span>
     c.RenderArgs[&#34;errors&#34;] = c.Validation.ErrorMap()
 
     return &amp;RenderTemplateResult{
@@ -407,13 +394,11 @@ func (f Flash) Success(msg string, args ...interface{}) {
 func ParseParams(req *Request) *Params {
     var files map[string][]*multipart.FileHeader
 
-    <span class="comment">// Always want the url parameters.</span>
     values := req.URL.Query()
 
-    <span class="comment">// Parse the body depending on the content type.</span>
     switch req.ContentType {
     case &#34;application/x-www-form-urlencoded&#34;:
-        <span class="comment">// Typical form.</span>
+
         if err := req.ParseForm(); err != nil {
             WARN.Println(&#34;Error parsing request body:&#34;, err)
         } else {
@@ -425,9 +410,8 @@ func ParseParams(req *Request) *Params {
         }
 
     case &#34;multipart/form-data&#34;:
-        <span class="comment">// Multipart form.</span>
-        <span class="comment">// TODO: Extract the multipart form param so app can set it.</span>
-        if err := req.ParseMultipartForm(32 &lt;&lt; 20 <span class="comment">/* 32 MB */</span>); err != nil {
+
+        if err := req.ParseMultipartForm(32 &lt;&lt; 20); err != nil {
             WARN.Println(&#34;Error parsing request body:&#34;, err)
         } else {
             for key, vals := range req.MultipartForm.Value {
@@ -493,7 +477,7 @@ func (resp *Response) WriteHeader(defaultStatusCode int, defaultContentType stri
     resp.Out.WriteHeader(resp.Status)
 }
 
-<span class="comment">// Internal bookeeping</span>
+var COOKIE_PREFIX string
 
 type ControllerType struct {
     Type    reflect.Type
@@ -504,7 +488,7 @@ type MethodType struct {
     Name           string
     Args           []*MethodArg
     RenderArgNames map[int][]string
-
+    <span class="comment">// contains filtered or unexported fields</span>
 }
 
 type MethodArg struct {
@@ -530,7 +514,6 @@ func RegisterController(c interface{}, methods []*MethodType) {
     var t reflect.Type = reflect.TypeOf(c)
     var elem reflect.Type = t.Elem()
 
-    <span class="comment">// De-star all of the method arg types too.</span>
     for _, m := range methods {
         m.lowerName = strings.ToLower(m.Name)
         for _, arg := range m.Args {

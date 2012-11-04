@@ -84,7 +84,7 @@ layout: godoc
 		
 			
 			
-			<h2 id="ActionDefinition">type <a href="../src/router.html?s=7486:7629#L294">ActionDefinition</a></h2>
+			<h2 id="ActionDefinition">type <a href="../src/router.html?s=8104:8247#L311">ActionDefinition</a></h2>
 			<pre>type ActionDefinition struct {
     Host, Method, Url, Action string
     Star                      bool
@@ -102,7 +102,7 @@ layout: godoc
 
 			
 				
-				<h3 id="ActionDefinition.String">func (*ActionDefinition) <a href="../src/router.html?s=7631:7673#L300">String</a></h3>
+				<h3 id="ActionDefinition.String">func (*ActionDefinition) <a href="../src/router.html?s=8249:8291#L317">String</a></h3>
 				<pre>func (a *ActionDefinition) String() string</pre>
 				
 				
@@ -173,7 +173,7 @@ Return nil if no match.
 		
 			
 			
-			<h2 id="Router">type <a href="../src/router.html?s=4555:4609#L162">Router</a></h2>
+			<h2 id="Router">type <a href="../src/router.html?s=5157:5211#L179">Router</a></h2>
 			<pre>type Router struct {
     Routes []*Route
     <span class="comment">// contains filtered or unexported fields</span>
@@ -188,7 +188,7 @@ Return nil if no match.
 
 			
 				
-				<h3 id="NewRouter">func <a href="../src/router.html?s=7399:7440#L288">NewRouter</a></h3>
+				<h3 id="NewRouter">func <a href="../src/router.html?s=8017:8058#L305">NewRouter</a></h3>
 				<pre>func NewRouter(routesPath string) *Router</pre>
 				
 				
@@ -196,7 +196,7 @@ Return nil if no match.
 
 			
 				
-				<h3 id="Router.Refresh">func (*Router) <a href="../src/router.html?s=4940:4978#L178">Refresh</a></h3>
+				<h3 id="Router.Refresh">func (*Router) <a href="../src/router.html?s=5542:5580#L195">Refresh</a></h3>
 				<pre>func (router *Router) Refresh() *Error</pre>
 				<p>
 Refresh re-reads the routes file and re-calculates the routing table.
@@ -207,14 +207,14 @@ Returns an error if a specified action could not be found.
 				
 			
 				
-				<h3 id="Router.Reverse">func (*Router) <a href="../src/router.html?s=7693:7784#L304">Reverse</a></h3>
+				<h3 id="Router.Reverse">func (*Router) <a href="../src/router.html?s=8311:8402#L321">Reverse</a></h3>
 				<pre>func (router *Router) Reverse(action string, argValues map[string]string) *ActionDefinition</pre>
 				
 				
 				
 			
 				
-				<h3 id="Router.Route">func (*Router) <a href="../src/router.html?s=4611:4669#L167">Route</a></h3>
+				<h3 id="Router.Route">func (*Router) <a href="../src/router.html?s=5213:5271#L184">Route</a></h3>
 				<pre>func (router *Router) Route(req *http.Request) *RouteMatch</pre>
 				
 				

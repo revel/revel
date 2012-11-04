@@ -18,6 +18,8 @@ layout: godoc
 		<div id="manual-nav">
 			<dl>
 			
+				<dd><a href="#constants">Constants</a></dd>
+			
 			
 				<dd><a href="#variables">Variables</a></dd>
 			
@@ -90,19 +92,25 @@ layout: godoc
 		
 
 		
+			<h2 id="constants">Constants</h2>
+			
+				<pre>const ERROR_CLASS = &#34;hasError&#34;</pre>
+				
+			
+		
 		
 			<h2 id="variables">Variables</h2>
 			
 				<pre>var (
     <span class="comment">// The functions available for use in the templates.</span>
-    Funcs = map[string]interface{}{
+    TemplateFuncs = map[string]interface{}{
         &#34;url&#34;: ReverseUrl,
         &#34;eq&#34;:  func(a, b interface{}) bool { return a == b },
-        &#34;set&#34;: func(key string, value interface{}, renderArgs map[string]interface{}) template.HTML {
+        &#34;set&#34;: func(renderArgs map[string]interface{}, key string, value interface{}) template.HTML {
             renderArgs[key] = value
             return template.HTML(&#34;&#34;)
         },
-        &#34;append&#34;: func(key string, value interface{}, renderArgs map[string]interface{}) template.HTML {
+        &#34;append&#34;: func(renderArgs map[string]interface{}, key string, value interface{}) template.HTML {
             if renderArgs[key] == nil {
                 renderArgs[key] = []interface{}{value}
             } else {
@@ -142,7 +150,22 @@ layout: godoc
             }
             return template.HTML(html.EscapeString(str) + strings.Repeat(&#34;&amp;nbsp;&#34;, width-len(str)))
         },
+
+        &#34;errorClass&#34;: func(name string, renderArgs map[string]interface{}) template.HTML {
+            errorMap, ok := renderArgs[&#34;errors&#34;].(map[string]*ValidationError)
+            if !ok {
+                WARN.Println(&#34;Called &#39;errorClass&#39; without &#39;errors&#39; in the render args.&#34;)
+                return template.HTML(&#34;&#34;)
+            }
+            valError, ok := errorMap[name]
+            if !ok || valError == nil {
+                return template.HTML(&#34;&#34;)
+            }
+            return template.HTML(ERROR_CLASS)
+        },
     }
+
+    Funcs = TemplateFuncs
 )</pre>
 				
 			
@@ -150,7 +173,7 @@ layout: godoc
 		
 			
 			
-			<h2 id="ReverseUrl">func <a href="../src/template.html?s=8229:8272#L279">ReverseUrl</a></h2>
+			<h2 id="ReverseUrl">func <a href="../src/template.html?s=8801:8844#L298">ReverseUrl</a></h2>
 			<pre>func ReverseUrl(args ...interface{}) string</pre>
 			<p>
 Return a url capable of invoking a given controller method:
@@ -162,7 +185,7 @@ Return a url capable of invoking a given controller method:
 		
 			
 			
-			<h2 id="Field">type <a href="../src/template.html?s=754:825#L25">Field</a></h2>
+			<h2 id="Field">type <a href="../src/template.html?s=786:857#L27">Field</a></h2>
 			<pre>type Field struct {
     Name, Value string
     Error       *ValidationError
@@ -179,7 +202,7 @@ Return a url capable of invoking a given controller method:
 
 			
 				
-				<h3 id="Field.Checked">func (*Field) <a href="../src/template.html?s=990:1032#L38">Checked</a></h3>
+				<h3 id="Field.Checked">func (*Field) <a href="../src/template.html?s=1023:1065#L40">Checked</a></h3>
 				<pre>func (f *Field) Checked(val string) string</pre>
 				<p>
 Return &#34;checked&#34; if this field.Value matches the provided value
@@ -189,7 +212,7 @@ Return &#34;checked&#34; if this field.Value matches the provided value
 				
 			
 				
-				<h3 id="Field.ErrorClass">func (*Field) <a href="../src/template.html?s=827:862#L30">ErrorClass</a></h3>
+				<h3 id="Field.ErrorClass">func (*Field) <a href="../src/template.html?s=859:894#L32">ErrorClass</a></h3>
 				<pre>func (f *Field) ErrorClass() string</pre>
 				
 				
@@ -198,7 +221,7 @@ Return &#34;checked&#34; if this field.Value matches the provided value
 		
 			
 			
-			<h2 id="GoTemplate">type <a href="../src/template.html?s=7697:7767#L258">GoTemplate</a></h2>
+			<h2 id="GoTemplate">type <a href="../src/template.html?s=8269:8339#L277">GoTemplate</a></h2>
 			<pre>type GoTemplate struct {
     *template.Template
     <span class="comment">// contains filtered or unexported fields</span>
@@ -218,14 +241,14 @@ Adapter for Go Templates.
 
 			
 				
-				<h3 id="GoTemplate.Content">func (GoTemplate) <a href="../src/template.html?s=7922:7965#L268">Content</a></h3>
+				<h3 id="GoTemplate.Content">func (GoTemplate) <a href="../src/template.html?s=8494:8537#L287">Content</a></h3>
 				<pre>func (gotmpl GoTemplate) Content() []string</pre>
 				
 				
 				
 			
 				
-				<h3 id="GoTemplate.Render">func (GoTemplate) <a href="../src/template.html?s=7816:7884#L264">Render</a></h3>
+				<h3 id="GoTemplate.Render">func (GoTemplate) <a href="../src/template.html?s=8388:8456#L283">Render</a></h3>
 				<pre>func (gotmpl GoTemplate) Render(wr io.Writer, arg interface{}) error</pre>
 				<p>
 return a &#39;rev.Template&#39; from Go&#39;s template.
@@ -237,7 +260,7 @@ return a &#39;rev.Template&#39; from Go&#39;s template.
 		
 			
 			
-			<h2 id="Template">type <a href="../src/template.html?s=645:752#L19">Template</a></h2>
+			<h2 id="Template">type <a href="../src/template.html?s=677:784#L21">Template</a></h2>
 			<pre>type Template interface {
     Name() string
     Content() []string
@@ -257,7 +280,7 @@ return a &#39;rev.Template&#39; from Go&#39;s template.
 		
 			
 			
-			<h2 id="TemplateLoader">type <a href="../src/template.html?s=268:643#L8">TemplateLoader</a></h2>
+			<h2 id="TemplateLoader">type <a href="../src/template.html?s=300:675#L10">TemplateLoader</a></h2>
 			<pre>type TemplateLoader struct {
     <span class="comment">// contains filtered or unexported fields</span>
 }</pre>
@@ -275,7 +298,7 @@ Everything below the application&#39;s views directory is treated as a template.
 
 			
 				
-				<h3 id="NewTemplateLoader">func <a href="../src/template.html?s=2847:2901#L98">NewTemplateLoader</a></h3>
+				<h3 id="NewTemplateLoader">func <a href="../src/template.html?s=3332:3386#L115">NewTemplateLoader</a></h3>
 				<pre>func NewTemplateLoader(paths []string) *TemplateLoader</pre>
 				
 				
@@ -283,7 +306,7 @@ Everything below the application&#39;s views directory is treated as a template.
 
 			
 				
-				<h3 id="TemplateLoader.Refresh">func (*TemplateLoader) <a href="../src/template.html?s=3160:3206#L108">Refresh</a></h3>
+				<h3 id="TemplateLoader.Refresh">func (*TemplateLoader) <a href="../src/template.html?s=3645:3691#L125">Refresh</a></h3>
 				<pre>func (loader *TemplateLoader) Refresh() *Error</pre>
 				<p>
 This scans the views directory and parses all templates as Go Templates.
@@ -295,7 +318,7 @@ If a template fails to parse, the error is set on the loader.
 				
 			
 				
-				<h3 id="TemplateLoader.Template">func (*TemplateLoader) <a href="../src/template.html?s=7118:7187#L238">Template</a></h3>
+				<h3 id="TemplateLoader.Template">func (*TemplateLoader) <a href="../src/template.html?s=7690:7759#L257">Template</a></h3>
 				<pre>func (loader *TemplateLoader) Template(name string) (Template, error)</pre>
 				<p>
 Return the Template with the given name.  The name is the template&#39;s path
@@ -310,14 +333,14 @@ this case, if a template is returned, it may still be usable.)
 				
 			
 				
-				<h3 id="TemplateLoader.WatchDir">func (*TemplateLoader) <a href="../src/template.html?s=5974:6035#L208">WatchDir</a></h3>
+				<h3 id="TemplateLoader.WatchDir">func (*TemplateLoader) <a href="../src/template.html?s=6546:6607#L227">WatchDir</a></h3>
 				<pre>func (loader *TemplateLoader) WatchDir(info os.FileInfo) bool</pre>
 				
 				
 				
 			
 				
-				<h3 id="TemplateLoader.WatchFile">func (*TemplateLoader) <a href="../src/template.html?s=6150:6211#L213">WatchFile</a></h3>
+				<h3 id="TemplateLoader.WatchFile">func (*TemplateLoader) <a href="../src/template.html?s=6722:6783#L232">WatchFile</a></h3>
 				<pre>func (loader *TemplateLoader) WatchFile(basename string) bool</pre>
 				
 				

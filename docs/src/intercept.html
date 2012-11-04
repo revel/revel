@@ -61,7 +61,7 @@ const (
 
 type Interception struct {
     When InterceptTime
-
+    <span class="comment">// contains filtered or unexported fields</span>
 }
 
 <span class="comment">// Perform the given interception.</span>
@@ -69,11 +69,10 @@ type Interception struct {
 func (i Interception) Invoke(val reflect.Value) reflect.Value {
     var arg reflect.Value
     if i.function == nil {
-        <span class="comment">// If it&#39;s an InterceptorMethod, then we have to pass in the target type.</span>
+
         arg = findTarget(val, i.target)
     } else {
-        <span class="comment">// If it&#39;s an InterceptorFunc, then the type must be *Controller.</span>
-        <span class="comment">// We can find that by following the embedded types up the chain.</span>
+
         for val.Type() != controllerPtrType {
             if val.Kind() == reflect.Ptr {
                 val = val.Elem()

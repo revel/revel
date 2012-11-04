@@ -12,10 +12,12 @@ layout: godoc
 
 	<pre>package rev
 
+const ERROR_CLASS = &#34;hasError&#34;
+
 <span class="comment">// This object handles loading and parsing of templates.</span>
 <span class="comment">// Everything below the application&#39;s views directory is treated as a template.</span>
 type TemplateLoader struct {
-
+    <span class="comment">// contains filtered or unexported fields</span>
 }
 
 type Template interface {
@@ -31,7 +33,7 @@ type Field struct {
 
 func (f *Field) ErrorClass() string {
     if f.Error != nil {
-        return &#34;hasError&#34;
+        return ERROR_CLASS
     }
     return &#34;&#34;
 }
@@ -46,14 +48,14 @@ func (f *Field) Checked(val string) string {
 
 var (
     <span class="comment">// The functions available for use in the templates.</span>
-    Funcs = map[string]interface{}{
+    TemplateFuncs = map[string]interface{}{
         &#34;url&#34;: ReverseUrl,
         &#34;eq&#34;:  func(a, b interface{}) bool { return a == b },
-        &#34;set&#34;: func(key string, value interface{}, renderArgs map[string]interface{}) template.HTML {
+        &#34;set&#34;: func(renderArgs map[string]interface{}, key string, value interface{}) template.HTML {
             renderArgs[key] = value
             return template.HTML(&#34;&#34;)
         },
-        &#34;append&#34;: func(key string, value interface{}, renderArgs map[string]interface{}) template.HTML {
+        &#34;append&#34;: func(renderArgs map[string]interface{}, key string, value interface{}) template.HTML {
             if renderArgs[key] == nil {
                 renderArgs[key] = []interface{}{value}
             } else {
@@ -87,14 +89,28 @@ var (
                 html.EscapeString(f.Name), html.EscapeString(val), checked))
         },
 
-        <span class="comment">// Pads the given string with &amp;nbsp;&#39;s up to the given width.</span>
         &#34;pad&#34;: func(str string, width int) template.HTML {
             if len(str) &gt;= width {
                 return template.HTML(html.EscapeString(str))
             }
             return template.HTML(html.EscapeString(str) + strings.Repeat(&#34;&amp;nbsp;&#34;, width-len(str)))
         },
+
+        &#34;errorClass&#34;: func(name string, renderArgs map[string]interface{}) template.HTML {
+            errorMap, ok := renderArgs[&#34;errors&#34;].(map[string]*ValidationError)
+            if !ok {
+                WARN.Println(&#34;Called &#39;errorClass&#39; without &#39;errors&#39; in the render args.&#34;)
+                return template.HTML(&#34;&#34;)
+            }
+            valError, ok := errorMap[name]
+            if !ok || valError == nil {
+                return template.HTML(&#34;&#34;)
+            }
+            return template.HTML(ERROR_CLASS)
+        },
     }
+
+    Funcs = TemplateFuncs
 )
 
 func NewTemplateLoader(paths []string) *TemplateLoader {
@@ -116,15 +132,12 @@ func (loader *TemplateLoader) Refresh() *Error {
     var templateSet *template.Template = nil
     for _, basePath := range loader.paths {
 
-        <span class="comment">// Walk only returns an error if the template loader is completely unusable</span>
-        <span class="comment">// (namely, if one of the Funcs does not have an acceptable signature).</span>
         funcErr := filepath.Walk(basePath, func(path string, info os.FileInfo, err error) error {
             if err != nil {
                 ERROR.Println(&#34;error walking templates:&#34;, err)
                 return nil
             }
 
-            <span class="comment">// Walk into directories.</span>
             if info.IsDir() {
                 if !loader.WatchDir(info) {
                     return filepath.SkipDir
@@ -136,11 +149,11 @@ func (loader *TemplateLoader) Refresh() *Error {
                 return nil
             }
 
-            <span class="comment">// If we already loaded a template of this name, skip it.</span>
             templateName := path[len(basePath)+1:]
             if os.PathSeparator == &#39;\\&#39; {
                 templateName = strings.Replace(templateName, `\`, `/`, -1)
             }
+
             if _, ok := loader.templatePaths[templateName]; ok {
                 return nil
             }
@@ -167,7 +180,7 @@ func (loader *TemplateLoader) Refresh() *Error {
                             }
                         }
                     }()
-                    templateSet = template.New(templateName).Funcs(Funcs)
+                    templateSet = template.New(templateName).Funcs(TemplateFuncs)
                     _, err = templateSet.Parse(fileStr)
                 }()
 
@@ -179,7 +192,6 @@ func (loader *TemplateLoader) Refresh() *Error {
                 _, err = templateSet.New(templateName).Parse(fileStr)
             }
 
-            <span class="comment">// Store / report the first error encountered.</span>
             if err != nil &amp;&amp; loader.compileError == nil {
                 line, description := parseTemplateError(err)
                 loader.compileError = &amp;Error{
@@ -195,25 +207,23 @@ func (loader *TemplateLoader) Refresh() *Error {
             return nil
         })
 
-        <span class="comment">// If there was an error with the Funcs, set it and return immediately.</span>
         if funcErr != nil {
             loader.compileError = funcErr.(*Error)
             return loader.compileError
         }
     }
 
-    <span class="comment">// Note: compileError may or may not be set.</span>
     loader.templateSet = templateSet
     return loader.compileError
 }
 
 func (loader *TemplateLoader) WatchDir(info os.FileInfo) bool {
-    <span class="comment">// Watch all directories, except the ones starting with a dot.</span>
+
     return !strings.HasPrefix(info.Name(), &#34;.&#34;)
 }
 
 func (loader *TemplateLoader) WatchFile(basename string) bool {
-    <span class="comment">// Watch all files, except the ones starting with a dot.</span>
+
     return !strings.HasPrefix(basename, &#34;.&#34;)
 }
 
@@ -223,7 +233,7 @@ func (loader *TemplateLoader) WatchFile(basename string) bool {
 <span class="comment">// An Error is returned if there was any problem with any of the templates.  (In</span>
 <span class="comment">// this case, if a template is returned, it may still be usable.)</span>
 func (loader *TemplateLoader) Template(name string) (Template, error) {
-    <span class="comment">// Look up and return the template.</span>
+
     tmpl := loader.templateSet.Lookup(name)
 
     <span class="comment">// This is necessary.</span>
@@ -244,7 +254,7 @@ func (loader *TemplateLoader) Template(name string) (Template, error) {
 <span class="comment">// Adapter for Go Templates.</span>
 type GoTemplate struct {
     *template.Template
-
+    <span class="comment">// contains filtered or unexported fields</span>
 }
 
 <span class="comment">// return a &#39;rev.Template&#39; from Go&#39;s template.</span>
@@ -256,10 +266,6 @@ func (gotmpl GoTemplate) Content() []string {
     content, _ := ReadLines(gotmpl.loader.templatePaths[gotmpl.Name()])
     return content
 }
-
-<span class="comment">/////////////////////</span>
-<span class="comment">// Template functions</span>
-<span class="comment">/////////////////////</span>
 
 <span class="comment">// Return a url capable of invoking a given controller method:</span>
 <span class="comment">// &#34;Application.ShowApp 123&#34; =&gt; &#34;/app/123&#34;</span>

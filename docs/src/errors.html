@@ -18,7 +18,39 @@ type Error struct {
     Title, Path, Description string   <span class="comment">// Description of the error, as presented to the user.</span>
     Line, Column             int      <span class="comment">// Where the error was encountered.</span>
     SourceLines              []string <span class="comment">// The entire source file, split into lines.</span>
+    Stack                    string   <span class="comment">// The raw stack trace string from debug.Stack().</span>
     MetaError                string   <span class="comment">// Error that occurred producing the error page.</span>
+}
+
+<span class="comment">// Find the deepest stack from in uesr code and provide a code listing of</span>
+<span class="comment">// that, on the line that eventually triggered the panic.  Returns nil if no</span>
+<span class="comment">// relevant stack frame can be found.</span>
+func NewErrorFromPanic(err interface{}) *Error {
+
+    stack := string(debug.Stack())
+    frame, basePath := findRelevantStackFrame(stack)
+    if frame == -1 {
+        return nil
+    }
+
+    stackElement := stack[frame : frame+strings.Index(stack[frame:], &#34;\n&#34;)]
+    colonIndex := strings.LastIndex(stackElement, &#34;:&#34;)
+    filename := stackElement[:colonIndex]
+    var line int
+    fmt.Sscan(stackElement[colonIndex+1:], &amp;line)
+
+    description := &#34;Unspecified error&#34;
+    if err != nil {
+        description = fmt.Sprintln(err)
+    }
+    return &amp;Error{
+        Title:       &#34;Panic&#34;,
+        Path:        filename[len(basePath):],
+        Line:        line,
+        Description: description,
+        SourceLines: MustReadLines(filename),
+        Stack:       stack,
+    }
 }
 
 <span class="comment">// Construct a plaintext version of the error, taking account that fields are optionally set.</span>

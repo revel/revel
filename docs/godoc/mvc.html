@@ -19,6 +19,8 @@ layout: godoc
 			<dl>
 			
 			
+				<dd><a href="#variables">Variables</a></dd>
+			
 			
 				
 				<dd><a href="#NotFound">func NotFound(req *Request, resp *Response, msg string)</a></dd>
@@ -171,10 +173,16 @@ layout: godoc
 
 		
 		
+			<h2 id="variables">Variables</h2>
+			
+				<pre>var COOKIE_PREFIX string</pre>
+				
+			
+		
 		
 			
 			
-			<h2 id="NotFound">func <a href="../src/mvc.html?s=12846:12901#L443">NotFound</a></h2>
+			<h2 id="NotFound">func <a href="../src/mvc.html?s=12078:12133#L420">NotFound</a></h2>
 			<pre>func NotFound(req *Request, resp *Response, msg string)</pre>
 			<p>
 This function is useful if there is no relevant Controller available.
@@ -185,7 +193,7 @@ It writes the 404 response immediately.
 		
 			
 			
-			<h2 id="RegisterController">func <a href="../src/mvc.html?s=18945:19006#L682">RegisterController</a></h2>
+			<h2 id="RegisterController">func <a href="../src/mvc.html?s=18363:18424#L667">RegisterController</a></h2>
 			<pre>func RegisterController(c interface{}, methods []*MethodType)</pre>
 			<p>
 Register a Controller and its Methods with Revel.
@@ -195,14 +203,14 @@ Register a Controller and its Methods with Revel.
 		
 			
 			
-			<h2 id="RenderError">func <a href="../src/mvc.html?s=9257:9314#L327">RenderError</a></h2>
+			<h2 id="RenderError">func <a href="../src/mvc.html?s=8489:8546#L304">RenderError</a></h2>
 			<pre>func RenderError(req *Request, resp *Response, err error)</pre>
 			
 			
 		
 			
 			
-			<h2 id="ResolveContentType">func <a href="../src/mvc.html?s=16981:17030#L605">ResolveContentType</a></h2>
+			<h2 id="ResolveContentType">func <a href="../src/mvc.html?s=16246:16295#L582">ResolveContentType</a></h2>
 			<pre>func ResolveContentType(req *http.Request) string</pre>
 			<p>
 Get the content type.
@@ -214,7 +222,7 @@ If none is specified, returns &#34;text/html&#34; by default.
 		
 			
 			
-			<h2 id="ResolveFormat">func <a href="../src/mvc.html?s=17210:17254#L613">ResolveFormat</a></h2>
+			<h2 id="ResolveFormat">func <a href="../src/mvc.html?s=16475:16519#L590">ResolveFormat</a></h2>
 			<pre>func ResolveFormat(req *http.Request) string</pre>
 			
 			
@@ -281,14 +289,14 @@ result.  (e.g. render a template to the response)
 				
 			
 				
-				<h3 id="Controller.NotFound">func (*Controller) <a href="../src/mvc.html?s=12553:12601#L433">NotFound</a></h3>
+				<h3 id="Controller.NotFound">func (*Controller) <a href="../src/mvc.html?s=11785:11833#L410">NotFound</a></h3>
 				<pre>func (c *Controller) NotFound(msg string) Result</pre>
 				
 				
 				
 			
 				
-				<h3 id="Controller.Redirect">func (*Controller) <a href="../src/mvc.html?s=13801:13875#L479">Redirect</a></h3>
+				<h3 id="Controller.Redirect">func (*Controller) <a href="../src/mvc.html?s=13033:13107#L456">Redirect</a></h3>
 				<pre>func (c *Controller) Redirect(val interface{}, args ...interface{}) Result</pre>
 				<p>
 Redirect to an action or to a URL.
@@ -302,7 +310,7 @@ c.Redirect(&#34;/controller/%d/action&#34;, id)
 				
 			
 				
-				<h3 id="Controller.Render">func (*Controller) <a href="../src/mvc.html?s=9821:9887#L344">Render</a></h3>
+				<h3 id="Controller.Render">func (*Controller) <a href="../src/mvc.html?s=9053:9119#L321">Render</a></h3>
 				<pre>func (c *Controller) Render(extraRenderArgs ...interface{}) Result</pre>
 				<p>
 Render a template corresponding to the calling Controller method.
@@ -326,14 +334,14 @@ key-value &#34;user&#34;: (User).
 				
 			
 				
-				<h3 id="Controller.RenderError">func (*Controller) <a href="../src/mvc.html?s=9162:9212#L323">RenderError</a></h3>
+				<h3 id="Controller.RenderError">func (*Controller) <a href="../src/mvc.html?s=8394:8444#L300">RenderError</a></h3>
 				<pre>func (c *Controller) RenderError(err error) Result</pre>
 				
 				
 				
 			
 				
-				<h3 id="Controller.RenderFile">func (*Controller) <a href="../src/mvc.html?s=13265:13347#L458">RenderFile</a></h3>
+				<h3 id="Controller.RenderFile">func (*Controller) <a href="../src/mvc.html?s=12497:12579#L435">RenderFile</a></h3>
 				<pre>func (c *Controller) RenderFile(file *os.File, delivery ContentDisposition) Result</pre>
 				<p>
 Return a file, either displayed inline or downloaded as an attachment.
@@ -344,7 +352,7 @@ The name and size are taken from the file info.
 				
 			
 				
-				<h3 id="Controller.RenderJson">func (*Controller) <a href="../src/mvc.html?s=11826:11879#L406">RenderJson</a></h3>
+				<h3 id="Controller.RenderJson">func (*Controller) <a href="../src/mvc.html?s=11058:11111#L383">RenderJson</a></h3>
 				<pre>func (c *Controller) RenderJson(o interface{}) Result</pre>
 				<p>
 Uses encoding/json.Marshal to return JSON to the client.
@@ -354,7 +362,7 @@ Uses encoding/json.Marshal to return JSON to the client.
 				
 			
 				
-				<h3 id="Controller.RenderTemplate">func (*Controller) <a href="../src/mvc.html?s=11387:11450#L388">RenderTemplate</a></h3>
+				<h3 id="Controller.RenderTemplate">func (*Controller) <a href="../src/mvc.html?s=10619:10682#L365">RenderTemplate</a></h3>
 				<pre>func (c *Controller) RenderTemplate(templatePath string) Result</pre>
 				<p>
 A less magical way to render a template.
@@ -365,7 +373,7 @@ Renders the given template, using the current RenderArgs.
 				
 			
 				
-				<h3 id="Controller.RenderText">func (*Controller) <a href="../src/mvc.html?s=12103:12175#L416">RenderText</a></h3>
+				<h3 id="Controller.RenderText">func (*Controller) <a href="../src/mvc.html?s=11335:11407#L393">RenderText</a></h3>
 				<pre>func (c *Controller) RenderText(text string, objs ...interface{}) Result</pre>
 				<p>
 Render plaintext in response, printf style.
@@ -375,7 +383,7 @@ Render plaintext in response, printf style.
 				
 			
 				
-				<h3 id="Controller.RenderXml">func (*Controller) <a href="../src/mvc.html?s=11971:12023#L411">RenderXml</a></h3>
+				<h3 id="Controller.RenderXml">func (*Controller) <a href="../src/mvc.html?s=11203:11255#L388">RenderXml</a></h3>
 				<pre>func (c *Controller) RenderXml(o interface{}) Result</pre>
 				<p>
 Uses encoding/xml.Marshal to return XML to the client.
@@ -392,7 +400,7 @@ Uses encoding/xml.Marshal to return XML to the client.
 				
 			
 				
-				<h3 id="Controller.Todo">func (*Controller) <a href="../src/mvc.html?s=12360:12394#L425">Todo</a></h3>
+				<h3 id="Controller.Todo">func (*Controller) <a href="../src/mvc.html?s=11592:11626#L402">Todo</a></h3>
 				<pre>func (c *Controller) Todo() Result</pre>
 				<p>
 Render a &#34;todo&#34; indicating that the action isn&#39;t done yet.
@@ -404,7 +412,7 @@ Render a &#34;todo&#34; indicating that the action isn&#39;t done yet.
 		
 			
 			
-			<h2 id="ControllerType">type <a href="../src/mvc.html?s=18300:18375#L651">ControllerType</a></h2>
+			<h2 id="ControllerType">type <a href="../src/mvc.html?s=17718:17793#L636">ControllerType</a></h2>
 			<pre>type ControllerType struct {
     Type    reflect.Type
     Methods []*MethodType
@@ -419,7 +427,7 @@ Render a &#34;todo&#34; indicating that the action isn&#39;t done yet.
 
 			
 				
-				<h3 id="LookupControllerType">func <a href="../src/mvc.html?s=19520:19574#L700">LookupControllerType</a></h3>
+				<h3 id="LookupControllerType">func <a href="../src/mvc.html?s=18938:18992#L685">LookupControllerType</a></h3>
 				<pre>func LookupControllerType(name string) *ControllerType</pre>
 				
 				
@@ -427,7 +435,7 @@ Render a &#34;todo&#34; indicating that the action isn&#39;t done yet.
 
 			
 				
-				<h3 id="ControllerType.Method">func (*ControllerType) <a href="../src/mvc.html?s=18631:18688#L669">Method</a></h3>
+				<h3 id="ControllerType.Method">func (*ControllerType) <a href="../src/mvc.html?s=18049:18106#L654">Method</a></h3>
 				<pre>func (ct *ControllerType) Method(name string) *MethodType</pre>
 				<p>
 Searches for a given exported method (case insensitive)
@@ -461,14 +469,14 @@ e.g. the Post/Redirect/Get pattern: <a href="http://en.wikipedia.org/wiki/Post/R
 
 			
 				
-				<h3 id="Flash.Error">func (Flash) <a href="../src/mvc.html?s=15436:15489#L544">Error</a></h3>
+				<h3 id="Flash.Error">func (Flash) <a href="../src/mvc.html?s=14701:14754#L521">Error</a></h3>
 				<pre>func (f Flash) Error(msg string, args ...interface{})</pre>
 				
 				
 				
 			
 				
-				<h3 id="Flash.Success">func (Flash) <a href="../src/mvc.html?s=15597:15652#L552">Success</a></h3>
+				<h3 id="Flash.Success">func (Flash) <a href="../src/mvc.html?s=14862:14917#L529">Success</a></h3>
 				<pre>func (f Flash) Success(msg string, args ...interface{})</pre>
 				
 				
@@ -477,7 +485,7 @@ e.g. the Post/Redirect/Get pattern: <a href="http://en.wikipedia.org/wiki/Post/R
 		
 			
 			
-			<h2 id="MethodArg">type <a href="../src/mvc.html?s=18513:18570#L663">MethodArg</a></h2>
+			<h2 id="MethodArg">type <a href="../src/mvc.html?s=17931:17988#L648">MethodArg</a></h2>
 			<pre>type MethodArg struct {
     Name string
     Type reflect.Type
@@ -496,7 +504,7 @@ e.g. the Post/Redirect/Get pattern: <a href="http://en.wikipedia.org/wiki/Post/R
 		
 			
 			
-			<h2 id="MethodType">type <a href="../src/mvc.html?s=18377:18511#L656">MethodType</a></h2>
+			<h2 id="MethodType">type <a href="../src/mvc.html?s=17795:17929#L641">MethodType</a></h2>
 			<pre>type MethodType struct {
     Name           string
     Args           []*MethodArg
@@ -540,7 +548,7 @@ Includes:
 
 			
 				
-				<h3 id="ParseParams">func <a href="../src/mvc.html?s=15764:15802#L560">ParseParams</a></h3>
+				<h3 id="ParseParams">func <a href="../src/mvc.html?s=15029:15067#L537">ParseParams</a></h3>
 				<pre>func ParseParams(req *Request) *Params</pre>
 				
 				
@@ -548,7 +556,7 @@ Includes:
 
 			
 				
-				<h3 id="Params.Bind">func (*Params) <a href="../src/mvc.html?s=16727:16793#L598">Bind</a></h3>
+				<h3 id="Params.Bind">func (*Params) <a href="../src/mvc.html?s=15992:16058#L575">Bind</a></h3>
 				<pre>func (p *Params) Bind(name string, typ reflect.Type) reflect.Value</pre>
 				
 				
@@ -608,7 +616,7 @@ Includes:
 
 			
 				
-				<h3 id="Response.WriteHeader">func (*Response) <a href="../src/mvc.html?s=17963:18046#L638">WriteHeader</a></h3>
+				<h3 id="Response.WriteHeader">func (*Response) <a href="../src/mvc.html?s=17228:17311#L615">WriteHeader</a></h3>
 				<pre>func (resp *Response) WriteHeader(defaultStatusCode int, defaultContentType string)</pre>
 				<p>
 Write the header (for now, just the status code).
