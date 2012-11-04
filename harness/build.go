@@ -1,12 +1,9 @@
 package harness
 
 import (
-	"bytes"
 	"fmt"
 	"github.com/robfig/revel"
 	"go/build"
-	"io"
-	"net"
 	"os"
 	"os/exec"
 	"path"
@@ -17,51 +14,17 @@ import (
 	"text/template"
 )
 
-var (
-	cmd *exec.Cmd // The app server cmd
-
-	importErrorPattern = regexp.MustCompile(
-		"import \"([^\"]+)\": cannot find package")
-)
-
-// Run the Revel program, optionally using the harness.
-// If the Harness is not used to manage the program, it is returned to the caller.
-// (e.g. the return value is nil if useHarness is true, else it is the running program)
-func StartApp(useHarness bool) *exec.Cmd {
-	// If we are in prod mode, just build and run the application.
-	if !useHarness {
-		rev.INFO.Println("Building...")
-		binName, err := Build()
-		if err != nil {
-			rev.ERROR.Fatalln(err)
-		}
-		start(binName, getAppAddress(), getAppPort())
-		return cmd
-	}
-
-	// If the harness exits, be sure to kill the app server.
-	defer func() {
-		if cmd != nil {
-			cmd.Process.Kill()
-			cmd = nil
-		}
-	}()
-
-	// Run a reverse proxy to it.
-	harness := NewHarness()
-	harness.Run()
-	return nil
-}
+var importErrorPattern = regexp.MustCompile("import \"([^\"]+)\": cannot find package")
 
 // Build the app:
 // 1. Generate the the main.go file.
 // 2. Run the appropriate "go build" command.
 // Requires that rev.Init has been called previously.
 // Returns the path to the built binary, and an error if there was a problem building it.
-func Build() (binaryPath string, compileError *rev.Error) {
+func Build() (app *App, compileError *rev.Error) {
 	sourceInfo, compileError := ProcessSource(rev.CodePaths)
 	if compileError != nil {
-		return "", compileError
+		return nil, compileError
 	}
 
 	tmpl := template.New("RegisterControllers")
@@ -72,15 +35,6 @@ func Build() (binaryPath string, compileError *rev.Error) {
 		"ImportPaths":    calcImportAliases(sourceInfo),
 		"TestSuites":     sourceInfo.TestSuites,
 	})
-
-	// Terminate the server if it's already running.
-	if cmd != nil && (cmd.ProcessState == nil || !cmd.ProcessState.Exited()) {
-		rev.TRACE.Println("Killing revel server pid", cmd.Process.Pid)
-		err := cmd.Process.Kill()
-		if err != nil {
-			rev.ERROR.Fatalln("Failed to kill revel server:", err)
-		}
-	}
 
 	// Create a fresh temp dir.
 	tmpPath := path.Join(rev.AppPath, "tmp")
@@ -129,20 +83,20 @@ func Build() (binaryPath string, compileError *rev.Error) {
 
 		// If the build succeeded, we're done.
 		if err == nil {
-			return binName, nil
+			return NewApp(binName), nil
 		}
 		rev.TRACE.Println(string(output))
 
 		// See if it was an import error that we can go get.
 		matches := importErrorPattern.FindStringSubmatch(string(output))
 		if matches == nil {
-			return "", newCompileError(output)
+			return nil, newCompileError(output)
 		}
 
 		// Ensure we haven't already tried to go get it.
 		pkgName := matches[1]
 		if _, alreadyTried := gotten[pkgName]; alreadyTried {
-			return "", newCompileError(output)
+			return nil, newCompileError(output)
 		}
 		gotten[pkgName] = struct{}{}
 
@@ -152,77 +106,13 @@ func Build() (binaryPath string, compileError *rev.Error) {
 		getOutput, err := getCmd.CombinedOutput()
 		if err != nil {
 			rev.TRACE.Println(string(getOutput))
-			return "", newCompileError(output)
+			return nil, newCompileError(output)
 		}
 
 		// Success getting the import, attempt to build again.
 	}
 	rev.ERROR.Fatalf("Not reachable")
-	return "", nil
-}
-
-// Start the application server, waiting until it has started up.
-// Panics if startup fails.
-func start(binName, addr string, port int) {
-	// Run the server, via tmp/main.go.
-	cmd = exec.Command(binName,
-		fmt.Sprintf("-port=%d", port),
-		fmt.Sprintf("-importPath=%s", rev.ImportPath),
-		fmt.Sprintf("-runMode=%s", rev.RunMode),
-	)
-	rev.TRACE.Println("Exec app:", cmd.Path, cmd.Args)
-	listeningWriter := startupListeningWriter{os.Stdout, make(chan bool)}
-	cmd.Stdout = listeningWriter
-	cmd.Stderr = os.Stderr
-	err := cmd.Start()
-	if err != nil {
-		rev.ERROR.Fatalln("Error running:", err)
-	}
-
-	<-listeningWriter.notifyReady
-}
-
-// A io.Writer that copies to the destination, and listens for "Listening on.."
-// in the stream.  (Which tells us when the revel server has finished starting up)
-// This is super ghetto, but by far the simplest thing that should work.
-type startupListeningWriter struct {
-	dest        io.Writer
-	notifyReady chan bool
-}
-
-func (w startupListeningWriter) Write(p []byte) (n int, err error) {
-	if w.notifyReady != nil && bytes.Contains(p, []byte("Listening")) {
-		w.notifyReady <- true
-		w.notifyReady = nil
-	}
-	return w.dest.Write(p)
-}
-
-// Return port that the app should listen on.
-// 9000 by default.
-func getAppPort() int {
-	return rev.Config.IntDefault("http.port", 9000)
-}
-
-// Return address that the app should listen on.
-// Wildcard by default.
-func getAppAddress() string {
-	return rev.Config.StringDefault("http.addr", "")
-}
-
-// Find an unused port
-func getFreePort() (port int) {
-	conn, err := net.Listen("tcp", ":0")
-	if err != nil {
-		rev.ERROR.Fatal(err)
-	}
-
-	port = conn.Addr().(*net.TCPAddr).Port
-	err = conn.Close()
-	if err != nil {
-		rev.ERROR.Fatal(err)
-	}
-	return port
+	return nil, nil
 }
 
 // Looks through all the method args and returns a set of unique import paths

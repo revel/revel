@@ -38,6 +38,16 @@ var (
 
 	Modules []Module
 
+	// Server config.	
+	//
+	// Alert: This is how the app is configured, which may be different from
+	// the current process reality.  For example, if the app is configured for
+	// port 9000, HttpPort will always be 9000, even though in dev mode it is
+	// run on a random port and proxied. 
+	HttpPort int    // e.g. 9000
+	HttpAddr string // e.g. "", "127.0.0.1"
+
+	// Loggers
 	DEFAULT = log.New(os.Stderr, "", log.Ldate|log.Ltime|log.Lshortfile)
 	TRACE   = DEFAULT
 	INFO    = DEFAULT
@@ -105,13 +115,16 @@ func Init(mode, importPath, srcPath string) {
 		log.Fatalln("app.conf: No mode found:", mode)
 	}
 	Config.SetSection(mode)
+
+	// Configure properties from app.conf
+	HttpPort = Config.IntDefault("http.port", 9000)
+	HttpAddr = Config.StringDefault("http.addr", "")
+	AppName = Config.StringDefault("app.name", "(not set)")
 	secretStr := Config.StringDefault("app.secret", "")
 	if secretStr == "" {
 		log.Fatalln("No app.secret provided.")
 	}
 	secretKey = []byte(secretStr)
-
-	AppName = Config.StringDefault("app.name", "(not set)")
 
 	// Configure logging.
 	TRACE = getLogger("trace")

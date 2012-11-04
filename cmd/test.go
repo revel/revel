@@ -75,14 +75,28 @@ You can add it to a run mode configuration with the following line:
 		errorf("Failed to create test result directory %s: %s", resultPath, err)
 	}
 
-	// Start the app.
+	// Direct all the output into a file in the test-results directory.
+	file, err := os.OpenFile(path.Join(resultPath, "app.log"), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	if err != nil {
+		errorf("Failed to create log file: %s", err)
+	}
+
+	app, reverr := harness.Build()
+	if reverr != nil {
+		errorf("Error building: %s", reverr)
+	}
+	cmd := app.Cmd()
+	cmd.Stderr = file
+	cmd.Stdout = file
+
+	// Start the app...
+	cmd.Start()
+	defer cmd.Kill()
 	rev.INFO.Printf("Testing %s (%s) in %s mode\n", rev.AppName, rev.ImportPath, mode)
-	cmd := harness.StartApp(false)
-	defer cmd.Process.Kill()
 
 	// Get a list of tests.
 	var testSuites []controllers.TestSuiteDesc
-	baseUrl := "http://127.0.0.1:" + rev.Config.StringDefault("http.port", "9000")
+	baseUrl := fmt.Sprintf("http://127.0.0.1:%d", rev.HttpPort)
 	resp, err := http.Get(baseUrl + "/@tests.list")
 	if err != nil {
 		errorf("Failed to request test list: %s", err)

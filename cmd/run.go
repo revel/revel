@@ -41,8 +41,15 @@ func runApp(args []string) {
 	log.Printf("Running %s (%s) in %s mode\n", rev.AppName, rev.ImportPath, mode)
 	rev.TRACE.Println("Base path:", rev.BasePath)
 
-	cmd := harness.StartApp(rev.Config.BoolDefault("server.watcher", true))
-	if cmd != nil {
-		cmd.Wait()
+	// If the app is run in "watched" mode, use the harness to run it.
+	if rev.Config.BoolDefault("server.watcher", true) {
+		harness.NewHarness().Run() // Never returns.
 	}
+
+	// Else, just build and run the app.
+	app, err := harness.Build()
+	if err != nil {
+		errorf("Failed to build app: %s", err)
+	}
+	app.Cmd().Run()
 }
