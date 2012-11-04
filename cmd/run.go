@@ -24,7 +24,6 @@ Run mode defaults to "dev".
 You can set a port as an optional third parameter.  For example:
 
     revel run github.com/robfig/revel/samples/chat prod 8080`,
-
 }
 
 func init() {
@@ -46,7 +45,7 @@ func runApp(args []string) {
 
 	if len(args) == 3 {
 		// change http.port config
-		rev.Config.AddOption(mode, "http.port", args[2])
+		rev.Config.SetOption("http.port", args[2])
 	}
 
 	log.Printf("Running %s (%s) in %s mode\n", rev.AppName, rev.ImportPath, mode)
