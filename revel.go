@@ -22,6 +22,7 @@ var (
 	AppPath    string // e.g. "/Users/robfig/gocode/src/corp/sample/app"
 	ViewsPath  string // e.g. "/Users/robfig/gocode/src/corp/sample/app/views"
 	ImportPath string // e.g. "corp/sample"
+	SourcePath string // e.g. "/Users/robfig/gocode/src"
 
 	Config  *MergedConfig
 	RunMode string // Application-defined (by default, "dev" or "prod")
@@ -31,9 +32,22 @@ var (
 
 	// Where to look for templates and configuration.
 	// Ordered by priority.  (Earlier paths take precedence over later paths.)
+	CodePaths     []string
 	ConfPaths     []string
 	TemplatePaths []string
 
+	Modules []Module
+
+	// Server config.	
+	//
+	// Alert: This is how the app is configured, which may be different from
+	// the current process reality.  For example, if the app is configured for
+	// port 9000, HttpPort will always be 9000, even though in dev mode it is
+	// run on a random port and proxied. 
+	HttpPort int    // e.g. 9000
+	HttpAddr string // e.g. "", "127.0.0.1"
+
+	// Loggers
 	DEFAULT = log.New(os.Stderr, "", log.Ldate|log.Ltime|log.Lshortfile)
 	TRACE   = DEFAULT
 	INFO    = DEFAULT
@@ -62,16 +76,19 @@ func init() {
 func Init(mode, importPath, srcPath string) {
 	// Ignore trailing slashes.
 	ImportPath = strings.TrimRight(importPath, "/")
+	SourcePath = strings.TrimRight(srcPath, "/")
 	RunMode = mode
 
-	if srcPath == "" {
-		srcPath = findSrcPath(importPath)
+	if SourcePath == "" {
+		SourcePath = findSrcPath(importPath)
 	}
 
-	RevelPath = path.Join(srcPath, filepath.FromSlash(REVEL_IMPORT_PATH))
-	BasePath = path.Join(srcPath, filepath.FromSlash(importPath))
+	RevelPath = path.Join(SourcePath, filepath.FromSlash(REVEL_IMPORT_PATH))
+	BasePath = path.Join(SourcePath, filepath.FromSlash(importPath))
 	AppPath = path.Join(BasePath, "app")
 	ViewsPath = path.Join(AppPath, "views")
+
+	CodePaths = []string{AppPath}
 
 	ConfPaths = []string{
 		path.Join(BasePath, "conf"),
@@ -98,19 +115,24 @@ func Init(mode, importPath, srcPath string) {
 		log.Fatalln("app.conf: No mode found:", mode)
 	}
 	Config.SetSection(mode)
+
+	// Configure properties from app.conf
+	HttpPort = Config.IntDefault("http.port", 9000)
+	HttpAddr = Config.StringDefault("http.addr", "")
+	AppName = Config.StringDefault("app.name", "(not set)")
 	secretStr := Config.StringDefault("app.secret", "")
 	if secretStr == "" {
 		log.Fatalln("No app.secret provided.")
 	}
 	secretKey = []byte(secretStr)
 
-	AppName = Config.StringDefault("app.name", "(not set)")
-
 	// Configure logging.
 	TRACE = getLogger("trace")
 	INFO = getLogger("info")
 	WARN = getLogger("warn")
 	ERROR = getLogger("error")
+
+	loadModules()
 
 	for _, hook := range InitHooks {
 		hook()
@@ -182,6 +204,43 @@ func findSrcPath(importPath string) string {
 	}
 
 	return appPkg.SrcRoot
+}
+
+type Module struct {
+	Name, ImportPath, Path string
+}
+
+func loadModules() {
+	for _, key := range Config.Options("module.") {
+		moduleImportPath := Config.StringDefault(key, "")
+		if moduleImportPath == "" {
+			continue
+		}
+
+		modPkg, err := build.Import(moduleImportPath, "", build.FindOnly)
+		if err != nil {
+			log.Fatalln("Failed to load module.  Import of", moduleImportPath, "failed:", err)
+		}
+
+		addModule(key[len("module."):], moduleImportPath, modPkg.Dir)
+	}
+}
+
+func addModule(name, importPath, modulePath string) {
+	Modules = append(Modules, Module{Name: name, ImportPath: importPath, Path: modulePath})
+	if codePath := path.Join(modulePath, "app"); DirExists(codePath) {
+		CodePaths = append(CodePaths, codePath)
+	}
+	if viewsPath := path.Join(modulePath, "app", "views"); DirExists(viewsPath) {
+		TemplatePaths = append(TemplatePaths, viewsPath)
+	}
+	INFO.Print("Loaded module ", path.Base(modulePath))
+
+	// Hack: There is presently no way for the testrunner module to add the
+	// "test" subdirectory to the CodePaths.  So this does it instead.
+	if importPath == "github.com/robfig/revel/modules/testrunner" {
+		CodePaths = append(CodePaths, path.Join(BasePath, "tests"))
+	}
 }
 
 func CheckInit() {

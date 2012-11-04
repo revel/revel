@@ -3,6 +3,7 @@ package rev
 // An plugin that allows the user to inject behavior at various points in the request cycle.
 type Plugin interface {
 	OnAppStart()
+	OnRoutesLoaded(router *Router)
 	BeforeRequest(c *Controller)
 	AfterRequest(c *Controller)
 	OnException(c *Controller, err interface{})
@@ -12,6 +13,7 @@ type Plugin interface {
 type EmptyPlugin struct{}
 
 func (p EmptyPlugin) OnAppStart()                                {}
+func (p EmptyPlugin) OnRoutesLoaded(router *Router)              {}
 func (p EmptyPlugin) BeforeRequest(c *Controller)                {}
 func (p EmptyPlugin) AfterRequest(c *Controller)                 {}
 func (p EmptyPlugin) OnException(c *Controller, err interface{}) {}
@@ -27,6 +29,12 @@ func RegisterPlugin(p Plugin) {
 func (plugins PluginCollection) OnAppStart() {
 	for _, p := range plugins {
 		p.OnAppStart()
+	}
+}
+
+func (plugins PluginCollection) OnRoutesLoaded(router *Router) {
+	for _, p := range plugins {
+		p.OnRoutesLoaded(router)
 	}
 }
 

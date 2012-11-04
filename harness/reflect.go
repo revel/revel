@@ -6,6 +6,7 @@ package harness
 import (
 	"github.com/robfig/revel"
 	"go/ast"
+	"go/build"
 	"go/parser"
 	"go/scanner"
 	"go/token"
@@ -13,15 +14,14 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"unicode"
 )
 
 // SourceInfo is the top-level struct containing all extracted information
 // about the app source code, used to generate main.go.
 type SourceInfo struct {
-	// ControllerSpecs lists specs for all structs found under
+	// ControllerSpecs lists type info for all structs found under
 	// app/controllers/... that embed (directly or indirectly) rev.Controller.
-	ControllerSpecs []*ControllerSpec
+	ControllerSpecs []*TypeInfo
 	// ValidationKeys provides a two-level lookup.  The keys are:
 	// 1. The fully-qualified function name,
 	//    e.g. "github.com/robfig/revel/samples/chat/app/controllers.(*Application).Action"
@@ -29,12 +29,15 @@ type SourceInfo struct {
 	//    e.g. the line returned from runtime.Caller()
 	// The result of the lookup the name of variable being validated.
 	ValidationKeys map[string]map[int]string
+	// TestSuites list the types that constitute the set of application tests.
+	TestSuites []*TypeInfo
 }
 
-type ControllerSpec struct {
-	PackageName string // e.g. "controllers"
+// TypeInfo summarizes information about a struct type in the app source code.
+type TypeInfo struct {
 	StructName  string // e.g. "Application"
 	ImportPath  string // e.g. "github.com/robfig/revel/samples/chat/app/controllers"
+	PackageName string // e.g. "controllers"
 	MethodSpecs []*MethodSpec
 
 	// Used internally to identify controllers that indirectly embed *rev.Controller.
@@ -56,13 +59,13 @@ type MethodSpec struct {
 }
 
 type MethodArg struct {
-	Name       string // Name of the argument.
-	TypeName   string // The name of the type, e.g. "int", "*pkg.UserType"
-	ImportPath string // If the arg is of an imported type, this is the import path.
+	Name       string   // Name of the argument.
+	TypeExpr   TypeExpr // The name of the type, e.g. "int", "*pkg.UserType"
+	ImportPath string   // If the arg is of an imported type, this is the import path.
 }
 
 type embeddedTypeName struct {
-	PackageName, StructName string
+	ImportPath, StructName string
 }
 
 // Maps a controller simple name (e.g. "Login") to the methods for which it is a
@@ -71,78 +74,74 @@ type methodMap map[string][]*MethodSpec
 
 // Parse the app controllers directory and return a list of the controller types found.
 // Returns a CompileError if the parsing fails.
-func ProcessSource() (*SourceInfo, *rev.Error) {
+func ProcessSource(roots []string) (*SourceInfo, *rev.Error) {
 	var (
-		root       = rev.AppPath
-		importBase = rev.BasePath
-
 		srcInfo      *SourceInfo
 		compileError *rev.Error
 	)
 
-	// Start walking the directory tree.
-	filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			log.Println("Error scanning app source:", err)
-			return nil
-		}
+	for _, root := range roots {
 
-		if !info.IsDir() {
-			return nil
-		}
-
-		if info.Name() == "tmp" {
-			return nil
-		}
-
-		// Get the import path of the package.
-		pkgImportPath := rev.ImportPath + "/" + filepath.ToSlash(path[len(importBase)+1:])
-
-		// Parse files within the path.
-		var pkgs map[string]*ast.Package
-		fset := token.NewFileSet()
-		pkgs, err = parser.ParseDir(fset, path, func(f os.FileInfo) bool {
-			return !f.IsDir() && !strings.HasPrefix(f.Name(), ".") && strings.HasSuffix(f.Name(), ".go")
-		}, 0)
-		if err != nil {
-			if errList, ok := err.(scanner.ErrorList); ok {
-				var pos token.Position = errList[0].Pos
-				compileError = &rev.Error{
-					SourceType:  ".go source",
-					Title:       "Go Compilation Error",
-					Path:        pos.Filename,
-					Description: errList[0].Msg,
-					Line:        pos.Line,
-					Column:      pos.Column,
-					SourceLines: rev.MustReadLines(pos.Filename),
-				}
-				return compileError
+		// Start walking the directory tree.
+		filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				log.Println("Error scanning app source:", err)
+				return nil
 			}
-			ast.Print(nil, err)
-			log.Fatalf("Failed to parse dir: %s", err)
-		}
 
-		// Skip "main" packages.
-		delete(pkgs, "main")
+			if !info.IsDir() || info.Name() == "tmp" {
+				return nil
+			}
 
-		// If there is no code in this directory, skip it.
-		if len(pkgs) == 0 {
+			// Get the import path of the package.
+			pkgImportPath := filepath.ToSlash(path[len(rev.SourcePath)+1:])
+
+			// Parse files within the path.
+			var pkgs map[string]*ast.Package
+			fset := token.NewFileSet()
+			pkgs, err = parser.ParseDir(fset, path, func(f os.FileInfo) bool {
+				return !f.IsDir() && !strings.HasPrefix(f.Name(), ".") && strings.HasSuffix(f.Name(), ".go")
+			}, 0)
+			if err != nil {
+				if errList, ok := err.(scanner.ErrorList); ok {
+					var pos token.Position = errList[0].Pos
+					compileError = &rev.Error{
+						SourceType:  ".go source",
+						Title:       "Go Compilation Error",
+						Path:        pos.Filename,
+						Description: errList[0].Msg,
+						Line:        pos.Line,
+						Column:      pos.Column,
+						SourceLines: rev.MustReadLines(pos.Filename),
+					}
+					return compileError
+				}
+				ast.Print(nil, err)
+				log.Fatalf("Failed to parse dir: %s", err)
+			}
+
+			// Skip "main" packages.
+			delete(pkgs, "main")
+
+			// If there is no code in this directory, skip it.
+			if len(pkgs) == 0 {
+				return nil
+			}
+
+			// There should be only one package in this directory.
+			if len(pkgs) > 1 {
+				log.Println("Most unexpected! Multiple packages in a single directory:", pkgs)
+			}
+
+			var pkg *ast.Package
+			for _, v := range pkgs {
+				pkg = v
+			}
+
+			srcInfo = appendSourceInfo(srcInfo, processPackage(fset, pkgImportPath, path, pkg))
 			return nil
-		}
-
-		// There should be only one package in this directory.
-		if len(pkgs) > 1 {
-			log.Println("Most unexpected! Multiple packages in a single directory:", pkgs)
-		}
-
-		var pkg *ast.Package
-		for _, v := range pkgs {
-			pkg = v
-		}
-
-		srcInfo = appendSourceInfo(srcInfo, processPackage(fset, pkgImportPath, pkg))
-		return nil
-	})
+		})
+	}
 
 	return srcInfo, compileError
 }
@@ -153,6 +152,7 @@ func appendSourceInfo(srcInfo1, srcInfo2 *SourceInfo) *SourceInfo {
 	}
 
 	srcInfo1.ControllerSpecs = append(srcInfo1.ControllerSpecs, srcInfo2.ControllerSpecs...)
+	srcInfo1.TestSuites = append(srcInfo1.TestSuites, srcInfo2.TestSuites...)
 	for k, v := range srcInfo2.ValidationKeys {
 		if _, ok := srcInfo1.ValidationKeys[k]; ok {
 			log.Println("Key conflict when scanning validation calls:", k)
@@ -163,12 +163,14 @@ func appendSourceInfo(srcInfo1, srcInfo2 *SourceInfo) *SourceInfo {
 	return srcInfo1
 }
 
-func processPackage(fset *token.FileSet, pkgImportPath string, pkg *ast.Package) *SourceInfo {
-	var structSpecs []*ControllerSpec
+func processPackage(fset *token.FileSet, pkgImportPath, pkgPath string, pkg *ast.Package) *SourceInfo {
+	var structSpecs []*TypeInfo
 	validationKeys := make(map[string]map[int]string)
 	methodSpecs := make(methodMap)
 	scanControllers := strings.HasSuffix(pkgImportPath, "/controllers") ||
 		strings.Contains(pkgImportPath, "/controllers/")
+	scanTests := strings.HasSuffix(pkgImportPath, "/tests") ||
+		strings.Contains(pkgImportPath, "/tests/")
 
 	// For each source file in the package...
 	for _, file := range pkg.Files {
@@ -182,14 +184,16 @@ func processPackage(fset *token.FileSet, pkgImportPath string, pkg *ast.Package)
 
 			if scanControllers {
 				// Match and add both structs and methods
-				addImports(imports, decl)
-				structSpecs = appendStruct(structSpecs, pkg, decl)
-				appendAction(fset, methodSpecs, decl, pkg.Name, imports)
+				addImports(imports, decl, pkgPath)
+				structSpecs = appendStruct(structSpecs, pkgImportPath, pkg, decl, imports)
+				appendAction(fset, methodSpecs, decl, pkgImportPath, pkg.Name, imports)
+			} else if scanTests {
+				addImports(imports, decl, pkgPath)
+				structSpecs = appendStruct(structSpecs, pkgImportPath, pkg, decl, imports)
 			}
 
 			// If this is a func, scan it for validation calls.
 			if funcDecl, ok := decl.(*ast.FuncDecl); ok {
-				// ast.Print(nil, funcDecl)
 				lineKeys := getValidationKeys(fset, funcDecl)
 				if len(lineKeys) > 0 {
 					validationKeys[pkgImportPath+"."+getFuncName(funcDecl)] = lineKeys
@@ -199,16 +203,17 @@ func processPackage(fset *token.FileSet, pkgImportPath string, pkg *ast.Package)
 	}
 
 	// Filter the struct specs to just the ones that embed rev.Controller.
-	structSpecs = filterControllers(structSpecs)
+	controllerSpecs := findTypesThatEmbed("github.com/robfig/revel.Controller", structSpecs)
 
 	// Add the method specs to them.
-	for _, spec := range structSpecs {
+	for _, spec := range controllerSpecs {
 		spec.MethodSpecs = methodSpecs[spec.StructName]
 	}
 
 	return &SourceInfo{
-		ControllerSpecs: structSpecs,
+		ControllerSpecs: controllerSpecs,
 		ValidationKeys:  validationKeys,
+		TestSuites:      findTypesThatEmbed("github.com/robfig/revel.TestSuite", structSpecs),
 	}
 }
 
@@ -228,7 +233,7 @@ func getFuncName(funcDecl *ast.FuncDecl) string {
 	return prefix + funcDecl.Name.Name
 }
 
-func addImports(imports map[string]string, decl ast.Decl) {
+func addImports(imports map[string]string, decl ast.Decl, srcDir string) {
 	genDecl, ok := decl.(*ast.GenDecl)
 	if !ok {
 		return
@@ -240,47 +245,52 @@ func addImports(imports map[string]string, decl ast.Decl) {
 
 	for _, spec := range genDecl.Specs {
 		importSpec := spec.(*ast.ImportSpec)
+		var pkgAlias string
+		if importSpec.Name != nil {
+			pkgAlias = importSpec.Name.Name
+			if pkgAlias == "_" {
+				continue
+			}
+		}
 		quotedPath := importSpec.Path.Value           // e.g. "\"sample/app/models\""
 		fullPath := quotedPath[1 : len(quotedPath)-1] // Remove the quotes
-		key := fullPath
-		if lastSlash := strings.LastIndex(fullPath, "/"); lastSlash != -1 {
-			key = fullPath[lastSlash+1:]
+
+		// If the package was not aliased (common case), we have to import it
+		// to see what the package name is.
+		// TODO: Can improve performance here a lot:
+		// 1. Do not import everything over and over again.  Keep a cache.
+		// 2. Exempt the standard library; their directories always match the package name.
+		// 3. Can use build.FindOnly and then use parser.ParseDir with mode PackageClauseOnly
+		if pkgAlias == "" {
+			pkg, err := build.Import(fullPath, srcDir, 0)
+			if err != nil {
+				log.Println("Could not find import:", fullPath)
+				continue
+			}
+			pkgAlias = pkg.Name
 		}
-		imports[key] = fullPath
+
+		imports[pkgAlias] = fullPath
 	}
 }
 
 // If this Decl is a struct type definition, it is summarized and added to specs.
 // Else, specs is returned unchanged.
-func appendStruct(specs []*ControllerSpec, pkg *ast.Package, decl ast.Decl) []*ControllerSpec {
+func appendStruct(specs []*TypeInfo, pkgImportPath string, pkg *ast.Package, decl ast.Decl, imports map[string]string) []*TypeInfo {
 	// Filter out non-Struct type declarations.
-	genDecl, ok := decl.(*ast.GenDecl)
-	if !ok {
+	spec, found := getStructTypeDecl(decl)
+	if !found {
 		return specs
 	}
-
-	if genDecl.Tok != token.TYPE {
-		return specs
-	}
-
-	if len(genDecl.Specs) != 1 {
-		rev.TRACE.Printf("Surprising: Decl does not have 1 Spec: %v", genDecl)
-		return specs
-	}
-
-	spec := genDecl.Specs[0].(*ast.TypeSpec)
-	structType, ok := spec.Type.(*ast.StructType)
-	if !ok {
-		return specs
-	}
+	structType := spec.Type.(*ast.StructType)
 
 	// At this point we know it's a type declaration for a struct.
 	// Fill in the rest of the info by diving into the fields.
 	// Add it provisionally to the Controller list -- it's later filtered using field info.
-	controllerSpec := &ControllerSpec{
-		PackageName: pkg.Name,
+	controllerSpec := &TypeInfo{
 		StructName:  spec.Name.Name,
-		ImportPath:  rev.ImportPath + "/app/" + pkg.Name,
+		ImportPath:  pkgImportPath,
+		PackageName: pkg.Name,
 	}
 
 	for _, field := range structType.Fields.List {
@@ -306,7 +316,7 @@ func appendStruct(specs []*ControllerSpec, pkg *ast.Package, decl ast.Decl) []*C
 
 			// If the embedded type is in the same package, it's an Ident.
 			if ident, ok := fieldType.(*ast.Ident); ok {
-				return pkg.Name, ident.Name
+				return "", ident.Name
 			}
 
 			if selectorExpr, ok := fieldType.(*ast.SelectorExpr); ok {
@@ -323,9 +333,23 @@ func appendStruct(specs []*ControllerSpec, pkg *ast.Package, decl ast.Decl) []*C
 			continue
 		}
 
+		// Find the import path for this type.
+		// If it was referenced without a package name, use the current package import path.
+		// Else, look up the package's import path by name.
+		var importPath string
+		if pkgName == "" {
+			importPath = pkgImportPath
+		} else {
+			var ok bool
+			if importPath, ok = imports[pkgName]; !ok {
+				log.Print("Failed to find import path for ", pkgName, ".", typeName)
+				continue
+			}
+		}
+
 		controllerSpec.embeddedTypes = append(controllerSpec.embeddedTypes, &embeddedTypeName{
-			PackageName: pkgName,
-			StructName:  typeName,
+			ImportPath: importPath,
+			StructName: typeName,
 		})
 	}
 
@@ -335,7 +359,7 @@ func appendStruct(specs []*ControllerSpec, pkg *ast.Package, decl ast.Decl) []*C
 // If decl is a Method declaration, it is summarized and added to the array
 // underneath its receiver type.
 // e.g. "Login" => {MethodSpec, MethodSpec, ..}
-func appendAction(fset *token.FileSet, mm methodMap, decl ast.Decl, pkgName string, imports map[string]string) {
+func appendAction(fset *token.FileSet, mm methodMap, decl ast.Decl, pkgImportPath, pkgName string, imports map[string]string) {
 	// Func declaration?
 	funcDecl, ok := decl.(*ast.FuncDecl)
 	if !ok {
@@ -374,28 +398,14 @@ func appendAction(fset *token.FileSet, mm methodMap, decl ast.Decl, pkgName stri
 	// Add a description of the arguments to the method.
 	for _, field := range funcDecl.Type.Params.List {
 		for _, name := range field.Names {
-			typeName := ExprName(field.Type)
-
-			// Figure out the Import Path for this field, if any.
-			importPath := ""
-			baseTypeName := strings.TrimLeft(typeName, "*")
-			dotIndex := strings.Index(baseTypeName, ".")
-			isExported := unicode.IsUpper([]rune(baseTypeName)[0])
-			if dotIndex == -1 && isExported {
-				// Fully-qualify types defined in that package.
-				// (Need to add back the stars that we trimmed, too)
-				typeName = pkgName + "." + baseTypeName
-			} else if dotIndex != -1 {
-				// The type comes from an imported package.
-				argPkgName := baseTypeName[:dotIndex]
-				if importPath, ok = imports[argPkgName]; !ok {
-					log.Println("Failed to find import for arg of type:", typeName)
-				}
+			typeExpr := NewTypeExpr(pkgName, field.Type)
+			importPath, ok := imports[typeExpr.PkgName]
+			if !ok && !IsBuiltinType(typeExpr.Expr) {
+				log.Println("Failed to find import for arg of type:", typeExpr.TypeName(""))
 			}
-
 			method.Args = append(method.Args, &MethodArg{
 				Name:       name.Name,
-				TypeName:   typeName,
+				TypeExpr:   typeExpr,
 				ImportPath: importPath,
 			})
 		}
@@ -524,7 +534,7 @@ func getValidationKeys(fset *token.FileSet, funcDecl *ast.FuncDecl) map[int]stri
 			return true
 		}
 
-		lineKeys[lastExprLine] = ExprName(arg)
+		lineKeys[lastExprLine] = NewTypeExpr("", arg).TypeName("")
 		return true
 	})
 
@@ -556,23 +566,48 @@ func getValidationParameter(funcDecl *ast.FuncDecl) *ast.Object {
 	return nil
 }
 
-func (s *ControllerSpec) SimpleName() string {
-	return s.PackageName + "." + s.StructName
+func (s *TypeInfo) String() string {
+	return s.ImportPath + "." + s.StructName
 }
 
-func (s *embeddedTypeName) SimpleName() string {
-	return s.PackageName + "." + s.StructName
+func (s *embeddedTypeName) String() string {
+	return s.ImportPath + "." + s.StructName
 }
 
-// Remove any types that do not (directly or indirectly) embed *rev.Controller.
-func filterControllers(specs []*ControllerSpec) (filtered []*ControllerSpec) {
-	// Do a search in the "embedded type graph", starting with rev.Controller.
-	nodeQueue := []string{"rev.Controller"}
+// getStructTypeDecl checks if the given decl is a type declaration for a
+// struct.  If so, the TypeSpec is returned.
+func getStructTypeDecl(decl ast.Decl) (spec *ast.TypeSpec, found bool) {
+	genDecl, ok := decl.(*ast.GenDecl)
+	if !ok {
+		return
+	}
+
+	if genDecl.Tok != token.TYPE {
+		return
+	}
+
+	if len(genDecl.Specs) != 1 {
+		rev.TRACE.Printf("Surprising: Decl does not have 1 Spec: %v", genDecl)
+		return
+	}
+
+	spec = genDecl.Specs[0].(*ast.TypeSpec)
+	if _, ok := spec.Type.(*ast.StructType); ok {
+		found = true
+	}
+
+	return
+}
+
+// Returnall types that (directly or indirectly) embed the target type.
+func findTypesThatEmbed(targetType string, specs []*TypeInfo) (filtered []*TypeInfo) {
+	// Do a search in the "embedded type graph", starting with the target type.
+	nodeQueue := []string{targetType}
 	for len(nodeQueue) > 0 {
 		controllerSimpleName := nodeQueue[0]
 		nodeQueue = nodeQueue[1:]
 		for _, spec := range specs {
-			if rev.ContainsString(nodeQueue, spec.SimpleName()) {
+			if rev.ContainsString(nodeQueue, spec.String()) {
 				continue // Already added
 			}
 
@@ -581,8 +616,8 @@ func filterControllers(specs []*ControllerSpec) (filtered []*ControllerSpec) {
 
 				// If so, add this type's simple name to the nodeQueue, and its spec to
 				// the filtered list.
-				if controllerSimpleName == embeddedType.SimpleName() {
-					nodeQueue = append(nodeQueue, spec.SimpleName())
+				if controllerSimpleName == embeddedType.String() {
+					nodeQueue = append(nodeQueue, spec.String())
 					filtered = append(filtered, spec)
 					break
 				}
@@ -592,22 +627,71 @@ func filterControllers(specs []*ControllerSpec) (filtered []*ControllerSpec) {
 	return
 }
 
+// TypeExpr provides a type name that may be rewritten to use a package name.
+type TypeExpr struct {
+	Expr     string // The unqualified type expression, e.g. "[]*MyType"
+	PkgName  string // The default package idenifier
+	pkgIndex int    // The index where the package identifier should be inserted.
+}
+
+// TypeName returns the fully-qualified type name for this expression.
+// The caller may optionally specify a package name to override the default.
+func (e TypeExpr) TypeName(pkgOverride string) string {
+	pkgName := rev.FirstNonEmpty(pkgOverride, e.PkgName)
+	if pkgName == "" {
+		return e.Expr
+	}
+	return e.Expr[:e.pkgIndex] + pkgName + "." + e.Expr[e.pkgIndex:]
+}
+
 // This returns the syntactic expression for referencing this type in Go.
-// One complexity is that package-local types have to be fully-qualified.
-// For example, if the type is "Hello", then it really means "pkg.Hello".
-func ExprName(expr ast.Expr) string {
+func NewTypeExpr(pkgName string, expr ast.Expr) TypeExpr {
 	switch t := expr.(type) {
 	case *ast.Ident:
-		return t.Name
+		if IsBuiltinType(t.Name) {
+			pkgName = ""
+		}
+		return TypeExpr{t.Name, pkgName, 0}
 	case *ast.SelectorExpr:
-		return ExprName(t.X) + "." + ExprName(t.Sel)
+		e := NewTypeExpr(pkgName, t.X)
+		return TypeExpr{t.Sel.Name, e.Expr, 0}
 	case *ast.StarExpr:
-		return "*" + ExprName(t.X)
+		e := NewTypeExpr(pkgName, t.X)
+		return TypeExpr{"*" + e.Expr, e.PkgName, e.pkgIndex + 1}
 	case *ast.ArrayType:
-		return "[]" + ExprName(t.Elt)
+		e := NewTypeExpr(pkgName, t.Elt)
+		return TypeExpr{"[]" + e.Expr, e.PkgName, e.pkgIndex + 2}
 	default:
 		log.Println("Failed to generate name for field.")
 		ast.Print(nil, expr)
 	}
-	return ""
+	return TypeExpr{}
+}
+
+var _BUILTIN_TYPES = map[string]struct{}{
+	"bool":       struct{}{},
+	"byte":       struct{}{},
+	"complex128": struct{}{},
+	"complex64":  struct{}{},
+	"error":      struct{}{},
+	"float32":    struct{}{},
+	"float64":    struct{}{},
+	"int":        struct{}{},
+	"int16":      struct{}{},
+	"int32":      struct{}{},
+	"int64":      struct{}{},
+	"int8":       struct{}{},
+	"rune":       struct{}{},
+	"string":     struct{}{},
+	"uint":       struct{}{},
+	"uint16":     struct{}{},
+	"uint32":     struct{}{},
+	"uint64":     struct{}{},
+	"uint8":      struct{}{},
+	"uintptr":    struct{}{},
+}
+
+func IsBuiltinType(name string) bool {
+	_, ok := _BUILTIN_TYPES[name]
+	return ok
 }
