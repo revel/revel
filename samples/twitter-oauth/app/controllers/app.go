@@ -53,7 +53,7 @@ func (c Application) Index() rev.Result {
 
 func (c Application) SetStatus(status string) rev.Result {
 	resp, err := TWITTER.PostForm(
-		"https://api.twitter.com/1.1/statuses/update.json",
+		"http://api.twitter.com/1/statuses/update.json",
 		map[string]string{"status": status},
 		getUser().AccessToken,
 	)
