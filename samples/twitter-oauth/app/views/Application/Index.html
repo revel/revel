@@ -1,0 +1,41 @@
+{{set . "title" "Home"}}
+{{template "header.html" .}}
+
+<h1>Useless Twitter Mashup</h1>
+
+<div class="toolbar"><a href="/Application/Authenticate">Authorize</a></div>
+
+Status: <input id="statusupdate" size="140" /> <input id="sendstatus" type="button" value="Publish" />
+
+<h2>Mentions</h2>
+
+<ul>
+{{range .mentions}}
+<li>
+	{{.Text}}
+</li>
+{{end}}
+</ul>
+
+<script>
+function sendstatus() {
+	$.post("/Application/SetStatus?status=" + $("#statusupdate").val(),
+		null,
+		function(result){
+			alert("Status published");
+		},
+	   "json");
+}
+$(document).ready(function(){
+	$("#statusupdate").keypress(function(e){
+		if (e.keyCode == 13) {
+			sendstatus();
+		}
+	});
+	$("#sendstatus").click(function(){
+		sendstatus();
+	});
+});
+</script>
+
+{{template "footer.html" .}}

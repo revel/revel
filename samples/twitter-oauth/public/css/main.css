@@ -1,0 +1,32 @@
+html {
+    background-color: #1196FC;
+    font-family: sans-serif;
+}
+
+body {
+    background-color: #77D9F9;
+    -moz-border-radius: 20px;
+    -webkit-border-radius: 20px;
+    padding: 20px 30px 20px 30px;
+}
+
+.toolbar {
+    height: 50px;
+}
+
+.toolbar a {
+    float: right;
+    text-decoration: none;
+    background-color: #1196FC;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    -moz-border-radius: 10px;
+    -webkit-border-radius: 10px;
+    border-radius: 10px;
+    padding: 3px 15px 3px 15px;
+}
+
+h1, h2, h3 {
+    color: #154E84;
+}
