@@ -20,13 +20,14 @@ typical Go installation.
 	        controllers     App controllers
 	        models          App domain models
 	        views           Templates
+	      tests             Test suites.
 	      conf              Configuration files
 	        app.conf        Main configuration file
 	        routes          Routes definition
 	      public            Public assets
 	        css             CSS files
 	        js              Javascript files
-	        img             Image files
+	        images          Image files
 
 
 ## The app/ directory
