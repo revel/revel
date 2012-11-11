@@ -2,6 +2,8 @@ package rev
 
 import (
 	"fmt"
+	"net/http"
+	"net/url"
 	"regexp"
 	"runtime"
 	"time"
@@ -329,3 +331,50 @@ func (v *Validation) Check(obj interface{}, checks ...Check) *ValidationResult {
 // E.g. "myapp/controllers.helper" or "myapp/controllers.(*Application).Action"
 // This is set on initialization in the generated main.go file.
 var DefaultValidationKeys map[string]map[int]string
+
+type ValidationPlugin struct{ EmptyPlugin }
+
+func (p ValidationPlugin) BeforeRequest(c *Controller) {
+	c.Validation = &Validation{
+		Errors: restoreValidationErrors(c.Request.Request),
+		keep:   false,
+	}
+}
+
+func (p ValidationPlugin) AfterRequest(c *Controller) {
+	// Add Validation errors to RenderArgs.
+	c.RenderArgs["errors"] = c.Validation.ErrorMap()
+
+	// Store the Validation errors
+	var errorsValue string
+	if c.Validation.keep {
+		for _, error := range c.Validation.Errors {
+			if error.Message != "" {
+				errorsValue += "\x00" + error.Key + ":" + error.Message + "\x00"
+			}
+		}
+	}
+	c.SetCookie(&http.Cookie{
+		Name:  CookiePrefix + "_ERRORS",
+		Value: url.QueryEscape(errorsValue),
+		Path:  "/",
+	})
+}
+
+// Restore Validation.Errors from a request.
+func restoreValidationErrors(req *http.Request) []*ValidationError {
+	errors := make([]*ValidationError, 0, 5)
+	if cookie, err := req.Cookie(CookiePrefix + "_ERRORS"); err == nil {
+		ParseKeyValueCookie(cookie.Value, func(key, val string) {
+			errors = append(errors, &ValidationError{
+				Key:     key,
+				Message: val,
+			})
+		})
+	}
+	return errors
+}
+
+func init() {
+	RegisterPlugin(ValidationPlugin{})
+}
