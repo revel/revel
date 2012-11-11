@@ -3,12 +3,10 @@ title: Interceptors
 layout: manual
 ---
 
-An "interceptor" is a function that is invoked by the framework at a designated
-time an action invocation.  It allows a form of
+An "interceptor" is a function that is invoked by the framework before or after an action invocation.  It allows a form of
 [Aspect Oriented Programming](http://en.wikipedia.org/wiki/Aspect-oriented_programming),
 which is useful for some common concerns:
 * Request logging
-* Beginning and committing transactions (or rolling back in the case of an exception)
 * Error handling
 * Stats keeping
 
