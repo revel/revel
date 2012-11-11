@@ -2,10 +2,15 @@ package rev
 
 // An plugin that allows the user to inject behavior at various points in the request cycle.
 type Plugin interface {
+	// Called on server startup (and on each code reload).
 	OnAppStart()
+	// Called after the router has finished configuration.
 	OnRoutesLoaded(router *Router)
+	// Called before every request.
 	BeforeRequest(c *Controller)
+	// Called after every request (except on panics).
 	AfterRequest(c *Controller)
+	// Called when a panic exits an action, with the recovered value.
 	OnException(c *Controller, err interface{})
 }
 
