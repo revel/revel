@@ -1,0 +1,14 @@
+greeting=Hello 
+greeting.name=Rob
+greeting.suffix=, welcome to Revel!
+
+folded=Greeting is '%(greeting)s'
+
+[AU]
+greeting=G'day
+
+[US]
+greeting=Howdy
+
+[GB]
+greeting=All right
