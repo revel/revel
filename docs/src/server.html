@@ -23,9 +23,9 @@ var (
 <span class="comment">// This is called from the generated main file.</span>
 <span class="comment">// If port is non-zero, use that.  Else, read the port from app.conf.</span>
 func Run(port int) {
-    address := Config.StringDefault(&#34;http.addr&#34;, &#34;&#34;)
+    address := HttpAddr
     if port == 0 {
-        port = Config.IntDefault(&#34;http.port&#34;, 9000)
+        port = HttpPort
     }
 
     MainRouter = NewRouter(path.Join(BasePath, &#34;conf&#34;, &#34;routes&#34;))

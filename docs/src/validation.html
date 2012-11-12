@@ -88,205 +88,47 @@ func (r *ValidationResult) Message(message string, args ...interface{}) *Validat
     return r
 }
 
-type Check interface {
-    IsSatisfied(interface{}) bool
-    DefaultMessage() string
-}
-
-type Required struct{}
-
-func (r Required) IsSatisfied(obj interface{}) bool {
-    if obj == nil {
-        return false
-    }
-
-    if str, ok := obj.(string); ok {
-        return len(str) &gt; 0
-    }
-    if list, ok := obj.([]interface{}); ok {
-        return len(list) &gt; 0
-    }
-    if b, ok := obj.(bool); ok {
-        return b
-    }
-    if i, ok := obj.(int); ok {
-        return i != 0
-    }
-    if t, ok := obj.(time.Time); ok {
-        return !t.IsZero()
-    }
-    return true
-}
-
-func (r Required) DefaultMessage() string {
-    return &#34;Required&#34;
-}
-
 <span class="comment">// Test that the argument is non-nil and non-empty (if string or list)</span>
 func (v *Validation) Required(obj interface{}) *ValidationResult {
     return v.apply(Required{}, obj)
-}
-
-type Min struct {
-    Min int
-}
-
-func (m Min) IsSatisfied(obj interface{}) bool {
-    num, ok := obj.(int)
-    if ok {
-        return num &gt;= m.Min
-    }
-    return false
-}
-
-func (m Min) DefaultMessage() string {
-    return fmt.Sprintln(&#34;Minimum is&#34;, m.Min)
 }
 
 func (v *Validation) Min(n int, min int) *ValidationResult {
     return v.apply(Min{min}, n)
 }
 
-type Max struct {
-    Max int
-}
-
-func (m Max) IsSatisfied(obj interface{}) bool {
-    num, ok := obj.(int)
-    if ok {
-        return num &lt;= m.Max
-    }
-    return false
-}
-
-func (m Max) DefaultMessage() string {
-    return fmt.Sprintln(&#34;Maximum is&#34;, m.Max)
-}
-
 func (v *Validation) Max(n int, max int) *ValidationResult {
     return v.apply(Max{max}, n)
-}
-
-<span class="comment">// Requires an integer to be within Min, Max inclusive.</span>
-type Range struct {
-    Min
-    Max
-}
-
-func (r Range) IsSatisfied(obj interface{}) bool {
-    return r.Min.IsSatisfied(obj) &amp;&amp; r.Max.IsSatisfied(obj)
-}
-
-func (r Range) DefaultMessage() string {
-    return fmt.Sprintln(&#34;Range is&#34;, r.Min.Min, &#34;to&#34;, r.Max.Max)
 }
 
 func (v *Validation) Range(n, min, max int) *ValidationResult {
     return v.apply(Range{Min{min}, Max{max}}, n)
 }
 
-<span class="comment">// Requires an array or string to be at least a given length.</span>
-type MinSize struct {
-    Min int
-}
-
-func (m MinSize) IsSatisfied(obj interface{}) bool {
-    if arr, ok := obj.([]interface{}); ok {
-        return len(arr) &gt;= m.Min
-    }
-    if str, ok := obj.(string); ok {
-        return len(str) &gt;= m.Min
-    }
-    return false
-}
-
-func (m MinSize) DefaultMessage() string {
-    return fmt.Sprintln(&#34;Minimum size is&#34;, m.Min)
-}
-
 func (v *Validation) MinSize(obj interface{}, min int) *ValidationResult {
     return v.apply(MinSize{min}, obj)
-}
-
-<span class="comment">// Requires an array or string to be at most a given length.</span>
-type MaxSize struct {
-    Max int
-}
-
-func (m MaxSize) IsSatisfied(obj interface{}) bool {
-    if arr, ok := obj.([]interface{}); ok {
-        return len(arr) &lt;= m.Max
-    }
-    if str, ok := obj.(string); ok {
-        return len(str) &lt;= m.Max
-    }
-    return false
-}
-
-func (m MaxSize) DefaultMessage() string {
-    return fmt.Sprintln(&#34;Maximum size is&#34;, m.Max)
 }
 
 func (v *Validation) MaxSize(obj interface{}, max int) *ValidationResult {
     return v.apply(MaxSize{max}, obj)
 }
 
-<span class="comment">// Requires an array or string to be exactly a given length.</span>
-type Length struct {
-    N int
-}
-
-func (s Length) IsSatisfied(obj interface{}) bool {
-    if arr, ok := obj.([]interface{}); ok {
-        return len(arr) == s.N
-    }
-    if str, ok := obj.(string); ok {
-        return len(str) == s.N
-    }
-    return false
-}
-
-func (s Length) DefaultMessage() string {
-    return fmt.Sprintln(&#34;Required length is&#34;, s.N)
-}
-
 func (v *Validation) Length(obj interface{}, n int) *ValidationResult {
     return v.apply(Length{n}, obj)
-}
-
-<span class="comment">// Requires a string to match a given regex.</span>
-type Match struct {
-    Regexp *regexp.Regexp
-}
-
-func (m Match) IsSatisfied(obj interface{}) bool {
-    str := obj.(string)
-    return m.Regexp.MatchString(str)
-}
-
-func (m Match) DefaultMessage() string {
-    return fmt.Sprintln(&#34;Must match&#34;, m.Regexp)
 }
 
 func (v *Validation) Match(str string, regex *regexp.Regexp) *ValidationResult {
     return v.apply(Match{regex}, str)
 }
 
-type Email struct {
-    Match
-}
-
-func (e Email) DefaultMessage() string {
-    return fmt.Sprintln(&#34;Must be a valid email address&#34;)
-}
-
 func (v *Validation) Email(str string) *ValidationResult {
     return v.apply(Email{Match{emailPattern}}, str)
 }
 
-<span class="comment">// Apply a group of Checks to a field, in order, and return the ValidationResult</span>
-<span class="comment">// from the first Check that fails, or the last one that succeeds.</span>
-func (v *Validation) Check(obj interface{}, checks ...Check) *ValidationResult {
+<span class="comment">// Apply a group of validators to a field, in order, and return the</span>
+<span class="comment">// ValidationResult from the first one that fails, or the last one that</span>
+<span class="comment">// succeeds.</span>
+func (v *Validation) Check(obj interface{}, checks ...Validator) *ValidationResult {
     var result *ValidationResult
     for _, check := range checks {
         result = v.apply(check, obj)
@@ -295,6 +137,35 @@ func (v *Validation) Check(obj interface{}, checks ...Check) *ValidationResult {
         }
     }
     return result
+}
+
+type ValidationPlugin struct{ EmptyPlugin }
+
+func (p ValidationPlugin) BeforeRequest(c *Controller) {
+    c.Validation = &amp;Validation{
+        Errors: restoreValidationErrors(c.Request.Request),
+        keep:   false,
+    }
+}
+
+func (p ValidationPlugin) AfterRequest(c *Controller) {
+
+    c.RenderArgs[&#34;errors&#34;] = c.Validation.ErrorMap()
+
+    <span class="comment">// Store the Validation errors</span>
+    var errorsValue string
+    if c.Validation.keep {
+        for _, error := range c.Validation.Errors {
+            if error.Message != &#34;&#34; {
+                errorsValue += &#34;\x00&#34; + error.Key + &#34;:&#34; + error.Message + &#34;\x00&#34;
+            }
+        }
+    }
+    c.SetCookie(&amp;http.Cookie{
+        Name:  CookiePrefix + &#34;_ERRORS&#34;,
+        Value: url.QueryEscape(errorsValue),
+        Path:  &#34;/&#34;,
+    })
 }
 
 <span class="comment">// Register default validation keys for all calls to Controller.Validation.Func().</span>

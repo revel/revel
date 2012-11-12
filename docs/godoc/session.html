@@ -1,0 +1,121 @@
+---
+layout: godoc
+---
+<!--
+	Copyright 2009 The Go Authors. All rights reserved.
+	Use of this source code is governed by a BSD-style
+	license that can be found in the LICENSE file.
+-->
+<h1>Session</h1>
+
+	
+		<!-- The package's Name is printed as title by the top-level template -->
+                
+		
+
+		<h2 id="index">Index</h2>
+		<!-- Table of contents for API; must be named manual-nav to turn off auto nav. -->
+		<div id="manual-nav">
+			<dl>
+			
+			
+			
+			
+				
+				<dd><a href="#Session">type Session</a></dd>
+				
+				
+			
+				
+				<dd><a href="#SessionPlugin">type SessionPlugin</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#SessionPlugin.AfterRequest">func (p SessionPlugin) AfterRequest(c *Controller)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#SessionPlugin.BeforeRequest">func (p SessionPlugin) BeforeRequest(c *Controller)</a></dd>
+				
+			
+			
+		</dl>
+
+		
+
+		
+			<h4>Package files</h4>
+			<p>
+			<span style="font-size:90%">
+			
+				<a href="../src/session.html">session.go</a>
+			
+			</span>
+			</p>
+		
+
+		
+		
+		
+		
+			
+			
+			<h2 id="Session">type <a href="../src/session.html?s=164:194#L1">Session</a></h2>
+			<pre>type Session map[string]string</pre>
+			<p>
+A signed cookie (and thus limited to 4kb in size).
+Restriction: Keys may not have a colon in them.
+</p>
+
+
+			
+
+			
+
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="SessionPlugin">type <a href="../src/session.html?s=196:236#L3">SessionPlugin</a></h2>
+			<pre>type SessionPlugin struct{ EmptyPlugin }</pre>
+			
+
+			
+
+			
+
+			
+
+			
+
+			
+				
+				<h3 id="SessionPlugin.AfterRequest">func (SessionPlugin) <a href="../src/session.html?s=342:392#L9">AfterRequest</a></h3>
+				<pre>func (p SessionPlugin) AfterRequest(c *Controller)</pre>
+				
+				
+				
+			
+				
+				<h3 id="SessionPlugin.BeforeRequest">func (SessionPlugin) <a href="../src/session.html?s=238:289#L5">BeforeRequest</a></h3>
+				<pre>func (p SessionPlugin) BeforeRequest(c *Controller)</pre>
+				
+				
+				
+			
+		
+		</div>
+	
+
+	
+
+
+
+
+
+
+
+

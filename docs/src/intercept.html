@@ -12,19 +12,16 @@ layout: godoc
 
 	<pre>package rev
 
-<span class="comment">// An &#34;interceptor&#34; is a function that is invoked by the framework at a</span>
-<span class="comment">// designated time (BEFORE or AFTER) an action invcation.</span>
-<span class="comment">//</span>
-<span class="comment">// Since an interceptor may be used across many user Controllers, it is a</span>
-<span class="comment">// function that takes the base Controller, rather than a method on a user</span>
-<span class="comment">// controller.</span>
+<span class="comment">// An &#34;interceptor&#34; is functionality invoked by the framework BEFORE or AFTER</span>
+<span class="comment">// an action.</span>
 <span class="comment">//</span>
 <span class="comment">// An interceptor may optionally return a Result (instead of nil).  Depending on</span>
 <span class="comment">// when the interceptor was invoked, the response is different:</span>
 <span class="comment">// 1. BEFORE:  No further interceptors are invoked, and neither is the action.</span>
 <span class="comment">// 2. AFTER: Further interceptors are still run.</span>
 <span class="comment">// In all cases, any returned Result will take the place of any existing Result.</span>
-<span class="comment">// But in the BEFORE case, that returned Result is guaranteed to be final, while</span>
+<span class="comment">//</span>
+<span class="comment">// In the BEFORE case, that returned Result is guaranteed to be final, while</span>
 <span class="comment">// in the AFTER case it is possible that a further interceptor could emit its</span>
 <span class="comment">// own Result.</span>
 <span class="comment">//</span>

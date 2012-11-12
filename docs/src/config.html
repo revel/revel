@@ -38,6 +38,10 @@ func (c *MergedConfig) SetSection(section string) {
     c.section = section
 }
 
+func (c *MergedConfig) SetOption(name, value string) {
+    c.config.AddOption(c.section, name, value)
+}
+
 func (c *MergedConfig) Int(option string) (result int, found bool) {
     result, err := c.config.Int(c.section, option)
     if err == nil {

@@ -47,6 +47,9 @@ layout: godoc
 					<dd>&nbsp; &nbsp; <a href="#MergedConfig.Options">func (c *MergedConfig) Options(prefix string) []string</a></dd>
 				
 					
+					<dd>&nbsp; &nbsp; <a href="#MergedConfig.SetOption">func (c *MergedConfig) SetOption(name, value string)</a></dd>
+				
+					
 					<dd>&nbsp; &nbsp; <a href="#MergedConfig.SetSection">func (c *MergedConfig) SetSection(section string)</a></dd>
 				
 					
@@ -106,48 +109,55 @@ checked fallback.
 
 			
 				
-				<h3 id="MergedConfig.Bool">func (*MergedConfig) <a href="../src/config.html?s=1334:1397#L48">Bool</a></h3>
+				<h3 id="MergedConfig.Bool">func (*MergedConfig) <a href="../src/config.html?s=1436:1499#L52">Bool</a></h3>
 				<pre>func (c *MergedConfig) Bool(option string) (result, found bool)</pre>
 				
 				
 				
 			
 				
-				<h3 id="MergedConfig.BoolDefault">func (*MergedConfig) <a href="../src/config.html?s=1721:1788#L62">BoolDefault</a></h3>
+				<h3 id="MergedConfig.BoolDefault">func (*MergedConfig) <a href="../src/config.html?s=1823:1890#L66">BoolDefault</a></h3>
 				<pre>func (c *MergedConfig) BoolDefault(option string, dfault bool) bool</pre>
 				
 				
 				
 			
 				
-				<h3 id="MergedConfig.HasSection">func (*MergedConfig) <a href="../src/config.html?s=2198:2252#L83">HasSection</a></h3>
+				<h3 id="MergedConfig.HasSection">func (*MergedConfig) <a href="../src/config.html?s=2300:2354#L87">HasSection</a></h3>
 				<pre>func (c *MergedConfig) HasSection(section string) bool</pre>
 				
 				
 				
 			
 				
-				<h3 id="MergedConfig.Int">func (*MergedConfig) <a href="../src/config.html?s=816:882#L27">Int</a></h3>
+				<h3 id="MergedConfig.Int">func (*MergedConfig) <a href="../src/config.html?s=918:984#L31">Int</a></h3>
 				<pre>func (c *MergedConfig) Int(option string) (result int, found bool)</pre>
 				
 				
 				
 			
 				
-				<h3 id="MergedConfig.IntDefault">func (*MergedConfig) <a href="../src/config.html?s=1196:1260#L41">IntDefault</a></h3>
+				<h3 id="MergedConfig.IntDefault">func (*MergedConfig) <a href="../src/config.html?s=1298:1362#L45">IntDefault</a></h3>
 				<pre>func (c *MergedConfig) IntDefault(option string, dfault int) int</pre>
 				
 				
 				
 			
 				
-				<h3 id="MergedConfig.Options">func (*MergedConfig) <a href="../src/config.html?s=2407:2461#L89">Options</a></h3>
+				<h3 id="MergedConfig.Options">func (*MergedConfig) <a href="../src/config.html?s=2509:2563#L93">Options</a></h3>
 				<pre>func (c *MergedConfig) Options(prefix string) []string</pre>
 				<p>
 Options returns all configuration option keys.
 If a prefix is provided, then that is applied as a filter.
 </p>
 
+				
+				
+			
+				
+				<h3 id="MergedConfig.SetOption">func (*MergedConfig) <a href="../src/config.html?s=816:868#L27">SetOption</a></h3>
+				<pre>func (c *MergedConfig) SetOption(name, value string)</pre>
+				
 				
 				
 			
@@ -159,14 +169,14 @@ If a prefix is provided, then that is applied as a filter.
 				
 			
 				
-				<h3 id="MergedConfig.String">func (*MergedConfig) <a href="../src/config.html?s=1863:1935#L69">String</a></h3>
+				<h3 id="MergedConfig.String">func (*MergedConfig) <a href="../src/config.html?s=1965:2037#L73">String</a></h3>
 				<pre>func (c *MergedConfig) String(option string) (result string, found bool)</pre>
 				
 				
 				
 			
 				
-				<h3 id="MergedConfig.StringDefault">func (*MergedConfig) <a href="../src/config.html?s=2055:2121#L76">StringDefault</a></h3>
+				<h3 id="MergedConfig.StringDefault">func (*MergedConfig) <a href="../src/config.html?s=2157:2223#L80">StringDefault</a></h3>
 				<pre>func (c *MergedConfig) StringDefault(option, dfault string) string</pre>
 				
 				

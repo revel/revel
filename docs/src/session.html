@@ -1,0 +1,44 @@
+---
+layout: godoc
+---
+<!--
+	Copyright 2009 The Go Authors. All rights reserved.
+	Use of this source code is governed by a BSD-style
+	license that can be found in the LICENSE file.
+-->
+<h1>Session</h1>
+
+
+
+	<pre>package rev
+
+<span class="comment">// A signed cookie (and thus limited to 4kb in size).</span>
+<span class="comment">// Restriction: Keys may not have a colon in them.</span>
+type Session map[string]string
+
+type SessionPlugin struct{ EmptyPlugin }
+
+func (p SessionPlugin) BeforeRequest(c *Controller) {
+    c.Session = restoreSession(c.Request.Request)
+}
+
+func (p SessionPlugin) AfterRequest(c *Controller) {
+    <span class="comment">// Store the session (and sign it).</span>
+    var sessionValue string
+    for key, value := range c.Session {
+        sessionValue += &#34;\x00&#34; + key + &#34;:&#34; + value + &#34;\x00&#34;
+    }
+    sessionData := url.QueryEscape(sessionValue)
+    c.SetCookie(&amp;http.Cookie{
+        Name:  CookiePrefix + &#34;_SESSION&#34;,
+        Value: Sign(sessionData) + &#34;-&#34; + sessionData,
+        Path:  &#34;/&#34;,
+    })
+}
+</pre>
+
+
+
+
+
+

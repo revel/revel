@@ -14,10 +14,15 @@ layout: godoc
 
 <span class="comment">// An plugin that allows the user to inject behavior at various points in the request cycle.</span>
 type Plugin interface {
+    <span class="comment">// Called on server startup (and on each code reload).</span>
     OnAppStart()
+    <span class="comment">// Called after the router has finished configuration.</span>
     OnRoutesLoaded(router *Router)
+    <span class="comment">// Called before every request.</span>
     BeforeRequest(c *Controller)
+    <span class="comment">// Called after every request (except on panics).</span>
     AfterRequest(c *Controller)
+    <span class="comment">// Called when a panic exits an action, with the recovered value.</span>
     OnException(c *Controller, err interface{})
 }
 

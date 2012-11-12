@@ -76,7 +76,7 @@ layout: godoc
 		
 			
 			
-			<h2 id="InterceptFunc">func <a href="../src/intercept.html?s=2577:2657#L85">InterceptFunc</a></h2>
+			<h2 id="InterceptFunc">func <a href="../src/intercept.html?s=2371:2451#L82">InterceptFunc</a></h2>
 			<pre>func InterceptFunc(intc InterceptorFunc, when InterceptTime, target interface{})</pre>
 			<p>
 Install a general interceptor.
@@ -90,7 +90,7 @@ It must have the signature of:
 		
 			
 			
-			<h2 id="InterceptMethod">func <a href="../src/intercept.html?s=3053:3117#L98">InterceptMethod</a></h2>
+			<h2 id="InterceptMethod">func <a href="../src/intercept.html?s=2847:2911#L95">InterceptMethod</a></h2>
 			<pre>func InterceptMethod(intc InterceptorMethod, when InterceptTime)</pre>
 			<p>
 Install an interceptor method that applies to its own Controller.
@@ -104,7 +104,7 @@ func (c *AppController) example() rev.Result
 		
 			
 			
-			<h2 id="InterceptTarget">type <a href="../src/intercept.html?s=1475:1499#L39">InterceptTarget</a></h2>
+			<h2 id="InterceptTarget">type <a href="../src/intercept.html?s=1269:1293#L36">InterceptTarget</a></h2>
 			<pre>type InterceptTarget int</pre>
 			
 
@@ -125,7 +125,7 @@ func (c *AppController) example() rev.Result
 		
 			
 			
-			<h2 id="InterceptTime">type <a href="../src/intercept.html?s=1404:1426#L32">InterceptTime</a></h2>
+			<h2 id="InterceptTime">type <a href="../src/intercept.html?s=1198:1220#L29">InterceptTime</a></h2>
 			<pre>type InterceptTime int</pre>
 			
 
@@ -147,7 +147,7 @@ func (c *AppController) example() rev.Result
 		
 			
 			
-			<h2 id="Interception">type <a href="../src/intercept.html?s=1552:1730#L45">Interception</a></h2>
+			<h2 id="Interception">type <a href="../src/intercept.html?s=1346:1524#L42">Interception</a></h2>
 			<pre>type Interception struct {
     When InterceptTime
     <span class="comment">// contains filtered or unexported fields</span>
@@ -164,7 +164,7 @@ func (c *AppController) example() rev.Result
 
 			
 				
-				<h3 id="Interception.Invoke">func (Interception) <a href="../src/intercept.html?s=1810:1871#L58">Invoke</a></h3>
+				<h3 id="Interception.Invoke">func (Interception) <a href="../src/intercept.html?s=1604:1665#L55">Invoke</a></h3>
 				<pre>func (i Interception) Invoke(val reflect.Value) reflect.Value</pre>
 				<p>
 Perform the given interception.
@@ -177,16 +177,11 @@ val is a pointer to the App Controller.
 		
 			
 			
-			<h2 id="InterceptorFunc">type <a href="../src/intercept.html?s=1323:1368#L30">InterceptorFunc</a></h2>
+			<h2 id="InterceptorFunc">type <a href="../src/intercept.html?s=1117:1162#L27">InterceptorFunc</a></h2>
 			<pre>type InterceptorFunc func(*Controller) Result</pre>
 			<p>
-An &#34;interceptor&#34; is a function that is invoked by the framework at a
-designated time (BEFORE or AFTER) an action invcation.
-</p>
-<p>
-Since an interceptor may be used across many user Controllers, it is a
-function that takes the base Controller, rather than a method on a user
-controller.
+An &#34;interceptor&#34; is functionality invoked by the framework BEFORE or AFTER
+an action.
 </p>
 <p>
 An interceptor may optionally return a Result (instead of nil).  Depending on
@@ -194,7 +189,9 @@ when the interceptor was invoked, the response is different:
 1. BEFORE:  No further interceptors are invoked, and neither is the action.
 2. AFTER: Further interceptors are still run.
 In all cases, any returned Result will take the place of any existing Result.
-But in the BEFORE case, that returned Result is guaranteed to be final, while
+</p>
+<p>
+In the BEFORE case, that returned Result is guaranteed to be final, while
 in the AFTER case it is possible that a further interceptor could emit its
 own Result.
 </p>
@@ -233,7 +230,7 @@ func (c *AppController) example() rev.Result
 		
 			
 			
-			<h2 id="InterceptorMethod">type <a href="../src/intercept.html?s=1369:1403#L31">InterceptorMethod</a></h2>
+			<h2 id="InterceptorMethod">type <a href="../src/intercept.html?s=1163:1197#L28">InterceptorMethod</a></h2>
 			<pre>type InterceptorMethod interface{}</pre>
 			
 
