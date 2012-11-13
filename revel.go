@@ -47,6 +47,9 @@ var (
 	HttpPort int    // e.g. 9000
 	HttpAddr string // e.g. "", "127.0.0.1"
 
+	// All cookies dropped by the framework begin with this prefix.
+	CookiePrefix string
+
 	// Loggers
 	DEFAULT = log.New(os.Stderr, "", log.Ldate|log.Ltime|log.Lshortfile)
 	TRACE   = DEFAULT
@@ -120,6 +123,7 @@ func Init(mode, importPath, srcPath string) {
 	HttpPort = Config.IntDefault("http.port", 9000)
 	HttpAddr = Config.StringDefault("http.addr", "")
 	AppName = Config.StringDefault("app.name", "(not set)")
+	CookiePrefix = Config.StringDefault("cookie.prefix", "REVEL")
 	secretStr := Config.StringDefault("app.secret", "")
 	if secretStr == "" {
 		log.Fatalln("No app.secret provided.")

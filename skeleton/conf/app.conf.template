@@ -2,7 +2,7 @@ app.name={{ .AppName }}
 app.secret={{ .Secret }}
 http.addr=
 http.port=9000
-session.cookie=REVEL
+cookie.prefix=REVEL
 
 [dev]
 results.pretty=true

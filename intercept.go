@@ -5,19 +5,16 @@ import (
 	"reflect"
 )
 
-// An "interceptor" is a function that is invoked by the framework at a
-// designated time (BEFORE or AFTER) an action invcation.
-//
-// Since an interceptor may be used across many user Controllers, it is a
-// function that takes the base Controller, rather than a method on a user
-// controller.
+// An "interceptor" is functionality invoked by the framework BEFORE or AFTER
+// an action.
 //
 // An interceptor may optionally return a Result (instead of nil).  Depending on
 // when the interceptor was invoked, the response is different:
 // 1. BEFORE:  No further interceptors are invoked, and neither is the action.
 // 2. AFTER: Further interceptors are still run.
 // In all cases, any returned Result will take the place of any existing Result.
-// But in the BEFORE case, that returned Result is guaranteed to be final, while
+//
+// In the BEFORE case, that returned Result is guaranteed to be final, while
 // in the AFTER case it is possible that a further interceptor could emit its
 // own Result.
 //

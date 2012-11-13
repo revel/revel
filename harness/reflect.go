@@ -442,7 +442,6 @@ func appendAction(fset *token.FileSet, mm methodMap, decl ast.Decl, pkgImportPat
 		for _, arg := range callExpr.Args {
 			argIdent, ok := arg.(*ast.Ident)
 			if !ok {
-				log.Println("Unnamed argument to Render call:", pos)
 				continue
 			}
 			methodCall.Names = append(methodCall.Names, argIdent.Name)
