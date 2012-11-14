@@ -84,18 +84,6 @@ a:hover {
   width: 940px;
 }
 
-@media (min-width: 768px) and (max-width: 979px) {
-  .navbar .container {
-    width: 724px;
-  }
-}
-
-@media (min-width: 1200px) {
-  .navbar .container {
-    width: 1170px;
-  }
-}
-
 .leftnav {
   border-right: 1px solid #eee;
   padding-top: 15px;
@@ -113,6 +101,7 @@ a:hover {
 .navbar-inner {
   min-height: 0 !important;
   height: 55px !important;
+  background: #FFF;
 }
 
 
