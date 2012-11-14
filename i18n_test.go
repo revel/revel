@@ -64,15 +64,21 @@ func BenchmarkI8nMessage(b *testing.B) {
 }
 
 func BenchmarkI8nMessageWithArguments(b *testing.B) {
+	b.StopTimer()
+	TRACE = log.New(ioutil.Discard, "", 0)
+	b.StartTimer()
+
 	for i := 0; i < b.N; i++ {
-		TRACE = log.New(ioutil.Discard, "", 0)
 		Message("en", "arguments.string", "Vincent Hanna")
 	}
 }
 
 func BenchmarkI8nMessageWithFoldingAndArguments(b *testing.B) {
+	b.StopTimer()
+	TRACE = log.New(ioutil.Discard, "", 0)
+	b.StartTimer()
+
 	for i := 0; i < b.N; i++ {
-		TRACE = log.New(ioutil.Discard, "", 0)
 		Message("en", "folded.arguments", 12345)
 	}
 }
