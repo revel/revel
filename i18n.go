@@ -32,7 +32,7 @@ func MessageLocales() []string {
 // Perform a message look-up for the given locale and message.
 //
 // When either an unknown locale or message is detected, a specially formatted string is returned.
-func GetMessage(locale string, message string) (value string) {
+func Message(locale, message string, args ...interface{}) (value string) {
 	messageConfig, knownLocale := messages[locale]
 	if !knownLocale {
 		WARN.Printf("Unknown locale '%s' for message '%s'", locale, message)
@@ -43,6 +43,11 @@ func GetMessage(locale string, message string) (value string) {
 	if error != nil {
 		WARN.Printf("Unknown message '%s' for locale '%s'", message, locale)
 		return fmt.Sprintf(unknownValueFormat, message)
+	}
+
+	if len(args) > 0 {
+		TRACE.Printf("Arguments detected, formatting '%s' with %v", value, args)
+		value = fmt.Sprintf(value, args...)
 	}
 
 	return value

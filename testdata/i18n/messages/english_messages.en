@@ -4,6 +4,9 @@ greeting.suffix=, welcome to Revel!
 
 folded=Greeting is '%(greeting)s'
 
+arguments.string=My name is %s
+arguments.hex=The number %d in hexadecimal notation would be %x
+
 [AU]
 greeting=G'day
 
