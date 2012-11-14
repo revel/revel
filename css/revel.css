@@ -5,6 +5,7 @@ body {
 .hero-unit {
   background-color: #222;
   margin-top:0px;
+  min-width: 940px;
   color:#ccc;
   padding-top:0px;
   border-bottom:1px solid #375EAB;
@@ -78,6 +79,14 @@ a {
 a:hover {
   color: #005580;
   text-decoration: underline;
+}
+
+.container {
+  padding: 5px;
+}
+
+.navbar {
+  min-width: 1062px;
 }
 
 .navbar .container {
