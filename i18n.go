@@ -29,17 +29,21 @@ func MessageLocales() []string {
 	return locales
 }
 
-// Perform a message look-up for the given locale and message.
+// Perform a message look-up for the given locale and message using the given arguments.
 //
 // When either an unknown locale or message is detected, a specially formatted string is returned.
 func Message(locale, message string, args ...interface{}) (value string) {
-	messageConfig, knownLocale := messages[locale]
+	language, region := parseLocale(locale)
+
+	messageConfig, knownLocale := messages[language]
 	if !knownLocale {
 		WARN.Printf("Unknown locale '%s' for message '%s'", locale, message)
 		return fmt.Sprintf(unknownValueFormat, locale)
 	}
 
-	value, error := messageConfig.String(locale, message)
+	// This works because unlike the goconfig documentation suggests it will actually
+	// try to resolve message in DEFAULT if it did not find it in the given section.
+	value, error := messageConfig.String(region, message)
 	if error != nil {
 		WARN.Printf("Unknown message '%s' for locale '%s'", message, locale)
 		return fmt.Sprintf(unknownValueFormat, message)
@@ -51,6 +55,15 @@ func Message(locale, message string, args ...interface{}) (value string) {
 	}
 
 	return value
+}
+
+func parseLocale(locale string) (language, region string) {
+	if strings.Contains(locale, "-") {
+		languageAndRegion := strings.Split(locale, "-")
+		return languageAndRegion[0], languageAndRegion[1]
+	}
+
+	return locale, ""
 }
 
 func init() {

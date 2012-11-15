@@ -10,7 +10,7 @@ const (
 	testDataPath string = "testdata/i18n"
 )
 
-func TestI8nLoadMessages(t *testing.T) {
+func TestI18nLoadMessages(t *testing.T) {
 	loadMessages(testDataPath)
 
 	// Assert that we have the expected number of locales
@@ -19,7 +19,7 @@ func TestI8nLoadMessages(t *testing.T) {
 	}
 }
 
-func TestI8nMessage(t *testing.T) {
+func TestI18nMessage(t *testing.T) {
 	loadMessages(testDataPath)
 
 	// Assert that we can get a message and we get the expected return value
@@ -41,6 +41,12 @@ func TestI8nMessage(t *testing.T) {
 	if message := Message("en", "folded.arguments", 12345); message != "Rob is 12345 years old" {
 		t.Errorf("Message 'folded.arguments' for locale 'en' (%s) does not have the expected value", message)
 	}
+	if message := Message("en-AU", "greeting"); message != "G'day" {
+		t.Errorf("Message 'greeting' for locale 'en-AU' (%s) does not have the expected value", message)
+	}
+	if message := Message("en-AU", "only_exists_in_default"); message != "Default" {
+		t.Errorf("Message 'only_exists_in_default' for locale 'en-AU' (%s) does not have the expected value", message)
+	}
 
 	// TODO: re-enable this test once files merging has been implemented
 	/*if message := Message("en", "greeting2"); message != "Yo!" {
@@ -57,28 +63,39 @@ func TestI8nMessage(t *testing.T) {
 	}
 }
 
-func BenchmarkI8nMessage(b *testing.B) {
+func BenchmarkI18nLoadMessages(b *testing.B) {
+	excludeFromTimer(b, func() { TRACE = log.New(ioutil.Discard, "", 0) })
+
+	for i := 0; i < b.N; i++ {
+		loadMessages(testDataPath)
+	}
+}
+
+func BenchmarkI18nMessage(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		Message("nl", "greeting")
 	}
 }
 
-func BenchmarkI8nMessageWithArguments(b *testing.B) {
-	b.StopTimer()
-	TRACE = log.New(ioutil.Discard, "", 0)
-	b.StartTimer()
+func BenchmarkI18nMessageWithArguments(b *testing.B) {
+	excludeFromTimer(b, func() { TRACE = log.New(ioutil.Discard, "", 0) })
 
 	for i := 0; i < b.N; i++ {
 		Message("en", "arguments.string", "Vincent Hanna")
 	}
 }
 
-func BenchmarkI8nMessageWithFoldingAndArguments(b *testing.B) {
-	b.StopTimer()
-	TRACE = log.New(ioutil.Discard, "", 0)
-	b.StartTimer()
+func BenchmarkI18nMessageWithFoldingAndArguments(b *testing.B) {
+	excludeFromTimer(b, func() { TRACE = log.New(ioutil.Discard, "", 0) })
 
 	for i := 0; i < b.N; i++ {
 		Message("en", "folded.arguments", 12345)
 	}
+}
+
+// Exclude whatever operations the given function performs from the benchmark timer.
+func excludeFromTimer(b *testing.B, f func()) {
+	b.StopTimer()
+	f()
+	b.StartTimer()
 }
