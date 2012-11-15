@@ -77,8 +77,15 @@ func NewHarness() *Harness {
 	rev.MainTemplateLoader = rev.NewTemplateLoader(rev.TemplatePaths)
 	rev.MainTemplateLoader.Refresh()
 
-	port := getFreePort()
-	serverUrl, _ := url.ParseRequestURI(fmt.Sprintf("http://localhost:%d", port))
+	addr := rev.HttpAddr
+	port := rev.Config.IntDefault("harness.port", 0)
+
+	if port == 0 {
+		port = getFreePort(addr)
+	}
+
+	serverUrl, _ := url.ParseRequestURI(fmt.Sprintf("http://%s:%d", addr, port))
+
 	harness := &Harness{
 		port:       port,
 		serverHost: serverUrl.String()[len("http://"):],
@@ -126,8 +133,8 @@ func (h *Harness) Run() {
 }
 
 // Find an unused port
-func getFreePort() (port int) {
-	conn, err := net.Listen("tcp", ":0")
+func getFreePort(addr string) (port int) {
+	conn, err := net.Listen("tcp", fmt.Sprintf("%s:0", addr))
 	if err != nil {
 		rev.ERROR.Fatal(err)
 	}
