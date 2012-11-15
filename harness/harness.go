@@ -81,7 +81,7 @@ func NewHarness() *Harness {
 	port := rev.Config.IntDefault("harness.port", 0)
 
 	if port == 0 {
-		port = getFreePort(addr)
+		port = getFreePort()
 	}
 
 	serverUrl, _ := url.ParseRequestURI(fmt.Sprintf("http://%s:%d", addr, port))
@@ -133,8 +133,8 @@ func (h *Harness) Run() {
 }
 
 // Find an unused port
-func getFreePort(addr string) (port int) {
-	conn, err := net.Listen("tcp", fmt.Sprintf("%s:0", addr))
+func getFreePort() (port int) {
+	conn, err := net.Listen("tcp", ":0")
 	if err != nil {
 		rev.ERROR.Fatal(err)
 	}
