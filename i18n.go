@@ -17,15 +17,18 @@ const (
 )
 
 var (
-	// All currently loaded locales.
-	locales []string
-
 	// All currently loaded message configs.
 	messages map[string]*config.Config
 )
 
 // Return all currently loaded message locales.
 func MessageLocales() []string {
+	locales := make([]string, len(messages))
+	i := 0
+	for locale, _ := range messages {
+		locales[i] = locale
+		i++
+	}
 	return locales
 }
 
@@ -98,11 +101,11 @@ func loadMessageFile(path string, info os.FileInfo, osError error) error {
 			return error
 		} else {
 			locale := parseLocaleFromFileName(info.Name())
-			locales = append(locales, locale)
 
+			// If we have already parsed a message file for this locale, merge both
 			if _, exists := messages[locale]; exists {
-				// TODO: fix this so that messages from identical locale files are merged
-				ERROR.Println("Multiple messages files for locale", locale)
+				messages[locale].Merge(config)
+				TRACE.Printf("Successfully merged messages for locale '%s'", locale)
 			} else {
 				messages[locale] = config
 			}

@@ -48,10 +48,10 @@ func TestI18nMessage(t *testing.T) {
 		t.Errorf("Message 'only_exists_in_default' for locale 'en-AU' (%s) does not have the expected value", message)
 	}
 
-	// TODO: re-enable this test once files merging has been implemented
-	/*if message := Message("en", "greeting2"); message != "Yo!" {
-		t.Error("Message 'greeting2' for locale 'en' does not have the expected value")
-	}*/
+	// Assert that message merging works
+	if message := Message("en", "greeting2"); message != "Yo!" {
+		t.Errorf("Message 'greeting2' for locale 'en' (%s) does not have the expected value", message)
+	}
 
 	// Assert that we get the expected return value for a locale that doesn't exist
 	if message := Message("unknown locale", "message"); message != "??? unknown locale ???" {
