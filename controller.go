@@ -36,6 +36,7 @@ func NewController(req *Request, resp *Response, ct *ControllerType) *Controller
 		Request:  req,
 		Response: resp,
 		Params:   ParseParams(req),
+		Args:     map[string]interface{}{},
 		RenderArgs: map[string]interface{}{
 			"RunMode": RunMode,
 		},
