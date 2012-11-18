@@ -20,7 +20,7 @@ type Result interface {
 // If RunMode is "dev", this results in a friendly error page.
 type ErrorResult struct {
 	RenderArgs map[string]interface{}
-	error
+	Error      error
 }
 
 func (r ErrorResult) Apply(req *Request, resp *Response) {
@@ -45,7 +45,7 @@ func (r ErrorResult) Apply(req *Request, resp *Response) {
 	showPlaintext := func(err error) {
 		PlaintextErrorResult{fmt.Errorf("Server Error:\n%s\n\n"+
 			"Additionally, an error occurred when rendering the error page:\n%s",
-			r.error, err)}.Apply(req, resp)
+			r.Error, err)}.Apply(req, resp)
 	}
 
 	if tmpl == nil {
@@ -58,7 +58,7 @@ func (r ErrorResult) Apply(req *Request, resp *Response) {
 
 	// If it's not a revel error, wrap it in one.
 	var revelError *Error
-	switch e := r.error.(type) {
+	switch e := r.Error.(type) {
 	case *Error:
 		revelError = e
 	case error:
@@ -91,13 +91,13 @@ func (r ErrorResult) Apply(req *Request, resp *Response) {
 }
 
 type PlaintextErrorResult struct {
-	error
+	Error error
 }
 
 // This method is used when the template loader or error template is not available.
 func (r PlaintextErrorResult) Apply(req *Request, resp *Response) {
 	resp.WriteHeader(http.StatusInternalServerError, "text/plain")
-	resp.Out.Write([]byte(r.Error()))
+	resp.Out.Write([]byte(r.Error.Error()))
 }
 
 // Action methods return this result to request a template be rendered.
@@ -174,7 +174,7 @@ func (r RenderJsonResult) Apply(req *Request, resp *Response) {
 	}
 
 	if err != nil {
-		ErrorResult{error: err}.Apply(req, resp)
+		ErrorResult{Error: err}.Apply(req, resp)
 		return
 	}
 
@@ -196,7 +196,7 @@ func (r RenderXmlResult) Apply(req *Request, resp *Response) {
 	}
 
 	if err != nil {
-		ErrorResult{error: err}.Apply(req, resp)
+		ErrorResult{Error: err}.Apply(req, resp)
 		return
 	}
 
@@ -258,7 +258,7 @@ func (r *RedirectToActionResult) Apply(req *Request, resp *Response) {
 	url, err := getRedirectUrl(r.val)
 	if err != nil {
 		ERROR.Println("Couldn't resolve redirect:", err.Error())
-		ErrorResult{error: err}.Apply(req, resp)
+		ErrorResult{Error: err}.Apply(req, resp)
 		return
 	}
 	resp.Out.Header().Set("Location", url)
