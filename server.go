@@ -113,16 +113,24 @@ func Run(port int) {
 	MainRouter = NewRouter(path.Join(BasePath, "conf", "routes"))
 	MainTemplateLoader = NewTemplateLoader(TemplatePaths)
 
+	// The "watch" config variable can turn on and off all watching.
+	// (As a convenient way to control it all together.)
+	if Config.BoolDefault("watch", true) {
+		MainWatcher = NewWatcher()
+	}
+
 	// If desired (or by default), create a watcher for templates and routes.
 	// The watcher calls Refresh() on things on the first request.
-	if Config.BoolDefault("server.watcher", true) {
-		MainWatcher = NewWatcher()
-		MainWatcher.auditor = PluginNotifier{plugins}
+	if MainWatcher != nil && Config.BoolDefault("watch.templates", true) {
 		MainWatcher.Listen(MainTemplateLoader, MainTemplateLoader.paths...)
+	} else {
+		MainTemplateLoader.Refresh()
+	}
+
+	if MainWatcher != nil && Config.BoolDefault("watch.routes", true) {
+		MainWatcher.auditor = PluginNotifier{plugins}
 		MainWatcher.Listen(MainRouter, MainRouter.path)
 	} else {
-		// Else, call refresh on them directly.
-		MainTemplateLoader.Refresh()
 		MainRouter.Refresh()
 		plugins.OnRoutesLoaded(MainRouter)
 	}

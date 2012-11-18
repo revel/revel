@@ -10,7 +10,7 @@ i18n.default=en
 [dev]
 results.pretty=true
 results.staging=true
-server.watcher=true
+watch=true
 
 module.testrunner = github.com/robfig/revel/modules/testrunner
 
@@ -22,7 +22,7 @@ log.error.output = stderr
 [prod]
 results.pretty=false
 results.staging=false
-server.watcher=false
+watch=false
 
 module.testrunner = 
 

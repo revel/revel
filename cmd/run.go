@@ -52,7 +52,7 @@ func runApp(args []string) {
 	rev.TRACE.Println("Base path:", rev.BasePath)
 
 	// If the app is run in "watched" mode, use the harness to run it.
-	if rev.Config.BoolDefault("server.watcher", true) {
+	if rev.Config.BoolDefault("watch", true) && rev.Config.BoolDefault("watch.code", true) {
 		harness.NewHarness().Run() // Never returns.
 	}
 
