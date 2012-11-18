@@ -125,6 +125,7 @@ func (h *Harness) Run() {
 	watcher = rev.NewWatcher()
 	watcher.Listen(h, rev.CodePaths...)
 
+	rev.HttpPort = rev.Config.IntDefault("http.port", 9000)
 	rev.INFO.Printf("Listening on %s:%d", rev.HttpAddr, rev.HttpPort)
 	err := http.ListenAndServe(fmt.Sprintf("%s:%d", rev.HttpAddr, rev.HttpPort), h)
 	if err != nil {
