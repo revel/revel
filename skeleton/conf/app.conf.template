@@ -4,6 +4,9 @@ http.addr=
 http.port=9000
 cookie.prefix=REVEL
 
+# The default language of this application. 
+i18n.default=en
+
 [dev]
 results.pretty=true
 results.staging=true

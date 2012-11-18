@@ -167,3 +167,26 @@ func TestMultipartForm(t *testing.T) {
 		t.Errorf("Param files: (expected) %v != %v (actual)", expectedFiles, actualFiles)
 	}
 }
+
+func TestResolveAcceptLanguage(t *testing.T) {
+	request := buildHttpRequestWithAcceptLanguage("")
+	if result := ResolveAcceptLanguage(request); result != nil {
+		t.Errorf("Expected Accept-Language to resolve to an empty string but it was '%s'", result)
+	}
+
+	request = buildHttpRequestWithAcceptLanguage("en-GB,en;q=0.8,nl;q=0.6")
+	if result := ResolveAcceptLanguage(request); len(result) != 3 || result[0] != "en-GB" || result[1] != "en;q=0.8" || result[2] != "nl;q=0.6" {
+		t.Error("Unexpected Accept-Language value after resolve")
+	}
+
+	request = buildHttpRequestWithAcceptLanguage("en-GB, en;q=0.8, nl;q=0.6")
+	if result := ResolveAcceptLanguage(request); len(result) != 3 || result[0] != "en-GB" || result[1] != "en;q=0.8" || result[2] != "nl;q=0.6" {
+		t.Error("Unexpected Accept-Language value after resolve")
+	}
+}
+
+func buildHttpRequestWithAcceptLanguage(acceptLanguage string) *http.Request {
+	request, _ := http.NewRequest("POST", "http://localhost/path", nil)
+	request.Header.Set("Accept-Language", acceptLanguage)
+	return request
+}

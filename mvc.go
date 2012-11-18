@@ -8,8 +8,9 @@ import (
 
 type Request struct {
 	*http.Request
-	ContentType string
-	Format      string // "html", "xml", "json", or "text"
+	ContentType    string
+	Format         string // "html", "xml", "json", or "text"
+	AcceptLanguage []string
 }
 
 type Response struct {
@@ -21,9 +22,10 @@ type Response struct {
 
 func NewRequest(r *http.Request) *Request {
 	return &Request{
-		Request:     r,
-		ContentType: ResolveContentType(r),
-		Format:      ResolveFormat(r),
+		Request:        r,
+		ContentType:    ResolveContentType(r),
+		Format:         ResolveFormat(r),
+		AcceptLanguage: ResolveAcceptLanguage(r),
 	}
 }
 
@@ -145,6 +147,20 @@ func ResolveFormat(req *http.Request) string {
 	}
 
 	return "html"
+}
+
+// Resolve the Accept-Language header value.
+func ResolveAcceptLanguage(req *http.Request) []string {
+	header := req.Header.Get("Accept-Language")
+	if header == "" {
+		return nil
+	}
+
+	acceptLanguages := strings.Split(header, ",")
+	for i, languageRange := range acceptLanguages {
+		acceptLanguages[i] = strings.TrimSpace(languageRange)
+	}
+	return acceptLanguages
 }
 
 // Write the header (for now, just the status code).
