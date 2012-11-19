@@ -41,17 +41,17 @@ func runApp(args []string) {
 		mode = args[1]
 	}
 
+	// Find and parse app.conf
+	rev.Init(mode, args[0], "")
+
 	// Determine the override port, if any.
-	port := 0
+	port := rev.HttpPort
 	if len(args) == 3 {
 		var err error
 		if port, err = strconv.Atoi(args[2]); err != nil {
 			errorf("Failed to parse port as integer: %s", args[2])
 		}
 	}
-
-	// Find and parse app.conf
-	rev.Init(mode, args[0], "")
 
 	rev.INFO.Printf("Running %s (%s) in %s mode\n", rev.AppName, rev.ImportPath, mode)
 	rev.TRACE.Println("Base path:", rev.BasePath)
