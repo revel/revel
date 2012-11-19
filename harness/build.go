@@ -230,6 +230,7 @@ var (
 
 func main() {
 	flag.Parse()
+	rev.INFO.Println("Running revel server ", *port, *runMode, *importPath, *srcPath)
 	rev.Init(*runMode, *importPath, *srcPath)
 	rev.INFO.Println("Running revel server")
 	{{range $i, $c := .Controllers}}
