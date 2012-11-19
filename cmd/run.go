@@ -58,7 +58,9 @@ func runApp(args []string) {
 
 	// If the app is run in "watched" mode, use the harness to run it.
 	if rev.Config.BoolDefault("watch", true) && rev.Config.BoolDefault("watch.code", true) {
-		rev.HttpPort = port
+		if port != 0 {
+			rev.HttpPort = port
+		}
 		harness.NewHarness().Run() // Never returns.
 	}
 
@@ -67,6 +69,8 @@ func runApp(args []string) {
 	if err != nil {
 		errorf("Failed to build app: %s", err)
 	}
-	app.Port = port
+	if port != 0 {
+		app.Port = port
+	}
 	app.Cmd().Run()
 }
