@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/robfig/revel"
 	"github.com/robfig/revel/harness"
-	"log"
+	"strconv"
 )
 
 var cmdRun = &Command{
@@ -35,24 +35,30 @@ func runApp(args []string) {
 		errorf("No import path given.\nRun 'revel help run' for usage.\n")
 	}
 
+	// Determine the run mode.
 	mode := "dev"
 	if len(args) >= 2 {
 		mode = args[1]
 	}
 
+	// Determine the override port, if any.
+	port := 0
+	if len(args) == 3 {
+		var err error
+		if port, err = strconv.Atoi(args[2]); err != nil {
+			errorf("Failed to parse port as integer: %s", args[2])
+		}
+	}
+
 	// Find and parse app.conf
 	rev.Init(mode, args[0], "")
 
-	if len(args) == 3 {
-		// change http.port config
-		rev.Config.SetOption("http.port", args[2])
-	}
-
-	log.Printf("Running %s (%s) in %s mode\n", rev.AppName, rev.ImportPath, mode)
+	rev.INFO.Printf("Running %s (%s) in %s mode\n", rev.AppName, rev.ImportPath, mode)
 	rev.TRACE.Println("Base path:", rev.BasePath)
 
 	// If the app is run in "watched" mode, use the harness to run it.
 	if rev.Config.BoolDefault("watch", true) && rev.Config.BoolDefault("watch.code", true) {
+		rev.HttpPort = port
 		harness.NewHarness().Run() // Never returns.
 	}
 
@@ -61,5 +67,6 @@ func runApp(args []string) {
 	if err != nil {
 		errorf("Failed to build app: %s", err)
 	}
+	app.Port = port
 	app.Cmd().Run()
 }

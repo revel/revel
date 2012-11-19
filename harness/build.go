@@ -229,9 +229,9 @@ var (
 )
 
 func main() {
-	rev.INFO.Println("Running revel server")
 	flag.Parse()
 	rev.Init(*runMode, *importPath, *srcPath)
+	rev.INFO.Println("Running revel server")
 	{{range $i, $c := .Controllers}}
 	rev.RegisterController((*{{index $.ImportPaths .ImportPath}}.{{.StructName}})(nil),
 		[]*rev.MethodType{
