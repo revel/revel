@@ -27,9 +27,8 @@ func Build() (app *App, compileError *rev.Error) {
 		return nil, compileError
 	}
 
-	tmpl := template.New("RegisterControllers")
-	tmpl = template.Must(tmpl.Parse(REGISTER_CONTROLLERS))
-	var registerControllerSource string = rev.ExecuteTemplate(tmpl, map[string]interface{}{
+	tmpl := template.Must(template.New("").Parse(REGISTER_CONTROLLERS))
+	registerControllerSource := rev.ExecuteTemplate(tmpl, map[string]interface{}{
 		"Controllers":    sourceInfo.ControllerSpecs,
 		"ValidationKeys": sourceInfo.ValidationKeys,
 		"ImportPaths":    calcImportAliases(sourceInfo),
@@ -123,7 +122,7 @@ func calcImportAliases(src *SourceInfo) map[string]string {
 	typeArrays := [][]*TypeInfo{src.ControllerSpecs, src.TestSuites}
 	for _, specs := range typeArrays {
 		for _, spec := range specs {
-			getOrAddAlias(aliases, spec.ImportPath, spec.PackageName)
+			addAlias(aliases, spec.ImportPath, spec.PackageName)
 
 			for _, methSpec := range spec.MethodSpecs {
 				for _, methArg := range methSpec.Args {
@@ -131,23 +130,29 @@ func calcImportAliases(src *SourceInfo) map[string]string {
 						continue
 					}
 
-					getOrAddAlias(aliases, methArg.ImportPath, methArg.TypeExpr.PkgName)
+					addAlias(aliases, methArg.ImportPath, methArg.TypeExpr.PkgName)
 				}
 			}
+		}
+	}
+
+	// Add the "InitImportPaths", with alias "_"
+	for _, importPath := range src.InitImportPaths {
+		if _, ok := aliases[importPath]; !ok {
+			aliases[importPath] = "_"
 		}
 	}
 
 	return aliases
 }
 
-func getOrAddAlias(aliases map[string]string, importPath, pkgName string) string {
+func addAlias(aliases map[string]string, importPath, pkgName string) {
 	alias, ok := aliases[importPath]
 	if ok {
-		return alias
+		return
 	}
 	alias = makePackageAlias(aliases, pkgName)
 	aliases[importPath] = alias
-	return alias
 }
 
 func makePackageAlias(aliases map[string]string, pkgName string) string {

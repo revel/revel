@@ -31,6 +31,9 @@ type SourceInfo struct {
 	ValidationKeys map[string]map[int]string
 	// TestSuites list the types that constitute the set of application tests.
 	TestSuites []*TypeInfo
+	// A list of import paths.
+	// Revel notices files with an init() function and imports that package.
+	InitImportPaths []string
 }
 
 // TypeInfo summarizes information about a struct type in the app source code.
@@ -153,6 +156,7 @@ func appendSourceInfo(srcInfo1, srcInfo2 *SourceInfo) *SourceInfo {
 
 	srcInfo1.ControllerSpecs = append(srcInfo1.ControllerSpecs, srcInfo2.ControllerSpecs...)
 	srcInfo1.TestSuites = append(srcInfo1.TestSuites, srcInfo2.TestSuites...)
+	srcInfo1.InitImportPaths = append(srcInfo1.InitImportPaths, srcInfo2.InitImportPaths...)
 	for k, v := range srcInfo2.ValidationKeys {
 		if _, ok := srcInfo1.ValidationKeys[k]; ok {
 			log.Println("Key conflict when scanning validation calls:", k)
@@ -164,13 +168,17 @@ func appendSourceInfo(srcInfo1, srcInfo2 *SourceInfo) *SourceInfo {
 }
 
 func processPackage(fset *token.FileSet, pkgImportPath, pkgPath string, pkg *ast.Package) *SourceInfo {
-	var structSpecs []*TypeInfo
-	validationKeys := make(map[string]map[int]string)
-	methodSpecs := make(methodMap)
-	scanControllers := strings.HasSuffix(pkgImportPath, "/controllers") ||
-		strings.Contains(pkgImportPath, "/controllers/")
-	scanTests := strings.HasSuffix(pkgImportPath, "/tests") ||
-		strings.Contains(pkgImportPath, "/tests/")
+	var (
+		structSpecs     []*TypeInfo
+		initImportPaths []string
+
+		methodSpecs     = make(methodMap)
+		validationKeys  = make(map[string]map[int]string)
+		scanControllers = strings.HasSuffix(pkgImportPath, "/controllers") ||
+			strings.Contains(pkgImportPath, "/controllers/")
+		scanTests = strings.HasSuffix(pkgImportPath, "/tests") ||
+			strings.Contains(pkgImportPath, "/tests/")
+	)
 
 	// For each source file in the package...
 	for _, file := range pkg.Files {
@@ -192,11 +200,17 @@ func processPackage(fset *token.FileSet, pkgImportPath, pkgPath string, pkg *ast
 				structSpecs = appendStruct(structSpecs, pkgImportPath, pkg, decl, imports)
 			}
 
-			// If this is a func, scan it for validation calls.
+			// If this is a func...
 			if funcDecl, ok := decl.(*ast.FuncDecl); ok {
+				// Scan it for validation calls
 				lineKeys := getValidationKeys(fset, funcDecl)
 				if len(lineKeys) > 0 {
 					validationKeys[pkgImportPath+"."+getFuncName(funcDecl)] = lineKeys
+				}
+
+				// Check if it's an init function.
+				if funcDecl.Name.Name == "init" {
+					initImportPaths = []string{pkgImportPath}
 				}
 			}
 		}
@@ -214,6 +228,7 @@ func processPackage(fset *token.FileSet, pkgImportPath, pkgPath string, pkg *ast
 		ControllerSpecs: controllerSpecs,
 		ValidationKeys:  validationKeys,
 		TestSuites:      findTypesThatEmbed("github.com/robfig/revel.TestSuite", structSpecs),
+		InitImportPaths: initImportPaths,
 	}
 }
 
