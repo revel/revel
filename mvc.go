@@ -10,9 +10,9 @@ import (
 
 type Request struct {
 	*http.Request
-	ContentType    string
-	Format         string // "html", "xml", "json", or "text"
-	AcceptLanguage AcceptLanguages
+	ContentType     string
+	Format          string // "html", "xml", "json", or "text"
+	AcceptLanguages AcceptLanguages
 }
 
 type Response struct {
@@ -24,10 +24,10 @@ type Response struct {
 
 func NewRequest(r *http.Request) *Request {
 	return &Request{
-		Request:        r,
-		ContentType:    ResolveContentType(r),
-		Format:         ResolveFormat(r),
-		AcceptLanguage: ResolveAcceptLanguage(r),
+		Request:         r,
+		ContentType:     ResolveContentType(r),
+		Format:          ResolveFormat(r),
+		AcceptLanguages: ResolveAcceptLanguage(r),
 	}
 }
 
