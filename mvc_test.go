@@ -175,13 +175,34 @@ func TestResolveAcceptLanguage(t *testing.T) {
 	}
 
 	request = buildHttpRequestWithAcceptLanguage("en-GB,en;q=0.8,nl;q=0.6")
-	if result := ResolveAcceptLanguage(request); len(result) != 3 || result[0] != "en-GB" || result[1] != "en;q=0.8" || result[2] != "nl;q=0.6" {
-		t.Error("Unexpected Accept-Language value after resolve")
+	if result := ResolveAcceptLanguage(request); len(result) != 3 {
+		t.Errorf("Unexpected Accept-Language values length of %d (expected %d)", len(result), 3)
+	} else {
+		if result[0].Language != "en-GB" {
+			t.Errorf("Expected '%s' to be most qualified but instead it's '%s'", "en-GB", result[0].Language)
+		}
+		if result[1].Language != "en" {
+			t.Errorf("Expected '%s' to be most qualified but instead it's '%s'", "en", result[1].Language)
+		}
+		if result[2].Language != "nl" {
+			t.Errorf("Expected '%s' to be most qualified but instead it's '%s'", "nl", result[2].Language)
+		}
 	}
 
-	request = buildHttpRequestWithAcceptLanguage("en-GB, en;q=0.8, nl;q=0.6")
-	if result := ResolveAcceptLanguage(request); len(result) != 3 || result[0] != "en-GB" || result[1] != "en;q=0.8" || result[2] != "nl;q=0.6" {
-		t.Error("Unexpected Accept-Language value after resolve")
+	request = buildHttpRequestWithAcceptLanguage("en;q=0.8,nl;q=0.6,en-AU;q=malformed")
+	if result := ResolveAcceptLanguage(request); len(result) != 3 {
+		t.Errorf("Unexpected Accept-Language values length of %d (expected %d)", len(result), 3)
+	} else {
+		if result[0].Language != "en-AU" {
+			t.Errorf("Expected '%s' to be most qualified but instead it's '%s'", "en-AU", result[0].Language)
+		}
+	}
+}
+
+func BenchmarkResolveAcceptLanguage(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		request := buildHttpRequestWithAcceptLanguage("en-GB,en;q=0.8,nl;q=0.6,fr;q=0.5,de-DE;q=0.4,no-NO;q=0.4,ru;q=0.2")
+		ResolveAcceptLanguage(request)
 	}
 }
 
