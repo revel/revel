@@ -27,6 +27,11 @@ func Build() (app *App, compileError *rev.Error) {
 		return nil, compileError
 	}
 
+	// Add the db.import to the import paths.
+	if dbImportPath, found := rev.Config.String("db.import"); found {
+		sourceInfo.InitImportPaths = append(sourceInfo.InitImportPaths, dbImportPath)
+	}
+
 	tmpl := template.Must(template.New("").Parse(REGISTER_CONTROLLERS))
 	registerControllerSource := rev.ExecuteTemplate(tmpl, map[string]interface{}{
 		"Controllers":    sourceInfo.ControllerSpecs,
