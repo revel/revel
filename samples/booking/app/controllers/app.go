@@ -6,49 +6,40 @@ import (
 	"github.com/robfig/revel/samples/booking/app/models"
 )
 
-func addUser(c *rev.Controller) rev.Result {
-	if user := connected(c); user != nil {
+type Application struct {
+	GorpController
+}
+
+func (c Application) AddUser() rev.Result {
+	if user := c.connected(); user != nil {
 		c.RenderArgs["user"] = user
 	}
 	return nil
 }
 
-func connected(c *rev.Controller) *models.User {
+func (c Application) connected() *models.User {
 	if c.RenderArgs["user"] != nil {
 		return c.RenderArgs["user"].(*models.User)
 	}
 	if username, ok := c.Session["user"]; ok {
-		return getUser(c, username)
+		return c.getUser(username)
 	}
 	return nil
 }
 
-func getUser(c *rev.Controller, username string) *models.User {
-	rows, err := c.Txn.Query(`
-select UserId, HashedPassword, Name
-  from User where Username = :Username`, username)
+func (c Application) getUser(username string) *models.User {
+	users, err := c.Txn.Select(models.User{}, `select * from User where Username = ?`, username)
 	if err != nil {
 		panic(err)
 	}
-	defer rows.Close()
-	if !rows.Next() {
+	if len(users) == 0 {
 		return nil
 	}
-
-	user := &models.User{Username: username}
-	err = rows.Scan(&user.UserId, &user.HashedPassword, &user.Name)
-	if err != nil {
-		panic(err)
-	}
-	return user
-}
-
-type Application struct {
-	*rev.Controller
+	return users[0].(*models.User)
 }
 
 func (c Application) Index() rev.Result {
-	if connected(c.Controller) != nil {
+	if c.connected() != nil {
 		return c.Redirect(Hotels.Index)
 	}
 	c.Flash.Error("Please log in first")
@@ -71,11 +62,9 @@ func (c Application) SaveUser(user models.User, verifyPassword string) rev.Resul
 		return c.Redirect(Application.Register)
 	}
 
-	bcryptPassword, _ := bcrypt.GenerateFromPassword(
+	user.HashedPassword, _ = bcrypt.GenerateFromPassword(
 		[]byte(user.Password), bcrypt.DefaultCost)
-	_, err := c.Txn.Exec(
-		"insert into User (Username, HashedPassword, Name) values (?, ?, ?)",
-		user.Username, bcryptPassword, user.Name)
+	err := c.Txn.Insert(&user)
 	if err != nil {
 		panic(err)
 	}
@@ -86,7 +75,7 @@ func (c Application) SaveUser(user models.User, verifyPassword string) rev.Resul
 }
 
 func (c Application) Login(username, password string) rev.Result {
-	user := getUser(c.Controller, username)
+	user := c.getUser(username)
 	err := bcrypt.CompareHashAndPassword(user.HashedPassword, []byte(password))
 	if err == nil {
 		c.Session["user"] = username
@@ -107,5 +96,5 @@ func (c Application) Logout() rev.Result {
 }
 
 func init() {
-	rev.InterceptFunc(addUser, rev.BEFORE, &Application{})
+	rev.InterceptMethod(Application.AddUser, rev.BEFORE)
 }

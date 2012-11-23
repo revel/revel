@@ -7,9 +7,10 @@ import (
 )
 
 type User struct {
-	UserId                   int
-	Username, Password, Name string
-	HashedPassword []byte
+	UserId             int
+	Name               string
+	Username, Password string
+	HashedPassword     []byte
 }
 
 func (u *User) String() string {

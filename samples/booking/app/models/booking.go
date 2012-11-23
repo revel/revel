@@ -2,6 +2,7 @@ package models
 
 import (
 	"fmt"
+	"github.com/coopernurse/gorp"
 	"github.com/robfig/revel"
 	"regexp"
 	"time"
@@ -65,4 +66,14 @@ func (b Booking) Description() string {
 
 func (b Booking) String() string {
 	return fmt.Sprintf("Booking(%s,%s)", b.User, b.Hotel)
+}
+
+func (b *Booking) PreInsert(_ gorp.SqlExecutor) error {
+	if b.User != nil {
+		b.UserId = b.User.UserId
+	}
+	if b.Hotel != nil {
+		b.HotelId = b.Hotel.HotelId
+	}
+	return nil
 }
