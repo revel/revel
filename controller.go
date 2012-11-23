@@ -118,6 +118,7 @@ func (c *Controller) Invoke(appControllerPtr reflect.Value, method reflect.Value
 // This function handles a panic in an action invocation.
 // It cleans up the stack trace, logs it, and displays an error page.
 func handleInvocationPanic(c *Controller, err interface{}) {
+	c.invokeInterceptors(PANIC, reflect.ValueOf(c))
 	plugins.OnException(c, err)
 	stack := string(debug.Stack())
 	ERROR.Println(err, "\n", stack)

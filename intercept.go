@@ -41,6 +41,7 @@ type InterceptTime int
 const (
 	BEFORE InterceptTime = iota
 	AFTER
+	PANIC
 )
 
 type InterceptTarget int
