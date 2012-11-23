@@ -46,7 +46,7 @@ func Build() (app *App, compileError *rev.Error) {
 		rev.ERROR.Fatalf("Failed to make tmp directory: %v", err)
 	}
 
-	// Create the new file
+	// Create the main.go file
 	controllersFile, err := os.Create(path.Join(tmpPath, "main.go"))
 	defer controllersFile.Close()
 	if err != nil {
@@ -56,6 +56,9 @@ func Build() (app *App, compileError *rev.Error) {
 	if err != nil {
 		rev.ERROR.Fatalf("Failed to write to main.go: %v", err)
 	}
+
+	// Read build config.
+	buildTags := rev.Config.StringDefault("build.tags", "")
 
 	// Build the user program (all code under app).
 	// It relies on the user having "go" installed.
@@ -76,7 +79,9 @@ func Build() (app *App, compileError *rev.Error) {
 
 	gotten := make(map[string]struct{})
 	for {
-		buildCmd := exec.Command(goPath, "build", "-o", binName, path.Join(rev.ImportPath, "app", "tmp"))
+		buildCmd := exec.Command(goPath, "build",
+			"-tags", buildTags,
+			"-o", binName, path.Join(rev.ImportPath, "app", "tmp"))
 		rev.TRACE.Println("Exec:", buildCmd.Args)
 		output, err := buildCmd.CombinedOutput()
 
