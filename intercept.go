@@ -84,6 +84,47 @@ func (i Interception) Invoke(val reflect.Value) reflect.Value {
 	return vals[0]
 }
 
+type InterceptorPlugin struct {
+	EmptyPlugin
+}
+
+func (p InterceptorPlugin) BeforeRequest(c *Controller) {
+	invokeInterceptors(BEFORE, c)
+}
+
+func (p InterceptorPlugin) AfterRequest(c *Controller) {
+	invokeInterceptors(AFTER, c)
+}
+
+func (p InterceptorPlugin) OnException(c *Controller, err interface{}) {
+	invokeInterceptors(PANIC, c)
+}
+
+func init() {
+	RegisterPlugin(InterceptorPlugin{})
+}
+
+func invokeInterceptors(when InterceptTime, c *Controller) {
+	appControllerPtr := reflect.ValueOf(c.AppController)
+	result := func() Result {
+		var result Result
+		for _, intc := range getInterceptors(when, appControllerPtr) {
+			resultValue := intc.Invoke(appControllerPtr)
+			if !resultValue.IsNil() {
+				result = resultValue.Interface().(Result)
+			}
+			if when == BEFORE && result != nil {
+				return result
+			}
+		}
+		return result
+	}()
+
+	if result != nil {
+		appControllerPtr.FieldByName("Result").Set(reflect.ValueOf(result))
+	}
+}
+
 var interceptors []*Interception
 
 // Install a general interceptor.
