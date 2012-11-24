@@ -100,10 +100,6 @@ func (p InterceptorPlugin) OnException(c *Controller, err interface{}) {
 	invokeInterceptors(PANIC, c)
 }
 
-func init() {
-	RegisterPlugin(InterceptorPlugin{})
-}
-
 func invokeInterceptors(when InterceptTime, c *Controller) {
 	appControllerPtr := reflect.ValueOf(c.AppController)
 	result := func() Result {
@@ -121,7 +117,7 @@ func invokeInterceptors(when InterceptTime, c *Controller) {
 	}()
 
 	if result != nil {
-		appControllerPtr.FieldByName("Result").Set(reflect.ValueOf(result))
+		appControllerPtr.Elem().FieldByName("Result").Set(reflect.ValueOf(result))
 	}
 }
 

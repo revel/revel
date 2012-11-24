@@ -96,7 +96,3 @@ func (c Application) Logout() rev.Result {
 	}
 	return c.Redirect(Application.Index)
 }
-
-func init() {
-	rev.InterceptMethod(Application.AddUser, rev.BEFORE)
-}

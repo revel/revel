@@ -109,10 +109,3 @@ func (c *GorpController) Rollback() rev.Result {
 	c.Txn = nil
 	return nil
 }
-
-func init() {
-	rev.RegisterPlugin(GorpPlugin{})
-	rev.InterceptMethod((*GorpController).Begin, rev.BEFORE)
-	rev.InterceptMethod((*GorpController).Commit, rev.AFTER)
-	rev.InterceptMethod((*GorpController).Rollback, rev.PANIC)
-}

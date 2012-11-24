@@ -20,8 +20,6 @@ type DbPlugin struct {
 }
 
 func (p DbPlugin) OnAppStart() {
-	rev.INFO.Println("Start DB plugin!")
-
 	// Read configuration.
 	var found bool
 	if Driver, found = rev.Config.String("db.driver"); !found {
@@ -68,8 +66,4 @@ func (p DbPlugin) OnException(c *rev.Controller, err interface{}) {
 			panic(err)
 		}
 	}
-}
-
-func init() {
-	rev.RegisterPlugin(DbPlugin{})
 }

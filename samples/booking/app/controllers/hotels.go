@@ -157,7 +157,3 @@ func (c Hotels) Book(id int) rev.Result {
 	// }
 	return c.Render(title, hotel)
 }
-
-func init() {
-	rev.InterceptMethod(Hotels.checkUser, rev.BEFORE)
-}
