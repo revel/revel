@@ -48,6 +48,8 @@ func (p GorpPlugin) OnAppStart() {
 	})
 
 	t = dbm.AddTable(models.Booking{}).SetKeys(true, "BookingId")
+	t.ColMap("User").Transient = true
+	t.ColMap("Hotel").Transient = true
 	setColumnSizes(t, map[string]int{
 		"CardNumber": 16,
 		"NameOnCard": 50,

@@ -8,5 +8,5 @@ func init() {
 	rev.InterceptMethod(Application.AddUser, rev.BEFORE)
 	rev.InterceptMethod(Hotels.checkUser, rev.BEFORE)
 	rev.InterceptMethod((*GorpController).Commit, rev.AFTER)
-	rev.InterceptMethod((*GorpController).Rollback, rev.PANIC)
+	rev.InterceptMethod((*GorpController).Rollback, rev.FINALLY)
 }
