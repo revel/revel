@@ -76,11 +76,13 @@ func (c Application) SaveUser(user models.User, verifyPassword string) rev.Resul
 
 func (c Application) Login(username, password string) rev.Result {
 	user := c.getUser(username)
-	err := bcrypt.CompareHashAndPassword(user.HashedPassword, []byte(password))
-	if err == nil {
-		c.Session["user"] = username
-		c.Flash.Success("Welcome, " + username)
-		return c.Redirect(Hotels.Index)
+	if user != nil {
+		err := bcrypt.CompareHashAndPassword(user.HashedPassword, []byte(password))
+		if err == nil {
+			c.Session["user"] = username
+			c.Flash.Success("Welcome, " + username)
+			return c.Redirect(Hotels.Index)
+		}
 	}
 
 	c.Flash.Out["username"] = username
