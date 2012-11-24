@@ -64,6 +64,8 @@ func (c *Controller) Invoke(appControllerPtr reflect.Value, method reflect.Value
 		if err := recover(); err != nil {
 			handleInvocationPanic(c, err)
 		}
+
+		plugins.Finally(c)
 	}()
 
 	// Clean up from the request.
@@ -86,20 +88,18 @@ func (c *Controller) Invoke(appControllerPtr reflect.Value, method reflect.Value
 
 	// Run the plugins.
 	plugins.BeforeRequest(c)
-	if c.Result != nil {
-		c.Result.Apply(c.Request, c.Response)
-		return
-	}
 
-	// Invoke the action.
-	resultValue := method.Call(methodArgs)[0]
-	c.Result = resultValue.Interface().(Result)
-
-	plugins.AfterRequest(c)
-
-	// if resultValue.Kind() == reflect.Interface && resultValue.IsNil() {
 	if c.Result == nil {
-		return
+		// Invoke the action.
+		resultValue := method.Call(methodArgs)[0]
+		if resultValue.Kind() == reflect.Interface && !resultValue.IsNil() {
+			c.Result = resultValue.Interface().(Result)
+		}
+
+		plugins.AfterRequest(c)
+		if c.Result == nil {
+			return
+		}
 	}
 
 	// Apply the result, which generally results in the ResponseWriter getting written.

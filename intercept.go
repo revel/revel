@@ -42,6 +42,7 @@ const (
 	BEFORE InterceptTime = iota
 	AFTER
 	PANIC
+	FINALLY
 )
 
 type InterceptTarget int
@@ -100,6 +101,10 @@ func (p InterceptorPlugin) OnException(c *Controller, err interface{}) {
 	invokeInterceptors(PANIC, c)
 }
 
+func (p InterceptorPlugin) Finally(c *Controller) {
+	invokeInterceptors(FINALLY, c)
+}
+
 func invokeInterceptors(when InterceptTime, c *Controller) {
 	appControllerPtr := reflect.ValueOf(c.AppController)
 	result := func() Result {
@@ -117,7 +122,7 @@ func invokeInterceptors(when InterceptTime, c *Controller) {
 	}()
 
 	if result != nil {
-		appControllerPtr.Elem().FieldByName("Result").Set(reflect.ValueOf(result))
+		c.Result = result
 	}
 }
 
