@@ -13,7 +13,7 @@ import (
 	"strings"
 )
 
-const ERROR_CLASS = "hasError"
+var ERROR_CLASS = "hasError"
 
 // This object handles loading and parsing of templates.
 // Everything below the application's views directory is treated as a template.
