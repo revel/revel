@@ -106,7 +106,7 @@ func (c *Controller) Invoke(appControllerPtr reflect.Value, method reflect.Value
 
 	plugins.AfterRequest(c)
 
-	if resultValue.IsNil() {
+	if resultValue.Kind() == reflect.Interface && resultValue.IsNil() {
 		return
 	}
 	result := resultValue.Interface().(Result)
