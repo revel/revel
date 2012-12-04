@@ -14,8 +14,6 @@ var (
 	dbm *gorp.DbMap
 )
 
-// TODO: Insert after DbPlugin
-
 type GorpPlugin struct {
 	rev.EmptyPlugin
 }
@@ -50,11 +48,14 @@ func (p GorpPlugin) OnAppStart() {
 	t = dbm.AddTable(models.Booking{}).SetKeys(true, "BookingId")
 	t.ColMap("User").Transient = true
 	t.ColMap("Hotel").Transient = true
+	t.ColMap("CheckInDate").Transient = true
+	t.ColMap("CheckOutDate").Transient = true
 	setColumnSizes(t, map[string]int{
 		"CardNumber": 16,
 		"NameOnCard": 50,
 	})
 
+	dbm.TraceOn("[gorp]", rev.INFO)
 	dbm.CreateTables()
 
 	bcryptPassword, _ := bcrypt.GenerateFromPassword(

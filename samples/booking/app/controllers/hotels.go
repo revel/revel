@@ -30,7 +30,6 @@ func (c Hotels) Index() rev.Result {
 	var bookings []*models.Booking
 	for _, r := range results {
 		b := r.(*models.Booking)
-		b.Hotel = c.loadHotelById(b.HotelId)
 		bookings = append(bookings, b)
 	}
 
