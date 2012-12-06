@@ -323,7 +323,7 @@ func ReverseUrl(args ...interface{}) string {
 	methodType := controllerType.Method(meth)
 	argsByName := make(map[string]string)
 	for i, argValue := range args[1:] {
-		argsByName[methodType.Args[i].Name] = fmt.Sprintf("%s", argValue)
+		argsByName[methodType.Args[i].Name] = fmt.Sprint(argValue)
 	}
 
 	return MainRouter.Reverse(args[0].(string), argsByName).Url
