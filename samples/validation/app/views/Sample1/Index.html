@@ -18,23 +18,23 @@
 		<legend>User informations</legend>
 
 		<div class="field">
-			<label>Desired username :
-			<input name="username" value="{{.flash.username}}" /></label>
+			<label for="username">Desired username :</label>
+			<input id="username" type="text" name="username" value="{{.flash.username}}" />
 		</div>
 
 		<div class="field">
-			<label>First name :
-			<input name="firstname" size="30" value="{{.flash.firstname}}" /></label>
+			<label for="firstname">First name :</label>
+			<input id="firstname" type="text" name="firstname" size="30" value="{{.flash.firstname}}" />
 		</div>
 
 		<div class="field">
-			<label>Last name :
-			<input name="lastname" size="30" value="{{.flash.lastname}}" /></label>
+			<label for="lastname">Last name :</label>
+			<input id="lastname" type="text" name="lastname" size="30" value="{{.flash.lastname}}" />
 		</div>
 
 		<div class="field">
-			<label>Age :
-			<input name="age" size="3" value="{{.flash.age}}" /></label>
+			<label for="age">Age :</label>
+			<input id="age" type="text" name="age" size="3" value="{{.flash.age}}" />
 		</div>
 
 	</fieldset>
@@ -42,13 +42,13 @@
 		<legend>Password</legend>
 
 		<div class="field">
-			<label>Password :
-			<input type="password" name="password" value="{{.flash.password}}" /></label>
+			<label for="password">Password :</label>
+			<input id="password" type="password" name="password" value="{{.flash.password}}" />
 		</div>
 
 		<div class="field">
-			<label>Confirm password :
-			<input type="password" name="passwordConfirm" value="{{.flash.passwordConfirm}}" /></label>
+			<label for="passwordConfirm">Confirm password :</label>
+			<input id="passwordConfirm" type="password" name="passwordConfirm" value="{{.flash.passwordConfirm}}" />
 		</div>
 
 	</fieldset>
@@ -56,13 +56,13 @@
 		<legend>Email</legend>
 
 		<div class="field">
-			<label>Email address :
-			<input name="email" size="30" value="{{.flash.email}}" /></label>
+			<label for="email">Email address :</label>
+			<input id="email" name="email" size="30" value="{{.flash.email}}" />
 		</div>
 
 		<div class="field">
-			<label>Confirm email address :
-			<input name="emailConfirm" size="30" value="{{.flash.emailConfirm}}" /></label>
+			<label for="emailConfirm">Confirm email address :</label>
+			<input id="emailConfirm" name="emailConfirm" size="30" value="{{.flash.emailConfirm}}" />
 		</div>
 
 	</fieldset>
@@ -75,8 +75,8 @@
 		</div>
 
 		<div class="field">
-			<label>I accept terms of use :
-			<input type="checkbox" value="true" name="termsOfUse" {{if .flash.termsOfUse}}checked="true"{{end}} /></label>
+			<label for="termsOfUse">I accept terms of use :</label>
+			<input id="termsOfUse" type="checkbox" value="true" name="termsOfUse" {{if .flash.termsOfUse}}checked="true"{{end}} />
 		</div>
 
 	</fieldset>
