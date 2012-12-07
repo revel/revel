@@ -34,6 +34,8 @@ func (c *Application) testFunc(a, b int, user models.User) rev.Result {
 func (m Model) Validate(v *rev.Validation) {
 	// Line 26
 	v.Required(m.name)
+	v.Required(m.name == "something").
+		Message("Error Message")
 }
 `
 
@@ -41,7 +43,7 @@ var expectedValidationKeys = []map[int]string{
 	{
 		6:  "a",
 		7:  "a",
-		9:  "a",
+		8:  "a",
 		12: "user.Name",
 		13: "user.Name",
 		16: "b",
@@ -50,6 +52,7 @@ var expectedValidationKeys = []map[int]string{
 		22: "b",
 	}, {
 		27: "m.name",
+		28: "m.name",
 	},
 }
 
