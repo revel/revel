@@ -34,26 +34,6 @@ type Template interface {
 	Render(wr io.Writer, arg interface{}) error
 }
 
-type Field struct {
-	Name, Value string
-	Error       *ValidationError
-}
-
-func (f *Field) ErrorClass() string {
-	if f.Error != nil {
-		return ERROR_CLASS
-	}
-	return ""
-}
-
-// Return "checked" if this field.Value matches the provided value
-func (f *Field) Checked(val string) string {
-	if f.Value == val {
-		return "checked"
-	}
-	return ""
-}
-
 var (
 	// The functions available for use in the templates.
 	TemplateFuncs = map[string]interface{}{
@@ -71,18 +51,10 @@ var (
 			}
 			return template.HTML("")
 		},
-		"field": func(name string, renderArgs map[string]interface{}) *Field {
-			value, _ := renderArgs["flash"].(map[string]string)[name]
-			err, _ := renderArgs["errors"].(map[string]*ValidationError)[name]
-			return &Field{
-				Name:  name,
-				Value: value,
-				Error: err,
-			}
-		},
+		"field": NewField,
 		"option": func(f *Field, val, label string) template.HTML {
 			selected := ""
-			if f.Value == val {
+			if f.Flash() == val {
 				selected = " selected"
 			}
 			return template.HTML(fmt.Sprintf(`<option value="%s"%s>%s</option>`,
@@ -90,7 +62,7 @@ var (
 		},
 		"radio": func(f *Field, val string) template.HTML {
 			checked := ""
-			if f.Value == val {
+			if f.Flash() == val {
 				checked = " checked"
 			}
 			return template.HTML(fmt.Sprintf(`<input type="radio" name="%s" value="%s"%s>`,
