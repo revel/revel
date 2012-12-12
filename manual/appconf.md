@@ -18,7 +18,7 @@ Here's an example file:
 
 	[dev]
 	results.pretty=true
-	server.watcher=true
+	watch=true
 
 	log.trace.output = off
 	log.info.output  = stderr
@@ -27,7 +27,7 @@ Here's an example file:
 
 	[prod]
 	results.pretty=false
-	server.watcher=false
+	watch=false
 
 	log.trace.output = off
 	log.info.output  = off
@@ -57,8 +57,12 @@ Revel uses the following properties internally:
   application uses [`rev.Sign`](../docs/godoc/util.html#Sign))
 * http.port - the port to listen on
 * http.addr - the ip address to which to bind (empty string is wildcard)
-* results.pretty - [`RenderXml`](../docs/godoc/mvc.html#RenderXml) and
-  [`RenderJson`](../docs/godoc/mvc.html#RenderJson) product nicely formatted
+* results.pretty - [`RenderXml`](../docs/godoc/controller.html#RenderXml) and
+  [`RenderJson`](../docs/godoc/controller.html#RenderJson) product nicely formatted
   XML/JSON.
-* server.watcher - should Revel watch for changes to files and reload?
+* watch - enable source watching.  if false, no watching is done regardless of other watch settings.  (default True)
+* watch.templates - should Revel watch for changes to views and reload?  (default True)
+* watch.routes - should Revel watch for changes to routes and reload?  (default True)
+* watch.code - should Revel watch for changes to code and reload?  (default True)
+* cookie.prefix - how should the Revel-produced cookies be named?  (default "REVEL")
 * log.* - Logging configuration

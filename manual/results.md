@@ -12,11 +12,16 @@ type Result interface {
 }
 </pre>
 
-[`rev.Controller`](../docs/godoc/mvc.html#Controller) provides a couple
+[`rev.Controller`](../docs/godoc/controller.html#Controller) provides a couple
 methods to produce Results:
-* Render(...) - render a template
+* Render, RenderTemplate - render a template, passing arguments.
 * RenderJson, RenderXml - serialize a structure to json or xml.
-* Redirect(...) - redirect to another action or URL
+* RenderText - return a plaintext response.
+* Redirect - redirect to another action or URL
+* RenderFile - return a file, generally to be downloaded as an attachment.
+* RenderError - return a 500 response that renders the errors/500.html template.
+* NotFound - return a 404 response that renders the errors/404.html template.
+* Todo - return a stub response (500)
 
 Additionally, the developer may define their own `rev.Result` and return that.
 
@@ -36,7 +41,7 @@ func (c Application) Action() rev.Result {
 ## Render
 
 Called within an action (e.g. "Controller.Action"),
-[`mvc.Controller.Render`](../docs/godoc/mvc.html#Controller.Render) does two things:
+[`mvc.Controller.Render`](../docs/godoc/controller.html#Controller.Render) does two things:
 1. Adds all arguments to the controller's RenderArgs, using their local identifier as the key.
 2. Executes the template "views/Controller/Action.html", passing in the controller's "RenderArgs" as the data map.
 
@@ -63,8 +68,8 @@ handled as a local variable anyway.
 ## RenderJson / RenderXml
 
 The application may call
-[`RenderJson`](../docs/godoc/mvc.html#Controller.RenderJson) or
-[`RenderXml`](../docs/godoc/mvc.html#Controller.RenderXml) and pass in any Go
+[`RenderJson`](../docs/godoc/controller.html#Controller.RenderJson) or
+[`RenderXml`](../docs/godoc/controller.html#Controller.RenderXml) and pass in any Go
 type (usually a struct).  Revel will serialize it using
 [`json.Marshal`](http://www.golang.org/pkg/encoding/json/#Marshal) or
 [`xml.Marshal`](http://www.golang.org/pkg/encoding/xml/#Marshal).

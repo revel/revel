@@ -19,6 +19,8 @@ type Plugin interface {
 	AfterRequest(c *Controller)
 	// Called when a panic exits an action, with the recovered value.
 	OnException(c *Controller, err interface{})
+	// Called after every request (panic or not), after the Result has been applied.
+	Finally(c *Controller)
 }
 </pre>
 

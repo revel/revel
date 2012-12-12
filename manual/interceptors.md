@@ -23,6 +23,15 @@ In Revel, an interceptor can take one of two forms:
 
 Interceptors are called in the order that they are added.
 
+## Intercept Times
+
+An interceptor can be registered to run at four points in the request lifecycle:
+
+1. BEFORE: After the request has been routed, the session, flash, and parameters decoded, but before the action has been invoked.
+2. AFTER: After the request has returned a Result, but before that Result has been applied.  These interceptors are not invoked if the action panicked.
+3. PANIC: After a panic exits an action or is raised from applying the returned Result.
+4. FINALLY: After an action has completed and the Result has been applied.
+
 ## Results
 
 Interceptors typically return `nil`, in which case they the request continues to
@@ -33,6 +42,8 @@ was invoked.
 
 1. BEFORE:  No further interceptors are invoked, and neither is the action.
 2. AFTER: All interceptors are still run.
+3. PANIC: All interceptors are still run.
+4. FINALLY: All interceptors are still run.
 
 In all cases, any returned Result will take the place of any existing Result.
 
