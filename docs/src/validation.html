@@ -27,7 +27,7 @@ func (e *ValidationError) String() string {
 <span class="comment">// A Validation context manages data validation and error messages.</span>
 type Validation struct {
     Errors []*ValidationError
-    <span class="comment">// contains filtered or unexported fields</span>
+
 }
 
 func (v *Validation) Keep() {
@@ -149,7 +149,7 @@ func (p ValidationPlugin) BeforeRequest(c *Controller) {
 }
 
 func (p ValidationPlugin) AfterRequest(c *Controller) {
-
+    <span class="comment">// Add Validation errors to RenderArgs.</span>
     c.RenderArgs[&#34;errors&#34;] = c.Validation.ErrorMap()
 
     <span class="comment">// Store the Validation errors</span>
@@ -174,8 +174,6 @@ func (p ValidationPlugin) AfterRequest(c *Controller) {
 <span class="comment">// This is set on initialization in the generated main.go file.</span>
 var DefaultValidationKeys map[string]map[int]string
 </pre>
-
-
 
 
 

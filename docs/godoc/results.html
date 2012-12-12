@@ -133,7 +133,7 @@ layout: godoc
 		
 			
 			
-			<h2 id="BinaryResult">type <a href="../src/results.html?s=5286:5396#L213">BinaryResult</a></h2>
+			<h2 id="BinaryResult">type <a href="../src/results.html?s=5309:5419#L213">BinaryResult</a></h2>
 			<pre>type BinaryResult struct {
     Reader   io.Reader
     Name     string
@@ -152,7 +152,7 @@ layout: godoc
 
 			
 				
-				<h3 id="BinaryResult.Apply">func (*BinaryResult) <a href="../src/results.html?s=5398:5456#L220">Apply</a></h3>
+				<h3 id="BinaryResult.Apply">func (*BinaryResult) <a href="../src/results.html?s=5421:5479#L220">Apply</a></h3>
 				<pre>func (r *BinaryResult) Apply(req *Request, resp *Response)</pre>
 				
 				
@@ -161,7 +161,7 @@ layout: godoc
 		
 			
 			
-			<h2 id="ContentDisposition">type <a href="../src/results.html?s=5157:5187#L206">ContentDisposition</a></h2>
+			<h2 id="ContentDisposition">type <a href="../src/results.html?s=5180:5210#L206">ContentDisposition</a></h2>
 			<pre>type ContentDisposition string</pre>
 			
 
@@ -183,10 +183,10 @@ layout: godoc
 		
 			
 			
-			<h2 id="ErrorResult">type <a href="../src/results.html?s=386:455#L11">ErrorResult</a></h2>
+			<h2 id="ErrorResult">type <a href="../src/results.html?s=386:466#L11">ErrorResult</a></h2>
 			<pre>type ErrorResult struct {
     RenderArgs map[string]interface{}
-    <span class="comment">// contains filtered or unexported fields</span>
+    Error      error
 }</pre>
 			<p>
 This result handles all kinds of error codes (500, 404, ..).
@@ -205,7 +205,7 @@ If RunMode is &#34;dev&#34;, this results in a friendly error page.
 
 			
 				
-				<h3 id="ErrorResult.Apply">func (ErrorResult) <a href="../src/results.html?s=457:513#L16">Apply</a></h3>
+				<h3 id="ErrorResult.Apply">func (ErrorResult) <a href="../src/results.html?s=468:524#L16">Apply</a></h3>
 				<pre>func (r ErrorResult) Apply(req *Request, resp *Response)</pre>
 				
 				
@@ -214,9 +214,9 @@ If RunMode is &#34;dev&#34;, this results in a friendly error page.
 		
 			
 			
-			<h2 id="PlaintextErrorResult">type <a href="../src/results.html?s=1996:2039#L83">PlaintextErrorResult</a></h2>
+			<h2 id="PlaintextErrorResult">type <a href="../src/results.html?s=2007:2056#L83">PlaintextErrorResult</a></h2>
 			<pre>type PlaintextErrorResult struct {
-    <span class="comment">// contains filtered or unexported fields</span>
+    Error error
 }</pre>
 			
 
@@ -230,7 +230,7 @@ If RunMode is &#34;dev&#34;, this results in a friendly error page.
 
 			
 				
-				<h3 id="PlaintextErrorResult.Apply">func (PlaintextErrorResult) <a href="../src/results.html?s=2125:2190#L88">Apply</a></h3>
+				<h3 id="PlaintextErrorResult.Apply">func (PlaintextErrorResult) <a href="../src/results.html?s=2142:2207#L88">Apply</a></h3>
 				<pre>func (r PlaintextErrorResult) Apply(req *Request, resp *Response)</pre>
 				<p>
 This method is used when the template loader or error template is not available.
@@ -242,7 +242,7 @@ This method is used when the template loader or error template is not available.
 		
 			
 			
-			<h2 id="RedirectToActionResult">type <a href="../src/results.html?s=6024:6079#L243">RedirectToActionResult</a></h2>
+			<h2 id="RedirectToActionResult">type <a href="../src/results.html?s=6047:6102#L243">RedirectToActionResult</a></h2>
 			<pre>type RedirectToActionResult struct {
     <span class="comment">// contains filtered or unexported fields</span>
 }</pre>
@@ -258,7 +258,7 @@ This method is used when the template loader or error template is not available.
 
 			
 				
-				<h3 id="RedirectToActionResult.Apply">func (*RedirectToActionResult) <a href="../src/results.html?s=6081:6149#L247">Apply</a></h3>
+				<h3 id="RedirectToActionResult.Apply">func (*RedirectToActionResult) <a href="../src/results.html?s=6104:6172#L247">Apply</a></h3>
 				<pre>func (r *RedirectToActionResult) Apply(req *Request, resp *Response)</pre>
 				
 				
@@ -267,7 +267,7 @@ This method is used when the template loader or error template is not available.
 		
 			
 			
-			<h2 id="RedirectToUrlResult">type <a href="../src/results.html?s=5822:5869#L234">RedirectToUrlResult</a></h2>
+			<h2 id="RedirectToUrlResult">type <a href="../src/results.html?s=5845:5892#L234">RedirectToUrlResult</a></h2>
 			<pre>type RedirectToUrlResult struct {
     <span class="comment">// contains filtered or unexported fields</span>
 }</pre>
@@ -283,7 +283,7 @@ This method is used when the template loader or error template is not available.
 
 			
 				
-				<h3 id="RedirectToUrlResult.Apply">func (*RedirectToUrlResult) <a href="../src/results.html?s=5871:5936#L238">Apply</a></h3>
+				<h3 id="RedirectToUrlResult.Apply">func (*RedirectToUrlResult) <a href="../src/results.html?s=5894:5959#L238">Apply</a></h3>
 				<pre>func (r *RedirectToUrlResult) Apply(req *Request, resp *Response)</pre>
 				
 				
@@ -292,7 +292,7 @@ This method is used when the template loader or error template is not available.
 		
 			
 			
-			<h2 id="RenderHtmlResult">type <a href="../src/results.html?s=3909:3954#L144">RenderHtmlResult</a></h2>
+			<h2 id="RenderHtmlResult">type <a href="../src/results.html?s=3932:3977#L144">RenderHtmlResult</a></h2>
 			<pre>type RenderHtmlResult struct {
     <span class="comment">// contains filtered or unexported fields</span>
 }</pre>
@@ -308,7 +308,7 @@ This method is used when the template loader or error template is not available.
 
 			
 				
-				<h3 id="RenderHtmlResult.Apply">func (RenderHtmlResult) <a href="../src/results.html?s=3956:4017#L148">Apply</a></h3>
+				<h3 id="RenderHtmlResult.Apply">func (RenderHtmlResult) <a href="../src/results.html?s=3979:4040#L148">Apply</a></h3>
 				<pre>func (r RenderHtmlResult) Apply(req *Request, resp *Response)</pre>
 				
 				
@@ -317,7 +317,7 @@ This method is used when the template loader or error template is not available.
 		
 			
 			
-			<h2 id="RenderJsonResult">type <a href="../src/results.html?s=4101:4150#L153">RenderJsonResult</a></h2>
+			<h2 id="RenderJsonResult">type <a href="../src/results.html?s=4124:4173#L153">RenderJsonResult</a></h2>
 			<pre>type RenderJsonResult struct {
     <span class="comment">// contains filtered or unexported fields</span>
 }</pre>
@@ -333,7 +333,7 @@ This method is used when the template loader or error template is not available.
 
 			
 				
-				<h3 id="RenderJsonResult.Apply">func (RenderJsonResult) <a href="../src/results.html?s=4152:4213#L157">Apply</a></h3>
+				<h3 id="RenderJsonResult.Apply">func (RenderJsonResult) <a href="../src/results.html?s=4175:4236#L157">Apply</a></h3>
 				<pre>func (r RenderJsonResult) Apply(req *Request, resp *Response)</pre>
 				
 				
@@ -342,7 +342,7 @@ This method is used when the template loader or error template is not available.
 		
 			
 			
-			<h2 id="RenderTemplateResult">type <a href="../src/results.html?s=2367:2459#L94">RenderTemplateResult</a></h2>
+			<h2 id="RenderTemplateResult">type <a href="../src/results.html?s=2390:2482#L94">RenderTemplateResult</a></h2>
 			<pre>type RenderTemplateResult struct {
     Template   Template
     RenderArgs map[string]interface{}
@@ -362,7 +362,7 @@ Action methods return this result to request a template be rendered.
 
 			
 				
-				<h3 id="RenderTemplateResult.Apply">func (*RenderTemplateResult) <a href="../src/results.html?s=2461:2527#L99">Apply</a></h3>
+				<h3 id="RenderTemplateResult.Apply">func (*RenderTemplateResult) <a href="../src/results.html?s=2484:2550#L99">Apply</a></h3>
 				<pre>func (r *RenderTemplateResult) Apply(req *Request, resp *Response)</pre>
 				
 				
@@ -371,7 +371,7 @@ Action methods return this result to request a template be rendered.
 		
 			
 			
-			<h2 id="RenderTextResult">type <a href="../src/results.html?s=4964:5009#L197">RenderTextResult</a></h2>
+			<h2 id="RenderTextResult">type <a href="../src/results.html?s=4987:5032#L197">RenderTextResult</a></h2>
 			<pre>type RenderTextResult struct {
     <span class="comment">// contains filtered or unexported fields</span>
 }</pre>
@@ -387,7 +387,7 @@ Action methods return this result to request a template be rendered.
 
 			
 				
-				<h3 id="RenderTextResult.Apply">func (RenderTextResult) <a href="../src/results.html?s=5011:5072#L201">Apply</a></h3>
+				<h3 id="RenderTextResult.Apply">func (RenderTextResult) <a href="../src/results.html?s=5034:5095#L201">Apply</a></h3>
 				<pre>func (r RenderTextResult) Apply(req *Request, resp *Response)</pre>
 				
 				
@@ -396,7 +396,7 @@ Action methods return this result to request a template be rendered.
 		
 			
 			
-			<h2 id="RenderXmlResult">type <a href="../src/results.html?s=4535:4583#L175">RenderXmlResult</a></h2>
+			<h2 id="RenderXmlResult">type <a href="../src/results.html?s=4558:4606#L175">RenderXmlResult</a></h2>
 			<pre>type RenderXmlResult struct {
     <span class="comment">// contains filtered or unexported fields</span>
 }</pre>
@@ -412,7 +412,7 @@ Action methods return this result to request a template be rendered.
 
 			
 				
-				<h3 id="RenderXmlResult.Apply">func (RenderXmlResult) <a href="../src/results.html?s=4585:4645#L179">Apply</a></h3>
+				<h3 id="RenderXmlResult.Apply">func (RenderXmlResult) <a href="../src/results.html?s=4608:4668#L179">Apply</a></h3>
 				<pre>func (r RenderXmlResult) Apply(req *Request, resp *Response)</pre>
 				
 				
@@ -441,8 +441,6 @@ Action methods return this result to request a template be rendered.
 	
 
 	
-
-
 
 
 

@@ -146,16 +146,6 @@ layout: godoc
 	<pre>{{node_html . $.FSet}}</pre>
 {{end}}
 
-{{with .PList}}
-	<h2>Other packages</h2>
-	<p>
-	{{/* PList entries are strings - no need for FSet */}}
-	{{range .}}
-	<a href="?p={{urlquery .}}">{{html .}}</a><br />
-	{{end}}
-	</p>
-{{end}}
-
 {{with .Dirs}}
 	{{/* DirList entries are numbers and strings - no need for FSet */}}
 	{{if $.PDoc}}

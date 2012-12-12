@@ -56,7 +56,7 @@ func (t *TestSuite) Post(path string, contentType string, reader io.Reader) {
 }
 
 <span class="comment">// Issue a POST request to the given path as a form post of the given key and</span>
-<span class="comment">// values, and store the result in Request and RequestBody.  </span>
+<span class="comment">// values, and store the result in Request and RequestBody.</span>
 func (t *TestSuite) PostForm(path string, data url.Values) {
     t.Post(path, &#34;application/x-www-form-urlencoded&#34;, strings.NewReader(data.Encode()))
 }
@@ -108,8 +108,6 @@ func (t *TestSuite) Assertf(exp bool, formatStr string, args ...interface{}) {
     }
 }
 </pre>
-
-
 
 
 

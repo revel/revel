@@ -27,6 +27,8 @@ type Error struct {
 <span class="comment">// relevant stack frame can be found.</span>
 func NewErrorFromPanic(err interface{}) *Error {
 
+    <span class="comment">// Parse the filename and line from the originating line of app code.</span>
+    <span class="comment">// /Users/robfig/code/gocode/src/revel/samples/booking/app/controllers/hotels.go:191 (0x44735)</span>
     stack := string(debug.Stack())
     frame, basePath := findRelevantStackFrame(stack)
     if frame == -1 {
@@ -39,6 +41,7 @@ func NewErrorFromPanic(err interface{}) *Error {
     var line int
     fmt.Sscan(stackElement[colonIndex+1:], &amp;line)
 
+    <span class="comment">// Show an error page.</span>
     description := &#34;Unspecified error&#34;
     if err != nil {
         description = fmt.Sprintln(err)
@@ -97,8 +100,6 @@ func (e *Error) ContextSource() []sourceLine {
     return lines
 }
 </pre>
-
-
 
 
 

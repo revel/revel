@@ -53,7 +53,8 @@ func ContainsString(list []string, target string) bool {
 
 <span class="comment">// Return the reflect.Method, given a Receiver type and Func value.</span>
 func FindMethod(recvType reflect.Type, funcVal *reflect.Value) *reflect.Method {
-
+    <span class="comment">// It is not possible to get the name of the method from the Func.</span>
+    <span class="comment">// Instead, compare it to each method of the Controller.</span>
     for i := 0; i &lt; recvType.NumMethod(); i++ {
         method := recvType.Method(i)
         if method.Func == *funcVal {
@@ -112,8 +113,6 @@ func FirstNonEmpty(strs ...string) string {
     return &#34;&#34;
 }
 </pre>
-
-
 
 
 

@@ -21,7 +21,7 @@ type Result interface {
 <span class="comment">// If RunMode is &#34;dev&#34;, this results in a friendly error page.</span>
 type ErrorResult struct {
     RenderArgs map[string]interface{}
-    <span class="comment">// contains filtered or unexported fields</span>
+    Error      error
 }
 
 func (r ErrorResult) Apply(req *Request, resp *Response) {
@@ -41,10 +41,12 @@ func (r ErrorResult) Apply(req *Request, resp *Response) {
     templatePath := fmt.Sprintf(&#34;errors/%d.%s&#34;, status, format)
     tmpl, err := MainTemplateLoader.Template(templatePath)
 
+    <span class="comment">// This func shows a plaintext error message, in case the template rendering</span>
+    <span class="comment">// doesn&#39;t work.</span>
     showPlaintext := func(err error) {
         PlaintextErrorResult{fmt.Errorf(&#34;Server Error:\n%s\n\n&#34;+
             &#34;Additionally, an error occurred when rendering the error page:\n%s&#34;,
-            r.error, err)}.Apply(req, resp)
+            r.Error, err)}.Apply(req, resp)
     }
 
     if tmpl == nil {
@@ -57,7 +59,7 @@ func (r ErrorResult) Apply(req *Request, resp *Response) {
 
     <span class="comment">// If it&#39;s not a revel error, wrap it in one.</span>
     var revelError *Error
-    switch e := r.error.(type) {
+    switch e := r.Error.(type) {
     case *Error:
         revelError = e
     case error:
@@ -79,6 +81,7 @@ func (r ErrorResult) Apply(req *Request, resp *Response) {
     var b bytes.Buffer
     err = tmpl.Render(&amp;b, r.RenderArgs)
 
+    <span class="comment">// If there was an error, print it in plain text.</span>
     if err != nil {
         showPlaintext(err)
         return
@@ -89,13 +92,13 @@ func (r ErrorResult) Apply(req *Request, resp *Response) {
 }
 
 type PlaintextErrorResult struct {
-    <span class="comment">// contains filtered or unexported fields</span>
+    Error error
 }
 
 <span class="comment">// This method is used when the template loader or error template is not available.</span>
 func (r PlaintextErrorResult) Apply(req *Request, resp *Response) {
     resp.WriteHeader(http.StatusInternalServerError, &#34;text/plain&#34;)
-    resp.Out.Write([]byte(r.Error()))
+    resp.Out.Write([]byte(r.Error.Error()))
 }
 
 <span class="comment">// Action methods return this result to request a template be rendered.</span>
@@ -105,9 +108,13 @@ type RenderTemplateResult struct {
 }
 
 func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
-
+    <span class="comment">// If &#34;result staging&#34; is on..</span>
+    <span class="comment">// Render the template into a temporary buffer, to see if there was an error</span>
+    <span class="comment">// rendering the template.  If not, then copy it into the response buffer.</span>
+    <span class="comment">// Otherwise, template render errors may result in unpredictable HTML (and</span>
+    <span class="comment">// would carry a 200 status code)</span>
     if Config.BoolDefault(&#34;results.staging&#34;, true) {
-
+        <span class="comment">// Handle panics when rendering templates.</span>
         defer func() {
             if err := recover(); err != nil {
                 ERROR.Println(err)
@@ -137,6 +144,7 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
         return
     }
 
+    <span class="comment">// Else, write the status, render, and hope for the best.</span>
     resp.WriteHeader(http.StatusOK, &#34;text/html&#34;)
     err := r.Template.Render(resp.Out, r.RenderArgs)
     if err != nil {
@@ -145,7 +153,7 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
 }
 
 type RenderHtmlResult struct {
-    <span class="comment">// contains filtered or unexported fields</span>
+
 }
 
 func (r RenderHtmlResult) Apply(req *Request, resp *Response) {
@@ -154,7 +162,7 @@ func (r RenderHtmlResult) Apply(req *Request, resp *Response) {
 }
 
 type RenderJsonResult struct {
-    <span class="comment">// contains filtered or unexported fields</span>
+
 }
 
 func (r RenderJsonResult) Apply(req *Request, resp *Response) {
@@ -167,7 +175,7 @@ func (r RenderJsonResult) Apply(req *Request, resp *Response) {
     }
 
     if err != nil {
-        ErrorResult{error: err}.Apply(req, resp)
+        ErrorResult{Error: err}.Apply(req, resp)
         return
     }
 
@@ -176,7 +184,7 @@ func (r RenderJsonResult) Apply(req *Request, resp *Response) {
 }
 
 type RenderXmlResult struct {
-    <span class="comment">// contains filtered or unexported fields</span>
+
 }
 
 func (r RenderXmlResult) Apply(req *Request, resp *Response) {
@@ -189,7 +197,7 @@ func (r RenderXmlResult) Apply(req *Request, resp *Response) {
     }
 
     if err != nil {
-        ErrorResult{error: err}.Apply(req, resp)
+        ErrorResult{Error: err}.Apply(req, resp)
         return
     }
 
@@ -198,7 +206,7 @@ func (r RenderXmlResult) Apply(req *Request, resp *Response) {
 }
 
 type RenderTextResult struct {
-    <span class="comment">// contains filtered or unexported fields</span>
+
 }
 
 func (r RenderTextResult) Apply(req *Request, resp *Response) {
@@ -235,7 +243,7 @@ func (r *BinaryResult) Apply(req *Request, resp *Response) {
 }
 
 type RedirectToUrlResult struct {
-    <span class="comment">// contains filtered or unexported fields</span>
+
 }
 
 func (r *RedirectToUrlResult) Apply(req *Request, resp *Response) {
@@ -244,22 +252,20 @@ func (r *RedirectToUrlResult) Apply(req *Request, resp *Response) {
 }
 
 type RedirectToActionResult struct {
-    <span class="comment">// contains filtered or unexported fields</span>
+
 }
 
 func (r *RedirectToActionResult) Apply(req *Request, resp *Response) {
     url, err := getRedirectUrl(r.val)
     if err != nil {
         ERROR.Println(&#34;Couldn&#39;t resolve redirect:&#34;, err.Error())
-        ErrorResult{error: err}.Apply(req, resp)
+        ErrorResult{Error: err}.Apply(req, resp)
         return
     }
     resp.Out.Header().Set(&#34;Location&#34;, url)
     resp.WriteHeader(http.StatusFound, &#34;&#34;)
 }
 </pre>
-
-
 
 
 

@@ -13,14 +13,16 @@ layout: godoc
 	<pre>package rev
 
 type Controller struct {
-    Name       string
-    Type       *ControllerType
-    MethodType *MethodType
+    Name          string          <span class="comment">// The controller name, e.g. &#34;Application&#34;</span>
+    Type          *ControllerType <span class="comment">// A description of the controller type.</span>
+    MethodType    *MethodType     <span class="comment">// A description of the invoked action type.</span>
+    AppController interface{}     <span class="comment">// The controller that was instantiated.</span>
 
     Request  *Request
     Response *Response
+    Result   Result
 
-    Flash      Flash                  <span class="comment">// User cookie, cleared after each request.</span>
+    Flash      Flash                  <span class="comment">// User cookie, cleared after 1 request.</span>
     Session    Session                <span class="comment">// Session, stored in cookie, signed.</span>
     Params     *Params                <span class="comment">// Parameters from URL and form (including multipart).</span>
     Args       map[string]interface{} <span class="comment">// Per-request scratch space.</span>
@@ -36,6 +38,7 @@ func NewController(req *Request, resp *Response, ct *ControllerType) *Controller
         Request:  req,
         Response: resp,
         Params:   ParseParams(req),
+        Args:     map[string]interface{}{},
         RenderArgs: map[string]interface{}{
             &#34;RunMode&#34;: RunMode,
         },
@@ -56,14 +59,18 @@ func (c *Controller) SetCookie(cookie *http.Cookie) {
 <span class="comment">// result.  (e.g. render a template to the response)</span>
 func (c *Controller) Invoke(appControllerPtr reflect.Value, method reflect.Value, methodArgs []reflect.Value) {
 
+    <span class="comment">// Handle panics.</span>
     defer func() {
         if err := recover(); err != nil {
             handleInvocationPanic(c, err)
         }
+
+        plugins.Finally(c)
     }()
 
+    <span class="comment">// Clean up from the request.</span>
     defer func() {
-
+        <span class="comment">// Delete temp files.</span>
         if c.Request.MultipartForm != nil {
             err := c.Request.MultipartForm.RemoveAll()
             if err != nil {
@@ -79,32 +86,24 @@ func (c *Controller) Invoke(appControllerPtr reflect.Value, method reflect.Value
         }
     }()
 
+    <span class="comment">// Run the plugins.</span>
     plugins.BeforeRequest(c)
 
-    resultValue := func() reflect.Value {
-
-        result := c.invokeInterceptors(BEFORE, appControllerPtr)
-        if result != nil {
-            return reflect.ValueOf(result)
-        }
-
+    if c.Result == nil {
+        <span class="comment">// Invoke the action.</span>
         resultValue := method.Call(methodArgs)[0]
-
-        result = c.invokeInterceptors(AFTER, appControllerPtr)
-        if result != nil {
-            return reflect.ValueOf(result)
+        if resultValue.Kind() == reflect.Interface &amp;&amp; !resultValue.IsNil() {
+            c.Result = resultValue.Interface().(Result)
         }
-        return resultValue
-    }()
 
-    plugins.AfterRequest(c)
-
-    if resultValue.IsNil() {
-        return
+        plugins.AfterRequest(c)
+        if c.Result == nil {
+            return
+        }
     }
-    result := resultValue.Interface().(Result)
 
-    result.Apply(c.Request, c.Response)
+    <span class="comment">// Apply the result, which generally results in the ResponseWriter getting written.</span>
+    c.Result.Apply(c.Request, c.Response)
 }
 
 func (c *Controller) RenderError(err error) Result {
@@ -125,7 +124,7 @@ func (c *Controller) RenderError(err error) Result {
 <span class="comment">// This action will render views/Users/ShowUser.html, passing in an extra</span>
 <span class="comment">// key-value &#34;user&#34;: (User).</span>
 func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
-
+    <span class="comment">// Get the calling function name.</span>
     pc, _, line, ok := runtime.Caller(1)
     if !ok {
         ERROR.Println(&#34;Failed to get Caller information&#34;)
@@ -135,6 +134,8 @@ func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
     var fqViewName string = runtime.FuncForPC(pc).Name()
     var viewName string = fqViewName[strings.LastIndex(fqViewName, &#34;.&#34;)+1 : len(fqViewName)]
 
+    <span class="comment">// Determine what method we are in.</span>
+    <span class="comment">// (e.g. the invoked controller method might have delegated to another method)</span>
     methodType := c.MethodType
     if methodType.Name != viewName {
         methodType = c.Type.Method(viewName)
@@ -146,6 +147,7 @@ func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
         }
     }
 
+    <span class="comment">// Get the extra RenderArgs passed in.</span>
     if renderArgNames, ok := methodType.RenderArgNames[line]; ok {
         if len(renderArgNames) == len(extraRenderArgs) {
             for i, extraRenderArg := range extraRenderArgs {
@@ -167,6 +169,7 @@ func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
 <span class="comment">// Renders the given template, using the current RenderArgs.</span>
 func (c *Controller) RenderTemplate(templatePath string) Result {
 
+    <span class="comment">// Get the Template.</span>
     template, err := MainTemplateLoader.Template(templatePath)
     if err != nil {
         return c.RenderError(err)
@@ -247,8 +250,6 @@ func (c *Controller) Redirect(val interface{}, args ...interface{}) Result {
     return &amp;RedirectToActionResult{val}
 }
 </pre>
-
-
 
 
 

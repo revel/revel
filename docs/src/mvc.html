@@ -47,6 +47,8 @@ func NewAppController(req *Request, resp *Response, controllerName, methodName s
     controller := NewController(req, resp, appControllerType)
     appControllerPtr := initNewAppController(appControllerType.Type, controller)
 
+    <span class="comment">// Set the method being called.</span>
+    controller.AppController = appControllerPtr.Interface()
     controller.MethodType = appControllerType.Method(methodName)
     if controller.MethodType == nil {
         INFO.Println(&#34;Failed to find method&#34;, methodName, &#34;on Controller&#34;,
@@ -83,7 +85,7 @@ func ResolveFormat(req *http.Request) string {
 
     switch {
     case accept == &#34;&#34;,
-        strings.HasPrefix(accept, &#34;*/*&#34;),
+        strings.HasPrefix(accept, &#34;*/*&#34;), <span class="comment">// */</span>
         strings.Contains(accept, &#34;application/xhtml&#34;),
         strings.Contains(accept, &#34;text/html&#34;):
         return &#34;html&#34;
@@ -114,6 +116,8 @@ func (resp *Response) WriteHeader(defaultStatusCode int, defaultContentType stri
     resp.Out.WriteHeader(resp.Status)
 }
 
+<span class="comment">// Internal bookeeping</span>
+
 type ControllerType struct {
     Type    reflect.Type
     Methods []*MethodType
@@ -123,7 +127,7 @@ type MethodType struct {
     Name           string
     Args           []*MethodArg
     RenderArgNames map[int][]string
-    <span class="comment">// contains filtered or unexported fields</span>
+
 }
 
 type MethodArg struct {
@@ -149,6 +153,7 @@ func RegisterController(c interface{}, methods []*MethodType) {
     var t reflect.Type = reflect.TypeOf(c)
     var elem reflect.Type = t.Elem()
 
+    <span class="comment">// De-star all of the method arg types too.</span>
     for _, m := range methods {
         m.lowerName = strings.ToLower(m.Name)
         for _, arg := range m.Args {
@@ -164,8 +169,6 @@ func LookupControllerType(name string) *ControllerType {
     return controllers[strings.ToLower(name)]
 }
 </pre>
-
-
 
 
 

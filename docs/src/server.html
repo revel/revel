@@ -31,14 +31,24 @@ func Run(port int) {
     MainRouter = NewRouter(path.Join(BasePath, &#34;conf&#34;, &#34;routes&#34;))
     MainTemplateLoader = NewTemplateLoader(TemplatePaths)
 
-    if Config.BoolDefault(&#34;server.watcher&#34;, true) {
+    <span class="comment">// The &#34;watch&#34; config variable can turn on and off all watching.</span>
+    <span class="comment">// (As a convenient way to control it all together.)</span>
+    if Config.BoolDefault(&#34;watch&#34;, true) {
         MainWatcher = NewWatcher()
-        MainWatcher.auditor = PluginNotifier{plugins}
+    }
+
+    <span class="comment">// If desired (or by default), create a watcher for templates and routes.</span>
+    <span class="comment">// The watcher calls Refresh() on things on the first request.</span>
+    if MainWatcher != nil &amp;&amp; Config.BoolDefault(&#34;watch.templates&#34;, true) {
         MainWatcher.Listen(MainTemplateLoader, MainTemplateLoader.paths...)
+    } else {
+        MainTemplateLoader.Refresh()
+    }
+
+    if MainWatcher != nil &amp;&amp; Config.BoolDefault(&#34;watch.routes&#34;, true) {
+        MainWatcher.auditor = PluginNotifier{plugins}
         MainWatcher.Listen(MainRouter, MainRouter.path)
     } else {
-
-        MainTemplateLoader.Refresh()
         MainRouter.Refresh()
         plugins.OnRoutesLoaded(MainRouter)
     }
@@ -61,7 +71,7 @@ func Run(port int) {
 <span class="comment">// The PluginNotifier glues the watcher and the plugin collection together.</span>
 <span class="comment">// It audits refreshes and invokes the appropriate method to inform the plugins.</span>
 type PluginNotifier struct {
-    <span class="comment">// contains filtered or unexported fields</span>
+
 }
 
 func (pn PluginNotifier) OnRefresh(l Listener) {
@@ -70,8 +80,6 @@ func (pn PluginNotifier) OnRefresh(l Listener) {
     }
 }
 </pre>
-
-
 
 
 

@@ -17,7 +17,7 @@ layout: godoc
 <span class="comment">// If the preferred section does not have the option, the DEFAULT section is</span>
 <span class="comment">// checked fallback.</span>
 type MergedConfig struct {
-    <span class="comment">// contains filtered or unexported fields</span>
+
 }
 
 func LoadConfig(confName string) (*MergedConfig, error) {
@@ -51,6 +51,7 @@ func (c *MergedConfig) Int(option string) (result int, found bool) {
         return 0, false
     }
 
+    <span class="comment">// If it wasn&#39;t an OptionError, it must have failed to parse.</span>
     ERROR.Println(&#34;Failed to parse config option&#34;, option, &#34;as int:&#34;, err)
     return 0, false
 }
@@ -71,6 +72,7 @@ func (c *MergedConfig) Bool(option string) (result, found bool) {
         return false, false
     }
 
+    <span class="comment">// If it wasn&#39;t an OptionError, it must have failed to parse.</span>
     ERROR.Println(&#34;Failed to parse config option&#34;, option, &#34;as bool:&#34;, err)
     return false, false
 }
@@ -113,8 +115,6 @@ func (c *MergedConfig) Options(prefix string) []string {
     return options
 }
 </pre>
-
-
 
 
 

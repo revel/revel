@@ -97,7 +97,7 @@ layout: godoc
 		
 			
 			
-			<h2 id="NotFound">func <a href="../src/mvc.html?s=3021:3076#L94">NotFound</a></h2>
+			<h2 id="NotFound">func <a href="../src/mvc.html?s=3078:3133#L95">NotFound</a></h2>
 			<pre>func NotFound(req *Request, resp *Response, msg string)</pre>
 			<p>
 This function is useful if there is no relevant Controller available.
@@ -108,7 +108,7 @@ It writes the 404 response immediately.
 		
 			
 			
-			<h2 id="RegisterController">func <a href="../src/mvc.html?s=5434:5495#L187">RegisterController</a></h2>
+			<h2 id="RegisterController">func <a href="../src/mvc.html?s=5497:5558#L188">RegisterController</a></h2>
 			<pre>func RegisterController(c interface{}, methods []*MethodType)</pre>
 			<p>
 Register a Controller and its Methods with Revel.
@@ -118,14 +118,14 @@ Register a Controller and its Methods with Revel.
 		
 			
 			
-			<h2 id="RenderError">func <a href="../src/mvc.html?s=2781:2838#L88">RenderError</a></h2>
+			<h2 id="RenderError">func <a href="../src/mvc.html?s=2838:2895#L89">RenderError</a></h2>
 			<pre>func RenderError(req *Request, resp *Response, err error)</pre>
 			
 			
 		
 			
 			
-			<h2 id="ResolveContentType">func <a href="../src/mvc.html?s=3470:3519#L110">ResolveContentType</a></h2>
+			<h2 id="ResolveContentType">func <a href="../src/mvc.html?s=3527:3576#L111">ResolveContentType</a></h2>
 			<pre>func ResolveContentType(req *http.Request) string</pre>
 			<p>
 Get the content type.
@@ -137,7 +137,7 @@ If none is specified, returns &#34;text/html&#34; by default.
 		
 			
 			
-			<h2 id="ResolveFormat">func <a href="../src/mvc.html?s=3699:3743#L118">ResolveFormat</a></h2>
+			<h2 id="ResolveFormat">func <a href="../src/mvc.html?s=3756:3800#L119">ResolveFormat</a></h2>
 			<pre>func ResolveFormat(req *http.Request) string</pre>
 			
 			
@@ -145,7 +145,7 @@ If none is specified, returns &#34;text/html&#34; by default.
 		
 			
 			
-			<h2 id="ControllerType">type <a href="../src/mvc.html?s=4789:4864#L156">ControllerType</a></h2>
+			<h2 id="ControllerType">type <a href="../src/mvc.html?s=4852:4927#L157">ControllerType</a></h2>
 			<pre>type ControllerType struct {
     Type    reflect.Type
     Methods []*MethodType
@@ -160,7 +160,7 @@ If none is specified, returns &#34;text/html&#34; by default.
 
 			
 				
-				<h3 id="LookupControllerType">func <a href="../src/mvc.html?s=6009:6063#L205">LookupControllerType</a></h3>
+				<h3 id="LookupControllerType">func <a href="../src/mvc.html?s=6072:6126#L206">LookupControllerType</a></h3>
 				<pre>func LookupControllerType(name string) *ControllerType</pre>
 				
 				
@@ -168,7 +168,7 @@ If none is specified, returns &#34;text/html&#34; by default.
 
 			
 				
-				<h3 id="ControllerType.Method">func (*ControllerType) <a href="../src/mvc.html?s=5120:5177#L174">Method</a></h3>
+				<h3 id="ControllerType.Method">func (*ControllerType) <a href="../src/mvc.html?s=5183:5240#L175">Method</a></h3>
 				<pre>func (ct *ControllerType) Method(name string) *MethodType</pre>
 				<p>
 Searches for a given exported method (case insensitive)
@@ -180,7 +180,7 @@ Searches for a given exported method (case insensitive)
 		
 			
 			
-			<h2 id="MethodArg">type <a href="../src/mvc.html?s=5002:5059#L168">MethodArg</a></h2>
+			<h2 id="MethodArg">type <a href="../src/mvc.html?s=5065:5122#L169">MethodArg</a></h2>
 			<pre>type MethodArg struct {
     Name string
     Type reflect.Type
@@ -199,7 +199,7 @@ Searches for a given exported method (case insensitive)
 		
 			
 			
-			<h2 id="MethodType">type <a href="../src/mvc.html?s=4866:5000#L161">MethodType</a></h2>
+			<h2 id="MethodType">type <a href="../src/mvc.html?s=4929:5063#L162">MethodType</a></h2>
 			<pre>type MethodType struct {
     Name           string
     Args           []*MethodArg
@@ -271,7 +271,7 @@ Searches for a given exported method (case insensitive)
 
 			
 				
-				<h3 id="Response.WriteHeader">func (*Response) <a href="../src/mvc.html?s=4452:4535#L143">WriteHeader</a></h3>
+				<h3 id="Response.WriteHeader">func (*Response) <a href="../src/mvc.html?s=4515:4598#L144">WriteHeader</a></h3>
 				<pre>func (resp *Response) WriteHeader(defaultStatusCode int, defaultContentType string)</pre>
 				<p>
 Write the header (for now, just the status code).
@@ -287,8 +287,6 @@ if it isn&#39;t, then fall back to the provided status code.
 	
 
 	
-
-
 
 
 

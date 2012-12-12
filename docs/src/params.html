@@ -20,17 +20,19 @@ layout: godoc
 type Params struct {
     url.Values
     Files map[string][]*multipart.FileHeader
-    <span class="comment">// contains filtered or unexported fields</span>
+
 }
 
 func ParseParams(req *Request) *Params {
     var files map[string][]*multipart.FileHeader
 
+    <span class="comment">// Always want the url parameters.</span>
     values := req.URL.Query()
 
+    <span class="comment">// Parse the body depending on the content type.</span>
     switch req.ContentType {
     case &#34;application/x-www-form-urlencoded&#34;:
-
+        <span class="comment">// Typical form.</span>
         if err := req.ParseForm(); err != nil {
             WARN.Println(&#34;Error parsing request body:&#34;, err)
         } else {
@@ -42,8 +44,9 @@ func ParseParams(req *Request) *Params {
         }
 
     case &#34;multipart/form-data&#34;:
-
-        if err := req.ParseMultipartForm(32 &lt;&lt; 20); err != nil {
+        <span class="comment">// Multipart form.</span>
+        <span class="comment">// TODO: Extract the multipart form param so app can set it.</span>
+        if err := req.ParseMultipartForm(32 &lt;&lt; 20 <span class="comment">/* 32 MB */</span>); err != nil {
             WARN.Println(&#34;Error parsing request body:&#34;, err)
         } else {
             for key, vals := range req.MultipartForm.Value {
@@ -62,8 +65,6 @@ func (p *Params) Bind(name string, typ reflect.Type) reflect.Value {
     return Bind(p, name, typ)
 }
 </pre>
-
-
 
 
 
