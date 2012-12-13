@@ -1,6 +1,8 @@
 package rev
 
 import (
+	"bytes"
+	"fmt"
 	"net/http"
 	"reflect"
 	"sort"
@@ -163,6 +165,16 @@ type AcceptLanguages []AcceptLanguage
 func (al AcceptLanguages) Len() int           { return len(al) }
 func (al AcceptLanguages) Swap(i, j int)      { al[i], al[j] = al[j], al[i] }
 func (al AcceptLanguages) Less(i, j int) bool { return al[i].Quality > al[j].Quality }
+func (al AcceptLanguages) String() string {
+	output := bytes.NewBufferString("")
+	for i, language := range al {
+		output.WriteString(fmt.Sprintf("%s (%1.1f)", language.Language, language.Quality))
+		if i != len(al)-1 {
+			output.WriteString(", ")
+		}
+	}
+	return output.String()
+}
 
 // Resolve the Accept-Language header value.
 //
