@@ -208,10 +208,6 @@ func restoreValidationErrors(req *http.Request) []*ValidationError {
 	return errors
 }
 
-func init() {
-	RegisterPlugin(ValidationPlugin{})
-}
-
 // Register default validation keys for all calls to Controller.Validation.Func().
 // Map from (package).func => (line => name of first arg to Validation func)
 // E.g. "myapp/controllers.helper" or "myapp/controllers.(*Application).Action"

@@ -53,6 +53,7 @@ func NewAppController(req *Request, resp *Response, controllerName, methodName s
 	appControllerPtr := initNewAppController(appControllerType.Type, controller)
 
 	// Set the method being called.
+	controller.AppController = appControllerPtr.Interface()
 	controller.MethodType = appControllerType.Method(methodName)
 	if controller.MethodType == nil {
 		INFO.Println("Failed to find method", methodName, "on Controller",
@@ -136,7 +137,7 @@ func ResolveFormat(req *http.Request) string {
 
 	switch {
 	case accept == "",
-		strings.HasPrefix(accept, "*/*"),
+		strings.HasPrefix(accept, "*/*"), // */
 		strings.Contains(accept, "application/xhtml"),
 		strings.Contains(accept, "text/html"):
 		return "html"

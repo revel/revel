@@ -13,14 +13,16 @@ import (
 )
 
 type Controller struct {
-	Name       string
-	Type       *ControllerType
-	MethodType *MethodType
+	Name          string          // The controller name, e.g. "Application"
+	Type          *ControllerType // A description of the controller type.
+	MethodType    *MethodType     // A description of the invoked action type.
+	AppController interface{}     // The controller that was instantiated.
 
 	Request  *Request
 	Response *Response
+	Result   Result
 
-	Flash      Flash                  // User cookie, cleared after each request.
+	Flash      Flash                  // User cookie, cleared after 1 request.
 	Session    Session                // Session, stored in cookie, signed.
 	Params     *Params                // Parameters from URL and form (including multipart).
 	Args       map[string]interface{} // Per-request scratch space.
@@ -62,6 +64,8 @@ func (c *Controller) Invoke(appControllerPtr reflect.Value, method reflect.Value
 		if err := recover(); err != nil {
 			handleInvocationPanic(c, err)
 		}
+
+		plugins.Finally(c)
 	}()
 
 	// Clean up from the request.
@@ -85,34 +89,21 @@ func (c *Controller) Invoke(appControllerPtr reflect.Value, method reflect.Value
 	// Run the plugins.
 	plugins.BeforeRequest(c)
 
-	// Calculate the Result by running the interceptors and the action.
-	resultValue := func() reflect.Value {
-		// Call the BEFORE interceptors
-		result := c.invokeInterceptors(BEFORE, appControllerPtr)
-		if result != nil {
-			return reflect.ValueOf(result)
-		}
-
+	if c.Result == nil {
 		// Invoke the action.
 		resultValue := method.Call(methodArgs)[0]
-
-		// Call the AFTER interceptors
-		result = c.invokeInterceptors(AFTER, appControllerPtr)
-		if result != nil {
-			return reflect.ValueOf(result)
+		if resultValue.Kind() == reflect.Interface && !resultValue.IsNil() {
+			c.Result = resultValue.Interface().(Result)
 		}
-		return resultValue
-	}()
 
-	plugins.AfterRequest(c)
-
-	if resultValue.IsNil() {
-		return
+		plugins.AfterRequest(c)
+		if c.Result == nil {
+			return
+		}
 	}
-	result := resultValue.Interface().(Result)
 
 	// Apply the result, which generally results in the ResponseWriter getting written.
-	result.Apply(c.Request, c.Response)
+	c.Result.Apply(c.Request, c.Response)
 }
 
 // This function handles a panic in an action invocation.
@@ -130,20 +121,6 @@ func handleInvocationPanic(c *Controller, err interface{}) {
 	}
 
 	c.RenderError(error).Apply(c.Request, c.Response)
-}
-
-func (c *Controller) invokeInterceptors(when InterceptTime, appControllerPtr reflect.Value) Result {
-	var result Result
-	for _, intc := range getInterceptors(when, appControllerPtr) {
-		resultValue := intc.Invoke(appControllerPtr)
-		if !resultValue.IsNil() {
-			result = resultValue.Interface().(Result)
-		}
-		if when == BEFORE && result != nil {
-			return result
-		}
-	}
-	return result
 }
 
 func (c *Controller) RenderError(err error) Result {

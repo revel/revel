@@ -8,10 +8,12 @@ type Plugin interface {
 	OnRoutesLoaded(router *Router)
 	// Called before every request.
 	BeforeRequest(c *Controller)
-	// Called after every request (except on panics).
+	// Called after every non-panicking request, before the Result has been applied.
 	AfterRequest(c *Controller)
-	// Called when a panic exits an action, with the recovered value.
+	// Called when a panic exits an action, with the recovered error value.
 	OnException(c *Controller, err interface{})
+	// Called after every request (panic or not), after the Result has been applied.
+	Finally(c *Controller)
 }
 
 // It provides default (empty) implementations for all the required methods.
@@ -22,6 +24,7 @@ func (p EmptyPlugin) OnRoutesLoaded(router *Router)              {}
 func (p EmptyPlugin) BeforeRequest(c *Controller)                {}
 func (p EmptyPlugin) AfterRequest(c *Controller)                 {}
 func (p EmptyPlugin) OnException(c *Controller, err interface{}) {}
+func (p EmptyPlugin) Finally(c *Controller)                      {}
 
 type PluginCollection []Plugin
 
@@ -58,5 +61,11 @@ func (plugins PluginCollection) AfterRequest(c *Controller) {
 func (plugins PluginCollection) OnException(c *Controller, err interface{}) {
 	for _, p := range plugins {
 		p.OnException(c, err)
+	}
+}
+
+func (plugins PluginCollection) Finally(c *Controller) {
+	for _, p := range plugins {
+		p.Finally(c)
 	}
 }

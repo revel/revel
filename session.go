@@ -56,7 +56,3 @@ func restoreSession(req *http.Request) Session {
 
 	return Session(session)
 }
-
-func init() {
-	RegisterPlugin(SessionPlugin{})
-}

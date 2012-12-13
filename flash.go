@@ -63,7 +63,3 @@ func restoreFlash(req *http.Request) Flash {
 	}
 	return flash
 }
-
-func init() {
-	RegisterPlugin(FlashPlugin{})
-}

@@ -492,19 +492,13 @@ func appendAction(fset *token.FileSet, mm methodMap, decl ast.Decl, pkgImportPat
 // be the same as the local variable.
 func getValidationKeys(fset *token.FileSet, funcDecl *ast.FuncDecl) map[int]string {
 	var (
-		lineKeys     = make(map[int]string)
-		lastExprLine = 0
+		lineKeys = make(map[int]string)
 
 		// Check the func parameters and the receiver's members for the *rev.Validation type.
 		validationParam = getValidationParameter(funcDecl)
 	)
 
 	ast.Inspect(funcDecl.Body, func(node ast.Node) bool {
-		if expr, ok := node.(*ast.ExprStmt); ok {
-			lastExprLine = fset.Position(expr.End()).Line
-			return true
-		}
-
 		// e.g. c.Validation.Required(arg) or v.Required(arg)
 		callExpr, ok := node.(*ast.CallExpr)
 		if !ok {
@@ -548,7 +542,7 @@ func getValidationKeys(fset *token.FileSet, funcDecl *ast.FuncDecl) map[int]stri
 			return true
 		}
 
-		lineKeys[lastExprLine] = NewTypeExpr("", arg).TypeName("")
+		lineKeys[fset.Position(callExpr.End()).Line] = NewTypeExpr("", arg).TypeName("")
 		return true
 	})
 
