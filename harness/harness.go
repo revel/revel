@@ -19,6 +19,7 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"os"
+	"os/signal"
 	"strings"
 	"sync/atomic"
 )
@@ -125,11 +126,22 @@ func (h *Harness) Run() {
 	watcher = rev.NewWatcher()
 	watcher.Listen(h, rev.CodePaths...)
 
-	rev.INFO.Printf("Listening on %s:%d", rev.HttpAddr, rev.HttpPort)
-	err := http.ListenAndServe(fmt.Sprintf("%s:%d", rev.HttpAddr, rev.HttpPort), h)
-	if err != nil {
-		rev.ERROR.Fatalln("Failed to start reverse proxy:", err)
+	go func() {
+		rev.INFO.Printf("Listening on %s:%d", rev.HttpAddr, rev.HttpPort)
+		err := http.ListenAndServe(fmt.Sprintf("%s:%d", rev.HttpAddr, rev.HttpPort), h)
+		if err != nil {
+			rev.ERROR.Fatalln("Failed to start reverse proxy:", err)
+		}
+	}()
+
+	// Kill the app on signal.
+	ch := make(chan os.Signal)
+	signal.Notify(ch, os.Interrupt, os.Kill)
+	<-ch
+	if h.app != nil {
+		h.app.Kill()
 	}
+	os.Exit(1)
 }
 
 // Find an unused port
