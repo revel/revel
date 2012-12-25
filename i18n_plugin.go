@@ -27,8 +27,7 @@ func (p I18nPlugin) BeforeRequest(c *Controller) {
 	}
 }
 
-// Set the current locale controller argument (CurrentLocaleControllerArg) with the given locale, or the default in case the given 
-// locale isn't supported.
+// Set the current locale controller argument (CurrentLocaleControllerArg) with the given locale.
 func setCurrentLocaleControllerArg(c *Controller, locale string) {
 	c.Args[CurrentLocaleControllerArg] = locale
 }
