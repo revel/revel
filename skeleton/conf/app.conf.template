@@ -4,8 +4,10 @@ http.addr=
 http.port=9000
 cookie.prefix=REVEL
 
+# The language cookie name used to store the current language.
+i18n.cookie=%(cookie.prefix)s_LANG
+
 # The default language of this application.
-# This language is used when the client did not specify and Accept-Language HTTP header value, or none of the values have messages associated with them.
 i18n.default_language=en
 
 [dev]

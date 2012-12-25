@@ -160,7 +160,7 @@ type AcceptLanguage struct {
 	Quality  float32
 }
 
-// A collection of AcceptLanguage instances.
+// A collection of sortable AcceptLanguage instances.
 type AcceptLanguages []AcceptLanguage
 
 func (al AcceptLanguages) Len() int           { return len(al) }

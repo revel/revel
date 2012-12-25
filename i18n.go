@@ -21,15 +21,15 @@ var (
 	messages map[string]*config.Config
 )
 
-// Return all currently loaded message locales.
-func MessageLocales() []string {
-	locales := make([]string, len(messages))
+// Return all currently loaded message languages.
+func MessageLanguages() []string {
+	languages := make([]string, len(messages))
 	i := 0
-	for locale, _ := range messages {
-		locales[i] = locale
+	for language, _ := range messages {
+		languages[i] = language
 		i++
 	}
-	return locales
+	return languages
 }
 
 // Perform a message look-up for the given locale and message using the given arguments.
@@ -38,9 +38,9 @@ func MessageLocales() []string {
 func Message(locale, message string, args ...interface{}) (value string) {
 	language, region := parseLocale(locale)
 
-	messageConfig, knownLocale := messages[language]
-	if !knownLocale {
-		WARN.Printf("Unknown locale '%s' for message '%s'", locale, message)
+	messageConfig, knownLanguage := messages[language]
+	if !knownLanguage {
+		WARN.Printf("Unsupported language for locale '%s' and message '%s'", locale, message)
 		return fmt.Sprintf(unknownValueFormat, locale)
 	}
 

@@ -13,9 +13,9 @@ const (
 func TestI18nLoadMessages(t *testing.T) {
 	loadMessages(testDataPath)
 
-	// Assert that we have the expected number of locales
-	if len(MessageLocales()) != 2 {
-		t.Fatalf("Expected messages to contain no more or less than 2 locales, instead there are %d locales", len(MessageLocales()))
+	// Assert that we have the expected number of languages
+	if len(MessageLanguages()) != 2 {
+		t.Fatalf("Expected messages to contain no more or less than 2 languages, instead there are %d languages", len(MessageLanguages()))
 	}
 }
 
