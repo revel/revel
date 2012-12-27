@@ -14,6 +14,7 @@ const (
 	messageFilesDirectory string = "messages"
 	messageFilePattern    string = `^\w+.[a-zA-Z]{2}$`
 	unknownValueFormat    string = "??? %s ???"
+	defaultLanguageOption string = "i18n.default_language"
 )
 
 var (
@@ -40,8 +41,20 @@ func Message(locale, message string, args ...interface{}) (value string) {
 
 	messageConfig, knownLanguage := messages[language]
 	if !knownLanguage {
-		WARN.Printf("Unsupported language for locale '%s' and message '%s'", locale, message)
-		return fmt.Sprintf(unknownValueFormat, locale)
+		WARN.Printf("Unsupported language for locale '%s' and message '%s', trying default language", locale, message)
+
+		if defaultLanguage, found := Config.String(defaultLanguageOption); found {
+			TRACE.Printf("Using default language '%s'", defaultLanguage)
+
+			messageConfig, knownLanguage = messages[defaultLanguage]
+			if !knownLanguage {
+				WARN.Printf("Unsupported default language for locale '%s' and message '%s'", defaultLanguage, message)
+				return fmt.Sprintf(unknownValueFormat, message)
+			}
+		} else {
+			WARN.Printf("Unable to find default language option (%s); messages for unsupported locales will never be translated", defaultLanguageOption)
+			return fmt.Sprintf(unknownValueFormat, message)
+		}
 	}
 
 	// This works because unlike the goconfig documentation suggests it will actually

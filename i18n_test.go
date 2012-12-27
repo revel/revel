@@ -54,12 +54,24 @@ func TestI18nMessage(t *testing.T) {
 	}
 
 	// Assert that we get the expected return value for a locale that doesn't exist
-	if message := Message("unknown locale", "message"); message != "??? unknown locale ???" {
+	if message := Message("unknown locale", "message"); message != "??? message ???" {
 		t.Error("Locale 'unknown locale' is not supposed to exist")
 	}
 	// Assert that we get the expected return value for a message that doesn't exist
 	if message := Message("nl", "unknown message"); message != "??? unknown message ???" {
 		t.Error("Message 'unknown message' is not supposed to exist")
+	}
+}
+
+func TestI18nMessageWithDefaultLocale(t *testing.T) {
+	loadMessages(testDataPath)
+	stubI18nConfig(t)
+
+	if message := Message("doesn't exist", "greeting"); message != "Hello" {
+		t.Errorf("Expected message '%s' for unknown locale to be default '%s' but was '%s'", "greeting", "Hello", message)
+	}
+	if message := Message("doesn't exist", "unknown message"); message != "??? unknown message ???" {
+		t.Error("Message 'unknown message' is not supposed to exist in the default language")
 	}
 }
 

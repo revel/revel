@@ -13,7 +13,7 @@ const (
 )
 
 func TestHasLocaleCookie(t *testing.T) {
-	stubConfig(t)
+	stubI18nConfig(t)
 
 	if found, value := hasLocaleCookie(buildRequestWithCookie("REVEL_LANG", "en")); !found {
 		t.Errorf("Expected %s cookie with value '%s' but found nothing or unexpected value '%s'", "REVEL_LANG", "en", value)
@@ -27,7 +27,7 @@ func TestHasLocaleCookie(t *testing.T) {
 }
 
 func TestHasLocaleCookieWithInvalidConfig(t *testing.T) {
-	stubConfigWithoutLanguageCookieOption(t)
+	stubI18nConfigWithoutLanguageCookieOption(t)
 	if found, _ := hasLocaleCookie(buildRequestWithCookie("REVEL_LANG", "en-US")); found {
 		t.Errorf("Expected %s cookie to not exist because the configured name is missing", "REVEL_LANG")
 	}
@@ -43,7 +43,7 @@ func TestHasAcceptLanguageHeader(t *testing.T) {
 }
 
 func TestBeforeRequest(t *testing.T) {
-	stubConfig(t)
+	stubI18nConfig(t)
 	plugin := I18nPlugin{}
 
 	controller := NewController(buildEmptyRequest(), nil, &ControllerType{reflect.TypeOf(Controller{}), nil})
@@ -62,7 +62,7 @@ func TestBeforeRequest(t *testing.T) {
 	}
 }
 
-func stubConfig(t *testing.T) {
+func stubI18nConfig(t *testing.T) {
 	ConfPaths = append(ConfPaths, testConfigPath)
 	testConfig, error := LoadConfig(testConfigName)
 	if error != nil {
@@ -71,8 +71,8 @@ func stubConfig(t *testing.T) {
 	Config = testConfig
 }
 
-func stubConfigWithoutLanguageCookieOption(t *testing.T) {
-	stubConfig(t)
+func stubI18nConfigWithoutLanguageCookieOption(t *testing.T) {
+	stubI18nConfig(t)
 	Config.config.RemoveOption("DEFAULT", "i18n.cookie")
 }
 
