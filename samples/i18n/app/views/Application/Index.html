@@ -1,0 +1,24 @@
+{{set . "title" "Home"}}
+{{template "header.html" .}}
+
+<h1>Internationalization Overview</h1>
+
+<p>
+	Some localization information:
+	<ul>
+		<li>Accept-Language HTTP header: {{.acceptLanguageHeader}}</li>
+		<li>Current preferred language as determined by the framework: {{.currentLanguage}}</li>
+	</ul>
+</p>
+<p>
+	Messages from the sample message file as resolved using <code>Controller.Message(...)</code>:
+	<ul>
+		<li>Greeting: {{.controllerGreeting}}</li>
+		<li>Greeting name: {{.controllerGreetingName}}</li>
+		<li>Greeting suffix: {{.controllerGreetingSuffix}}</li>
+		<li>Full greeting: {{.controllerGreetingFull}}</li>
+		<li>Full greeting with argument: {{.controllerGreetingWithArgument}}</li>
+	</ul>
+</p>
+
+{{template "footer.html" .}}

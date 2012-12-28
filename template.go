@@ -105,7 +105,8 @@ func NewTemplateLoader(paths []string) *TemplateLoader {
 // If a template fails to parse, the error is set on the loader.
 // (It's awkward to refresh a single Go Template)
 func (loader *TemplateLoader) Refresh() *Error {
-	TRACE.Println("Refresh")
+	TRACE.Printf("Refreshing templates from %s", loader.paths)
+
 	loader.compileError = nil
 	loader.templatePaths = map[string]string{}
 
