@@ -107,7 +107,7 @@ explicitly defined as `en-GB` or `en-US` would the `greeting` message be resolve
 <p/>
 #### Referencing
 
-Messages in message files can reference other messages. This allows users to compose a single message from multiple other messages. The syntax for referencing other messages 
+Messages in message files can reference other messages. This allows users to compose a single message from one or more other messages. The syntax for referencing other messages 
 is `%(key)s`. For example:
 
     greeting=Hello 
@@ -155,9 +155,9 @@ func (c Application) Index() rev.Result {
 }
 </pre>
 
-From a template, the current locale can be retrieved from the current `renderArgs` instance. For example:
+From a template, the current locale can be retrieved from the `currentLocale` property in the current `renderArgs` instance. For example:
 
-    <p>Current preferred locale: &#123;&#123;.currentLocale&#125;&#125;</p>
+    <p>Current preferred locale: {{.currentLocale}}</p>
 
 <p/>
 ## Resolving messages
@@ -166,9 +166,14 @@ Messages can be resolved from either a *view template* or a *controller*.
 
 * Controller
 
-    Each controller has a `Message(...)` function that can be used to resolve messages:
+    Each controller has a `Message(message string, args ...interface{})` function that can be used to resolve messages. For example:
 
-    ...
+<pre class="prettyprint lang-go">
+func (c Application) Index() rev.Result {
+	c.RenderArgs["controllerGreeting"] = c.Message("greeting")
+	c.Render()
+}
+</pre>
 
 * Template
 
