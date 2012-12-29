@@ -8,9 +8,6 @@ supports message files organized per locale (a combination of *language* and *re
 look-up, cookie-based overrides and message nesting and arguments.
 
 #### Glossary
-
-Throughout this manual, the following terms will be used frequently:
-
 * Locale: a combination of *language* and *region* that indicates a user language preference, eg. `en-US`.
 * Language: the language part of a locale, eg. `en`. Language identifiers are expected to be [ISO 639-1 codes](http://en.wikipedia.org/wiki/List_of_ISO_639-1_codes).
 * Region: the region part of a locale, eg. `US`. Region identifiers are expected to be [ISO 3166-1 alpha-2 codes](http://en.wikipedia.org/wiki/ISO_3166-1_alpha-2).
@@ -26,7 +23,7 @@ An executive summary of how message files work:
 * Message files are UTF-8 encoded files stored in the `messages` folder in the root your application.
 * The *file extension* determines the *language* of the text contained in the file and should be an [ISO 639-1 code](http://en.wikipedia.org/wiki/List_of_ISO_639-1_codes).
 * Each message file contains the key-value pairs that can be used throughout your application.
-* Each message file can contain any number of *region* sections that allow you to override messages in the file on a per-region basis.
+* Each message file can contain any number of *region* sections (identified by a [ISO 3166-1 alpha-2 code](http://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)) that allow you to override messages in the file on a per-region basis.
 
 Oh, and by the way: each message file is effectively a [goconfig file](https://github.com/robfig/goconfig) and supports all goconfig features.
 
