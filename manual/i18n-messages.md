@@ -12,6 +12,8 @@ look-up, cookie-based overrides and message nesting and arguments.
 * Language: the language part of a locale, eg. `en`. Language identifiers are expected to be [ISO 639-1 codes](http://en.wikipedia.org/wiki/List_of_ISO_639-1_codes).
 * Region: the region part of a locale, eg. `US`. Region identifiers are expected to be [ISO 3166-1 alpha-2 codes](http://en.wikipedia.org/wiki/ISO_3166-1_alpha-2).
 
+***
+
 ## Quick start
 
 ### Sample application
@@ -28,6 +30,8 @@ to override messages in the file on a per-region basis.
 * Each message file is effectively a [goconfig file](https://github.com/robfig/goconfig) and supports all goconfig features.
 
 The following chapters will describe each part of the framework in detail.
+
+***
 
 ## Message files
 
@@ -60,7 +64,7 @@ Another approach would be to create *multiple files* for the *same language* and
         warnings.fr
         ...
 
-<div class="alert alert-block"><strong>Important note:</strong> while it's technically possible to define the same *message key* in multiple files with the same language, this will result in unpredictable behaviour. When using multiple files per language, take care to keep your message keys unique so that keys in one file cannot be overwritten after the files are merged!</div>
+<div class="alert alert-block"><strong>Important note:</strong> while it's technically possible to define the same <em>message key</em> in multiple files with the same language, this will result in unpredictable behaviour. When using multiple files per language, take care to keep your message keys unique so that keys in one file cannot be overwritten after the files are merged!</div>
 
 ### Message keys and values
 
