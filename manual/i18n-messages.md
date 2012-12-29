@@ -60,8 +60,8 @@ Another approach would be to create *multiple files* for the *same language* and
         warnings.fr
         ...
 
-**Important note:** while it's technically possible to define the same *message key* in multiple files with the same language, this will result in unpredictable behaviour.
-When using multiple files per language, take care to keep your message keys unique so that keys in one file cannot be overwritten after the files are merged!
+<div class="alert alert-error">**Important note:** while it's technically possible to define the same *message key* in multiple files with the same language, this will result in unpredictable behaviour.
+When using multiple files per language, take care to keep your message keys unique so that keys in one file cannot be overwritten after the files are merged!</div>
 
 ### Message keys and values
 
@@ -90,7 +90,7 @@ The `key=value` message is implicitly put in the default section as it was not d
 For message files all messages should be defined in the *default section* unless they are specific to a certain region (see 
 [Sections and regions](#regions) for more information).
 
-<div class="alert alert-info"><strong>Note:</strong> Sections are a <em>goconfig</em> feature.</div>
+<div class="alert alert-info"><strong>Note:</strong> sections are a <em>goconfig</em> feature.</div>
 
 ### Regions
 
