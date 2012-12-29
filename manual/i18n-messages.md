@@ -33,7 +33,7 @@ When creating new message files, there are a couple of rules to keep in mind:
 * Each message file is effectively a [goconfig file](https://github.com/robfig/goconfig) and supports all goconfig features.
 
 ### Organizing message files
-
+<p/>
 There are no restrictions on message file names; a message file name can be anything as long as it has a valid extention. There is also no restriction on the *amount*
 of files per language. When the application starts, Revel will parse all message files with a valid extension in the `messages` folder and merge them according to their 
 language. This means that you are free to organize the message files however you want.
@@ -57,7 +57,7 @@ Another approach would be to create *multiple files* for the *same language* and
 <div class="alert alert-block"><strong>Important note:</strong> while it's technically possible to define the same <em>message key</em> in multiple files with the same language, this will result in unpredictable behaviour. When using multiple files per language, take care to keep your message keys unique so that keys in one file cannot be overwritten after the files are merged!</div>
 
 ### Message keys and values
-
+<p/>
 A message file is for all intents and purposes a [goconfig file](https://github.com/robfig/goconfig). This means that messages should be defined according to the tried and
 tested key-value format:
 
@@ -70,7 +70,7 @@ For example:
     greeting.suffix=, welcome to Revel!
 
 ### Sections
-
+<p/>
 A goconfig file is separated into *sections*. The *default section* always exists and contains any messages that are not defined in a specific section. For example:
 
     key=value
@@ -86,7 +86,7 @@ For message files all messages should be defined in the *default section* unless
 <div class="alert alert-info"><strong>Note:</strong> sections are a <em>goconfig</em> feature.</div>
 
 ### Regions
-
+<p/>
 Region-specific messages should be defined in sections with the same name. For example, suppose that we want to greet all English speaking users with `"Hello"`, all British
 users with `"Hey"` and all American users with `"Howdy"`. In order to accomplish this, we could define the following message file `greeting.en`:
 
@@ -104,9 +104,7 @@ explicitly defined as `en-GB` or `en-US` would the `greeting` message be resolve
 <div class="alert alert-block"><strong>Important note:</strong> messages defined under a section that is not a valid region are technically allowed but ultimately useless (as they will never be resolved).</div>
 
 ### Referencing and arguments
-
 <p/>
-
 #### Referencing
 
 Messages in message files can reference other messages. This allows users to compose a single message from multiple other messages. The syntax for referencing other messages 
@@ -125,7 +123,7 @@ Messages support one or more arguments. Arguments in messages are resolved using
 
     greeting.name_arg=Hello %s!
     
-***
+<p/>
 
 ## Resolving the client locale
 
@@ -148,7 +146,7 @@ In order to figure out which locale the user prefers Revel will look for a usabl
     file (`i18n.default_language`).
 
 ### Retrieving the current locale
-
+<p/>
 The application code can access the current locale from within a `Controller` using the `Controller.Args` map with the key `currentLocale`. For example:
 
 <pre class="prettyprint lang-go">
@@ -162,7 +160,7 @@ From a template, the current locale can be retrieved from the current `renderArg
 
     <p>Current preferred locale: {{.currentLocale}}</p>
 
-***
+<p/>
 
 ## Resolving messages
 
