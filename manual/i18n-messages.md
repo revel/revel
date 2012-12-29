@@ -60,7 +60,7 @@ Another approach would be to create *multiple files* for the *same language* and
         warnings.fr
         ...
 
-<div class="alert alert-error"><strong>Important note:</strong> while it's technically possible to define the same *message key* in multiple files with the same language, this will result in unpredictable behaviour. When using multiple files per language, take care to keep your message keys unique so that keys in one file cannot be overwritten after the files are merged!</div>
+<div class="alert alert-block"><strong>Important note:</strong> while it's technically possible to define the same *message key* in multiple files with the same language, this will result in unpredictable behaviour. When using multiple files per language, take care to keep your message keys unique so that keys in one file cannot be overwritten after the files are merged!</div>
 
 ### Message keys and values
 
@@ -107,7 +107,7 @@ users with `"Hey"` and all American users with `"Howdy"`. In order to accomplish
 For users who have defined English (`en`) as their preferred language, Revel would resolve `greeting` to `Hello`. Only in specific cases where the user's locale has been
 explicitly defined as `en-GB` or `en-US` would the `greeting` message be resolved using the specific sections.
 
-**Important note:** messages defined under a section that is not a valid region are technically allowed but ultimately useless (as they will never be resolved).
+<div class="alert alert-block"><strong>Important note:</strong> messages defined under a section that is not a valid region are technically allowed but ultimately useless (as they will never be resolved).</div>
 
 ### Referencing and arguments
 
@@ -121,7 +121,7 @@ is `%(key)s`. For example:
     greeting.suffix=, welcome to Revel!
     greeting.full=%(greeting)s %(greeting.name)s%(greeting.suffix)s
 
-*Note:* referencing is a [goconfig file](https://github.com/robfig/goconfig) feature.
+<div class="alert alert-info"><strong>Note:</strong> sections are a <em>goconfig</em> feature.</div>
 
 #### Arguments
 
