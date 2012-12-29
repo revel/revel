@@ -5,17 +5,3 @@
 # - http://www.rfc-editor.org/rfc/bcp/bcp47.txt
 # - http://www.w3.org/International/questions/qa-accept-lang-locales
 
-# Default values for English
-greeting=Hello 
-greeting.name=Rob
-greeting.suffix=, welcome to Revel!
-
-# Specify region-specific overrides
-[AU]
-greeting=G'day
-
-[US]
-greeting=Howdy
-
-[GB]
-greeting=All right
