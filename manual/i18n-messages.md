@@ -104,7 +104,9 @@ explicitly defined as `en-GB` or `en-US` would the `greeting` message be resolve
 <div class="alert alert-block"><strong>Important note:</strong> messages defined under a section that is not a valid region are technically allowed but ultimately useless (as they will never be resolved).</div>
 
 ### Referencing and arguments
-    
+
+<p/>
+
 #### Referencing
 
 Messages in message files can reference other messages. This allows users to compose a single message from multiple other messages. The syntax for referencing other messages 
