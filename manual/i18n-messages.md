@@ -31,8 +31,8 @@ The following chapters will describe each part of the framework in detail.
 
 ## Message files
 
-Message files is the central concept of internationalized messages in Revel. They contain the actual text that will be used while rendering the view (or 
-elsewhere in your application if you so desire). When creating new message files, there are a couple of rules to keep in mind:
+Messages are defined in message files. These files contain the actual text that will be used while rendering the view (or elsewhere in your application if you so desire). 
+When creating new message files, there are a couple of rules to keep in mind:
 
 * All message files should be stored in the `messages` folder in the application root.
 * The file extension determines the *language* of the message file and should be an [ISO 639-1 code](http://en.wikipedia.org/wiki/List_of_ISO_639-1_codes).
@@ -41,7 +41,7 @@ elsewhere in your application if you so desire). When creating new message files
 ### Organizing message files
 
 There are no restrictions on message file names; a message file name can be anything as long as it has a valid extention. There is also no restriction on the *amount*
-of files per language. When the application starts, Revel will walk all message files with a valid extension in the `messages` folder and merge them according to their 
+of files per language. When the application starts, Revel will parse all message files with a valid extension in the `messages` folder and merge them according to their 
 language. This means that you are free to organize the message files however you want.
 
 For example, you may want to take a traditional approach and define 1 single message file per language:
@@ -61,7 +61,7 @@ Another approach would be to create *multiple files* for the *same language* and
         ...
 
 **Important note:** while it's technically possible to define the same *message key* in multiple files with the same language, this will result in unpredictable behaviour.
-When using multiple files per language, take care to keep your message keys unique so that keys in one file cannot be overwritten after merging!
+When using multiple files per language, take care to keep your message keys unique so that keys in one file cannot be overwritten after the files are merged!
 
 ### Message keys and values
 
@@ -90,6 +90,8 @@ The `key=value` message is implicitly put in the default section as it was not d
 For message files all messages should be defined in the *default section* unless they are specific to a certain region (see 
 [Sections and regions](#regions) for more information).
 
+<span class="label label-info">Note</span> Sections are a [goconfig file](https://github.com/robfig/goconfig) feature.
+
 ### Regions
 
 Region-specific messages should be defined in sections with the same name. For example, suppose that we want to greet all English speaking users with `"Hello"`, all British
@@ -112,8 +114,8 @@ explicitly defined as `en-GB` or `en-US` would the `greeting` message be resolve
 
 #### Referencing
 
-Messages in message files can reference eachother. This allows users to compose a single message from multiple other messages. The syntax for referencing other messages is
-`%(key)s`. For example:
+Messages in message files can reference other messages. This allows users to compose a single message from multiple other messages. The syntax for referencing other messages 
+is `%(key)s`. For example:
 
     greeting=Hello 
     greeting.name=Rob
@@ -127,6 +129,40 @@ Messages in message files can reference eachother. This allows users to compose 
 Messages support one or more arguments. Arguments in messages are resolved using the same rules as the go `fmt` package. For example:
 
     greeting.name_arg=Hello %s!
+    
+
+## Resolving the client locale
+
+In order to figure out which locale the user prefers Revel will look for a usable locale in the following places:
+
+1. Language cookie
+
+    Each request the framework will look for a cookie with the name defined in the application configuration (`i18n.cookie`). When such a cookie is found its value is 
+    assumed to be the current locale. It's possible for the application to set this cookie's value in order to *force* the current locale.
+
+2. Accept-Language HTTP header
+
+    Revel will automatically parse the *Accept-Language HTTP header* for each incoming request. Each of the locales in the Accept-Language header value is evaluated 
+    and stored - in order of qualification according to the [HTTP specification](http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.4) - in the current 
+    Revel `Request` instance. This information is later used by the various message resolving functions to determine the current locale.
+
+3. Default language
+
+    When all of the look-up methods above have returned no usable client locale, the framework will use the default locale as defined in the application configuration
+    file (`i18n.default_language`).
+
+### Retrieving the current locale
+
+The application code can access the current locale from within a `Controller` using the `Controller.Args` map with the key `currentLocale`. For example:
+
+    func (c Application) Index() rev.Result {
+    	currentLanguage := c.Args["currentLocale"].(string)
+        c.Render(currentLanguage)
+    }
+
+From a template, the current language can be retrieved from the current `renderArgs` instance. For example:
+
+    <p>Current preferred language: {{.currentLocale}}</p>
 
 ## Resolving messages
 
@@ -134,20 +170,11 @@ Messages can be resolved from either a *view template* or a *controller*.
 
 ### Controller
 
-Each controller has a convenience function `Message(...)` that can be used to resolve messages.
+Each controller has a `Message(...)` function that can be used to resolve messages:
+
 
 ...
 
 ### Template
-
-...
-
-## Resolving the client locale
-
-...
-
-* Cookie
-* Accept-Language HTTP header
-* Default language
 
 ...
