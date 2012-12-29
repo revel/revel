@@ -23,6 +23,7 @@ var (
     AppPath    string <span class="comment">// e.g. &#34;/Users/robfig/gocode/src/corp/sample/app&#34;</span>
     ViewsPath  string <span class="comment">// e.g. &#34;/Users/robfig/gocode/src/corp/sample/app/views&#34;</span>
     ImportPath string <span class="comment">// e.g. &#34;corp/sample&#34;</span>
+    SourcePath string <span class="comment">// e.g. &#34;/Users/robfig/gocode/src&#34;</span>
 
     Config  *MergedConfig
     RunMode string <span class="comment">// Application-defined (by default, &#34;dev&#34; or &#34;prod&#34;)</span>
@@ -32,9 +33,25 @@ var (
 
     <span class="comment">// Where to look for templates and configuration.</span>
     <span class="comment">// Ordered by priority.  (Earlier paths take precedence over later paths.)</span>
+    CodePaths     []string
     ConfPaths     []string
     TemplatePaths []string
 
+    Modules []Module
+
+    <span class="comment">// Server config.</span>
+    <span class="comment">//</span>
+    <span class="comment">// Alert: This is how the app is configured, which may be different from</span>
+    <span class="comment">// the current process reality.  For example, if the app is configured for</span>
+    <span class="comment">// port 9000, HttpPort will always be 9000, even though in dev mode it is</span>
+    <span class="comment">// run on a random port and proxied.</span>
+    HttpPort int    <span class="comment">// e.g. 9000</span>
+    HttpAddr string <span class="comment">// e.g. &#34;&#34;, &#34;127.0.0.1&#34;</span>
+
+    <span class="comment">// All cookies dropped by the framework begin with this prefix.</span>
+    CookiePrefix string
+
+    <span class="comment">// Loggers</span>
     DEFAULT = log.New(os.Stderr, &#34;&#34;, log.Ldate|log.Ltime|log.Lshortfile)
     TRACE   = DEFAULT
     INFO    = DEFAULT
@@ -55,16 +72,19 @@ var (
 func Init(mode, importPath, srcPath string) {
     <span class="comment">// Ignore trailing slashes.</span>
     ImportPath = strings.TrimRight(importPath, &#34;/&#34;)
+    SourcePath = strings.TrimRight(srcPath, &#34;/&#34;)
     RunMode = mode
 
-    if srcPath == &#34;&#34; {
-        srcPath = findSrcPath(importPath)
+    if SourcePath == &#34;&#34; {
+        SourcePath = findSrcPath(importPath)
     }
 
-    RevelPath = path.Join(srcPath, filepath.FromSlash(REVEL_IMPORT_PATH))
-    BasePath = path.Join(srcPath, filepath.FromSlash(importPath))
+    RevelPath = path.Join(SourcePath, filepath.FromSlash(REVEL_IMPORT_PATH))
+    BasePath = path.Join(SourcePath, filepath.FromSlash(importPath))
     AppPath = path.Join(BasePath, &#34;app&#34;)
     ViewsPath = path.Join(AppPath, &#34;views&#34;)
+
+    CodePaths = []string{AppPath}
 
     ConfPaths = []string{
         path.Join(BasePath, &#34;conf&#34;),
@@ -91,19 +111,25 @@ func Init(mode, importPath, srcPath string) {
         log.Fatalln(&#34;app.conf: No mode found:&#34;, mode)
     }
     Config.SetSection(mode)
+
+    <span class="comment">// Configure properties from app.conf</span>
+    HttpPort = Config.IntDefault(&#34;http.port&#34;, 9000)
+    HttpAddr = Config.StringDefault(&#34;http.addr&#34;, &#34;&#34;)
+    AppName = Config.StringDefault(&#34;app.name&#34;, &#34;(not set)&#34;)
+    CookiePrefix = Config.StringDefault(&#34;cookie.prefix&#34;, &#34;REVEL&#34;)
     secretStr := Config.StringDefault(&#34;app.secret&#34;, &#34;&#34;)
     if secretStr == &#34;&#34; {
         log.Fatalln(&#34;No app.secret provided.&#34;)
     }
     secretKey = []byte(secretStr)
 
-    AppName = Config.StringDefault(&#34;app.name&#34;, &#34;(not set)&#34;)
-
     <span class="comment">// Configure logging.</span>
     TRACE = getLogger(&#34;trace&#34;)
     INFO = getLogger(&#34;info&#34;)
     WARN = getLogger(&#34;warn&#34;)
     ERROR = getLogger(&#34;error&#34;)
+
+    loadModules()
 
     for _, hook := range InitHooks {
         hook()
@@ -112,14 +138,16 @@ func Init(mode, importPath, srcPath string) {
     revelInit = true
 }
 
+type Module struct {
+    Name, ImportPath, Path string
+}
+
 func CheckInit() {
     if !revelInit {
         panic(&#34;Revel has not been initialized!&#34;)
     }
 }
 </pre>
-
-
 
 
 

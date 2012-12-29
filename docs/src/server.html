@@ -16,33 +16,44 @@ var (
     MainRouter         *Router
     MainTemplateLoader *TemplateLoader
     MainWatcher        *Watcher
+    Server             *http.Server
 )
 
 <span class="comment">// Run the server.</span>
 <span class="comment">// This is called from the generated main file.</span>
 <span class="comment">// If port is non-zero, use that.  Else, read the port from app.conf.</span>
 func Run(port int) {
-    address := Config.StringDefault(&#34;http.addr&#34;, &#34;&#34;)
+    address := HttpAddr
     if port == 0 {
-        port = Config.IntDefault(&#34;http.port&#34;, 9000)
+        port = HttpPort
     }
 
     MainRouter = NewRouter(path.Join(BasePath, &#34;conf&#34;, &#34;routes&#34;))
     MainTemplateLoader = NewTemplateLoader(TemplatePaths)
 
-    <span class="comment">// If desired (or by default), create a watcher for templates and routes.</span>
-    <span class="comment">// The watcher calls Refresh() on things on the first request.</span>
-    if Config.BoolDefault(&#34;server.watcher&#34;, true) {
+    <span class="comment">// The &#34;watch&#34; config variable can turn on and off all watching.</span>
+    <span class="comment">// (As a convenient way to control it all together.)</span>
+    if Config.BoolDefault(&#34;watch&#34;, true) {
         MainWatcher = NewWatcher()
-        MainWatcher.Listen(MainTemplateLoader, MainTemplateLoader.paths...)
-        MainWatcher.Listen(MainRouter, MainRouter.path)
-    } else {
-        <span class="comment">// Else, call refresh on them directly.</span>
-        MainTemplateLoader.Refresh()
-        MainRouter.Refresh()
     }
 
-    server := &amp;http.Server{
+    <span class="comment">// If desired (or by default), create a watcher for templates and routes.</span>
+    <span class="comment">// The watcher calls Refresh() on things on the first request.</span>
+    if MainWatcher != nil &amp;&amp; Config.BoolDefault(&#34;watch.templates&#34;, true) {
+        MainWatcher.Listen(MainTemplateLoader, MainTemplateLoader.paths...)
+    } else {
+        MainTemplateLoader.Refresh()
+    }
+
+    if MainWatcher != nil &amp;&amp; Config.BoolDefault(&#34;watch.routes&#34;, true) {
+        MainWatcher.auditor = PluginNotifier{plugins}
+        MainWatcher.Listen(MainRouter, MainRouter.path)
+    } else {
+        MainRouter.Refresh()
+        plugins.OnRoutesLoaded(MainRouter)
+    }
+
+    Server = &amp;http.Server{
         Addr:    fmt.Sprintf(&#34;%s:%d&#34;, address, port),
         Handler: http.HandlerFunc(handle),
     }
@@ -54,11 +65,21 @@ func Run(port int) {
         fmt.Printf(&#34;Listening on port %d...\n&#34;, port)
     }()
 
-    ERROR.Fatalln(&#34;Failed to listen:&#34;, server.ListenAndServe())
+    ERROR.Fatalln(&#34;Failed to listen:&#34;, Server.ListenAndServe())
+}
+
+<span class="comment">// The PluginNotifier glues the watcher and the plugin collection together.</span>
+<span class="comment">// It audits refreshes and invokes the appropriate method to inform the plugins.</span>
+type PluginNotifier struct {
+
+}
+
+func (pn PluginNotifier) OnRefresh(l Listener) {
+    if l == MainRouter {
+        pn.plugins.OnRoutesLoaded(MainRouter)
+    }
 }
 </pre>
-
-
 
 
 

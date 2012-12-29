@@ -75,10 +75,14 @@ Example:
 A helper for input fields.
 
 Given a field name, it returns a struct containing the following members:
+* Id: the field name, converted to be suitable as a HTML element ID.
 * Name: the field name
-* Value: the flashed value
+* Value: the value of the field in the current RenderArgs
+* Flash: the flashed value of the field.
 * Error: the error message, if any is associated with this field.
 * ErrorClass: the literal string "error", if there was an error, else "".
+
+[See godoc.](../docs/godoc/field.html)
 
 Example:
 
@@ -87,7 +91,7 @@ Example:
 	{{with $field := field "booking.CheckInDate" .}}
 	  <p class="{{$field.ErrorClass}}">
 	    <strong>Check In Date:</strong>
-	    <input type="text" size="10" name="{{$field.Name}}" class="datepicker" value="{{$field.Value}}">
+	    <input type="text" size="10" name="{{$field.Name}}" class="datepicker" value="{{$field.Flash}}">
 	    * <span class="error">{{$field.Error}}</span>
 	  </p>
 	{{end}}

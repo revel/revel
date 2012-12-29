@@ -1,0 +1,155 @@
+---
+layout: godoc
+---
+<!--
+	Copyright 2009 The Go Authors. All rights reserved.
+	Use of this source code is governed by a BSD-style
+	license that can be found in the LICENSE file.
+-->
+<h1>Field</h1>
+
+	
+		<!-- The package's Name is printed as title by the top-level template -->
+                
+		
+
+		<h2 id="index">Index</h2>
+		<!-- Table of contents for API; must be named manual-nav to turn off auto nav. -->
+		<div id="manual-nav">
+			<dl>
+			
+			
+			
+			
+				
+				<dd><a href="#Field">type Field</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#NewField">func NewField(name string, renderArgs map[string]interface{}) *Field</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Field.ErrorClass">func (f *Field) ErrorClass() string</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Field.Flash">func (f *Field) Flash() string</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Field.FlashArray">func (f *Field) FlashArray() []string</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Field.Id">func (f *Field) Id() string</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Field.Value">func (f *Field) Value() interface{}</a></dd>
+				
+			
+			
+		</dl>
+
+		
+
+		
+			<h4>Package files</h4>
+			<p>
+			<span style="font-size:90%">
+			
+				<a href="../src/field.html">field.go</a>
+			
+			</span>
+			</p>
+		
+
+		
+		
+		
+		
+			
+			
+			<h2 id="Field">type <a href="../src/field.html?s=117:221#L1">Field</a></h2>
+			<pre>type Field struct {
+    Name  string
+    Error *ValidationError
+    <span class="comment">// contains filtered or unexported fields</span>
+}</pre>
+			<p>
+Field represents a data fieid that may be collected in a web form.
+</p>
+
+
+			
+
+			
+
+			
+
+			
+				
+				<h3 id="NewField">func <a href="../src/field.html?s=223:291#L5">NewField</a></h3>
+				<pre>func NewField(name string, renderArgs map[string]interface{}) *Field</pre>
+				
+				
+			
+
+			
+				
+				<h3 id="Field.ErrorClass">func (*Field) <a href="../src/field.html?s=1409:1444#L57">ErrorClass</a></h3>
+				<pre>func (f *Field) ErrorClass() string</pre>
+				<p>
+Return ERROR_CLASS if this field has a validation error, else empty string.
+</p>
+
+				
+				
+			
+				
+				<h3 id="Field.Flash">func (*Field) <a href="../src/field.html?s=630:660#L20">Flash</a></h3>
+				<pre>func (f *Field) Flash() string</pre>
+				<p>
+Returned the flashed value of this field.
+</p>
+
+				
+				
+			
+				
+				<h3 id="Field.FlashArray">func (*Field) <a href="../src/field.html?s=790:827#L26">FlashArray</a></h3>
+				<pre>func (f *Field) FlashArray() []string</pre>
+				<p>
+Returned the flashed value of this field as a list.
+</p>
+
+				
+				
+			
+				
+				<h3 id="Field.Id">func (*Field) <a href="../src/field.html?s=506:533#L15">Id</a></h3>
+				<pre>func (f *Field) Id() string</pre>
+				<p>
+Returns an identifier suitable for use as an HTML id.
+</p>
+
+				
+				
+			
+				
+				<h3 id="Field.Value">func (*Field) <a href="../src/field.html?s=959:994#L35">Value</a></h3>
+				<pre>func (f *Field) Value() interface{}</pre>
+				<p>
+Return the current value of this field.
+</p>
+
+				
+				
+			
+		
+		</div>
+	
+
+	
+
+
+
+
+
+

@@ -1,0 +1,239 @@
+---
+layout: godoc
+---
+<!--
+	Copyright 2009 The Go Authors. All rights reserved.
+	Use of this source code is governed by a BSD-style
+	license that can be found in the LICENSE file.
+-->
+<h1>Tests</h1>
+
+	
+		<!-- The package's Name is printed as title by the top-level template -->
+                
+		
+
+		<h2 id="index">Index</h2>
+		<!-- Table of contents for API; must be named manual-nav to turn off auto nav. -->
+		<div id="manual-nav">
+			<dl>
+			
+			
+				<dd><a href="#variables">Variables</a></dd>
+			
+			
+			
+				
+				<dd><a href="#TestSuite">type TestSuite</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#NewTestSuite">func NewTestSuite() TestSuite</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#TestSuite.Assert">func (t *TestSuite) Assert(exp bool)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#TestSuite.AssertContentType">func (t *TestSuite) AssertContentType(contentType string)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#TestSuite.AssertHeader">func (t *TestSuite) AssertHeader(name, value string)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#TestSuite.AssertNotFound">func (t *TestSuite) AssertNotFound()</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#TestSuite.AssertOk">func (t *TestSuite) AssertOk()</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#TestSuite.AssertStatus">func (t *TestSuite) AssertStatus(status int)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#TestSuite.Assertf">func (t *TestSuite) Assertf(exp bool, formatStr string, args ...interface{})</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#TestSuite.BaseUrl">func (t *TestSuite) BaseUrl() string</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#TestSuite.Get">func (t *TestSuite) Get(path string)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#TestSuite.MakeRequest">func (t *TestSuite) MakeRequest(req *http.Request)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#TestSuite.Post">func (t *TestSuite) Post(path string, contentType string, reader io.Reader)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#TestSuite.PostForm">func (t *TestSuite) PostForm(path string, data url.Values)</a></dd>
+				
+			
+			
+		</dl>
+
+		
+
+		
+			<h4>Package files</h4>
+			<p>
+			<span style="font-size:90%">
+			
+				<a href="../src/tests.html">tests.go</a>
+			
+			</span>
+			</p>
+		
+
+		
+		
+			<h2 id="variables">Variables</h2>
+			
+				<pre>var TestSuites []interface{} <span class="comment">// Array of structs that embed TestSuite</span>
+</pre>
+				
+			
+		
+		
+		
+			
+			
+			<h2 id="TestSuite">type <a href="../src/tests.html?s=85:187#L2">TestSuite</a></h2>
+			<pre>type TestSuite struct {
+    Client       *http.Client
+    Response     *http.Response
+    ResponseBody []byte
+}</pre>
+			
+
+			
+
+			
+
+			
+
+			
+				
+				<h3 id="NewTestSuite">func <a href="../src/tests.html?s=416:445#L12">NewTestSuite</a></h3>
+				<pre>func NewTestSuite() TestSuite</pre>
+				<p>
+NewTestSuite returns an initialized TestSuite ready for use. It is invoked
+by the test harness to initialize the embedded field in application tests.
+</p>
+
+				
+			
+
+			
+				
+				<h3 id="TestSuite.Assert">func (*TestSuite) <a href="../src/tests.html?s=2638:2674#L88">Assert</a></h3>
+				<pre>func (t *TestSuite) Assert(exp bool)</pre>
+				
+				
+				
+			
+				
+				<h3 id="TestSuite.AssertContentType">func (*TestSuite) <a href="../src/tests.html?s=2324:2381#L77">AssertContentType</a></h3>
+				<pre>func (t *TestSuite) AssertContentType(contentType string)</pre>
+				
+				
+				
+			
+				
+				<h3 id="TestSuite.AssertHeader">func (*TestSuite) <a href="../src/tests.html?s=2432:2484#L81">AssertHeader</a></h3>
+				<pre>func (t *TestSuite) AssertHeader(name, value string)</pre>
+				
+				
+				
+			
+				
+				<h3 id="TestSuite.AssertNotFound">func (*TestSuite) <a href="../src/tests.html?s=2063:2099#L67">AssertNotFound</a></h3>
+				<pre>func (t *TestSuite) AssertNotFound()</pre>
+				
+				
+				
+			
+				
+				<h3 id="TestSuite.AssertOk">func (*TestSuite) <a href="../src/tests.html?s=1996:2026#L63">AssertOk</a></h3>
+				<pre>func (t *TestSuite) AssertOk()</pre>
+				
+				
+				
+			
+				
+				<h3 id="TestSuite.AssertStatus">func (*TestSuite) <a href="../src/tests.html?s=2142:2186#L71">AssertStatus</a></h3>
+				<pre>func (t *TestSuite) AssertStatus(status int)</pre>
+				
+				
+				
+			
+				
+				<h3 id="TestSuite.Assertf">func (*TestSuite) <a href="../src/tests.html?s=2716:2792#L92">Assertf</a></h3>
+				<pre>func (t *TestSuite) Assertf(exp bool, formatStr string, args ...interface{})</pre>
+				
+				
+				
+			
+				
+				<h3 id="TestSuite.BaseUrl">func (*TestSuite) <a href="../src/tests.html?s=560:596#L17">BaseUrl</a></h3>
+				<pre>func (t *TestSuite) BaseUrl() string</pre>
+				<p>
+Return the base URL of the server, e.g. &#34;<a href="http://127.0.0.1:8557">http://127.0.0.1:8557</a>&#34;
+</p>
+
+				
+				
+			
+				
+				<h3 id="TestSuite.Get">func (*TestSuite) <a href="../src/tests.html?s=800:836#L26">Get</a></h3>
+				<pre>func (t *TestSuite) Get(path string)</pre>
+				<p>
+Issue a GET request to the given path and store the result in Request and
+RequestBody.
+</p>
+
+				
+				
+			
+				
+				<h3 id="TestSuite.MakeRequest">func (*TestSuite) <a href="../src/tests.html?s=1768:1818#L53">MakeRequest</a></h3>
+				<pre>func (t *TestSuite) MakeRequest(req *http.Request)</pre>
+				<p>
+Issue any request and read the response. If successful, the caller may
+examine the Response and ResponseBody properties.
+</p>
+
+				
+				
+			
+				
+				<h3 id="TestSuite.Post">func (*TestSuite) <a href="../src/tests.html?s=1110:1185#L36">Post</a></h3>
+				<pre>func (t *TestSuite) Post(path string, contentType string, reader io.Reader)</pre>
+				<p>
+Issue a POST request to the given path, sending the given Content-Type and
+data, and store the result in Request and RequestBody.  &#34;data&#34; may be nil.
+</p>
+
+				
+				
+			
+				
+				<h3 id="TestSuite.PostForm">func (*TestSuite) <a href="../src/tests.html?s=1492:1550#L47">PostForm</a></h3>
+				<pre>func (t *TestSuite) PostForm(path string, data url.Values)</pre>
+				<p>
+Issue a POST request to the given path as a form post of the given key and
+values, and store the result in Request and RequestBody.
+</p>
+
+				
+				
+			
+		
+		</div>
+	
+
+	
+
+
+
+
+
+

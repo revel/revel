@@ -97,9 +97,22 @@ func ContentTypeByFilename(filename string) string {
 
     return contentType
 }
+
+<span class="comment">// DirExists returns true if the given path exists and is a directory.</span>
+func DirExists(filename string) bool {
+    fileInfo, err := os.Stat(filename)
+    return err == nil &amp;&amp; fileInfo.IsDir()
+}
+
+func FirstNonEmpty(strs ...string) string {
+    for _, str := range strs {
+        if len(str) &gt; 0 {
+            return str
+        }
+    }
+    return &#34;&#34;
+}
 </pre>
-
-
 
 
 

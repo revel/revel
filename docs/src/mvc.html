@@ -12,29 +12,6 @@ layout: godoc
 
 	<pre>package rev
 
-<span class="comment">// Flash represents a cookie that gets overwritten on each request.</span>
-<span class="comment">// It allows data to be stored across one page at a time.</span>
-<span class="comment">// This is commonly used to implement success or error messages.</span>
-<span class="comment">// e.g. the Post/Redirect/Get pattern: http://en.wikipedia.org/wiki/Post/Redirect/Get</span>
-type Flash struct {
-    Data, Out map[string]string
-}
-
-<span class="comment">// These provide a unified view of the request params.</span>
-<span class="comment">// Includes:</span>
-<span class="comment">// - URL query string</span>
-<span class="comment">// - Form values</span>
-<span class="comment">// - File uploads</span>
-type Params struct {
-    url.Values
-    Files map[string][]*multipart.FileHeader
-
-}
-
-<span class="comment">// A signed cookie (and thus limited to 4kb in size).</span>
-<span class="comment">// Restriction: Keys may not have a colon in them.</span>
-type Session map[string]string
-
 type Request struct {
     *http.Request
     ContentType string
@@ -46,46 +23,6 @@ type Response struct {
     ContentType string
 
     Out http.ResponseWriter
-}
-
-type Controller struct {
-    Name       string
-    Type       *ControllerType
-    MethodType *MethodType
-
-    Request  *Request
-    Response *Response
-
-    Flash      Flash                  <span class="comment">// User cookie, cleared after each request.</span>
-    Session    Session                <span class="comment">// Session, stored in cookie, signed.</span>
-    Params     *Params                <span class="comment">// Parameters from URL and form (including multipart).</span>
-    Args       map[string]interface{} <span class="comment">// Per-request scratch space.</span>
-    RenderArgs map[string]interface{} <span class="comment">// Args passed to the template.</span>
-    Validation *Validation            <span class="comment">// Data validation helpers</span>
-    Txn        *sql.Tx                <span class="comment">// Nil by default, but may be used by the app / plugins</span>
-}
-
-func NewController(req *Request, resp *Response, ct *ControllerType) *Controller {
-    flash := restoreFlash(req.Request)
-    params := ParseParams(req)
-
-    return &amp;Controller{
-        Name:     ct.Type.Name(),
-        Type:     ct,
-        Request:  req,
-        Response: resp,
-        Params:   params,
-        Flash:    flash,
-        Session:  restoreSession(req.Request),
-        RenderArgs: map[string]interface{}{
-            &#34;RunMode&#34;: RunMode,
-            &#34;flash&#34;:   flash.Data,
-        },
-        Validation: &amp;Validation{
-            Errors: restoreValidationErrors(req.Request),
-            keep:   false,
-        },
-    }
 }
 
 func NewRequest(r *http.Request) *Request {
@@ -111,6 +48,7 @@ func NewAppController(req *Request, resp *Response, controllerName, methodName s
     appControllerPtr := initNewAppController(appControllerType.Type, controller)
 
     <span class="comment">// Set the method being called.</span>
+    controller.AppController = appControllerPtr.Interface()
     controller.MethodType = appControllerType.Method(methodName)
     if controller.MethodType == nil {
         INFO.Println(&#34;Failed to find method&#34;, methodName, &#34;on Controller&#34;,
@@ -121,329 +59,14 @@ func NewAppController(req *Request, resp *Response, controllerName, methodName s
     return controller, appControllerPtr
 }
 
-func (c *Controller) FlashParams() {
-    for key, vals := range c.Params.Values {
-        c.Flash.Out[key] = vals[0]
-    }
-}
-
-func (c *Controller) SetCookie(cookie *http.Cookie) {
-    http.SetCookie(c.Response.Out, cookie)
-}
-
-<span class="comment">// Invoke the given method, save headers/cookies to the response, and apply the</span>
-<span class="comment">// result.  (e.g. render a template to the response)</span>
-func (c *Controller) Invoke(appControllerPtr reflect.Value, method reflect.Value, methodArgs []reflect.Value) {
-
-    <span class="comment">// Handle panics.</span>
-    defer func() {
-        if err := recover(); err != nil {
-            handleInvocationPanic(c, err)
-        }
-    }()
-
-    <span class="comment">// Clean up from the request.</span>
-    defer func() {
-        <span class="comment">// Delete temp files.</span>
-        if c.Request.MultipartForm != nil {
-            err := c.Request.MultipartForm.RemoveAll()
-            if err != nil {
-                WARN.Println(&#34;Error removing temporary files:&#34;, err)
-            }
-        }
-
-        for _, tmpFile := range c.Params.tmpFiles {
-            err := os.Remove(tmpFile.Name())
-            if err != nil {
-                WARN.Println(&#34;Could not remove upload temp file:&#34;, err)
-            }
-        }
-    }()
-
-    <span class="comment">// Run the plugins.</span>
-    plugins.BeforeRequest(c)
-
-    <span class="comment">// Calculate the Result by running the interceptors and the action.</span>
-    resultValue := func() reflect.Value {
-        <span class="comment">// Call the BEFORE interceptors</span>
-        result := c.invokeInterceptors(BEFORE, appControllerPtr)
-        if result != nil {
-            return reflect.ValueOf(result)
-        }
-
-        <span class="comment">// Invoke the action.</span>
-        resultValue := method.Call(methodArgs)[0]
-
-        <span class="comment">// Call the AFTER interceptors</span>
-        result = c.invokeInterceptors(AFTER, appControllerPtr)
-        if result != nil {
-            return reflect.ValueOf(result)
-        }
-        return resultValue
-    }()
-
-    plugins.AfterRequest(c)
-
-    if resultValue.IsNil() {
-        return
-    }
-    result := resultValue.Interface().(Result)
-
-    <span class="comment">// Store the flash.</span>
-    var flashValue string
-    for key, value := range c.Flash.Out {
-        flashValue += &#34;\x00&#34; + key + &#34;:&#34; + value + &#34;\x00&#34;
-    }
-    c.SetCookie(&amp;http.Cookie{
-        Name:  &#34;REVEL_FLASH&#34;,
-        Value: url.QueryEscape(flashValue),
-        Path:  &#34;/&#34;,
-    })
-
-    <span class="comment">// Store the Validation errors</span>
-    var errorsValue string
-    if c.Validation.keep {
-        for _, error := range c.Validation.Errors {
-            if error.Message != &#34;&#34; {
-                errorsValue += &#34;\x00&#34; + error.Key + &#34;:&#34; + error.Message + &#34;\x00&#34;
-            }
-        }
-    }
-    c.SetCookie(&amp;http.Cookie{
-        Name:  &#34;REVEL_ERRORS&#34;,
-        Value: url.QueryEscape(errorsValue),
-        Path:  &#34;/&#34;,
-    })
-
-    <span class="comment">// Store the session (and sign it).</span>
-    var sessionValue string
-    for key, value := range c.Session {
-        sessionValue += &#34;\x00&#34; + key + &#34;:&#34; + value + &#34;\x00&#34;
-    }
-    sessionData := url.QueryEscape(sessionValue)
-    c.SetCookie(&amp;http.Cookie{
-        Name:  &#34;REVEL_SESSION&#34;,
-        Value: Sign(sessionData) + &#34;-&#34; + sessionData,
-        Path:  &#34;/&#34;,
-    })
-
-    <span class="comment">// Apply the result, which generally results in the ResponseWriter getting written.</span>
-    result.Apply(c.Request, c.Response)
-}
-
-func (c *Controller) RenderError(err error) Result {
-    return ErrorResult{c.RenderArgs, err}
-}
-
 func RenderError(req *Request, resp *Response, err error) {
     stubController(req, resp).RenderError(err).Apply(req, resp)
-}
-
-<span class="comment">// Render a template corresponding to the calling Controller method.</span>
-<span class="comment">// Arguments will be added to c.RenderArgs prior to rendering the template.</span>
-<span class="comment">// They are keyed on their local identifier.</span>
-<span class="comment">//</span>
-<span class="comment">// For example:</span>
-<span class="comment">//</span>
-<span class="comment">//     func (c Users) ShowUser(id int) rev.Result {</span>
-<span class="comment">//     	 user := loadUser(id)</span>
-<span class="comment">//     	 return c.Render(user)</span>
-<span class="comment">//     }</span>
-<span class="comment">//</span>
-<span class="comment">// This action will render views/Users/ShowUser.html, passing in an extra</span>
-<span class="comment">// key-value &#34;user&#34;: (User).</span>
-func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
-    <span class="comment">// Get the calling function name.</span>
-    pc, _, line, ok := runtime.Caller(1)
-    if !ok {
-        ERROR.Println(&#34;Failed to get Caller information&#34;)
-        return nil
-    }
-    <span class="comment">// e.g. sample/app/controllers.(*Application).Index</span>
-    var fqViewName string = runtime.FuncForPC(pc).Name()
-    var viewName string = fqViewName[strings.LastIndex(fqViewName, &#34;.&#34;)+1 : len(fqViewName)]
-
-    <span class="comment">// Determine what method we are in.</span>
-    <span class="comment">// (e.g. the invoked controller method might have delegated to another method)</span>
-    methodType := c.MethodType
-    if methodType.Name != viewName {
-        methodType = c.Type.Method(viewName)
-        if methodType == nil {
-            return c.RenderError(fmt.Errorf(
-                &#34;No Method %s in Controller %s when loading the view.&#34;+
-                    &#34; (delegating Render is only supported within the same controller)&#34;,
-                viewName, c.Name))
-        }
-    }
-
-    <span class="comment">// Get the extra RenderArgs passed in.</span>
-    if renderArgNames, ok := methodType.RenderArgNames[line]; ok {
-        if len(renderArgNames) == len(extraRenderArgs) {
-            for i, extraRenderArg := range extraRenderArgs {
-                c.RenderArgs[renderArgNames[i]] = extraRenderArg
-            }
-        } else {
-            ERROR.Println(len(renderArgNames), &#34;RenderArg names found for&#34;,
-                len(extraRenderArgs), &#34;extra RenderArgs&#34;)
-        }
-    } else {
-        ERROR.Println(&#34;No RenderArg names found for Render call on line&#34;, line,
-            &#34;(Method&#34;, methodType, &#34;, ViewName&#34;, viewName, &#34;)&#34;)
-    }
-
-    return c.RenderTemplate(c.Name + &#34;/&#34; + viewName + &#34;.html&#34;)
-}
-
-<span class="comment">// A less magical way to render a template.</span>
-<span class="comment">// Renders the given template, using the current RenderArgs.</span>
-func (c *Controller) RenderTemplate(templatePath string) Result {
-
-    <span class="comment">// Get the Template.</span>
-    template, err := MainTemplateLoader.Template(templatePath)
-    if err != nil {
-        return c.RenderError(err)
-    }
-
-    <span class="comment">// Add Validation errors to RenderArgs.</span>
-    c.RenderArgs[&#34;errors&#34;] = c.Validation.ErrorMap()
-
-    return &amp;RenderTemplateResult{
-        Template:   template,
-        RenderArgs: c.RenderArgs,
-    }
-}
-
-<span class="comment">// Uses encoding/json.Marshal to return JSON to the client.</span>
-func (c *Controller) RenderJson(o interface{}) Result {
-    return RenderJsonResult{o}
-}
-
-<span class="comment">// Uses encoding/xml.Marshal to return XML to the client.</span>
-func (c *Controller) RenderXml(o interface{}) Result {
-    return RenderXmlResult{o}
-}
-
-<span class="comment">// Render plaintext in response, printf style.</span>
-func (c *Controller) RenderText(text string, objs ...interface{}) Result {
-    finalText := text
-    if len(objs) &gt; 0 {
-        finalText = fmt.Sprintf(text, objs)
-    }
-    return &amp;RenderTextResult{finalText}
-}
-
-<span class="comment">// Render a &#34;todo&#34; indicating that the action isn&#39;t done yet.</span>
-func (c *Controller) Todo() Result {
-    c.Response.Status = http.StatusNotImplemented
-    return c.RenderError(&amp;Error{
-        Title:       &#34;TODO&#34;,
-        Description: &#34;This action is not implemented&#34;,
-    })
-}
-
-func (c *Controller) NotFound(msg string) Result {
-    c.Response.Status = http.StatusNotFound
-    return c.RenderError(&amp;Error{
-        Title:       &#34;Not Found&#34;,
-        Description: msg,
-    })
 }
 
 <span class="comment">// This function is useful if there is no relevant Controller available.</span>
 <span class="comment">// It writes the 404 response immediately.</span>
 func NotFound(req *Request, resp *Response, msg string) {
     stubController(req, resp).NotFound(msg).Apply(req, resp)
-}
-
-<span class="comment">// Return a file, either displayed inline or downloaded as an attachment.</span>
-<span class="comment">// The name and size are taken from the file info.</span>
-func (c *Controller) RenderFile(file *os.File, delivery ContentDisposition) Result {
-    var length int64 = -1
-    fileInfo, err := file.Stat()
-    if err != nil {
-        WARN.Println(&#34;RenderFile error:&#34;, err)
-    }
-    if fileInfo != nil {
-        length = fileInfo.Size()
-    }
-    return &amp;BinaryResult{
-        Reader:   file,
-        Name:     filepath.Base(file.Name()),
-        Length:   length,
-        Delivery: delivery,
-    }
-}
-
-<span class="comment">// Redirect to an action or to a URL.</span>
-<span class="comment">//   c.Redirect(Controller.Action)</span>
-<span class="comment">//   c.Redirect(&#34;/controller/action&#34;)</span>
-<span class="comment">//   c.Redirect(&#34;/controller/%d/action&#34;, id)</span>
-func (c *Controller) Redirect(val interface{}, args ...interface{}) Result {
-    if url, ok := val.(string); ok {
-        if len(args) == 0 {
-            return &amp;RedirectToUrlResult{url}
-        }
-        return &amp;RedirectToUrlResult{fmt.Sprintf(url, args...)}
-    }
-    return &amp;RedirectToActionResult{val}
-}
-
-func (f Flash) Error(msg string, args ...interface{}) {
-    if len(args) == 0 {
-        f.Out[&#34;error&#34;] = msg
-    } else {
-        f.Out[&#34;error&#34;] = fmt.Sprintf(msg, args...)
-    }
-}
-
-func (f Flash) Success(msg string, args ...interface{}) {
-    if len(args) == 0 {
-        f.Out[&#34;success&#34;] = msg
-    } else {
-        f.Out[&#34;success&#34;] = fmt.Sprintf(msg, args...)
-    }
-}
-
-func ParseParams(req *Request) *Params {
-    var files map[string][]*multipart.FileHeader
-
-    <span class="comment">// Always want the url parameters.</span>
-    values := req.URL.Query()
-
-    <span class="comment">// Parse the body depending on the content type.</span>
-    switch req.ContentType {
-    case &#34;application/x-www-form-urlencoded&#34;:
-        <span class="comment">// Typical form.</span>
-        if err := req.ParseForm(); err != nil {
-            WARN.Println(&#34;Error parsing request body:&#34;, err)
-        } else {
-            for key, vals := range req.Form {
-                for _, val := range vals {
-                    values.Add(key, val)
-                }
-            }
-        }
-
-    case &#34;multipart/form-data&#34;:
-        <span class="comment">// Multipart form.</span>
-        <span class="comment">// TODO: Extract the multipart form param so app can set it.</span>
-        if err := req.ParseMultipartForm(32 &lt;&lt; 20 <span class="comment">/* 32 MB */</span>); err != nil {
-            WARN.Println(&#34;Error parsing request body:&#34;, err)
-        } else {
-            for key, vals := range req.MultipartForm.Value {
-                for _, val := range vals {
-                    values.Add(key, val)
-                }
-            }
-            files = req.MultipartForm.File
-        }
-    }
-
-    return &amp;Params{Values: values, Files: files}
-}
-
-func (p *Params) Bind(name string, typ reflect.Type) reflect.Value {
-    return Bind(p, name, typ)
 }
 
 <span class="comment">// Get the content type.</span>
@@ -462,7 +85,7 @@ func ResolveFormat(req *http.Request) string {
 
     switch {
     case accept == &#34;&#34;,
-        strings.HasPrefix(accept, &#34;*/*&#34;),
+        strings.HasPrefix(accept, &#34;*/*&#34;), <span class="comment">// */</span>
         strings.Contains(accept, &#34;application/xhtml&#34;),
         strings.Contains(accept, &#34;text/html&#34;):
         return &#34;html&#34;
@@ -546,8 +169,6 @@ func LookupControllerType(name string) *ControllerType {
     return controllers[strings.ToLower(name)]
 }
 </pre>
-
-
 
 
 

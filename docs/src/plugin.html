@@ -14,19 +14,29 @@ layout: godoc
 
 <span class="comment">// An plugin that allows the user to inject behavior at various points in the request cycle.</span>
 type Plugin interface {
+    <span class="comment">// Called on server startup (and on each code reload).</span>
     OnAppStart()
+    <span class="comment">// Called after the router has finished configuration.</span>
+    OnRoutesLoaded(router *Router)
+    <span class="comment">// Called before every request.</span>
     BeforeRequest(c *Controller)
+    <span class="comment">// Called after every non-panicking request, before the Result has been applied.</span>
     AfterRequest(c *Controller)
+    <span class="comment">// Called when a panic exits an action, with the recovered error value.</span>
     OnException(c *Controller, err interface{})
+    <span class="comment">// Called after every request (panic or not), after the Result has been applied.</span>
+    Finally(c *Controller)
 }
 
 <span class="comment">// It provides default (empty) implementations for all the required methods.</span>
 type EmptyPlugin struct{}
 
 func (p EmptyPlugin) OnAppStart()                                {}
+func (p EmptyPlugin) OnRoutesLoaded(router *Router)              {}
 func (p EmptyPlugin) BeforeRequest(c *Controller)                {}
 func (p EmptyPlugin) AfterRequest(c *Controller)                 {}
 func (p EmptyPlugin) OnException(c *Controller, err interface{}) {}
+func (p EmptyPlugin) Finally(c *Controller)                      {}
 
 type PluginCollection []Plugin
 
@@ -37,6 +47,12 @@ func RegisterPlugin(p Plugin) {
 func (plugins PluginCollection) OnAppStart() {
     for _, p := range plugins {
         p.OnAppStart()
+    }
+}
+
+func (plugins PluginCollection) OnRoutesLoaded(router *Router) {
+    for _, p := range plugins {
+        p.OnRoutesLoaded(router)
     }
 }
 
@@ -57,9 +73,13 @@ func (plugins PluginCollection) OnException(c *Controller, err interface{}) {
         p.OnException(c, err)
     }
 }
+
+func (plugins PluginCollection) Finally(c *Controller) {
+    for _, p := range plugins {
+        p.Finally(c)
+    }
+}
 </pre>
-
-
 
 
 

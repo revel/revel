@@ -1,0 +1,104 @@
+---
+layout: godoc
+---
+<!--
+	Copyright 2009 The Go Authors. All rights reserved.
+	Use of this source code is governed by a BSD-style
+	license that can be found in the LICENSE file.
+-->
+<h1>Params</h1>
+
+	
+		<!-- The package's Name is printed as title by the top-level template -->
+                
+		
+
+		<h2 id="index">Index</h2>
+		<!-- Table of contents for API; must be named manual-nav to turn off auto nav. -->
+		<div id="manual-nav">
+			<dl>
+			
+			
+			
+			
+				
+				<dd><a href="#Params">type Params</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#ParseParams">func ParseParams(req *Request) *Params</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Params.Bind">func (p *Params) Bind(name string, typ reflect.Type) reflect.Value</a></dd>
+				
+			
+			
+		</dl>
+
+		
+
+		
+			<h4>Package files</h4>
+			<p>
+			<span style="font-size:90%">
+			
+				<a href="../src/params.html">params.go</a>
+			
+			</span>
+			</p>
+		
+
+		
+		
+		
+		
+			
+			
+			<h2 id="Params">type <a href="../src/params.html?s=196:335#L5">Params</a></h2>
+			<pre>type Params struct {
+    url.Values
+    Files map[string][]*multipart.FileHeader
+    <span class="comment">// contains filtered or unexported fields</span>
+}</pre>
+			<p>
+These provide a unified view of the request params.
+Includes:
+- URL query string
+- Form values
+- File uploads
+</p>
+
+
+			
+
+			
+
+			
+
+			
+				
+				<h3 id="ParseParams">func <a href="../src/params.html?s=337:375#L11">ParseParams</a></h3>
+				<pre>func ParseParams(req *Request) *Params</pre>
+				
+				
+			
+
+			
+				
+				<h3 id="Params.Bind">func (*Params) <a href="../src/params.html?s=1300:1366#L49">Bind</a></h3>
+				<pre>func (p *Params) Bind(name string, typ reflect.Type) reflect.Value</pre>
+				
+				
+				
+			
+		
+		</div>
+	
+
+	
+
+
+
+
+
+

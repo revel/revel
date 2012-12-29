@@ -5,7 +5,8 @@ layout: samples
 
 The Booking sample app demonstrates:
 
-* Using a SQL database
+* Using a SQL database by configuring the Revel DB module.
+* Using the GORP "ORM-ish" library
 * Interceptors for checking that the user is logged in.
 * Using validation to display inline errors
 
@@ -18,9 +19,10 @@ Here are the contents of the app:
 			user.go
 
 		controllers
+			init.go    # Register all of the interceptors.
+			gorp.go    # A plugin for setting up Gorp, creating tables, and managing transactions.
 			app.go     # "Login" and "Register new user" pages
 			hotels.go  # Hotel searching and booking
-			db.go      # A plugin for managing an in-memory SQLite
 
 		views
 			...
@@ -44,35 +46,40 @@ usual:
 
 	$ revel run github.com/robfig/revel/samples/booking
 
-## Database Plugin
+## Database / Gorp Plugin
 
-**app/controllers/db.go** defines `DbPlugin`, which is a plugin that does a couple things:
+**app/controllers/gorp.go** defines `GorpPlugin`, which is a plugin that does a couple things:
 
-* OnAppStart: Opens a SQLite in-memory database, creates the User, Booking, and
-  Hotel tables, and inserts some test records.
+* OnAppStart: Uses the DB module to open a SQLite in-memory database, create the
+  User, Booking, and Hotel tables, and insert some test records.
 * BeforeRequest: Begins a transaction and stores the Transaction on the Controller
 * AfterRequest: Commits the transaction.  Panics if there was an error.
 * OnException: Rolls back the transaction.
 
-[Check out the code](https://github.com/robfig/revel/blob/master/samples/booking/app/controllers/db.go)
+[Check out the code](https://github.com/robfig/revel/blob/master/samples/booking/app/controllers/gorp.go)
 
 ## Interceptors
 
-**app/controllers/hotels.go** registers an interceptor that runs before every
-action on that controller:
+**app/controllers/init.go** registers the interceptors that run before every
+action:
 
 <pre class="prettyprint lang-go">
 func init() {
-	rev.InterceptFunc(checkUser, rev.BEFORE, &Hotels{})
+	rev.RegisterPlugin(GorpPlugin{})
+	rev.InterceptMethod((*GorpController).Begin, rev.BEFORE)
+	rev.InterceptMethod(Application.AddUser, rev.BEFORE)
+	rev.InterceptMethod(Hotels.checkUser, rev.BEFORE)
+	rev.InterceptMethod((*GorpController).Commit, rev.AFTER)
+	rev.InterceptMethod((*GorpController).Rollback, rev.FINALLY)
 }
 </pre>
 
-`checkUser` looks up the username in the session and redirects the user to log
-in if they are not already.
+As an example, `checkUser` looks up the username in the session and redirects
+the user to log in if they are not already.
 
 <pre class="prettyprint lang-go">
-func checkUser(c *rev.Controller) rev.Result {
-	if user := connected(c); user == nil {
+func (c Hotels) checkUser() rev.Result {
+	if user := c.connected(); user == nil {
 		c.Flash.Error("Please log in first")
 		return c.Redirect(Application.Index)
 	}
@@ -120,7 +127,7 @@ template can easily access them using the **field** helper:
   {{with $field := field "booking.CheckInDate" .}}
     <p class="{{$field.ErrorClass}}">
       <strong>Check In Date:</strong>
-      <input type="text" size="10" name="{{$field.Name}}" class="datepicker" value="{{$field.Value}}">
+      <input type="text" size="10" name="{{$field.Name}}" class="datepicker" value="{{$field.Flash}}">
       * <span class="error">{{$field.Error}}</span>
     </p>
   {{end}}

@@ -21,7 +21,7 @@ type Result interface {
 <span class="comment">// If RunMode is &#34;dev&#34;, this results in a friendly error page.</span>
 type ErrorResult struct {
     RenderArgs map[string]interface{}
-
+    Error      error
 }
 
 func (r ErrorResult) Apply(req *Request, resp *Response) {
@@ -46,7 +46,7 @@ func (r ErrorResult) Apply(req *Request, resp *Response) {
     showPlaintext := func(err error) {
         PlaintextErrorResult{fmt.Errorf(&#34;Server Error:\n%s\n\n&#34;+
             &#34;Additionally, an error occurred when rendering the error page:\n%s&#34;,
-            r.error, err)}.Apply(req, resp)
+            r.Error, err)}.Apply(req, resp)
     }
 
     if tmpl == nil {
@@ -59,7 +59,7 @@ func (r ErrorResult) Apply(req *Request, resp *Response) {
 
     <span class="comment">// If it&#39;s not a revel error, wrap it in one.</span>
     var revelError *Error
-    switch e := r.error.(type) {
+    switch e := r.Error.(type) {
     case *Error:
         revelError = e
     case error:
@@ -92,13 +92,13 @@ func (r ErrorResult) Apply(req *Request, resp *Response) {
 }
 
 type PlaintextErrorResult struct {
-
+    Error error
 }
 
 <span class="comment">// This method is used when the template loader or error template is not available.</span>
 func (r PlaintextErrorResult) Apply(req *Request, resp *Response) {
     resp.WriteHeader(http.StatusInternalServerError, &#34;text/plain&#34;)
-    resp.Out.Write([]byte(r.Error()))
+    resp.Out.Write([]byte(r.Error.Error()))
 }
 
 <span class="comment">// Action methods return this result to request a template be rendered.</span>
@@ -108,28 +108,57 @@ type RenderTemplateResult struct {
 }
 
 func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
+    <span class="comment">// If &#34;result staging&#34; is on..</span>
     <span class="comment">// Render the template into a temporary buffer, to see if there was an error</span>
     <span class="comment">// rendering the template.  If not, then copy it into the response buffer.</span>
-    <span class="comment">// TODO: It seems a shame to make a copy of everything, but if we don&#39;t,</span>
-    <span class="comment">// template errors result in unpredictable HTML for error pages.</span>
-    var b bytes.Buffer
-    err := r.Template.Render(&amp;b, r.RenderArgs)
-    if err != nil {
-        line, description := parseTemplateError(err)
-        compileError := &amp;Error{
-            Title:       &#34;Template Execution Error&#34;,
-            Path:        r.Template.Name(),
-            Description: description,
-            Line:        line,
-            SourceLines: r.Template.Content(),
-            SourceType:  &#34;template&#34;,
+    <span class="comment">// Otherwise, template render errors may result in unpredictable HTML (and</span>
+    <span class="comment">// would carry a 200 status code)</span>
+    if Config.BoolDefault(&#34;results.staging&#34;, true) {
+        <span class="comment">// Handle panics when rendering templates.</span>
+        defer func() {
+            if err := recover(); err != nil {
+                ERROR.Println(err)
+                PlaintextErrorResult{fmt.Errorf(&#34;Template Execution Panic in %s:\n%s&#34;,
+                    r.Template.Name(), err)}.Apply(req, resp)
+            }
+        }()
+
+        var b bytes.Buffer
+        err := r.Template.Render(&amp;b, r.RenderArgs)
+        if err != nil {
+            line, description := parseTemplateError(err)
+            compileError := &amp;Error{
+                Title:       &#34;Template Execution Error&#34;,
+                Path:        r.Template.Name(),
+                Description: description,
+                Line:        line,
+                SourceLines: r.Template.Content(),
+                SourceType:  &#34;template&#34;,
+            }
+            ErrorResult{r.RenderArgs, compileError}.Apply(req, resp)
+            return
         }
-        ErrorResult{r.RenderArgs, compileError}.Apply(req, resp)
+
+        resp.WriteHeader(http.StatusOK, &#34;text/html&#34;)
+        b.WriteTo(resp.Out)
         return
     }
 
+    <span class="comment">// Else, write the status, render, and hope for the best.</span>
     resp.WriteHeader(http.StatusOK, &#34;text/html&#34;)
-    b.WriteTo(resp.Out)
+    err := r.Template.Render(resp.Out, r.RenderArgs)
+    if err != nil {
+        ERROR.Println(&#34;Failed to render template&#34;, r.Template.Name(), &#34;\n&#34;, err)
+    }
+}
+
+type RenderHtmlResult struct {
+
+}
+
+func (r RenderHtmlResult) Apply(req *Request, resp *Response) {
+    resp.WriteHeader(http.StatusOK, &#34;text/html&#34;)
+    resp.Out.Write([]byte(r.html))
 }
 
 type RenderJsonResult struct {
@@ -146,7 +175,7 @@ func (r RenderJsonResult) Apply(req *Request, resp *Response) {
     }
 
     if err != nil {
-        ErrorResult{error: err}.Apply(req, resp)
+        ErrorResult{Error: err}.Apply(req, resp)
         return
     }
 
@@ -168,7 +197,7 @@ func (r RenderXmlResult) Apply(req *Request, resp *Response) {
     }
 
     if err != nil {
-        ErrorResult{error: err}.Apply(req, resp)
+        ErrorResult{Error: err}.Apply(req, resp)
         return
     }
 
@@ -230,15 +259,13 @@ func (r *RedirectToActionResult) Apply(req *Request, resp *Response) {
     url, err := getRedirectUrl(r.val)
     if err != nil {
         ERROR.Println(&#34;Couldn&#39;t resolve redirect:&#34;, err.Error())
-        ErrorResult{error: err}.Apply(req, resp)
+        ErrorResult{Error: err}.Apply(req, resp)
         return
     }
     resp.Out.Header().Set(&#34;Location&#34;, url)
     resp.WriteHeader(http.StatusFound, &#34;&#34;)
 }
 </pre>
-
-
 
 
 

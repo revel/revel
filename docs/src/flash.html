@@ -1,0 +1,62 @@
+---
+layout: godoc
+---
+<!--
+	Copyright 2009 The Go Authors. All rights reserved.
+	Use of this source code is governed by a BSD-style
+	license that can be found in the LICENSE file.
+-->
+<h1>Flash</h1>
+
+
+
+	<pre>package rev
+
+<span class="comment">// Flash represents a cookie that gets overwritten on each request.</span>
+<span class="comment">// It allows data to be stored across one page at a time.</span>
+<span class="comment">// This is commonly used to implement success or error messages.</span>
+<span class="comment">// e.g. the Post/Redirect/Get pattern: http://en.wikipedia.org/wiki/Post/Redirect/Get</span>
+type Flash struct {
+    Data, Out map[string]string
+}
+
+func (f Flash) Error(msg string, args ...interface{}) {
+    if len(args) == 0 {
+        f.Out[&#34;error&#34;] = msg
+    } else {
+        f.Out[&#34;error&#34;] = fmt.Sprintf(msg, args...)
+    }
+}
+
+func (f Flash) Success(msg string, args ...interface{}) {
+    if len(args) == 0 {
+        f.Out[&#34;success&#34;] = msg
+    } else {
+        f.Out[&#34;success&#34;] = fmt.Sprintf(msg, args...)
+    }
+}
+
+type FlashPlugin struct{ EmptyPlugin }
+
+func (p FlashPlugin) BeforeRequest(c *Controller) {
+    c.Flash = restoreFlash(c.Request.Request)
+    c.RenderArgs[&#34;flash&#34;] = c.Flash.Data
+}
+
+func (p FlashPlugin) AfterRequest(c *Controller) {
+    <span class="comment">// Store the flash.</span>
+    var flashValue string
+    for key, value := range c.Flash.Out {
+        flashValue += &#34;\x00&#34; + key + &#34;:&#34; + value + &#34;\x00&#34;
+    }
+    c.SetCookie(&amp;http.Cookie{
+        Name:  CookiePrefix + &#34;_FLASH&#34;,
+        Value: url.QueryEscape(flashValue),
+        Path:  &#34;/&#34;,
+    })
+}
+</pre>
+
+
+
+

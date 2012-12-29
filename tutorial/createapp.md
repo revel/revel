@@ -8,12 +8,15 @@ run it:
 
 	$ cd $GOPATH
 
-	$ revel new src/myapp
+	$ revel new myapp
 	~
 	~ revel! http://robfig.github.com/revel
 	~
-	Your application is ready:
-	   src/myapp
+    Your application is ready:
+        /Users/robfig/code/gocode/src/myapp
+
+    You can run it with:
+        revel run myapp
 
 	$ revel run myapp
 	~

@@ -26,6 +26,14 @@ layout: godoc
 				<dd><a href="#Run">func Run(port int)</a></dd>
 			
 			
+				
+				<dd><a href="#PluginNotifier">type PluginNotifier</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#PluginNotifier.OnRefresh">func (pn PluginNotifier) OnRefresh(l Listener)</a></dd>
+				
+			
 			
 		</dl>
 
@@ -50,6 +58,7 @@ layout: godoc
     MainRouter         *Router
     MainTemplateLoader *TemplateLoader
     MainWatcher        *Watcher
+    Server             *http.Server
 )</pre>
 				
 			
@@ -57,7 +66,7 @@ layout: godoc
 		
 			
 			
-			<h2 id="Run">func <a href="../src/server.html?s=2801:2819#L96">Run</a></h2>
+			<h2 id="Run">func <a href="../src/server.html?s=2834:2852#L97">Run</a></h2>
 			<pre>func Run(port int)</pre>
 			<p>
 Run the server.
@@ -68,12 +77,39 @@ If port is non-zero, use that.  Else, read the port from app.conf.
 			
 		
 		
+			
+			
+			<h2 id="PluginNotifier">type <a href="../src/server.html?s=4254:4310#L145">PluginNotifier</a></h2>
+			<pre>type PluginNotifier struct {
+    <span class="comment">// contains filtered or unexported fields</span>
+}</pre>
+			<p>
+The PluginNotifier glues the watcher and the plugin collection together.
+It audits refreshes and invokes the appropriate method to inform the plugins.
+</p>
+
+
+			
+
+			
+
+			
+
+			
+
+			
+				
+				<h3 id="PluginNotifier.OnRefresh">func (PluginNotifier) <a href="../src/server.html?s=4312:4358#L149">OnRefresh</a></h3>
+				<pre>func (pn PluginNotifier) OnRefresh(l Listener)</pre>
+				
+				
+				
+			
+		
 		</div>
 	
 
 	
-
-
 
 
 

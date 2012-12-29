@@ -34,6 +34,6 @@ Areas for development:
 ## Heroku
 
 **jamesward** kindly made a
-  [Heroku buildpack for Revel apps](https://github.com/jamesward/heroku-buildpack-go-revel).
+  [Heroku buildpack for Revel apps](https://github.com/robfig/heroku-buildpack-go-revel).
   He also wrote
   [a blog post about getting a sample app up and running on Heroku](http://www.jamesward.com/2012/09/28/run-revel-apps-on-heroku).

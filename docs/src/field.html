@@ -1,0 +1,84 @@
+---
+layout: godoc
+---
+<!--
+	Copyright 2009 The Go Authors. All rights reserved.
+	Use of this source code is governed by a BSD-style
+	license that can be found in the LICENSE file.
+-->
+<h1>Field</h1>
+
+
+
+	<pre>package rev
+
+<span class="comment">// Field represents a data fieid that may be collected in a web form.</span>
+type Field struct {
+    Name  string
+    Error *ValidationError
+
+}
+
+func NewField(name string, renderArgs map[string]interface{}) *Field {
+    err, _ := renderArgs[&#34;errors&#34;].(map[string]*ValidationError)[name]
+    return &amp;Field{
+        Name:       name,
+        Error:      err,
+        renderArgs: renderArgs,
+    }
+}
+
+<span class="comment">// Returns an identifier suitable for use as an HTML id.</span>
+func (f *Field) Id() string {
+    return strings.Replace(f.Name, &#34;.&#34;, &#34;_&#34;, -1)
+}
+
+<span class="comment">// Returned the flashed value of this field.</span>
+func (f *Field) Flash() string {
+    v, _ := f.renderArgs[&#34;flash&#34;].(map[string]string)[f.Name]
+    return v
+}
+
+<span class="comment">// Returned the flashed value of this field as a list.</span>
+func (f *Field) FlashArray() []string {
+    v := f.Flash()
+    if v == &#34;&#34; {
+        return []string{}
+    }
+    return strings.Split(v, &#34;,&#34;)
+}
+
+<span class="comment">// Return the current value of this field.</span>
+func (f *Field) Value() interface{} {
+    pieces := strings.Split(f.Name, &#34;.&#34;)
+    answer, ok := f.renderArgs[pieces[0]]
+    if !ok {
+        return &#34;&#34;
+    }
+
+    val := reflect.ValueOf(answer)
+    for i := 1; i &lt; len(pieces); i++ {
+        if val.Kind() == reflect.Ptr {
+            val = val.Elem()
+        }
+        val = val.FieldByName(pieces[i])
+        if !val.IsValid() {
+            return &#34;&#34;
+        }
+    }
+
+    return val.Interface()
+}
+
+<span class="comment">// Return ERROR_CLASS if this field has a validation error, else empty string.</span>
+func (f *Field) ErrorClass() string {
+    if f.Error != nil {
+        return ERROR_CLASS
+    }
+    return &#34;&#34;
+}
+</pre>
+
+
+
+

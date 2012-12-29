@@ -1,0 +1,143 @@
+---
+layout: godoc
+---
+<!--
+	Copyright 2009 The Go Authors. All rights reserved.
+	Use of this source code is governed by a BSD-style
+	license that can be found in the LICENSE file.
+-->
+<h1>Flash</h1>
+
+	
+		<!-- The package's Name is printed as title by the top-level template -->
+                
+		
+
+		<h2 id="index">Index</h2>
+		<!-- Table of contents for API; must be named manual-nav to turn off auto nav. -->
+		<div id="manual-nav">
+			<dl>
+			
+			
+			
+			
+				
+				<dd><a href="#Flash">type Flash</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Flash.Error">func (f Flash) Error(msg string, args ...interface{})</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Flash.Success">func (f Flash) Success(msg string, args ...interface{})</a></dd>
+				
+			
+				
+				<dd><a href="#FlashPlugin">type FlashPlugin</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#FlashPlugin.AfterRequest">func (p FlashPlugin) AfterRequest(c *Controller)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#FlashPlugin.BeforeRequest">func (p FlashPlugin) BeforeRequest(c *Controller)</a></dd>
+				
+			
+			
+		</dl>
+
+		
+
+		
+			<h4>Package files</h4>
+			<p>
+			<span style="font-size:90%">
+			
+				<a href="../src/flash.html">flash.go</a>
+			
+			</span>
+			</p>
+		
+
+		
+		
+		
+		
+			
+			
+			<h2 id="Flash">type <a href="../src/flash.html?s=332:382#L3">Flash</a></h2>
+			<pre>type Flash struct {
+    Data, Out map[string]string
+}</pre>
+			<p>
+Flash represents a cookie that gets overwritten on each request.
+It allows data to be stored across one page at a time.
+This is commonly used to implement success or error messages.
+e.g. the Post/Redirect/Get pattern: <a href="http://en.wikipedia.org/wiki/Post/Redirect/Get">http://en.wikipedia.org/wiki/Post/Redirect/Get</a>
+</p>
+
+
+			
+
+			
+
+			
+
+			
+
+			
+				
+				<h3 id="Flash.Error">func (Flash) <a href="../src/flash.html?s=384:437#L7">Error</a></h3>
+				<pre>func (f Flash) Error(msg string, args ...interface{})</pre>
+				
+				
+				
+			
+				
+				<h3 id="Flash.Success">func (Flash) <a href="../src/flash.html?s=545:600#L15">Success</a></h3>
+				<pre>func (f Flash) Success(msg string, args ...interface{})</pre>
+				
+				
+				
+			
+		
+			
+			
+			<h2 id="FlashPlugin">type <a href="../src/flash.html?s=712:750#L23">FlashPlugin</a></h2>
+			<pre>type FlashPlugin struct{ EmptyPlugin }</pre>
+			
+
+			
+
+			
+
+			
+
+			
+
+			
+				
+				<h3 id="FlashPlugin.AfterRequest">func (FlashPlugin) <a href="../src/flash.html?s=888:936#L30">AfterRequest</a></h3>
+				<pre>func (p FlashPlugin) AfterRequest(c *Controller)</pre>
+				
+				
+				
+			
+				
+				<h3 id="FlashPlugin.BeforeRequest">func (FlashPlugin) <a href="../src/flash.html?s=752:801#L25">BeforeRequest</a></h3>
+				<pre>func (p FlashPlugin) BeforeRequest(c *Controller)</pre>
+				
+				
+				
+			
+		
+		</div>
+	
+
+	
+
+
+
+
+
+

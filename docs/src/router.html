@@ -115,8 +115,25 @@ func (r *Route) Match(method string, reqPath string) *RouteMatch {
 
     <span class="comment">// If it&#39;s a static file request..</span>
     if r.staticDir != &#34;&#34; {
+        <span class="comment">// Check if it is specifying a module.. if so, look there instead.</span>
+        <span class="comment">// This is a tenative syntax: &#34;staticDir:moduleName:(directory)&#34;</span>
+        var basePath, dirName string
+        if i := strings.Index(r.staticDir, &#34;:&#34;); i != -1 {
+            moduleName, dirName := r.staticDir[:i], r.staticDir[i+1:]
+            for _, module := range Modules {
+                if module.Name == moduleName {
+                    basePath = path.Join(module.Path, dirName)
+                }
+            }
+            if basePath == &#34;&#34; {
+                ERROR.Print(&#34;No such module found: &#34;, moduleName)
+                basePath = BasePath
+            }
+        } else {
+            basePath, dirName = BasePath, r.staticDir
+        }
         return &amp;RouteMatch{
-            StaticFilename: path.Join(BasePath, r.staticDir, matches[1]),
+            StaticFilename: path.Join(basePath, dirName, matches[1]),
         }
     }
 
@@ -144,7 +161,7 @@ func (r *Route) Match(method string, reqPath string) *RouteMatch {
     <span class="comment">// Split the action into controller and method</span>
     actionSplit := strings.Split(action, &#34;.&#34;)
     if len(actionSplit) != 2 {
-        ERROR.Printf(&#34;Failed to split action: %s&#34;, r.Action)
+        ERROR.Printf(&#34;Failed to split action: %s (matching route: %s)&#34;, action, r.Action)
         return nil
     }
 
@@ -273,8 +290,6 @@ NEXT_ROUTE:
     return nil
 }
 </pre>
-
-
 
 
 

@@ -26,6 +26,11 @@ type DiscerningListener interface {
     WatchFile(basename string) bool
 }
 
+<span class="comment">// Auditor gets notified each time a listener gets refreshed.</span>
+type Auditor interface {
+    OnRefresh(listener Listener)
+}
+
 <span class="comment">// Watcher allows listeners to register to be notified of changes under a given</span>
 <span class="comment">// directory.</span>
 type Watcher struct {
@@ -102,6 +107,10 @@ func (w *Watcher) Listen(listener Listener, roots ...string) {
 <span class="comment">// Notify causes the watcher to forward any change events to listeners.</span>
 <span class="comment">// It returns the first (if any) error returned.</span>
 func (w *Watcher) Notify() *Error {
+    <span class="comment">// Serialize Notify() calls.</span>
+    w.notifyMutex.Lock()
+    defer w.notifyMutex.Unlock()
+
     for i, watcher := range w.watchers {
         listener := w.listeners[i]
 
@@ -135,6 +144,9 @@ func (w *Watcher) Notify() *Error {
                 w.lastError = i
                 return err
             }
+            if w.auditor != nil {
+                w.auditor.OnRefresh(listener)
+            }
         }
     }
 
@@ -143,8 +155,6 @@ func (w *Watcher) Notify() *Error {
     return nil
 }
 </pre>
-
-
 
 
 

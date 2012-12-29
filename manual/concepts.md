@@ -48,7 +48,7 @@ type AppController struct {
 (Currently `rev.Controller` must be embedded as the first type in your struct)
 
 The `rev.Controller` is the context for the request.  It contains the request
-and response data.  Please refer to [the godoc](../docs/godoc/mvc.html#Controller)
+and response data.  Please refer to [the godoc](../docs/godoc/controller.html#Controller)
 for the full story, but here is the definition (along with definitions of helper types):
 
 <pre class="prettyprint lang-go">

@@ -1,0 +1,71 @@
+---
+layout: godoc
+---
+<!--
+	Copyright 2009 The Go Authors. All rights reserved.
+	Use of this source code is governed by a BSD-style
+	license that can be found in the LICENSE file.
+-->
+<h1>Params</h1>
+
+
+
+	<pre>package rev
+
+<span class="comment">// These provide a unified view of the request params.</span>
+<span class="comment">// Includes:</span>
+<span class="comment">// - URL query string</span>
+<span class="comment">// - Form values</span>
+<span class="comment">// - File uploads</span>
+type Params struct {
+    url.Values
+    Files map[string][]*multipart.FileHeader
+
+}
+
+func ParseParams(req *Request) *Params {
+    var files map[string][]*multipart.FileHeader
+
+    <span class="comment">// Always want the url parameters.</span>
+    values := req.URL.Query()
+
+    <span class="comment">// Parse the body depending on the content type.</span>
+    switch req.ContentType {
+    case &#34;application/x-www-form-urlencoded&#34;:
+        <span class="comment">// Typical form.</span>
+        if err := req.ParseForm(); err != nil {
+            WARN.Println(&#34;Error parsing request body:&#34;, err)
+        } else {
+            for key, vals := range req.Form {
+                for _, val := range vals {
+                    values.Add(key, val)
+                }
+            }
+        }
+
+    case &#34;multipart/form-data&#34;:
+        <span class="comment">// Multipart form.</span>
+        <span class="comment">// TODO: Extract the multipart form param so app can set it.</span>
+        if err := req.ParseMultipartForm(32 &lt;&lt; 20 <span class="comment">/* 32 MB */</span>); err != nil {
+            WARN.Println(&#34;Error parsing request body:&#34;, err)
+        } else {
+            for key, vals := range req.MultipartForm.Value {
+                for _, val := range vals {
+                    values.Add(key, val)
+                }
+            }
+            files = req.MultipartForm.File
+        }
+    }
+
+    return &amp;Params{Values: values, Files: files}
+}
+
+func (p *Params) Bind(name string, typ reflect.Type) reflect.Value {
+    return Bind(p, name, typ)
+}
+</pre>
+
+
+
+

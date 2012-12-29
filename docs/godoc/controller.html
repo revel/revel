@@ -1,0 +1,278 @@
+---
+layout: godoc
+---
+<!--
+	Copyright 2009 The Go Authors. All rights reserved.
+	Use of this source code is governed by a BSD-style
+	license that can be found in the LICENSE file.
+-->
+<h1>Controller</h1>
+
+	
+		<!-- The package's Name is printed as title by the top-level template -->
+                
+		
+
+		<h2 id="index">Index</h2>
+		<!-- Table of contents for API; must be named manual-nav to turn off auto nav. -->
+		<div id="manual-nav">
+			<dl>
+			
+			
+			
+			
+				
+				<dd><a href="#Controller">type Controller</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#NewController">func NewController(req *Request, resp *Response, ct *ControllerType) *Controller</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Controller.FlashParams">func (c *Controller) FlashParams()</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Controller.Invoke">func (c *Controller) Invoke(appControllerPtr reflect.Value, method reflect.Value, methodArgs []reflect.Value)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Controller.NotFound">func (c *Controller) NotFound(msg string) Result</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Controller.Redirect">func (c *Controller) Redirect(val interface{}, args ...interface{}) Result</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Controller.Render">func (c *Controller) Render(extraRenderArgs ...interface{}) Result</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Controller.RenderError">func (c *Controller) RenderError(err error) Result</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Controller.RenderFile">func (c *Controller) RenderFile(file *os.File, delivery ContentDisposition) Result</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Controller.RenderJson">func (c *Controller) RenderJson(o interface{}) Result</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Controller.RenderTemplate">func (c *Controller) RenderTemplate(templatePath string) Result</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Controller.RenderText">func (c *Controller) RenderText(text string, objs ...interface{}) Result</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Controller.RenderXml">func (c *Controller) RenderXml(o interface{}) Result</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Controller.SetCookie">func (c *Controller) SetCookie(cookie *http.Cookie)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Controller.Todo">func (c *Controller) Todo() Result</a></dd>
+				
+			
+			
+		</dl>
+
+		
+
+		
+			<h4>Package files</h4>
+			<p>
+			<span style="font-size:90%">
+			
+				<a href="../src/controller.html">controller.go</a>
+			
+			</span>
+			</p>
+		
+
+		
+		
+		
+		
+			
+			
+			<h2 id="Controller">type <a href="../src/controller.html?s=133:1035#L5">Controller</a></h2>
+			<pre>type Controller struct {
+    Name          string          <span class="comment">// The controller name, e.g. &#34;Application&#34;</span>
+    Type          *ControllerType <span class="comment">// A description of the controller type.</span>
+    MethodType    *MethodType     <span class="comment">// A description of the invoked action type.</span>
+    AppController interface{}     <span class="comment">// The controller that was instantiated.</span>
+
+    Request  *Request
+    Response *Response
+    Result   Result
+
+    Flash      Flash                  <span class="comment">// User cookie, cleared after 1 request.</span>
+    Session    Session                <span class="comment">// Session, stored in cookie, signed.</span>
+    Params     *Params                <span class="comment">// Parameters from URL and form (including multipart).</span>
+    Args       map[string]interface{} <span class="comment">// Per-request scratch space.</span>
+    RenderArgs map[string]interface{} <span class="comment">// Args passed to the template.</span>
+    Validation *Validation            <span class="comment">// Data validation helpers</span>
+    Txn        *sql.Tx                <span class="comment">// Nil by default, but may be used by the app / plugins</span>
+}</pre>
+			
+
+			
+
+			
+
+			
+
+			
+				
+				<h3 id="NewController">func <a href="../src/controller.html?s=1037:1117#L24">NewController</a></h3>
+				<pre>func NewController(req *Request, resp *Response, ct *ControllerType) *Controller</pre>
+				
+				
+			
+
+			
+				
+				<h3 id="Controller.FlashParams">func (*Controller) <a href="../src/controller.html?s=1360:1394#L38">FlashParams</a></h3>
+				<pre>func (c *Controller) FlashParams()</pre>
+				
+				
+				
+			
+				
+				<h3 id="Controller.Invoke">func (*Controller) <a href="../src/controller.html?s=1704:1813#L50">Invoke</a></h3>
+				<pre>func (c *Controller) Invoke(appControllerPtr reflect.Value, method reflect.Value, methodArgs []reflect.Value)</pre>
+				<p>
+Invoke the given method, save headers/cookies to the response, and apply the
+result.  (e.g. render a template to the response)
+</p>
+
+				
+				
+			
+				
+				<h3 id="Controller.NotFound">func (*Controller) <a href="../src/controller.html?s=6475:6523#L219">NotFound</a></h3>
+				<pre>func (c *Controller) NotFound(msg string) Result</pre>
+				
+				
+				
+			
+				
+				<h3 id="Controller.Redirect">func (*Controller) <a href="../src/controller.html?s=7313:7387#L250">Redirect</a></h3>
+				<pre>func (c *Controller) Redirect(val interface{}, args ...interface{}) Result</pre>
+				<p>
+Redirect to an action or to a URL.
+</p>
+<pre>c.Redirect(Controller.Action)
+c.Redirect(&#34;/controller/action&#34;)
+c.Redirect(&#34;/controller/%d/action&#34;, id)
+</pre>
+
+				
+				
+			
+				
+				<h3 id="Controller.Render">func (*Controller) <a href="../src/controller.html?s=3835:3901#L133">Render</a></h3>
+				<pre>func (c *Controller) Render(extraRenderArgs ...interface{}) Result</pre>
+				<p>
+Render a template corresponding to the calling Controller method.
+Arguments will be added to c.RenderArgs prior to rendering the template.
+They are keyed on their local identifier.
+</p>
+<p>
+For example:
+</p>
+<pre>func (c Users) ShowUser(id int) rev.Result {
+	 user := loadUser(id)
+	 return c.Render(user)
+}
+</pre>
+<p>
+This action will render views/Users/ShowUser.html, passing in an extra
+key-value &#34;user&#34;: (User).
+</p>
+
+				
+				
+			
+				
+				<h3 id="Controller.RenderError">func (*Controller) <a href="../src/controller.html?s=3300:3350#L116">RenderError</a></h3>
+				<pre>func (c *Controller) RenderError(err error) Result</pre>
+				
+				
+				
+			
+				
+				<h3 id="Controller.RenderFile">func (*Controller) <a href="../src/controller.html?s=6777:6859#L229">RenderFile</a></h3>
+				<pre>func (c *Controller) RenderFile(file *os.File, delivery ContentDisposition) Result</pre>
+				<p>
+Return a file, either displayed inline or downloaded as an attachment.
+The name and size are taken from the file info.
+</p>
+
+				
+				
+			
+				
+				<h3 id="Controller.RenderJson">func (*Controller) <a href="../src/controller.html?s=5748:5801#L192">RenderJson</a></h3>
+				<pre>func (c *Controller) RenderJson(o interface{}) Result</pre>
+				<p>
+Uses encoding/json.Marshal to return JSON to the client.
+</p>
+
+				
+				
+			
+				
+				<h3 id="Controller.RenderTemplate">func (*Controller) <a href="../src/controller.html?s=5401:5464#L177">RenderTemplate</a></h3>
+				<pre>func (c *Controller) RenderTemplate(templatePath string) Result</pre>
+				<p>
+A less magical way to render a template.
+Renders the given template, using the current RenderArgs.
+</p>
+
+				
+				
+			
+				
+				<h3 id="Controller.RenderText">func (*Controller) <a href="../src/controller.html?s=6025:6097#L202">RenderText</a></h3>
+				<pre>func (c *Controller) RenderText(text string, objs ...interface{}) Result</pre>
+				<p>
+Render plaintext in response, printf style.
+</p>
+
+				
+				
+			
+				
+				<h3 id="Controller.RenderXml">func (*Controller) <a href="../src/controller.html?s=5893:5945#L197">RenderXml</a></h3>
+				<pre>func (c *Controller) RenderXml(o interface{}) Result</pre>
+				<p>
+Uses encoding/xml.Marshal to return XML to the client.
+</p>
+
+				
+				
+			
+				
+				<h3 id="Controller.SetCookie">func (*Controller) <a href="../src/controller.html?s=1474:1525#L44">SetCookie</a></h3>
+				<pre>func (c *Controller) SetCookie(cookie *http.Cookie)</pre>
+				
+				
+				
+			
+				
+				<h3 id="Controller.Todo">func (*Controller) <a href="../src/controller.html?s=6282:6316#L211">Todo</a></h3>
+				<pre>func (c *Controller) Todo() Result</pre>
+				<p>
+Render a &#34;todo&#34; indicating that the action isn&#39;t done yet.
+</p>
+
+				
+				
+			
+		
+		</div>
+	
+
+	
+
+
+
+
+
+

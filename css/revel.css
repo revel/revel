@@ -5,6 +5,7 @@ body {
 .hero-unit {
   background-color: #222;
   margin-top:0px;
+  min-width: 940px;
   color:#ccc;
   padding-top:0px;
   border-bottom:1px solid #375EAB;
@@ -80,20 +81,17 @@ a:hover {
   text-decoration: underline;
 }
 
+.container {
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+.navbar {
+  min-width: 1062px;
+}
+
 .navbar .container {
   width: 940px;
-}
-
-@media (min-width: 768px) and (max-width: 979px) {
-  .navbar .container {
-    width: 724px;
-  }
-}
-
-@media (min-width: 1200px) {
-  .navbar .container {
-    width: 1170px;
-  }
 }
 
 .leftnav {
@@ -113,6 +111,7 @@ a:hover {
 .navbar-inner {
   min-height: 0 !important;
   height: 55px !important;
+  background: #FFF;
 }
 
 

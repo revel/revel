@@ -15,25 +15,27 @@ type AppController struct {
 (Currently `rev.Controller` must be embedded as the first type in your struct)
 
 The `rev.Controller` is the context for the request.  It contains the request
-and response data.  Please refer to [the godoc](../docs/godoc/mvc.html#Controller)
+and response data.  Please refer to [the godoc](../docs/godoc/controller.html)
 for the full story, but here is the definition (along with definitions of helper types):
 
 <pre class="prettyprint lang-go">
 type Controller struct {
-	Name       string
-	Type       *ControllerType
-	MethodType *MethodType
+    Name          string          // The controller name, e.g. "Application"
+    Type          *ControllerType // A description of the controller type.
+    MethodType    *MethodType     // A description of the invoked action type.
+    AppController interface{}     // The controller that was instantiated.
 
-	Request  *Request
-	Response *Response
+    Request  *Request
+    Response *Response
+    Result   Result
 
-	Flash      Flash                  // User cookie, cleared after each request.
-	Session    Session                // Session, stored in cookie, signed.
-	Params     Params                 // Parameters from URL and form (including multipart).
-	Args       map[string]interface{} // Per-request scratch space.
-	RenderArgs map[string]interface{} // Args passed to the template.
-	Validation *Validation            // Data validation helpers
-	Txn        *sql.Tx                // Nil by default, but may be used by the app / plugins
+    Flash      Flash                  // User cookie, cleared after 1 request.
+    Session    Session                // Session, stored in cookie, signed.
+    Params     *Params                // Parameters from URL and form (including multipart).
+    Args       map[string]interface{} // Per-request scratch space.
+    RenderArgs map[string]interface{} // Args passed to the template.
+    Validation *Validation            // Data validation helpers
+    Txn        *sql.Tx                // Nil by default, but may be used by the app / plugins
 }
 
 // These provide a unified view of the request params.
