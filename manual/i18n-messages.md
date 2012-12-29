@@ -104,7 +104,7 @@ explicitly defined as `en-GB` or `en-US` would the `greeting` message be resolve
 <div class="alert alert-block"><strong>Important note:</strong> messages defined under a section that is not a valid region are technically allowed but ultimately useless (as they will never be resolved).</div>
 
 ### Referencing and arguments
-
+    
 #### Referencing
 
 Messages in message files can reference other messages. This allows users to compose a single message from multiple other messages. The syntax for referencing other messages 
@@ -151,14 +151,14 @@ The application code can access the current locale from within a `Controller` us
 
 <pre class="prettyprint lang-go">
 func (c Application) Index() rev.Result {
-	currentLanguage := c.Args["currentLocale"].(string)
-	c.Render(currentLanguage)
+	currentLocale := c.Args["currentLocale"].(string)
+	c.Render(currentLocale)
 }
 </pre>
 
-From a template, the current language can be retrieved from the current `renderArgs` instance. For example:
+From a template, the current locale can be retrieved from the current `renderArgs` instance. For example:
 
-    <p>Current preferred language: {{.currentLocale}}</p>
+    <p>Current preferred locale: {{.currentLocale}}</p>
 
 ***
 
