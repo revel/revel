@@ -149,10 +149,12 @@ In order to figure out which locale the user prefers Revel will look for a usabl
 
 The application code can access the current locale from within a `Controller` using the `Controller.Args` map with the key `currentLocale`. For example:
 
-    func (c Application) Index() rev.Result {
-    	currentLanguage := c.Args["currentLocale"].(string)
-        c.Render(currentLanguage)
-    }
+<pre class="prettyprint lang-go">
+func (c Application) Index() rev.Result {
+	currentLanguage := c.Args["currentLocale"].(string)
+	c.Render(currentLanguage)
+}
+</pre>
 
 From a template, the current language can be retrieved from the current `renderArgs` instance. For example:
 
