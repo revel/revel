@@ -124,7 +124,6 @@ Messages support one or more arguments. Arguments in messages are resolved using
     greeting.name_arg=Hello %s!
     
 <p/>
-
 ## Resolving the client locale
 
 In order to figure out which locale the user prefers Revel will look for a usable locale in the following places:
@@ -158,10 +157,9 @@ func (c Application) Index() rev.Result {
 
 From a template, the current locale can be retrieved from the current `renderArgs` instance. For example:
 
-    <p>Current preferred locale: {{.currentLocale}}</p>
+    <p>Current preferred locale: &#123;&#123;.currentLocale&#125;&#125;</p>
 
 <p/>
-
 ## Resolving messages
 
 Messages can be resolved from either a *view template* or a *controller*.
