@@ -106,4 +106,48 @@ users with `"Hey"` and all American users with `"Howdy"`. In order to accomplish
 For users who have defined English (`en`) as their preferred language, Revel would resolve `greeting` to `Hello`. Only in specific cases where the user's locale has been
 explicitly defined as `en-GB` or `en-US` would the `greeting` message be resolved using the specific sections.
 
-Messages defined under a section that is not a valid region are allowed but ultimately useless (as they will never be resolved).
+**Important note:** messages defined under a section that is not a valid region are technically allowed but ultimately useless (as they will never be resolved).
+
+### Referencing and arguments
+
+#### Referencing
+
+Messages in message files can reference eachother. This allows users to compose a single message from multiple other messages. The syntax for referencing other messages is
+`%(key)s`. For example:
+
+    greeting=Hello 
+    greeting.name=Rob
+    greeting.suffix=, welcome to Revel!
+    greeting.full=%(greeting)s %(greeting.name)s%(greeting.suffix)s
+
+*Note:* referencing is a [goconfig file](https://github.com/robfig/goconfig) feature.
+
+#### Arguments
+
+Messages support one or more arguments. Arguments in messages are resolved using the same rules as the go `fmt` package. For example:
+
+    greeting.name_arg=Hello %s!
+
+## Resolving messages
+
+Messages can be resolved from either a *view template* or a *controller*.
+
+### Controller
+
+Each controller has a convenience function `Message(...)` that can be used to resolve messages.
+
+...
+
+### Template
+
+...
+
+## Resolving the client locale
+
+...
+
+* Cookie
+* Accept-Language HTTP header
+* Default language
+
+...
