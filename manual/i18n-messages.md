@@ -90,7 +90,7 @@ The `key=value` message is implicitly put in the default section as it was not d
 For message files all messages should be defined in the *default section* unless they are specific to a certain region (see 
 [Sections and regions](#regions) for more information).
 
-<div class="alert alert-info">Sections are a [goconfig file](https://github.com/robfig/goconfig) feature.</div>
+<div class="alert alert-info"><strong>Note:</strong> Sections are a <em>goconfig</em> feature.</div>
 
 ### Regions
 
