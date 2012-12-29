@@ -2,6 +2,7 @@ package rev
 
 const (
 	CurrentLocaleControllerArg string = "CURRENT_LOCALE"
+	CurrentLocaleRenderArg     string = "currentLocale"
 
 	localeCookieConfigKey string = "i18n.cookie"
 )
@@ -17,19 +18,20 @@ type I18nPlugin struct {
 func (p I18nPlugin) BeforeRequest(c *Controller) {
 	if foundCookie, cookieValue := hasLocaleCookie(c.Request); foundCookie {
 		TRACE.Printf("Found locale cookie value: %s", cookieValue)
-		setCurrentLocaleControllerArg(c, cookieValue)
+		setCurrentLocaleControllerArguments(c, cookieValue)
 	} else if foundHeader, headerValue := hasAcceptLanguageHeader(c.Request); foundHeader {
 		TRACE.Printf("Found Accept-Language header value: %s", headerValue)
-		setCurrentLocaleControllerArg(c, headerValue)
+		setCurrentLocaleControllerArguments(c, headerValue)
 	} else {
 		TRACE.Println("Unable to find locale in cookie or header, using empty string")
-		setCurrentLocaleControllerArg(c, "")
+		setCurrentLocaleControllerArguments(c, "")
 	}
 }
 
 // Set the current locale controller argument (CurrentLocaleControllerArg) with the given locale.
-func setCurrentLocaleControllerArg(c *Controller, locale string) {
+func setCurrentLocaleControllerArguments(c *Controller, locale string) {
 	c.Args[CurrentLocaleControllerArg] = locale
+	c.RenderArgs[CurrentLocaleRenderArg] = locale
 }
 
 // Determine whether the given request has valid Accept-Language value.

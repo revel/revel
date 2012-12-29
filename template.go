@@ -89,6 +89,10 @@ var (
 			}
 			return template.HTML(ERROR_CLASS)
 		},
+
+		"msg": func(renderArgs map[string]interface{}, message string, args ...interface{}) template.HTML {
+			return template.HTML(Message(renderArgs["currentLocale"].(string), message, args...))
+		},
 	}
 
 	Funcs = TemplateFuncs

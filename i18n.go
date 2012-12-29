@@ -66,7 +66,7 @@ func Message(locale, message string, args ...interface{}) (value string) {
 		return fmt.Sprintf(unknownValueFormat, message)
 	}
 
-	if len(args) > 0 {
+	if args != nil && len(args) > 0 {
 		TRACE.Printf("Arguments detected, formatting '%s' with %v", value, args)
 		value = fmt.Sprintf(value, args...)
 	}
