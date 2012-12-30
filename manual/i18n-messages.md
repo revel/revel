@@ -101,7 +101,7 @@ users with `"Hey"` and all American users with `"Howdy"`. In order to accomplish
 For users who have defined English (`en`) as their preferred language, Revel would resolve `greeting` to `Hello`. Only in specific cases where the user's locale has been
 explicitly defined as `en-GB` or `en-US` would the `greeting` message be resolved using the specific sections.
 
-<div class="alert alert-block"><strong><i class="icon-warning-sign"></i> Important note:</strong> messages defined under a section that is not a valid region are technically allowed but ultimately useless (as they will never be resolved).</div>
+<div class="alert alert-block"><i class="icon-warning-sign"></i> <strong>Important note:</strong> messages defined under a section that is not a valid region are technically allowed but ultimately useless (as they will never be resolved).</div>
 
 ### Referencing and arguments
 <p/>
