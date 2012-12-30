@@ -30,6 +30,8 @@
 		<li>Greeting suffix: {{msg . "greeting.suffix"}}</li>
 		<li>Full greeting: {{msg . "greeting.full"}}</li>
 		<li>Full greeting with argument: {{msg . "greeting.full.name" "Tommy Lee Jones"}}</li>
+		<li>Cross-file referencing: {{msg . "alpha"}}</li>
+		<li>Message not found: {{msg . "doesnt exist"}}</li>
 	</ul>
 </p>
 

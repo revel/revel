@@ -14,6 +14,9 @@ greeting.full=%(greeting)s %(greeting.name)s%(greeting.suffix)s
 
 greeting.full.name=%(greeting)s %s%(greeting.suffix)s
 
+# beta is defined in sample2.en
+alpha=alpha %(beta)s
+
 # Specify region-specific overrides
 [AU]
 greeting=G'day
