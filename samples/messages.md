@@ -14,7 +14,7 @@ Here are the contents of the app:
 		conf/		# Configuration file(s)
 		messages/
 			sample.en 	# English language sample messages
-			sample2.en  # English language sample messages #2
+			sample2.en 	# English language sample messages #2
 		public/
 		tests/
 
