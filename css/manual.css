@@ -15,3 +15,11 @@ h4 {
   margin-top: 10px;
   margin-bottom: 2px;
 }
+
+.config-overview table {
+  width: 100%;
+}
+
+.config-overview table td {
+  text-align: center;
+}

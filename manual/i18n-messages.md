@@ -23,7 +23,7 @@ all the basics.
 Messages are defined in message files. These files contain the actual text that will be used while rendering the view (or elsewhere in your application if you so desire). 
 When creating new message files, there are a couple of rules to keep in mind:
 
-* All message files should be stored in the `messages` folder in the application root.
+* All message files should be stored in the `messages` directory in the application root.
 * The file extension determines the *language* of the message file and should be an [ISO 639-1 code](http://en.wikipedia.org/wiki/List_of_ISO_639-1_codes).
 * Message files should be UTF-8 encoded. While this is not a hard requirement, it is best practice.
 * Each message file is effectively a [goconfig file](https://github.com/robfig/goconfig) and supports all goconfig features.
@@ -31,24 +31,26 @@ When creating new message files, there are a couple of rules to keep in mind:
 ### Organizing message files
 
 There are no restrictions on message file names; a message file name can be anything as long as it has a valid extention. There is also no restriction on the *amount*
-of files per language. When the application starts, Revel will parse all message files with a valid extension in the `messages` folder and merge them according to their 
+of files per language. When the application starts, Revel will parse all message files with a valid extension in the `messages` directory and merge them according to their 
 language. This means that you are free to organize the message files however you want.
 
 For example, you may want to take a traditional approach and define 1 single message file per language:
 
-    /messages
-        messages.en
-        messages.fr
-        ...
+    /application
+        /messages
+            messages.en
+            messages.fr
+            ...
 
 Another approach would be to create *multiple files* for the *same language* and organize them based on the kind of messages they contain:
 
-    /messages
-        labels.en
-        warnings.en
-        labels.fr
-        warnings.fr
-        ...
+    /application
+        /messages
+            labels.en
+            warnings.en
+            labels.fr
+            warnings.fr
+            ...
 
 <div class="alert alert-block"><strong>Important note:</strong> while it's technically possible to define the same <em>message key</em> in multiple files with the same language, this will result in unpredictable behaviour. When using multiple files per language, take care to keep your message keys unique so that keys in one file cannot be overwritten after the files are merged!</div>
 
@@ -184,3 +186,28 @@ To resolve messages using the current locale from templates there is a *template
 </pre>
 
 <div class="alert alert-info"><strong>Note:</strong> the signature of the <code>msg</code> function is <code>msg . "message name" "argument" "argument"</code>. If there are no arguments, simply do not include any.</div>
+
+## Configuration
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th style="width: 20%">File</th>
+            <th style="width: 20%">Option</th>
+            <th style="width: 60%">Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+                <code>app.conf</code>
+            </td>
+            <td>
+                <code>i18n.cookie</code>
+            </td>
+            <td>
+                Defines the name of the language cookie. Should always be prefixed with the Revel cookie prefix to avoid cookie name conflicts.
+            </td>
+        </tr>
+    </tbody>
+</table>
