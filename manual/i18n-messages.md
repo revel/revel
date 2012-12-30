@@ -192,8 +192,8 @@ To resolve messages using the current locale from templates there is a *template
 <table class="table table-striped">
     <thead>
         <tr>
-            <th style="width: 20%">File</th>
-            <th style="width: 20%">Option</th>
+            <th style="width: 15%">File</th>
+            <th style="width: 25%">Option</th>
             <th style="width: 60%">Description</th>
         </tr>
     </thead>
