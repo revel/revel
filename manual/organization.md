@@ -20,10 +20,11 @@ typical Go installation.
 	        controllers     App controllers
 	        models          App domain models
 	        views           Templates
-	      tests             Test suites.
+	      tests             Test suites
 	      conf              Configuration files
 	        app.conf        Main configuration file
 	        routes          Routes definition
+	      messages			Message files
 	      public            Public assets
 	        css             CSS files
 	        js              Javascript files
@@ -46,15 +47,6 @@ will watch all directories under `app/` and rebuild the app when it
 notices any changes.  Any dependencies outside of `app/` will not be watched for
 changes -- it is the developer's responsibility to recompile when necessary.
 
-## The public/ directory
-
-Resources stored in the `public` directory are static assets that are served
-directly by the Web server.  Typically it is split into three standard
-sub-directories for images, CSS stylesheets and JavaScript files.
-
-The names of these directories may be anything; the developer need only update
-the routes.
-
 ## The conf/ directory
 
 The `conf` directory contains the application's configuration files. There are
@@ -63,3 +55,16 @@ two main configuration files:
 - `app.conf`, the main configuration file for the application, which contains
   standard configuration parameters
 - `routes`, the routes definition file.
+
+## The messages/ directory
+
+The `messages` directory contains all localized message files.
+
+## The public/ directory
+
+Resources stored in the `public` directory are static assets that are served
+directly by the Web server.  Typically it is split into three standard
+sub-directories for images, CSS stylesheets and JavaScript files.
+
+The names of these directories may be anything; the developer need only update
+the routes.
