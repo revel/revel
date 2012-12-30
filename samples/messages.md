@@ -11,7 +11,7 @@ The i18n application demonstrates the various internationalization features of R
 
 <div class="alert alert-info"><strong>Note:</strong> at the time of writing this sample application only demonstrates the <em>messages</em> feature.</div>
 
-Here are the contents of the app:
+### Contents
 
 	i18n/
 		app/		# Controllers & views
