@@ -1,7 +1,7 @@
 package rev
 
 const (
-	CurrentLocaleControllerArg string = "CURRENT_LOCALE"
+	CurrentLocaleControllerArg string = "currentLocale"
 	CurrentLocaleRenderArg     string = "currentLocale"
 
 	localeCookieConfigKey string = "i18n.cookie"
