@@ -158,7 +158,9 @@ func (c Application) Index() rev.Result {
 
 From a template, the current locale can be retrieved from the `currentLocale` property in the current `renderArgs` instance. For example:
 
-    <p>Current preferred locale: &#x7b;&#x7b;.currentLocale}}</p>
+<pre class="prettyprint lang-html">
+    &#x3c;p&#x3e;Current preferred locale: &#x7b;&#x7b;.currentLocale&#x7d;&#x7d;&#x3c;/p&#x3e;
+</pre>
 
 <p></p>
 ## Resolving messages
