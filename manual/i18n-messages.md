@@ -144,6 +144,8 @@ In order to figure out which locale the user prefers Revel will look for a usabl
     When all of the look-up methods above have returned no usable client locale, the framework will use the default locale as defined in the application configuration
     file (`i18n.default_language`).
 
+When the requested message could not be resolved at all, a specially formatted string containing the original message is returned.
+
 ### Retrieving the current locale
 <p></p>
 
@@ -156,7 +158,7 @@ func (c Application) Index() rev.Result {
 }
 </pre>
 
-From a template, the current locale can be retrieved from the `currentLocale` property in the current `renderArgs` instance. For example:
+From a template, the current locale can be retrieved from the `currentLocale` property from the current `renderArgs`. For example:
 
 <pre class="prettyprint lang-html">
     &#x3c;p&#x3e;Current preferred locale: &#x7b;&#x7b;.currentLocale&#x7d;&#x7d;&#x3c;/p&#x3e;
@@ -169,9 +171,7 @@ Messages can be resolved from either a *view template* or a *controller*.
 
 * Controller
 
-    Each controller has a `Message(message string, args ...interface{})` function that can be used to resolve messages.
-    
-    For example:
+    Each controller has a `Message(message string, args ...interface{})` function that can be used to resolve messages. For example:
 
 <pre class="prettyprint lang-go">
 func (c Application) Index() rev.Result {
@@ -182,4 +182,9 @@ func (c Application) Index() rev.Result {
 
 * Template
 
-    ...
+    To resolve messages from templates there is a *template function* called `msg` that you can use. For example:
+
+<pre class="prettyprint lang-html">
+    &#x3c;p&#x3e;{{msg . "greeting.full.name" "Tommy Lee Jones"}}&#x3c;/p&#x3e;
+    &#x3c;p&#x3e;Current preferred locale: &#x7b;&#x7b;.currentLocale&#x7d;&#x7d;&#x3c;/p&#x3e;
+</pre>
