@@ -4,8 +4,8 @@ layout: manual
 ---
 
 Messages are used to externalize pieces of text in order to be able to provide translations for them. Revel
-supports message files organized per locale (a combination of *language* and *region*), transparent locale 
-look-up, cookie-based overrides and message nesting and arguments.
+supports message files organized per language, automatic locale look-up, cookie-based overrides and message 
+nesting and arguments.
 
 #### Glossary
 * Locale: a combination of *language* and *region* that indicates a user language preference, eg. `en-US`.
@@ -78,7 +78,7 @@ A goconfig file is separated into *sections*. The *default section* always exist
 The `key=value` message is implicitly put in the default section as it was not defined under another specific section.
 
 For message files all messages should be defined in the *default section* unless they are specific to a certain region (see 
-[Sections and regions](#regions) for more information).
+[Regions](#regions) for more information).
 
 <div class="alert alert-info"><strong>Note:</strong> sections are a <em>goconfig</em> feature.</div>
 
@@ -112,7 +112,7 @@ is `%(key)s`. For example:
     greeting.suffix=, welcome to Revel!
     greeting.full=%(greeting)s %(greeting.name)s%(greeting.suffix)s
 
-<div class="alert alert-info"><strong>Note:</strong> sections are a <em>goconfig</em> feature.</div>
+<div class="alert alert-info"><strong>Note:</strong> referencing is a <em>goconfig</em> feature.</div>
 
 #### Arguments
 
@@ -120,7 +120,7 @@ Messages support one or more arguments. Arguments in messages are resolved using
 
     greeting.name_arg=Hello %s!
 
-Arguments are resolved in the order that they are specified, see [Resolving messages](#resolving_messages).
+Arguments are resolved in the same order as they are given, see [Resolving messages](#resolving_messages).
 
 ## Resolving the client locale
 
@@ -129,13 +129,15 @@ In order to figure out which locale the user prefers Revel will look for a usabl
 1. Language cookie
 
     Each request the framework will look for a cookie with the name defined in the application configuration (`i18n.cookie`). When such a cookie is found its value is 
-    assumed to be the current locale. It's possible for the application to set this cookie's value in order to *force* the current locale.
+    assumed to be the current locale. All other resolution methods will be skipped when a cookie has been found.
 
-2. Accept-Language HTTP header
+2. `Accept-Language` HTTP header
 
-    Revel will automatically parse the *Accept-Language HTTP header* for each incoming request. Each of the locales in the Accept-Language header value is evaluated 
+    Revel will automatically parse the `Accept-Language` HTTP header for each incoming request. Each of the locales in the `Accept-Language` header value is evaluated 
     and stored - in order of qualification according to the [HTTP specification](http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.4) - in the current 
     Revel `Request` instance. This information is later used by the various message resolving functions to determine the current locale.
+
+    <p><div class="alert alert-info"><strong>Note:</strong> the `Accept-Language` header is <strong>always</strong> parsed and stored in the current `Request`, even when a language cookie has been found.</div></p>
 
 3. Default language
 
