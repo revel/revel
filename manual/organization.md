@@ -24,7 +24,7 @@ typical Go installation.
 	      conf              Configuration files
 	        app.conf        Main configuration file
 	        routes          Routes definition
-	      messages			Message files
+	      messages          Message files
 	      public            Public assets
 	        css             CSS files
 	        js              Javascript files
