@@ -112,7 +112,13 @@ is `%(key)s`. For example:
     greeting.suffix=, welcome to Revel!
     greeting.full=%(greeting)s %(greeting.name)s%(greeting.suffix)s
 
-<div class="alert alert-info"><strong>Note:</strong> referencing is a <em>goconfig</em> feature.</div>
+<div class="alert alert-info"> 
+    <strong>Notes:</strong>
+    <ul>
+        <li>Referencing is a <em>goconfig</em> feature.</li>
+        <li>Because message files are merged, it's perfectly possible to reference messages in other files provided they are defined for the same language.</li>
+    </ul>
+</div>
 
 #### Arguments
 
