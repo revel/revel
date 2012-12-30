@@ -52,7 +52,7 @@ Another approach would be to create *multiple files* for the *same language* and
             warnings.fr
             ...
 
-<div class="alert alert-block"><strong>Important note:</strong> while it's technically possible to define the same <em>message key</em> in multiple files with the same language, this will result in unpredictable behaviour. When using multiple files per language, take care to keep your message keys unique so that keys in one file cannot be overwritten after the files are merged!</div>
+<div class="alert alert-block"><strong>Important note:</strong> while it's technically possible to define the same <em>message key</em> in multiple files with the same language, this will result in unpredictable behaviour. When using multiple files per language, take care to keep your message keys unique so that keys will not be overwritten after the files are merged!</div>
 
 ### Message keys and values
 
