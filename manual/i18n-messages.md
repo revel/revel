@@ -206,7 +206,18 @@ To resolve messages using the current locale from templates there is a *template
                 <code>i18n.cookie</code>
             </td>
             <td>
-                Defines the name of the language cookie. Should always be prefixed with the Revel cookie prefix to avoid cookie name conflicts.
+                The name of the language cookie. Should always be prefixed with the Revel cookie prefix to avoid cookie name conflicts.
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <code>app.conf</code>
+            </td>
+            <td>
+                <code>i18n.default_language</code>
+            </td>
+            <td>
+                The default locale to use in case no preferred locale could be found.
             </td>
         </tr>
     </tbody>
