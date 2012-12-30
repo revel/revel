@@ -1,20 +1,17 @@
-h1 {
-  margin-top: 15px;
-  margin-bottom: 5px;
-}
+/* Custom Revel manual styles. */
 
 h2 {
-  margin-top: 15px;
+  margin-top: 20px;
   margin-bottom: 5px;
   border-bottom: 1px solid #EEE;
 }
 
 h3 {
-  margin-top: 10px;
+  margin-top: 15px;
   margin-bottom: 5px;
 }
 
 h4 {
-  margin-top: 5px;
+  margin-top: 10px;
   margin-bottom: 2px;
 }
