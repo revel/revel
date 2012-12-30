@@ -167,11 +167,12 @@ From a template, the current locale can be retrieved from the `currentLocale` pr
 <p></p>
 ## Resolving messages
 
-Messages can be resolved from either a *view template* or a *controller*.
+Messages can be resolved from either a *controller* or a *view template*.
 
-* Controller
+<p></p>
+### Controller
 
-    Each controller has a `Message(message string, args ...interface{})` function that can be used to resolve messages. For example:
+Each controller has a `Message(message string, args ...interface{})` function that can be used to resolve messages using the current locale. For example:
 
 <pre class="prettyprint lang-go">
 func (c Application) Index() rev.Result {
@@ -180,11 +181,15 @@ func (c Application) Index() rev.Result {
 }
 </pre>
 
-* Template
+<p></p>
+### Template
 
-    To resolve messages from templates there is a *template function* called `msg` that you can use. For example:
+To resolve messages using the current locale from templates there is a *template function* `msg` that you can use. For example:
 
 <pre class="prettyprint lang-html">
-    &#x3c;p&#x3e;{{msg . "greeting.full.name" "Tommy Lee Jones"}}&#x3c;/p&#x3e;
-    &#x3c;p&#x3e;Current preferred locale: &#x7b;&#x7b;.currentLocale&#x7d;&#x7d;&#x3c;/p&#x3e;
+    &#x3c;p&#x3e;Greetings without arguments: &#x7b;&#x7b;msg . "greeting"&#x7d;&#x7d;&#x3c;/p&#x3e;
+    &#x3c;p&#x3e;Greetings: &#x7b;&#x7b;msg . "greeting.full.name" "Tommy Lee Jones"&#x7d;&#x7d;&#x3c;/p&#x3e;
 </pre>
+
+<div class="alert alert-info"><strong>Note:</strong> the signature of the <code>msg</code> function is <code>msg . "message name" "argument" "argument"</code>. If there are no arguments, simply do not include any.</div>
+
