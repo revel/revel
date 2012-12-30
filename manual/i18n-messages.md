@@ -120,7 +120,7 @@ Messages support one or more arguments. Arguments in messages are resolved using
 
     greeting.name_arg=Hello %s!
 
-Arguments are resolved in the order that they are specified, see [Resolving messages](#resolving-messages).
+Arguments are resolved in the order that they are specified, see [Resolving messages](#resolving_messages).
 
 ## Resolving the client locale
 
