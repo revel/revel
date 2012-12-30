@@ -122,7 +122,9 @@ is `%(key)s`. For example:
 Messages support one or more arguments. Arguments in messages are resolved using the same rules as the go `fmt` package. For example:
 
     greeting.name_arg=Hello %s!
-    
+
+Arguments are resolved in the order that they are specified, see [Resolving messages](#resolving-messages).
+
 <p></p>
 ## Resolving the client locale
 
