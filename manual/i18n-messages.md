@@ -137,14 +137,14 @@ In order to figure out which locale the user prefers Revel will look for a usabl
     and stored - in order of qualification according to the [HTTP specification](http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.4) - in the current 
     Revel `Request` instance. This information is later used by the various message resolving functions to determine the current locale.
 
-    <p><div class="alert alert-info"><strong>Note:</strong> the <code>Accept-Language</code> header is <strong>always</strong> parsed and stored in the current <code>Request`</code>, even when a language cookie has been found.</div></p>
-
 3. Default language
 
     When all of the look-up methods above have returned no usable client locale, the framework will use the default locale as defined in the application configuration
     file (`i18n.default_language`).
 
 When the requested message could not be resolved at all, a specially formatted string containing the original message is returned.
+
+<div class="alert alert-info"><strong>Note:</strong> the <code>Accept-Language</code> header is <strong>always</strong> parsed and stored in the current <code>Request</code>, even when a language cookie has been found. In such a case, the values from the header are simply never used by the message resolution functions, but they're still available to the application in case it needs them.</div>
 
 ### Retrieving the current locale
 
