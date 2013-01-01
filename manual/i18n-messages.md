@@ -144,7 +144,7 @@ In order to figure out which locale the user prefers Revel will look for a usabl
     and stored - in order of qualification according to the [HTTP specification](http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.4) - in the current 
     Revel `Request` instance. This information is later used by the various message resolving functions to determine the current locale.
 
-    For more information see [Accessing the parsed Accept-Language HTTP header](parsed_accept_language_http_header).
+    For more information see [Accessing the parsed Accept-Language HTTP header](#parsed_accept_language_http_header).
 
 3. Default language
 
@@ -188,7 +188,7 @@ func (c Application) Index() rev.Result {
 }
 </pre>
 
-For more information see [Accessing the parsed Accept-Language HTTP header](parsed_accept_language_http_header).
+For more information see the [HTTP specification](http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.4).
 
 ## Resolving messages
 
