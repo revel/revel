@@ -68,6 +68,7 @@ For example:
     greeting.suffix=, welcome to Revel!
 
 ### Sections
+
 A goconfig file is separated into *sections*. The *default section* always exists and contains any messages that are not defined in a specific section. For example:
 
     key=value
@@ -143,6 +144,8 @@ In order to figure out which locale the user prefers Revel will look for a usabl
     and stored - in order of qualification according to the [HTTP specification](http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.4) - in the current 
     Revel `Request` instance. This information is later used by the various message resolving functions to determine the current locale.
 
+    For more information see [Accessing the parsed Accept-Language HTTP header](parsed_accept_language_http_header).
+
 3. Default language
 
     When all of the look-up methods above have returned no usable client locale, the framework will use the default locale as defined in the application configuration
@@ -167,6 +170,22 @@ From a template, the current locale can be retrieved from the `currentLocale` pr
 
 <pre class="prettyprint lang-html">
     &#x3c;p&#x3e;Current preferred locale: &#x7b;&#x7b;.currentLocale&#x7d;&#x7d;&#x3c;/p&#x3e;
+</pre>
+
+### Parsed Accept-Language HTTP header
+
+In case the application needs access to the `Accept-Language` HTTP header for the current request it can retrieve it from the `Request` instance of the `Controller`. The `AcceptLanguages` field 
+- which is a slice of `AcceptLanguage` instances - contains all parsed values from the respective header, sorted per qualification with the most qualified values first in the slice. For example:
+
+<pre class="prettyprint lang-go">
+func (c Application) Index() rev.Result {
+    // Get the string representation of all parsed accept languages
+    c.RenderArgs["acceptLanguageHeaderParsed"] = c.Request.AcceptLanguages.String()
+    // Returns the most qualified AcceptLanguage instance
+    c.RenderArgs["acceptLanguageHeaderMostQualified"] = c.Request.AcceptLanguages[0]
+
+    c.Render()
+}
 </pre>
 
 ## Resolving messages
