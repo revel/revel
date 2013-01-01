@@ -9,8 +9,9 @@ type Application struct {
 func (c Application) Index() rev.Result {
 	// Localization information
 	c.RenderArgs["acceptLanguageHeader"] = c.Request.Header.Get("Accept-Language")
-	currentLocale := c.Args["currentLocale"].(string)
-	c.RenderArgs["controllerCurrentLocale"] = currentLocale
+	c.RenderArgs["acceptLanguageHeaderParsed"] = c.Request.AcceptLanguages.String()
+	c.RenderArgs["acceptLanguageHeaderMostQualified"] = c.Request.AcceptLanguages[0]
+	c.RenderArgs["controllerCurrentLocale"] = c.Args["currentLocale"].(string)
 
 	// Controller-resolves messages
 	c.RenderArgs["controllerGreeting"] = c.Message("greeting")
