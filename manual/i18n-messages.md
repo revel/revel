@@ -188,6 +188,8 @@ func (c Application) Index() rev.Result {
 }
 </pre>
 
+For more information see [Accessing the parsed Accept-Language HTTP header](parsed_accept_language_http_header).
+
 ## Resolving messages
 
 Messages can be resolved from either a *controller* or a *view template*.
