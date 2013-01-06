@@ -148,6 +148,7 @@ GET  /app/{id}               Application.Show
 POST /app/{id}               Application.Save
 
 GET	/public/	                staticDir:www
+GET	/photos/	                staticDir:/Users/robfig/Photos/
 *		/{controller}/{action}		{controller}.{action}
 
 GET  /favicon.ico            404
@@ -191,7 +192,17 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 		ControllerName: "",
 		MethodName:     "",
 		Params:         map[string]string{},
-		StaticFilename: "www/style.css",
+		StaticFilename: "/BasePath/www/style.css",
+	},
+
+	&http.Request{
+		Method: "GET",
+		URL:    &url.URL{Path: "/photos/Rob/profile.png"},
+	}: &RouteMatch{
+		ControllerName: "",
+		MethodName:     "",
+		Params:         map[string]string{},
+		StaticFilename: "/Users/robfig/Photos/Rob/profile.png",
 	},
 
 	&http.Request{
@@ -217,6 +228,7 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 }
 
 func TestRouteMatches(t *testing.T) {
+	BasePath = "/BasePath"
 	router := NewRouter("")
 	router.parse(TEST_ROUTES, false)
 	for req, expected := range routeMatchTestCases {
