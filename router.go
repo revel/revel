@@ -143,7 +143,10 @@ func (r *Route) Match(method string, reqPath string) *RouteMatch {
 				basePath = BasePath
 			}
 		} else {
-			basePath, dirName = BasePath, r.staticDir
+			dirName = r.staticDir
+			if !path.IsAbs(dirName) {
+				basePath = BasePath
+			}
 		}
 		return &RouteMatch{
 			StaticFilename: path.Join(basePath, dirName, matches[1]),
