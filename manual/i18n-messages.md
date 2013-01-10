@@ -157,11 +157,11 @@ When the requested message could not be resolved at all, a specially formatted s
 
 ### Retrieving the current locale
 
-The application code can access the current locale from within a `Controller` using the `Controller.Args` map with the key `currentLocale`. For example:
+The application code can access the current locale from within a `Controller` using the `Controller.Locale` property. For example:
 
 <pre class="prettyprint lang-go">
 func (c Application) Index() rev.Result {
-	currentLocale := c.Args["currentLocale"].(string)
+	currentLocale := c.Locale
 	c.Render(currentLocale)
 }
 </pre>
