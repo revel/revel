@@ -251,4 +251,3 @@ To resolve messages using the current locale from templates there is a *template
         </tr>
     </tbody>
 </table>
-
