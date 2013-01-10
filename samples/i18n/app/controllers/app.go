@@ -11,7 +11,7 @@ func (c Application) Index() rev.Result {
 	c.RenderArgs["acceptLanguageHeader"] = c.Request.Header.Get("Accept-Language")
 	c.RenderArgs["acceptLanguageHeaderParsed"] = c.Request.AcceptLanguages.String()
 	c.RenderArgs["acceptLanguageHeaderMostQualified"] = c.Request.AcceptLanguages[0]
-	c.RenderArgs["controllerCurrentLocale"] = c.Args["currentLocale"].(string)
+	c.RenderArgs["controllerCurrentLocale"] = c.Locale
 
 	// Controller-resolves messages
 	c.RenderArgs["controllerGreeting"] = c.Message("greeting")

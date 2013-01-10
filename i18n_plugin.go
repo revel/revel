@@ -1,10 +1,9 @@
 package rev
 
 const (
-	CurrentLocaleControllerArg string = "currentLocale"
-	CurrentLocaleRenderArg     string = "currentLocale"
+	CurrentLocaleRenderArg string = "currentLocale" // The key for the current locale render arg value
 
-	localeCookieConfigKey string = "i18n.cookie"
+	localeCookieConfigKey string = "i18n.cookie" // The config option key for the current locale cookie name
 )
 
 func init() {
@@ -30,7 +29,7 @@ func (p I18nPlugin) BeforeRequest(c *Controller) {
 
 // Set the current locale controller argument (CurrentLocaleControllerArg) with the given locale.
 func setCurrentLocaleControllerArguments(c *Controller, locale string) {
-	c.Args[CurrentLocaleControllerArg] = locale
+	c.Locale = locale
 	c.RenderArgs[CurrentLocaleRenderArg] = locale
 }
 
