@@ -117,12 +117,11 @@ func init() {
 
 // Types that files may be bound to, and a func that can read the content from
 // that type.
-// TODO: Is there any way to create a slice, given only the element Type?
-var fileBindings = []struct{ val, arrval, f interface{} }{
-	{(**os.File)(nil), []*os.File{}, ioutil.ReadAll},
-	{(*[]byte)(nil), [][]byte{}, func(b []byte) []byte { return b }},
-	{(*io.Reader)(nil), []io.Reader{}, ioutil.ReadAll},
-	{(*io.ReadSeeker)(nil), []io.ReadSeeker{}, ioutil.ReadAll},
+var fileBindings = []struct{ val, f interface{} }{
+	{(**os.File)(nil), ioutil.ReadAll},
+	{(*[]byte)(nil), func(b []byte) []byte { return b }},
+	{(*io.Reader)(nil), ioutil.ReadAll},
+	{(*io.ReadSeeker)(nil), ioutil.ReadAll},
 }
 
 func TestBinder(t *testing.T) {
@@ -172,7 +171,7 @@ func TestBinder(t *testing.T) {
 			// Test binding multi to:
 			// []*os.File, [][]byte, []io.Reader, []io.ReadSeeker
 			for _, binding := range fileBindings {
-				typ := reflect.TypeOf(binding.arrval)
+				typ := reflect.SliceOf(reflect.TypeOf(binding.val).Elem())
 				actual := Bind(params, k, typ)
 				if actual.Len() != len(fhs) {
 					t.Fatalf("%s (%s) - Number of files: (expected) %d != %d (actual)",
