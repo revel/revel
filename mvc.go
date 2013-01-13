@@ -179,10 +179,11 @@ func (al AcceptLanguages) String() string {
 
 // Resolve the Accept-Language header value.
 //
-// The results are sorted using the quality defined in the header for each language range with the most qualified 
-// language range as the first element in the slice.
+// The results are sorted using the quality defined in the header for each language range with the 
+// most qualified language range as the first element in the slice.
 //
-// See the HTTP header fields specification (http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.4) for more details.
+// See the HTTP header fields specification 
+// (http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.4) for more details.
 func ResolveAcceptLanguage(req *http.Request) AcceptLanguages {
 	header := req.Header.Get("Accept-Language")
 	if header == "" {

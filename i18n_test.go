@@ -3,11 +3,16 @@ package rev
 import (
 	"io/ioutil"
 	"log"
+	"net/http"
+	"reflect"
 	"testing"
+	"time"
 )
 
 const (
-	testDataPath string = "testdata/i18n"
+	testDataPath   string = "testdata/i18n"
+	testConfigPath string = "testdata/i18n/config"
+	testConfigName string = "test_app.conf"
 )
 
 func TestI18nLoadMessages(t *testing.T) {
@@ -21,6 +26,7 @@ func TestI18nLoadMessages(t *testing.T) {
 
 func TestI18nMessage(t *testing.T) {
 	loadMessages(testDataPath)
+	loadTestI18nConfig(t)
 
 	// Assert that we can get a message and we get the expected return value
 	if message := Message("nl", "greeting"); message != "Hallo" {
@@ -65,13 +71,63 @@ func TestI18nMessage(t *testing.T) {
 
 func TestI18nMessageWithDefaultLocale(t *testing.T) {
 	loadMessages(testDataPath)
-	stubI18nConfig(t)
+	loadTestI18nConfig(t)
 
 	if message := Message("doesn't exist", "greeting"); message != "Hello" {
 		t.Errorf("Expected message '%s' for unknown locale to be default '%s' but was '%s'", "greeting", "Hello", message)
 	}
 	if message := Message("doesn't exist", "unknown message"); message != "??? unknown message ???" {
 		t.Error("Message 'unknown message' is not supposed to exist in the default language")
+	}
+}
+
+func TestHasLocaleCookie(t *testing.T) {
+	loadTestI18nConfig(t)
+
+	if found, value := hasLocaleCookie(buildRequestWithCookie("REVEL_LANG", "en")); !found {
+		t.Errorf("Expected %s cookie with value '%s' but found nothing or unexpected value '%s'", "REVEL_LANG", "en", value)
+	}
+	if found, value := hasLocaleCookie(buildRequestWithCookie("REVEL_LANG", "en-US")); !found {
+		t.Errorf("Expected %s cookie with value '%s' but found nothing or unexpected value '%s'", "REVEL_LANG", "en-US", value)
+	}
+	if found, _ := hasLocaleCookie(buildRequestWithCookie("DOESNT_EXIST", "en-US")); found {
+		t.Errorf("Expected %s cookie to not exist, but apparently it does", "DOESNT_EXIST")
+	}
+}
+
+func TestHasLocaleCookieWithInvalidConfig(t *testing.T) {
+	loadTestI18nConfigWithoutLanguageCookieOption(t)
+	if found, _ := hasLocaleCookie(buildRequestWithCookie("REVEL_LANG", "en-US")); found {
+		t.Errorf("Expected %s cookie to not exist because the configured name is missing", "REVEL_LANG")
+	}
+}
+
+func TestHasAcceptLanguageHeader(t *testing.T) {
+	if found, value := hasAcceptLanguageHeader(buildRequestWithAcceptLanguages("en-US")); !found && value != "en-US" {
+		t.Errorf("Expected to find Accept-Language header with value '%s', found '%s' instead", "en-US", value)
+	}
+	if found, value := hasAcceptLanguageHeader(buildRequestWithAcceptLanguages("en-GB", "en-US", "nl")); !found && value != "en-GB" {
+		t.Errorf("Expected to find Accept-Language header with value '%s', found '%s' instead", "en-GB", value)
+	}
+}
+
+func TestBeforeRequest(t *testing.T) {
+	loadTestI18nConfig(t)
+	plugin := I18nPlugin{}
+
+	controller := NewController(buildEmptyRequest(), nil, &ControllerType{reflect.TypeOf(Controller{}), nil})
+	if plugin.BeforeRequest(controller); controller.Locale != "" {
+		t.Errorf("Expected to find current language '%s' in controller, found '%s' instead", "", controller.Locale)
+	}
+
+	controller = NewController(buildRequestWithCookie("REVEL_LANG", "en-US"), nil, &ControllerType{reflect.TypeOf(Controller{}), nil})
+	if plugin.BeforeRequest(controller); controller.Locale != "en-US" {
+		t.Errorf("Expected to find current language '%s' in controller, found '%s' instead", "en-US", controller.Locale)
+	}
+
+	controller = NewController(buildRequestWithAcceptLanguages("en-GB", "en-US"), nil, &ControllerType{reflect.TypeOf(Controller{}), nil})
+	if plugin.BeforeRequest(controller); controller.Locale != "en-GB" {
+		t.Errorf("Expected to find current language '%s' in controller, found '%s' instead", "en-GB", controller.Locale)
 	}
 }
 
@@ -110,4 +166,40 @@ func excludeFromTimer(b *testing.B, f func()) {
 	b.StopTimer()
 	f()
 	b.StartTimer()
+}
+
+func loadTestI18nConfig(t *testing.T) {
+	ConfPaths = append(ConfPaths, testConfigPath)
+	testConfig, error := LoadConfig(testConfigName)
+	if error != nil {
+		t.Fatalf("Unable to load test config '%s': %s", testConfigName, error.Error())
+	}
+	Config = testConfig
+}
+
+func loadTestI18nConfigWithoutLanguageCookieOption(t *testing.T) {
+	loadTestI18nConfig(t)
+	Config.config.RemoveOption("DEFAULT", "i18n.cookie")
+}
+
+func buildRequestWithCookie(name, value string) *Request {
+	httpRequest, _ := http.NewRequest("GET", "/", nil)
+	request := NewRequest(httpRequest)
+	request.AddCookie(&http.Cookie{name, value, "", "", time.Now(), "", 0, false, false, "", nil})
+	return request
+}
+
+func buildRequestWithAcceptLanguages(acceptLanguages ...string) *Request {
+	httpRequest, _ := http.NewRequest("GET", "/", nil)
+	request := NewRequest(httpRequest)
+	for _, acceptLanguage := range acceptLanguages {
+		request.AcceptLanguages = append(request.AcceptLanguages, AcceptLanguage{acceptLanguage, 1})
+	}
+	return request
+}
+
+func buildEmptyRequest() *Request {
+	httpRequest, _ := http.NewRequest("GET", "/", nil)
+	request := NewRequest(httpRequest)
+	return request
 }

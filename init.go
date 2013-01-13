@@ -5,4 +5,5 @@ func init() {
 	RegisterPlugin(FlashPlugin{})
 	RegisterPlugin(ValidationPlugin{})
 	RegisterPlugin(InterceptorPlugin{})
+	RegisterPlugin(I18nPlugin{})
 }
