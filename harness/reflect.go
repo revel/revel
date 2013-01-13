@@ -672,6 +672,9 @@ func NewTypeExpr(pkgName string, expr ast.Expr) TypeExpr {
 	case *ast.ArrayType:
 		e := NewTypeExpr(pkgName, t.Elt)
 		return TypeExpr{"[]" + e.Expr, e.PkgName, e.pkgIndex + 2}
+	case *ast.Ellipsis:
+		e := NewTypeExpr(pkgName, t.Elt)
+		return TypeExpr{"[]" + e.Expr, e.PkgName, e.pkgIndex + 2}
 	default:
 		log.Println("Failed to generate name for field.")
 		ast.Print(nil, expr)
