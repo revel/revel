@@ -91,12 +91,7 @@ func (c *Controller) Invoke(appControllerPtr reflect.Value, method reflect.Value
 
 	if c.Result == nil {
 		// Invoke the action.
-		var resultValue reflect.Value
-		if method.Type().IsVariadic() {
-			resultValue = method.CallSlice(methodArgs)[0]
-		} else {
-			resultValue = method.Call(methodArgs)[0]
-		}
+		resultValue := method.Call(methodArgs)[0]
 		if resultValue.Kind() == reflect.Interface && !resultValue.IsNil() {
 			c.Result = resultValue.Interface().(Result)
 		}

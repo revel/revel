@@ -86,33 +86,23 @@ func TestGetValidationKeys(t *testing.T) {
 }
 
 var TypeExprs = map[string]TypeExpr{
-	"int":        TypeExpr{"int", "", 0},
-	"*int":       TypeExpr{"*int", "", 1},
-	"[]int":      TypeExpr{"[]int", "", 2},
-	"...int":     TypeExpr{"[]int", "", 2},
-	"[]*int":     TypeExpr{"[]*int", "", 3},
-	"...*int":    TypeExpr{"[]*int", "", 3},
-	"MyType":     TypeExpr{"MyType", "pkg", 0},
-	"*MyType":    TypeExpr{"*MyType", "pkg", 1},
-	"[]MyType":   TypeExpr{"[]MyType", "pkg", 2},
-	"...MyType":  TypeExpr{"[]MyType", "pkg", 2},
-	"[]*MyType":  TypeExpr{"[]*MyType", "pkg", 3},
-	"...*MyType": TypeExpr{"[]*MyType", "pkg", 3},
+	"int":       TypeExpr{"int", "", 0},
+	"*int":      TypeExpr{"*int", "", 1},
+	"[]int":     TypeExpr{"[]int", "", 2},
+	"[]*int":    TypeExpr{"[]*int", "", 3},
+	"MyType":    TypeExpr{"MyType", "pkg", 0},
+	"*MyType":   TypeExpr{"*MyType", "pkg", 1},
+	"[]MyType":  TypeExpr{"[]MyType", "pkg", 2},
+	"[]*MyType": TypeExpr{"[]*MyType", "pkg", 3},
 }
 
 func TestTypeExpr(t *testing.T) {
 	for typeStr, expected := range TypeExprs {
-		// Handle arrays and ... myself, since ParseExpr() does not.
+		// Handle arrays myself, since ParseExpr() does not.
 		array := strings.HasPrefix(typeStr, "[]")
 		if array {
 			typeStr = typeStr[2:]
 		}
-
-		ellipsis := strings.HasPrefix(typeStr, "...")
-		if ellipsis {
-			typeStr = typeStr[3:]
-		}
-
 		expr, err := parser.ParseExpr(typeStr)
 		if err != nil {
 			t.Error("Failed to parse test expr:", typeStr)
@@ -121,9 +111,6 @@ func TestTypeExpr(t *testing.T) {
 
 		if array {
 			expr = &ast.ArrayType{expr.Pos(), nil, expr}
-		}
-		if ellipsis {
-			expr = &ast.Ellipsis{expr.Pos(), expr}
 		}
 
 		actual := NewTypeExpr("pkg", expr)
