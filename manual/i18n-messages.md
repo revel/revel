@@ -148,7 +148,7 @@ In order to figure out which locale the user prefers Revel will look for a usabl
 
 3. Default language
 
-    When all of the look-up methods above have returned no usable client locale, the framework will use the default locale as defined in the application configuration
+    When all of the look-up methods above have returned no usable client locale, the framework will use the default language as defined in the application configuration
     file (`i18n.default_language`).
 
 When the requested message could not be resolved at all, a specially formatted string containing the original message is returned.
