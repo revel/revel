@@ -28,8 +28,7 @@ type Controller struct {
 	Args       map[string]interface{} // Per-request scratch space.
 	RenderArgs map[string]interface{} // Args passed to the template.
 	Validation *Validation            // Data validation helpers
-	Txn        *sql.Tx                // Nil by default, but may be used by the app / plugins
-	Locale     string                 // The current locale as determined by the framework				
+	Txn        *sql.Tx                // Nil by default, but may be used by the app / plugins			
 }
 
 func NewController(req *Request, resp *Response, ct *ControllerType) *Controller {
@@ -278,5 +277,5 @@ func (c *Controller) Redirect(val interface{}, args ...interface{}) Result {
 //
 // The current language is set by the i18n plugin.
 func (c *Controller) Message(message string, args ...interface{}) (value string) {
-	return Message(c.Locale, message, args...)
+	return Message(c.Request.CurrentLocale, message, args...)
 }
