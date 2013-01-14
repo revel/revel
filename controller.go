@@ -17,6 +17,7 @@ type Controller struct {
 	Type          *ControllerType // A description of the controller type.
 	MethodType    *MethodType     // A description of the invoked action type.
 	AppController interface{}     // The controller that was instantiated.
+	Action        string          // The full action name, e.g. "Application.Index"
 
 	Request  *Request
 	Response *Response
@@ -32,7 +33,7 @@ type Controller struct {
 }
 
 func NewController(req *Request, resp *Response, ct *ControllerType) *Controller {
-	return &Controller{
+	c := &Controller{
 		Name:     ct.Type.Name(),
 		Type:     ct,
 		Request:  req,
@@ -43,6 +44,8 @@ func NewController(req *Request, resp *Response, ct *ControllerType) *Controller
 			"RunMode": RunMode,
 		},
 	}
+	c.RenderArgs["Controller"] = c
+	return c
 }
 
 func (c *Controller) FlashParams() {

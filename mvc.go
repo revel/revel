@@ -47,6 +47,7 @@ func NewAppController(req *Request, resp *Response, controllerName, methodName s
 	appControllerPtr := initNewAppController(appControllerType.Type, controller)
 
 	// Set the method being called.
+	controller.Action = controllerName + "." + methodName
 	controller.AppController = appControllerPtr.Interface()
 	controller.MethodType = appControllerType.Method(methodName)
 	if controller.MethodType == nil {
