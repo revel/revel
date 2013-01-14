@@ -413,10 +413,13 @@ func appendAction(fset *token.FileSet, mm methodMap, decl ast.Decl, pkgImportPat
 	// Add a description of the arguments to the method.
 	for _, field := range funcDecl.Type.Params.List {
 		for _, name := range field.Names {
+			var importPath string
 			typeExpr := NewTypeExpr(pkgName, field.Type)
-			importPath, ok := imports[typeExpr.PkgName]
-			if !ok && !IsBuiltinType(typeExpr.Expr) {
-				log.Println("Failed to find import for arg of type:", typeExpr.TypeName(""))
+			if typeExpr.PkgName != "" {
+				var ok bool
+				if importPath, ok = imports[typeExpr.PkgName]; !ok {
+					log.Println("Failed to find import for arg of type:", typeExpr.TypeName(""))
+				}
 			}
 			method.Args = append(method.Args, &MethodArg{
 				Name:       name.Name,
@@ -667,6 +670,9 @@ func NewTypeExpr(pkgName string, expr ast.Expr) TypeExpr {
 		e := NewTypeExpr(pkgName, t.X)
 		return TypeExpr{"*" + e.Expr, e.PkgName, e.pkgIndex + 1}
 	case *ast.ArrayType:
+		e := NewTypeExpr(pkgName, t.Elt)
+		return TypeExpr{"[]" + e.Expr, e.PkgName, e.pkgIndex + 2}
+	case *ast.Ellipsis:
 		e := NewTypeExpr(pkgName, t.Elt)
 		return TypeExpr{"[]" + e.Expr, e.PkgName, e.pkgIndex + 2}
 	default:
