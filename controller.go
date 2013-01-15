@@ -220,7 +220,7 @@ func (c *Controller) RenderXml(o interface{}) Result {
 func (c *Controller) RenderText(text string, objs ...interface{}) Result {
 	finalText := text
 	if len(objs) > 0 {
-		finalText = fmt.Sprintf(text, objs)
+		finalText = fmt.Sprintf(text, objs...)
 	}
 	return &RenderTextResult{finalText}
 }
@@ -234,11 +234,15 @@ func (c *Controller) Todo() Result {
 	})
 }
 
-func (c *Controller) NotFound(msg string) Result {
+func (c *Controller) NotFound(msg string, objs ...interface{}) Result {
+	finalText := msg
+	if len(objs) > 0 {
+		finalText = fmt.Sprintf(msg, objs...)
+	}
 	c.Response.Status = http.StatusNotFound
 	return c.RenderError(&Error{
 		Title:       "Not Found",
-		Description: msg,
+		Description: finalText,
 	})
 }
 
