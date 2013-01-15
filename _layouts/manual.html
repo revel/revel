@@ -57,6 +57,12 @@ nav:
     title: Testing
     url: testing.html
 -
+  name: I18N
+  articles:
+  -
+    title: Messages
+    url: i18n-messages.html
+-
   name: Operational
   articles:
   -
@@ -82,6 +88,7 @@ nav:
 <html lang="en">
   <head>
     {% include head.html %}
+    <link href="{{ page.root }}/css/manual.css" type="text/css" rel="stylesheet" />
     <link href="{{ page.root }}/css/prettify.css" type="text/css" rel="stylesheet" />
     <script src="{{ page.root }}/js/prettify.js" type="text/javascript"></script>
     <script src="{{ page.root }}/js/lang-go-rich.js" type="text/javascript"></script>
