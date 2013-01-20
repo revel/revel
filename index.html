@@ -230,9 +230,9 @@ func (c Application) SaveUser(user models.User, verifyPassword string) rev.Resul
 		return c.Redirect(Application.Register)
 	}
 
-	bcryptPassword, _ := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
-	_, err := c.Txn.Exec("insert into User (Username, HashedPassword, Name) values (?, ?, ?)",
-		user.Username, bcryptPassword, user.Name)
+	user.HashedPassword, _ = bcrypt.GenerateFromPassword(
+		[]byte(user.Password), bcrypt.DefaultCost)
+	err := c.Txn.Insert(&user)
 	if err != nil {
 		panic(err)
 	}
@@ -278,7 +278,7 @@ func (c Application) SaveUser(user models.User, verifyPassword string) rev.Resul
   {{with $field := field "user.Username" .}}
     <p class="{{$field.ErrorClass}}">
       <strong>Username:</strong>
-      <input type="text" name="{{$field.Name}}" size="16" value="{{$field.Value}}"> *
+      <input type="text" name="{{$field.Name}}" size="16" value="{{$field.Flash}}"> *
       <span class="error">{{$field.Error}}</span>
     </p>
   {{end}}
@@ -333,9 +333,11 @@ func init() {
             <pre class="prettyprint">
 type Plugin interface {
 	OnAppStart()
+	OnRoutesLoaded(router *Router)
 	BeforeRequest(c *Controller)
 	AfterRequest(c *Controller)
 	OnException(c *Controller, err interface{})
+	Finally(c *Controller)
 }</pre>
             <p>
               An empty implementation is provided; clients can embed that and
@@ -343,7 +345,7 @@ type Plugin interface {
               added as they are found useful.
             </p>
             <p>
-              The booking sample app uses a plugin to manage its SQLite
+              For example, this is how you can use a plugin to manage a SQLite
               database.
             </p>
           </div>
