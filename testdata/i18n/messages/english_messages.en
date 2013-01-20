@@ -1,0 +1,21 @@
+greeting=Hello 
+greeting.name=Rob
+greeting.suffix=, welcome to Revel!
+
+folded=Greeting is '%(greeting)s'
+folded.arguments=%(greeting.name)s is %d years old
+
+arguments.string=My name is %s
+arguments.hex=The number %d in hexadecimal notation would be %x
+arguments.none=No arguments here son
+
+only_exists_in_default=Default
+
+[AU]
+greeting=G'day
+
+[US]
+greeting=Howdy
+
+[GB]
+greeting=All right
