@@ -126,7 +126,7 @@ type User struct {
 
 ### Date / Time
 
-The SQL standard time formats ["2006-01-02", "2006-01-02 15:04"] are built in.
+The SQL standard time formats \["2006-01-02", "2006-01-02 15:04"\] are built in.
 
 More may be added by the application, using
 [the official pattern](http://golang.org/pkg/time/#constants).  Simply add
@@ -141,7 +141,7 @@ func init() {
 ### File Uploads
 
 File uploads may be bound to any of the following types:
-* *os.File
+* \*os.File
 * \[\]byte
 * io.Reader
 * io.ReadSeeker

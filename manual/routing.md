@@ -73,7 +73,7 @@ or
 	POST   /hotels/{<[0-9]+>id}   Hotels.Save
 
 Routes may also specify a regular expression with their parameters to restrict
-what they may match.  The regular expression goes between <brackets>, before the
+what they may match.  The regular expression goes between `<angle brackets>`, before the
 name.
 
 In the example, we restrict the Hotel ID to be numerical.
