@@ -116,18 +116,18 @@ func TestBeforeRequest(t *testing.T) {
 	plugin := I18nPlugin{}
 
 	controller := NewController(buildEmptyRequest(), nil, &ControllerType{reflect.TypeOf(Controller{}), nil})
-	if plugin.BeforeRequest(controller); controller.Request.CurrentLocale != "" {
-		t.Errorf("Expected to find current language '%s' in controller, found '%s' instead", "", controller.Request.CurrentLocale)
+	if plugin.BeforeRequest(controller); controller.Request.Locale != "" {
+		t.Errorf("Expected to find current language '%s' in controller, found '%s' instead", "", controller.Request.Locale)
 	}
 
 	controller = NewController(buildRequestWithCookie("REVEL_LANG", "en-US"), nil, &ControllerType{reflect.TypeOf(Controller{}), nil})
-	if plugin.BeforeRequest(controller); controller.Request.CurrentLocale != "en-US" {
-		t.Errorf("Expected to find current language '%s' in controller, found '%s' instead", "en-US", controller.Request.CurrentLocale)
+	if plugin.BeforeRequest(controller); controller.Request.Locale != "en-US" {
+		t.Errorf("Expected to find current language '%s' in controller, found '%s' instead", "en-US", controller.Request.Locale)
 	}
 
 	controller = NewController(buildRequestWithAcceptLanguages("en-GB", "en-US"), nil, &ControllerType{reflect.TypeOf(Controller{}), nil})
-	if plugin.BeforeRequest(controller); controller.Request.CurrentLocale != "en-GB" {
-		t.Errorf("Expected to find current language '%s' in controller, found '%s' instead", "en-GB", controller.Request.CurrentLocale)
+	if plugin.BeforeRequest(controller); controller.Request.Locale != "en-GB" {
+		t.Errorf("Expected to find current language '%s' in controller, found '%s' instead", "en-GB", controller.Request.Locale)
 	}
 }
 

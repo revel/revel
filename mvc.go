@@ -15,7 +15,7 @@ type Request struct {
 	ContentType     string
 	Format          string // "html", "xml", "json", or "text"
 	AcceptLanguages AcceptLanguages
-	CurrentLocale   string
+	Locale          string
 }
 
 type Response struct {

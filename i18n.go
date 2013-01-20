@@ -11,13 +11,13 @@ import (
 )
 
 const (
-	CurrentLocaleRenderArg string = "currentLocale" // The key for the current locale render arg value
+	CurrentLocaleRenderArg = "currentLocale" // The key for the current locale render arg value
 
-	messageFilesDirectory string = "messages"
-	messageFilePattern    string = `^\w+.[a-zA-Z]{2}$`
-	unknownValueFormat    string = "??? %s ???"
-	defaultLanguageOption string = "i18n.default_language"
-	localeCookieConfigKey string = "i18n.cookie"
+	messageFilesDirectory = "messages"
+	messageFilePattern    = `^\w+.[a-zA-Z]{2}$`
+	unknownValueFormat    = "??? %s ???"
+	defaultLanguageOption = "i18n.default_language"
+	localeCookieConfigKey = "i18n.cookie"
 )
 
 var (
@@ -39,7 +39,7 @@ func MessageLanguages() []string {
 // Perform a message look-up for the given locale and message using the given arguments.
 //
 // When either an unknown locale or message is detected, a specially formatted string is returned.
-func Message(locale, message string, args ...interface{}) (value string) {
+func Message(locale, message string, args ...interface{}) string {
 	language, region := parseLocale(locale)
 	TRACE.Printf("Resolving message '%s' for language '%s' and region '%s'", message, language, region)
 
@@ -69,7 +69,7 @@ func Message(locale, message string, args ...interface{}) (value string) {
 		return fmt.Sprintf(unknownValueFormat, message)
 	}
 
-	if args != nil && len(args) > 0 {
+	if len(args) > 0 {
 		TRACE.Printf("Arguments detected, formatting '%s' with %v", value, args)
 		value = fmt.Sprintf(value, args...)
 	}
@@ -86,13 +86,9 @@ func parseLocale(locale string) (language, region string) {
 	return locale, ""
 }
 
+// Load the messages when Revel boots.
 func init() {
-	InitHooks = append(InitHooks, loadMessagesOnInitialize)
-}
-
-// Wrap loadMessages() in a function so it can be hooked into InitHooks.
-func loadMessagesOnInitialize() {
-	loadMessages(path.Join(BasePath, messageFilesDirectory))
+	InitHooks = append(InitHooks, func() { loadMessages(path.Join(BasePath, messageFilesDirectory)) })
 }
 
 // Recursively read and cache all available messages from all message files on the given path.
@@ -165,7 +161,7 @@ func (p I18nPlugin) BeforeRequest(c *Controller) {
 
 // Set the current locale controller argument (CurrentLocaleControllerArg) with the given locale.
 func setCurrentLocaleControllerArguments(c *Controller, locale string) {
-	c.Request.CurrentLocale = locale
+	c.Request.Locale = locale
 	c.RenderArgs[CurrentLocaleRenderArg] = locale
 }
 
