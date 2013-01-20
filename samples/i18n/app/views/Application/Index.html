@@ -1,0 +1,39 @@
+{{set . "title" "Home"}}
+{{template "header.html" .}}
+
+<h2>Internationalization overview/test page</h2>
+
+<h4>Client localization information</h4>
+<p>
+	<ul>
+		<li>Accept-Language HTTP header: {{.acceptLanguageHeader}}</li>
+		<li>Parsed Accept-Language HTTP header: {{.acceptLanguageHeaderParsed}}</li>
+		<li>Current preferred locale as determined by the framework: {{.currentLocale}}</li>
+	</ul>
+</p>
+
+<h4>Messages from the sample message file as resolved using <code>Controller.Message(...)</code></h4>
+<p>
+	<ul>
+		<li>Greeting: {{.controllerGreeting}}</li>
+		<li>Greeting name: {{.controllerGreetingName}}</li>
+		<li>Greeting suffix: {{.controllerGreetingSuffix}}</li>
+		<li>Full greeting: {{.controllerGreetingFull}}</li>
+		<li>Full greeting with argument: {{.controllerGreetingWithArgument}}</li>
+	</ul>
+</p>
+
+<h4>Messages from the sample message file as resolved using the <code>&#123;&#123;msg . "message" "arg" "arg"&#125;&#125;</code> template function</h4>
+<p>
+	<ul>
+		<li>Greeting: {{msg . "greeting"}}</li>
+		<li>Greeting name: {{msg . "greeting.name"}}</li>
+		<li>Greeting suffix: {{msg . "greeting.suffix"}}</li>
+		<li>Full greeting: {{msg . "greeting.full"}}</li>
+		<li>Full greeting with argument: {{msg . "greeting.full.name" "Tommy Lee Jones"}}</li>
+		<li>Cross-file referencing: {{msg . "alpha"}}</li>
+		<li>Message not found: {{msg . "doesnt exist"}}</li>
+	</ul>
+</p>
+
+{{template "footer.html" .}}
