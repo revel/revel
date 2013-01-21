@@ -61,6 +61,21 @@ var routeTestCases = map[string]*Route{
 		actionPattern: regexp.MustCompile("Application\\.List"),
 	},
 
+	`get /apps/{<\d+>appId}/? Application.Show`: &Route{
+		Method:      "GET",
+		Path:        `/apps/{<\d+>appId}/?`,
+		Action:      "Application.Show",
+		pathPattern: regexp.MustCompile(`/apps/(?P<appId>\d+)/?$`),
+		staticDir:   "",
+		args: []*arg{
+			{
+				name:       "appId",
+				constraint: regexp.MustCompile(`\d+`),
+			},
+		},
+		actionPattern: regexp.MustCompile("Application\\.Show"),
+	},
+
 	"GET /public/ staticDir:www": &Route{
 		Method:        "GET",
 		Path:          "/public/",
@@ -144,7 +159,7 @@ func TestComputeRoute(t *testing.T) {
 const TEST_ROUTES = `
 # This is a comment
 GET  /                       Application.Index
-GET  /app/{id}               Application.Show
+GET  /app/{id}/?             Application.Show
 POST /app/{id}               Application.Save
 
 GET	/public/	                staticDir:www
@@ -170,7 +185,7 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 		URL:    &url.URL{Path: "/app/123"},
 	}: &RouteMatch{
 		ControllerName: "Application",
-		MethodName:     "ShowApp",
+		MethodName:     "Show",
 		Params:         map[string]string{"id": "123"},
 		StaticFilename: "",
 	},
@@ -180,7 +195,17 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 		URL:    &url.URL{Path: "/app/123"},
 	}: &RouteMatch{
 		ControllerName: "Application",
-		MethodName:     "SaveApp",
+		MethodName:     "Save",
+		Params:         map[string]string{"id": "123"},
+		StaticFilename: "",
+	},
+
+	&http.Request{
+		Method: "GET",
+		URL:    &url.URL{Path: "/app/123/"},
+	}: &RouteMatch{
+		ControllerName: "Application",
+		MethodName:     "Show",
 		Params:         map[string]string{"id": "123"},
 		StaticFilename: "",
 	},
@@ -232,12 +257,13 @@ func TestRouteMatches(t *testing.T) {
 	router := NewRouter("")
 	router.parse(TEST_ROUTES, false)
 	for req, expected := range routeMatchTestCases {
+		t.Log("Routing:", req.Method, req.URL)
 		actual := router.Route(req)
 		if !eq(t, "Found route", actual != nil, expected != nil) {
 			continue
 		}
 		eq(t, "ControllerName", actual.ControllerName, expected.ControllerName)
-		eq(t, "MethodName", actual.ControllerName, expected.ControllerName)
+		eq(t, "MethodName", actual.MethodName, expected.MethodName)
 		eq(t, "len(Params)", len(actual.Params), len(expected.Params))
 		for key, actualValue := range actual.Params {
 			eq(t, "Params", actualValue, expected.Params[key])
@@ -268,7 +294,7 @@ var reverseRoutingTestCases = map[*ReverseRouteArgs]*ActionDefinition{
 		action: "Application.Show",
 		args:   map[string]string{"id": "123"},
 	}: &ActionDefinition{
-		Url:    "/app/123",
+		Url:    "/app/123/",
 		Method: "GET",
 		Star:   false,
 		Action: "Application.Show",

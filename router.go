@@ -122,7 +122,7 @@ func (r *Route) Match(method string, reqPath string) *RouteMatch {
 
 	// Check the Path
 	var matches []string = r.pathPattern.FindStringSubmatch(reqPath)
-	if matches == nil {
+	if len(matches) == 0 || len(matches[0]) != len(reqPath) {
 		return nil
 	}
 
@@ -365,7 +365,8 @@ NEXT_ROUTE:
 
 		// Build up the URL.
 		var queryValues url.Values = make(url.Values)
-		path := route.Path
+		// Handle optional trailing slashes (e.g. "/?") by removing the question mark.
+		path := strings.Replace(route.Path, "?", "", -1)
 		for argKey, argValue := range argValues {
 			if _, ok := routeArgs[argKey]; ok {
 				// If this arg goes into the path, put it in.
