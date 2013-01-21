@@ -91,7 +91,7 @@ var (
 		},
 
 		"msg": func(renderArgs map[string]interface{}, message string, args ...interface{}) template.HTML {
-			return template.HTML(Message(renderArgs["currentLocale"].(string), message, args...))
+			return template.HTML(Message(renderArgs[CurrentLocaleRenderArg].(string), message, args...))
 		},
 	}
 
