@@ -34,7 +34,7 @@ That makes sense.  Add the action to **app/controllers/app.go**:
 Next, we have to create the view.  Create a file
 **app/views/Application/Hello.html**, with this content:
 
-{% literal %}
+{% raw %}
 	{{set . "title" "Home"}}
 	{{template "header.html" .}}
 
@@ -42,7 +42,7 @@ Next, we have to create the view.  Create a file
 	<a href="/">Back to form</a>
 
 	{{template "footer.html" .}}
-{% endliteral %}
+{% endraw %}
 
 Refresh the page, and you should see a greeting:
 
@@ -73,7 +73,7 @@ name. Their name and the validation error are kept in the
 
 Let's use that data in the form.  Edit **app/views/Application/Index.html**:
 
-{% literal %}
+{% raw %}
 
 	<h1>Aloha World</h1>
 
@@ -88,7 +88,7 @@ Let's use that data in the form.  Edit **app/views/Application/Index.html**:
 		<input type="submit" value="Say hello!" />
 	</form>
 
-{% endliteral %}
+{% endraw %}
 
 Now when we submit a single letter as our name:
 

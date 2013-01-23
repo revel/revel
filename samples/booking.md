@@ -123,7 +123,7 @@ Subsequently, the
 [Hotels/Book.html](https://github.com/robfig/revel/blob/master/samples/booking/app/views/Hotels/Book.html)
 template can easily access them using the **field** helper:
 
-<pre class="prettyprint lang-go">{% capture tmpl %}{% literal %}
+<pre class="prettyprint lang-go">{% capture tmpl %}{% raw %}
   {{with $field := field "booking.CheckInDate" .}}
     <p class="{{$field.ErrorClass}}">
       <strong>Check In Date:</strong>
@@ -131,7 +131,7 @@ template can easily access them using the **field** helper:
       * <span class="error">{{$field.Error}}</span>
     </p>
   {{end}}
-{% endliteral %}{% endcapture %}{{ tmpl|escape }}</pre>
+{% endraw %}{% endcapture %}{{ tmpl|escape }}</pre>
 
 The **field** template helper looks for errors in the validation context, using
 the field name as the key.

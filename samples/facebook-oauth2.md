@@ -49,7 +49,7 @@ uses [a fork](https://github.com/robfig/goauth2).
 
 Let's take a look at the first bit of code:
 
-<pre class="prettyprint lang-go">{% capture guy %}{% literal %}
+<pre class="prettyprint lang-go">{% capture guy %}{% raw %}
 func (c Application) Index() rev.Result {
 	u := c.connected()
 	me := map[string]interface{}{}
@@ -60,7 +60,7 @@ func (c Application) Index() rev.Result {
 
 	authUrl := FACEBOOK.AuthCodeURL("foo")
 	return c.Render(me, authUrl)
-}{% endliteral %}{% endcapture %}{{ guy|escape }}
+}{% endraw %}{% endcapture %}{{ guy|escape }}
 </pre>
 
 It doesn't do much since we don't have an access token yet.  All it does is
@@ -70,13 +70,13 @@ need to use it here.)
 
 Here's the interesting bit of the template:
 
-{% literal %}
+{% raw %}
 	{{if .me}}
 	<h3>You're {{.me.name}} on Facebook</h3>
 	{{else}}
 	<a href="{{.authUrl}}">login</a>
 	{{end}}
-{% endliteral %}
+{% endraw %}
 
 If we had information on the user, we would tell them their name.  Since we
 don't, we just ask the user to log in to Facebook.
@@ -103,7 +103,7 @@ The `t.Exchange(code)` bit makes a request to the **TokenURL** to get the access
 token.  If successful, we store it on the user.  Either way, the user ends up
 back at `Index`:
 
-<pre class="prettyprint lang-go">{% capture guy %}{% literal %}
+<pre class="prettyprint lang-go">{% capture guy %}{% raw %}
 func (c Application) Index() rev.Result {
 	u := c.connected()
 	me := map[string]interface{}{}
@@ -114,7 +114,7 @@ func (c Application) Index() rev.Result {
 		if err := json.NewDecoder(resp.Body).Decode(&me); err != nil {
 			rev.ERROR.Println(err)
 		}
-{% endliteral %}{% endcapture %}{{ guy|escape }}
+{% endraw %}{% endcapture %}{{ guy|escape }}
 </pre>
 
 Now we have an AccessToken, so we make a request to get the associated user's

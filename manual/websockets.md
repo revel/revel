@@ -16,7 +16,7 @@ For example, add this your `routes` file:
 
 Then write an action like this:
 
-{% literal %}
+{% raw %}
 <pre class="prettyprint lang-go">
 import "code.google.com/p/go.net/websocket"
 
@@ -24,5 +24,5 @@ func (c Application) Feed(user string, ws *websocket.Conn) rev.Result {
 	...
 }
 </pre>
-{% endliteral %}
+{% endraw %}
 

@@ -45,7 +45,7 @@ validated, and uses that as the default key in the validation context (to be loo
 6. Revel returns a redirect to the Hotels.Settings action.
 
 The Hotels.Settings action renders a template:
-{% literal %}
+{% raw %}
 
 	{{/* app/views/Hotels/Settings.html */}}
 	...
@@ -57,7 +57,7 @@ The Hotels.Settings action renders a template:
 		<span class="error">{{.errors.username.Message}}</span>
 	</p>
 
-{% endliteral %}
+{% endraw %}
 
 It does three things:
 1. Checks the `errors` map for the `username` key to see if that field had an error.
@@ -100,7 +100,7 @@ func (c MyApp) SaveUser(username string) rev.Result {
 
 .. and the template:
 
-{% literal %}
+{% raw %}
 
 	{{/* app/views/Hotels/Settings.html */}}
 	...
@@ -115,4 +115,4 @@ func (c MyApp) SaveUser(username string) rev.Result {
 	{{end}}
 	...
 
-{% endliteral %}
+{% endraw %}

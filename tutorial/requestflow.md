@@ -48,7 +48,7 @@ template name is not specified, Revel looks for a template matching the action.
 In this case, Revel finds the **app/views/Application/Index.html** file, and
 renders it as a [Go template](http://www.golang.org/pkg/html/template).
 
-{% literal %}
+{% raw %}
 
 	{{set . "title" "Home"}}
 	{{template "header.html" .}}
@@ -57,7 +57,7 @@ renders it as a [Go template](http://www.golang.org/pkg/html/template).
 
 	{{template "footer.html" .}}
 
-{% endliteral %}
+{% endraw %}
 
 Beyond the functions provided by the Go templates, Revel adds
 [a few helpful ones](../manual/templates.html) of its own.
@@ -71,7 +71,7 @@ This template is very simple.  It:
 
 If you look at header.html, you can see some more template tags in action:
 
-{% literal %}
+{% raw %}
 
 	<!DOCTYPE html>
 	<html>
@@ -90,7 +90,7 @@ If you look at header.html, you can see some more template tags in action:
 	  </head>
 	  <body>
 
-{% endliteral %}
+{% endraw %}
 
 You can see the title being set, and you can also see that it accepts JS and CSS
 files included from calling templates in the **moreStyles** and **moreScripts**
@@ -144,19 +144,19 @@ to:
 
 In **app/views/Application/Index.html**, change:
 
-{% literal %}
+{% raw %}
 
 	<h1>Hello World</h1>
 
-{% endliteral %}
+{% endraw %}
 
 to:
 
-{% literal %}
+{% raw %}
 
 	<h1>{{.greeting}}</h1>
 
-{% endliteral %}
+{% endraw %}
 
 Refresh the page and you should see your Hawaiian greeting.
 

@@ -34,11 +34,11 @@ A simple "a == b" test.
 
 Example:
 
-{% literal %}
+{% raw %}
 
 	<div class="message {{if eq .User "you"}}you{{end}}">
 
-{% endliteral %}
+{% endraw %}
 
 ### set
 
@@ -46,13 +46,13 @@ Set a variable in the given context.
 
 Example:
 
-{% literal %}
+{% raw %}
 
 	{{set . "title" "Basic Chat room"}}
 
 	<h1>{{.title}}</h1>
 
-{% endliteral %}
+{% endraw %}
 
 ### append
 
@@ -60,7 +60,7 @@ Add a variable to an array, or start an array, in the given context.
 
 Example:
 
-{% literal %}
+{% raw %}
 
 	{{append . "moreScripts" "js/jquery-ui-1.7.2.custom.min.js"}}
 
@@ -68,7 +68,7 @@ Example:
       <link rel="stylesheet" type="text/css" href="/public/{{.}}">
     {{end}}
 
-{% endliteral %}
+{% endraw %}
 
 ### field
 
@@ -80,13 +80,13 @@ Given a field name, it returns a struct containing the following members:
 * Value: the value of the field in the current RenderArgs
 * Flash: the flashed value of the field.
 * Error: the error message, if any is associated with this field.
-* ErrorClass: the literal string "error", if there was an error, else "".
+* ErrorClass: the raw string "error", if there was an error, else "".
 
 [See godoc.](../docs/godoc/field.html)
 
 Example:
 
-{% literal %}
+{% raw %}
 
 	{{with $field := field "booking.CheckInDate" .}}
 	  <p class="{{$field.ErrorClass}}">
@@ -96,7 +96,7 @@ Example:
 	  </p>
 	{{end}}
 
-{% endliteral %}
+{% endraw %}
 
 ### option
 
@@ -105,7 +105,7 @@ helper.
 
 Example:
 
-{% literal %}
+{% raw %}
 
 	{{with $field := field "booking.Beds" .}}
 	<select name="{{$field.Name}}">
@@ -115,7 +115,7 @@ Example:
 	</select>
 	{{end}}
 
-{% endliteral %}
+{% endraw %}
 
 ### radio
 
@@ -124,25 +124,25 @@ helper.
 
 Example:
 
-{% literal %}
+{% raw %}
 
 	{{with $field := field "booking.Smoking" .}}
 	  {{radio $field "true"}} Smoking
 	  {{radio $field "false"}} Non smoking
 	{{end}}
 
-{% endliteral %}
+{% endraw %}
 
 
 ## Including
 
 Go Templates allow you to compose templates by inclusion.  For example:
 
-{% literal %}
+{% raw %}
 
 	{{include "header.html"}}
 
-{% endliteral %}
+{% endraw %}
 
 There are two things to note:
 * Paths are relative to `app/views`
@@ -161,7 +161,7 @@ the template itself.
 
 For example, the header looks like this:
 
-{% literal %}
+{% raw %}
 
 	<html>
 	  <head>
@@ -179,18 +179,18 @@ For example, the header looks like this:
 	    {{end}}
 	  </head>
 
-{% endliteral %}
+{% endraw %}
 
 And templates that include it look like this:
 
-{% literal %}
+{% raw %}
 
 	{{set . title "Hotels"}}
 	{{append . "moreStyles" "ui-lightness/jquery-ui-1.7.2.custom.css"}}
 	{{append . "moreScripts" "js/jquery-ui-1.7.2.custom.min.js"}}
 	{{template "header.html" .}}
 
-{% endliteral %}
+{% endraw %}
 
 ## Custom Functions
 
@@ -198,10 +198,10 @@ Applications may register custom functions to use in templates.
 
 Here is an example:
 
-{% literal %}
+{% raw %}
 <pre class="prettyprint lang-go">
 func init() {
 	rev.TemplateFuncs["eq"] = func(a, b interface{}) bool { return a == b }
 }
 </pre>
-{% endliteral %}
+{% endraw %}

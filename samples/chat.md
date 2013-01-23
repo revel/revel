@@ -41,7 +41,7 @@ func init() {
 The `chatroom()` function simply selects on three channels and executes the
 requested action.
 
-<pre class="prettyprint lang-go">{% capture chatroom %}{% literal %}
+<pre class="prettyprint lang-go">{% capture chatroom %}{% raw %}
 var (
 	// Send a channel here to get room events back.  It will send the entire
 	// archive initially, and then new messages as they come in.
@@ -67,13 +67,13 @@ func chatroom() {
 		}
 	}
 }
-{% endliteral %}{% endcapture %}{{ chatroom|escape }}</pre>
+{% endraw %}{% endcapture %}{{ chatroom|escape }}</pre>
 
 Let's see how each of those is implemented.
 
 ### Subscribe
 
-<pre class="prettyprint lang-go">{% capture subscribe %}{% literal %}
+<pre class="prettyprint lang-go">{% capture subscribe %}{% raw %}
 	case ch := <-subscribe:
 		var events []Event
 		for e := archive.Front(); e != nil; e = e.Next() {
@@ -82,7 +82,7 @@ Let's see how each of those is implemented.
 		subscriber := make(chan Event, 10)
 		subscribers.PushBack(subscriber)
 		ch <- Subscription{events, subscriber}
-{% endliteral %}{% endcapture %}{{ subscribe|escape }}</pre>
+{% endraw %}{% endcapture %}{{ subscribe|escape }}</pre>
 
 A Subscription is created with two properties:
 
@@ -95,7 +95,7 @@ supplied.
 
 ### Publish
 
-<pre class="prettyprint lang-go">{% capture publish %}{% literal %}
+<pre class="prettyprint lang-go">{% capture publish %}{% raw %}
 	case event := <-publish:
 		for ch := subscribers.Front(); ch != nil; ch = ch.Next() {
 			ch.Value.(chan Event) <- event
@@ -104,21 +104,21 @@ supplied.
 			archive.Remove(archive.Front())
 		}
 		archive.PushBack(event)
-{% endliteral %}{% endcapture %}{{ publish|escape }}</pre>
+{% endraw %}{% endcapture %}{{ publish|escape }}</pre>
 
 The published event is sent to the subscribers' channels one by one.  Then the
 event is added to the archive, which is trimmed if necessary.
 
 ### Unsubscribe
 
-<pre class="prettyprint lang-go">{% capture unsub %}{% literal %}
+<pre class="prettyprint lang-go">{% capture unsub %}{% raw %}
 	case unsub := <-unsubscribe:
 		for ch := subscribers.Front(); ch != nil; ch = ch.Next() {
 			if ch.Value.(chan Event) == unsub {
 				subscribers.Remove(ch)
 			}
 		}
-{% endliteral %}{% endcapture %}{{ unsub|escape }}</pre>
+{% endraw %}{% endcapture %}{{ unsub|escape }}</pre>
 
 The subscriber channel is removed from the list.
 
@@ -212,7 +212,7 @@ keeps open until a new message comes in.  The javascript provides a
 
 and here is the handler
 
-<pre class="prettyprint lang-go">{% capture WaitMessages %}{% literal %}
+<pre class="prettyprint lang-go">{% capture WaitMessages %}{% raw %}
 func (c LongPolling) WaitMessages(lastReceived int) rev.Result {
 	subscription := chatroom.Subscribe()
 	defer subscription.Cancel()
@@ -234,7 +234,7 @@ func (c LongPolling) WaitMessages(lastReceived int) rev.Result {
 	event := <-subscription.New
 	return c.RenderJson([]chatroom.Event{event})
 }
-{% endliteral %}{% endcapture %}{{ WaitMessages|escape }}</pre>
+{% endraw %}{% endcapture %}{{ WaitMessages|escape }}</pre>
 
 > [longpolling.go](https://github.com/robfig/revel/tree/master/samples/chat/app/controllers/longpolling.go)
 
@@ -291,7 +291,7 @@ Next, we have to listen for new events from the subscription.  However, the
 websocket library only provides a blocking call to get a new frame.  To select
 between them, we have to wrap it:
 
-<pre class="prettyprint lang-go">{% capture WebSocket2 %}{% literal %}
+<pre class="prettyprint lang-go">{% capture WebSocket2 %}{% raw %}
 	// In order to select between websocket messages and subscription events, we
 	// need to stuff websocket events into a channel.
 	newMessages := make(chan string)
@@ -306,7 +306,7 @@ between them, we have to wrap it:
 			newMessages <- msg
 		}
 	}()
-{% endliteral %}{% endcapture %}{{ WebSocket2|escape }}</pre>
+{% endraw %}{% endcapture %}{{ WebSocket2|escape }}</pre>
 
 > [websocket.go](https://github.com/robfig/revel/tree/master/samples/chat/app/controllers/websocket.go#L33)
 
@@ -316,7 +316,7 @@ The last bit does exactly that -- it waits for a new message from the websocket
 (if the user has said something) or from the subscription (someone else in the
 chat room has said something) and propagates the message to the other.
 
-<pre class="prettyprint lang-go">{% capture WebSocket3 %}{% literal %}
+<pre class="prettyprint lang-go">{% capture WebSocket3 %}{% raw %}
 	// Now listen for new events from either the websocket or the chatroom.
 	for {
 		select {
@@ -337,7 +337,7 @@ chat room has said something) and propagates the message to the other.
 	}
 	return nil
 }
-{% endliteral %}{% endcapture %}{{ WebSocket3|escape }}</pre>
+{% endraw %}{% endcapture %}{{ WebSocket3|escape }}</pre>
 
 > [websocket.go](https://github.com/robfig/revel/tree/master/samples/chat/app/controllers/websocket.go#L48)
 

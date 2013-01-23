@@ -57,7 +57,7 @@ own Result.
 
 Here's a simple example defining and registering a Func Interceptor.
 
-{% literal %}
+{% raw %}
 <pre class="prettyprint lang-go">
 func checkUser(c *rev.Controller) rev.Result {
 	if user := connected(c); user == nil {
@@ -71,22 +71,22 @@ func init() {
 	rev.InterceptFunc(checkUser, rev.BEFORE, &Hotels{})
 }
 </pre>
-{% endliteral %}
+{% endraw %}
 
 ### Method Interceptor
 
 A method interceptor signature may have one of these two forms:
 
-{% literal %}
+{% raw %}
 <pre class="prettyprint lang-go">
 func (c AppController) example() rev.Result
 func (c *AppController) example() rev.Result
 </pre>
-{% endliteral %}
+{% endraw %}
 
 Here's the same example that operates only on the app controller.
 
-{% literal %}
+{% raw %}
 <pre class="prettyprint lang-go">
 func (c Hotels) checkUser() rev.Result {
 	if user := connected(c); user == nil {
@@ -100,4 +100,4 @@ func init() {
 	rev.InterceptMethod(checkUser, rev.BEFORE)
 }
 </pre>
-{% endliteral %}
+{% endraw %}
