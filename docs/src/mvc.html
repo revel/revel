@@ -12,31 +12,6 @@ layout: godoc
 
 	<pre>package rev
 
-type Request struct {
-    *http.Request
-    ContentType string
-    Format      string <span class="comment">// &#34;html&#34;, &#34;xml&#34;, &#34;json&#34;, or &#34;text&#34;</span>
-}
-
-type Response struct {
-    Status      int
-    ContentType string
-
-    Out http.ResponseWriter
-}
-
-func NewRequest(r *http.Request) *Request {
-    return &amp;Request{
-        Request:     r,
-        ContentType: ResolveContentType(r),
-        Format:      ResolveFormat(r),
-    }
-}
-
-func NewResponse(w http.ResponseWriter) *Response {
-    return &amp;Response{Out: w}
-}
-
 func NewAppController(req *Request, resp *Response, controllerName, methodName string) (*Controller, reflect.Value) {
     var appControllerType *ControllerType = LookupControllerType(controllerName)
     if appControllerType == nil {
@@ -48,6 +23,7 @@ func NewAppController(req *Request, resp *Response, controllerName, methodName s
     appControllerPtr := initNewAppController(appControllerType.Type, controller)
 
     <span class="comment">// Set the method being called.</span>
+    controller.Action = controllerName + &#34;.&#34; + methodName
     controller.AppController = appControllerPtr.Interface()
     controller.MethodType = appControllerType.Method(methodName)
     if controller.MethodType == nil {
@@ -67,39 +43,6 @@ func RenderError(req *Request, resp *Response, err error) {
 <span class="comment">// It writes the 404 response immediately.</span>
 func NotFound(req *Request, resp *Response, msg string) {
     stubController(req, resp).NotFound(msg).Apply(req, resp)
-}
-
-<span class="comment">// Get the content type.</span>
-<span class="comment">// e.g. From &#34;multipart/form-data; boundary=--&#34; to &#34;multipart/form-data&#34;</span>
-<span class="comment">// If none is specified, returns &#34;text/html&#34; by default.</span>
-func ResolveContentType(req *http.Request) string {
-    contentType := req.Header.Get(&#34;Content-Type&#34;)
-    if contentType == &#34;&#34; {
-        return &#34;text/html&#34;
-    }
-    return strings.ToLower(strings.TrimSpace(strings.Split(contentType, &#34;;&#34;)[0]))
-}
-
-func ResolveFormat(req *http.Request) string {
-    accept := req.Header.Get(&#34;accept&#34;)
-
-    switch {
-    case accept == &#34;&#34;,
-        strings.HasPrefix(accept, &#34;*/*&#34;), <span class="comment">// */</span>
-        strings.Contains(accept, &#34;application/xhtml&#34;),
-        strings.Contains(accept, &#34;text/html&#34;):
-        return &#34;html&#34;
-    case strings.Contains(accept, &#34;application/xml&#34;),
-        strings.Contains(accept, &#34;text/xml&#34;):
-        return &#34;xml&#34;
-    case strings.Contains(accept, &#34;text/plain&#34;):
-        return &#34;txt&#34;
-    case strings.Contains(accept, &#34;application/json&#34;),
-        strings.Contains(accept, &#34;text/javascript&#34;):
-        return &#34;json&#34;
-    }
-
-    return &#34;html&#34;
 }
 
 <span class="comment">// Write the header (for now, just the status code).</span>

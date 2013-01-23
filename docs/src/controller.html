@@ -17,6 +17,7 @@ type Controller struct {
     Type          *ControllerType <span class="comment">// A description of the controller type.</span>
     MethodType    *MethodType     <span class="comment">// A description of the invoked action type.</span>
     AppController interface{}     <span class="comment">// The controller that was instantiated.</span>
+    Action        string          <span class="comment">// The full action name, e.g. &#34;Application.Index&#34;</span>
 
     Request  *Request
     Response *Response
@@ -32,7 +33,7 @@ type Controller struct {
 }
 
 func NewController(req *Request, resp *Response, ct *ControllerType) *Controller {
-    return &amp;Controller{
+    c := &amp;Controller{
         Name:     ct.Type.Name(),
         Type:     ct,
         Request:  req,
@@ -43,6 +44,8 @@ func NewController(req *Request, resp *Response, ct *ControllerType) *Controller
             &#34;RunMode&#34;: RunMode,
         },
     }
+    c.RenderArgs[&#34;Controller&#34;] = c
+    return c
 }
 
 func (c *Controller) FlashParams() {
@@ -91,7 +94,12 @@ func (c *Controller) Invoke(appControllerPtr reflect.Value, method reflect.Value
 
     if c.Result == nil {
         <span class="comment">// Invoke the action.</span>
-        resultValue := method.Call(methodArgs)[0]
+        var resultValue reflect.Value
+        if method.Type().IsVariadic() {
+            resultValue = method.CallSlice(methodArgs)[0]
+        } else {
+            resultValue = method.Call(methodArgs)[0]
+        }
         if resultValue.Kind() == reflect.Interface &amp;&amp; !resultValue.IsNil() {
             c.Result = resultValue.Interface().(Result)
         }
@@ -195,7 +203,7 @@ func (c *Controller) RenderXml(o interface{}) Result {
 func (c *Controller) RenderText(text string, objs ...interface{}) Result {
     finalText := text
     if len(objs) &gt; 0 {
-        finalText = fmt.Sprintf(text, objs)
+        finalText = fmt.Sprintf(text, objs...)
     }
     return &amp;RenderTextResult{finalText}
 }
@@ -209,11 +217,15 @@ func (c *Controller) Todo() Result {
     })
 }
 
-func (c *Controller) NotFound(msg string) Result {
+func (c *Controller) NotFound(msg string, objs ...interface{}) Result {
+    finalText := msg
+    if len(objs) &gt; 0 {
+        finalText = fmt.Sprintf(msg, objs...)
+    }
     c.Response.Status = http.StatusNotFound
     return c.RenderError(&amp;Error{
         Title:       &#34;Not Found&#34;,
-        Description: msg,
+        Description: finalText,
     })
 }
 
@@ -248,6 +260,14 @@ func (c *Controller) Redirect(val interface{}, args ...interface{}) Result {
         return &amp;RedirectToUrlResult{fmt.Sprintf(url, args...)}
     }
     return &amp;RedirectToActionResult{val}
+}
+
+<span class="comment">// Perform a message lookup for the given message name using the given arguments</span>
+<span class="comment">// using the current language defined for this controller.</span>
+<span class="comment">//</span>
+<span class="comment">// The current language is set by the i18n plugin.</span>
+func (c *Controller) Message(message string, args ...interface{}) (value string) {
+    return Message(c.Request.Locale, message, args...)
 }
 </pre>
 

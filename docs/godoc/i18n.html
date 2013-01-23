@@ -1,0 +1,126 @@
+---
+layout: godoc
+---
+<!--
+	Copyright 2009 The Go Authors. All rights reserved.
+	Use of this source code is governed by a BSD-style
+	license that can be found in the LICENSE file.
+-->
+<h1>I18n</h1>
+
+	
+		<!-- The package's Name is printed as title by the top-level template -->
+                
+		
+
+		<h2 id="index">Index</h2>
+		<!-- Table of contents for API; must be named manual-nav to turn off auto nav. -->
+		<div id="manual-nav">
+			<dl>
+			
+				<dd><a href="#constants">Constants</a></dd>
+			
+			
+			
+				
+				<dd><a href="#Message">func Message(locale, message string, args ...interface{}) string</a></dd>
+			
+				
+				<dd><a href="#MessageLanguages">func MessageLanguages() []string</a></dd>
+			
+			
+				
+				<dd><a href="#I18nPlugin">type I18nPlugin</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#I18nPlugin.BeforeRequest">func (p I18nPlugin) BeforeRequest(c *Controller)</a></dd>
+				
+			
+			
+		</dl>
+
+		
+
+		
+			<h4>Package files</h4>
+			<p>
+			<span style="font-size:90%">
+			
+				<a href="../src/i18n.html">i18n.go</a>
+			
+			</span>
+			</p>
+		
+
+		
+			<h2 id="constants">Constants</h2>
+			
+				<pre>const (
+    CurrentLocaleRenderArg = &#34;currentLocale&#34; <span class="comment">// The key for the current locale render arg value</span>
+
+)</pre>
+				
+			
+		
+		
+		
+			
+			
+			<h2 id="Message">func <a href="../src/i18n.html?s=941:1005#L32">Message</a></h2>
+			<pre>func Message(locale, message string, args ...interface{}) string</pre>
+			<p>
+Perform a message look-up for the given locale and message using the given arguments.
+</p>
+<p>
+When either an unknown locale or message is detected, a specially formatted string is returned.
+</p>
+
+			
+		
+			
+			
+			<h2 id="MessageLanguages">func <a href="../src/i18n.html?s=570:602#L19">MessageLanguages</a></h2>
+			<pre>func MessageLanguages() []string</pre>
+			<p>
+Return all currently loaded message languages.
+</p>
+
+			
+		
+		
+			
+			
+			<h2 id="I18nPlugin">type <a href="../src/i18n.html?s=4284:4323#L135">I18nPlugin</a></h2>
+			<pre>type I18nPlugin struct {
+    EmptyPlugin
+}</pre>
+			
+
+			
+
+			
+
+			
+
+			
+
+			
+				
+				<h3 id="I18nPlugin.BeforeRequest">func (I18nPlugin) <a href="../src/i18n.html?s=4325:4373#L139">BeforeRequest</a></h3>
+				<pre>func (p I18nPlugin) BeforeRequest(c *Controller)</pre>
+				
+				
+				
+			
+		
+		</div>
+	
+
+	
+
+
+
+
+
+

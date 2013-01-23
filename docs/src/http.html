@@ -1,0 +1,137 @@
+---
+layout: godoc
+---
+<!--
+	Copyright 2009 The Go Authors. All rights reserved.
+	Use of this source code is governed by a BSD-style
+	license that can be found in the LICENSE file.
+-->
+<h1>Http</h1>
+
+
+
+	<pre>package rev
+
+type Request struct {
+    *http.Request
+    ContentType     string
+    Format          string <span class="comment">// &#34;html&#34;, &#34;xml&#34;, &#34;json&#34;, or &#34;text&#34;</span>
+    AcceptLanguages AcceptLanguages
+    Locale          string
+}
+
+type Response struct {
+    Status      int
+    ContentType string
+
+    Out http.ResponseWriter
+}
+
+func NewResponse(w http.ResponseWriter) *Response {
+    return &amp;Response{Out: w}
+}
+
+func NewRequest(r *http.Request) *Request {
+    return &amp;Request{
+        Request:         r,
+        ContentType:     ResolveContentType(r),
+        Format:          ResolveFormat(r),
+        AcceptLanguages: ResolveAcceptLanguage(r),
+    }
+}
+
+<span class="comment">// Get the content type.</span>
+<span class="comment">// e.g. From &#34;multipart/form-data; boundary=--&#34; to &#34;multipart/form-data&#34;</span>
+<span class="comment">// If none is specified, returns &#34;text/html&#34; by default.</span>
+func ResolveContentType(req *http.Request) string {
+    contentType := req.Header.Get(&#34;Content-Type&#34;)
+    if contentType == &#34;&#34; {
+        return &#34;text/html&#34;
+    }
+    return strings.ToLower(strings.TrimSpace(strings.Split(contentType, &#34;;&#34;)[0]))
+}
+
+<span class="comment">// Resolve the accept request header.</span>
+func ResolveFormat(req *http.Request) string {
+    accept := req.Header.Get(&#34;accept&#34;)
+
+    switch {
+    case accept == &#34;&#34;,
+        strings.HasPrefix(accept, &#34;*/*&#34;), <span class="comment">// */</span>
+        strings.Contains(accept, &#34;application/xhtml&#34;),
+        strings.Contains(accept, &#34;text/html&#34;):
+        return &#34;html&#34;
+    case strings.Contains(accept, &#34;application/xml&#34;),
+        strings.Contains(accept, &#34;text/xml&#34;):
+        return &#34;xml&#34;
+    case strings.Contains(accept, &#34;text/plain&#34;):
+        return &#34;txt&#34;
+    case strings.Contains(accept, &#34;application/json&#34;),
+        strings.Contains(accept, &#34;text/javascript&#34;):
+        return &#34;json&#34;
+    }
+
+    return &#34;html&#34;
+}
+
+<span class="comment">// A single language from the Accept-Language HTTP header.</span>
+type AcceptLanguage struct {
+    Language string
+    Quality  float32
+}
+
+<span class="comment">// A collection of sortable AcceptLanguage instances.</span>
+type AcceptLanguages []AcceptLanguage
+
+func (al AcceptLanguages) Len() int           { return len(al) }
+func (al AcceptLanguages) Swap(i, j int)      { al[i], al[j] = al[j], al[i] }
+func (al AcceptLanguages) Less(i, j int) bool { return al[i].Quality &gt; al[j].Quality }
+func (al AcceptLanguages) String() string {
+    output := bytes.NewBufferString(&#34;&#34;)
+    for i, language := range al {
+        output.WriteString(fmt.Sprintf(&#34;%s (%1.1f)&#34;, language.Language, language.Quality))
+        if i != len(al)-1 {
+            output.WriteString(&#34;, &#34;)
+        }
+    }
+    return output.String()
+}
+
+<span class="comment">// Resolve the Accept-Language header value.</span>
+<span class="comment">//</span>
+<span class="comment">// The results are sorted using the quality defined in the header for each language range with the</span>
+<span class="comment">// most qualified language range as the first element in the slice.</span>
+<span class="comment">//</span>
+<span class="comment">// See the HTTP header fields specification</span>
+<span class="comment">// (http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.4) for more details.</span>
+func ResolveAcceptLanguage(req *http.Request) AcceptLanguages {
+    header := req.Header.Get(&#34;Accept-Language&#34;)
+    if header == &#34;&#34; {
+        return nil
+    }
+
+    acceptLanguageHeaderValues := strings.Split(header, &#34;,&#34;)
+    acceptLanguages := make(AcceptLanguages, len(acceptLanguageHeaderValues))
+
+    for i, languageRange := range acceptLanguageHeaderValues {
+        if qualifiedRange := strings.Split(languageRange, &#34;;q=&#34;); len(qualifiedRange) == 2 {
+            quality, error := strconv.ParseFloat(qualifiedRange[1], 32)
+            if error != nil {
+                WARN.Printf(&#34;Detected malformed Accept-Language header quality in &#39;%s&#39;, assuming quality is 1&#34;, languageRange)
+                acceptLanguages[i] = AcceptLanguage{qualifiedRange[0], 1}
+            } else {
+                acceptLanguages[i] = AcceptLanguage{qualifiedRange[0], float32(quality)}
+            }
+        } else {
+            acceptLanguages[i] = AcceptLanguage{languageRange, 1}
+        }
+    }
+
+    sort.Sort(acceptLanguages)
+    return acceptLanguages
+}
+</pre>
+
+
+
+

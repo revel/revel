@@ -109,7 +109,7 @@ func (r *Route) Match(method string, reqPath string) *RouteMatch {
 
     <span class="comment">// Check the Path</span>
     var matches []string = r.pathPattern.FindStringSubmatch(reqPath)
-    if matches == nil {
+    if len(matches) == 0 || len(matches[0]) != len(reqPath) {
         return nil
     }
 
@@ -130,7 +130,10 @@ func (r *Route) Match(method string, reqPath string) *RouteMatch {
                 basePath = BasePath
             }
         } else {
-            basePath, dirName = BasePath, r.staticDir
+            dirName = r.staticDir
+            if !path.IsAbs(dirName) {
+                basePath = BasePath
+            }
         }
         return &amp;RouteMatch{
             StaticFilename: path.Join(basePath, dirName, matches[1]),
@@ -252,7 +255,8 @@ NEXT_ROUTE:
 
         <span class="comment">// Build up the URL.</span>
         var queryValues url.Values = make(url.Values)
-        path := route.Path
+        <span class="comment">// Handle optional trailing slashes (e.g. &#34;/?&#34;) by removing the question mark.</span>
+        path := strings.Replace(route.Path, &#34;?&#34;, &#34;&#34;, -1)
         for argKey, argValue := range argValues {
             if _, ok := routeArgs[argKey]; ok {
                 <span class="comment">// If this arg goes into the path, put it in.</span>

@@ -1,0 +1,92 @@
+---
+layout: godoc
+---
+<!--
+	Copyright 2009 The Go Authors. All rights reserved.
+	Use of this source code is governed by a BSD-style
+	license that can be found in the LICENSE file.
+-->
+<h1>I18n</h1>
+
+
+
+	<pre>package rev
+
+const (
+    CurrentLocaleRenderArg = &#34;currentLocale&#34; <span class="comment">// The key for the current locale render arg value</span>
+
+)
+
+<span class="comment">// Return all currently loaded message languages.</span>
+func MessageLanguages() []string {
+    languages := make([]string, len(messages))
+    i := 0
+    for language, _ := range messages {
+        languages[i] = language
+        i++
+    }
+    return languages
+}
+
+<span class="comment">// Perform a message look-up for the given locale and message using the given arguments.</span>
+<span class="comment">//</span>
+<span class="comment">// When either an unknown locale or message is detected, a specially formatted string is returned.</span>
+func Message(locale, message string, args ...interface{}) string {
+    language, region := parseLocale(locale)
+    TRACE.Printf(&#34;Resolving message &#39;%s&#39; for language &#39;%s&#39; and region &#39;%s&#39;&#34;, message, language, region)
+
+    messageConfig, knownLanguage := messages[language]
+    if !knownLanguage {
+        WARN.Printf(&#34;Unsupported language for locale &#39;%s&#39; and message &#39;%s&#39;, trying default language&#34;, locale, message)
+
+        if defaultLanguage, found := Config.String(defaultLanguageOption); found {
+            TRACE.Printf(&#34;Using default language &#39;%s&#39;&#34;, defaultLanguage)
+
+            messageConfig, knownLanguage = messages[defaultLanguage]
+            if !knownLanguage {
+                WARN.Printf(&#34;Unsupported default language for locale &#39;%s&#39; and message &#39;%s&#39;&#34;, defaultLanguage, message)
+                return fmt.Sprintf(unknownValueFormat, message)
+            }
+        } else {
+            WARN.Printf(&#34;Unable to find default language option (%s); messages for unsupported locales will never be translated&#34;, defaultLanguageOption)
+            return fmt.Sprintf(unknownValueFormat, message)
+        }
+    }
+
+    <span class="comment">// This works because unlike the goconfig documentation suggests it will actually</span>
+    <span class="comment">// try to resolve message in DEFAULT if it did not find it in the given section.</span>
+    value, error := messageConfig.String(region, message)
+    if error != nil {
+        WARN.Printf(&#34;Unknown message &#39;%s&#39; for locale &#39;%s&#39;&#34;, message, locale)
+        return fmt.Sprintf(unknownValueFormat, message)
+    }
+
+    if len(args) &gt; 0 {
+        TRACE.Printf(&#34;Arguments detected, formatting &#39;%s&#39; with %v&#34;, value, args)
+        value = fmt.Sprintf(value, args...)
+    }
+
+    return value
+}
+
+type I18nPlugin struct {
+    EmptyPlugin
+}
+
+func (p I18nPlugin) BeforeRequest(c *Controller) {
+    if foundCookie, cookieValue := hasLocaleCookie(c.Request); foundCookie {
+        TRACE.Printf(&#34;Found locale cookie value: %s&#34;, cookieValue)
+        setCurrentLocaleControllerArguments(c, cookieValue)
+    } else if foundHeader, headerValue := hasAcceptLanguageHeader(c.Request); foundHeader {
+        TRACE.Printf(&#34;Found Accept-Language header value: %s&#34;, headerValue)
+        setCurrentLocaleControllerArguments(c, headerValue)
+    } else {
+        TRACE.Println(&#34;Unable to find locale in cookie or header, using empty string&#34;)
+        setCurrentLocaleControllerArguments(c, &#34;&#34;)
+    }
+}
+</pre>
+
+
+
+

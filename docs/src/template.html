@@ -81,6 +81,10 @@ var (
             }
             return template.HTML(ERROR_CLASS)
         },
+
+        &#34;msg&#34;: func(renderArgs map[string]interface{}, message string, args ...interface{}) template.HTML {
+            return template.HTML(Message(renderArgs[CurrentLocaleRenderArg].(string), message, args...))
+        },
     }
 
     Funcs = TemplateFuncs
@@ -97,7 +101,8 @@ func NewTemplateLoader(paths []string) *TemplateLoader {
 <span class="comment">// If a template fails to parse, the error is set on the loader.</span>
 <span class="comment">// (It&#39;s awkward to refresh a single Go Template)</span>
 func (loader *TemplateLoader) Refresh() *Error {
-    TRACE.Println(&#34;Refresh&#34;)
+    TRACE.Printf(&#34;Refreshing templates from %s&#34;, loader.paths)
+
     loader.compileError = nil
     loader.templatePaths = map[string]string{}
 

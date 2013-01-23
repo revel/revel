@@ -1,0 +1,263 @@
+---
+layout: godoc
+---
+<!--
+	Copyright 2009 The Go Authors. All rights reserved.
+	Use of this source code is governed by a BSD-style
+	license that can be found in the LICENSE file.
+-->
+<h1>Http</h1>
+
+	
+		<!-- The package's Name is printed as title by the top-level template -->
+                
+		
+
+		<h2 id="index">Index</h2>
+		<!-- Table of contents for API; must be named manual-nav to turn off auto nav. -->
+		<div id="manual-nav">
+			<dl>
+			
+			
+			
+				
+				<dd><a href="#ResolveContentType">func ResolveContentType(req *http.Request) string</a></dd>
+			
+				
+				<dd><a href="#ResolveFormat">func ResolveFormat(req *http.Request) string</a></dd>
+			
+			
+				
+				<dd><a href="#AcceptLanguage">type AcceptLanguage</a></dd>
+				
+				
+			
+				
+				<dd><a href="#AcceptLanguages">type AcceptLanguages</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#ResolveAcceptLanguage">func ResolveAcceptLanguage(req *http.Request) AcceptLanguages</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#AcceptLanguages.Len">func (al AcceptLanguages) Len() int</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#AcceptLanguages.Less">func (al AcceptLanguages) Less(i, j int) bool</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#AcceptLanguages.String">func (al AcceptLanguages) String() string</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#AcceptLanguages.Swap">func (al AcceptLanguages) Swap(i, j int)</a></dd>
+				
+			
+				
+				<dd><a href="#Request">type Request</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#NewRequest">func NewRequest(r *http.Request) *Request</a></dd>
+				
+				
+			
+				
+				<dd><a href="#Response">type Response</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#NewResponse">func NewResponse(w http.ResponseWriter) *Response</a></dd>
+				
+				
+			
+			
+		</dl>
+
+		
+
+		
+			<h4>Package files</h4>
+			<p>
+			<span style="font-size:90%">
+			
+				<a href="../src/http.html">http.go</a>
+			
+			</span>
+			</p>
+		
+
+		
+		
+		
+			
+			
+			<h2 id="ResolveContentType">func <a href="../src/http.html?s=803:852#L33">ResolveContentType</a></h2>
+			<pre>func ResolveContentType(req *http.Request) string</pre>
+			<p>
+Get the content type.
+e.g. From &#34;multipart/form-data; boundary=--&#34; to &#34;multipart/form-data&#34;
+If none is specified, returns &#34;text/html&#34; by default.
+</p>
+
+			
+		
+			
+			
+			<h2 id="ResolveFormat">func <a href="../src/http.html?s=1070:1114#L42">ResolveFormat</a></h2>
+			<pre>func ResolveFormat(req *http.Request) string</pre>
+			<p>
+Resolve the accept request header.
+</p>
+
+			
+		
+		
+			
+			
+			<h2 id="AcceptLanguage">type <a href="../src/http.html?s=1695:1760#L65">AcceptLanguage</a></h2>
+			<pre>type AcceptLanguage struct {
+    Language string
+    Quality  float32
+}</pre>
+			<p>
+A single language from the Accept-Language HTTP header.
+</p>
+
+
+			
+
+			
+
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="AcceptLanguages">type <a href="../src/http.html?s=1816:1853#L71">AcceptLanguages</a></h2>
+			<pre>type AcceptLanguages []AcceptLanguage</pre>
+			<p>
+A collection of sortable AcceptLanguage instances.
+</p>
+
+
+			
+
+			
+
+			
+
+			
+				
+				<h3 id="ResolveAcceptLanguage">func <a href="../src/http.html?s=2716:2777#L94">ResolveAcceptLanguage</a></h3>
+				<pre>func ResolveAcceptLanguage(req *http.Request) AcceptLanguages</pre>
+				<p>
+Resolve the Accept-Language header value.
+</p>
+<p>
+The results are sorted using the quality defined in the header for each language range with the
+most qualified language range as the first element in the slice.
+</p>
+<p>
+See the HTTP header fields specification
+(<a href="http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.4">http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.4</a>) for more details.
+</p>
+
+				
+			
+
+			
+				
+				<h3 id="AcceptLanguages.Len">func (AcceptLanguages) <a href="../src/http.html?s=1855:1890#L73">Len</a></h3>
+				<pre>func (al AcceptLanguages) Len() int</pre>
+				
+				
+				
+			
+				
+				<h3 id="AcceptLanguages.Less">func (AcceptLanguages) <a href="../src/http.html?s=1998:2043#L75">Less</a></h3>
+				<pre>func (al AcceptLanguages) Less(i, j int) bool</pre>
+				
+				
+				
+			
+				
+				<h3 id="AcceptLanguages.String">func (AcceptLanguages) <a href="../src/http.html?s=2085:2126#L76">String</a></h3>
+				<pre>func (al AcceptLanguages) String() string</pre>
+				
+				
+				
+			
+				
+				<h3 id="AcceptLanguages.Swap">func (AcceptLanguages) <a href="../src/http.html?s=1920:1960#L74">Swap</a></h3>
+				<pre>func (al AcceptLanguages) Swap(i, j int)</pre>
+				
+				
+				
+			
+		
+			
+			
+			<h2 id="Request">type <a href="../src/http.html?s=83:262#L2">Request</a></h2>
+			<pre>type Request struct {
+    *http.Request
+    ContentType     string
+    Format          string <span class="comment">// &#34;html&#34;, &#34;xml&#34;, &#34;json&#34;, or &#34;text&#34;</span>
+    AcceptLanguages AcceptLanguages
+    Locale          string
+}</pre>
+			
+
+			
+
+			
+
+			
+
+			
+				
+				<h3 id="NewRequest">func <a href="../src/http.html?s=434:475#L21">NewRequest</a></h3>
+				<pre>func NewRequest(r *http.Request) *Request</pre>
+				
+				
+			
+
+			
+		
+			
+			
+			<h2 id="Response">type <a href="../src/http.html?s=264:351#L10">Response</a></h2>
+			<pre>type Response struct {
+    Status      int
+    ContentType string
+
+    Out http.ResponseWriter
+}</pre>
+			
+
+			
+
+			
+
+			
+
+			
+				
+				<h3 id="NewResponse">func <a href="../src/http.html?s=353:402#L17">NewResponse</a></h3>
+				<pre>func NewResponse(w http.ResponseWriter) *Response</pre>
+				
+				
+			
+
+			
+		
+		</div>
+	
+
+	
+
+
+
+
+
+
