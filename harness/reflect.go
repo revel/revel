@@ -189,21 +189,20 @@ func processPackage(fset *token.FileSet, pkgImportPath, pkgPath string, pkg *ast
 
 		// For each declaration in the source file...
 		for _, decl := range file.Decls {
+			addImports(imports, decl, pkgPath)
 
 			if scanControllers {
 				// Match and add both structs and methods
-				addImports(imports, decl, pkgPath)
 				structSpecs = appendStruct(structSpecs, pkgImportPath, pkg, decl, imports)
 				appendAction(fset, methodSpecs, decl, pkgImportPath, pkg.Name, imports)
 			} else if scanTests {
-				addImports(imports, decl, pkgPath)
 				structSpecs = appendStruct(structSpecs, pkgImportPath, pkg, decl, imports)
 			}
 
 			// If this is a func...
 			if funcDecl, ok := decl.(*ast.FuncDecl); ok {
 				// Scan it for validation calls
-				lineKeys := getValidationKeys(fset, funcDecl)
+				lineKeys := getValidationKeys(fset, funcDecl, imports)
 				if len(lineKeys) > 0 {
 					validationKeys[pkgImportPath+"."+getFuncName(funcDecl)] = lineKeys
 				}
@@ -217,7 +216,7 @@ func processPackage(fset *token.FileSet, pkgImportPath, pkgPath string, pkg *ast
 	}
 
 	// Filter the struct specs to just the ones that embed rev.Controller.
-	controllerSpecs := findTypesThatEmbed("github.com/robfig/revel.Controller", structSpecs)
+	controllerSpecs := findTypesThatEmbed(rev.REVEL_IMPORT_PATH+".Controller", structSpecs)
 
 	// Add the method specs to them.
 	for _, spec := range controllerSpecs {
@@ -227,7 +226,7 @@ func processPackage(fset *token.FileSet, pkgImportPath, pkgPath string, pkg *ast
 	return &SourceInfo{
 		ControllerSpecs: controllerSpecs,
 		ValidationKeys:  validationKeys,
-		TestSuites:      findTypesThatEmbed("github.com/robfig/revel.TestSuite", structSpecs),
+		TestSuites:      findTypesThatEmbed(rev.REVEL_IMPORT_PATH+".TestSuite", structSpecs),
 		InitImportPaths: initImportPaths,
 	}
 }
@@ -279,7 +278,7 @@ func addImports(imports map[string]string, decl ast.Decl, srcDir string) {
 		if pkgAlias == "" {
 			pkg, err := build.Import(fullPath, srcDir, 0)
 			if err != nil {
-				log.Println("Could not find import:", fullPath)
+				rev.TRACE.Println("Could not find import:", fullPath)
 				continue
 			}
 			pkgAlias = pkg.Name
@@ -391,7 +390,7 @@ func appendAction(fset *token.FileSet, mm methodMap, decl ast.Decl, pkgImportPat
 		return
 	}
 
-	// Does it return a rev.Result?
+	// Does it return a Result?
 	if funcDecl.Type.Results == nil || len(funcDecl.Type.Results.List) != 1 {
 		return
 	}
@@ -399,10 +398,10 @@ func appendAction(fset *token.FileSet, mm methodMap, decl ast.Decl, pkgImportPat
 	if !ok {
 		return
 	}
-	if pkgIdent, ok := selExpr.X.(*ast.Ident); !ok || pkgIdent.Name != "rev" {
+	if selExpr.Sel.Name != "Result" {
 		return
 	}
-	if selExpr.Sel.Name != "Result" {
+	if pkgIdent, ok := selExpr.X.(*ast.Ident); !ok || imports[pkgIdent.Name] != rev.REVEL_IMPORT_PATH {
 		return
 	}
 
@@ -493,12 +492,12 @@ func appendAction(fset *token.FileSet, mm methodMap, decl ast.Decl, pkgImportPat
 //
 // The end result is that we can set the default validation key for each call to
 // be the same as the local variable.
-func getValidationKeys(fset *token.FileSet, funcDecl *ast.FuncDecl) map[int]string {
+func getValidationKeys(fset *token.FileSet, funcDecl *ast.FuncDecl, imports map[string]string) map[int]string {
 	var (
 		lineKeys = make(map[int]string)
 
 		// Check the func parameters and the receiver's members for the *rev.Validation type.
-		validationParam = getValidationParameter(funcDecl)
+		validationParam = getValidationParameter(funcDecl, imports)
 	)
 
 	ast.Inspect(funcDecl.Body, func(node ast.Node) bool {
@@ -553,7 +552,7 @@ func getValidationKeys(fset *token.FileSet, funcDecl *ast.FuncDecl) map[int]stri
 }
 
 // Check to see if there is a *rev.Validation as an argument.
-func getValidationParameter(funcDecl *ast.FuncDecl) *ast.Object {
+func getValidationParameter(funcDecl *ast.FuncDecl, imports map[string]string) *ast.Object {
 	for _, field := range funcDecl.Type.Params.List {
 		starExpr, ok := field.Type.(*ast.StarExpr) // e.g. *rev.Validation
 		if !ok {
@@ -570,7 +569,7 @@ func getValidationParameter(funcDecl *ast.FuncDecl) *ast.Object {
 			continue
 		}
 
-		if xIdent.Name == "rev" && selExpr.Sel.Name == "Validation" {
+		if selExpr.Sel.Name == "Validation" && imports[xIdent.Name] == rev.REVEL_IMPORT_PATH {
 			return field.Names[0].Obj
 		}
 	}

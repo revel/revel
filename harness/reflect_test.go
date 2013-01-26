@@ -1,9 +1,12 @@
 package harness
 
 import (
+	"github.com/robfig/revel"
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"io/ioutil"
+	"log"
 	"reflect"
 	"strings"
 	"testing"
@@ -72,7 +75,7 @@ func TestGetValidationKeys(t *testing.T) {
 	}
 
 	for i, decl := range file.Decls {
-		lineKeys := getValidationKeys(fset, decl.(*ast.FuncDecl))
+		lineKeys := getValidationKeys(fset, decl.(*ast.FuncDecl), map[string]string{"rev": REVEL})
 		for k, v := range expectedValidationKeys[i] {
 			if lineKeys[k] != v {
 				t.Errorf("Not found - %d: %v - Actual Map: %v", k, v, lineKeys)
@@ -129,6 +132,57 @@ func TestTypeExpr(t *testing.T) {
 		actual := NewTypeExpr("pkg", expr)
 		if !reflect.DeepEqual(expected, actual) {
 			t.Error("Fail, expected", expected, ", was", actual)
+		}
+	}
+}
+
+func TestProcessBookingSource(t *testing.T) {
+	rev.Init("", "github.com/robfig/revel/samples/booking", "")
+	sourceInfo, err := ProcessSource([]string{rev.AppPath})
+	if err != nil {
+		t.Fatal("Failed to process booking source with error:", err)
+	}
+
+	CONTROLLER_PKG := "github.com/robfig/revel/samples/booking/app/controllers"
+	expectedControllerSpecs := []*TypeInfo{
+		{"GorpController", CONTROLLER_PKG, "controllers", nil, nil},
+		{"Application", CONTROLLER_PKG, "controllers", nil, nil},
+		{"Hotels", CONTROLLER_PKG, "controllers", nil, nil},
+	}
+	if len(sourceInfo.ControllerSpecs) != len(expectedControllerSpecs) {
+		t.Errorf("Unexpected number of controllers found.  Expected %d, Found %d",
+			len(expectedControllerSpecs), len(sourceInfo.ControllerSpecs))
+	}
+
+NEXT_TEST:
+	for _, expected := range expectedControllerSpecs {
+		for _, actual := range sourceInfo.ControllerSpecs {
+			if actual.StructName == expected.StructName {
+				if actual.ImportPath != expected.ImportPath {
+					t.Errorf("%s expected to have import path %s, actual %s",
+						actual.StructName, expected.ImportPath, actual.ImportPath)
+				}
+				if actual.PackageName != expected.PackageName {
+					t.Errorf("%s expected to have package name %s, actual %s",
+						actual.StructName, expected.PackageName, actual.PackageName)
+				}
+				continue NEXT_TEST
+			}
+		}
+		t.Errorf("Expected to find controller %s, but did not.  Actuals: %s",
+			expected.StructName, sourceInfo.ControllerSpecs)
+	}
+}
+
+func BenchmarkProcessBookingSource(b *testing.B) {
+	rev.Init("", "github.com/robfig/revel/samples/booking", "")
+	rev.TRACE = log.New(ioutil.Discard, "", 0)
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		_, err := ProcessSource(rev.CodePaths)
+		if err != nil {
+			b.Error("Unexpected error:", err)
 		}
 	}
 }

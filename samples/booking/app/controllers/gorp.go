@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"github.com/coopernurse/gorp"
 	_ "github.com/mattn/go-sqlite3"
-	"github.com/robfig/revel"
+	r "github.com/robfig/revel"
 	"github.com/robfig/revel/modules/db/app"
 	"github.com/robfig/revel/samples/booking/app/models"
 )
@@ -15,7 +15,7 @@ var (
 )
 
 type GorpPlugin struct {
-	rev.EmptyPlugin
+	r.EmptyPlugin
 }
 
 func (p GorpPlugin) OnAppStart() {
@@ -55,7 +55,7 @@ func (p GorpPlugin) OnAppStart() {
 		"NameOnCard": 50,
 	})
 
-	dbm.TraceOn("[gorp]", rev.INFO)
+	dbm.TraceOn("[gorp]", r.INFO)
 	dbm.CreateTables()
 
 	bcryptPassword, _ := bcrypt.GenerateFromPassword(
@@ -78,11 +78,11 @@ func (p GorpPlugin) OnAppStart() {
 }
 
 type GorpController struct {
-	*rev.Controller
+	*r.Controller
 	Txn *gorp.Transaction
 }
 
-func (c *GorpController) Begin() rev.Result {
+func (c *GorpController) Begin() r.Result {
 	txn, err := dbm.Begin()
 	if err != nil {
 		panic(err)
@@ -91,7 +91,7 @@ func (c *GorpController) Begin() rev.Result {
 	return nil
 }
 
-func (c *GorpController) Commit() rev.Result {
+func (c *GorpController) Commit() r.Result {
 	if c.Txn == nil {
 		return nil
 	}
@@ -102,7 +102,7 @@ func (c *GorpController) Commit() rev.Result {
 	return nil
 }
 
-func (c *GorpController) Rollback() rev.Result {
+func (c *GorpController) Rollback() r.Result {
 	if c.Txn == nil {
 		return nil
 	}
