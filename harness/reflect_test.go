@@ -75,7 +75,7 @@ func TestGetValidationKeys(t *testing.T) {
 	}
 
 	for i, decl := range file.Decls {
-		lineKeys := getValidationKeys(fset, decl.(*ast.FuncDecl), map[string]string{"rev": REVEL})
+		lineKeys := getValidationKeys(fset, decl.(*ast.FuncDecl), map[string]string{"rev": rev.REVEL_IMPORT_PATH})
 		for k, v := range expectedValidationKeys[i] {
 			if lineKeys[k] != v {
 				t.Errorf("Not found - %d: %v - Actual Map: %v", k, v, lineKeys)
