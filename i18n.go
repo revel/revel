@@ -100,7 +100,7 @@ func loadMessages(path string) {
 	}
 }
 
-// Load a single message file 
+// Load a single message file
 func loadMessageFile(path string, info os.FileInfo, osError error) error {
 	if osError != nil {
 		return osError
@@ -167,7 +167,7 @@ func setCurrentLocaleControllerArguments(c *Controller, locale string) {
 
 // Determine whether the given request has valid Accept-Language value.
 //
-// Assumes that the accept languages stored in the request are sorted according to quality, with top 
+// Assumes that the accept languages stored in the request are sorted according to quality, with top
 // quality first in the slice.
 func hasAcceptLanguageHeader(request *Request) (bool, string) {
 	if request.AcceptLanguages != nil && len(request.AcceptLanguages) > 0 {
@@ -180,14 +180,11 @@ func hasAcceptLanguageHeader(request *Request) (bool, string) {
 // Determine whether the given request has a valid language cookie value.
 func hasLocaleCookie(request *Request) (bool, string) {
 	if request != nil && request.Cookies() != nil {
-		if name, found := Config.String(localeCookieConfigKey); found {
-			if cookie, error := request.Cookie(name); error == nil {
-				return true, cookie.Value
-			} else {
-				TRACE.Printf("Unable to read locale cookie with name '%s': %s", name, error.Error())
-			}
+		name := Config.StringDefault(localeCookieConfigKey, CookiePrefix+"_LANG")
+		if cookie, error := request.Cookie(name); error == nil {
+			return true, cookie.Value
 		} else {
-			ERROR.Printf("Unable to find configured locale cookie (%s), please correct the application configuration file!", localeCookieConfigKey)
+			TRACE.Printf("Unable to read locale cookie with name '%s': %s", name, error.Error())
 		}
 	}
 

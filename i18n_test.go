@@ -84,11 +84,11 @@ func TestI18nMessageWithDefaultLocale(t *testing.T) {
 func TestHasLocaleCookie(t *testing.T) {
 	loadTestI18nConfig(t)
 
-	if found, value := hasLocaleCookie(buildRequestWithCookie("REVEL_LANG", "en")); !found {
-		t.Errorf("Expected %s cookie with value '%s' but found nothing or unexpected value '%s'", "REVEL_LANG", "en", value)
+	if found, value := hasLocaleCookie(buildRequestWithCookie("APP_LANG", "en")); !found {
+		t.Errorf("Expected %s cookie with value '%s' but found nothing or unexpected value '%s'", "APP_LANG", "en", value)
 	}
-	if found, value := hasLocaleCookie(buildRequestWithCookie("REVEL_LANG", "en-US")); !found {
-		t.Errorf("Expected %s cookie with value '%s' but found nothing or unexpected value '%s'", "REVEL_LANG", "en-US", value)
+	if found, value := hasLocaleCookie(buildRequestWithCookie("APP_LANG", "en-US")); !found {
+		t.Errorf("Expected %s cookie with value '%s' but found nothing or unexpected value '%s'", "APP_LANG", "en-US", value)
 	}
 	if found, _ := hasLocaleCookie(buildRequestWithCookie("DOESNT_EXIST", "en-US")); found {
 		t.Errorf("Expected %s cookie to not exist, but apparently it does", "DOESNT_EXIST")
@@ -97,8 +97,11 @@ func TestHasLocaleCookie(t *testing.T) {
 
 func TestHasLocaleCookieWithInvalidConfig(t *testing.T) {
 	loadTestI18nConfigWithoutLanguageCookieOption(t)
-	if found, _ := hasLocaleCookie(buildRequestWithCookie("REVEL_LANG", "en-US")); found {
-		t.Errorf("Expected %s cookie to not exist because the configured name is missing", "REVEL_LANG")
+	if found, _ := hasLocaleCookie(buildRequestWithCookie("APP_LANG", "en-US")); found {
+		t.Errorf("Expected %s cookie to not exist because the configured name is missing", "APP_LANG")
+	}
+	if found, _ := hasLocaleCookie(buildRequestWithCookie("REVEL_LANG", "en-US")); !found {
+		t.Errorf("Expected %s cookie to exist", "REVEL_LANG")
 	}
 }
 
@@ -120,7 +123,7 @@ func TestBeforeRequest(t *testing.T) {
 		t.Errorf("Expected to find current language '%s' in controller, found '%s' instead", "", controller.Request.Locale)
 	}
 
-	controller = NewController(buildRequestWithCookie("REVEL_LANG", "en-US"), nil, &ControllerType{reflect.TypeOf(Controller{}), nil})
+	controller = NewController(buildRequestWithCookie("APP_LANG", "en-US"), nil, &ControllerType{reflect.TypeOf(Controller{}), nil})
 	if plugin.BeforeRequest(controller); controller.Request.Locale != "en-US" {
 		t.Errorf("Expected to find current language '%s' in controller, found '%s' instead", "en-US", controller.Request.Locale)
 	}
@@ -175,6 +178,7 @@ func loadTestI18nConfig(t *testing.T) {
 		t.Fatalf("Unable to load test config '%s': %s", testConfigName, error.Error())
 	}
 	Config = testConfig
+	CookiePrefix = Config.StringDefault("cookie.prefix", "REVEL")
 }
 
 func loadTestI18nConfigWithoutLanguageCookieOption(t *testing.T) {

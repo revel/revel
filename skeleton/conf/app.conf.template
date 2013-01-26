@@ -4,9 +4,6 @@ http.addr=
 http.port=9000
 cookie.prefix=REVEL
 
-# The language cookie name used to store the current language.
-i18n.cookie=%(cookie.prefix)s_LANG
-
 # The default language of this application.
 i18n.default_language=en
 
@@ -27,7 +24,7 @@ results.pretty=false
 results.staging=false
 watch=false
 
-module.testrunner = 
+module.testrunner =
 
 log.trace.output = off
 log.info.output  = off
