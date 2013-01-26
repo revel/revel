@@ -7,25 +7,25 @@
   {{with $field := field "user.Username" .}}
     <p class="{{$field.ErrorClass}}">
       <strong>Username:</strong>
-      <input type="text" name="{{$field.Name}}" size="16" value="{{$field.Value}}"> *
+      <input type="text" name="{{$field.Name}}" size="16" value="{{$field.Flash}}"> *
       <span class="error">{{$field.Error}}</span>
     </p>
   {{end}}
   {{with $field := field "user.Name" .}}
     <p class="{{$field.ErrorClass}}">
-      <strong>Real name:</strong> <input type="text" name="{{$field.Name}}" size="16" value="{{$field.Value}}"> *
+      <strong>Real name:</strong> <input type="text" name="{{$field.Name}}" size="16" value="{{$field.Flash}}"> *
       <span class="error">{{$field.Error}}</span>
     </p>
   {{end}}
   {{with $field := field "user.Password" .}}
     <p class="{{$field.ErrorClass}}">
-      <strong>Password:</strong> <input type="password" name="{{$field.Name}}" size="16" value="{{$field.Value}}"> *
+      <strong>Password:</strong> <input type="password" name="{{$field.Name}}" size="16" value="{{$field.Flash}}"> *
       <span class="error">{{$field.Error}}</span>
     </p>
   {{end}}
   {{with $field := field "verifyPassword" .}}
     <p class="{{$field.ErrorClass}}">
-      <strong>Verify password:</strong> <input type="password" name="{{$field.Name}}" size="16" value="{{$field.Value}}"> *
+      <strong>Verify password:</strong> <input type="password" name="{{$field.Name}}" size="16" value="{{$field.Flash}}"> *
       <span class="error">{{$field.Error}}</span>
     </p>
   {{end}}
@@ -35,4 +35,3 @@
 </form>
 
 {{template "footer.html" .}}
-

@@ -29,14 +29,14 @@
   {{with $field := field "booking.CheckInDate" .}}
     <p class="{{$field.ErrorClass}}">
       <strong>Check In Date:</strong>
-      <input type="text" size="10" name="{{$field.Name}}" class="datepicker" value="{{$field.Value}}">
+      <input type="text" size="10" name="{{$field.Name}}" class="datepicker" value="{{$field.Flash}}">
       * <span class="error">{{$field.Error}}</span>
     </p>
   {{end}}
   {{with $field := field "booking.CheckOutDate" .}}
     <p class="{{$field.ErrorClass}}">
       <strong>Check Out Date:</strong>
-      <input type="text" size="10" name="{{$field.Name}}" class="datepicker" value="{{$field.Value}}">
+      <input type="text" size="10" name="{{$field.Name}}" class="datepicker" value="{{$field.Flash}}">
       * <span class="error">{{$field.Error}}</span>
     </p>
   {{end}}
@@ -60,14 +60,14 @@
   {{with $field := field "booking.CardNumber" .}}
     <p class="{{$field.ErrorClass}}">
       <strong>Credit Card #:</strong>
-      <input type="text" name="{{$field.Name}}" size="16" value="{{$field.Value}}">
+      <input type="text" name="{{$field.Name}}" size="16" value="{{$field.Flash}}">
       * <span class="error">{{$field.Error}}</span>
     </p>
   {{end}}
   {{with $field := field "booking.NameOnCard" .}}
     <p class="{{$field.ErrorClass}}">
       <strong>Credit Card Name:</strong>
-      <input type="text" name="{{$field.Name}}" size="16" value="{{$field.Value}}">
+      <input type="text" name="{{$field.Name}}" size="16" value="{{$field.Flash}}">
       * <span class="error">{{$field.Error}}</span>
     </p>
   {{end}}
