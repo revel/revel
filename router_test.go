@@ -336,6 +336,17 @@ func TestReverseRouting(t *testing.T) {
 	}
 }
 
+func BenchmarkRouter(b *testing.B) {
+	router := NewRouter("")
+	router.parse(TEST_ROUTES, false)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		for req, _ := range routeMatchTestCases {
+			router.Route(req)
+		}
+	}
+}
+
 // Helpers
 
 func eq(t *testing.T, name string, a, b interface{}) bool {
