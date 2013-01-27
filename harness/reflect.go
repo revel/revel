@@ -12,6 +12,7 @@ import (
 	"go/token"
 	"log"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 )
@@ -84,6 +85,11 @@ func ProcessSource(roots []string) (*SourceInfo, *rev.Error) {
 	)
 
 	for _, root := range roots {
+		rootImportPath := importPathFromPath(root)
+		if rootImportPath == "" {
+			rev.WARN.Println("Skipping code path", root)
+			continue
+		}
 
 		// Start walking the directory tree.
 		filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
@@ -97,7 +103,10 @@ func ProcessSource(roots []string) (*SourceInfo, *rev.Error) {
 			}
 
 			// Get the import path of the package.
-			pkgImportPath := filepath.ToSlash(path[len(rev.SourcePath)+1:])
+			pkgImportPath := rootImportPath
+			if root != path {
+				pkgImportPath = rootImportPath + "/" + filepath.ToSlash(path[len(root)+1:])
+			}
 
 			// Parse files within the path.
 			var pkgs map[string]*ast.Package
@@ -707,4 +716,22 @@ var _BUILTIN_TYPES = map[string]struct{}{
 func IsBuiltinType(name string) bool {
 	_, ok := _BUILTIN_TYPES[name]
 	return ok
+}
+
+func importPathFromPath(root string) string {
+	for _, gopath := range filepath.SplitList(build.Default.GOPATH) {
+		srcPath := path.Join(gopath, "src")
+		if strings.HasPrefix(root, srcPath) {
+			return filepath.ToSlash(root[len(srcPath)+1:])
+		}
+	}
+
+	srcPath := path.Join(build.Default.GOROOT, "src", "pkg")
+	if strings.HasPrefix(root, srcPath) {
+		rev.WARN.Println("Code path should be in GOPATH, but is in GOROOT:", root)
+		return filepath.ToSlash(root[len(srcPath)+1:])
+	}
+
+	rev.ERROR.Println("Unexpected! Code path is not in GOPATH:", root)
+	return ""
 }

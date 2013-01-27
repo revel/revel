@@ -79,18 +79,20 @@ func init() {
 func Init(mode, importPath, srcPath string) {
 	// Ignore trailing slashes.
 	ImportPath = strings.TrimRight(importPath, "/")
-	SourcePath = strings.TrimRight(srcPath, "/")
+	SourcePath = srcPath
 	RunMode = mode
 
+	// If the SourcePath is not specified, find it using build.Import.
+	var revelSourcePath string // may be different from the app source path
 	if SourcePath == "" {
-		if gopath := os.Getenv("GOPATH"); gopath == "" {
-			ERROR.Fatalln("GOPATH environment variable is not set. ",
-				"Please refer to http://golang.org/doc/code.html to configure your Go environment.")
-		}
-		SourcePath = findSrcPath(importPath)
+		revelSourcePath, SourcePath = findSrcPaths(importPath)
+	} else {
+		// If the SourcePath was specified, assume both Revel and the app are within it.
+		SourcePath = path.Clean(SourcePath)
+		revelSourcePath = SourcePath
 	}
 
-	RevelPath = path.Join(SourcePath, filepath.FromSlash(REVEL_IMPORT_PATH))
+	RevelPath = path.Join(revelSourcePath, filepath.FromSlash(REVEL_IMPORT_PATH))
 	BasePath = path.Join(SourcePath, filepath.FromSlash(importPath))
 	AppPath = path.Join(BasePath, "app")
 	ViewsPath = path.Join(AppPath, "views")
@@ -192,26 +194,26 @@ func newLogger(wr io.Writer) *log.Logger {
 	return log.New(wr, DEFAULT.Prefix(), DEFAULT.Flags())
 }
 
-// findSrcPath uses the "go/build" package to find the source root.
-func findSrcPath(importPath string) string {
+// findSrcPaths uses the "go/build" package to find the source root for Revel
+// and the app.
+func findSrcPaths(importPath string) (revelSourcePath, appSourcePath string) {
+	log.Println("findSrcpaths:", importPath)
+	if gopath := os.Getenv("GOPATH"); gopath == "" {
+		ERROR.Fatalln("GOPATH environment variable is not set. ",
+			"Please refer to http://golang.org/doc/code.html to configure your Go environment.")
+	}
+
 	appPkg, err := build.Import(importPath, "", build.FindOnly)
 	if err != nil {
-		log.Fatalln("Failed to import", importPath, "with error:", err)
+		ERROR.Fatalln("Failed to import", importPath, "with error:", err)
 	}
 
 	revelPkg, err := build.Import(REVEL_IMPORT_PATH, "", build.FindOnly)
 	if err != nil {
-		log.Fatalln("Failed to find Revel with error:", err)
+		ERROR.Fatalln("Failed to find Revel with error:", err)
 	}
 
-	// Find the source path from each, and ensure they are equal.
-	if revelPkg.SrcRoot != appPkg.SrcRoot {
-		log.Fatalln("Revel must be installed in the same GOPATH as your app."+
-			"\nRevel source root:", revelPkg.SrcRoot,
-			"\nApp source root:", appPkg.SrcRoot)
-	}
-
-	return appPkg.SrcRoot
+	return revelPkg.SrcRoot, appPkg.SrcRoot
 }
 
 type Module struct {

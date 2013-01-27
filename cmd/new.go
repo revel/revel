@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/robfig/revel"
 	"go/build"
 	"math/rand"
 	"os"
@@ -38,7 +39,8 @@ func newApp(args []string) {
 		errorf("No import path given.\nRun 'revel help new' for usage.\n")
 	}
 
-	if gopath := os.Getenv("GOPATH"); gopath == "" {
+	gopath := build.Default.GOPATH
+	if gopath == "" {
 		errorf("Abort: GOPATH environment variable is not set. " +
 			"Please refer to http://golang.org/doc/code.html to configure your Go environment.")
 	}
@@ -55,13 +57,14 @@ func newApp(args []string) {
 		return
 	}
 
-	revelPkg, err := build.Import("github.com/robfig/revel", "", build.FindOnly)
+	revelPkg, err := build.Import(rev.REVEL_IMPORT_PATH, "", build.FindOnly)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Failed to find revel code.")
+		fmt.Fprintf(os.Stderr, "Abort: Could not find Revel source code: %s\n", err)
 		return
 	}
 
-	appDir := path.Join(revelPkg.SrcRoot, filepath.FromSlash(importPath))
+	srcRoot := path.Join(filepath.SplitList(gopath)[0], "src")
+	appDir := path.Join(srcRoot, filepath.FromSlash(importPath))
 	err = os.MkdirAll(appDir, 0777)
 	panicOnError(err, "Failed to create directory "+appDir)
 
