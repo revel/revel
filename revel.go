@@ -38,12 +38,12 @@ var (
 
 	Modules []Module
 
-	// Server config.	
+	// Server config.
 	//
 	// Alert: This is how the app is configured, which may be different from
 	// the current process reality.  For example, if the app is configured for
 	// port 9000, HttpPort will always be 9000, even though in dev mode it is
-	// run on a random port and proxied. 
+	// run on a random port and proxied.
 	HttpPort int    // e.g. 9000
 	HttpAddr string // e.g. "", "127.0.0.1"
 
@@ -58,10 +58,10 @@ var (
 	ERROR   = DEFAULT
 
 	// Revel runs every function in this array after init.
-	InitHooks []func()
+	InitHooks   []func()
+	Initialized bool
 
 	// Private
-	revelInit bool
 	secretKey []byte
 )
 
@@ -142,7 +142,7 @@ func Init(mode, importPath, srcPath string) {
 		hook()
 	}
 
-	revelInit = true
+	Initialized = true
 }
 
 // Create a logger using log.* directives in app.conf plus the current settings
@@ -248,7 +248,7 @@ func addModule(name, importPath, modulePath string) {
 }
 
 func CheckInit() {
-	if !revelInit {
+	if !Initialized {
 		panic("Revel has not been initialized!")
 	}
 }
