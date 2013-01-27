@@ -36,6 +36,10 @@ func packageApp(args []string) {
 	appImportPath := args[0]
 	rev.Init("", appImportPath, "")
 
+	// Remove the archive if it already exists.
+	destFile := path.Base(rev.BasePath) + ".zip"
+	os.Remove(destFile)
+
 	app, reverr := harness.Build()
 	panicOnError(reverr, "Failed to build")
 
@@ -74,7 +78,7 @@ func packageApp(args []string) {
 		tmplData)
 
 	// Create the zip file.
-	zipName := mustZipDir(path.Base(rev.BasePath)+".zip", tmpDir)
+	zipName := mustZipDir(destFile, tmpDir)
 
 	fmt.Println("Your archive is ready:", zipName)
 }
