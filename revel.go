@@ -83,6 +83,10 @@ func Init(mode, importPath, srcPath string) {
 	RunMode = mode
 
 	if SourcePath == "" {
+		if gopath := os.Getenv("GOPATH"); gopath == "" {
+			ERROR.Fatalln("GOPATH environment variable is not set. ",
+				"Please refer to http://golang.org/doc/code.html to configure your Go environment.")
+		}
 		SourcePath = findSrcPath(importPath)
 	}
 

@@ -35,10 +35,20 @@ var (
 
 func newApp(args []string) {
 	if len(args) == 0 {
-		errorf("No path given.\nRun 'revel help new' for usage.\n")
+		errorf("No import path given.\nRun 'revel help new' for usage.\n")
+	}
+
+	if gopath := os.Getenv("GOPATH"); gopath == "" {
+		errorf("Abort: GOPATH environment variable is not set. " +
+			"Please refer to http://golang.org/doc/code.html to configure your Go environment.")
 	}
 
 	importPath := args[0]
+	if path.IsAbs(importPath) {
+		errorf("Abort: '%s' looks like a directory.  Please provide a Go import path instead.",
+			importPath)
+	}
+
 	_, err := build.Import(importPath, "", build.FindOnly)
 	if err == nil {
 		fmt.Fprintf(os.Stderr, "Abort: Import path %s already exists.\n", importPath)
