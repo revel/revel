@@ -20,11 +20,12 @@ Now run it:
 
 	The commands are:
 
-	    run         run a Revel application
-	    new         create a skeleton Revel application
-	    clean       clean a Revel application's temp files
-	    package     package a Revel application (e.g. for deployment)
-	    test        run all tests from the command-line
+		new         create a skeleton Revel application
+		run         run a Revel application
+		build       build a Revel application (e.g. for deployment)
+		package     package a Revel application (e.g. for deployment)
+		clean       clean a Revel application's temp files
+		test        run all tests from the command-line
 
 	Use "revel help [command]" for more information.
 
