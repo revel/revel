@@ -142,6 +142,7 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
 				Line:        line,
 				SourceLines: templateContent,
 			}
+			ERROR.Printf("Template Execution Error (in %s): %s", templateName, description)
 			ErrorResult{r.RenderArgs, compileError}.Apply(req, resp)
 			return
 		}
