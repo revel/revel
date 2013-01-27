@@ -2,11 +2,13 @@ package harness
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"github.com/robfig/revel"
 	"io"
 	"os"
 	"os/exec"
+	"time"
 )
 
 // App contains the configuration for running a Revel app.  (Not for the app itself)
@@ -48,14 +50,26 @@ func NewAppCmd(binPath string, port int) AppCmd {
 }
 
 // Start the app server, and wait until it is ready to serve requests.
-func (cmd AppCmd) Start() {
+func (cmd AppCmd) Start() error {
 	listeningWriter := startupListeningWriter{os.Stdout, make(chan bool)}
 	cmd.Stdout = listeningWriter
 	rev.TRACE.Println("Exec app:", cmd.Path, cmd.Args)
 	if err := cmd.Cmd.Start(); err != nil {
 		rev.ERROR.Fatalln("Error running:", err)
 	}
-	<-listeningWriter.notifyReady
+
+	select {
+	case <-cmd.waitChan():
+		return errors.New("revel/harness: app died")
+
+	case <-time.After(30 * time.Second):
+		cmd.Kill()
+		return errors.New("revel/harness: app timed out")
+
+	case <-listeningWriter.notifyReady:
+		return nil
+	}
+	panic("Impossible")
 }
 
 // Run the app server inline.  Never returns.
@@ -75,6 +89,16 @@ func (cmd AppCmd) Kill() {
 			rev.ERROR.Fatalln("Failed to kill revel server:", err)
 		}
 	}
+}
+
+// Return a channel that is notified when Wait() returns.
+func (cmd AppCmd) waitChan() <-chan struct{} {
+	ch := make(chan struct{}, 1)
+	go func() {
+		cmd.Wait()
+		ch <- struct{}{}
+	}()
+	return ch
 }
 
 // A io.Writer that copies to the destination, and listens for "Listening on.."

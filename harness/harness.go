@@ -108,7 +108,13 @@ func (h *Harness) Refresh() (err *rev.Error) {
 	}
 
 	h.app.Port = h.port
-	h.app.Cmd().Start()
+	if err2 := h.app.Cmd().Start(); err2 != nil {
+		return &rev.Error{
+			Title:       "App failed to start up",
+			Description: err2.Error(),
+		}
+	}
+
 	return
 }
 
