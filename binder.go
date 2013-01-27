@@ -49,13 +49,11 @@ var (
 // Sadly, the binder lookups can not be declared initialized -- that results in
 // an "initialization loop" compile error.
 func init() {
-	intBinder := ValueBinder(bindInt)
-
-	KindBinders[reflect.Int] = intBinder
-	KindBinders[reflect.Int8] = intBinder
-	KindBinders[reflect.Int16] = intBinder
-	KindBinders[reflect.Int32] = intBinder
-	KindBinders[reflect.Int64] = intBinder
+	KindBinders[reflect.Int] = ValueBinder(bindInt)
+	KindBinders[reflect.Int8] = ValueBinder(bindInt8)
+	KindBinders[reflect.Int16] = ValueBinder(bindInt16)
+	KindBinders[reflect.Int32] = ValueBinder(bindInt32)
+	KindBinders[reflect.Int64] = ValueBinder(bindInt64)
 
 	KindBinders[reflect.String] = ValueBinder(bindStr)
 	KindBinders[reflect.Bool] = ValueBinder(bindBool)
@@ -81,13 +79,32 @@ var (
 func bindStr(val string, typ reflect.Type) reflect.Value {
 	return reflect.ValueOf(val)
 }
-
 func bindInt(val string, typ reflect.Type) reflect.Value {
-	intValue, err := strconv.Atoi(val)
-	if err != nil {
-		WARN.Println("BindInt:", err)
+	return reflect.ValueOf(int(bindIntHelper(val, 0)))
+}
+func bindInt8(val string, typ reflect.Type) reflect.Value {
+	return reflect.ValueOf(int8(bindIntHelper(val, 8)))
+}
+func bindInt16(val string, typ reflect.Type) reflect.Value {
+	return reflect.ValueOf(int16(bindIntHelper(val, 16)))
+}
+func bindInt32(val string, typ reflect.Type) reflect.Value {
+	return reflect.ValueOf(int32(bindIntHelper(val, 32)))
+}
+func bindInt64(val string, typ reflect.Type) reflect.Value {
+	return reflect.ValueOf(int64(bindIntHelper(val, 64)))
+}
+
+func bindIntHelper(val string, bits int) int64 {
+	if len(val) == 0 {
+		return 0
 	}
-	return reflect.ValueOf(intValue)
+	intValue, err := strconv.ParseInt(val, 10, bits)
+	if err != nil {
+		WARN.Println(err)
+		return 0
+	}
+	return intValue
 }
 
 // Booleans support a couple different value formats:

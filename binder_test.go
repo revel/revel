@@ -25,6 +25,10 @@ type B struct {
 var (
 	PARAMS = map[string][]string{
 		"int":             {"1"},
+		"int8":            {"1"},
+		"int16":           {"1"},
+		"int32":           {"1"},
+		"int64":           {"1"},
 		"str":             {"hello"},
 		"bool-true":       {"true"},
 		"bool-1":          {"1"},
@@ -71,6 +75,10 @@ var (
 
 var binderTestCases = map[string]interface{}{
 	"int":        1,
+	"int8":       int8(1),
+	"int16":      int16(1),
+	"int32":      int32(1),
+	"int64":      int64(1),
 	"str":        "hello",
 	"bool-true":  true,
 	"bool-1":     true,

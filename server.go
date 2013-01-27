@@ -91,6 +91,7 @@ func handleInternal(w http.ResponseWriter, r *http.Request, ws *websocket.Conn) 
 		if arg.Type == websocketType {
 			boundArg = reflect.ValueOf(ws)
 		} else {
+			TRACE.Println("Binding:", arg.Name, "as", arg.Type)
 			boundArg = controller.Params.Bind(arg.Name, arg.Type)
 		}
 		actualArgs = append(actualArgs, boundArg)
