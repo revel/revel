@@ -185,7 +185,7 @@ func (loader *TemplateLoader) Refresh() *Error {
 
 			// Store / report the first error encountered.
 			if err != nil && loader.compileError == nil {
-				line, description := parseTemplateError(err)
+				_, line, description := parseTemplateError(err)
 				loader.compileError = &Error{
 					Title:       "Template Compilation Error",
 					Path:        templateName,
@@ -223,7 +223,7 @@ func (loader *TemplateLoader) WatchFile(basename string) bool {
 
 // Parse the line, and description from an error message like:
 // html/template:Application/Register.html:36: no such template "footer.html"
-func parseTemplateError(err error) (line int, description string) {
+func parseTemplateError(err error) (templateName string, line int, description string) {
 	description = err.Error()
 	i := regexp.MustCompile(`:\d+:`).FindStringIndex(description)
 	if i != nil {
@@ -231,9 +231,14 @@ func parseTemplateError(err error) (line int, description string) {
 		if err != nil {
 			ERROR.Println("Failed to parse line number from error message:", err)
 		}
+		templateName = description[:i[0]]
+		if colon := strings.Index(templateName, ":"); colon != -1 {
+			templateName = templateName[colon+1:]
+		}
+		templateName = strings.TrimSpace(templateName)
 		description = description[i[1]+1:]
 	}
-	return line, description
+	return templateName, line, description
 }
 
 // Return the Template with the given name.  The name is the template's path

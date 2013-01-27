@@ -125,14 +125,22 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
 		var b bytes.Buffer
 		err := r.Template.Render(&b, r.RenderArgs)
 		if err != nil {
-			line, description := parseTemplateError(err)
+			var templateContent []string
+			templateName, line, description := parseTemplateError(err)
+			if templateName == "" {
+				templateName = r.Template.Name()
+				templateContent = r.Template.Content()
+			} else {
+				if tmpl, err := MainTemplateLoader.Template(templateName); err == nil {
+					templateContent = tmpl.Content()
+				}
+			}
 			compileError := &Error{
 				Title:       "Template Execution Error",
-				Path:        r.Template.Name(),
+				Path:        templateName,
 				Description: description,
 				Line:        line,
-				SourceLines: r.Template.Content(),
-				SourceType:  "template",
+				SourceLines: templateContent,
 			}
 			ErrorResult{r.RenderArgs, compileError}.Apply(req, resp)
 			return
