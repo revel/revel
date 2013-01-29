@@ -36,18 +36,18 @@ response. Related **actions** are grouped into **controllers**.
 
 ***
 
-A **Controller** is any type that embeds `rev.Controller` (directly or indirectly).
+A **Controller** is any type that embeds `revel.Controller` (directly or indirectly).
 
 Typically:
 <pre class="prettyprint lang-go">
 type AppController struct {
-  *rev.Controller
+  *revel.Controller
 }
 </pre>
 
-(Currently `rev.Controller` must be embedded as the first type in your struct)
+(Currently `revel.Controller` must be embedded as the first type in your struct)
 
-The `rev.Controller` is the context for the request.  It contains the request
+The `revel.Controller` is the context for the request.  It contains the request
 and response data.  Please refer to [the godoc](../docs/godoc/controller.html#Controller)
 for the full story, but here is the definition (along with definitions of helper types):
 
@@ -108,27 +108,27 @@ type Response struct {
 
 As part of handling a HTTP request, Revel instantiates an instance of your
 Controller, and it sets all of these properties on the embedded
-`rev.Controller`.  Therefore, Revel does not share Controller instances between
+`revel.Controller`.  Therefore, Revel does not share Controller instances between
 requests.
 
 ***
 
 An **Action** is any method on a **Controller** that meets the following criteria:
 * is exported
-* returns a rev.Result
+* returns a revel.Result
 
 For example:
 
 <pre class="prettyprint lang-go">
-func (c AppController) ShowLogin(username string) rev.Result {
+func (c AppController) ShowLogin(username string) revel.Result {
 	..
 	return c.Render(username)
 }
 </pre>
 
-The example invokes rev.Controller.Render to execute a template, passing it the
-username as a parameter.  There are many methods on **rev.Controller** that
-produce **rev.Result**, but applications are also free to create their own.
+The example invokes revel.Controller.Render to execute a template, passing it the
+username as a parameter.  There are many methods on **revel.Controller** that
+produce **revel.Result**, but applications are also free to create their own.
 
 ## Results
 

@@ -65,12 +65,12 @@ action:
 
 <pre class="prettyprint lang-go">
 func init() {
-	rev.RegisterPlugin(GorpPlugin{})
-	rev.InterceptMethod((*GorpController).Begin, rev.BEFORE)
-	rev.InterceptMethod(Application.AddUser, rev.BEFORE)
-	rev.InterceptMethod(Hotels.checkUser, rev.BEFORE)
-	rev.InterceptMethod((*GorpController).Commit, rev.AFTER)
-	rev.InterceptMethod((*GorpController).Rollback, rev.FINALLY)
+	revel.RegisterPlugin(GorpPlugin{})
+	revel.InterceptMethod((*GorpController).Begin, revel.BEFORE)
+	revel.InterceptMethod(Application.AddUser, revel.BEFORE)
+	revel.InterceptMethod(Hotels.checkUser, revel.BEFORE)
+	revel.InterceptMethod((*GorpController).Commit, revel.AFTER)
+	revel.InterceptMethod((*GorpController).Rollback, revel.FINALLY)
 }
 </pre>
 
@@ -78,7 +78,7 @@ As an example, `checkUser` looks up the username in the session and redirects
 the user to log in if they are not already.
 
 <pre class="prettyprint lang-go">
-func (c Hotels) checkUser() rev.Result {
+func (c Hotels) checkUser() revel.Result {
 	if user := c.connected(); user == nil {
 		c.Flash.Error("Please log in first")
 		return c.Redirect(Application.Index)
@@ -97,7 +97,7 @@ For example, here is the routine to validate a booking, from
 [models/booking.go](https://github.com/robfig/revel/blob/master/samples/booking/app/models/booking.go):
 
 <pre class="prettyprint lang-go">
-func (booking Booking) Validate(v *rev.Validation) {
+func (booking Booking) Validate(v *revel.Validation) {
 	v.Required(booking.User)
 	v.Required(booking.Hotel)
 	v.Required(booking.CheckInDate)
@@ -107,9 +107,9 @@ func (booking Booking) Validate(v *rev.Validation) {
 		Message("Credit card number must be numeric and 16 digits")
 
 	v.Check(booking.NameOnCard,
-		rev.Required{},
-		rev.MinSize{3},
-		rev.MaxSize{70},
+		revel.Required{},
+		revel.MinSize{3},
+		revel.MaxSize{70},
 	)
 }
 </pre>

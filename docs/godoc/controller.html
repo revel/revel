@@ -93,7 +93,7 @@ layout: godoc
 		
 			
 			
-			<h2 id="Controller">type <a href="../src/controller.html?s=133:1116#L5">Controller</a></h2>
+			<h2 id="Controller">type <a href="../src/controller.html?s=135:1118#L5">Controller</a></h2>
 			<pre>type Controller struct {
     Name          string          <span class="comment">// The controller name, e.g. &#34;Application&#34;</span>
     Type          *ControllerType <span class="comment">// A description of the controller type.</span>
@@ -123,7 +123,7 @@ layout: godoc
 
 			
 				
-				<h3 id="NewController">func <a href="../src/controller.html?s=1118:1198#L25">NewController</a></h3>
+				<h3 id="NewController">func <a href="../src/controller.html?s=1120:1200#L25">NewController</a></h3>
 				<pre>func NewController(req *Request, resp *Response, ct *ControllerType) *Controller</pre>
 				
 				
@@ -131,14 +131,14 @@ layout: godoc
 
 			
 				
-				<h3 id="Controller.FlashParams">func (*Controller) <a href="../src/controller.html?s=1481:1515#L41">FlashParams</a></h3>
+				<h3 id="Controller.FlashParams">func (*Controller) <a href="../src/controller.html?s=1483:1517#L41">FlashParams</a></h3>
 				<pre>func (c *Controller) FlashParams()</pre>
 				
 				
 				
 			
 				
-				<h3 id="Controller.Invoke">func (*Controller) <a href="../src/controller.html?s=1825:1934#L53">Invoke</a></h3>
+				<h3 id="Controller.Invoke">func (*Controller) <a href="../src/controller.html?s=1827:1936#L53">Invoke</a></h3>
 				<pre>func (c *Controller) Invoke(appControllerPtr reflect.Value, method reflect.Value, methodArgs []reflect.Value)</pre>
 				<p>
 Invoke the given method, save headers/cookies to the response, and apply the
@@ -149,7 +149,7 @@ result.  (e.g. render a template to the response)
 				
 			
 				
-				<h3 id="Controller.Message">func (*Controller) <a href="../src/controller.html?s=8143:8223#L276">Message</a></h3>
+				<h3 id="Controller.Message">func (*Controller) <a href="../src/controller.html?s=8147:8227#L276">Message</a></h3>
 				<pre>func (c *Controller) Message(message string, args ...interface{}) (value string)</pre>
 				<p>
 Perform a message lookup for the given message name using the given arguments
@@ -163,14 +163,14 @@ The current language is set by the i18n plugin.
 				
 			
 				
-				<h3 id="Controller.NotFound">func (*Controller) <a href="../src/controller.html?s=6729:6798#L227">NotFound</a></h3>
+				<h3 id="Controller.NotFound">func (*Controller) <a href="../src/controller.html?s=6733:6802#L227">NotFound</a></h3>
 				<pre>func (c *Controller) NotFound(msg string, objs ...interface{}) Result</pre>
 				
 				
 				
 			
 				
-				<h3 id="Controller.Redirect">func (*Controller) <a href="../src/controller.html?s=7675:7749#L262">Redirect</a></h3>
+				<h3 id="Controller.Redirect">func (*Controller) <a href="../src/controller.html?s=7679:7753#L262">Redirect</a></h3>
 				<pre>func (c *Controller) Redirect(val interface{}, args ...interface{}) Result</pre>
 				<p>
 Redirect to an action or to a URL.
@@ -184,7 +184,7 @@ c.Redirect(&#34;/controller/%d/action&#34;, id)
 				
 			
 				
-				<h3 id="Controller.Render">func (*Controller) <a href="../src/controller.html?s=4086:4152#L141">Render</a></h3>
+				<h3 id="Controller.Render">func (*Controller) <a href="../src/controller.html?s=4090:4156#L141">Render</a></h3>
 				<pre>func (c *Controller) Render(extraRenderArgs ...interface{}) Result</pre>
 				<p>
 Render a template corresponding to the calling Controller method.
@@ -194,7 +194,7 @@ They are keyed on their local identifier.
 <p>
 For example:
 </p>
-<pre>func (c Users) ShowUser(id int) rev.Result {
+<pre>func (c Users) ShowUser(id int) revel.Result {
 	 user := loadUser(id)
 	 return c.Render(user)
 }
@@ -208,14 +208,14 @@ key-value &#34;user&#34;: (User).
 				
 			
 				
-				<h3 id="Controller.RenderError">func (*Controller) <a href="../src/controller.html?s=3551:3601#L124">RenderError</a></h3>
+				<h3 id="Controller.RenderError">func (*Controller) <a href="../src/controller.html?s=3553:3603#L124">RenderError</a></h3>
 				<pre>func (c *Controller) RenderError(err error) Result</pre>
 				
 				
 				
 			
 				
-				<h3 id="Controller.RenderFile">func (*Controller) <a href="../src/controller.html?s=7139:7221#L241">RenderFile</a></h3>
+				<h3 id="Controller.RenderFile">func (*Controller) <a href="../src/controller.html?s=7143:7225#L241">RenderFile</a></h3>
 				<pre>func (c *Controller) RenderFile(file *os.File, delivery ContentDisposition) Result</pre>
 				<p>
 Return a file, either displayed inline or downloaded as an attachment.
@@ -226,7 +226,7 @@ The name and size are taken from the file info.
 				
 			
 				
-				<h3 id="Controller.RenderJson">func (*Controller) <a href="../src/controller.html?s=5999:6052#L200">RenderJson</a></h3>
+				<h3 id="Controller.RenderJson">func (*Controller) <a href="../src/controller.html?s=6003:6056#L200">RenderJson</a></h3>
 				<pre>func (c *Controller) RenderJson(o interface{}) Result</pre>
 				<p>
 Uses encoding/json.Marshal to return JSON to the client.
@@ -236,7 +236,7 @@ Uses encoding/json.Marshal to return JSON to the client.
 				
 			
 				
-				<h3 id="Controller.RenderTemplate">func (*Controller) <a href="../src/controller.html?s=5652:5715#L185">RenderTemplate</a></h3>
+				<h3 id="Controller.RenderTemplate">func (*Controller) <a href="../src/controller.html?s=5656:5719#L185">RenderTemplate</a></h3>
 				<pre>func (c *Controller) RenderTemplate(templatePath string) Result</pre>
 				<p>
 A less magical way to render a template.
@@ -247,7 +247,7 @@ Renders the given template, using the current RenderArgs.
 				
 			
 				
-				<h3 id="Controller.RenderText">func (*Controller) <a href="../src/controller.html?s=6276:6348#L210">RenderText</a></h3>
+				<h3 id="Controller.RenderText">func (*Controller) <a href="../src/controller.html?s=6280:6352#L210">RenderText</a></h3>
 				<pre>func (c *Controller) RenderText(text string, objs ...interface{}) Result</pre>
 				<p>
 Render plaintext in response, printf style.
@@ -257,7 +257,7 @@ Render plaintext in response, printf style.
 				
 			
 				
-				<h3 id="Controller.RenderXml">func (*Controller) <a href="../src/controller.html?s=6144:6196#L205">RenderXml</a></h3>
+				<h3 id="Controller.RenderXml">func (*Controller) <a href="../src/controller.html?s=6148:6200#L205">RenderXml</a></h3>
 				<pre>func (c *Controller) RenderXml(o interface{}) Result</pre>
 				<p>
 Uses encoding/xml.Marshal to return XML to the client.
@@ -267,14 +267,14 @@ Uses encoding/xml.Marshal to return XML to the client.
 				
 			
 				
-				<h3 id="Controller.SetCookie">func (*Controller) <a href="../src/controller.html?s=1595:1646#L47">SetCookie</a></h3>
+				<h3 id="Controller.SetCookie">func (*Controller) <a href="../src/controller.html?s=1597:1648#L47">SetCookie</a></h3>
 				<pre>func (c *Controller) SetCookie(cookie *http.Cookie)</pre>
 				
 				
 				
 			
 				
-				<h3 id="Controller.Todo">func (*Controller) <a href="../src/controller.html?s=6536:6570#L219">Todo</a></h3>
+				<h3 id="Controller.Todo">func (*Controller) <a href="../src/controller.html?s=6540:6574#L219">Todo</a></h3>
 				<pre>func (c *Controller) Todo() Result</pre>
 				<p>
 Render a &#34;todo&#34; indicating that the action isn&#39;t done yet.

@@ -46,7 +46,7 @@ argument provided to "revel run" (the [command-line tool](tool.html)).
 ## Custom properties
 
 The developer may define custom keys and access them via the
-[`rev.Config` variable](../docs/godoc/revel.html#variables), which exposes a
+[`revel.Config` variable](../docs/godoc/revel.html#variables), which exposes a
 [simple api](../docs/godoc/config.html).
 
 ## Built-in properties
@@ -54,7 +54,7 @@ The developer may define custom keys and access them via the
 Revel uses the following properties internally:
 * app.name
 * app.secret - the secret key used to sign session cookies (and anywhere the
-  application uses [`rev.Sign`](../docs/godoc/util.html#Sign))
+  application uses [`revel.Sign`](../docs/godoc/util.html#Sign))
 * http.port - the port to listen on
 * http.addr - the ip address to which to bind (empty string is wildcard)
 * results.pretty - [`RenderXml`](../docs/godoc/controller.html#RenderXml) and

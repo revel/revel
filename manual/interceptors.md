@@ -17,7 +17,7 @@ In Revel, an interceptor can take one of two forms:
 	* Does not have access to specific application Controller invoked.
 	* May be applied to any / all Controllers in an application.
 
-2. Method Interceptor: A controller method accepting no arguments and returning a `rev.Result`
+2. Method Interceptor: A controller method accepting no arguments and returning a `revel.Result`
 	* May only intercept calls to the bound Controller.
 	* May modify the invoked controller as desired.
 
@@ -37,7 +37,7 @@ An interceptor can be registered to run at four points in the request lifecycle:
 Interceptors typically return `nil`, in which case they the request continues to
 be processed without interruption.
 
-The effect of returning a non-`nil` `rev.Result` depends on when the interceptor
+The effect of returning a non-`nil` `revel.Result` depends on when the interceptor
 was invoked.
 
 1. BEFORE:  No further interceptors are invoked, and neither is the action.
@@ -59,7 +59,7 @@ Here's a simple example defining and registering a Func Interceptor.
 
 {% raw %}
 <pre class="prettyprint lang-go">
-func checkUser(c *rev.Controller) rev.Result {
+func checkUser(c *revel.Controller) revel.Result {
 	if user := connected(c); user == nil {
 		c.Flash.Error("Please log in first")
 		return c.Redirect(Application.Index)
@@ -68,7 +68,7 @@ func checkUser(c *rev.Controller) rev.Result {
 }
 
 func init() {
-	rev.InterceptFunc(checkUser, rev.BEFORE, &Hotels{})
+	revel.InterceptFunc(checkUser, revel.BEFORE, &Hotels{})
 }
 </pre>
 {% endraw %}
@@ -79,8 +79,8 @@ A method interceptor signature may have one of these two forms:
 
 {% raw %}
 <pre class="prettyprint lang-go">
-func (c AppController) example() rev.Result
-func (c *AppController) example() rev.Result
+func (c AppController) example() revel.Result
+func (c *AppController) example() revel.Result
 </pre>
 {% endraw %}
 
@@ -88,7 +88,7 @@ Here's the same example that operates only on the app controller.
 
 {% raw %}
 <pre class="prettyprint lang-go">
-func (c Hotels) checkUser() rev.Result {
+func (c Hotels) checkUser() revel.Result {
 	if user := connected(c); user == nil {
 		c.Flash.Error("Please log in first")
 		return c.Redirect(Application.Index)
@@ -97,7 +97,7 @@ func (c Hotels) checkUser() rev.Result {
 }
 
 func init() {
-	rev.InterceptMethod(checkUser, rev.BEFORE)
+	revel.InterceptMethod(checkUser, revel.BEFORE)
 }
 </pre>
 {% endraw %}

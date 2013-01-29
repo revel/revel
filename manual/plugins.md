@@ -24,11 +24,11 @@ type Plugin interface {
 }
 </pre>
 
-To define a Plugin of your own, declare a type that embeds `rev.EmptyPlugin`, and override just the methods that you want.  Then register it with `rev.RegisterPlugin`.
+To define a Plugin of your own, declare a type that embeds `revel.EmptyPlugin`, and override just the methods that you want.  Then register it with `revel.RegisterPlugin`.
 
 <pre class="prettyprint lang-go">
 type DbPlugin struct {
-	rev.EmptyPlugin
+	revel.EmptyPlugin
 }
 
 func (p DbPlugin) OnAppStart() {
@@ -36,7 +36,7 @@ func (p DbPlugin) OnAppStart() {
 }
 
 func init() {
-	rev.RegisterPlugin(DbPlugin{})
+	revel.RegisterPlugin(DbPlugin{})
 }
 </pre>
 

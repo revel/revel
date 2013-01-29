@@ -72,7 +72,7 @@ layout: godoc
 		
 			
 			
-			<h2 id="Auditor">type <a href="../src/watcher.html?s=619:675#L17">Auditor</a></h2>
+			<h2 id="Auditor">type <a href="../src/watcher.html?s=621:677#L17">Auditor</a></h2>
 			<pre>type Auditor interface {
     OnRefresh(listener Listener)
 }</pre>
@@ -93,7 +93,7 @@ Auditor gets notified each time a listener gets refreshed.
 		
 			
 			
-			<h2 id="DiscerningListener">type <a href="../src/watcher.html?s=442:555#L10">DiscerningListener</a></h2>
+			<h2 id="DiscerningListener">type <a href="../src/watcher.html?s=444:557#L10">DiscerningListener</a></h2>
 			<pre>type DiscerningListener interface {
     Listener
     WatchDir(info os.FileInfo) bool
@@ -116,7 +116,7 @@ DiscerningListener allows the receiver to selectively watch files.
 		
 			
 			
-			<h2 id="Listener">type <a href="../src/watcher.html?s=169:370#L3">Listener</a></h2>
+			<h2 id="Listener">type <a href="../src/watcher.html?s=171:372#L3">Listener</a></h2>
 			<pre>type Listener interface {
     <span class="comment">// Refresh is invoked by the watcher on relevant filesystem events.</span>
     <span class="comment">// If the listener returns an error, it is served to the user on the current request.</span>
@@ -139,7 +139,7 @@ Listener is an interface for receivers of filesystem events.
 		
 			
 			
-			<h2 id="Watcher">type <a href="../src/watcher.html?s=771:984#L23">Watcher</a></h2>
+			<h2 id="Watcher">type <a href="../src/watcher.html?s=773:986#L23">Watcher</a></h2>
 			<pre>type Watcher struct {
     <span class="comment">// contains filtered or unexported fields</span>
 }</pre>
@@ -157,7 +157,7 @@ directory.
 
 			
 				
-				<h3 id="NewWatcher">func <a href="../src/watcher.html?s=986:1012#L33">NewWatcher</a></h3>
+				<h3 id="NewWatcher">func <a href="../src/watcher.html?s=988:1014#L33">NewWatcher</a></h3>
 				<pre>func NewWatcher() *Watcher</pre>
 				
 				
@@ -165,7 +165,7 @@ directory.
 
 			
 				
-				<h3 id="Watcher.Listen">func (*Watcher) <a href="../src/watcher.html?s=1161:1221#L41">Listen</a></h3>
+				<h3 id="Watcher.Listen">func (*Watcher) <a href="../src/watcher.html?s=1163:1223#L41">Listen</a></h3>
 				<pre>func (w *Watcher) Listen(listener Listener, roots ...string)</pre>
 				<p>
 Listen registers for events within the given root directories (recursively).
@@ -175,7 +175,7 @@ Listen registers for events within the given root directories (recursively).
 				
 			
 				
-				<h3 id="Watcher.Notify">func (*Watcher) <a href="../src/watcher.html?s=2797:2830#L102">Notify</a></h3>
+				<h3 id="Watcher.Notify">func (*Watcher) <a href="../src/watcher.html?s=2799:2832#L102">Notify</a></h3>
 				<pre>func (w *Watcher) Notify() *Error</pre>
 				<p>
 Notify causes the watcher to forward any change events to listeners.

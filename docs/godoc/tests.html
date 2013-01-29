@@ -96,7 +96,7 @@ layout: godoc
 		
 			
 			
-			<h2 id="TestSuite">type <a href="../src/tests.html?s=85:187#L2">TestSuite</a></h2>
+			<h2 id="TestSuite">type <a href="../src/tests.html?s=87:189#L2">TestSuite</a></h2>
 			<pre>type TestSuite struct {
     Client       *http.Client
     Response     *http.Response
@@ -112,7 +112,7 @@ layout: godoc
 
 			
 				
-				<h3 id="NewTestSuite">func <a href="../src/tests.html?s=416:445#L12">NewTestSuite</a></h3>
+				<h3 id="NewTestSuite">func <a href="../src/tests.html?s=418:447#L12">NewTestSuite</a></h3>
 				<pre>func NewTestSuite() TestSuite</pre>
 				<p>
 NewTestSuite returns an initialized TestSuite ready for use. It is invoked
@@ -124,56 +124,56 @@ by the test harness to initialize the embedded field in application tests.
 
 			
 				
-				<h3 id="TestSuite.Assert">func (*TestSuite) <a href="../src/tests.html?s=2638:2674#L88">Assert</a></h3>
+				<h3 id="TestSuite.Assert">func (*TestSuite) <a href="../src/tests.html?s=2640:2676#L88">Assert</a></h3>
 				<pre>func (t *TestSuite) Assert(exp bool)</pre>
 				
 				
 				
 			
 				
-				<h3 id="TestSuite.AssertContentType">func (*TestSuite) <a href="../src/tests.html?s=2324:2381#L77">AssertContentType</a></h3>
+				<h3 id="TestSuite.AssertContentType">func (*TestSuite) <a href="../src/tests.html?s=2326:2383#L77">AssertContentType</a></h3>
 				<pre>func (t *TestSuite) AssertContentType(contentType string)</pre>
 				
 				
 				
 			
 				
-				<h3 id="TestSuite.AssertHeader">func (*TestSuite) <a href="../src/tests.html?s=2432:2484#L81">AssertHeader</a></h3>
+				<h3 id="TestSuite.AssertHeader">func (*TestSuite) <a href="../src/tests.html?s=2434:2486#L81">AssertHeader</a></h3>
 				<pre>func (t *TestSuite) AssertHeader(name, value string)</pre>
 				
 				
 				
 			
 				
-				<h3 id="TestSuite.AssertNotFound">func (*TestSuite) <a href="../src/tests.html?s=2063:2099#L67">AssertNotFound</a></h3>
+				<h3 id="TestSuite.AssertNotFound">func (*TestSuite) <a href="../src/tests.html?s=2065:2101#L67">AssertNotFound</a></h3>
 				<pre>func (t *TestSuite) AssertNotFound()</pre>
 				
 				
 				
 			
 				
-				<h3 id="TestSuite.AssertOk">func (*TestSuite) <a href="../src/tests.html?s=1996:2026#L63">AssertOk</a></h3>
+				<h3 id="TestSuite.AssertOk">func (*TestSuite) <a href="../src/tests.html?s=1998:2028#L63">AssertOk</a></h3>
 				<pre>func (t *TestSuite) AssertOk()</pre>
 				
 				
 				
 			
 				
-				<h3 id="TestSuite.AssertStatus">func (*TestSuite) <a href="../src/tests.html?s=2142:2186#L71">AssertStatus</a></h3>
+				<h3 id="TestSuite.AssertStatus">func (*TestSuite) <a href="../src/tests.html?s=2144:2188#L71">AssertStatus</a></h3>
 				<pre>func (t *TestSuite) AssertStatus(status int)</pre>
 				
 				
 				
 			
 				
-				<h3 id="TestSuite.Assertf">func (*TestSuite) <a href="../src/tests.html?s=2716:2792#L92">Assertf</a></h3>
+				<h3 id="TestSuite.Assertf">func (*TestSuite) <a href="../src/tests.html?s=2718:2794#L92">Assertf</a></h3>
 				<pre>func (t *TestSuite) Assertf(exp bool, formatStr string, args ...interface{})</pre>
 				
 				
 				
 			
 				
-				<h3 id="TestSuite.BaseUrl">func (*TestSuite) <a href="../src/tests.html?s=560:596#L17">BaseUrl</a></h3>
+				<h3 id="TestSuite.BaseUrl">func (*TestSuite) <a href="../src/tests.html?s=562:598#L17">BaseUrl</a></h3>
 				<pre>func (t *TestSuite) BaseUrl() string</pre>
 				<p>
 Return the base URL of the server, e.g. &#34;<a href="http://127.0.0.1:8557">http://127.0.0.1:8557</a>&#34;
@@ -183,7 +183,7 @@ Return the base URL of the server, e.g. &#34;<a href="http://127.0.0.1:8557">htt
 				
 			
 				
-				<h3 id="TestSuite.Get">func (*TestSuite) <a href="../src/tests.html?s=800:836#L26">Get</a></h3>
+				<h3 id="TestSuite.Get">func (*TestSuite) <a href="../src/tests.html?s=802:838#L26">Get</a></h3>
 				<pre>func (t *TestSuite) Get(path string)</pre>
 				<p>
 Issue a GET request to the given path and store the result in Request and
@@ -194,7 +194,7 @@ RequestBody.
 				
 			
 				
-				<h3 id="TestSuite.MakeRequest">func (*TestSuite) <a href="../src/tests.html?s=1768:1818#L53">MakeRequest</a></h3>
+				<h3 id="TestSuite.MakeRequest">func (*TestSuite) <a href="../src/tests.html?s=1770:1820#L53">MakeRequest</a></h3>
 				<pre>func (t *TestSuite) MakeRequest(req *http.Request)</pre>
 				<p>
 Issue any request and read the response. If successful, the caller may
@@ -205,7 +205,7 @@ examine the Response and ResponseBody properties.
 				
 			
 				
-				<h3 id="TestSuite.Post">func (*TestSuite) <a href="../src/tests.html?s=1110:1185#L36">Post</a></h3>
+				<h3 id="TestSuite.Post">func (*TestSuite) <a href="../src/tests.html?s=1112:1187#L36">Post</a></h3>
 				<pre>func (t *TestSuite) Post(path string, contentType string, reader io.Reader)</pre>
 				<p>
 Issue a POST request to the given path, sending the given Content-Type and
@@ -216,7 +216,7 @@ data, and store the result in Request and RequestBody.  &#34;data&#34; may be ni
 				
 			
 				
-				<h3 id="TestSuite.PostForm">func (*TestSuite) <a href="../src/tests.html?s=1492:1550#L47">PostForm</a></h3>
+				<h3 id="TestSuite.PostForm">func (*TestSuite) <a href="../src/tests.html?s=1494:1552#L47">PostForm</a></h3>
 				<pre>func (t *TestSuite) PostForm(path string, data url.Values)</pre>
 				<p>
 Issue a POST request to the given path as a form post of the given key and

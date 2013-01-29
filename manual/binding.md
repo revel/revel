@@ -34,7 +34,7 @@ Parameters may be accepted directly as method arguments by the action.  For
 example:
 
 <pre class="prettyprint lang-go">
-func (c AppController) Action(name string, ids []int, user User, img []byte) rev.Result {
+func (c AppController) Action(name string, ids []int, user User, img []byte) revel.Result {
 	...
 }
 </pre>
@@ -50,7 +50,7 @@ To bind a parameter to a data type, use Revel's Binder
 as the following example shows:
 
 <pre class="prettyprint lang-go">
-func (c SomeController) Action() rev.Result {
+func (c SomeController) Action() revel.Result {
 	var ids []int = c.Params.Bind("ids[]", reflect.TypeOf([]int{}))
 	...
 }
@@ -134,7 +134,7 @@ the pattern to recognize to the `TimeFormats` variable, like this:
 
 <pre class="prettyprint lang-go">
 func init() {
-	rev.TimeFormats = append(rev.TimeFormats, "01/02/2006")
+	revel.TimeFormats = append(revel.TimeFormats, "01/02/2006")
 }
 </pre>
 
@@ -167,6 +167,6 @@ func myBinder(params Params, name string, typ reflect.Type) reflect.Value {
 }
 
 func init() {
-	rev.TypeBinders[reflect.TypeOf(MyType{})] = myBinder
+	revel.TypeBinders[reflect.TypeOf(MyType{})] = myBinder
 }
 </pre>

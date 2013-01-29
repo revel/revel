@@ -10,7 +10,7 @@ layout: godoc
 
 
 
-	<pre>package rev
+	<pre>package revel
 
 type Result interface {
     Apply(req *Request, resp *Response)
@@ -126,15 +126,24 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
         var b bytes.Buffer
         err := r.Template.Render(&amp;b, r.RenderArgs)
         if err != nil {
-            line, description := parseTemplateError(err)
+            var templateContent []string
+            templateName, line, description := parseTemplateError(err)
+            if templateName == &#34;&#34; {
+                templateName = r.Template.Name()
+                templateContent = r.Template.Content()
+            } else {
+                if tmpl, err := MainTemplateLoader.Template(templateName); err == nil {
+                    templateContent = tmpl.Content()
+                }
+            }
             compileError := &amp;Error{
                 Title:       &#34;Template Execution Error&#34;,
-                Path:        r.Template.Name(),
+                Path:        templateName,
                 Description: description,
                 Line:        line,
-                SourceLines: r.Template.Content(),
-                SourceType:  &#34;template&#34;,
+                SourceLines: templateContent,
             }
+            ERROR.Printf(&#34;Template Execution Error (in %s): %s&#34;, templateName, description)
             ErrorResult{r.RenderArgs, compileError}.Apply(req, resp)
             return
         }

@@ -210,15 +210,15 @@ GET    /public/               staticDir:public       <b># Map /app/public resour
 // app/controllers/app.go
 
 type Application struct {
-	*rev.Controller
+	*revel.Controller
 }
 
-func (c Application) Register() rev.Result {
+func (c Application) Register() revel.Result {
 	title := "Register"
 	return c.Render(title)
 }
 
-func (c Application) SaveUser(user models.User, verifyPassword string) rev.Result {
+func (c Application) SaveUser(user models.User, verifyPassword string) revel.Result {
 	c.Validation.Required(verifyPassword)
 	c.Validation.Required(verifyPassword == user.Password)
 		Message("Password does not match")
@@ -310,7 +310,7 @@ func (c Application) SaveUser(user models.User, verifyPassword string) rev.Resul
 // This interceptor loads the user (using a helper).
 // If it's nil, the user isn't logged in so it redirects them to the login page.
 // Otherwise, it adds the user to the render context.
-func checkLogin(c *rev.Controller) rev.Result {
+func checkLogin(c *revel.Controller) revel.Result {
 	if user := connected(c); user != nil {
 		c.RenderArgs["user"] = user
 	} else {
@@ -319,7 +319,7 @@ func checkLogin(c *rev.Controller) rev.Result {
 }
 
 func init() {
-	rev.InterceptFunc(checkLogin, rev.BEFORE, &Application{})
+	revel.InterceptFunc(checkLogin, revel.BEFORE, &Application{})
 }</pre>
           </div>
         </div>
@@ -364,7 +364,7 @@ var (
 )
 
 type DbPlugin struct {
-	rev.EmptyPlugin
+	revel.EmptyPlugin
 }
 
 func (p DbPlugin) OnAppStart() {
@@ -385,24 +385,24 @@ create table User (
 }
 
 // Start a new transaction for each request.
-func (p DbPlugin) BeforeRequest(c *rev.Controller) {
+func (p DbPlugin) BeforeRequest(c *revel.Controller) {
 	txn, _ := db.Begin()
 	c.Txn = txn
 }
 
 // Commit the transaction at the conclusion.
-func (p DbPlugin) AfterRequest(c *rev.Controller) {
+func (p DbPlugin) AfterRequest(c *revel.Controller) {
 	c.Txn.Commit()
 	c.Txn = nil
 }
 
 // Rollback in the case of exception.
-func (p DbPlugin) OnException(c *rev.Controller, err interface{}) {
+func (p DbPlugin) OnException(c *revel.Controller, err interface{}) {
 	c.Txn.Rollback()
 }
 
 func init() {
-	rev.RegisterPlugin(DbPlugin{})
+	revel.RegisterPlugin(DbPlugin{})
 }
             </pre>
           </div>

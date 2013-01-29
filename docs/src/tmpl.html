@@ -148,7 +148,7 @@ type GoTemplate struct {
     <span class="comment">// contains filtered or unexported fields</span>
 }
 
-<span class="comment">// return a &#39;rev.Template&#39; from Go&#39;s template.</span>
+<span class="comment">// return a &#39;revel.Template&#39; from Go&#39;s template.</span>
 func (gotmpl GoTemplate) Render(wr io.Writer, arg interface{}) error {
     return gotmpl.Execute(wr, arg)
 }

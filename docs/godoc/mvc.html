@@ -72,7 +72,7 @@ layout: godoc
 		
 			
 			
-			<h2 id="NotFound">func <a href="../src/mvc.html?s=2678:2733#L70">NotFound</a></h2>
+			<h2 id="NotFound">func <a href="../src/mvc.html?s=2684:2739#L70">NotFound</a></h2>
 			<pre>func NotFound(req *Request, resp *Response, msg string)</pre>
 			<p>
 This function is useful if there is no relevant Controller available.
@@ -83,7 +83,7 @@ It writes the 404 response immediately.
 		
 			
 			
-			<h2 id="RegisterController">func <a href="../src/mvc.html?s=4147:4208#L130">RegisterController</a></h2>
+			<h2 id="RegisterController">func <a href="../src/mvc.html?s=4153:4214#L130">RegisterController</a></h2>
 			<pre>func RegisterController(c interface{}, methods []*MethodType)</pre>
 			<p>
 Register a Controller and its Methods with Revel.
@@ -93,7 +93,7 @@ Register a Controller and its Methods with Revel.
 		
 			
 			
-			<h2 id="RenderError">func <a href="../src/mvc.html?s=2438:2495#L64">RenderError</a></h2>
+			<h2 id="RenderError">func <a href="../src/mvc.html?s=2444:2501#L64">RenderError</a></h2>
 			<pre>func RenderError(req *Request, resp *Response, err error)</pre>
 			
 			
@@ -101,7 +101,7 @@ Register a Controller and its Methods with Revel.
 		
 			
 			
-			<h2 id="ControllerType">type <a href="../src/mvc.html?s=3502:3577#L99">ControllerType</a></h2>
+			<h2 id="ControllerType">type <a href="../src/mvc.html?s=3508:3583#L99">ControllerType</a></h2>
 			<pre>type ControllerType struct {
     Type    reflect.Type
     Methods []*MethodType
@@ -116,7 +116,7 @@ Register a Controller and its Methods with Revel.
 
 			
 				
-				<h3 id="LookupControllerType">func <a href="../src/mvc.html?s=4722:4776#L148">LookupControllerType</a></h3>
+				<h3 id="LookupControllerType">func <a href="../src/mvc.html?s=4728:4782#L148">LookupControllerType</a></h3>
 				<pre>func LookupControllerType(name string) *ControllerType</pre>
 				
 				
@@ -124,7 +124,7 @@ Register a Controller and its Methods with Revel.
 
 			
 				
-				<h3 id="ControllerType.Method">func (*ControllerType) <a href="../src/mvc.html?s=3833:3890#L117">Method</a></h3>
+				<h3 id="ControllerType.Method">func (*ControllerType) <a href="../src/mvc.html?s=3839:3896#L117">Method</a></h3>
 				<pre>func (ct *ControllerType) Method(name string) *MethodType</pre>
 				<p>
 Searches for a given exported method (case insensitive)
@@ -136,7 +136,7 @@ Searches for a given exported method (case insensitive)
 		
 			
 			
-			<h2 id="MethodArg">type <a href="../src/mvc.html?s=3715:3772#L111">MethodArg</a></h2>
+			<h2 id="MethodArg">type <a href="../src/mvc.html?s=3721:3778#L111">MethodArg</a></h2>
 			<pre>type MethodArg struct {
     Name string
     Type reflect.Type
@@ -155,7 +155,7 @@ Searches for a given exported method (case insensitive)
 		
 			
 			
-			<h2 id="MethodType">type <a href="../src/mvc.html?s=3579:3713#L104">MethodType</a></h2>
+			<h2 id="MethodType">type <a href="../src/mvc.html?s=3585:3719#L104">MethodType</a></h2>
 			<pre>type MethodType struct {
     Name           string
     Args           []*MethodArg

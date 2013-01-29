@@ -16,7 +16,7 @@ in-depth examples.
 This example demonstrates field validation with inline error messages.
 
 <pre class="prettyprint lang-go">
-func (c MyApp) SaveUser(username string) rev.Result {
+func (c MyApp) SaveUser(username string) revel.Result {
 	// Username (required) must be between 4 and 15 letters (inclusive).
 	c.Validation.Required(username)
 	c.Validation.MaxSize(username, 15)
@@ -79,7 +79,7 @@ There are only two differences from the previous example:
 Here's the code.
 
 <pre class="prettyprint lang-go">
-func (c MyApp) SaveUser(username string) rev.Result {
+func (c MyApp) SaveUser(username string) revel.Result {
 	// Username (required) must be between 4 and 15 letters (inclusive).
 	c.Validation.Required(username).Message("Please enter a username")
 	c.Validation.MaxSize(username, 15).Message("Username must be at most 15 characters long")

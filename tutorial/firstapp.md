@@ -26,7 +26,7 @@ Let's try submitting that form.
 
 That makes sense.  Add the action to **app/controllers/app.go**:
 
-	func (c Application) Hello(myName string) rev.Result {
+	func (c Application) Hello(myName string) revel.Result {
 		return c.Render(myName)
 	}
 
@@ -54,7 +54,7 @@ three characters.
 To do this, let's use the [validation module](../manual/validation.html).  Edit
 your action in **app/controllers/app.go**:
 
-	func (c Application) Hello(myName string) rev.Result {
+	func (c Application) Hello(myName string) revel.Result {
 		c.Validation.Required(myName).Message("Your name is required!")
 		c.Validation.MinSize(myName, 3).Message("Your name is not long enough!")
 

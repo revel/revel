@@ -160,7 +160,7 @@ When the requested message could not be resolved at all, a specially formatted s
 The application code can access the current locale from within a `Controller` using the `Controller.Locale` property. For example:
 
 <pre class="prettyprint lang-go">
-func (c Application) Index() rev.Result {
+func (c Application) Index() revel.Result {
 	currentLocale := c.Locale
 	c.Render(currentLocale)
 }
@@ -178,7 +178,7 @@ In case the application needs access to the `Accept-Language` HTTP header for th
 - which is a slice of `AcceptLanguage` instances - contains all parsed values from the respective header, sorted per qualification with the most qualified values first in the slice. For example:
 
 <pre class="prettyprint lang-go">
-func (c Application) Index() rev.Result {
+func (c Application) Index() revel.Result {
     // Get the string representation of all parsed accept languages
     c.RenderArgs["acceptLanguageHeaderParsed"] = c.Request.AcceptLanguages.String()
     // Returns the most qualified AcceptLanguage instance
@@ -199,7 +199,7 @@ Messages can be resolved from either a *controller* or a *view template*.
 Each controller has a `Message(message string, args ...interface{})` function that can be used to resolve messages using the current locale. For example:
 
 <pre class="prettyprint lang-go">
-func (c Application) Index() rev.Result {
+func (c Application) Index() revel.Result {
 	c.RenderArgs["controllerGreeting"] = c.Message("greeting")
 	c.Render()
 }

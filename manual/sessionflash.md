@@ -39,12 +39,12 @@ Here's an example of that pattern:
 
 <pre class="prettyprint lang-go">
 // Show the Settings form
-func (c App) ShowSettings() rev.Result {
+func (c App) ShowSettings() revel.Result {
 	return c.Render()
 }
 
 // Process a post
-func (c App) SaveSettings(setting string) rev.Result {
+func (c App) SaveSettings(setting string) revel.Result {
 	c.Validation.Required(setting)
 	if c.Validation.HasErrors() {
 		c.Flash.Error("Settings invalid!")

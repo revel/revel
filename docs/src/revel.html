@@ -10,7 +10,7 @@ layout: godoc
 
 
 
-	<pre>package rev
+	<pre>package revel
 
 const (
     REVEL_IMPORT_PATH = &#34;github.com/robfig/revel&#34;
@@ -59,7 +59,8 @@ var (
     ERROR   = DEFAULT
 
     <span class="comment">// Revel runs every function in this array after init.</span>
-    InitHooks []func()
+    InitHooks   []func()
+    Initialized bool
 )
 
 <span class="comment">// Init initializes Revel -- it provides paths for getting around the app.</span>
@@ -72,14 +73,20 @@ var (
 func Init(mode, importPath, srcPath string) {
     <span class="comment">// Ignore trailing slashes.</span>
     ImportPath = strings.TrimRight(importPath, &#34;/&#34;)
-    SourcePath = strings.TrimRight(srcPath, &#34;/&#34;)
+    SourcePath = srcPath
     RunMode = mode
 
+    <span class="comment">// If the SourcePath is not specified, find it using build.Import.</span>
+    var revelSourcePath string <span class="comment">// may be different from the app source path</span>
     if SourcePath == &#34;&#34; {
-        SourcePath = findSrcPath(importPath)
+        revelSourcePath, SourcePath = findSrcPaths(importPath)
+    } else {
+        <span class="comment">// If the SourcePath was specified, assume both Revel and the app are within it.</span>
+        SourcePath = path.Clean(SourcePath)
+        revelSourcePath = SourcePath
     }
 
-    RevelPath = path.Join(SourcePath, filepath.FromSlash(REVEL_IMPORT_PATH))
+    RevelPath = path.Join(revelSourcePath, filepath.FromSlash(REVEL_IMPORT_PATH))
     BasePath = path.Join(SourcePath, filepath.FromSlash(importPath))
     AppPath = path.Join(BasePath, &#34;app&#34;)
     ViewsPath = path.Join(AppPath, &#34;views&#34;)
@@ -135,7 +142,7 @@ func Init(mode, importPath, srcPath string) {
         hook()
     }
 
-    revelInit = true
+    Initialized = true
 }
 
 type Module struct {
@@ -143,7 +150,7 @@ type Module struct {
 }
 
 func CheckInit() {
-    if !revelInit {
+    if !Initialized {
         panic(&#34;Revel has not been initialized!&#34;)
     }
 }

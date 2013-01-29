@@ -201,7 +201,7 @@ Here is an example:
 {% raw %}
 <pre class="prettyprint lang-go">
 func init() {
-	rev.TemplateFuncs["eq"] = func(a, b interface{}) bool { return a == b }
+	revel.TemplateFuncs["eq"] = func(a, b interface{}) bool { return a == b }
 }
 </pre>
 {% endraw %}

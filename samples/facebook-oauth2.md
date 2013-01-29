@@ -50,7 +50,7 @@ uses [a fork](https://github.com/robfig/goauth2).
 Let's take a look at the first bit of code:
 
 <pre class="prettyprint lang-go">{% capture guy %}{% raw %}
-func (c Application) Index() rev.Result {
+func (c Application) Index() revel.Result {
 	u := c.connected()
 	me := map[string]interface{}{}
 	if u != nil && u.AccessToken != "" {
@@ -85,11 +85,11 @@ Assuming the user does so, the next time we see them is when Facebook sends them
 to `Auth`:
 
 <pre class="prettyprint lang-go">
-func (c Application) Auth(code string) rev.Result {
+func (c Application) Auth(code string) revel.Result {
 	t := &oauth.Transport{Config: FACEBOOK}
 	tok, err := t.Exchange(code)
 	if err != nil {
-		rev.ERROR.Println(err)
+		revel.ERROR.Println(err)
 		return c.Redirect(Application.Index)
 	}
 
@@ -104,7 +104,7 @@ token.  If successful, we store it on the user.  Either way, the user ends up
 back at `Index`:
 
 <pre class="prettyprint lang-go">{% capture guy %}{% raw %}
-func (c Application) Index() rev.Result {
+func (c Application) Index() revel.Result {
 	u := c.connected()
 	me := map[string]interface{}{}
 	if u != nil && u.AccessToken != "" {
@@ -112,7 +112,7 @@ func (c Application) Index() rev.Result {
 			url.QueryEscape(u.AccessToken))
 		defer resp.Body.Close()
 		if err := json.NewDecoder(resp.Body).Decode(&me); err != nil {
-			rev.ERROR.Println(err)
+			revel.ERROR.Println(err)
 		}
 {% endraw %}{% endcapture %}{{ guy|escape }}
 </pre>

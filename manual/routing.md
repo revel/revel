@@ -50,20 +50,20 @@ match anything except a slash (`[^/]+`).  In this case, `/hotels/123` and
 Extracted parameters are available in the `Controller.Params` map, as well as
 via action method parameters.  For example:
 
-	func (c Hotels) Show(id int) rev.Result {
+	func (c Hotels) Show(id int) revel.Result {
 		...
 	}
 
 or
 
-	func (c Hotels) Show() rev.Result {
+	func (c Hotels) Show() revel.Result {
 		var id string = c.Params.Get("id")
 		...
 	}
 
 or
 
-	func (c Hotels) Show() rev.Result {
+	func (c Hotels) Show() revel.Result {
 		var id int = c.Params.Bind("id", reflect.TypeOf(0))
 		...
 	}
@@ -87,7 +87,7 @@ identifier of **WS**.
 
 The corresponding action would have this signature:
 
-	func (c Hotels) Feed(ws *websocket.Conn, id int) rev.Result {
+	func (c Hotels) Feed(ws *websocket.Conn, id int) revel.Result {
 		...
 	}
 

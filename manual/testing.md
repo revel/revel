@@ -21,7 +21,7 @@ A simple test looks like the following:
 
 <pre class="prettyprint lang-go">
 type ApplicationTest struct {
-  rev.TestSuite
+  revel.TestSuite
 }
 
 func (t ApplicationTest) Before() {
@@ -41,9 +41,9 @@ func (t ApplicationTest) After() {
 
 The example code above shows a couple things: 
 
-* A test suite is any struct that embeds `rev.TestSuite`
+* A test suite is any struct that embeds `revel.TestSuite`
 * `Before()` and `After()` are invoked before and after every test method, if present.
-* The `rev.TestSuite` provides helpers for issuing requests to your application and for asserting things about the response.
+* The `revel.TestSuite` provides helpers for issuing requests to your application and for asserting things about the response.
 * An assertion failure generates a panic, which is caught by the test harness.
 
 You may run this test in two ways:
@@ -53,7 +53,7 @@ You may run this test in two ways:
 
 ## Developing a test suite
 
-To create your own test suite, define a struct that embeds `rev.TestSuite`, which provides a HTTP client and a number of helper methods for making requests to your application.
+To create your own test suite, define a struct that embeds `revel.TestSuite`, which provides a HTTP client and a number of helper methods for making requests to your application.
 
 <pre class="prettyprint lang-go">
 type TestSuite struct {
@@ -181,7 +181,7 @@ There are two suggested mechanisms for integrating this into a continuous build:
 What Revel does is:
 
 * Scan the test source code for types that (transitively) embed TestSuite
-* Set the `rev.TestSuites` variable to a list of those types in the generated main.go file.
+* Set the `revel.TestSuites` variable to a list of those types in the generated main.go file.
 * On demand, uses reflection to find all methods beginning with "Test" on the TestSuite types, and invokes them to run the test.
 * Catches panics from bugs or failed assertions and displays the error helpfully. 
 

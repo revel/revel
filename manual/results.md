@@ -3,7 +3,7 @@ title: Results
 layout: manual
 ---
 
-Actions must return a [`rev.Result`](../docs/godoc/results.html#Result), which
+Actions must return a [`revel.Result`](../docs/godoc/results.html#Result), which
 handles the response generation.  It adheres to a simple interface:
 
 <pre class="prettyprint lang-go">
@@ -12,7 +12,7 @@ type Result interface {
 }
 </pre>
 
-[`rev.Controller`](../docs/godoc/controller.html#Controller) provides a couple
+[`revel.Controller`](../docs/godoc/controller.html#Controller) provides a couple
 methods to produce Results:
 * Render, RenderTemplate - render a template, passing arguments.
 * RenderJson, RenderXml - serialize a structure to json or xml.
@@ -23,7 +23,7 @@ methods to produce Results:
 * NotFound - return a 404 response that renders the errors/404.html template.
 * Todo - return a stub response (500)
 
-Additionally, the developer may define their own `rev.Result` and return that.
+Additionally, the developer may define their own `revel.Result` and return that.
 
 ### Setting the Status Code / Content Type
 
@@ -31,7 +31,7 @@ Each built-in Result has a default Status Code and Content Type.  To override
 those defaults, simply set those properties on the response:
 
 <pre class="prettyprint lang-go">
-func (c Application) Action() rev.Result {
+func (c Application) Action() revel.Result {
 	c.Response.Status = http.StatusTeapot
 	c.Response.ContentType = "application/dishware"
 	return c.Render()
@@ -50,7 +50,7 @@ If unsuccessful (e.g. it could not find the template), it returns an ErrorResult
 This allows the developer to write:
 
 <pre class="prettyprint lang-go">
-func (c MyApp) Action() rev.Result {
+func (c MyApp) Action() revel.Result {
 	myValue := calculateValue()
 	return c.Render(myValue)
 }
@@ -115,7 +115,7 @@ func (r Html) Apply(req *Request, resp *Response) {
 Then use it in an action:
 
 <pre class="prettyprint lang-go">{% capture html %}
-func (c *Application) Action() rev.Result {
+func (c *Application) Action() revel.Result {
 	return Html("<html><body>Hello World</body></html>")
 }{% endcapture %}{{ html|escape }}
 </pre>
@@ -126,7 +126,7 @@ Each Result will set a status code by default.  You can override the default
 status code by setting one yourself:
 
 <pre class="prettyprint lang-go">
-func (c *Application) CreateEntity() rev.Result {
+func (c *Application) CreateEntity() revel.Result {
 	c.Response.Status = 201
 	return c.Render()
 }

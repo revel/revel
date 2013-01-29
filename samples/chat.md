@@ -154,7 +154,7 @@ get any new messages:
 This is the handler to serve that:
 
 <pre class="prettyprint lang-go">
-func (c Refresh) Room(user string) rev.Result {
+func (c Refresh) Room(user string) revel.Result {
 	subscription := chatroom.Subscribe()
 	defer subscription.Cancel()
 	events := subscription.Archive
@@ -213,7 +213,7 @@ keeps open until a new message comes in.  The javascript provides a
 and here is the handler
 
 <pre class="prettyprint lang-go">{% capture WaitMessages %}{% raw %}
-func (c LongPolling) WaitMessages(lastReceived int) rev.Result {
+func (c LongPolling) WaitMessages(lastReceived int) revel.Result {
 	subscription := chatroom.Subscribe()
 	defer subscription.Cancel()
 
@@ -268,7 +268,7 @@ The first thing to do is to subscribe to new events, join the room, and send
 down the archive.  Here is what that looks like:
 
 <pre class="prettyprint lang-go">
-func (c WebSocket) RoomSocket(user string, ws *websocket.Conn) rev.Result {
+func (c WebSocket) RoomSocket(user string, ws *websocket.Conn) revel.Result {
 	// Join the room.
 	subscription := chatroom.Subscribe()
 	defer subscription.Cancel()

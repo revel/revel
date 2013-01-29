@@ -10,7 +10,7 @@ layout: godoc
 
 
 
-	<pre>package rev
+	<pre>package revel
 
 <span class="comment">// An &#34;interceptor&#34; is functionality invoked by the framework BEFORE or AFTER</span>
 <span class="comment">// an action.</span>
@@ -33,13 +33,13 @@ layout: godoc
 <span class="comment">//</span>
 <span class="comment">// Func Interceptors may apply to any / all Controllers.</span>
 <span class="comment">//</span>
-<span class="comment">//   func example(*rev.Controller) rev.Result</span>
+<span class="comment">//   func example(*revel.Controller) revel.Result</span>
 <span class="comment">//</span>
 <span class="comment">// Method Interceptors are provided so that properties can be set on application</span>
 <span class="comment">// controllers.</span>
 <span class="comment">//</span>
-<span class="comment">//   func (c AppController) example() rev.Result</span>
-<span class="comment">//   func (c *AppController) example() rev.Result</span>
+<span class="comment">//   func (c AppController) example() revel.Result</span>
+<span class="comment">//   func (c *AppController) example() revel.Result</span>
 <span class="comment">//</span>
 type InterceptorFunc func(*Controller) Result
 type InterceptorMethod interface{}
@@ -109,7 +109,7 @@ func (p InterceptorPlugin) Finally(c *Controller) {
 <span class="comment">// Install a general interceptor.</span>
 <span class="comment">// This can be applied to any Controller.</span>
 <span class="comment">// It must have the signature of:</span>
-<span class="comment">//   func example(c *rev.Controller) rev.Result</span>
+<span class="comment">//   func example(c *revel.Controller) revel.Result</span>
 func InterceptFunc(intc InterceptorFunc, when InterceptTime, target interface{}) {
     interceptors = append(interceptors, &amp;Interception{
         When:         when,
@@ -121,13 +121,13 @@ func InterceptFunc(intc InterceptorFunc, when InterceptTime, target interface{})
 }
 
 <span class="comment">// Install an interceptor method that applies to its own Controller.</span>
-<span class="comment">//   func (c AppController) example() rev.Result</span>
-<span class="comment">//   func (c *AppController) example() rev.Result</span>
+<span class="comment">//   func (c AppController) example() revel.Result</span>
+<span class="comment">//   func (c *AppController) example() revel.Result</span>
 func InterceptMethod(intc InterceptorMethod, when InterceptTime) {
     methodType := reflect.TypeOf(intc)
     if methodType.Kind() != reflect.Func || methodType.NumOut() != 1 || methodType.NumIn() != 1 {
         log.Fatalln(&#34;Interceptor method should have signature like&#34;,
-            &#34;&#39;func (c *AppController) example() rev.Result&#39; but was&#34;, methodType)
+            &#34;&#39;func (c *AppController) example() revel.Result&#39; but was&#34;, methodType)
     }
     interceptors = append(interceptors, &amp;Interception{
         When:     when,

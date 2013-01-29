@@ -26,16 +26,16 @@ Let's follow this call to the code, in **app/controllers/app.go**:
 	import "github.com/robfig/revel"
 
 	type Application struct {
-		*rev.Controller
+		*revel.Controller
 	}
 
-	func (c Application) Index() rev.Result {
+	func (c Application) Index() revel.Result {
 		return c.Render()
 	}
 
-All controllers must be structs that embed `rev.Controller` or `*rev.Controller`
+All controllers must be structs that embed `revel.Controller` or `*revel.Controller`
 in the first slot (directly or indirectly). Any method on a controller that is
-exported and returns a `rev.Result` may be treated as an Action.
+exported and returns a `revel.Result` may be treated as an Action.
 
 The Revel controller provides many useful methods for generating Results.  In
 this example, it calls [`Render()`](../docs/godoc/mvc.html#Controller.Render),

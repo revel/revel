@@ -89,7 +89,7 @@ layout: godoc
 		
 			
 			
-			<h2 id="ResolveContentType">func <a href="../src/http.html?s=803:852#L33">ResolveContentType</a></h2>
+			<h2 id="ResolveContentType">func <a href="../src/http.html?s=805:854#L33">ResolveContentType</a></h2>
 			<pre>func ResolveContentType(req *http.Request) string</pre>
 			<p>
 Get the content type.
@@ -101,7 +101,7 @@ If none is specified, returns &#34;text/html&#34; by default.
 		
 			
 			
-			<h2 id="ResolveFormat">func <a href="../src/http.html?s=1070:1114#L42">ResolveFormat</a></h2>
+			<h2 id="ResolveFormat">func <a href="../src/http.html?s=1072:1116#L42">ResolveFormat</a></h2>
 			<pre>func ResolveFormat(req *http.Request) string</pre>
 			<p>
 Resolve the accept request header.
@@ -112,7 +112,7 @@ Resolve the accept request header.
 		
 			
 			
-			<h2 id="AcceptLanguage">type <a href="../src/http.html?s=1695:1760#L65">AcceptLanguage</a></h2>
+			<h2 id="AcceptLanguage">type <a href="../src/http.html?s=1697:1762#L65">AcceptLanguage</a></h2>
 			<pre>type AcceptLanguage struct {
     Language string
     Quality  float32
@@ -134,7 +134,7 @@ A single language from the Accept-Language HTTP header.
 		
 			
 			
-			<h2 id="AcceptLanguages">type <a href="../src/http.html?s=1816:1853#L71">AcceptLanguages</a></h2>
+			<h2 id="AcceptLanguages">type <a href="../src/http.html?s=1818:1855#L71">AcceptLanguages</a></h2>
 			<pre>type AcceptLanguages []AcceptLanguage</pre>
 			<p>
 A collection of sortable AcceptLanguage instances.
@@ -149,7 +149,7 @@ A collection of sortable AcceptLanguage instances.
 
 			
 				
-				<h3 id="ResolveAcceptLanguage">func <a href="../src/http.html?s=2716:2777#L94">ResolveAcceptLanguage</a></h3>
+				<h3 id="ResolveAcceptLanguage">func <a href="../src/http.html?s=2718:2779#L94">ResolveAcceptLanguage</a></h3>
 				<pre>func ResolveAcceptLanguage(req *http.Request) AcceptLanguages</pre>
 				<p>
 Resolve the Accept-Language header value.
@@ -168,28 +168,28 @@ See the HTTP header fields specification
 
 			
 				
-				<h3 id="AcceptLanguages.Len">func (AcceptLanguages) <a href="../src/http.html?s=1855:1890#L73">Len</a></h3>
+				<h3 id="AcceptLanguages.Len">func (AcceptLanguages) <a href="../src/http.html?s=1857:1892#L73">Len</a></h3>
 				<pre>func (al AcceptLanguages) Len() int</pre>
 				
 				
 				
 			
 				
-				<h3 id="AcceptLanguages.Less">func (AcceptLanguages) <a href="../src/http.html?s=1998:2043#L75">Less</a></h3>
+				<h3 id="AcceptLanguages.Less">func (AcceptLanguages) <a href="../src/http.html?s=2000:2045#L75">Less</a></h3>
 				<pre>func (al AcceptLanguages) Less(i, j int) bool</pre>
 				
 				
 				
 			
 				
-				<h3 id="AcceptLanguages.String">func (AcceptLanguages) <a href="../src/http.html?s=2085:2126#L76">String</a></h3>
+				<h3 id="AcceptLanguages.String">func (AcceptLanguages) <a href="../src/http.html?s=2087:2128#L76">String</a></h3>
 				<pre>func (al AcceptLanguages) String() string</pre>
 				
 				
 				
 			
 				
-				<h3 id="AcceptLanguages.Swap">func (AcceptLanguages) <a href="../src/http.html?s=1920:1960#L74">Swap</a></h3>
+				<h3 id="AcceptLanguages.Swap">func (AcceptLanguages) <a href="../src/http.html?s=1922:1962#L74">Swap</a></h3>
 				<pre>func (al AcceptLanguages) Swap(i, j int)</pre>
 				
 				
@@ -198,7 +198,7 @@ See the HTTP header fields specification
 		
 			
 			
-			<h2 id="Request">type <a href="../src/http.html?s=83:262#L2">Request</a></h2>
+			<h2 id="Request">type <a href="../src/http.html?s=85:264#L2">Request</a></h2>
 			<pre>type Request struct {
     *http.Request
     ContentType     string
@@ -216,7 +216,7 @@ See the HTTP header fields specification
 
 			
 				
-				<h3 id="NewRequest">func <a href="../src/http.html?s=434:475#L21">NewRequest</a></h3>
+				<h3 id="NewRequest">func <a href="../src/http.html?s=436:477#L21">NewRequest</a></h3>
 				<pre>func NewRequest(r *http.Request) *Request</pre>
 				
 				
@@ -226,7 +226,7 @@ See the HTTP header fields specification
 		
 			
 			
-			<h2 id="Response">type <a href="../src/http.html?s=264:351#L10">Response</a></h2>
+			<h2 id="Response">type <a href="../src/http.html?s=266:353#L10">Response</a></h2>
 			<pre>type Response struct {
     Status      int
     ContentType string
@@ -243,7 +243,7 @@ See the HTTP header fields specification
 
 			
 				
-				<h3 id="NewResponse">func <a href="../src/http.html?s=353:402#L17">NewResponse</a></h3>
+				<h3 id="NewResponse">func <a href="../src/http.html?s=355:404#L17">NewResponse</a></h3>
 				<pre>func NewResponse(w http.ResponseWriter) *Response</pre>
 				
 				

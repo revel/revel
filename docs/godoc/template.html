@@ -153,7 +153,7 @@ layout: godoc
 		
 			
 			
-			<h2 id="ReverseUrl">func <a href="../src/template.html?s=8441:8484#L275">ReverseUrl</a></h2>
+			<h2 id="ReverseUrl">func <a href="../src/template.html?s=8675:8718#L280">ReverseUrl</a></h2>
 			<pre>func ReverseUrl(args ...interface{}) string</pre>
 			<p>
 Return a url capable of invoking a given controller method:
@@ -165,7 +165,7 @@ Return a url capable of invoking a given controller method:
 		
 			
 			
-			<h2 id="GoTemplate">type <a href="../src/template.html?s=7909:7979#L254">GoTemplate</a></h2>
+			<h2 id="GoTemplate">type <a href="../src/template.html?s=8141:8211#L259">GoTemplate</a></h2>
 			<pre>type GoTemplate struct {
     *template.Template
     <span class="comment">// contains filtered or unexported fields</span>
@@ -185,17 +185,17 @@ Adapter for Go Templates.
 
 			
 				
-				<h3 id="GoTemplate.Content">func (GoTemplate) <a href="../src/template.html?s=8134:8177#L264">Content</a></h3>
+				<h3 id="GoTemplate.Content">func (GoTemplate) <a href="../src/template.html?s=8368:8411#L269">Content</a></h3>
 				<pre>func (gotmpl GoTemplate) Content() []string</pre>
 				
 				
 				
 			
 				
-				<h3 id="GoTemplate.Render">func (GoTemplate) <a href="../src/template.html?s=8028:8096#L260">Render</a></h3>
+				<h3 id="GoTemplate.Render">func (GoTemplate) <a href="../src/template.html?s=8262:8330#L265">Render</a></h3>
 				<pre>func (gotmpl GoTemplate) Render(wr io.Writer, arg interface{}) error</pre>
 				<p>
-return a &#39;rev.Template&#39; from Go&#39;s template.
+return a &#39;revel.Template&#39; from Go&#39;s template.
 </p>
 
 				
@@ -204,7 +204,7 @@ return a &#39;rev.Template&#39; from Go&#39;s template.
 		
 			
 			
-			<h2 id="Template">type <a href="../src/template.html?s=675:782#L21">Template</a></h2>
+			<h2 id="Template">type <a href="../src/template.html?s=677:784#L21">Template</a></h2>
 			<pre>type Template interface {
     Name() string
     Content() []string
@@ -224,7 +224,7 @@ return a &#39;rev.Template&#39; from Go&#39;s template.
 		
 			
 			
-			<h2 id="TemplateLoader">type <a href="../src/template.html?s=298:673#L10">TemplateLoader</a></h2>
+			<h2 id="TemplateLoader">type <a href="../src/template.html?s=300:675#L10">TemplateLoader</a></h2>
 			<pre>type TemplateLoader struct {
     <span class="comment">// contains filtered or unexported fields</span>
 }</pre>
@@ -242,7 +242,7 @@ Everything below the application&#39;s views directory is treated as a template.
 
 			
 				
-				<h3 id="NewTemplateLoader">func <a href="../src/template.html?s=2937:2991#L91">NewTemplateLoader</a></h3>
+				<h3 id="NewTemplateLoader">func <a href="../src/template.html?s=2939:2993#L91">NewTemplateLoader</a></h3>
 				<pre>func NewTemplateLoader(paths []string) *TemplateLoader</pre>
 				
 				
@@ -250,7 +250,7 @@ Everything below the application&#39;s views directory is treated as a template.
 
 			
 				
-				<h3 id="TemplateLoader.Refresh">func (*TemplateLoader) <a href="../src/template.html?s=3250:3296#L101">Refresh</a></h3>
+				<h3 id="TemplateLoader.Refresh">func (*TemplateLoader) <a href="../src/template.html?s=3252:3298#L101">Refresh</a></h3>
 				<pre>func (loader *TemplateLoader) Refresh() *Error</pre>
 				<p>
 This scans the views directory and parses all templates as Go Templates.
@@ -262,7 +262,7 @@ If a template fails to parse, the error is set on the loader.
 				
 			
 				
-				<h3 id="TemplateLoader.Template">func (*TemplateLoader) <a href="../src/template.html?s=7330:7399#L234">Template</a></h3>
+				<h3 id="TemplateLoader.Template">func (*TemplateLoader) <a href="../src/template.html?s=7562:7631#L239">Template</a></h3>
 				<pre>func (loader *TemplateLoader) Template(name string) (Template, error)</pre>
 				<p>
 Return the Template with the given name.  The name is the template&#39;s path
@@ -277,14 +277,14 @@ this case, if a template is returned, it may still be usable.)
 				
 			
 				
-				<h3 id="TemplateLoader.WatchDir">func (*TemplateLoader) <a href="../src/template.html?s=6186:6247#L204">WatchDir</a></h3>
+				<h3 id="TemplateLoader.WatchDir">func (*TemplateLoader) <a href="../src/template.html?s=6191:6252#L204">WatchDir</a></h3>
 				<pre>func (loader *TemplateLoader) WatchDir(info os.FileInfo) bool</pre>
 				
 				
 				
 			
 				
-				<h3 id="TemplateLoader.WatchFile">func (*TemplateLoader) <a href="../src/template.html?s=6362:6423#L209">WatchFile</a></h3>
+				<h3 id="TemplateLoader.WatchFile">func (*TemplateLoader) <a href="../src/template.html?s=6367:6428#L209">WatchFile</a></h3>
 				<pre>func (loader *TemplateLoader) WatchFile(basename string) bool</pre>
 				
 				

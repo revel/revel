@@ -10,7 +10,7 @@ layout: godoc
 
 
 
-	<pre>package rev
+	<pre>package revel
 
 var ERROR_CLASS = &#34;hasError&#34;
 
@@ -177,7 +177,7 @@ func (loader *TemplateLoader) Refresh() *Error {
 
             <span class="comment">// Store / report the first error encountered.</span>
             if err != nil &amp;&amp; loader.compileError == nil {
-                line, description := parseTemplateError(err)
+                _, line, description := parseTemplateError(err)
                 loader.compileError = &amp;Error{
                     Title:       &#34;Template Compilation Error&#34;,
                     Path:        templateName,
@@ -243,7 +243,7 @@ type GoTemplate struct {
 
 }
 
-<span class="comment">// return a &#39;rev.Template&#39; from Go&#39;s template.</span>
+<span class="comment">// return a &#39;revel.Template&#39; from Go&#39;s template.</span>
 func (gotmpl GoTemplate) Render(wr io.Writer, arg interface{}) error {
     return gotmpl.Execute(wr, arg)
 }
