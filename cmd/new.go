@@ -57,7 +57,7 @@ func newApp(args []string) {
 		return
 	}
 
-	revelPkg, err := build.Import(rev.REVEL_IMPORT_PATH, "", build.FindOnly)
+	revelPkg, err := build.Import(revel.REVEL_IMPORT_PATH, "", build.FindOnly)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Abort: Could not find Revel source code: %s\n", err)
 		return

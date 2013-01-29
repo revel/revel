@@ -5,10 +5,10 @@ import (
 )
 
 type Sample2 struct {
-	*rev.Controller
+	*revel.Controller
 }
 
-func (c Sample2) Index() rev.Result {
+func (c Sample2) Index() revel.Result {
 	return c.Render()
 }
 
@@ -16,7 +16,7 @@ func (c Sample2) HandleSubmit(
 	username, firstname, lastname string,
 	age int,
 	password, passwordConfirm, email, emailConfirm string,
-	termsOfUse bool) rev.Result {
+	termsOfUse bool) revel.Result {
 
 	// Validation rules
 	c.Validation.Required(username)

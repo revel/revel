@@ -1,4 +1,4 @@
-package rev
+package revel
 
 import (
 	"mime/multipart"

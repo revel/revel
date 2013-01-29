@@ -16,29 +16,29 @@ var (
 )
 
 type DbPlugin struct {
-	rev.EmptyPlugin
+	revel.EmptyPlugin
 }
 
 func (p DbPlugin) OnAppStart() {
 	// Read configuration.
 	var found bool
-	if Driver, found = rev.Config.String("db.driver"); !found {
-		rev.ERROR.Fatal("No db.driver found.")
+	if Driver, found = revel.Config.String("db.driver"); !found {
+		revel.ERROR.Fatal("No db.driver found.")
 	}
-	if Spec, found = rev.Config.String("db.spec"); !found {
-		rev.ERROR.Fatal("No db.spec found.")
+	if Spec, found = revel.Config.String("db.spec"); !found {
+		revel.ERROR.Fatal("No db.spec found.")
 	}
 
 	// Open a connection.
 	var err error
 	Db, err = sql.Open(Driver, Spec)
 	if err != nil {
-		rev.ERROR.Fatal(err)
+		revel.ERROR.Fatal(err)
 	}
 }
 
 // Begin a transaction.
-func (p DbPlugin) BeforeRequest(c *rev.Controller) {
+func (p DbPlugin) BeforeRequest(c *revel.Controller) {
 	txn, err := Db.Begin()
 	if err != nil {
 		panic(err)
@@ -47,7 +47,7 @@ func (p DbPlugin) BeforeRequest(c *rev.Controller) {
 }
 
 // Commit the active transaction.
-func (p DbPlugin) AfterRequest(c *rev.Controller) {
+func (p DbPlugin) AfterRequest(c *revel.Controller) {
 	if err := c.Txn.Commit(); err != nil {
 		if err != sql.ErrTxDone {
 			panic(err)
@@ -57,7 +57,7 @@ func (p DbPlugin) AfterRequest(c *rev.Controller) {
 }
 
 // Rollback the active transaction, if any.
-func (p DbPlugin) OnException(c *rev.Controller, err interface{}) {
+func (p DbPlugin) OnException(c *revel.Controller, err interface{}) {
 	if c.Txn == nil {
 		return
 	}

@@ -15,7 +15,7 @@ import (
 const validationKeysSource = `
 package test
 
-func (c *Application) testFunc(a, b int, user models.User) rev.Result {
+func (c *Application) testFunc(a, b int, user models.User) revel.Result {
 	// Line 5
 	c.Validation.Required(a)
 	c.Validation.Required(a).Message("Error message")
@@ -36,7 +36,7 @@ func (c *Application) testFunc(a, b int, user models.User) rev.Result {
 	c.Validation.Required(b == 5)
 }
 
-func (m Model) Validate(v *rev.Validation) {
+func (m Model) Validate(v *revel.Validation) {
 	// Line 26
 	v.Required(m.name)
 	v.Required(m.name == "something").
@@ -75,7 +75,7 @@ func TestGetValidationKeys(t *testing.T) {
 	}
 
 	for i, decl := range file.Decls {
-		lineKeys := getValidationKeys(fset, decl.(*ast.FuncDecl), map[string]string{"rev": rev.REVEL_IMPORT_PATH})
+		lineKeys := getValidationKeys(fset, decl.(*ast.FuncDecl), map[string]string{"rev": revel.REVEL_IMPORT_PATH})
 		for k, v := range expectedValidationKeys[i] {
 			if lineKeys[k] != v {
 				t.Errorf("Not found - %d: %v - Actual Map: %v", k, v, lineKeys)
@@ -137,8 +137,8 @@ func TestTypeExpr(t *testing.T) {
 }
 
 func TestProcessBookingSource(t *testing.T) {
-	rev.Init("", "github.com/robfig/revel/samples/booking", "")
-	sourceInfo, err := ProcessSource([]string{rev.AppPath})
+	revel.Init("", "github.com/robfig/revel/samples/booking", "")
+	sourceInfo, err := ProcessSource([]string{revel.AppPath})
 	if err != nil {
 		t.Fatal("Failed to process booking source with error:", err)
 	}
@@ -175,12 +175,12 @@ NEXT_TEST:
 }
 
 func BenchmarkProcessBookingSource(b *testing.B) {
-	rev.Init("", "github.com/robfig/revel/samples/booking", "")
-	rev.TRACE = log.New(ioutil.Discard, "", 0)
+	revel.Init("", "github.com/robfig/revel/samples/booking", "")
+	revel.TRACE = log.New(ioutil.Discard, "", 0)
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		_, err := ProcessSource(rev.CodePaths)
+		_, err := ProcessSource(revel.CodePaths)
 		if err != nil {
 			b.Error("Unexpected error:", err)
 		}

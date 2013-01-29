@@ -5,14 +5,14 @@ import (
 )
 
 type Application struct {
-	*rev.Controller
+	*revel.Controller
 }
 
-func (c Application) Index() rev.Result {
+func (c Application) Index() revel.Result {
 	return c.Render()
 }
 
-func (c Application) EnterDemo(user, demo string) rev.Result {
+func (c Application) EnterDemo(user, demo string) revel.Result {
 	c.Validation.Required(user)
 	c.Validation.Required(demo)
 

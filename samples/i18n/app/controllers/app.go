@@ -3,10 +3,10 @@ package controllers
 import "github.com/robfig/revel"
 
 type Application struct {
-	*rev.Controller
+	*revel.Controller
 }
 
-func (c Application) Index() rev.Result {
+func (c Application) Index() revel.Result {
 	// Localization information
 	c.RenderArgs["acceptLanguageHeader"] = c.Request.Header.Get("Accept-Language")
 	c.RenderArgs["acceptLanguageHeaderParsed"] = c.Request.AcceptLanguages.String()

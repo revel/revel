@@ -1,4 +1,4 @@
-package rev
+package revel
 
 import (
 	"reflect"
@@ -36,12 +36,12 @@ func NewAppController(req *Request, resp *Response, controllerName, methodName s
 // This is a helper that initializes (zeros) a new app controller value.
 // Generally, everything is set to its zero value, except:
 // 1. Embedded controller pointers are newed up.
-// 2. The rev.Controller embedded type is set to the value provided.
+// 2. The revel.Controller embedded type is set to the value provided.
 // Returns a value representing a pointer to the new app controller.
 func initNewAppController(appControllerType reflect.Type, c *Controller) reflect.Value {
 	// It might be a multi-level embedding, so we have to create new controllers
 	// at every level of the hierarchy.
-	// ASSUME: the first field in each type is the way up to rev.Controller.
+	// ASSUME: the first field in each type is the way up to revel.Controller.
 	appControllerPtr := reflect.New(appControllerType)
 	ptr := appControllerPtr
 	for {

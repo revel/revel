@@ -3,10 +3,10 @@ package controllers
 import "github.com/robfig/revel"
 
 func init() {
-	rev.RegisterPlugin(GorpPlugin{})
-	rev.InterceptMethod((*GorpController).Begin, rev.BEFORE)
-	rev.InterceptMethod(Application.AddUser, rev.BEFORE)
-	rev.InterceptMethod(Hotels.checkUser, rev.BEFORE)
-	rev.InterceptMethod((*GorpController).Commit, rev.AFTER)
-	rev.InterceptMethod((*GorpController).Rollback, rev.FINALLY)
+	revel.RegisterPlugin(GorpPlugin{})
+	revel.InterceptMethod((*GorpController).Begin, revel.BEFORE)
+	revel.InterceptMethod(Application.AddUser, revel.BEFORE)
+	revel.InterceptMethod(Hotels.checkUser, revel.BEFORE)
+	revel.InterceptMethod((*GorpController).Commit, revel.AFTER)
+	revel.InterceptMethod((*GorpController).Rollback, revel.FINALLY)
 }

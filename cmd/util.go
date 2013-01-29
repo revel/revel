@@ -16,7 +16,7 @@ import (
 type LoggedError struct{ error }
 
 func panicOnError(err error, msg string) {
-	if revErr, ok := err.(*rev.Error); (ok && revErr != nil) || (!ok && err != nil) {
+	if revErr, ok := err.(*revel.Error); (ok && revErr != nil) || (!ok && err != nil) {
 		fmt.Fprintf(os.Stderr, "Abort: %s: %s\n", msg, err)
 		panic(LoggedError{err})
 	}

@@ -10,7 +10,7 @@ type Application struct {
 	GorpController
 }
 
-func (c Application) AddUser() rev.Result {
+func (c Application) AddUser() revel.Result {
 	if user := c.connected(); user != nil {
 		c.RenderArgs["user"] = user
 	}
@@ -38,7 +38,7 @@ func (c Application) getUser(username string) *models.User {
 	return users[0].(*models.User)
 }
 
-func (c Application) Index() rev.Result {
+func (c Application) Index() revel.Result {
 	if c.connected() != nil {
 		return c.Redirect(Hotels.Index)
 	}
@@ -46,11 +46,11 @@ func (c Application) Index() rev.Result {
 	return c.Render()
 }
 
-func (c Application) Register() rev.Result {
+func (c Application) Register() revel.Result {
 	return c.Render()
 }
 
-func (c Application) SaveUser(user models.User, verifyPassword string) rev.Result {
+func (c Application) SaveUser(user models.User, verifyPassword string) revel.Result {
 	c.Validation.Required(verifyPassword)
 	c.Validation.Required(verifyPassword == user.Password).
 		Message("Password does not match")
@@ -74,7 +74,7 @@ func (c Application) SaveUser(user models.User, verifyPassword string) rev.Resul
 	return c.Redirect(Hotels.Index)
 }
 
-func (c Application) Login(username, password string) rev.Result {
+func (c Application) Login(username, password string) revel.Result {
 	user := c.getUser(username)
 	if user != nil {
 		err := bcrypt.CompareHashAndPassword(user.HashedPassword, []byte(password))
@@ -90,7 +90,7 @@ func (c Application) Login(username, password string) rev.Result {
 	return c.Redirect(Application.Index)
 }
 
-func (c Application) Logout() rev.Result {
+func (c Application) Logout() revel.Result {
 	for k := range c.Session {
 		delete(c.Session, k)
 	}

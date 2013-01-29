@@ -12,7 +12,7 @@ import (
 )
 
 type Application struct {
-	*rev.Controller
+	*revel.Controller
 }
 
 // The following keys correspond to a test application
@@ -28,7 +28,7 @@ var FACEBOOK = &oauth.Config{
 	RedirectURL:  "http://loisant.org:9000/Application/Auth",
 }
 
-func (c Application) Index() rev.Result {
+func (c Application) Index() revel.Result {
 	u := c.connected()
 	me := map[string]interface{}{}
 	if u != nil && u.AccessToken != "" {
@@ -36,20 +36,20 @@ func (c Application) Index() rev.Result {
 			url.QueryEscape(u.AccessToken))
 		defer resp.Body.Close()
 		if err := json.NewDecoder(resp.Body).Decode(&me); err != nil {
-			rev.ERROR.Println(err)
+			revel.ERROR.Println(err)
 		}
-		rev.INFO.Println(me)
+		revel.INFO.Println(me)
 	}
 
 	authUrl := FACEBOOK.AuthCodeURL("foo")
 	return c.Render(me, authUrl)
 }
 
-func (c Application) Auth(code string) rev.Result {
+func (c Application) Auth(code string) revel.Result {
 	t := &oauth.Transport{Config: FACEBOOK}
 	tok, err := t.Exchange(code)
 	if err != nil {
-		rev.ERROR.Println(err)
+		revel.ERROR.Println(err)
 		return c.Redirect(Application.Index)
 	}
 
@@ -58,7 +58,7 @@ func (c Application) Auth(code string) rev.Result {
 	return c.Redirect(Application.Index)
 }
 
-func setuser(c *rev.Controller) rev.Result {
+func setuser(c *revel.Controller) revel.Result {
 	var user *models.User
 	if _, ok := c.Session["uid"]; ok {
 		uid, _ := strconv.ParseInt(c.Session["uid"], 10, 0)
@@ -73,7 +73,7 @@ func setuser(c *rev.Controller) rev.Result {
 }
 
 func init() {
-	rev.InterceptFunc(setuser, rev.BEFORE, &Application{})
+	revel.InterceptFunc(setuser, revel.BEFORE, &Application{})
 }
 
 func (c Application) connected() *models.User {

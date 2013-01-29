@@ -1,4 +1,4 @@
-package rev
+package revel
 
 // An plugin that allows the user to inject behavior at various points in the request cycle.
 type Plugin interface {

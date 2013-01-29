@@ -46,11 +46,11 @@ func testApp(args []string) {
 	}
 
 	// Find and parse app.conf
-	rev.Init(mode, args[0], "")
+	revel.Init(mode, args[0], "")
 
 	// Ensure that the testrunner is loaded in this mode.
 	testRunnerFound := false
-	for _, module := range rev.Modules {
+	for _, module := range revel.Modules {
 		if module.ImportPath == "github.com/robfig/revel/modules/testrunner" {
 			testRunnerFound = true
 			break
@@ -67,7 +67,7 @@ You can add it to a run mode configuration with the following line:
 	}
 
 	// Create a directory to hold the test result files.
-	resultPath := path.Join(rev.BasePath, "test-results")
+	resultPath := path.Join(revel.BasePath, "test-results")
 	if err = os.RemoveAll(resultPath); err != nil {
 		errorf("Failed to remove test result directory %s: %s", resultPath, err)
 	}
@@ -92,11 +92,11 @@ You can add it to a run mode configuration with the following line:
 	// Start the app...
 	cmd.Start()
 	defer cmd.Kill()
-	rev.INFO.Printf("Testing %s (%s) in %s mode\n", rev.AppName, rev.ImportPath, mode)
+	revel.INFO.Printf("Testing %s (%s) in %s mode\n", revel.AppName, revel.ImportPath, mode)
 
 	// Get a list of tests.
 	var testSuites []controllers.TestSuiteDesc
-	baseUrl := fmt.Sprintf("http://127.0.0.1:%d", rev.HttpPort)
+	baseUrl := fmt.Sprintf("http://127.0.0.1:%d", revel.HttpPort)
 	resp, err := http.Get(baseUrl + "/@tests.list")
 	if err != nil {
 		errorf("Failed to request test list: %s", err)
@@ -108,7 +108,7 @@ You can add it to a run mode configuration with the following line:
 	fmt.Println()
 
 	// Load the result template, which we execute for each suite.
-	TemplateLoader := rev.NewTemplateLoader(rev.TemplatePaths)
+	TemplateLoader := revel.NewTemplateLoader(revel.TemplatePaths)
 	if err := TemplateLoader.Refresh(); err != nil {
 		errorf("Failed to compile templates: %s", err)
 	}
@@ -117,7 +117,7 @@ You can add it to a run mode configuration with the following line:
 		errorf("Failed to load suite result template: %s", err)
 	}
 
-	// Run each suite.	
+	// Run each suite.
 	overallSuccess := true
 	for _, suite := range testSuites {
 		// Print the name of the suite we're running.

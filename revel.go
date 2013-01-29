@@ -1,4 +1,4 @@
-package rev
+package revel
 
 import (
 	"github.com/robfig/goconfig/config"
@@ -197,7 +197,6 @@ func newLogger(wr io.Writer) *log.Logger {
 // findSrcPaths uses the "go/build" package to find the source root for Revel
 // and the app.
 func findSrcPaths(importPath string) (revelSourcePath, appSourcePath string) {
-	log.Println("findSrcpaths:", importPath)
 	if gopath := os.Getenv("GOPATH"); gopath == "" {
 		ERROR.Fatalln("GOPATH environment variable is not set. ",
 			"Please refer to http://golang.org/doc/code.html to configure your Go environment.")

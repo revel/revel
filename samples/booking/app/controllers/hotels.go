@@ -12,7 +12,7 @@ type Hotels struct {
 	Application
 }
 
-func (c Hotels) checkUser() rev.Result {
+func (c Hotels) checkUser() revel.Result {
 	if user := c.connected(); user == nil {
 		c.Flash.Error("Please log in first")
 		return c.Redirect(Application.Index)
@@ -20,7 +20,7 @@ func (c Hotels) checkUser() rev.Result {
 	return nil
 }
 
-func (c Hotels) Index() rev.Result {
+func (c Hotels) Index() revel.Result {
 	results, err := c.Txn.Select(models.Booking{},
 		`select * from Booking where UserId = ?`, c.connected().UserId)
 	if err != nil {
@@ -36,7 +36,7 @@ func (c Hotels) Index() rev.Result {
 	return c.Render(bookings)
 }
 
-func (c Hotels) List(search string, size, page int) rev.Result {
+func (c Hotels) List(search string, size, page int) revel.Result {
 	if page == 0 {
 		page = 1
 	}
@@ -76,7 +76,7 @@ func (c Hotels) loadHotelById(id int) *models.Hotel {
 	return h.(*models.Hotel)
 }
 
-func (c Hotels) Show(id int) rev.Result {
+func (c Hotels) Show(id int) revel.Result {
 	var title string
 	hotel := c.loadHotelById(id)
 	if hotel == nil {
@@ -88,11 +88,11 @@ func (c Hotels) Show(id int) rev.Result {
 	return c.Render(title, hotel)
 }
 
-func (c Hotels) Settings() rev.Result {
+func (c Hotels) Settings() revel.Result {
 	return c.Render()
 }
 
-func (c Hotels) SaveSettings(password, verifyPassword string) rev.Result {
+func (c Hotels) SaveSettings(password, verifyPassword string) revel.Result {
 	models.ValidatePassword(c.Validation, password)
 	c.Validation.Required(verifyPassword).
 		Message("Please verify your password")
@@ -113,7 +113,7 @@ func (c Hotels) SaveSettings(password, verifyPassword string) rev.Result {
 	return c.Redirect(Hotels.Index)
 }
 
-func (c Hotels) ConfirmBooking(id int, booking models.Booking) rev.Result {
+func (c Hotels) ConfirmBooking(id int, booking models.Booking) revel.Result {
 	hotel := c.loadHotelById(id)
 	title := fmt.Sprintf("Confirm %s booking", hotel.Name)
 	booking.Hotel = hotel
@@ -139,7 +139,7 @@ func (c Hotels) ConfirmBooking(id int, booking models.Booking) rev.Result {
 	return c.Render(title, hotel, booking)
 }
 
-func (c Hotels) CancelBooking(id int) rev.Result {
+func (c Hotels) CancelBooking(id int) revel.Result {
 	_, err := c.Txn.Delete(&models.Booking{BookingId: id})
 	if err != nil {
 		panic(err)
@@ -148,7 +148,7 @@ func (c Hotels) CancelBooking(id int) rev.Result {
 	return c.Redirect(Hotels.Index)
 }
 
-func (c Hotels) Book(id int) rev.Result {
+func (c Hotels) Book(id int) revel.Result {
 	hotel := c.loadHotelById(id)
 	title := "Book " + hotel.Name
 	// if hotel == nil {

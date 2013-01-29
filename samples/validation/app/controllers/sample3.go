@@ -6,14 +6,14 @@ import (
 )
 
 type Sample3 struct {
-	*rev.Controller
+	*revel.Controller
 }
 
-func (c Sample3) Index() rev.Result {
+func (c Sample3) Index() revel.Result {
 	return c.Render()
 }
 
-func (c Sample3) HandleSubmit(user *models.User) rev.Result {
+func (c Sample3) HandleSubmit(user *models.User) revel.Result {
 	user.Validate(c.Validation)
 
 	// Handle errors

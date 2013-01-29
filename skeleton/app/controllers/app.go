@@ -3,9 +3,9 @@ package controllers
 import "github.com/robfig/revel"
 
 type Application struct {
-	*rev.Controller
+	*revel.Controller
 }
 
-func (c Application) Index() rev.Result {
+func (c Application) Index() revel.Result {
 	return c.Render()
 }

@@ -19,27 +19,27 @@ func (u *User) String() string {
 
 var userRegex = regexp.MustCompile("^\\w*$")
 
-func (user *User) Validate(v *rev.Validation) {
+func (user *User) Validate(v *revel.Validation) {
 	v.Check(user.Username,
-		rev.Required{},
-		rev.MaxSize{15},
-		rev.MinSize{4},
-		rev.Match{userRegex},
+		revel.Required{},
+		revel.MaxSize{15},
+		revel.MinSize{4},
+		revel.Match{userRegex},
 	)
 
 	ValidatePassword(v, user.Password).
 		Key("user.Password")
 
 	v.Check(user.Name,
-		rev.Required{},
-		rev.MaxSize{100},
+		revel.Required{},
+		revel.MaxSize{100},
 	)
 }
 
-func ValidatePassword(v *rev.Validation, password string) *rev.ValidationResult {
+func ValidatePassword(v *revel.Validation, password string) *revel.ValidationResult {
 	return v.Check(password,
-		rev.Required{},
-		rev.MaxSize{15},
-		rev.MinSize{5},
+		revel.Required{},
+		revel.MaxSize{15},
+		revel.MinSize{5},
 	)
 }

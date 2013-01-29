@@ -30,7 +30,7 @@ type Booking struct {
 
 // TODO: Make an interface for Validate() and then validation can pass in the
 // key prefix ("booking.")
-func (booking Booking) Validate(v *rev.Validation) {
+func (booking Booking) Validate(v *revel.Validation) {
 	v.Required(booking.User)
 	v.Required(booking.Hotel)
 	v.Required(booking.CheckInDate)
@@ -40,9 +40,9 @@ func (booking Booking) Validate(v *rev.Validation) {
 		Message("Credit card number must be numeric and 16 digits")
 
 	v.Check(booking.NameOnCard,
-		rev.Required{},
-		rev.MinSize{3},
-		rev.MaxSize{70},
+		revel.Required{},
+		revel.MinSize{3},
+		revel.MaxSize{70},
 	)
 }
 

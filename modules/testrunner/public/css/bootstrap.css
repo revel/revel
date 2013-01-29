@@ -5656,7 +5656,7 @@ a.badge:hover {
 }
 
 .carousel .next.left,
-.carousel .prev.right {
+.carousel .prevel.right {
   left: 0;
 }
 

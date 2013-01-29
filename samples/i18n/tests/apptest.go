@@ -3,7 +3,7 @@ package tests
 import "github.com/robfig/revel"
 
 type ApplicationTest struct {
-	rev.TestSuite
+	revel.TestSuite
 }
 
 func (t ApplicationTest) Before() {

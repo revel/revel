@@ -19,10 +19,10 @@ var TWITTER = oauth.NewConsumer(
 )
 
 type Application struct {
-	*rev.Controller
+	*revel.Controller
 }
 
-func (c Application) Index() rev.Result {
+func (c Application) Index() revel.Result {
 	user := getUser()
 	if user.AccessToken == nil {
 		return c.Render()
@@ -34,7 +34,7 @@ func (c Application) Index() rev.Result {
 		map[string]string{"count": "10"},
 		user.AccessToken)
 	if err != nil {
-		rev.ERROR.Println(err)
+		revel.ERROR.Println(err)
 		return c.Render()
 	}
 	defer resp.Body.Close()
@@ -45,32 +45,32 @@ func (c Application) Index() rev.Result {
 	}{}
 	err = json.NewDecoder(resp.Body).Decode(&mentions)
 	if err != nil {
-		rev.ERROR.Println(err)
+		revel.ERROR.Println(err)
 	}
-	rev.INFO.Println(mentions)
+	revel.INFO.Println(mentions)
 	return c.Render(mentions)
 }
 
-func (c Application) SetStatus(status string) rev.Result {
+func (c Application) SetStatus(status string) revel.Result {
 	resp, err := TWITTER.PostForm(
 		"http://api.twitter.com/1/statuses/update.json",
 		map[string]string{"status": status},
 		getUser().AccessToken,
 	)
 	if err != nil {
-		rev.ERROR.Println(err)
+		revel.ERROR.Println(err)
 		return c.RenderError(err)
 	}
 	defer resp.Body.Close()
 	bodyBytes, _ := ioutil.ReadAll(resp.Body)
-	rev.INFO.Println(string(bodyBytes))
+	revel.INFO.Println(string(bodyBytes))
 	c.Response.ContentType = "application/json"
 	return c.RenderText(string(bodyBytes))
 }
 
 // Twitter authentication
 
-func (c Application) Authenticate(oauth_verifier string) rev.Result {
+func (c Application) Authenticate(oauth_verifier string) revel.Result {
 	user := getUser()
 	if oauth_verifier != "" {
 		// We got the verifier; now get the access token, store it and back to index
@@ -78,7 +78,7 @@ func (c Application) Authenticate(oauth_verifier string) rev.Result {
 		if err == nil {
 			user.AccessToken = accessToken
 		} else {
-			rev.ERROR.Println("Error connecting to twitter:", err)
+			revel.ERROR.Println("Error connecting to twitter:", err)
 		}
 		return c.Redirect(Application.Index)
 	}
@@ -89,7 +89,7 @@ func (c Application) Authenticate(oauth_verifier string) rev.Result {
 		user.RequestToken = requestToken
 		return c.Redirect(url)
 	} else {
-		rev.ERROR.Println("Error connecting to twitter:", err)
+		revel.ERROR.Println("Error connecting to twitter:", err)
 	}
 	return c.Redirect(Application.Index)
 }

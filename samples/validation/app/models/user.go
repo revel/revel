@@ -14,7 +14,7 @@ type User struct {
 	TermsOfUse      bool
 }
 
-func (user *User) Validate(v *rev.Validation) {
+func (user *User) Validate(v *revel.Validation) {
 	v.Required(user.Username)
 	v.MinSize(user.Username, 6)
 	v.Required(user.FirstName)

@@ -32,14 +32,14 @@ func packageApp(args []string) {
 	}
 
 	appImportPath := args[0]
-	rev.Init("", appImportPath, "")
+	revel.Init("", appImportPath, "")
 
 	// Remove the archive if it already exists.
-	destFile := path.Base(rev.BasePath) + ".zip"
+	destFile := path.Base(revel.BasePath) + ".zip"
 	os.Remove(destFile)
 
 	// Collect stuff in a temp directory.
-	tmpDir, err := ioutil.TempDir("", path.Base(rev.BasePath))
+	tmpDir, err := ioutil.TempDir("", path.Base(revel.BasePath))
 	panicOnError(err, "Failed to get temp dir")
 
 	buildApp([]string{args[0], tmpDir})

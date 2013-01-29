@@ -1,4 +1,4 @@
-package rev
+package revel
 
 func init() {
 	RegisterPlugin(SessionPlugin{})

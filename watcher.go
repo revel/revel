@@ -1,4 +1,4 @@
-package rev
+package revel
 
 import (
 	"github.com/robfig/fsnotify"

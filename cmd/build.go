@@ -35,8 +35,8 @@ func buildApp(args []string) {
 	}
 
 	appImportPath, destPath := args[0], args[1]
-	if !rev.Initialized {
-		rev.Init("", appImportPath, "")
+	if !revel.Initialized {
+		revel.Init("", appImportPath, "")
 	}
 
 	os.RemoveAll(destPath)
@@ -53,11 +53,11 @@ func buildApp(args []string) {
 
 	// Revel and the app are in a directory structure mirroring import path
 	srcPath := path.Join(destPath, "src")
-	tmpRevelPath := path.Join(srcPath, filepath.FromSlash(rev.REVEL_IMPORT_PATH))
+	tmpRevelPath := path.Join(srcPath, filepath.FromSlash(revel.REVEL_IMPORT_PATH))
 	mustCopyFile(path.Join(destPath, filepath.Base(app.BinaryPath)), app.BinaryPath)
-	mustCopyDir(path.Join(tmpRevelPath, "conf"), path.Join(rev.RevelPath, "conf"), nil)
-	mustCopyDir(path.Join(tmpRevelPath, "templates"), path.Join(rev.RevelPath, "templates"), nil)
-	mustCopyDir(path.Join(srcPath, filepath.FromSlash(appImportPath)), rev.BasePath, nil)
+	mustCopyDir(path.Join(tmpRevelPath, "conf"), path.Join(revel.RevelPath, "conf"), nil)
+	mustCopyDir(path.Join(tmpRevelPath, "templates"), path.Join(revel.RevelPath, "templates"), nil)
+	mustCopyDir(path.Join(srcPath, filepath.FromSlash(appImportPath)), revel.BasePath, nil)
 
 	tmplData := map[string]interface{}{
 		"BinName":    filepath.Base(app.BinaryPath),
@@ -66,11 +66,11 @@ func buildApp(args []string) {
 
 	mustRenderTemplate(
 		path.Join(destPath, "run.sh"),
-		path.Join(rev.RevelPath, "cmd", "package_run.sh.template"),
+		path.Join(revel.RevelPath, "cmd", "package_run.sh.template"),
 		tmplData)
 
 	mustRenderTemplate(
 		path.Join(destPath, "run.bat"),
-		path.Join(rev.RevelPath, "cmd", "package_run.bat.template"),
+		path.Join(revel.RevelPath, "cmd", "package_run.bat.template"),
 		tmplData)
 }

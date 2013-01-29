@@ -42,10 +42,10 @@ func runApp(args []string) {
 	}
 
 	// Find and parse app.conf
-	rev.Init(mode, args[0], "")
+	revel.Init(mode, args[0], "")
 
 	// Determine the override port, if any.
-	port := rev.HttpPort
+	port := revel.HttpPort
 	if len(args) == 3 {
 		var err error
 		if port, err = strconv.Atoi(args[2]); err != nil {
@@ -53,12 +53,12 @@ func runApp(args []string) {
 		}
 	}
 
-	rev.INFO.Printf("Running %s (%s) in %s mode\n", rev.AppName, rev.ImportPath, mode)
-	rev.TRACE.Println("Base path:", rev.BasePath)
+	revel.INFO.Printf("Running %s (%s) in %s mode\n", revel.AppName, revel.ImportPath, mode)
+	revel.TRACE.Println("Base path:", revel.BasePath)
 
 	// If the app is run in "watched" mode, use the harness to run it.
-	if rev.Config.BoolDefault("watch", true) && rev.Config.BoolDefault("watch.code", true) {
-		rev.HttpPort = port
+	if revel.Config.BoolDefault("watch", true) && revel.Config.BoolDefault("watch.code", true) {
+		revel.HttpPort = port
 		harness.NewHarness().Run() // Never returns.
 	}
 

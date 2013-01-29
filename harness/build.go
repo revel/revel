@@ -19,21 +19,21 @@ var importErrorPattern = regexp.MustCompile("import \"([^\"]+)\": cannot find pa
 // Build the app:
 // 1. Generate the the main.go file.
 // 2. Run the appropriate "go build" command.
-// Requires that rev.Init has been called previously.
+// Requires that revel.Init has been called previously.
 // Returns the path to the built binary, and an error if there was a problem building it.
-func Build() (app *App, compileError *rev.Error) {
-	sourceInfo, compileError := ProcessSource(rev.CodePaths)
+func Build() (app *App, compileError *revel.Error) {
+	sourceInfo, compileError := ProcessSource(revel.CodePaths)
 	if compileError != nil {
 		return nil, compileError
 	}
 
 	// Add the db.import to the import paths.
-	if dbImportPath, found := rev.Config.String("db.import"); found {
+	if dbImportPath, found := revel.Config.String("db.import"); found {
 		sourceInfo.InitImportPaths = append(sourceInfo.InitImportPaths, dbImportPath)
 	}
 
 	tmpl := template.Must(template.New("").Parse(REGISTER_CONTROLLERS))
-	registerControllerSource := rev.ExecuteTemplate(tmpl, map[string]interface{}{
+	registerControllerSource := revel.ExecuteTemplate(tmpl, map[string]interface{}{
 		"Controllers":    sourceInfo.ControllerSpecs,
 		"ValidationKeys": sourceInfo.ValidationKeys,
 		"ImportPaths":    calcImportAliases(sourceInfo),
@@ -41,43 +41,43 @@ func Build() (app *App, compileError *rev.Error) {
 	})
 
 	// Create a fresh temp dir.
-	tmpPath := path.Join(rev.AppPath, "tmp")
+	tmpPath := path.Join(revel.AppPath, "tmp")
 	err := os.RemoveAll(tmpPath)
 	if err != nil {
-		rev.ERROR.Println("Failed to remove tmp dir:", err)
+		revel.ERROR.Println("Failed to remove tmp dir:", err)
 	}
 	err = os.Mkdir(tmpPath, 0777)
 	if err != nil {
-		rev.ERROR.Fatalf("Failed to make tmp directory: %v", err)
+		revel.ERROR.Fatalf("Failed to make tmp directory: %v", err)
 	}
 
 	// Create the main.go file
 	controllersFile, err := os.Create(path.Join(tmpPath, "main.go"))
 	defer controllersFile.Close()
 	if err != nil {
-		rev.ERROR.Fatalf("Failed to create main.go: %v", err)
+		revel.ERROR.Fatalf("Failed to create main.go: %v", err)
 	}
 	_, err = controllersFile.WriteString(registerControllerSource)
 	if err != nil {
-		rev.ERROR.Fatalf("Failed to write to main.go: %v", err)
+		revel.ERROR.Fatalf("Failed to write to main.go: %v", err)
 	}
 
 	// Read build config.
-	buildTags := rev.Config.StringDefault("build.tags", "")
+	buildTags := revel.Config.StringDefault("build.tags", "")
 
 	// Build the user program (all code under app).
 	// It relies on the user having "go" installed.
 	goPath, err := exec.LookPath("go")
 	if err != nil {
-		rev.ERROR.Fatalf("Go executable not found in PATH.")
+		revel.ERROR.Fatalf("Go executable not found in PATH.")
 	}
 
 	ctx := build.Default
-	pkg, err := ctx.Import(rev.ImportPath, "", build.FindOnly)
+	pkg, err := ctx.Import(revel.ImportPath, "", build.FindOnly)
 	if err != nil {
-		rev.ERROR.Fatalln("Failure importing", rev.ImportPath)
+		revel.ERROR.Fatalln("Failure importing", revel.ImportPath)
 	}
-	binName := path.Join(pkg.BinDir, path.Base(rev.BasePath))
+	binName := path.Join(pkg.BinDir, path.Base(revel.BasePath))
 	if runtime.GOOS == "windows" {
 		binName += ".exe"
 	}
@@ -86,15 +86,15 @@ func Build() (app *App, compileError *rev.Error) {
 	for {
 		buildCmd := exec.Command(goPath, "build",
 			"-tags", buildTags,
-			"-o", binName, path.Join(rev.ImportPath, "app", "tmp"))
-		rev.TRACE.Println("Exec:", buildCmd.Args)
+			"-o", binName, path.Join(revel.ImportPath, "app", "tmp"))
+		revel.TRACE.Println("Exec:", buildCmd.Args)
 		output, err := buildCmd.CombinedOutput()
 
 		// If the build succeeded, we're done.
 		if err == nil {
 			return NewApp(binName), nil
 		}
-		rev.TRACE.Println(string(output))
+		revel.TRACE.Println(string(output))
 
 		// See if it was an import error that we can go get.
 		matches := importErrorPattern.FindStringSubmatch(string(output))
@@ -111,16 +111,16 @@ func Build() (app *App, compileError *rev.Error) {
 
 		// Execute "go get <pkg>"
 		getCmd := exec.Command(goPath, "get", pkgName)
-		rev.TRACE.Println("Exec:", getCmd.Args)
+		revel.TRACE.Println("Exec:", getCmd.Args)
 		getOutput, err := getCmd.CombinedOutput()
 		if err != nil {
-			rev.TRACE.Println(string(getOutput))
+			revel.TRACE.Println(string(getOutput))
 			return nil, newCompileError(output)
 		}
 
 		// Success getting the import, attempt to build again.
 	}
-	rev.ERROR.Fatalf("Not reachable")
+	revel.ERROR.Fatalf("Not reachable")
 	return nil, nil
 }
 
@@ -186,12 +186,12 @@ func containsValue(m map[string]string, val string) bool {
 
 // Parse the output of the "go build" command.
 // Return a detailed Error.
-func newCompileError(output []byte) *rev.Error {
+func newCompileError(output []byte) *revel.Error {
 	errorMatch := regexp.MustCompile(`(?m)^([^:#]+):(\d+):(\d+:)? (.*)$`).
 		FindSubmatch(output)
 	if errorMatch == nil {
-		rev.ERROR.Println("Failed to parse build errors:\n", string(output))
-		return &rev.Error{
+		revel.ERROR.Println("Failed to parse build errors:\n", string(output))
+		return &revel.Error{
 			SourceType:  "Go code",
 			Title:       "Go Compilation Error",
 			Description: "See console for build error.",
@@ -204,7 +204,7 @@ func newCompileError(output []byte) *rev.Error {
 		absFilename, _ = filepath.Abs(relFilename)
 		line, _        = strconv.Atoi(string(errorMatch[2]))
 		description    = string(errorMatch[4])
-		compileError   = &rev.Error{
+		compileError   = &revel.Error{
 			SourceType:  "Go code",
 			Title:       "Go Compilation Error",
 			Path:        relFilename,
@@ -213,10 +213,10 @@ func newCompileError(output []byte) *rev.Error {
 		}
 	)
 
-	fileStr, err := rev.ReadLines(absFilename)
+	fileStr, err := revel.ReadLines(absFilename)
 	if err != nil {
 		compileError.MetaError = absFilename + ": " + err.Error()
-		rev.ERROR.Println(compileError.MetaError)
+		revel.ERROR.Println(compileError.MetaError)
 		return compileError
 	}
 
@@ -245,15 +245,15 @@ var (
 
 func main() {
 	flag.Parse()
-	rev.Init(*runMode, *importPath, *srcPath)
-	rev.INFO.Println("Running revel server")
+	revel.Init(*runMode, *importPath, *srcPath)
+	revel.INFO.Println("Running revel server")
 	{{range $i, $c := .Controllers}}
-	rev.RegisterController((*{{index $.ImportPaths .ImportPath}}.{{.StructName}})(nil),
-		[]*rev.MethodType{
-			{{range .MethodSpecs}}&rev.MethodType{
+	revel.RegisterController((*{{index $.ImportPaths .ImportPath}}.{{.StructName}})(nil),
+		[]*revel.MethodType{
+			{{range .MethodSpecs}}&revel.MethodType{
 				Name: "{{.Name}}",
-				Args: []*rev.MethodArg{ {{range .Args}}
-					&rev.MethodArg{Name: "{{.Name}}", Type: reflect.TypeOf((*{{index $.ImportPaths .ImportPath | .TypeExpr.TypeName}})(nil)) },{{end}}
+				Args: []*revel.MethodArg{ {{range .Args}}
+					&revel.MethodArg{Name: "{{.Name}}", Type: reflect.TypeOf((*{{index $.ImportPaths .ImportPath | .TypeExpr.TypeName}})(nil)) },{{end}}
 				},
 				RenderArgNames: map[int][]string{ {{range .RenderCalls}}
 					{{.Line}}: []string{ {{range .Names}}
@@ -264,15 +264,15 @@ func main() {
 			{{end}}
 		})
 	{{end}}
-	rev.DefaultValidationKeys = map[string]map[int]string{ {{range $path, $lines := .ValidationKeys}}
+	revel.DefaultValidationKeys = map[string]map[int]string{ {{range $path, $lines := .ValidationKeys}}
 		"{{$path}}": { {{range $line, $key := $lines}}
 			{{$line}}: "{{$key}}",{{end}}
 		},{{end}}
 	}
-	rev.TestSuites = []interface{}{ {{range .TestSuites}}
+	revel.TestSuites = []interface{}{ {{range .TestSuites}}
 		(*{{index $.ImportPaths .ImportPath}}.{{.StructName}})(nil),{{end}}
 	}
 
-	rev.Run(*port)
+	revel.Run(*port)
 }
 `

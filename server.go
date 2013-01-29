@@ -1,4 +1,4 @@
-package rev
+package revel
 
 import (
 	"code.google.com/p/go.net/websocket"

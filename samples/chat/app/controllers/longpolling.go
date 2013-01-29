@@ -6,20 +6,20 @@ import (
 )
 
 type LongPolling struct {
-	*rev.Controller
+	*revel.Controller
 }
 
-func (c LongPolling) Room(user string) rev.Result {
+func (c LongPolling) Room(user string) revel.Result {
 	chatroom.Join(user)
 	return c.Render(user)
 }
 
-func (c LongPolling) Say(user, message string) rev.Result {
+func (c LongPolling) Say(user, message string) revel.Result {
 	chatroom.Say(user, message)
 	return nil
 }
 
-func (c LongPolling) WaitMessages(lastReceived int) rev.Result {
+func (c LongPolling) WaitMessages(lastReceived int) revel.Result {
 	subscription := chatroom.Subscribe()
 	defer subscription.Cancel()
 
@@ -41,7 +41,7 @@ func (c LongPolling) WaitMessages(lastReceived int) rev.Result {
 	return c.RenderJson([]chatroom.Event{event})
 }
 
-func (c LongPolling) Leave(user string) rev.Result {
+func (c LongPolling) Leave(user string) revel.Result {
 	chatroom.Leave(user)
 	return c.Redirect(Application.Index)
 }

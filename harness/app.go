@@ -35,7 +35,7 @@ func (a *App) Kill() {
 }
 
 // AppCmd manages the running of a Revel app server.
-// It requires rev.Init to have been called previously.
+// It requires revel.Init to have been called previously.
 type AppCmd struct {
 	*exec.Cmd
 }
@@ -43,8 +43,8 @@ type AppCmd struct {
 func NewAppCmd(binPath string, port int) AppCmd {
 	cmd := exec.Command(binPath,
 		fmt.Sprintf("-port=%d", port),
-		fmt.Sprintf("-importPath=%s", rev.ImportPath),
-		fmt.Sprintf("-runMode=%s", rev.RunMode))
+		fmt.Sprintf("-importPath=%s", revel.ImportPath),
+		fmt.Sprintf("-runMode=%s", revel.RunMode))
 	cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
 	return AppCmd{cmd}
 }
@@ -53,9 +53,9 @@ func NewAppCmd(binPath string, port int) AppCmd {
 func (cmd AppCmd) Start() error {
 	listeningWriter := startupListeningWriter{os.Stdout, make(chan bool)}
 	cmd.Stdout = listeningWriter
-	rev.TRACE.Println("Exec app:", cmd.Path, cmd.Args)
+	revel.TRACE.Println("Exec app:", cmd.Path, cmd.Args)
 	if err := cmd.Cmd.Start(); err != nil {
-		rev.ERROR.Fatalln("Error running:", err)
+		revel.ERROR.Fatalln("Error running:", err)
 	}
 
 	select {
@@ -74,19 +74,19 @@ func (cmd AppCmd) Start() error {
 
 // Run the app server inline.  Never returns.
 func (cmd AppCmd) Run() {
-	rev.TRACE.Println("Exec app:", cmd.Path, cmd.Args)
+	revel.TRACE.Println("Exec app:", cmd.Path, cmd.Args)
 	if err := cmd.Cmd.Run(); err != nil {
-		rev.ERROR.Fatalln("Error running:", err)
+		revel.ERROR.Fatalln("Error running:", err)
 	}
 }
 
 // Terminate the app server if it's running.
 func (cmd AppCmd) Kill() {
 	if cmd.Cmd != nil && (cmd.ProcessState == nil || !cmd.ProcessState.Exited()) {
-		rev.TRACE.Println("Killing revel server pid", cmd.Process.Pid)
+		revel.TRACE.Println("Killing revel server pid", cmd.Process.Pid)
 		err := cmd.Process.Kill()
 		if err != nil {
-			rev.ERROR.Fatalln("Failed to kill revel server:", err)
+			revel.ERROR.Fatalln("Failed to kill revel server:", err)
 		}
 	}
 }

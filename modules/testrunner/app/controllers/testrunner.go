@@ -12,7 +12,7 @@ import (
 )
 
 type TestRunner struct {
-	*rev.Controller
+	*revel.Controller
 }
 
 type TestSuiteDesc struct {
@@ -38,18 +38,18 @@ type TestResult struct {
 
 var NONE = []reflect.Value{}
 
-func (c TestRunner) Index() rev.Result {
+func (c TestRunner) Index() revel.Result {
 	var testSuites []TestSuiteDesc
-	for _, testSuite := range rev.TestSuites {
+	for _, testSuite := range revel.TestSuites {
 		testSuites = append(testSuites, DescribeSuite(testSuite))
 	}
 	return c.Render(testSuites)
 }
 
 // Run runs a single test, given by the argument. 
-func (c TestRunner) Run(suite, test string) rev.Result {
+func (c TestRunner) Run(suite, test string) revel.Result {
 	result := TestResult{Name: test}
-	for _, testSuite := range rev.TestSuites {
+	for _, testSuite := range revel.TestSuites {
 		t := reflect.TypeOf(testSuite).Elem()
 		if t.Name() != suite {
 			continue
@@ -60,12 +60,12 @@ func (c TestRunner) Run(suite, test string) rev.Result {
 		func() {
 			defer func() {
 				if err := recover(); err != nil {
-					error := rev.NewErrorFromPanic(err)
+					error := revel.NewErrorFromPanic(err)
 					if error == nil {
 						result.ErrorHtml = template.HTML(html.EscapeString(fmt.Sprint(err)))
 					} else {
 						var buffer bytes.Buffer
-						tmpl, _ := rev.MainTemplateLoader.Template("TestRunner/FailureDetail.html")
+						tmpl, _ := revel.MainTemplateLoader.Template("TestRunner/FailureDetail.html")
 						tmpl.Render(&buffer, error)
 						result.ErrorHtml = template.HTML(buffer.String())
 					}
@@ -74,7 +74,7 @@ func (c TestRunner) Run(suite, test string) rev.Result {
 
 			// Initialize the test suite with a NewTestSuite()
 			testSuiteInstance := v.Elem().FieldByName("TestSuite")
-			testSuiteInstance.Set(reflect.ValueOf(rev.NewTestSuite()))
+			testSuiteInstance.Set(reflect.ValueOf(revel.NewTestSuite()))
 
 			// Call Before(), call the test, and call After().
 			if m := v.MethodByName("Before"); m.IsValid() {
@@ -95,9 +95,9 @@ func (c TestRunner) Run(suite, test string) rev.Result {
 
 // List returns a JSON list of test suites and tests.
 // Used by the "test" command line tool.
-func (c TestRunner) List() rev.Result {
+func (c TestRunner) List() revel.Result {
 	var testSuites []TestSuiteDesc
-	for _, testSuite := range rev.TestSuites {
+	for _, testSuite := range revel.TestSuites {
 		testSuites = append(testSuites, DescribeSuite(testSuite))
 	}
 	return c.RenderJson(testSuites)
@@ -136,5 +136,5 @@ func DescribeSuite(testSuite interface{}) TestSuiteDesc {
 }
 
 func init() {
-	rev.RegisterPlugin(app.TestRunnerPlugin{})
+	revel.RegisterPlugin(app.TestRunnerPlugin{})
 }

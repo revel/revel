@@ -7,14 +7,14 @@ import (
 )
 
 type WebSocket struct {
-	*rev.Controller
+	*revel.Controller
 }
 
-func (c WebSocket) Room(user string) rev.Result {
+func (c WebSocket) Room(user string) revel.Result {
 	return c.Render(user)
 }
 
-func (c WebSocket) RoomSocket(user string, ws *websocket.Conn) rev.Result {
+func (c WebSocket) RoomSocket(user string, ws *websocket.Conn) revel.Result {
 	// Join the room.
 	subscription := chatroom.Subscribe()
 	defer subscription.Cancel()

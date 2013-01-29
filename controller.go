@@ -1,4 +1,4 @@
-package rev
+package revel
 
 import (
 	"database/sql"
@@ -141,7 +141,7 @@ func (c *Controller) RenderError(err error) Result {
 //
 // For example:
 //
-//     func (c Users) ShowUser(id int) rev.Result {
+//     func (c Users) ShowUser(id int) revel.Result {
 //     	 user := loadUser(id)
 //     	 return c.Render(user)
 //     }
