@@ -93,6 +93,19 @@ var (
 		"msg": func(renderArgs map[string]interface{}, message string, args ...interface{}) template.HTML {
 			return template.HTML(Message(renderArgs[CurrentLocaleRenderArg].(string), message, args...))
 		},
+
+		// Replaces newlines with <br>
+		"nl2br": func(text string) template.HTML {
+			return template.HTML(strings.Replace(template.HTMLEscapeString(text), "\n", "<br>", -1))
+		},
+
+		// Pluralize
+		"pluralize": func(num int, singular, plural string) template.HTML {
+			if num == 1 {
+				return template.HTML(singular)
+			}
+			return template.HTML(plural)
+		},
 	}
 
 	Funcs = TemplateFuncs
