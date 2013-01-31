@@ -133,6 +133,30 @@ Example:
 
 {% endraw %}
 
+### nl2br
+
+Convert newlines to HTML breaks.
+
+Example:
+
+{% raw %}
+
+    You said:
+    <div class="comment">{{nl2br .commentText}}</div>
+
+{% endraw %}
+
+### pluralize
+
+A helper for correctly pluralizing words.
+
+Example:
+
+{% raw %}
+
+	There are {{.numComments}} comment{{pluralize (len comments) "" "s"}}
+
+{% endraw %}
 
 ## Including
 
@@ -140,7 +164,7 @@ Go Templates allow you to compose templates by inclusion.  For example:
 
 {% raw %}
 
-	{{include "header.html"}}
+	{{template "header.html" .}}
 
 {% endraw %}
 
