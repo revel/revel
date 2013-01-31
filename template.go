@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -100,10 +101,21 @@ var (
 		},
 
 		// Pluralize
-		"pluralize": func(num int, singular, plural string) template.HTML {
-			if num == 1 {
+		"pluralize": func(array interface{}, pluralOverrides ...string) template.HTML {
+			singular, plural := "", "s"
+
+			if len(pluralOverrides) >= 1 {
+				singular = pluralOverrides[0]
+				if len(pluralOverrides) == 2 {
+					plural = pluralOverrides[1]
+				}
+			}
+
+			v := reflect.ValueOf(array)
+			if v.Kind() != reflect.Slice || v.Len() == 1 {
 				return template.HTML(singular)
 			}
+
 			return template.HTML(plural)
 		},
 	}
