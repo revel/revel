@@ -6,7 +6,7 @@ layout: manual
 ## Overview
 
 The application config file is named `app.conf` and uses the syntax accepted by
-[goconfig](https://github.com/robfig/goconfig), which is similar to Microsoft
+[goconfig](https://github.com/robfig/config), which is similar to Microsoft
 INI files.
 
 Here's an example file:
