@@ -1,7 +1,8 @@
 package main
 
 import (
-	"archive/zip"
+	"archive/tar"
+	"compress/gzip"
 	"fmt"
 	"github.com/robfig/revel"
 	"io"
@@ -94,36 +95,39 @@ func mustCopyDir(destDir, srcDir string, data map[string]interface{}) error {
 	})
 }
 
-func mustZipDir(destFilename, srcDir string) string {
+func mustTarGzDir(destFilename, srcDir string) string {
 	zipFile, err := os.Create(destFilename)
-	panicOnError(err, "Failed to create zip file")
+	panicOnError(err, "Failed to create archive")
+	defer zipFile.Close()
 
-	w := zip.NewWriter(zipFile)
+	gzipWriter := gzip.NewWriter(zipFile)
+	defer gzipWriter.Close()
+
+	tarWriter := tar.NewWriter(gzipWriter)
+	defer tarWriter.Close()
+
 	filepath.Walk(srcDir, func(srcPath string, info os.FileInfo, err error) error {
-		// Ignore directories (they are represented by the path of written entries).
 		if info.IsDir() {
 			return nil
 		}
 
-		relSrcPath := strings.TrimLeft(srcPath[len(srcDir):], string(os.PathSeparator))
-
-		f, err := w.Create(relSrcPath)
-		panicOnError(err, "Failed to create zip entry")
-
 		srcFile, err := os.Open(srcPath)
 		panicOnError(err, "Failed to read source file")
+		defer srcFile.Close()
 
-		_, err = io.Copy(f, srcFile)
+		err = tarWriter.WriteHeader(&tar.Header{
+			Name:    strings.TrimLeft(srcPath[len(srcDir):], string(os.PathSeparator)),
+			Size:    info.Size(),
+			Mode:    int64(info.Mode()),
+			ModTime: info.ModTime(),
+		})
+		panicOnError(err, "Failed to write tar entry header")
+
+		_, err = io.Copy(tarWriter, srcFile)
 		panicOnError(err, "Failed to copy")
 
 		return nil
 	})
-
-	err = w.Close()
-	panicOnError(err, "Failed to close archive")
-
-	err = zipFile.Close()
-	panicOnError(err, "Failed to close zip file")
 
 	return zipFile.Name()
 }
