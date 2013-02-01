@@ -29,15 +29,15 @@ which compiles and zips the app, along with a script to run it.
 
 	# Package it up.
 	$ revel package import/path/to/app
-	Your archive is ready: app.zip
+	Your archive is ready: app.tar.gz
 
 	# Copy to the target machine.
-	$ scp app.zip target:/srv/
+	$ scp app.tar.gz target:/srv/
 
 	# Run it on the target machine.
 	$ ssh target
 	$ cd /srv/
-    $ unzip app.zip
+    $ tar xzvf app.tar.gz
 	$ bash run.sh
 
 Presently there is no explicit cross-compilation support, so this only works if
