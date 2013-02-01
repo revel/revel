@@ -157,11 +157,11 @@ When the requested message could not be resolved at all, a specially formatted s
 
 ### Retrieving the current locale
 
-The application code can access the current locale from within a `Controller` using the `Controller.Locale` property. For example:
+The application code can access the current locale from within a `Request` using the `Request.Locale` property. For example:
 
 <pre class="prettyprint lang-go">
 func (c Application) Index() revel.Result {
-	currentLocale := c.Locale
+	currentLocale := c.Request.Locale
 	c.Render(currentLocale)
 }
 </pre>
