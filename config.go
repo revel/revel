@@ -2,7 +2,7 @@ package revel
 
 import (
 	"errors"
-	"github.com/robfig/goconfig/config"
+	"github.com/robfig/config"
 	"path"
 	"strings"
 )

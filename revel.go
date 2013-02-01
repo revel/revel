@@ -1,7 +1,7 @@
 package revel
 
 import (
-	"github.com/robfig/goconfig/config"
+	"github.com/robfig/config"
 	"go/build"
 	"io"
 	"log"

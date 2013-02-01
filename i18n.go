@@ -2,7 +2,7 @@ package revel
 
 import (
 	"fmt"
-	"github.com/robfig/goconfig/config"
+	"github.com/robfig/config"
 	"os"
 	"path"
 	"path/filepath"
