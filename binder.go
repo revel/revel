@@ -67,6 +67,15 @@ func init() {
 	KindBinders[reflect.Int32] = ValueBinder(bindInt32)
 	KindBinders[reflect.Int64] = ValueBinder(bindInt64)
 
+	KindBinders[reflect.Uint] = ValueBinder(bindUint)
+	KindBinders[reflect.Uint8] = ValueBinder(bindUint8)
+	KindBinders[reflect.Uint16] = ValueBinder(bindUint16)
+	KindBinders[reflect.Uint32] = ValueBinder(bindUint32)
+	KindBinders[reflect.Uint64] = ValueBinder(bindUint64)
+
+	KindBinders[reflect.Float32] = ValueBinder(bindFloat32)
+	KindBinders[reflect.Float64] = ValueBinder(bindFloat64)
+
 	KindBinders[reflect.String] = ValueBinder(bindStr)
 	KindBinders[reflect.Bool] = ValueBinder(bindBool)
 	KindBinders[reflect.Slice] = bindSlice
@@ -91,6 +100,7 @@ func init() {
 func bindStr(val string, typ reflect.Type) reflect.Value {
 	return reflect.ValueOf(val)
 }
+
 func bindInt(val string, typ reflect.Type) reflect.Value {
 	return reflect.ValueOf(int(bindIntHelper(val, 0)))
 }
@@ -117,6 +127,53 @@ func bindIntHelper(val string, bits int) int64 {
 		return 0
 	}
 	return intValue
+}
+
+func bindUint(val string, typ reflect.Type) reflect.Value {
+	return reflect.ValueOf(uint(bindUintHelper(val, 0)))
+}
+func bindUint8(val string, typ reflect.Type) reflect.Value {
+	return reflect.ValueOf(uint8(bindUintHelper(val, 8)))
+}
+func bindUint16(val string, typ reflect.Type) reflect.Value {
+	return reflect.ValueOf(uint16(bindUintHelper(val, 16)))
+}
+func bindUint32(val string, typ reflect.Type) reflect.Value {
+	return reflect.ValueOf(uint32(bindUintHelper(val, 32)))
+}
+func bindUint64(val string, typ reflect.Type) reflect.Value {
+	return reflect.ValueOf(uint64(bindUintHelper(val, 64)))
+}
+
+func bindUintHelper(val string, bits int) uint64 {
+	if len(val) == 0 {
+		return 0
+	}
+	uintValue, err := strconv.ParseUint(val, 10, bits)
+	if err != nil {
+		WARN.Println(err)
+		return 0
+	}
+	return uintValue
+}
+
+func bindFloat32(val string, typ reflect.Type) reflect.Value {
+	return reflect.ValueOf(float32(bindFloatHelper(val, 32)))
+}
+func bindFloat64(val string, typ reflect.Type) reflect.Value {
+	return reflect.ValueOf(float64(bindFloatHelper(val, 64)))
+}
+
+func bindFloatHelper(val string, bits int) float64 {
+	if len(val) == 0 {
+		return 0
+	}
+	floatValue, err := strconv.ParseFloat(val, bits)
+	if err != nil {
+		WARN.Println(err)
+		return 0
+	}
+	return floatValue
 }
 
 // Booleans support a couple different value formats:
