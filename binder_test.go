@@ -120,7 +120,7 @@ var binderTestCases = map[string]interface{}{
 }
 
 func init() {
-	TimeFormats = append(TimeFormats, "01/02/2006")
+	TimeFormats = append(TimeFormats, DEFAULT_DATE_FORMAT, DEFAULT_DATETIME_FORMAT, "01/02/2006")
 }
 
 // Types that files may be bound to, and a func that can read the content from

@@ -39,11 +39,23 @@ func ValueBinder(f func(value string, typ reflect.Type) reflect.Value) Binder {
 	}
 }
 
-// These are the lookups to find a Binder for any type of data.
-// The most specific binder found will be used (Type before Kind)
+const (
+	DEFAULT_DATE_FORMAT     = "2006-01-02"
+	DEFAULT_DATETIME_FORMAT = "2006-01-02 15:04"
+)
+
 var (
+	// These are the lookups to find a Binder for any type of data.
+	// The most specific binder found will be used (Type before Kind)
 	TypeBinders = make(map[reflect.Type]Binder)
 	KindBinders = make(map[reflect.Kind]Binder)
+
+	// Applications can add custom time formats to this array, and they will be
+	// automatically attempted when binding a time.Time.
+	TimeFormats = []string{}
+
+	DateFormat     string
+	DateTimeFormat string
 )
 
 // Sadly, the binder lookups can not be declared initialized -- that results in
@@ -68,13 +80,13 @@ func init() {
 	TypeBinders[reflect.TypeOf([]byte{})] = bindByteArray
 	TypeBinders[reflect.TypeOf((*io.Reader)(nil)).Elem()] = bindReadSeeker
 	TypeBinders[reflect.TypeOf((*io.ReadSeeker)(nil)).Elem()] = bindReadSeeker
-}
 
-var (
-	// Applications can add custom time formats to this array, and they will be
-	// automatically attempted when binding a time.Time.
-	TimeFormats = []string{"2006-01-02", "2006-01-02 15:04"}
-)
+	InitHooks = append(InitHooks, func() {
+		DateTimeFormat = Config.StringDefault("format.datetime", DEFAULT_DATETIME_FORMAT)
+		DateFormat = Config.StringDefault("format.date", DEFAULT_DATE_FORMAT)
+		TimeFormats = append(TimeFormats, DateTimeFormat, DateFormat)
+	})
+}
 
 func bindStr(val string, typ reflect.Type) reflect.Value {
 	return reflect.ValueOf(val)
