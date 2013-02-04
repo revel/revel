@@ -113,11 +113,23 @@ var (
 			}
 
 			v := reflect.ValueOf(array)
-			if v.Kind() != reflect.Slice || v.Len() == 1 {
+
+			switch {
+
+			case v.Kind() == reflect.Int:
+				if array.(int) == 1 {
+					return template.HTML(singular)
+				}
+			case v.Kind() == reflect.Slice:
+				if v.Len() == 1 {
+					return template.HTML(singular)
+				}
+			case v.Kind() != reflect.Slice:
 				return template.HTML(singular)
 			}
 
 			return template.HTML(plural)
+
 		},
 
 		// Format a date according to the application's default date(time) format.
