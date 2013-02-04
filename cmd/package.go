@@ -35,7 +35,7 @@ func packageApp(args []string) {
 	revel.Init("", appImportPath, "")
 
 	// Remove the archive if it already exists.
-	destFile := path.Base(revel.BasePath) + ".zip"
+	destFile := path.Base(revel.BasePath) + ".tar.gz"
 	os.Remove(destFile)
 
 	// Collect stuff in a temp directory.
@@ -45,7 +45,7 @@ func packageApp(args []string) {
 	buildApp([]string{args[0], tmpDir})
 
 	// Create the zip file.
-	zipName := mustZipDir(destFile, tmpDir)
+	archiveName := mustTarGzDir(destFile, tmpDir)
 
-	fmt.Println("Your archive is ready:", zipName)
+	fmt.Println("Your archive is ready:", archiveName)
 }

@@ -29,6 +29,13 @@ var (
 		"int16":           {"1"},
 		"int32":           {"1"},
 		"int64":           {"1"},
+		"uint":            {"1"},
+		"uint8":           {"1"},
+		"uint16":          {"1"},
+		"uint32":          {"1"},
+		"uint64":          {"1"},
+		"float32":         {"1.0"},
+		"float64":         {"1.0"},
 		"str":             {"hello"},
 		"bool-true":       {"true"},
 		"bool-1":          {"1"},
@@ -79,6 +86,13 @@ var binderTestCases = map[string]interface{}{
 	"int16":      int16(1),
 	"int32":      int32(1),
 	"int64":      int64(1),
+	"uint":       1,
+	"uint8":      uint8(1),
+	"uint16":     uint16(1),
+	"uint32":     uint32(1),
+	"uint64":     uint64(1),
+	"float32":    float32(1.0),
+	"float64":    float64(1.0),
 	"str":        "hello",
 	"bool-true":  true,
 	"bool-1":     true,
@@ -120,7 +134,7 @@ var binderTestCases = map[string]interface{}{
 }
 
 func init() {
-	TimeFormats = append(TimeFormats, "01/02/2006")
+	TimeFormats = append(TimeFormats, DEFAULT_DATE_FORMAT, DEFAULT_DATETIME_FORMAT, "01/02/2006")
 }
 
 // Types that files may be bound to, and a func that can read the content from

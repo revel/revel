@@ -12,6 +12,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 )
 
 var ERROR_CLASS = "hasError"
@@ -117,6 +118,14 @@ var (
 			}
 
 			return template.HTML(plural)
+		},
+
+		// Format a date according to the application's default date(time) format.
+		"date": func(date time.Time) string {
+			return date.Format(DateFormat)
+		},
+		"datetime": func(date time.Time) string {
+			return date.Format(DateTimeFormat)
 		},
 	}
 

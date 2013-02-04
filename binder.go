@@ -39,11 +39,23 @@ func ValueBinder(f func(value string, typ reflect.Type) reflect.Value) Binder {
 	}
 }
 
-// These are the lookups to find a Binder for any type of data.
-// The most specific binder found will be used (Type before Kind)
+const (
+	DEFAULT_DATE_FORMAT     = "2006-01-02"
+	DEFAULT_DATETIME_FORMAT = "2006-01-02 15:04"
+)
+
 var (
+	// These are the lookups to find a Binder for any type of data.
+	// The most specific binder found will be used (Type before Kind)
 	TypeBinders = make(map[reflect.Type]Binder)
 	KindBinders = make(map[reflect.Kind]Binder)
+
+	// Applications can add custom time formats to this array, and they will be
+	// automatically attempted when binding a time.Time.
+	TimeFormats = []string{}
+
+	DateFormat     string
+	DateTimeFormat string
 )
 
 // Sadly, the binder lookups can not be declared initialized -- that results in
@@ -54,6 +66,15 @@ func init() {
 	KindBinders[reflect.Int16] = ValueBinder(bindInt16)
 	KindBinders[reflect.Int32] = ValueBinder(bindInt32)
 	KindBinders[reflect.Int64] = ValueBinder(bindInt64)
+
+	KindBinders[reflect.Uint] = ValueBinder(bindUint)
+	KindBinders[reflect.Uint8] = ValueBinder(bindUint8)
+	KindBinders[reflect.Uint16] = ValueBinder(bindUint16)
+	KindBinders[reflect.Uint32] = ValueBinder(bindUint32)
+	KindBinders[reflect.Uint64] = ValueBinder(bindUint64)
+
+	KindBinders[reflect.Float32] = ValueBinder(bindFloat32)
+	KindBinders[reflect.Float64] = ValueBinder(bindFloat64)
 
 	KindBinders[reflect.String] = ValueBinder(bindStr)
 	KindBinders[reflect.Bool] = ValueBinder(bindBool)
@@ -68,17 +89,18 @@ func init() {
 	TypeBinders[reflect.TypeOf([]byte{})] = bindByteArray
 	TypeBinders[reflect.TypeOf((*io.Reader)(nil)).Elem()] = bindReadSeeker
 	TypeBinders[reflect.TypeOf((*io.ReadSeeker)(nil)).Elem()] = bindReadSeeker
-}
 
-var (
-	// Applications can add custom time formats to this array, and they will be
-	// automatically attempted when binding a time.Time.
-	TimeFormats = []string{"2006-01-02", "2006-01-02 15:04"}
-)
+	InitHooks = append(InitHooks, func() {
+		DateTimeFormat = Config.StringDefault("format.datetime", DEFAULT_DATETIME_FORMAT)
+		DateFormat = Config.StringDefault("format.date", DEFAULT_DATE_FORMAT)
+		TimeFormats = append(TimeFormats, DateTimeFormat, DateFormat)
+	})
+}
 
 func bindStr(val string, typ reflect.Type) reflect.Value {
 	return reflect.ValueOf(val)
 }
+
 func bindInt(val string, typ reflect.Type) reflect.Value {
 	return reflect.ValueOf(int(bindIntHelper(val, 0)))
 }
@@ -105,6 +127,53 @@ func bindIntHelper(val string, bits int) int64 {
 		return 0
 	}
 	return intValue
+}
+
+func bindUint(val string, typ reflect.Type) reflect.Value {
+	return reflect.ValueOf(uint(bindUintHelper(val, 0)))
+}
+func bindUint8(val string, typ reflect.Type) reflect.Value {
+	return reflect.ValueOf(uint8(bindUintHelper(val, 8)))
+}
+func bindUint16(val string, typ reflect.Type) reflect.Value {
+	return reflect.ValueOf(uint16(bindUintHelper(val, 16)))
+}
+func bindUint32(val string, typ reflect.Type) reflect.Value {
+	return reflect.ValueOf(uint32(bindUintHelper(val, 32)))
+}
+func bindUint64(val string, typ reflect.Type) reflect.Value {
+	return reflect.ValueOf(uint64(bindUintHelper(val, 64)))
+}
+
+func bindUintHelper(val string, bits int) uint64 {
+	if len(val) == 0 {
+		return 0
+	}
+	uintValue, err := strconv.ParseUint(val, 10, bits)
+	if err != nil {
+		WARN.Println(err)
+		return 0
+	}
+	return uintValue
+}
+
+func bindFloat32(val string, typ reflect.Type) reflect.Value {
+	return reflect.ValueOf(float32(bindFloatHelper(val, 32)))
+}
+func bindFloat64(val string, typ reflect.Type) reflect.Value {
+	return reflect.ValueOf(float64(bindFloatHelper(val, 64)))
+}
+
+func bindFloatHelper(val string, bits int) float64 {
+	if len(val) == 0 {
+		return 0
+	}
+	floatValue, err := strconv.ParseFloat(val, bits)
+	if err != nil {
+		WARN.Println(err)
+		return 0
+	}
+	return floatValue
 }
 
 // Booleans support a couple different value formats:

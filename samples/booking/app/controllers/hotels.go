@@ -73,18 +73,18 @@ func (c Hotels) loadHotelById(id int) *models.Hotel {
 	if err != nil {
 		panic(err)
 	}
+	if h == nil {
+		return nil
+	}
 	return h.(*models.Hotel)
 }
 
 func (c Hotels) Show(id int) revel.Result {
-	var title string
 	hotel := c.loadHotelById(id)
 	if hotel == nil {
-		title = "Not found"
-		// 	TODO: return c.NotFound("Hotel does not exist")
-	} else {
-		title = hotel.Name
+		return c.NotFound("Hotel %d does not exist", id)
 	}
+	title := hotel.Name
 	return c.Render(title, hotel)
 }
 
@@ -115,6 +115,10 @@ func (c Hotels) SaveSettings(password, verifyPassword string) revel.Result {
 
 func (c Hotels) ConfirmBooking(id int, booking models.Booking) revel.Result {
 	hotel := c.loadHotelById(id)
+	if hotel == nil {
+		return c.NotFound("Hotel %d does not exist", id)
+	}
+
 	title := fmt.Sprintf("Confirm %s booking", hotel.Name)
 	booking.Hotel = hotel
 	booking.User = c.connected()
@@ -150,9 +154,10 @@ func (c Hotels) CancelBooking(id int) revel.Result {
 
 func (c Hotels) Book(id int) revel.Result {
 	hotel := c.loadHotelById(id)
+	if hotel == nil {
+		return c.NotFound("Hotel %d does not exist", id)
+	}
+
 	title := "Book " + hotel.Name
-	// if hotel == nil {
-	// 	return c.NotFound("Hotel does not exist")
-	// }
 	return c.Render(title, hotel)
 }
