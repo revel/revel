@@ -102,7 +102,7 @@ var (
 		},
 
 		// Pluralize
-		"pluralize": func(array interface{}, pluralOverrides ...string) template.HTML {
+		"pluralize": func(item interface{}, pluralOverrides ...string) string {
 			singular, plural := "", "s"
 
 			if len(pluralOverrides) >= 1 {
@@ -112,23 +112,21 @@ var (
 				}
 			}
 
-			v := reflect.ValueOf(array)
+			switch v := reflect.ValueOf(item); v.Kind() {
 
-			switch {
-
-			case v.Kind() == reflect.Int:
-				if array.(int) == 1 {
-					return template.HTML(singular)
+			case reflect.Int:
+				if item.(int) != 1 {
+					return plural
 				}
-			case v.Kind() == reflect.Slice:
-				if v.Len() == 1 {
-					return template.HTML(singular)
+			case reflect.Slice:
+				if v.Len() != 1 {
+					return plural
 				}
-			case v.Kind() != reflect.Slice:
-				return template.HTML(singular)
+			default:
+				ERROR.Println("pluralize: unexpected type: ", v)
 			}
 
-			return template.HTML(plural)
+			return singular
 
 		},
 
