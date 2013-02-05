@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -101,11 +102,32 @@ var (
 		},
 
 		// Pluralize
-		"pluralize": func(num int, singular, plural string) template.HTML {
-			if num == 1 {
-				return template.HTML(singular)
+		"pluralize": func(item interface{}, pluralOverrides ...string) string {
+			singular, plural := "", "s"
+
+			if len(pluralOverrides) >= 1 {
+				singular = pluralOverrides[0]
+				if len(pluralOverrides) == 2 {
+					plural = pluralOverrides[1]
+				}
 			}
-			return template.HTML(plural)
+
+			switch v := reflect.ValueOf(item); v.Kind() {
+
+			case reflect.Int:
+				if item.(int) != 1 {
+					return plural
+				}
+			case reflect.Slice:
+				if v.Len() != 1 {
+					return plural
+				}
+			default:
+				ERROR.Println("pluralize: unexpected type: ", v)
+			}
+
+			return singular
+
 		},
 
 		// Format a date according to the application's default date(time) format.
