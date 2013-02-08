@@ -36,7 +36,8 @@ func NewErrorFromPanic(err interface{}) *Error {
 		return nil
 	}
 
-	stackElement := stack[frame : frame+strings.Index(stack[frame:], "\n")]
+	stack = stack[frame:]
+	stackElement := stack[:strings.Index(stack, "\n")]
 	colonIndex := strings.LastIndex(stackElement, ":")
 	filename := stackElement[:colonIndex]
 	var line int
@@ -45,7 +46,7 @@ func NewErrorFromPanic(err interface{}) *Error {
 	// Show an error page.
 	description := "Unspecified error"
 	if err != nil {
-		description = fmt.Sprintln(err)
+		description = fmt.Sprint(err)
 	}
 	return &Error{
 		Title:       "Panic",

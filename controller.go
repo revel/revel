@@ -118,16 +118,15 @@ func (c *Controller) Invoke(appControllerPtr reflect.Value, method reflect.Value
 // It cleans up the stack trace, logs it, and displays an error page.
 func handleInvocationPanic(c *Controller, err interface{}) {
 	plugins.OnException(c, err)
-	stack := string(debug.Stack())
-	ERROR.Println(err, "\n", stack)
 
 	error := NewErrorFromPanic(err)
 	if error == nil {
 		c.Response.Out.WriteHeader(500)
-		c.Response.Out.Write([]byte(stack))
+		c.Response.Out.Write(debug.Stack())
 		return
 	}
 
+	ERROR.Print(err, "\n", error.Stack)
 	c.RenderError(error).Apply(c.Request, c.Response)
 }
 
@@ -279,7 +278,7 @@ func (c *Controller) Redirect(val interface{}, args ...interface{}) Result {
 	return &RedirectToActionResult{val}
 }
 
-// Perform a message lookup for the given message name using the given arguments 
+// Perform a message lookup for the given message name using the given arguments
 // using the current language defined for this controller.
 //
 // The current language is set by the i18n plugin.
