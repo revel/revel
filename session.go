@@ -1,14 +1,34 @@
 package revel
 
 import (
+	"github.com/streadway/simpleuuid"
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 )
 
 // A signed cookie (and thus limited to 4kb in size).
 // Restriction: Keys may not have a colon in them.
 type Session map[string]string
+
+const (
+	SESSION_ID_KEY = "_ID"
+)
+
+// Return a UUID identifying this session.
+func (s Session) Id() string {
+	if uuidStr, ok := s[SESSION_ID_KEY]; ok {
+		return uuidStr
+	}
+
+	uuid, err := simpleuuid.NewTime(time.Now())
+	if err != nil {
+		panic(err) // I don't think this can actually happen.
+	}
+	s[SESSION_ID_KEY] = uuid.String()
+	return s[SESSION_ID_KEY]
+}
 
 type SessionPlugin struct{ EmptyPlugin }
 
@@ -20,6 +40,9 @@ func (p SessionPlugin) AfterRequest(c *Controller) {
 	// Store the session (and sign it).
 	var sessionValue string
 	for key, value := range c.Session {
+		if strings.Contains(key, ":") {
+			panic("Session keys may not have colons")
+		}
 		sessionValue += "\x00" + key + ":" + value + "\x00"
 	}
 	sessionData := url.QueryEscape(sessionValue)
