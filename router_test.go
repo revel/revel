@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"testing"
 )
 
@@ -171,7 +172,7 @@ GET	/photos/	                staticDir:%s
 *		/{controller}/{action}		{controller}.{action}
 
 GET  /favicon.ico            404
-`, filepath.FromSlash("/Users/robfig/Photos/"))
+`, osPath("/Users/robfig/Photos/"))
 }
 
 var routeMatchTestCases = map[*http.Request]*RouteMatch{
@@ -222,7 +223,7 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 		ControllerName: "",
 		MethodName:     "",
 		Params:         map[string]string{},
-		StaticFilename: filepath.FromSlash("/BasePath/www/style.css"),
+		StaticFilename: osPath("/BasePath/www/style.css"),
 	},
 
 	&http.Request{
@@ -232,7 +233,7 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 		ControllerName: "",
 		MethodName:     "",
 		Params:         map[string]string{},
-		StaticFilename: filepath.FromSlash("/Users/robfig/Photos/Rob/profile.png"),
+		StaticFilename: osPath("/Users/robfig/Photos/Rob/profile.png"),
 	},
 
 	&http.Request{
@@ -360,4 +361,11 @@ func eq(t *testing.T, name string, a, b interface{}) bool {
 		return false
 	}
 	return true
+}
+
+func osPath(unixPath string) string {
+	if runtime.GOOS == "windows" {
+		return "C:" + filepath.FromSlash(unixPath)
+	}
+	return unixPath
 }
