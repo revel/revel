@@ -6,7 +6,6 @@ import (
 	"go/build"
 	"math/rand"
 	"os"
-	"path"
 	"path/filepath"
 )
 
@@ -46,7 +45,7 @@ func newApp(args []string) {
 	}
 
 	importPath := args[0]
-	if path.IsAbs(importPath) {
+	if filepath.IsAbs(importPath) {
 		errorf("Abort: '%s' looks like a directory.  Please provide a Go import path instead.",
 			importPath)
 	}

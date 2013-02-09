@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -145,7 +144,7 @@ func (r *Route) Match(method string, reqPath string) *RouteMatch {
 			}
 		} else {
 			dirName = r.staticDir
-			if !path.IsAbs(dirName) {
+			if !filepath.IsAbs(dirName) {
 				basePath = BasePath
 			}
 		}
