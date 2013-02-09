@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"path/filepath"
 	"regexp"
 	"testing"
 )
@@ -156,18 +157,22 @@ func TestComputeRoute(t *testing.T) {
 
 // Router Tests
 
-const TEST_ROUTES = `
+var TEST_ROUTES string
+
+func init() {
+	TEST_ROUTES = fmt.Sprintf(`
 # This is a comment
 GET  /                       Application.Index
 GET  /app/{id}/?             Application.Show
 POST /app/{id}               Application.Save
 
 GET	/public/	                staticDir:www
-GET	/photos/	                staticDir:/Users/robfig/Photos/
+GET	/photos/	                staticDir:%s
 *		/{controller}/{action}		{controller}.{action}
 
 GET  /favicon.ico            404
-`
+`, filepath.FromSlash("/Users/robfig/Photos/"))
+}
 
 var routeMatchTestCases = map[*http.Request]*RouteMatch{
 	&http.Request{
@@ -217,7 +222,7 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 		ControllerName: "",
 		MethodName:     "",
 		Params:         map[string]string{},
-		StaticFilename: "/BasePath/www/style.css",
+		StaticFilename: filepath.FromSlash("/BasePath/www/style.css"),
 	},
 
 	&http.Request{
@@ -227,7 +232,7 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 		ControllerName: "",
 		MethodName:     "",
 		Params:         map[string]string{},
-		StaticFilename: "/Users/robfig/Photos/Rob/profile.png",
+		StaticFilename: filepath.FromSlash("/Users/robfig/Photos/Rob/profile.png"),
 	},
 
 	&http.Request{
