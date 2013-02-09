@@ -259,7 +259,7 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 }
 
 func TestRouteMatches(t *testing.T) {
-	BasePath = "/BasePath"
+	BasePath = osPath("/BasePath")
 	router := NewRouter("")
 	router.parse(TEST_ROUTES, false)
 	for req, expected := range routeMatchTestCases {
