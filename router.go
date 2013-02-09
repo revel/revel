@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"path/filepath"
 	"regexp"
 	"strings"
 )
@@ -135,7 +136,7 @@ func (r *Route) Match(method string, reqPath string) *RouteMatch {
 			moduleName, dirName := r.staticDir[:i], r.staticDir[i+1:]
 			for _, module := range Modules {
 				if module.Name == moduleName {
-					basePath = path.Join(module.Path, dirName)
+					basePath = filepath.Join(module.Path, dirName)
 				}
 			}
 			if basePath == "" {
@@ -149,7 +150,7 @@ func (r *Route) Match(method string, reqPath string) *RouteMatch {
 			}
 		}
 		return &RouteMatch{
-			StaticFilename: path.Join(basePath, dirName, matches[1]),
+			StaticFilename: filepath.Join(basePath, dirName, matches[1]),
 		}
 	}
 

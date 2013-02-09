@@ -12,7 +12,6 @@ import (
 	"go/token"
 	"log"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 )
@@ -720,13 +719,13 @@ func IsBuiltinType(name string) bool {
 
 func importPathFromPath(root string) string {
 	for _, gopath := range filepath.SplitList(build.Default.GOPATH) {
-		srcPath := path.Join(gopath, "src")
+		srcPath := filepath.Join(gopath, "src")
 		if strings.HasPrefix(root, srcPath) {
 			return filepath.ToSlash(root[len(srcPath)+1:])
 		}
 	}
 
-	srcPath := path.Join(build.Default.GOROOT, "src", "pkg")
+	srcPath := filepath.Join(build.Default.GOROOT, "src", "pkg")
 	if strings.HasPrefix(root, srcPath) {
 		revel.WARN.Println("Code path should be in GOPATH, but is in GOROOT:", root)
 		return filepath.ToSlash(root[len(srcPath)+1:])
