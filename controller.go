@@ -186,7 +186,7 @@ func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
 			"(Method", methodType, ", ViewName", viewName, ")")
 	}
 
-	return c.RenderTemplate(c.Name + "/" + viewName + ".html")
+	return c.RenderTemplate(c.Name + "/" + viewName + "." + c.Request.Format)
 }
 
 // A less magical way to render a template.
