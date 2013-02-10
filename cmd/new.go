@@ -6,6 +6,7 @@ import (
 	"go/build"
 	"math/rand"
 	"os"
+	"path"
 	"path/filepath"
 )
 
@@ -45,7 +46,7 @@ func newApp(args []string) {
 	}
 
 	importPath := args[0]
-	if filepath.IsAbs(importPath) {
+	if path.IsAbs(importPath) {
 		errorf("Abort: '%s' looks like a directory.  Please provide a Go import path instead.",
 			importPath)
 	}
@@ -62,12 +63,12 @@ func newApp(args []string) {
 		return
 	}
 
-	srcRoot := filepath.Join(filepath.SplitList(gopath)[0], "src")
-	appDir := filepath.Join(srcRoot, filepath.FromSlash(importPath))
+	srcRoot := path.Join(filepath.SplitList(gopath)[0], "src")
+	appDir := path.Join(srcRoot, filepath.FromSlash(importPath))
 	err = os.MkdirAll(appDir, 0777)
 	panicOnError(err, "Failed to create directory "+appDir)
 
-	skeletonBase = filepath.Join(revelPkg.Dir, "skeleton")
+	skeletonBase = path.Join(revelPkg.Dir, "skeleton")
 	mustCopyDir(appDir, skeletonBase, map[string]interface{}{
 		// app.conf
 		"AppName": filepath.Base(appDir),
@@ -76,7 +77,7 @@ func newApp(args []string) {
 
 	// Dotfiles are skipped by mustCopyDir, so we have to explicitly copy the .gitignore.
 	gitignore := ".gitignore"
-	mustCopyFile(filepath.Join(appDir, gitignore), filepath.Join(skeletonBase, gitignore))
+	mustCopyFile(path.Join(appDir, gitignore), path.Join(skeletonBase, gitignore))
 
 	fmt.Fprintln(os.Stdout, "Your application is ready:\n  ", appDir)
 	fmt.Fprintln(os.Stdout, "\nYou can run it with:\n   revel run", importPath)

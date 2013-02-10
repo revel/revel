@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"path/filepath"
+	"path"
 	"regexp"
 	"strings"
 )
@@ -131,11 +131,11 @@ func (r *Route) Match(method string, reqPath string) *RouteMatch {
 		// Check if it is specifying a module.. if so, look there instead.
 		// This is a tenative syntax: "staticDir:moduleName:(directory)"
 		var basePath, dirName string
-		if i := strings.Index(r.staticDir, ":"); i != -1 && !filepath.IsAbs(r.staticDir) {
+		if i := strings.Index(r.staticDir, ":"); i != -1 {
 			moduleName, dirName := r.staticDir[:i], r.staticDir[i+1:]
 			for _, module := range Modules {
 				if module.Name == moduleName {
-					basePath = filepath.Join(module.Path, dirName)
+					basePath = path.Join(module.Path, dirName)
 				}
 			}
 			if basePath == "" {
@@ -144,12 +144,12 @@ func (r *Route) Match(method string, reqPath string) *RouteMatch {
 			}
 		} else {
 			dirName = r.staticDir
-			if !filepath.IsAbs(dirName) {
+			if !path.IsAbs(dirName) {
 				basePath = BasePath
 			}
 		}
 		return &RouteMatch{
-			StaticFilename: filepath.Join(basePath, dirName, matches[1]),
+			StaticFilename: path.Join(basePath, dirName, matches[1]),
 		}
 	}
 

@@ -41,7 +41,7 @@ func Build() (app *App, compileError *revel.Error) {
 	})
 
 	// Create a fresh temp dir.
-	tmpPath := filepath.Join(revel.AppPath, "tmp")
+	tmpPath := path.Join(revel.AppPath, "tmp")
 	err := os.RemoveAll(tmpPath)
 	if err != nil {
 		revel.ERROR.Println("Failed to remove tmp dir:", err)
@@ -52,7 +52,7 @@ func Build() (app *App, compileError *revel.Error) {
 	}
 
 	// Create the main.go file
-	controllersFile, err := os.Create(filepath.Join(tmpPath, "main.go"))
+	controllersFile, err := os.Create(path.Join(tmpPath, "main.go"))
 	defer controllersFile.Close()
 	if err != nil {
 		revel.ERROR.Fatalf("Failed to create main.go: %v", err)
@@ -77,7 +77,7 @@ func Build() (app *App, compileError *revel.Error) {
 	if err != nil {
 		revel.ERROR.Fatalln("Failure importing", revel.ImportPath)
 	}
-	binName := filepath.Join(pkg.BinDir, path.Base(revel.BasePath))
+	binName := path.Join(pkg.BinDir, path.Base(revel.BasePath))
 	if runtime.GOOS == "windows" {
 		binName += ".exe"
 	}
@@ -86,7 +86,7 @@ func Build() (app *App, compileError *revel.Error) {
 	for {
 		buildCmd := exec.Command(goPath, "build",
 			"-tags", buildTags,
-			"-o", binName, filepath.Join(revel.ImportPath, "app", "tmp"))
+			"-o", binName, path.Join(revel.ImportPath, "app", "tmp"))
 		revel.TRACE.Println("Exec:", buildCmd.Args)
 		output, err := buildCmd.CombinedOutput()
 

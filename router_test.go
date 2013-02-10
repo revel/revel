@@ -4,9 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"path/filepath"
 	"regexp"
-	"runtime"
 	"testing"
 )
 
@@ -158,22 +156,18 @@ func TestComputeRoute(t *testing.T) {
 
 // Router Tests
 
-var TEST_ROUTES string
-
-func init() {
-	TEST_ROUTES = fmt.Sprintf(`
+const TEST_ROUTES = `
 # This is a comment
 GET  /                       Application.Index
 GET  /app/{id}/?             Application.Show
 POST /app/{id}               Application.Save
 
 GET	/public/	                staticDir:www
-GET	/photos/	                staticDir:%s
+GET	/photos/	                staticDir:/Users/robfig/Photos/
 *		/{controller}/{action}		{controller}.{action}
 
 GET  /favicon.ico            404
-`, osPath("/Users/robfig/Photos/"))
-}
+`
 
 var routeMatchTestCases = map[*http.Request]*RouteMatch{
 	&http.Request{
@@ -223,7 +217,7 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 		ControllerName: "",
 		MethodName:     "",
 		Params:         map[string]string{},
-		StaticFilename: osPath("/BasePath/www/style.css"),
+		StaticFilename: "/BasePath/www/style.css",
 	},
 
 	&http.Request{
@@ -233,7 +227,7 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 		ControllerName: "",
 		MethodName:     "",
 		Params:         map[string]string{},
-		StaticFilename: osPath("/Users/robfig/Photos/Rob/profile.png"),
+		StaticFilename: "/Users/robfig/Photos/Rob/profile.png",
 	},
 
 	&http.Request{
@@ -259,7 +253,7 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 }
 
 func TestRouteMatches(t *testing.T) {
-	BasePath = osPath("/BasePath")
+	BasePath = "/BasePath"
 	router := NewRouter("")
 	router.parse(TEST_ROUTES, false)
 	for req, expected := range routeMatchTestCases {
@@ -361,11 +355,4 @@ func eq(t *testing.T, name string, a, b interface{}) bool {
 		return false
 	}
 	return true
-}
-
-func osPath(unixPath string) string {
-	if runtime.GOOS == "windows" {
-		return "C:" + filepath.FromSlash(unixPath)
-	}
-	return unixPath
 }

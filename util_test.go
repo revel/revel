@@ -1,6 +1,7 @@
 package revel
 
 import (
+	"path"
 	"path/filepath"
 	"testing"
 )
@@ -14,7 +15,7 @@ func TestContentTypeByFilename(t *testing.T) {
 		"hello.world.c": "text/x-c; charset=utf-8",
 	}
 	srcPath, _ := findSrcPaths(REVEL_IMPORT_PATH)
-	ConfPaths = []string{filepath.Join(
+	ConfPaths = []string{path.Join(
 		srcPath,
 		filepath.FromSlash(REVEL_IMPORT_PATH),
 		"conf"),

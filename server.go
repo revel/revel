@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"path/filepath"
+	"path"
 	"reflect"
 	"time"
 )
@@ -111,7 +111,7 @@ func Run(port int) {
 		port = HttpPort
 	}
 
-	MainRouter = NewRouter(filepath.Join(BasePath, "conf", "routes"))
+	MainRouter = NewRouter(path.Join(BasePath, "conf", "routes"))
 	MainTemplateLoader = NewTemplateLoader(TemplatePaths)
 
 	// The "watch" config variable can turn on and off all watching.
