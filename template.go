@@ -101,6 +101,11 @@ var (
 			return template.HTML(strings.Replace(template.HTMLEscapeString(text), "\n", "<br>", -1))
 		},
 
+		// Skips sanitation on the parameter.  Do not use with dynamic data.
+		"raw": func(text string) template.HTML {
+			return template.HTML(text)
+		},
+
 		// Pluralize, a helper for pluralizing words to correspond to data of dynamic length.
 		// items - a slice of items, or an integer indicating how many items there are.
 		// pluralOverrides - optional arguments specifying the output in the
