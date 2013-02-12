@@ -90,7 +90,7 @@ func init() {
 	TypeBinders[reflect.TypeOf((*io.Reader)(nil)).Elem()] = bindReadSeeker
 	TypeBinders[reflect.TypeOf((*io.ReadSeeker)(nil)).Elem()] = bindReadSeeker
 
-	InitHooks = append(InitHooks, func() {
+	OnAppStart(func() {
 		DateTimeFormat = Config.StringDefault("format.datetime", DEFAULT_DATETIME_FORMAT)
 		DateFormat = Config.StringDefault("format.date", DEFAULT_DATE_FORMAT)
 		TimeFormats = append(TimeFormats, DateTimeFormat, DateFormat)

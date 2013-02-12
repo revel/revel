@@ -20,7 +20,7 @@ func TestContentTypeByFilename(t *testing.T) {
 		filepath.FromSlash(REVEL_IMPORT_PATH),
 		"conf"),
 	}
-	loadMimeConfig()
+	LoadMimeConfig()
 	for filename, expected := range testCases {
 		actual := ContentTypeByFilename(filename)
 		if actual != expected {

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/robfig/config"
 	"os"
-	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -86,11 +85,6 @@ func parseLocale(locale string) (language, region string) {
 	return locale, ""
 }
 
-// Load the messages when Revel boots.
-func init() {
-	InitHooks = append(InitHooks, func() { loadMessages(path.Join(BasePath, messageFilesDirectory)) })
-}
-
 // Recursively read and cache all available messages from all message files on the given path.
 func loadMessages(path string) {
 	messages = make(map[string]*config.Config)
@@ -144,6 +138,10 @@ func parseLocaleFromFileName(file string) string {
 
 type I18nPlugin struct {
 	EmptyPlugin
+}
+
+func (p I18nPlugin) OnAppStart() {
+	loadMessages(filepath.Join(BasePath, messageFilesDirectory))
 }
 
 func (p I18nPlugin) BeforeRequest(c *Controller) {
