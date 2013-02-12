@@ -82,7 +82,7 @@ const DefaultFileContentType = "application/octet-stream"
 var mimeConfig *MergedConfig
 
 // Load mime-types.conf on init.
-func LoadMimeConfig() {
+func loadMimeConfig() {
 	var err error
 	mimeConfig, err = LoadConfig("mime-types.conf")
 	if err != nil {
@@ -91,7 +91,7 @@ func LoadMimeConfig() {
 }
 
 func init() {
-	OnAppStart(LoadMimeConfig)
+	InitHooks = append(InitHooks, loadMimeConfig)
 }
 
 // Returns a MIME content type based on the filename's extension.

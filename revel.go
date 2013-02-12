@@ -57,6 +57,8 @@ var (
 	WARN    = DEFAULT
 	ERROR   = DEFAULT
 
+	// Revel runs every function in this array after init.
+	InitHooks   []func()
 	Initialized bool
 
 	// Private
@@ -141,6 +143,10 @@ func Init(mode, importPath, srcPath string) {
 	ERROR = getLogger("error")
 
 	loadModules()
+
+	for _, hook := range InitHooks {
+		hook()
+	}
 
 	Initialized = true
 }

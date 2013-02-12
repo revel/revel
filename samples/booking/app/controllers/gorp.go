@@ -74,7 +74,6 @@ func (p GorpPlugin) OnAppStart() {
 		if err := dbm.Insert(hotel); err != nil {
 			panic(err)
 		}
-		r.INFO.Println("Hotel", hotel.HotelId, "inserted.")
 	}
 }
 
