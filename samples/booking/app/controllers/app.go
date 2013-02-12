@@ -42,6 +42,8 @@ func (c Application) Index() revel.Result {
 	if c.connected() != nil {
 		return c.Redirect(Hotels.Index)
 	}
+
+	println(c.Session.Id())
 	c.Flash.Error("Please log in first")
 	return c.Render()
 }

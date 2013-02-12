@@ -43,6 +43,7 @@ func runApp(args []string) {
 
 	// Find and parse app.conf
 	revel.Init(mode, args[0], "")
+	revel.LoadMimeConfig()
 
 	// Determine the override port, if any.
 	port := revel.HttpPort

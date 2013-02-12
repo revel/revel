@@ -101,10 +101,12 @@ var (
 			return template.HTML(strings.Replace(template.HTMLEscapeString(text), "\n", "<br>", -1))
 		},
 
-		// Pluralize
-		"pluralize": func(item interface{}, pluralOverrides ...string) string {
+		// Pluralize, a helper for pluralizing words to correspond to data of dynamic length.
+		// items - a slice of items, or an integer indicating how many items there are.
+		// pluralOverrides - optional arguments specifying the output in the
+		//     singular and plural cases.  by default "" and "s"
+		"pluralize": func(items interface{}, pluralOverrides ...string) string {
 			singular, plural := "", "s"
-
 			if len(pluralOverrides) >= 1 {
 				singular = pluralOverrides[0]
 				if len(pluralOverrides) == 2 {
@@ -112,10 +114,9 @@ var (
 				}
 			}
 
-			switch v := reflect.ValueOf(item); v.Kind() {
-
+			switch v := reflect.ValueOf(items); v.Kind() {
 			case reflect.Int:
-				if item.(int) != 1 {
+				if items.(int) != 1 {
 					return plural
 				}
 			case reflect.Slice:
@@ -125,9 +126,7 @@ var (
 			default:
 				ERROR.Println("pluralize: unexpected type: ", v)
 			}
-
 			return singular
-
 		},
 
 		// Format a date according to the application's default date(time) format.
