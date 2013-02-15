@@ -44,7 +44,7 @@ C library.
 >	`brew install pkgconfig sqlite3`
 
 ### To install (Ubuntu):
->       `sudo apt-get install sqlite3 libsqlite3-dev
+>       `sudo apt-get install sqlite3 libsqlite3-dev`
 
 Once you have SQLite installed, it should be possible to run the booking app as
 usual:
