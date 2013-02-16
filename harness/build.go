@@ -94,7 +94,7 @@ func Build() (app *App, compileError *revel.Error) {
 		if err == nil {
 			return NewApp(binName), nil
 		}
-		revel.TRACE.Println(string(output))
+		revel.ERROR.Println(string(output))
 
 		// See if it was an import error that we can go get.
 		matches := importErrorPattern.FindStringSubmatch(string(output))
@@ -114,7 +114,7 @@ func Build() (app *App, compileError *revel.Error) {
 		revel.TRACE.Println("Exec:", getCmd.Args)
 		getOutput, err := getCmd.CombinedOutput()
 		if err != nil {
-			revel.TRACE.Println(string(getOutput))
+			revel.ERROR.Println(string(getOutput))
 			return nil, newCompileError(output)
 		}
 
