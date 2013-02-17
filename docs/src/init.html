@@ -11,6 +11,21 @@ layout: godoc
 
 
 	<pre>package revel
+
+<span class="comment">// A simple hook to run code on startup without having to implement a plugin.</span>
+func OnAppStart(f func()) {
+    hooks = append(hooks, f)
+}
+
+type StartupPlugin struct {
+    EmptyPlugin
+}
+
+func (p StartupPlugin) OnAppStart() {
+    for _, hook := range hooks {
+        hook()
+    }
+}
 </pre>
 
 

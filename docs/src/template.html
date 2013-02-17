@@ -85,6 +85,52 @@ var (
         &#34;msg&#34;: func(renderArgs map[string]interface{}, message string, args ...interface{}) template.HTML {
             return template.HTML(Message(renderArgs[CurrentLocaleRenderArg].(string), message, args...))
         },
+
+        <span class="comment">// Replaces newlines with &lt;br&gt;</span>
+        &#34;nl2br&#34;: func(text string) template.HTML {
+            return template.HTML(strings.Replace(template.HTMLEscapeString(text), &#34;\n&#34;, &#34;&lt;br&gt;&#34;, -1))
+        },
+
+        <span class="comment">// Skips sanitation on the parameter.  Do not use with dynamic data.</span>
+        &#34;raw&#34;: func(text string) template.HTML {
+            return template.HTML(text)
+        },
+
+        <span class="comment">// Pluralize, a helper for pluralizing words to correspond to data of dynamic length.</span>
+        <span class="comment">// items - a slice of items, or an integer indicating how many items there are.</span>
+        <span class="comment">// pluralOverrides - optional arguments specifying the output in the</span>
+        <span class="comment">//     singular and plural cases.  by default &#34;&#34; and &#34;s&#34;</span>
+        &#34;pluralize&#34;: func(items interface{}, pluralOverrides ...string) string {
+            singular, plural := &#34;&#34;, &#34;s&#34;
+            if len(pluralOverrides) &gt;= 1 {
+                singular = pluralOverrides[0]
+                if len(pluralOverrides) == 2 {
+                    plural = pluralOverrides[1]
+                }
+            }
+
+            switch v := reflect.ValueOf(items); v.Kind() {
+            case reflect.Int:
+                if items.(int) != 1 {
+                    return plural
+                }
+            case reflect.Slice:
+                if v.Len() != 1 {
+                    return plural
+                }
+            default:
+                ERROR.Println(&#34;pluralize: unexpected type: &#34;, v)
+            }
+            return singular
+        },
+
+        <span class="comment">// Format a date according to the application&#39;s default date(time) format.</span>
+        &#34;date&#34;: func(date time.Time) string {
+            return date.Format(DateFormat)
+        },
+        &#34;datetime&#34;: func(date time.Time) string {
+            return date.Format(DateTimeFormat)
+        },
     }
 
     Funcs = TemplateFuncs

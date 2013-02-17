@@ -36,6 +36,9 @@ layout: godoc
 					
 					<dd>&nbsp; &nbsp; <a href="#I18nPlugin.BeforeRequest">func (p I18nPlugin) BeforeRequest(c *Controller)</a></dd>
 				
+					
+					<dd>&nbsp; &nbsp; <a href="#I18nPlugin.OnAppStart">func (p I18nPlugin) OnAppStart()</a></dd>
+				
 			
 			
 		</dl>
@@ -67,7 +70,7 @@ layout: godoc
 		
 			
 			
-			<h2 id="Message">func <a href="../src/i18n.html?s=943:1007#L32">Message</a></h2>
+			<h2 id="Message">func <a href="../src/i18n.html?s=926:990#L31">Message</a></h2>
 			<pre>func Message(locale, message string, args ...interface{}) string</pre>
 			<p>
 Perform a message look-up for the given locale and message using the given arguments.
@@ -80,7 +83,7 @@ When either an unknown locale or message is detected, a specially formatted stri
 		
 			
 			
-			<h2 id="MessageLanguages">func <a href="../src/i18n.html?s=572:604#L19">MessageLanguages</a></h2>
+			<h2 id="MessageLanguages">func <a href="../src/i18n.html?s=555:587#L18">MessageLanguages</a></h2>
 			<pre>func MessageLanguages() []string</pre>
 			<p>
 Return all currently loaded message languages.
@@ -91,7 +94,7 @@ Return all currently loaded message languages.
 		
 			
 			
-			<h2 id="I18nPlugin">type <a href="../src/i18n.html?s=4285:4324#L135">I18nPlugin</a></h2>
+			<h2 id="I18nPlugin">type <a href="../src/i18n.html?s=4112:4151#L129">I18nPlugin</a></h2>
 			<pre>type I18nPlugin struct {
     EmptyPlugin
 }</pre>
@@ -107,8 +110,15 @@ Return all currently loaded message languages.
 
 			
 				
-				<h3 id="I18nPlugin.BeforeRequest">func (I18nPlugin) <a href="../src/i18n.html?s=4326:4374#L139">BeforeRequest</a></h3>
+				<h3 id="I18nPlugin.BeforeRequest">func (I18nPlugin) <a href="../src/i18n.html?s=4253:4301#L137">BeforeRequest</a></h3>
 				<pre>func (p I18nPlugin) BeforeRequest(c *Controller)</pre>
+				
+				
+				
+			
+				
+				<h3 id="I18nPlugin.OnAppStart">func (I18nPlugin) <a href="../src/i18n.html?s=4153:4185#L133">OnAppStart</a></h3>
+				<pre>func (p I18nPlugin) OnAppStart()</pre>
 				
 				
 				

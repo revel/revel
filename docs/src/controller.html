@@ -170,7 +170,7 @@ func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
             &#34;(Method&#34;, methodType, &#34;, ViewName&#34;, viewName, &#34;)&#34;)
     }
 
-    return c.RenderTemplate(c.Name + &#34;/&#34; + viewName + &#34;.html&#34;)
+    return c.RenderTemplate(c.Name + &#34;/&#34; + viewName + &#34;.&#34; + c.Request.Format)
 }
 
 <span class="comment">// A less magical way to render a template.</span>
@@ -225,6 +225,18 @@ func (c *Controller) NotFound(msg string, objs ...interface{}) Result {
     c.Response.Status = http.StatusNotFound
     return c.RenderError(&amp;Error{
         Title:       &#34;Not Found&#34;,
+        Description: finalText,
+    })
+}
+
+func (c *Controller) Forbidden(msg string, objs ...interface{}) Result {
+    finalText := msg
+    if len(objs) &gt; 0 {
+        finalText = fmt.Sprintf(msg, objs...)
+    }
+    c.Response.Status = http.StatusForbidden
+    return c.RenderError(&amp;Error{
+        Title:       &#34;Forbidden&#34;,
         Description: finalText,
     })
 }

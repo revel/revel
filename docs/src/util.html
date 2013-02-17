@@ -76,6 +76,15 @@ func ParseKeyValueCookie(val string, cb func(key, val string)) {
 
 const DefaultFileContentType = &#34;application/octet-stream&#34;
 
+<span class="comment">// Load mime-types.conf on init.</span>
+func LoadMimeConfig() {
+    var err error
+    mimeConfig, err = LoadConfig(&#34;mime-types.conf&#34;)
+    if err != nil {
+        ERROR.Fatalln(&#34;Failed to load mime type config:&#34;, err)
+    }
+}
+
 <span class="comment">// Returns a MIME content type based on the filename&#39;s extension.</span>
 <span class="comment">// If no appropriate one is found, returns &#34;application/octet-stream&#34; by default.</span>
 <span class="comment">// Additionally, specifies the charset as UTF-8 for text/* types.</span>

@@ -18,6 +18,8 @@ layout: godoc
 		<div id="manual-nav">
 			<dl>
 			
+				<dd><a href="#constants">Constants</a></dd>
+			
 			
 				<dd><a href="#variables">Variables</a></dd>
 			
@@ -57,23 +59,30 @@ layout: godoc
 		
 
 		
+			<h2 id="constants">Constants</h2>
+			
+				<pre>const (
+    DEFAULT_DATE_FORMAT     = &#34;2006-01-02&#34;
+    DEFAULT_DATETIME_FORMAT = &#34;2006-01-02 15:04&#34;
+)</pre>
+				
+			
+		
 		
 			<h2 id="variables">Variables</h2>
 			
 				<pre>var (
+    <span class="comment">// These are the lookups to find a Binder for any type of data.</span>
+    <span class="comment">// The most specific binder found will be used (Type before Kind)</span>
     TypeBinders = make(map[reflect.Type]Binder)
     KindBinders = make(map[reflect.Kind]Binder)
-)</pre>
-				<p>
-These are the lookups to find a Binder for any type of data.
-The most specific binder found will be used (Type before Kind)
-</p>
 
-			
-				<pre>var (
     <span class="comment">// Applications can add custom time formats to this array, and they will be</span>
     <span class="comment">// automatically attempted when binding a time.Time.</span>
-    TimeFormats = []string{&#34;2006-01-02&#34;, &#34;2006-01-02 15:04&#34;}
+    TimeFormats = []string{}
+
+    DateFormat     string
+    DateTimeFormat string
 )</pre>
 				
 			
@@ -81,7 +90,7 @@ The most specific binder found will be used (Type before Kind)
 		
 			
 			
-			<h2 id="Bind">func <a href="../src/binder.html?s=9786:9856#L326">Bind</a></h2>
+			<h2 id="Bind">func <a href="../src/binder.html?s=11790:11860#L395">Bind</a></h2>
 			<pre>func Bind(params *Params, name string, typ reflect.Type) reflect.Value</pre>
 			<p>
 Parse the value string into a real Go value.
@@ -92,14 +101,14 @@ Returns 0 values when things can not be parsed.
 		
 			
 			
-			<h2 id="BindFile">func <a href="../src/binder.html?s=10253:10332#L346">BindFile</a></h2>
+			<h2 id="BindFile">func <a href="../src/binder.html?s=12257:12336#L415">BindFile</a></h2>
 			<pre>func BindFile(fileHeader *multipart.FileHeader, typ reflect.Type) reflect.Value</pre>
 			
 			
 		
 			
 			
-			<h2 id="BindValue">func <a href="../src/binder.html?s=10118:10176#L342">BindValue</a></h2>
+			<h2 id="BindValue">func <a href="../src/binder.html?s=12122:12180#L411">BindValue</a></h2>
 			<pre>func BindValue(val string, typ reflect.Type) reflect.Value</pre>
 			
 			

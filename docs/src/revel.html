@@ -58,8 +58,6 @@ var (
     WARN    = DEFAULT
     ERROR   = DEFAULT
 
-    <span class="comment">// Revel runs every function in this array after init.</span>
-    InitHooks   []func()
     Initialized bool
 )
 
@@ -137,10 +135,6 @@ func Init(mode, importPath, srcPath string) {
     ERROR = getLogger(&#34;error&#34;)
 
     loadModules()
-
-    for _, hook := range InitHooks {
-        hook()
-    }
 
     Initialized = true
 }

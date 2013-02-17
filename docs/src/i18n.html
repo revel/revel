@@ -73,6 +73,10 @@ type I18nPlugin struct {
     EmptyPlugin
 }
 
+func (p I18nPlugin) OnAppStart() {
+    loadMessages(filepath.Join(BasePath, messageFilesDirectory))
+}
+
 func (p I18nPlugin) BeforeRequest(c *Controller) {
     if foundCookie, cookieValue := hasLocaleCookie(c.Request); foundCookie {
         TRACE.Printf(&#34;Found locale cookie value: %s&#34;, cookieValue)

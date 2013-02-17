@@ -40,17 +40,23 @@ func ValueBinder(f func(value string, typ reflect.Type) reflect.Value) Binder {
     }
 }
 
-<span class="comment">// These are the lookups to find a Binder for any type of data.</span>
-<span class="comment">// The most specific binder found will be used (Type before Kind)</span>
-var (
-    TypeBinders = make(map[reflect.Type]Binder)
-    KindBinders = make(map[reflect.Kind]Binder)
+const (
+    DEFAULT_DATE_FORMAT     = &#34;2006-01-02&#34;
+    DEFAULT_DATETIME_FORMAT = &#34;2006-01-02 15:04&#34;
 )
 
 var (
+    <span class="comment">// These are the lookups to find a Binder for any type of data.</span>
+    <span class="comment">// The most specific binder found will be used (Type before Kind)</span>
+    TypeBinders = make(map[reflect.Type]Binder)
+    KindBinders = make(map[reflect.Kind]Binder)
+
     <span class="comment">// Applications can add custom time formats to this array, and they will be</span>
     <span class="comment">// automatically attempted when binding a time.Time.</span>
-    TimeFormats = []string{&#34;2006-01-02&#34;, &#34;2006-01-02 15:04&#34;}
+    TimeFormats = []string{}
+
+    DateFormat     string
+    DateTimeFormat string
 )
 
 <span class="comment">// Parse the value string into a real Go value.</span>

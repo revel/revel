@@ -41,6 +41,9 @@ layout: godoc
 				<dd><a href="#FirstNonEmpty">func FirstNonEmpty(strs ...string) string</a></dd>
 			
 				
+				<dd><a href="#LoadMimeConfig">func LoadMimeConfig()</a></dd>
+			
+				
 				<dd><a href="#MustReadLines">func MustReadLines(filename string) []string</a></dd>
 			
 				
@@ -89,7 +92,7 @@ layout: godoc
 		
 			
 			
-			<h2 id="ContentTypeByFilename">func <a href="../src/util.html?s=2406:2456#L90">ContentTypeByFilename</a></h2>
+			<h2 id="ContentTypeByFilename">func <a href="../src/util.html?s=2387:2437#L90">ContentTypeByFilename</a></h2>
 			<pre>func ContentTypeByFilename(filename string) string</pre>
 			<p>
 Returns a MIME content type based on the filename&#39;s extension.
@@ -101,7 +104,7 @@ Additionally, specifies the charset as UTF-8 for text/* types.
 		
 			
 			
-			<h2 id="DirExists">func <a href="../src/util.html?s=2910:2946#L110">DirExists</a></h2>
+			<h2 id="DirExists">func <a href="../src/util.html?s=2891:2927#L110">DirExists</a></h2>
 			<pre>func DirExists(filename string) bool</pre>
 			<p>
 DirExists returns true if the given path exists and is a directory.
@@ -131,9 +134,19 @@ Return the reflect.Method, given a Receiver type and Func value.
 		
 			
 			
-			<h2 id="FirstNonEmpty">func <a href="../src/util.html?s=3027:3068#L115">FirstNonEmpty</a></h2>
+			<h2 id="FirstNonEmpty">func <a href="../src/util.html?s=3008:3049#L115">FirstNonEmpty</a></h2>
 			<pre>func FirstNonEmpty(strs ...string) string</pre>
 			
+			
+		
+			
+			
+			<h2 id="LoadMimeConfig">func <a href="../src/util.html?s=1960:1981#L75">LoadMimeConfig</a></h2>
+			<pre>func LoadMimeConfig()</pre>
+			<p>
+Load mime-types.conf on init.
+</p>
+
 			
 		
 			
