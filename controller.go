@@ -245,6 +245,18 @@ func (c *Controller) NotFound(msg string, objs ...interface{}) Result {
 	})
 }
 
+func (c *Controller) Forbidden(msg string, objs ...interface{}) Result {
+	finalText := msg
+	if len(objs) > 0 {
+		finalText = fmt.Sprintf(msg, objs...)
+	}
+	c.Response.Status = http.StatusForbidden
+	return c.RenderError(&Error{
+		Title:       "Forbidden",
+		Description: finalText,
+	})
+}
+
 // Return a file, either displayed inline or downloaded as an attachment.
 // The name and size are taken from the file info.
 func (c *Controller) RenderFile(file *os.File, delivery ContentDisposition) Result {
