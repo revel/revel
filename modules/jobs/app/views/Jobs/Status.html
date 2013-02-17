@@ -1,0 +1,39 @@
+<html>
+	<head>
+		<style>
+body {
+  font-size: 12px;
+  font-family: sans-serif;
+}
+table {
+  border-collapse: collapse;
+  border: none;
+}
+table td, table th {
+  padding: 4 10px;
+  border: none;
+}
+table tr:nth-child(odd) {
+  background-color: #f0f0f0;
+}
+th {
+  text-align: left;
+}
+		</style>
+	</head>
+	<body>
+
+<h1>Scheduled Jobs</h1>
+
+<table>
+	<tr><th>Name</th><th>Status</th><th>Last run</th><th>Next run</th></tr>
+{{range .entries}}
+	{{$job := castjob .Job}}
+	<tr>
+		<td>{{$job.Name}}</td>
+		<td>{{$job.Status}}</td>
+		<td>{{if not .Prev.IsZero}}{{.Prev.Format "2006-01-02 15:04:05"}}{{end}}</td>
+		<td>{{if not .Next.IsZero}}{{.Next.Format "2006-01-02 15:04:05"}}{{end}}</td>
+	</tr>
+{{end}}
+</table>
