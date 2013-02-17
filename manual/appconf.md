@@ -66,3 +66,16 @@ Revel uses the following properties internally:
 * watch.code - should Revel watch for changes to code and reload?  (default True)
 * cookie.prefix - how should the Revel-produced cookies be named?  (default "REVEL")
 * log.* - Logging configuration
+
+### Jobs
+
+* cron.* - a named cron schedule
+* jobs.pool - number of jobs allowed to run concurrently
+* jobs.selfconcurrent - if true, allows a job to run even if previous instances have not completed yet.
+
+
+## Areas for development
+
+* Finish documenting the built-in properties
+* Allow inserting command line arguments as config values or otherwise
+  specifying config values from the command line.
