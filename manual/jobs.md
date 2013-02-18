@@ -50,7 +50,7 @@ Jobs may be scheduled to run on any schedule.  There are two options for express
 
 Revel uses the [cron library](https://github.com/robfig/cron) to parse the
 schedule and run the jobs.  The library's
-[README](https://github.com/robfig/cron/master/README.md) provides a detailed
+[README](https://github.com/robfig/cron/blob/master/README.md) provides a detailed
 description of the format accepted.
 
 Jobs are generally registered using the
