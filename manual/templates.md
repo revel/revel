@@ -80,7 +80,7 @@ Given a field name, it returns a struct containing the following members:
 * Value: the value of the field in the current RenderArgs
 * Flash: the flashed value of the field.
 * Error: the error message, if any is associated with this field.
-* ErrorClass: the raw string "error", if there was an error, else "".
+* ErrorClass: the raw string "hasError", if there was an error, else "".
 
 [See godoc.](../docs/godoc/field.html)
 
