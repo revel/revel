@@ -33,8 +33,7 @@ func (c Hotels) Show(id int) Result {
 // This tries to benchmark the usual request-serving pipeline to get an overall
 // performance metric.
 //
-// Each iteration runs one mock request to display a hotel's detail page by id,
-// and 10 static requests for a file, sized 7k.
+// Each iteration runs one mock request to display a hotel's detail page by id.
 //
 // Contributing parts:
 // - Routing
@@ -42,11 +41,34 @@ func (c Hotels) Show(id int) Result {
 // - Parameter binding
 // - Session, flash, i18n cookies
 // - Render() call magic
-// - Validation magic
 // - Template rendering
-func BenchmarkRevel(b *testing.B) {
+func BenchmarkServeAction(b *testing.B) {
+	benchmarkRequest(b, showRequest)
+}
+
+// This tries to benchmark the static serving overhead when serving an "average
+// size" 7k file.
+func BenchmarkServeStatic(b *testing.B) {
+	benchmarkRequest(b, staticRequest)
+}
+
+func benchmarkRequest(b *testing.B, req *http.Request) {
+	resp := httptest.NewRecorder()
+	startFakeBookingApp(b)
+	for i := 0; i < b.N; i++ {
+		handle(resp, req)
+	}
+}
+
+var (
+	showRequest, _   = http.NewRequest("GET", "/hotels/3", nil)
+	staticRequest, _ = http.NewRequest("GET", "/public/js/sessvars.js", nil)
+)
+
+func startFakeBookingApp(b *testing.B) {
 	Init("", "github.com/robfig/revel/samples/booking", "")
 
+	// Disable logging.
 	TRACE = log.New(ioutil.Discard, "", 0)
 	INFO = TRACE
 	WARN = TRACE
@@ -71,9 +93,6 @@ func BenchmarkRevel(b *testing.B) {
 
 	plugins.OnAppStart()
 
-	showRequest, _ := http.NewRequest("GET", "/hotels/3", nil)
-	staticRequest, _ := http.NewRequest("GET", "/public/js/sessvars.js", nil)
-
 	resp := httptest.NewRecorder()
 
 	// First, test that the expected responses are actually generated
@@ -92,12 +111,4 @@ func BenchmarkRevel(b *testing.B) {
 
 	resp.Body = nil
 	b.ResetTimer()
-
-	// Each iteration, run 1 action and 10 static requests.
-	for i := 0; i < b.N; i++ {
-		handle(resp, showRequest)
-		for j := 0; j < 10; j++ {
-			handle(resp, staticRequest)
-		}
-	}
 }
