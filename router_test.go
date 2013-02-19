@@ -340,7 +340,7 @@ func BenchmarkRouter(b *testing.B) {
 	router := NewRouter("")
 	router.parse(TEST_ROUTES, false)
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for i := 0; i < b.N/len(routeMatchTestCases); i++ {
 		for req, _ := range routeMatchTestCases {
 			router.Route(req)
 		}
