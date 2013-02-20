@@ -85,14 +85,21 @@ func handleInternal(w http.ResponseWriter, r *http.Request, ws *websocket.Conn) 
 
 	// Collect the values for the method's arguments.
 	var actualArgs []reflect.Value
-	for _, arg := range controller.MethodType.Args {
-		// If they accept a websocket connection, treat that arg specially.
+
+	for key, arg := range controller.MethodType.Args {
 		var boundArg reflect.Value
-		if arg.Type == websocketType {
-			boundArg = reflect.ValueOf(ws)
+
+		if key < len(route.FixedParams) {
+			// Add the fixed argument at our matching index
+			boundArg = reflect.ValueOf(route.FixedParams[key])
 		} else {
-			TRACE.Println("Binding:", arg.Name, "as", arg.Type)
-			boundArg = controller.Params.Bind(arg.Name, arg.Type)
+			// If they accept a websocket connection, treat that arg specially.
+			if arg.Type == websocketType {
+				boundArg = reflect.ValueOf(ws)
+			} else {
+				TRACE.Println("Binding:", arg.Name, "as", arg.Type)
+				boundArg = controller.Params.Bind(arg.Name, arg.Type)
+			}
 		}
 		actualArgs = append(actualArgs, boundArg)
 	}

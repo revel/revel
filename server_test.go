@@ -5,6 +5,8 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -24,10 +26,32 @@ type Hotels struct {
 	*Controller
 }
 
+type Static struct {
+	*Controller
+}
+
 func (c Hotels) Show(id int) Result {
 	title := "View Hotel"
 	hotel := &Hotel{id, "A Hotel", "300 Main St.", "New York", "NY", "10010", "USA", 300}
 	return c.Render(title, hotel)
+}
+
+func (c Static) ServeDir(prefix, filepath string) Result {
+	var basePath, dirName string
+
+	if !path.IsAbs(dirName) {
+		basePath = BasePath
+	}
+
+	fname := path.Join(basePath, prefix, filepath)
+	file, err := os.Open(fname)
+	if os.IsNotExist(err) {
+		return c.NotFound("")
+	} else if err != nil {
+		WARN.Printf("Problem opening file (%s): %s ", fname, err)
+		return c.NotFound("This was found but not sure why we couldn't open it.")
+	}
+	return c.RenderFile(file, "")
 }
 
 // This tries to benchmark the usual request-serving pipeline to get an overall
@@ -88,6 +112,18 @@ func startFakeBookingApp(b *testing.B) {
 					{"id", reflect.TypeOf((*int)(nil))},
 				},
 				RenderArgNames: map[int][]string{30: []string{"title", "hotel"}},
+			},
+		})
+
+	RegisterController((*Static)(nil),
+		[]*MethodType{
+			&MethodType{
+				Name: "ServeDir",
+				Args: []*MethodArg{
+					&MethodArg{Name: "prefix", Type: reflect.TypeOf((*string)(nil))},
+					&MethodArg{Name: "filepath", Type: reflect.TypeOf((*string)(nil))},
+				},
+				RenderArgNames: map[int][]string{},
 			},
 		})
 

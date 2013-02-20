@@ -1,7 +1,9 @@
 package revel
 
 import (
+	"encoding/csv"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -11,9 +13,10 @@ import (
 )
 
 type Route struct {
-	Method string // e.g. GET
-	Path   string // e.g. /app/{id}
-	Action string // e.g. Application.ShowApp
+	Method    string   // e.g. GET
+	Path      string   // e.g. /app/{id}
+	Action    string   // e.g. Application.ShowApp
+	FixedArgs []string // e.g. "arg1","arg2","arg3" (CSV formatting)
 
 	pathPattern   *regexp.Regexp // for matching the url path
 	staticDir     string         // e.g. "public" from action "staticDir:public"
@@ -22,9 +25,10 @@ type Route struct {
 }
 
 type RouteMatch struct {
-	Action         string            // e.g. Application.ShowApp
-	ControllerName string            // e.g. Application
-	MethodName     string            // e.g. ShowApp
+	Action         string // e.g. Application.ShowApp
+	ControllerName string // e.g. Application
+	MethodName     string // e.g. ShowApp
+	FixedParams    []string
 	Params         map[string]string // e.g. {id: 123}
 	StaticFilename string
 }
@@ -41,11 +45,20 @@ var (
 )
 
 // Prepares the route to be used in matching.
-func NewRoute(method, path, action string) (r *Route) {
+func NewRoute(method, path, action, fixedArgs string) (r *Route) {
+	// Handle fixed arguments
+	argsReader := strings.NewReader(fixedArgs)
+	csv := csv.NewReader(argsReader)
+	fargs, err := csv.Read()
+	if err != nil && err != io.EOF {
+		ERROR.Printf("Invalid fixed parameters (%v): for string '%v'", err.Error(), fixedArgs)
+	}
+
 	r = &Route{
-		Method: strings.ToUpper(method),
-		Path:   path,
-		Action: action,
+		Method:    strings.ToUpper(method),
+		Path:      path,
+		Action:    action,
+		FixedArgs: fargs,
 	}
 
 	// Handle static routes
@@ -186,6 +199,7 @@ func (r *Route) Match(method string, reqPath string) *RouteMatch {
 		ControllerName: actionSplit[0],
 		MethodName:     actionSplit[1],
 		Params:         params,
+		FixedParams:    r.FixedArgs,
 	}
 }
 
@@ -229,12 +243,12 @@ func (router *Router) parse(content string, validate bool) *Error {
 			continue
 		}
 
-		method, path, action, found := parseRouteLine(line)
+		method, path, action, fixedArgs, found := parseRouteLine(line)
 		if !found {
 			continue
 		}
 
-		route := NewRoute(method, path, action)
+		route := NewRoute(method, path, action, fixedArgs)
 		routes = append(routes, route)
 
 		if validate {
@@ -300,17 +314,19 @@ func (router *Router) validate(route *Route) *Error {
 // 1: method
 // 4: path
 // 5: action
+// 6: fixedargs
 var routePattern *regexp.Regexp = regexp.MustCompile(
 	"(?i)^(GET|POST|PUT|DELETE|OPTIONS|HEAD|WS|\\*)" +
 		"[(]?([^)]*)(\\))?[ \t]+" +
-		"(.*/[^ \t]*)[ \t]+([^ \t(]+)(.+)?([ \t]*)$")
+		"(.*/[^ \t]*)[ \t]+([^ \t(]+)" +
+		`\(?([^)]*)\)?$`)
 
-func parseRouteLine(line string) (method, path, action string, found bool) {
+func parseRouteLine(line string) (method, path, action, fixedArgs string, found bool) {
 	var matches []string = routePattern.FindStringSubmatch(line)
 	if matches == nil {
 		return
 	}
-	method, path, action = matches[1], matches[4], matches[5]
+	method, path, action, fixedArgs = matches[1], matches[4], matches[5], matches[6]
 	found = true
 	return
 }
