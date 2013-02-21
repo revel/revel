@@ -17,29 +17,29 @@ Tests are kept in the tests directory:
 		public/
 		tests/    <----
 
-A simple test looks like the following: 
+A simple test looks like the following:
 
 <pre class="prettyprint lang-go">
 type ApplicationTest struct {
   revel.TestSuite
 }
 
-func (t ApplicationTest) Before() {
+func (t *ApplicationTest) Before() {
 	println("Set up")
 }
 
-func (t ApplicationTest) TestThatIndexPageWorks() {
+func (t *ApplicationTest) TestThatIndexPageWorks() {
 	t.Get("/")
 	t.AssertOk()
 	t.AssertContentType("text/html")
 }
 
-func (t ApplicationTest) After() {
+func (t *ApplicationTest) After() {
 	println("Tear down")
 }
 </pre>
 
-The example code above shows a couple things: 
+The example code above shows a couple things:
 
 * A test suite is any struct that embeds `revel.TestSuite`
 * `Before()` and `After()` are invoked before and after every test method, if present.
@@ -64,8 +64,8 @@ type TestSuite struct {
 
 // Some request methods
 func (t *TestSuite) Get(path string)
-func (t *TestSuite) Post(path string, contentType string, reader io.Reader) 
-func (t *TestSuite) PostForm(path string, data url.Values) 
+func (t *TestSuite) Post(path string, contentType string, reader io.Reader)
+func (t *TestSuite) PostForm(path string, data url.Values)
 func (t *TestSuite) MakeRequest(req *http.Request)
 
 // Some assertion methods
@@ -98,7 +98,7 @@ With that done, the tests may be run interactively or non-interactively.
 
 ### Running tests interactively
 
-To take advantage of Revel's hot-compile functionality, an interactive test runner is provided for quick edit-refresh cycles.  
+To take advantage of Revel's hot-compile functionality, an interactive test runner is provided for quick edit-refresh cycles.
 
 For example, the developer loads `/@tests` in their browser:
 
@@ -134,9 +134,9 @@ Then they re-run the test:
 
 Success.
 
-### Running tests non-interactively 
+### Running tests non-interactively
 
-The Revel [command line tool](tool.html) provides a `test` command that allows all application tests to be run from the command line.  
+The Revel [command line tool](tool.html) provides a `test` command that allows all application tests to be run from the command line.
 
 Here is an example session:
 
@@ -165,7 +165,7 @@ In the console only a simple PASSED/FAILED overview by test suite is displayed. 
 	test-results/ApplicationTest.passed.html
 	test-results/result.passed
 
-It writes three different things: 
+It writes three different things:
 
 1. The application's stdout and stderr are redirected to `app.log`
 2. One HTML file per test suite is written, describing the tests that passed or failed.
@@ -173,7 +173,7 @@ It writes three different things:
 
 There are two suggested mechanisms for integrating this into a continuous build:
 
-1. Check the return code, which is 0 for a successful test run and non-zero otherwise.  
+1. Check the return code, which is 0 for a successful test run and non-zero otherwise.
 2. Require the presence of `result.success` after the run, or disallow the presence of `result.failed`.
 
 ## Implementation notes
@@ -183,7 +183,7 @@ What Revel does is:
 * Scan the test source code for types that (transitively) embed TestSuite
 * Set the `revel.TestSuites` variable to a list of those types in the generated main.go file.
 * On demand, uses reflection to find all methods beginning with "Test" on the TestSuite types, and invokes them to run the test.
-* Catches panics from bugs or failed assertions and displays the error helpfully. 
+* Catches panics from bugs or failed assertions and displays the error helpfully.
 
 Testing code is only built when the special `testrunner` module is activated.
 
