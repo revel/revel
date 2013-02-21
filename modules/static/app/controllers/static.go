@@ -11,9 +11,9 @@ type Static struct {
 }
 
 func (c Static) ServeDir(prefix, filepath string) revel.Result {
-	var basePath, dirName string
+	var basePath string
 
-	if !fpath.IsAbs(dirName) {
+	if !fpath.IsAbs(prefix) {
 		basePath = revel.BasePath
 	}
 
