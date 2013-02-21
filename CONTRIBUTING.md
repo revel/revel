@@ -35,6 +35,7 @@ These are outstanding feature requests, roughly ordered by priority.
 2.	Support for other templating languages (e.g. mustache, HAML).  Maybe make TemplateLoader pluggable.
 6.	Better reverse routing (the current thing sucks, the stuff Play has rocks)
 5. SCSS/LESS/Coffeescript pre-processors.
+12.	Test Fixtures
 4.	GAE support (some progress made in the appengine branch, just lacking running the appengine services in development)
 3.  Form helpers in general.
 5.	A Mongo module (perhaps with a sample app)
@@ -42,7 +43,6 @@ These are outstanding feature requests, roughly ordered by priority.
 9.	Easy emailer support (e.g. to email exception logs to developer, or even to email users),
 10.	Cross-compilation in the "package" command. (Generally, working on easy deployment or having a full article on deploying to Heroku)
 11.	ETags, cache controls
-12.	Test Fixtures
 3.	Performance tests (both overall QPS to use for marketing, and subsystem tests to help optimization)
 13.	Authenticity tokens for CSRF protection
 14.	A module or plugins for adding HTTP Basic Auth
