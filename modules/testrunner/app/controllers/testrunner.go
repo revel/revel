@@ -46,7 +46,7 @@ func (c TestRunner) Index() revel.Result {
 	return c.Render(testSuites)
 }
 
-// Run runs a single test, given by the argument. 
+// Run runs a single test, given by the argument.
 func (c TestRunner) Run(suite, test string) revel.Result {
 	result := TestResult{Name: test}
 	for _, testSuite := range revel.TestSuites {
@@ -104,10 +104,10 @@ func (c TestRunner) List() revel.Result {
 }
 
 func DescribeSuite(testSuite interface{}) TestSuiteDesc {
-	t := reflect.TypeOf(testSuite).Elem()
+	t := reflect.TypeOf(testSuite)
 
 	// Get a list of methods of the embedded test type.
-	super := t.Field(0).Type
+	super := t.Elem().Field(0).Type
 	superMethodNameSet := map[string]struct{}{}
 	for i := 0; i < super.NumMethod(); i++ {
 		superMethodNameSet[super.Method(i).Name] = struct{}{}
@@ -130,7 +130,7 @@ func DescribeSuite(testSuite interface{}) TestSuiteDesc {
 	}
 
 	return TestSuiteDesc{
-		Name:  t.Name(),
+		Name:  t.Elem().Name(),
 		Tests: tests,
 	}
 }
