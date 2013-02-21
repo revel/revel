@@ -18,7 +18,7 @@ var routeTestCases = map[string]*Route{
 		pathPattern:   regexp.MustCompile("/$"),
 		staticDir:     "",
 		args:          []*arg{},
-		FixedArgs:     []string{},
+		FixedParams:     []string{},
 		actionPattern: regexp.MustCompile("Application\\.Index"),
 	},
 
@@ -34,7 +34,7 @@ var routeTestCases = map[string]*Route{
 				constraint: regexp.MustCompile("[^/]+"),
 			},
 		},
-		FixedArgs:     []string{},
+		FixedParams:     []string{},
 		actionPattern: regexp.MustCompile("Application\\.SaveApp"),
 	},
 
@@ -50,7 +50,7 @@ var routeTestCases = map[string]*Route{
 				constraint: regexp.MustCompile("[0-9]+"),
 			},
 		},
-		FixedArgs:     []string{},
+		FixedParams:     []string{},
 		actionPattern: regexp.MustCompile("Application\\.SaveApp"),
 	},
 
@@ -61,7 +61,7 @@ var routeTestCases = map[string]*Route{
 		pathPattern:   regexp.MustCompile("/app/?$"),
 		staticDir:     "",
 		args:          []*arg{},
-		FixedArgs:     []string{},
+		FixedParams:     []string{},
 		actionPattern: regexp.MustCompile("Application\\.List"),
 	},
 
@@ -77,7 +77,7 @@ var routeTestCases = map[string]*Route{
 				constraint: regexp.MustCompile(`\d+`),
 			},
 		},
-		FixedArgs:     []string{},
+		FixedParams:     []string{},
 		actionPattern: regexp.MustCompile("Application\\.Show"),
 	},
 
@@ -93,7 +93,7 @@ var routeTestCases = map[string]*Route{
 				constraint: regexp.MustCompile(`.+`),
 			},
 		},
-		FixedArgs: []string{
+		FixedParams: []string{
 			"public",
 		},
 		actionPattern: regexp.MustCompile("Static\\.ServeDir"),
@@ -106,7 +106,7 @@ var routeTestCases = map[string]*Route{
 		pathPattern:   regexp.MustCompile("^/public/(.*)$"),
 		staticDir:     "www",
 		args:          []*arg{},
-		FixedArgs:     []string{},
+		FixedParams:     []string{},
 		actionPattern: nil,
 	},
 
@@ -126,7 +126,7 @@ var routeTestCases = map[string]*Route{
 				constraint: regexp.MustCompile("[^/]+"),
 			},
 		},
-		FixedArgs:     []string{},
+		FixedParams:     []string{},
 		actionPattern: regexp.MustCompile("Application\\.(?P<action>[^/]+)"),
 	},
 
@@ -146,7 +146,7 @@ var routeTestCases = map[string]*Route{
 				constraint: regexp.MustCompile("[^/]+"),
 			},
 		},
-		FixedArgs:     []string{},
+		FixedParams:     []string{},
 		actionPattern: regexp.MustCompile("(?P<controller>[^/]+)\\.(?P<action>[^/]+)"),
 	},
 }

@@ -3,7 +3,7 @@ package controllers
 import (
 	"github.com/robfig/revel"
 	"os"
-	"path"
+	fpath "path/filepath"
 )
 
 type Static struct {
@@ -13,11 +13,11 @@ type Static struct {
 func (c Static) ServeDir(prefix, filepath string) revel.Result {
 	var basePath, dirName string
 
-	if !path.IsAbs(dirName) {
+	if !fpath.IsAbs(dirName) {
 		basePath = revel.BasePath
 	}
 
-	fname := path.Join(basePath, prefix, filepath)
+	fname := fpath.Join(basePath, fpath.FromSlash(prefix), fpath.FromSlash(filepath))
 	file, err := os.Open(fname)
 	if os.IsNotExist(err) {
 		revel.WARN.Printf("File not found (%s): %s ", fname, err)

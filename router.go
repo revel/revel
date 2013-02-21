@@ -13,10 +13,10 @@ import (
 )
 
 type Route struct {
-	Method    string   // e.g. GET
-	Path      string   // e.g. /app/{id}
-	Action    string   // e.g. Application.ShowApp
-	FixedArgs []string // e.g. "arg1","arg2","arg3" (CSV formatting)
+	Method      string   // e.g. GET
+	Path        string   // e.g. /app/{id}
+	Action      string   // e.g. Application.ShowApp
+	FixedParams []string // e.g. "arg1","arg2","arg3" (CSV formatting)
 
 	pathPattern   *regexp.Regexp // for matching the url path
 	staticDir     string         // e.g. "public" from action "staticDir:public"
@@ -55,10 +55,10 @@ func NewRoute(method, path, action, fixedArgs string) (r *Route) {
 	}
 
 	r = &Route{
-		Method:    strings.ToUpper(method),
-		Path:      path,
-		Action:    action,
-		FixedArgs: fargs,
+		Method:      strings.ToUpper(method),
+		Path:        path,
+		Action:      action,
+		FixedParams: fargs,
 	}
 
 	// Handle static routes
@@ -199,7 +199,7 @@ func (r *Route) Match(method string, reqPath string) *RouteMatch {
 		ControllerName: actionSplit[0],
 		MethodName:     actionSplit[1],
 		Params:         params,
-		FixedParams:    r.FixedArgs,
+		FixedParams:    r.FixedParams,
 	}
 }
 
@@ -319,7 +319,7 @@ var routePattern *regexp.Regexp = regexp.MustCompile(
 	"(?i)^(GET|POST|PUT|DELETE|OPTIONS|HEAD|WS|\\*)" +
 		"[(]?([^)]*)(\\))?[ \t]+" +
 		"(.*/[^ \t]*)[ \t]+([^ \t(]+)" +
-		`\(?([^)]*)\)?$`)
+		`\(?([^)]*)\)?[ \t]*$`)
 
 func parseRouteLine(line string) (method, path, action, fixedArgs string, found bool) {
 	var matches []string = routePattern.FindStringSubmatch(line)
