@@ -18,7 +18,6 @@ type Route struct {
 	FixedParams []string // e.g. "arg1","arg2","arg3" (CSV formatting)
 
 	pathPattern   *regexp.Regexp // for matching the url path
-	staticDir     string         // e.g. "public" from action "staticDir:public"
 	args          []*arg         // e.g. {id} from path /app/{id}
 	actionPattern *regexp.Regexp
 }
@@ -57,24 +56,6 @@ func NewRoute(method, path, action, fixedArgs string) (r *Route) {
 		Path:        path,
 		Action:      action,
 		FixedParams: fargs,
-	}
-
-	// Handle static routes
-	if strings.HasPrefix(r.Action, "staticDir:") {
-		if r.Method != "*" && r.Method != "GET" {
-			WARN.Print("Static route only supports GET")
-			return
-		}
-
-		if !strings.HasSuffix(r.Path, "/") {
-			WARN.Printf("The path for staticDir must end with / (%s)", r.Path)
-			r.Path = r.Path + "/"
-		}
-
-		r.pathPattern = regexp.MustCompile("^" + r.Path + "(.*)$")
-		r.staticDir = r.Action[len("staticDir:"):]
-		// TODO: staticFile:
-		return
 	}
 
 	// URL pattern
@@ -238,11 +219,6 @@ func (router *Router) parse(content string, validate bool) *Error {
 
 // Check that every specified action exists.
 func (router *Router) validate(route *Route) *Error {
-	// Skip static routes
-	if route.staticDir != "" {
-		return nil
-	}
-
 	// Skip variable routes.
 	if strings.ContainsAny(route.Action, "{}") {
 		return nil

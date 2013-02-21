@@ -9,7 +9,7 @@ GET     /auth                                   Application.authenticate
 POST	/ws/status									Application.setStatus
 
 # Map static resources from the /app/public folder to the /public path
-GET     /public/                                staticDir:public
+GET   /public/{<.+>filepath}              Static.ServeDir("public")
 
 # Catch all
 *       /{controller}/{action}                  {controller}.{action}

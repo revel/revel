@@ -16,7 +16,6 @@ var routeTestCases = map[string]*Route{
 		Path:          "/",
 		Action:        "Application.Index",
 		pathPattern:   regexp.MustCompile("/$"),
-		staticDir:     "",
 		args:          []*arg{},
 		FixedParams:   []string{},
 		actionPattern: regexp.MustCompile("Application\\.Index"),
@@ -27,7 +26,6 @@ var routeTestCases = map[string]*Route{
 		Path:        "/app/{id}",
 		Action:      "Application.SaveApp",
 		pathPattern: regexp.MustCompile("/app/(?P<id>[^/]+)$"),
-		staticDir:   "",
 		args: []*arg{
 			{
 				name:       "id",
@@ -43,7 +41,6 @@ var routeTestCases = map[string]*Route{
 		Path:        "/app/{<[0-9]+>id}",
 		Action:      "Application.SaveApp",
 		pathPattern: regexp.MustCompile("/app/(?P<id>[0-9]+)$"),
-		staticDir:   "",
 		args: []*arg{
 			{
 				name:       "id",
@@ -59,7 +56,6 @@ var routeTestCases = map[string]*Route{
 		Path:          "/app/?",
 		Action:        "Application.List",
 		pathPattern:   regexp.MustCompile("/app/?$"),
-		staticDir:     "",
 		args:          []*arg{},
 		FixedParams:   []string{},
 		actionPattern: regexp.MustCompile("Application\\.List"),
@@ -70,7 +66,6 @@ var routeTestCases = map[string]*Route{
 		Path:        `/apps/{<\d+>appId}/?`,
 		Action:      "Application.Show",
 		pathPattern: regexp.MustCompile(`/apps/(?P<appId>\d+)/?$`),
-		staticDir:   "",
 		args: []*arg{
 			{
 				name:       "appId",
@@ -86,7 +81,6 @@ var routeTestCases = map[string]*Route{
 		Path:        "/public/{<.+>filepath}",
 		Action:      "Static.ServeDir",
 		pathPattern: regexp.MustCompile(`/public/(?P<filepath>.+)$`),
-		staticDir:   "",
 		args: []*arg{
 			{
 				name:       "filepath",
@@ -99,23 +93,11 @@ var routeTestCases = map[string]*Route{
 		actionPattern: regexp.MustCompile("Static\\.ServeDir"),
 	},
 
-	"GET /public/ staticDir:www": &Route{
-		Method:        "GET",
-		Path:          "/public/",
-		Action:        "staticDir:www",
-		pathPattern:   regexp.MustCompile("^/public/(.*)$"),
-		staticDir:     "www",
-		args:          []*arg{},
-		FixedParams:   []string{},
-		actionPattern: nil,
-	},
-
 	"* /apps/{id}/{action} Application.{action}": &Route{
 		Method:      "*",
 		Path:        "/apps/{id}/{action}",
 		Action:      "Application.{action}",
 		pathPattern: regexp.MustCompile("/apps/(?P<id>[^/]+)/(?P<action>[^/]+)$"),
-		staticDir:   "",
 		args: []*arg{
 			{
 				name:       "id",
@@ -135,7 +117,6 @@ var routeTestCases = map[string]*Route{
 		Path:        "/{controller}/{action}",
 		Action:      "{controller}.{action}",
 		pathPattern: regexp.MustCompile("/(?P<controller>[^/]+)/(?P<action>[^/]+)$"),
-		staticDir:   "",
 		args: []*arg{
 			{
 				name:       "controller",
@@ -164,7 +145,6 @@ func TestComputeRoute(t *testing.T) {
 		eq(t, "Path", actual.Path, expected.Path)
 		eq(t, "Action", actual.Action, expected.Action)
 		eq(t, "pathPattern", fmt.Sprint(actual.pathPattern), fmt.Sprint(expected.pathPattern))
-		eq(t, "staticDir", actual.staticDir, expected.staticDir)
 		eq(t, "len(args)", len(actual.args), len(expected.args))
 		for i, arg := range actual.args {
 			if len(expected.args) <= i {
