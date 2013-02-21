@@ -93,6 +93,23 @@ var routeTestCases = map[string]*Route{
 		actionPattern: regexp.MustCompile("Static\\.ServeDir"),
 	},
 
+	`GET /javascript/{<.+>filepath} Static.ServeDir("public/js")`: &Route{
+		Method:      "GET",
+		Path:        "/javascript/{<.+>filepath}",
+		Action:      "Static.ServeDir",
+		pathPattern: regexp.MustCompile(`/javascript/(?P<filepath>.+)$`),
+		args: []*arg{
+			{
+				name:       "filepath",
+				constraint: regexp.MustCompile(`.+`),
+			},
+		},
+		FixedParams: []string{
+			"public",
+		},
+		actionPattern: regexp.MustCompile("Static\\.ServeDir"),
+	},
+
 	"* /apps/{id}/{action} Application.{action}": &Route{
 		Method:      "*",
 		Path:        "/apps/{id}/{action}",
@@ -167,7 +184,7 @@ const TEST_ROUTES = `
 GET  /                       Application.Index
 GET  /app/{id}/?             Application.Show
 POST /app/{id}               Application.Save
-
+GET /javascript/{<.+>filepath} Static.ServeDir("public/js")
 GET /public/{<.+>filepath}   Static.ServeDir("public")
 *		/{controller}/{action}		{controller}.{action}
 
@@ -223,6 +240,16 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 		MethodName:     "ServeDir",
 		FixedParams:    []string{"public"},
 		Params:         map[string]string{"filepath": "style.css"},
+	},
+
+	&http.Request{
+		Method: "GET",
+		URL:    &url.URL{Path: "/javascript/sessvars.js"},
+	}: &RouteMatch{
+		ControllerName: "Static",
+		MethodName:     "ServeDir",
+		FixedParams:    []string{"public"},
+		Params:         map[string]string{"filepath": "sessvars.js"},
 	},
 
 	&http.Request{
