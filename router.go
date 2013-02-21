@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"path"
 	"regexp"
 	"strings"
 )
@@ -30,7 +29,6 @@ type RouteMatch struct {
 	MethodName     string // e.g. ShowApp
 	FixedParams    []string
 	Params         map[string]string // e.g. {id: 123}
-	StaticFilename string
 }
 
 type arg struct {
@@ -137,33 +135,6 @@ func (r *Route) Match(method string, reqPath string) *RouteMatch {
 	var matches []string = r.pathPattern.FindStringSubmatch(reqPath)
 	if len(matches) == 0 || len(matches[0]) != len(reqPath) {
 		return nil
-	}
-
-	// If it's a static file request..
-	if r.staticDir != "" {
-		// Check if it is specifying a module.. if so, look there instead.
-		// This is a tenative syntax: "staticDir:moduleName:(directory)"
-		var basePath, dirName string
-		if i := strings.Index(r.staticDir, ":"); i != -1 {
-			moduleName, dirName := r.staticDir[:i], r.staticDir[i+1:]
-			for _, module := range Modules {
-				if module.Name == moduleName {
-					basePath = path.Join(module.Path, dirName)
-				}
-			}
-			if basePath == "" {
-				ERROR.Print("No such module found: ", moduleName)
-				basePath = BasePath
-			}
-		} else {
-			dirName = r.staticDir
-			if !path.IsAbs(dirName) {
-				basePath = BasePath
-			}
-		}
-		return &RouteMatch{
-			StaticFilename: path.Join(basePath, dirName, matches[1]),
-		}
 	}
 
 	// Figure out the Param names.

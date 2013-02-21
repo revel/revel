@@ -57,12 +57,6 @@ func handleInternal(w http.ResponseWriter, r *http.Request, ws *websocket.Conn) 
 		return
 	}
 
-	// Dispatch the static files first.
-	if route.StaticFilename != "" {
-		http.ServeFile(w, r, route.StaticFilename)
-		return
-	}
-
 	// Construct the controller and get the method to call.
 	controller, appControllerPtr := NewAppController(req, resp, route.ControllerName, route.MethodName)
 	if controller == nil {

@@ -18,7 +18,7 @@ var routeTestCases = map[string]*Route{
 		pathPattern:   regexp.MustCompile("/$"),
 		staticDir:     "",
 		args:          []*arg{},
-		FixedParams:     []string{},
+		FixedParams:   []string{},
 		actionPattern: regexp.MustCompile("Application\\.Index"),
 	},
 
@@ -34,7 +34,7 @@ var routeTestCases = map[string]*Route{
 				constraint: regexp.MustCompile("[^/]+"),
 			},
 		},
-		FixedParams:     []string{},
+		FixedParams:   []string{},
 		actionPattern: regexp.MustCompile("Application\\.SaveApp"),
 	},
 
@@ -50,7 +50,7 @@ var routeTestCases = map[string]*Route{
 				constraint: regexp.MustCompile("[0-9]+"),
 			},
 		},
-		FixedParams:     []string{},
+		FixedParams:   []string{},
 		actionPattern: regexp.MustCompile("Application\\.SaveApp"),
 	},
 
@@ -61,7 +61,7 @@ var routeTestCases = map[string]*Route{
 		pathPattern:   regexp.MustCompile("/app/?$"),
 		staticDir:     "",
 		args:          []*arg{},
-		FixedParams:     []string{},
+		FixedParams:   []string{},
 		actionPattern: regexp.MustCompile("Application\\.List"),
 	},
 
@@ -77,7 +77,7 @@ var routeTestCases = map[string]*Route{
 				constraint: regexp.MustCompile(`\d+`),
 			},
 		},
-		FixedParams:     []string{},
+		FixedParams:   []string{},
 		actionPattern: regexp.MustCompile("Application\\.Show"),
 	},
 
@@ -106,7 +106,7 @@ var routeTestCases = map[string]*Route{
 		pathPattern:   regexp.MustCompile("^/public/(.*)$"),
 		staticDir:     "www",
 		args:          []*arg{},
-		FixedParams:     []string{},
+		FixedParams:   []string{},
 		actionPattern: nil,
 	},
 
@@ -126,7 +126,7 @@ var routeTestCases = map[string]*Route{
 				constraint: regexp.MustCompile("[^/]+"),
 			},
 		},
-		FixedParams:     []string{},
+		FixedParams:   []string{},
 		actionPattern: regexp.MustCompile("Application\\.(?P<action>[^/]+)"),
 	},
 
@@ -146,7 +146,7 @@ var routeTestCases = map[string]*Route{
 				constraint: regexp.MustCompile("[^/]+"),
 			},
 		},
-		FixedParams:     []string{},
+		FixedParams:   []string{},
 		actionPattern: regexp.MustCompile("(?P<controller>[^/]+)\\.(?P<action>[^/]+)"),
 	},
 }
@@ -203,7 +203,6 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 		MethodName:     "Index",
 		FixedParams:    []string{},
 		Params:         map[string]string{},
-		StaticFilename: "",
 	},
 
 	&http.Request{
@@ -214,7 +213,6 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 		MethodName:     "Show",
 		FixedParams:    []string{},
 		Params:         map[string]string{"id": "123"},
-		StaticFilename: "",
 	},
 
 	&http.Request{
@@ -225,7 +223,6 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 		MethodName:     "Save",
 		FixedParams:    []string{},
 		Params:         map[string]string{"id": "123"},
-		StaticFilename: "",
 	},
 
 	&http.Request{
@@ -236,7 +233,6 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 		MethodName:     "Show",
 		FixedParams:    []string{},
 		Params:         map[string]string{"id": "123"},
-		StaticFilename: "",
 	},
 
 	&http.Request{
@@ -247,7 +243,6 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 		MethodName:     "ServeDir",
 		FixedParams:    []string{"public"},
 		Params:         map[string]string{"filepath": "style.css"},
-		StaticFilename: "",
 	},
 
 	&http.Request{
@@ -258,7 +253,6 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 		MethodName:     "Route",
 		FixedParams:    []string{},
 		Params:         map[string]string{"controller": "Implicit", "action": "Route"},
-		StaticFilename: "",
 	},
 
 	&http.Request{
@@ -270,7 +264,6 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 		Action:         "404",
 		FixedParams:    []string{},
 		Params:         map[string]string{},
-		StaticFilename: "",
 	},
 }
 
@@ -290,7 +283,6 @@ func TestRouteMatches(t *testing.T) {
 		for key, actualValue := range actual.Params {
 			eq(t, "Params", actualValue, expected.Params[key])
 		}
-		eq(t, "StaticFilename", actual.StaticFilename, expected.StaticFilename)
 	}
 }
 
