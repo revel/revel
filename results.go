@@ -248,6 +248,13 @@ func (r *BinaryResult) Apply(req *Request, resp *Response) {
 	}
 	resp.WriteHeader(http.StatusOK, ContentTypeByFilename(r.Name))
 	io.Copy(resp.Out, r.Reader)
+
+	// Close the Reader if we can
+	v, ok := r.Reader.(io.Closer)
+	if ok {
+		v.Close()
+	}
+
 }
 
 type RedirectToUrlResult struct {
