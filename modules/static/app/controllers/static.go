@@ -18,15 +18,29 @@ func (c Static) ServeDir(prefix, filepath string) revel.Result {
 	}
 
 	fname := fpath.Join(basePath, fpath.FromSlash(prefix), fpath.FromSlash(filepath))
-	file, err := os.Open(fname)
-	if os.IsNotExist(err) {
-		revel.WARN.Printf("File not found (%s): %s ", fname, err)
-		return c.NotFound("")
-	} else if err != nil {
-		revel.WARN.Printf("Problem opening file (%s): %s ", fname, err)
-		return c.NotFound("This was found but not sure why we couldn't open it.")
+
+	finfo, err := os.Stat(fname)
+
+	if err == nil {
+		if finfo.Mode().IsDir() {
+			revel.WARN.Printf("Attempted directory listing of %s", fname)
+			return c.Forbidden("Directory listing not allowed")
+		}
+		file, err := os.Open(fname)
+		if os.IsNotExist(err) {
+			revel.WARN.Printf("File not found (%s): %s ", fname, err)
+			return c.NotFound("File not found")
+		} else if err != nil {
+			revel.WARN.Printf("Problem opening file (%s): %s ", fname, err)
+			return c.RenderError(err)
+		}
+		return c.RenderFile(file, "")
+	} else {
+		revel.ERROR.Printf("Error trying to get fileinfo for '%s': %s", fname, err)
 	}
-	return c.RenderFile(file, "")
+
+	return c.RenderError(err)
+
 }
 
 func (c Static) ServeFile(filepath string) revel.Result {
