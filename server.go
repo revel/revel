@@ -79,8 +79,13 @@ func handleInternal(w http.ResponseWriter, r *http.Request, ws *websocket.Conn) 
 
 	// Add the fixed parameters mapped by name.
 	for i, value := range route.FixedParams {
-		arg := controller.MethodType.Args[i]
-		controller.Params.Values.Add(arg.Name, value)
+		if i < len(controller.MethodType.Args) {
+			arg := controller.MethodType.Args[i]
+			controller.Params.Values.Add(arg.Name, value)
+		} else {
+			WARN.Println("Too many parameters to", route.Action, "trying to add", value)
+			break
+		}
 	}
 
 	// Collect the values for the method's arguments.
