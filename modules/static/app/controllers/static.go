@@ -30,5 +30,8 @@ func (c Static) ServeDir(prefix, filepath string) revel.Result {
 }
 
 func (c Static) ServeFile(filepath string) revel.Result {
-	return c.ServeDir("", filepath)
+	if !fpath.IsAbs(filepath) {
+		return c.ServeDir("", filepath)
+	}
+	return c.ServeDir("/", filepath)
 }
