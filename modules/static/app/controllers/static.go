@@ -4,6 +4,7 @@ import (
 	"github.com/robfig/revel"
 	"os"
 	fpath "path/filepath"
+	"strings"
 )
 
 type Static struct {
@@ -11,10 +12,27 @@ type Static struct {
 }
 
 func (c Static) ServeDir(prefix, filepath string) revel.Result {
-	var basePath string
+	var basePath, moduleName string
 
-	if !fpath.IsAbs(prefix) {
-		basePath = revel.BasePath
+	// Handle module paths
+	if i := strings.Index(prefix, "MODULE:"); i != -1 {
+		// strip the leading "MODULE:"
+		prefix = prefix[7:]
+		if i := strings.Index(prefix, ":"); i != -1 {
+			moduleName, prefix = prefix[:i], prefix[i+1:]
+		}
+
+		// Find the module path
+		for _, module := range revel.Modules {
+			if module.Name == moduleName {
+				basePath = module.Path
+				break
+			}
+		}
+	} else {
+		if !fpath.IsAbs(prefix) {
+			basePath = revel.BasePath
+		}
 	}
 
 	fname := fpath.Join(basePath, fpath.FromSlash(prefix), fpath.FromSlash(filepath))
