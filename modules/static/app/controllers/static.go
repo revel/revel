@@ -35,3 +35,16 @@ func (c Static) ServeFile(filepath string) revel.Result {
 	}
 	return c.ServeDir("/", filepath)
 }
+
+func (c Static) ServeModuleDir(moduleName, prefix, filepath string) revel.Result {
+	var basePath string
+	for _, module := range revel.Modules {
+		if module.Name == moduleName {
+			basePath = module.Path
+		}
+	}
+
+	absPath := fpath.Join(basePath, fpath.FromSlash(prefix), fpath.FromSlash(filepath))
+
+	return c.ServeDir("/", absPath)
+}
