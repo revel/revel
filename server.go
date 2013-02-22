@@ -78,8 +78,8 @@ func handleInternal(w http.ResponseWriter, r *http.Request, ws *websocket.Conn) 
 	}
 
 	// Add the fixed parameters mapped by name.
-	for key, value := range route.FixedParams {
-		arg := controller.MethodType.Args[key]
+	for i, value := range route.FixedParams {
+		arg := controller.MethodType.Args[i]
 		controller.Params.Values.Add(arg.Name, value)
 	}
 
