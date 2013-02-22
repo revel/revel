@@ -85,10 +85,8 @@ func handleInternal(w http.ResponseWriter, r *http.Request, ws *websocket.Conn) 
 
 	// Collect the values for the method's arguments.
 	var actualArgs []reflect.Value
-
 	for _, arg := range controller.MethodType.Args {
 		var boundArg reflect.Value
-
 		// If they accept a websocket connection, treat that arg specially.
 		if arg.Type == websocketType {
 			boundArg = reflect.ValueOf(ws)
