@@ -16,8 +16,8 @@ var routeTestCases = map[string]*Route{
 		Path:          "/",
 		Action:        "Application.Index",
 		pathPattern:   regexp.MustCompile("/$"),
-		staticDir:     "",
 		args:          []*arg{},
+		FixedParams:   []string{},
 		actionPattern: regexp.MustCompile("Application\\.Index"),
 	},
 
@@ -26,13 +26,13 @@ var routeTestCases = map[string]*Route{
 		Path:        "/app/{id}",
 		Action:      "Application.SaveApp",
 		pathPattern: regexp.MustCompile("/app/(?P<id>[^/]+)$"),
-		staticDir:   "",
 		args: []*arg{
 			{
 				name:       "id",
 				constraint: regexp.MustCompile("[^/]+"),
 			},
 		},
+		FixedParams:   []string{},
 		actionPattern: regexp.MustCompile("Application\\.SaveApp"),
 	},
 
@@ -41,13 +41,13 @@ var routeTestCases = map[string]*Route{
 		Path:        "/app/{<[0-9]+>id}",
 		Action:      "Application.SaveApp",
 		pathPattern: regexp.MustCompile("/app/(?P<id>[0-9]+)$"),
-		staticDir:   "",
 		args: []*arg{
 			{
 				name:       "id",
 				constraint: regexp.MustCompile("[0-9]+"),
 			},
 		},
+		FixedParams:   []string{},
 		actionPattern: regexp.MustCompile("Application\\.SaveApp"),
 	},
 
@@ -56,8 +56,8 @@ var routeTestCases = map[string]*Route{
 		Path:          "/app/?",
 		Action:        "Application.List",
 		pathPattern:   regexp.MustCompile("/app/?$"),
-		staticDir:     "",
 		args:          []*arg{},
+		FixedParams:   []string{},
 		actionPattern: regexp.MustCompile("Application\\.List"),
 	},
 
@@ -66,24 +66,48 @@ var routeTestCases = map[string]*Route{
 		Path:        `/apps/{<\d+>appId}/?`,
 		Action:      "Application.Show",
 		pathPattern: regexp.MustCompile(`/apps/(?P<appId>\d+)/?$`),
-		staticDir:   "",
 		args: []*arg{
 			{
 				name:       "appId",
 				constraint: regexp.MustCompile(`\d+`),
 			},
 		},
+		FixedParams:   []string{},
 		actionPattern: regexp.MustCompile("Application\\.Show"),
 	},
 
-	"GET /public/ staticDir:www": &Route{
-		Method:        "GET",
-		Path:          "/public/",
-		Action:        "staticDir:www",
-		pathPattern:   regexp.MustCompile("^/public/(.*)$"),
-		staticDir:     "www",
-		args:          []*arg{},
-		actionPattern: nil,
+	`GET /public/{<.+>filepath}   Static.Serve("public")`: &Route{
+		Method:      "GET",
+		Path:        "/public/{<.+>filepath}",
+		Action:      "Static.Serve",
+		pathPattern: regexp.MustCompile(`/public/(?P<filepath>.+)$`),
+		args: []*arg{
+			{
+				name:       "filepath",
+				constraint: regexp.MustCompile(`.+`),
+			},
+		},
+		FixedParams: []string{
+			"public",
+		},
+		actionPattern: regexp.MustCompile("Static\\.Serve"),
+	},
+
+	`GET /javascript/{<.+>filepath} Static.Serve("public/js")`: &Route{
+		Method:      "GET",
+		Path:        "/javascript/{<.+>filepath}",
+		Action:      "Static.Serve",
+		pathPattern: regexp.MustCompile(`/javascript/(?P<filepath>.+)$`),
+		args: []*arg{
+			{
+				name:       "filepath",
+				constraint: regexp.MustCompile(`.+`),
+			},
+		},
+		FixedParams: []string{
+			"public",
+		},
+		actionPattern: regexp.MustCompile("Static\\.Serve"),
 	},
 
 	"* /apps/{id}/{action} Application.{action}": &Route{
@@ -91,7 +115,6 @@ var routeTestCases = map[string]*Route{
 		Path:        "/apps/{id}/{action}",
 		Action:      "Application.{action}",
 		pathPattern: regexp.MustCompile("/apps/(?P<id>[^/]+)/(?P<action>[^/]+)$"),
-		staticDir:   "",
 		args: []*arg{
 			{
 				name:       "id",
@@ -102,6 +125,7 @@ var routeTestCases = map[string]*Route{
 				constraint: regexp.MustCompile("[^/]+"),
 			},
 		},
+		FixedParams:   []string{},
 		actionPattern: regexp.MustCompile("Application\\.(?P<action>[^/]+)"),
 	},
 
@@ -110,7 +134,6 @@ var routeTestCases = map[string]*Route{
 		Path:        "/{controller}/{action}",
 		Action:      "{controller}.{action}",
 		pathPattern: regexp.MustCompile("/(?P<controller>[^/]+)/(?P<action>[^/]+)$"),
-		staticDir:   "",
 		args: []*arg{
 			{
 				name:       "controller",
@@ -121,6 +144,7 @@ var routeTestCases = map[string]*Route{
 				constraint: regexp.MustCompile("[^/]+"),
 			},
 		},
+		FixedParams:   []string{},
 		actionPattern: regexp.MustCompile("(?P<controller>[^/]+)\\.(?P<action>[^/]+)"),
 	},
 }
@@ -128,17 +152,16 @@ var routeTestCases = map[string]*Route{
 // Run the test cases above.
 func TestComputeRoute(t *testing.T) {
 	for routeLine, expected := range routeTestCases {
-		method, path, action, found := parseRouteLine(routeLine)
+		method, path, action, fixedArgs, found := parseRouteLine(routeLine)
 		if !found {
 			t.Error("Failed to parse route line:", routeLine)
 			continue
 		}
-		actual := NewRoute(method, path, action)
+		actual := NewRoute(method, path, action, fixedArgs)
 		eq(t, "Method", actual.Method, expected.Method)
 		eq(t, "Path", actual.Path, expected.Path)
 		eq(t, "Action", actual.Action, expected.Action)
 		eq(t, "pathPattern", fmt.Sprint(actual.pathPattern), fmt.Sprint(expected.pathPattern))
-		eq(t, "staticDir", actual.staticDir, expected.staticDir)
 		eq(t, "len(args)", len(actual.args), len(expected.args))
 		for i, arg := range actual.args {
 			if len(expected.args) <= i {
@@ -161,9 +184,8 @@ const TEST_ROUTES = `
 GET  /                       Application.Index
 GET  /app/{id}/?             Application.Show
 POST /app/{id}               Application.Save
-
-GET	/public/	                staticDir:www
-GET	/photos/	                staticDir:/Users/robfig/Photos/
+GET /javascript/{<.+>filepath} Static.Serve("public/js")
+GET /public/{<.+>filepath}   Static.Serve("public")
 *		/{controller}/{action}		{controller}.{action}
 
 GET  /favicon.ico            404
@@ -176,8 +198,8 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 	}: &RouteMatch{
 		ControllerName: "Application",
 		MethodName:     "Index",
+		FixedParams:    []string{},
 		Params:         map[string]string{},
-		StaticFilename: "",
 	},
 
 	&http.Request{
@@ -186,8 +208,8 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 	}: &RouteMatch{
 		ControllerName: "Application",
 		MethodName:     "Show",
+		FixedParams:    []string{},
 		Params:         map[string]string{"id": "123"},
-		StaticFilename: "",
 	},
 
 	&http.Request{
@@ -196,8 +218,8 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 	}: &RouteMatch{
 		ControllerName: "Application",
 		MethodName:     "Save",
+		FixedParams:    []string{},
 		Params:         map[string]string{"id": "123"},
-		StaticFilename: "",
 	},
 
 	&http.Request{
@@ -206,28 +228,28 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 	}: &RouteMatch{
 		ControllerName: "Application",
 		MethodName:     "Show",
+		FixedParams:    []string{},
 		Params:         map[string]string{"id": "123"},
-		StaticFilename: "",
 	},
 
 	&http.Request{
 		Method: "GET",
 		URL:    &url.URL{Path: "/public/style.css"},
 	}: &RouteMatch{
-		ControllerName: "",
-		MethodName:     "",
-		Params:         map[string]string{},
-		StaticFilename: "/BasePath/www/style.css",
+		ControllerName: "Static",
+		MethodName:     "Serve",
+		FixedParams:    []string{"public"},
+		Params:         map[string]string{"filepath": "style.css"},
 	},
 
 	&http.Request{
 		Method: "GET",
-		URL:    &url.URL{Path: "/photos/Rob/profile.png"},
+		URL:    &url.URL{Path: "/javascript/sessvars.js"},
 	}: &RouteMatch{
-		ControllerName: "",
-		MethodName:     "",
-		Params:         map[string]string{},
-		StaticFilename: "/Users/robfig/Photos/Rob/profile.png",
+		ControllerName: "Static",
+		MethodName:     "Serve",
+		FixedParams:    []string{"public"},
+		Params:         map[string]string{"filepath": "sessvars.js"},
 	},
 
 	&http.Request{
@@ -236,8 +258,8 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 	}: &RouteMatch{
 		ControllerName: "Implicit",
 		MethodName:     "Route",
+		FixedParams:    []string{},
 		Params:         map[string]string{"controller": "Implicit", "action": "Route"},
-		StaticFilename: "",
 	},
 
 	&http.Request{
@@ -247,8 +269,8 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 		ControllerName: "",
 		MethodName:     "",
 		Action:         "404",
+		FixedParams:    []string{},
 		Params:         map[string]string{},
-		StaticFilename: "",
 	},
 }
 
@@ -268,7 +290,6 @@ func TestRouteMatches(t *testing.T) {
 		for key, actualValue := range actual.Params {
 			eq(t, "Params", actualValue, expected.Params[key])
 		}
-		eq(t, "StaticFilename", actual.StaticFilename, expected.StaticFilename)
 	}
 }
 

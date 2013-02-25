@@ -1,32 +1,33 @@
 package revel
 
 import (
+	"encoding/csv"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"path"
 	"regexp"
 	"strings"
 )
 
 type Route struct {
-	Method string // e.g. GET
-	Path   string // e.g. /app/{id}
-	Action string // e.g. Application.ShowApp
+	Method      string   // e.g. GET
+	Path        string   // e.g. /app/{id}
+	Action      string   // e.g. Application.ShowApp
+	FixedParams []string // e.g. "arg1","arg2","arg3" (CSV formatting)
 
 	pathPattern   *regexp.Regexp // for matching the url path
-	staticDir     string         // e.g. "public" from action "staticDir:public"
 	args          []*arg         // e.g. {id} from path /app/{id}
 	actionPattern *regexp.Regexp
 }
 
 type RouteMatch struct {
-	Action         string            // e.g. Application.ShowApp
-	ControllerName string            // e.g. Application
-	MethodName     string            // e.g. ShowApp
+	Action         string // e.g. Application.ShowApp
+	ControllerName string // e.g. Application
+	MethodName     string // e.g. ShowApp
+	FixedParams    []string
 	Params         map[string]string // e.g. {id: 123}
-	StaticFilename string
 }
 
 type arg struct {
@@ -41,29 +42,20 @@ var (
 )
 
 // Prepares the route to be used in matching.
-func NewRoute(method, path, action string) (r *Route) {
-	r = &Route{
-		Method: strings.ToUpper(method),
-		Path:   path,
-		Action: action,
+func NewRoute(method, path, action, fixedArgs string) (r *Route) {
+	// Handle fixed arguments
+	argsReader := strings.NewReader(fixedArgs)
+	csv := csv.NewReader(argsReader)
+	fargs, err := csv.Read()
+	if err != nil && err != io.EOF {
+		ERROR.Printf("Invalid fixed parameters (%v): for string '%v'", err.Error(), fixedArgs)
 	}
 
-	// Handle static routes
-	if strings.HasPrefix(r.Action, "staticDir:") {
-		if r.Method != "*" && r.Method != "GET" {
-			WARN.Print("Static route only supports GET")
-			return
-		}
-
-		if !strings.HasSuffix(r.Path, "/") {
-			WARN.Printf("The path for staticDir must end with / (%s)", r.Path)
-			r.Path = r.Path + "/"
-		}
-
-		r.pathPattern = regexp.MustCompile("^" + r.Path + "(.*)$")
-		r.staticDir = r.Action[len("staticDir:"):]
-		// TODO: staticFile:
-		return
+	r = &Route{
+		Method:      strings.ToUpper(method),
+		Path:        path,
+		Action:      action,
+		FixedParams: fargs,
 	}
 
 	// URL pattern
@@ -126,33 +118,6 @@ func (r *Route) Match(method string, reqPath string) *RouteMatch {
 		return nil
 	}
 
-	// If it's a static file request..
-	if r.staticDir != "" {
-		// Check if it is specifying a module.. if so, look there instead.
-		// This is a tenative syntax: "staticDir:moduleName:(directory)"
-		var basePath, dirName string
-		if i := strings.Index(r.staticDir, ":"); i != -1 {
-			moduleName, dirName := r.staticDir[:i], r.staticDir[i+1:]
-			for _, module := range Modules {
-				if module.Name == moduleName {
-					basePath = path.Join(module.Path, dirName)
-				}
-			}
-			if basePath == "" {
-				ERROR.Print("No such module found: ", moduleName)
-				basePath = BasePath
-			}
-		} else {
-			dirName = r.staticDir
-			if !path.IsAbs(dirName) {
-				basePath = BasePath
-			}
-		}
-		return &RouteMatch{
-			StaticFilename: path.Join(basePath, dirName, matches[1]),
-		}
-	}
-
 	// Figure out the Param names.
 	params := make(map[string]string)
 	for i, m := range matches[1:] {
@@ -186,6 +151,7 @@ func (r *Route) Match(method string, reqPath string) *RouteMatch {
 		ControllerName: actionSplit[0],
 		MethodName:     actionSplit[1],
 		Params:         params,
+		FixedParams:    r.FixedParams,
 	}
 }
 
@@ -229,12 +195,12 @@ func (router *Router) parse(content string, validate bool) *Error {
 			continue
 		}
 
-		method, path, action, found := parseRouteLine(line)
+		method, path, action, fixedArgs, found := parseRouteLine(line)
 		if !found {
 			continue
 		}
 
-		route := NewRoute(method, path, action)
+		route := NewRoute(method, path, action, fixedArgs)
 		routes = append(routes, route)
 
 		if validate {
@@ -253,11 +219,6 @@ func (router *Router) parse(content string, validate bool) *Error {
 
 // Check that every specified action exists.
 func (router *Router) validate(route *Route) *Error {
-	// Skip static routes
-	if route.staticDir != "" {
-		return nil
-	}
-
 	// Skip variable routes.
 	if strings.ContainsAny(route.Action, "{}") {
 		return nil
@@ -300,17 +261,19 @@ func (router *Router) validate(route *Route) *Error {
 // 1: method
 // 4: path
 // 5: action
+// 6: fixedargs
 var routePattern *regexp.Regexp = regexp.MustCompile(
 	"(?i)^(GET|POST|PUT|DELETE|OPTIONS|HEAD|WS|\\*)" +
 		"[(]?([^)]*)(\\))?[ \t]+" +
-		"(.*/[^ \t]*)[ \t]+([^ \t(]+)(.+)?([ \t]*)$")
+		"(.*/[^ \t]*)[ \t]+([^ \t(]+)" +
+		`\(?([^)]*)\)?[ \t]*$`)
 
-func parseRouteLine(line string) (method, path, action string, found bool) {
+func parseRouteLine(line string) (method, path, action, fixedArgs string, found bool) {
 	var matches []string = routePattern.FindStringSubmatch(line)
 	if matches == nil {
 		return
 	}
-	method, path, action = matches[1], matches[4], matches[5]
+	method, path, action, fixedArgs = matches[1], matches[4], matches[5], matches[6]
 	found = true
 	return
 }

@@ -37,7 +37,7 @@ func (p JobsPlugin) OnAppStop() {
 
 func (t JobsPlugin) OnRoutesLoaded(router *revel.Router) {
 	router.Routes = append([]*revel.Route{
-		revel.NewRoute("GET", "/@jobs", "Jobs.Status"),
+		revel.NewRoute("GET", "/@jobs", "Jobs.Status", ""),
 	}, router.Routes...)
 	fmt.Println("Go to /@jobs to see job status.")
 }
