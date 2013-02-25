@@ -10,7 +10,7 @@ type Static struct {
 	*revel.Controller
 }
 
-func (c Static) ServeDir(prefix, filepath string) revel.Result {
+func (c Static) Serve(prefix, filepath string) revel.Result {
 	var basePath string
 
 	if !fpath.IsAbs(prefix) {
@@ -43,14 +43,7 @@ func (c Static) ServeDir(prefix, filepath string) revel.Result {
 
 }
 
-func (c Static) ServeFile(filepath string) revel.Result {
-	if !fpath.IsAbs(filepath) {
-		return c.ServeDir("", filepath)
-	}
-	return c.ServeDir("/", filepath)
-}
-
-func (c Static) ServeModuleDir(moduleName, prefix, filepath string) revel.Result {
+func (c Static) ServeModule(moduleName, prefix, filepath string) revel.Result {
 	var basePath string
 	for _, module := range revel.Modules {
 		if module.Name == moduleName {
@@ -58,7 +51,7 @@ func (c Static) ServeModuleDir(moduleName, prefix, filepath string) revel.Result
 		}
 	}
 
-	absPath := fpath.Join(basePath, fpath.FromSlash(prefix), fpath.FromSlash(filepath))
+	absPath := fpath.Join(basePath, fpath.FromSlash(prefix))
 
-	return c.ServeDir("/", absPath)
+	return c.Serve(absPath, filepath)
 }

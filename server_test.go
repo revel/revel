@@ -36,7 +36,7 @@ func (c Hotels) Show(id int) Result {
 	return c.Render(title, hotel)
 }
 
-func (c Static) ServeDir(prefix, filepath string) Result {
+func (c Static) Serve(prefix, filepath string) Result {
 	var basePath, dirName string
 
 	if !path.IsAbs(dirName) {
@@ -118,7 +118,7 @@ func startFakeBookingApp(b *testing.B) {
 	RegisterController((*Static)(nil),
 		[]*MethodType{
 			&MethodType{
-				Name: "ServeDir",
+				Name: "Serve",
 				Args: []*MethodArg{
 					&MethodArg{Name: "prefix", Type: reflect.TypeOf((*string)(nil))},
 					&MethodArg{Name: "filepath", Type: reflect.TypeOf((*string)(nil))},
