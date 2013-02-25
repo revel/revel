@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"reflect"
+	"time"
 )
 
 type Result interface {
@@ -230,10 +231,11 @@ var (
 )
 
 type BinaryResult struct {
-	Reader   io.Reader
-	Name     string
-	Length   int64
-	Delivery ContentDisposition
+	ReadSeeker io.ReadSeeker
+	Name       string
+	Length     int64
+	Delivery   ContentDisposition
+	ModTime    time.Time
 }
 
 func (r *BinaryResult) Apply(req *Request, resp *Response) {
@@ -246,11 +248,11 @@ func (r *BinaryResult) Apply(req *Request, resp *Response) {
 	if r.Length != -1 {
 		resp.Out.Header().Set("Content-Length", fmt.Sprintf("%d", r.Length))
 	}
-	resp.WriteHeader(http.StatusOK, ContentTypeByFilename(r.Name))
-	io.Copy(resp.Out, r.Reader)
+
+	http.ServeContent(resp.Out, req.Request, r.Name, r.ModTime, r.ReadSeeker)
 
 	// Close the Reader if we can
-	v, ok := r.Reader.(io.Closer)
+	v, ok := r.ReadSeeker.(io.Closer)
 	if ok {
 		v.Close()
 	}
