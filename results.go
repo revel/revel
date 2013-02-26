@@ -252,7 +252,7 @@ func (r *BinaryResult) Apply(req *Request, resp *Response) {
 	http.ServeContent(resp.Out, req.Request, r.Name, r.ModTime, r.ReadSeeker)
 
 	// Close the Reader if we can
-	if v, ok := r.ReadSeeker.(io.Closer); ok
+	if v, ok := r.ReadSeeker.(io.Closer); ok {
 		v.Close()
 	}
 
