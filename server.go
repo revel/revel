@@ -57,12 +57,6 @@ func handleInternal(w http.ResponseWriter, r *http.Request, ws *websocket.Conn) 
 		return
 	}
 
-	// Dispatch the static files first.
-	if route.StaticFilename != "" {
-		http.ServeFile(w, r, route.StaticFilename)
-		return
-	}
-
 	// Construct the controller and get the method to call.
 	controller, appControllerPtr := NewAppController(req, resp, route.ControllerName, route.MethodName)
 	if controller == nil {
@@ -81,6 +75,17 @@ func handleInternal(w http.ResponseWriter, r *http.Request, ws *websocket.Conn) 
 	// Add the route Params to the Request Params.
 	for key, value := range route.Params {
 		url.Values(controller.Params.Values).Add(key, value)
+	}
+
+	// Add the fixed parameters mapped by name.
+	for i, value := range route.FixedParams {
+		if i < len(controller.MethodType.Args) {
+			arg := controller.MethodType.Args[i]
+			controller.Params.Values.Add(arg.Name, value)
+		} else {
+			WARN.Println("Too many parameters to", route.Action, "trying to add", value)
+			break
+		}
 	}
 
 	// Collect the values for the method's arguments.
