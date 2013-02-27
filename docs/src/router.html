@@ -13,44 +13,36 @@ layout: godoc
 	<pre>package revel
 
 type Route struct {
-    Method string <span class="comment">// e.g. GET</span>
-    Path   string <span class="comment">// e.g. /app/{id}</span>
-    Action string <span class="comment">// e.g. Application.ShowApp</span>
+    Method      string   <span class="comment">// e.g. GET</span>
+    Path        string   <span class="comment">// e.g. /app/{id}</span>
+    Action      string   <span class="comment">// e.g. Application.ShowApp</span>
+    FixedParams []string <span class="comment">// e.g. &#34;arg1&#34;,&#34;arg2&#34;,&#34;arg3&#34; (CSV formatting)</span>
 
 }
 
 type RouteMatch struct {
-    Action         string            <span class="comment">// e.g. Application.ShowApp</span>
-    ControllerName string            <span class="comment">// e.g. Application</span>
-    MethodName     string            <span class="comment">// e.g. ShowApp</span>
+    Action         string <span class="comment">// e.g. Application.ShowApp</span>
+    ControllerName string <span class="comment">// e.g. Application</span>
+    MethodName     string <span class="comment">// e.g. ShowApp</span>
+    FixedParams    []string
     Params         map[string]string <span class="comment">// e.g. {id: 123}</span>
-    StaticFilename string
 }
 
 <span class="comment">// Prepares the route to be used in matching.</span>
-func NewRoute(method, path, action string) (r *Route) {
-    r = &amp;Route{
-        Method: strings.ToUpper(method),
-        Path:   path,
-        Action: action,
+func NewRoute(method, path, action, fixedArgs string) (r *Route) {
+    <span class="comment">// Handle fixed arguments</span>
+    argsReader := strings.NewReader(fixedArgs)
+    csv := csv.NewReader(argsReader)
+    fargs, err := csv.Read()
+    if err != nil &amp;&amp; err != io.EOF {
+        ERROR.Printf(&#34;Invalid fixed parameters (%v): for string &#39;%v&#39;&#34;, err.Error(), fixedArgs)
     }
 
-    <span class="comment">// Handle static routes</span>
-    if strings.HasPrefix(r.Action, &#34;staticDir:&#34;) {
-        if r.Method != &#34;*&#34; &amp;&amp; r.Method != &#34;GET&#34; {
-            WARN.Print(&#34;Static route only supports GET&#34;)
-            return
-        }
-
-        if !strings.HasSuffix(r.Path, &#34;/&#34;) {
-            WARN.Printf(&#34;The path for staticDir must end with / (%s)&#34;, r.Path)
-            r.Path = r.Path + &#34;/&#34;
-        }
-
-        r.pathPattern = regexp.MustCompile(&#34;^&#34; + r.Path + &#34;(.*)$&#34;)
-        r.staticDir = r.Action[len(&#34;staticDir:&#34;):]
-        <span class="comment">// TODO: staticFile:</span>
-        return
+    r = &amp;Route{
+        Method:      strings.ToUpper(method),
+        Path:        path,
+        Action:      action,
+        FixedParams: fargs,
     }
 
     <span class="comment">// URL pattern</span>
@@ -113,33 +105,6 @@ func (r *Route) Match(method string, reqPath string) *RouteMatch {
         return nil
     }
 
-    <span class="comment">// If it&#39;s a static file request..</span>
-    if r.staticDir != &#34;&#34; {
-        <span class="comment">// Check if it is specifying a module.. if so, look there instead.</span>
-        <span class="comment">// This is a tenative syntax: &#34;staticDir:moduleName:(directory)&#34;</span>
-        var basePath, dirName string
-        if i := strings.Index(r.staticDir, &#34;:&#34;); i != -1 {
-            moduleName, dirName := r.staticDir[:i], r.staticDir[i+1:]
-            for _, module := range Modules {
-                if module.Name == moduleName {
-                    basePath = path.Join(module.Path, dirName)
-                }
-            }
-            if basePath == &#34;&#34; {
-                ERROR.Print(&#34;No such module found: &#34;, moduleName)
-                basePath = BasePath
-            }
-        } else {
-            dirName = r.staticDir
-            if !path.IsAbs(dirName) {
-                basePath = BasePath
-            }
-        }
-        return &amp;RouteMatch{
-            StaticFilename: path.Join(basePath, dirName, matches[1]),
-        }
-    }
-
     <span class="comment">// Figure out the Param names.</span>
     params := make(map[string]string)
     for i, m := range matches[1:] {
@@ -173,6 +138,7 @@ func (r *Route) Match(method string, reqPath string) *RouteMatch {
         ControllerName: actionSplit[0],
         MethodName:     actionSplit[1],
         Params:         params,
+        FixedParams:    r.FixedParams,
     }
 }
 

@@ -33,7 +33,7 @@ layout: godoc
 				<dd><a href="#Route">type Route</a></dd>
 				
 					
-					<dd>&nbsp; &nbsp; <a href="#NewRoute">func NewRoute(method, path, action string) (r *Route)</a></dd>
+					<dd>&nbsp; &nbsp; <a href="#NewRoute">func NewRoute(method, path, action, fixedArgs string) (r *Route)</a></dd>
 				
 				
 					
@@ -84,7 +84,7 @@ layout: godoc
 		
 			
 			
-			<h2 id="ActionDefinition">type <a href="../src/router.html?s=8182:8325#L314">ActionDefinition</a></h2>
+			<h2 id="ActionDefinition">type <a href="../src/router.html?s=7305:7448#L277">ActionDefinition</a></h2>
 			<pre>type ActionDefinition struct {
     Host, Method, Url, Action string
     Star                      bool
@@ -102,7 +102,7 @@ layout: godoc
 
 			
 				
-				<h3 id="ActionDefinition.String">func (*ActionDefinition) <a href="../src/router.html?s=8327:8369#L320">String</a></h3>
+				<h3 id="ActionDefinition.String">func (*ActionDefinition) <a href="../src/router.html?s=7450:7492#L283">String</a></h3>
 				<pre>func (a *ActionDefinition) String() string</pre>
 				
 				
@@ -111,11 +111,12 @@ layout: godoc
 		
 			
 			
-			<h2 id="Route">type <a href="../src/router.html?s=99:454#L3">Route</a></h2>
+			<h2 id="Route">type <a href="../src/router.html?s=113:479#L4">Route</a></h2>
 			<pre>type Route struct {
-    Method string <span class="comment">// e.g. GET</span>
-    Path   string <span class="comment">// e.g. /app/{id}</span>
-    Action string <span class="comment">// e.g. Application.ShowApp</span>
+    Method      string   <span class="comment">// e.g. GET</span>
+    Path        string   <span class="comment">// e.g. /app/{id}</span>
+    Action      string   <span class="comment">// e.g. Application.ShowApp</span>
+    FixedParams []string <span class="comment">// e.g. &#34;arg1&#34;,&#34;arg2&#34;,&#34;arg3&#34; (CSV formatting)</span>
     <span class="comment">// contains filtered or unexported fields</span>
 }</pre>
 			
@@ -128,8 +129,8 @@ layout: godoc
 
 			
 				
-				<h3 id="NewRoute">func <a href="../src/router.html?s=1029:1082#L34">NewRoute</a></h3>
-				<pre>func NewRoute(method, path, action string) (r *Route)</pre>
+				<h3 id="NewRoute">func <a href="../src/router.html?s=1023:1087#L35">NewRoute</a></h3>
+				<pre>func NewRoute(method, path, action, fixedArgs string) (r *Route)</pre>
 				<p>
 Prepares the route to be used in matching.
 </p>
@@ -139,7 +140,7 @@ Prepares the route to be used in matching.
 
 			
 				
-				<h3 id="Route.Match">func (*Route) <a href="../src/router.html?s=3253:3317#L107">Match</a></h3>
+				<h3 id="Route.Match">func (*Route) <a href="../src/router.html?s=3092:3156#L99">Match</a></h3>
 				<pre>func (r *Route) Match(method string, reqPath string) *RouteMatch</pre>
 				<p>
 Return nil if no match.
@@ -151,13 +152,13 @@ Return nil if no match.
 		
 			
 			
-			<h2 id="RouteMatch">type <a href="../src/router.html?s=456:723#L14">RouteMatch</a></h2>
+			<h2 id="RouteMatch">type <a href="../src/router.html?s=481:717#L15">RouteMatch</a></h2>
 			<pre>type RouteMatch struct {
-    Action         string            <span class="comment">// e.g. Application.ShowApp</span>
-    ControllerName string            <span class="comment">// e.g. Application</span>
-    MethodName     string            <span class="comment">// e.g. ShowApp</span>
+    Action         string <span class="comment">// e.g. Application.ShowApp</span>
+    ControllerName string <span class="comment">// e.g. Application</span>
+    MethodName     string <span class="comment">// e.g. ShowApp</span>
+    FixedParams    []string
     Params         map[string]string <span class="comment">// e.g. {id: 123}</span>
-    StaticFilename string
 }</pre>
 			
 
@@ -173,7 +174,7 @@ Return nil if no match.
 		
 			
 			
-			<h2 id="Router">type <a href="../src/router.html?s=5235:5289#L182">Router</a></h2>
+			<h2 id="Router">type <a href="../src/router.html?s=4341:4395#L148">Router</a></h2>
 			<pre>type Router struct {
     Routes []*Route
     <span class="comment">// contains filtered or unexported fields</span>
@@ -188,7 +189,7 @@ Return nil if no match.
 
 			
 				
-				<h3 id="NewRouter">func <a href="../src/router.html?s=8095:8136#L308">NewRouter</a></h3>
+				<h3 id="NewRouter">func <a href="../src/router.html?s=7218:7259#L271">NewRouter</a></h3>
 				<pre>func NewRouter(routesPath string) *Router</pre>
 				
 				
@@ -196,7 +197,7 @@ Return nil if no match.
 
 			
 				
-				<h3 id="Router.Refresh">func (*Router) <a href="../src/router.html?s=5620:5658#L198">Refresh</a></h3>
+				<h3 id="Router.Refresh">func (*Router) <a href="../src/router.html?s=4726:4764#L164">Refresh</a></h3>
 				<pre>func (router *Router) Refresh() *Error</pre>
 				<p>
 Refresh re-reads the routes file and re-calculates the routing table.
@@ -207,14 +208,14 @@ Returns an error if a specified action could not be found.
 				
 			
 				
-				<h3 id="Router.Reverse">func (*Router) <a href="../src/router.html?s=8389:8480#L324">Reverse</a></h3>
+				<h3 id="Router.Reverse">func (*Router) <a href="../src/router.html?s=7512:7603#L287">Reverse</a></h3>
 				<pre>func (router *Router) Reverse(action string, argValues map[string]string) *ActionDefinition</pre>
 				
 				
 				
 			
 				
-				<h3 id="Router.Route">func (*Router) <a href="../src/router.html?s=5291:5349#L187">Route</a></h3>
+				<h3 id="Router.Route">func (*Router) <a href="../src/router.html?s=4397:4455#L153">Route</a></h3>
 				<pre>func (router *Router) Route(req *http.Request) *RouteMatch</pre>
 				
 				

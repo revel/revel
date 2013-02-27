@@ -159,25 +159,26 @@ title: The Revel Web Framework for Go
           <div class="span6">
             <h2 id="routing">Routing</h2>
             <p>
-              Revel uses the
+              Revel uses a more powerful version of the
               <a href="http://www.playframework.org/documentation/1.2.4/routes#syntax">
                 original Play! routing syntax</a>. It collects all routes for an
-              app in a single file, with a simple syntax for matching requests
-              and extracting arguments from URIs.  Here's a commented sample...
+              app in a single file, with a simple syntax for matching requests,
+              extracting arguments from URIs, and specifying route-specific
+              arguments to the action. Here's a commented sample...
             </p>
           </div>
           <div class="span12">
             <pre>
 # conf/routes
 # This file defines all application routes (Higher priority routes first)
-GET    /login                 Application.Login      <b># A simple path</b>
-GET    /hotels/?              Hotels.Index           <b># Match /hotels and /hotels/ (optional trailing slash)</b>
-GET    /hotels/{id}           Hotels.Show            <b># Extract a URI argument (matching /[^/]+/)</b>
-POST   /hotels/{<[0-9]+>id}   Hotels.Save            <b># URI arg with custom regex</b>
-WS     /hotels/{id}/feed      Hotels.Feed            <b># WebSockets.</b>
-POST   /hotels/{id}/{action}  Hotels.{action}        <b># Automatically route some actions.</b>
-GET    /public/               staticDir:public       <b># Map /app/public resources under /public/...</b>
-*      /{controller}/{action} {controller}.{action}  <b># Catch all; Automatic URL generation</b></pre>
+GET    /login                 Application.Login       <b># A simple path</b>
+GET    /hotels/?              Hotels.Index            <b># Match /hotels and /hotels/ (optional trailing slash)</b>
+GET    /hotels/{id}           Hotels.Show             <b># Extract a URI argument (matching /[^/]+/)</b>
+POST   /hotels/{<[0-9]+>id}   Hotels.Save             <b># URI arg with custom regex</b>
+WS     /hotels/{id}/feed      Hotels.Feed             <b># WebSockets.</b>
+POST   /hotels/{id}/{action}  Hotels.{action}         <b># Automatically route some actions.</b>
+GET    /public/{<.*>filepath} Static.Serve("public")  <b># Map /app/public resources under /public/...</b>
+*      /{controller}/{action} {controller}.{action}   <b># Catch all; Automatic URL generation</b></pre>
 
           </div>
         </div>

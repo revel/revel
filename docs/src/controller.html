@@ -245,18 +245,21 @@ func (c *Controller) Forbidden(msg string, objs ...interface{}) Result {
 <span class="comment">// The name and size are taken from the file info.</span>
 func (c *Controller) RenderFile(file *os.File, delivery ContentDisposition) Result {
     var length int64 = -1
+    modtime := time.Now()
     fileInfo, err := file.Stat()
     if err != nil {
         WARN.Println(&#34;RenderFile error:&#34;, err)
     }
     if fileInfo != nil {
         length = fileInfo.Size()
+        modtime = fileInfo.ModTime()
     }
     return &amp;BinaryResult{
-        Reader:   file,
-        Name:     filepath.Base(file.Name()),
-        Length:   length,
-        Delivery: delivery,
+        ReadSeeker: file,
+        Name:       filepath.Base(file.Name()),
+        Length:     length,
+        Delivery:   delivery,
+        ModTime:    modtime,
     }
 }
 

@@ -9,7 +9,8 @@ The module should have the same layout as a Revel application. The "hosting" app
 
 1. Any templates in module/app/views will be added to the Template Loader search path
 2. Any controllers in module/app/controllers will be treated as if they were in your application
-3. The assets are made available, via a route of the form staticDir:modulename:public
+3. The assets are made available, via a route of the form
+   `Static.ServeModule("modulename", "public")`
 
 ### Enabling a module
 
@@ -19,7 +20,7 @@ In order to add a module to your app, add a line to `app.conf`:
 
 An empty import path disables the module:
 
-	module.mymodulename = 
+	module.mymodulename =
 
 For example, to enable the test runner module:
 

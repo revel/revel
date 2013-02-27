@@ -13,14 +13,14 @@ This example demonstrates all of the features:
 
 	# conf/routes
 	# This file defines all application routes (Higher priority routes first)
-	GET    /login                 Application.Login      <b># A simple path</b>
-	GET    /hotels/?              Hotels.Index           <b># Match /hotels and /hotels/ (optional trailing slash)</b>
-	GET    /hotels/{id}           Hotels.Show            <b># Extract a URI argument (matching /[^/]+/)</b>
-	POST   /hotels/{<[0-9]+>id}   Hotels.Save            <b># URI arg with custom regex</b>
-	WS     /hotels/{id}/feed      Hotels.Feed            <b># WebSockets.</b>
-	POST   /hotels/{id}/{action}  Hotels.{action}        <b># Automatically route some actions.</b>
-	GET    /public/               staticDir:public       <b># Map /app/public resources under /public/...</b>
-	*      /{controller}/{action} {controller}.{action}  <b># Catch all; Automatic URL generation</b>
+	GET    /login                 Application.Login      # A simple path
+	GET    /hotels/?              Hotels.Index           # Match /hotels and /hotels/ (optional trailing slash)
+	GET    /hotels/{id}           Hotels.Show            # Extract a URI argument (matching /[^/]+/)
+	POST   /hotels/{<[0-9]+>id}   Hotels.Save            # URI arg with custom regex
+	WS     /hotels/{id}/feed      Hotels.Feed            # WebSockets.
+	POST   /hotels/{id}/{action}  Hotels.{action}        # Automatically route some actions.
+	GET    /public/{<.*>filepath} Static.Serve("public") # Map /app/public resources under /public/...
+	*      /{controller}/{action} {controller}.{action}  # Catch all; Automatic URL generation
 
 Let's go through the lines one at a time.
 
@@ -93,14 +93,38 @@ The corresponding action would have this signature:
 
 ## Static Serving
 
-	GET    /public/               staticDir:public
+	GET    /public/{<.*>filepath}       Static.Serve("public")
+	GET    /favicon.ico                 Static.Serve("public", "img/favicon.png")
 
-For serving directories of static assets, Revel provides the **staticDir:**
-directive.  This route tells Revel to use
-[http.ServeFile](http://www.golang.org/pkg/net/http/#ServeFile) to serve
-requests with a path prefix of `/public/` the corresponding static file within
-the `public` directory.  (Refer to [organization](organization.html) for the
-directory layout)
+For serving directories of static assets, Revel provides the **static** module,
+which contains a single
+[Static](http://godoc.org/github.com/robfig/revel/modules/static/app/controllers)
+controller.  Its Serve action takes two parameters:
+
+* prefix (string) - A (relative or absolute) path to the asset root.
+* filepath (string) - A relative path that specifies the requested file.
+
+(Refer to [organization](organization.html) for the directory layout)
+
+## Fixed parameters
+
+As demonstrated in the Static Serving section, routes may specify one or more
+parameters to the action.  For example:
+
+	GET    /products/{id}    ShowList("PRODUCT")
+	GET    /menus/{id}       ShowList("MENU")
+
+The provided argument(s) are bound to a parameter name using their position.  In
+this case, the list type string would be bound to the name of the first action
+parameter.
+
+This could be helpful in situations where:
+
+* you have a couple similar actions
+* you have actions that do the same thing, but operate in different modes
+* you have actions that do the same thing, but operate on different data types
+
+
 
 ## Auto Routing
 
