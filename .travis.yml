@@ -1,1 +1,3 @@
 language: go
+services:
+  - memcache # github.com/robfig/revel/cache
