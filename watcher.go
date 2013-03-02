@@ -1,7 +1,7 @@
 package revel
 
 import (
-	"github.com/robfig/fsnotify"
+	"github.com/howeyc/fsnotify"
 	"os"
 	"path"
 	"path/filepath"
