@@ -245,10 +245,6 @@ func (r *BinaryResult) Apply(req *Request, resp *Response) {
 	}
 	resp.Out.Header().Set("Content-Disposition", disposition)
 
-	if r.Length != -1 {
-		resp.Out.Header().Set("Content-Length", fmt.Sprintf("%d", r.Length))
-	}
-
 	http.ServeContent(resp.Out, req.Request, r.Name, r.ModTime, r.ReadSeeker)
 
 	// Close the Reader if we can
