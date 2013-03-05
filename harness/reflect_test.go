@@ -149,14 +149,14 @@ func TestProcessBookingSource(t *testing.T) {
 		{"Application", CONTROLLER_PKG, "controllers", nil, nil},
 		{"Hotels", CONTROLLER_PKG, "controllers", nil, nil},
 	}
-	if len(sourceInfo.ControllerSpecs) != len(expectedControllerSpecs) {
+	if len(sourceInfo.ControllerSpecs()) != len(expectedControllerSpecs) {
 		t.Errorf("Unexpected number of controllers found.  Expected %d, Found %d",
-			len(expectedControllerSpecs), len(sourceInfo.ControllerSpecs))
+			len(expectedControllerSpecs), len(sourceInfo.ControllerSpecs()))
 	}
 
 NEXT_TEST:
 	for _, expected := range expectedControllerSpecs {
-		for _, actual := range sourceInfo.ControllerSpecs {
+		for _, actual := range sourceInfo.ControllerSpecs() {
 			if actual.StructName == expected.StructName {
 				if actual.ImportPath != expected.ImportPath {
 					t.Errorf("%s expected to have import path %s, actual %s",
@@ -170,7 +170,7 @@ NEXT_TEST:
 			}
 		}
 		t.Errorf("Expected to find controller %s, but did not.  Actuals: %s",
-			expected.StructName, sourceInfo.ControllerSpecs)
+			expected.StructName, sourceInfo.ControllerSpecs())
 	}
 }
 

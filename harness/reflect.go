@@ -19,9 +19,9 @@ import (
 // SourceInfo is the top-level struct containing all extracted information
 // about the app source code, used to generate main.go.
 type SourceInfo struct {
-	// ControllerSpecs lists type info for all structs found under
-	// app/controllers/... that embed (directly or indirectly) revel.Controller.
-	ControllerSpecs []*TypeInfo
+	// StructSpecs lists type info for all structs found under the code paths.
+	// They may be queried to determine which ones (transitively) embed certain types.
+	StructSpecs []*TypeInfo
 	// ValidationKeys provides a two-level lookup.  The keys are:
 	// 1. The fully-qualified function name,
 	//    e.g. "github.com/robfig/revel/samples/chat/app/controllers.(*Application).Action"
@@ -29,11 +29,15 @@ type SourceInfo struct {
 	//    e.g. the line returned from runtime.Caller()
 	// The result of the lookup the name of variable being validated.
 	ValidationKeys map[string]map[int]string
-	// TestSuites list the types that constitute the set of application tests.
-	TestSuites []*TypeInfo
 	// A list of import paths.
 	// Revel notices files with an init() function and imports that package.
 	InitImportPaths []string
+
+	// controllerSpecs lists type info for all structs found under
+	// app/controllers/... that embed (directly or indirectly) revel.Controller
+	controllerSpecs []*TypeInfo
+	// testSuites list the types that constitute the set of application tests.
+	testSuites []*TypeInfo
 }
 
 // TypeInfo summarizes information about a struct type in the app source code.
@@ -162,8 +166,7 @@ func appendSourceInfo(srcInfo1, srcInfo2 *SourceInfo) *SourceInfo {
 		return srcInfo2
 	}
 
-	srcInfo1.ControllerSpecs = append(srcInfo1.ControllerSpecs, srcInfo2.ControllerSpecs...)
-	srcInfo1.TestSuites = append(srcInfo1.TestSuites, srcInfo2.TestSuites...)
+	srcInfo1.StructSpecs = append(srcInfo1.StructSpecs, srcInfo2.StructSpecs...)
 	srcInfo1.InitImportPaths = append(srcInfo1.InitImportPaths, srcInfo2.InitImportPaths...)
 	for k, v := range srcInfo2.ValidationKeys {
 		if _, ok := srcInfo1.ValidationKeys[k]; ok {
@@ -223,18 +226,14 @@ func processPackage(fset *token.FileSet, pkgImportPath, pkgPath string, pkg *ast
 		}
 	}
 
-	// Filter the struct specs to just the ones that embed revel.Controller.
-	controllerSpecs := findTypesThatEmbed(revel.REVEL_IMPORT_PATH+".Controller", structSpecs)
-
-	// Add the method specs to them.
-	for _, spec := range controllerSpecs {
+	// Add the method specs to the struct specs.
+	for _, spec := range structSpecs {
 		spec.MethodSpecs = methodSpecs[spec.StructName]
 	}
 
 	return &SourceInfo{
-		ControllerSpecs: controllerSpecs,
+		StructSpecs:     structSpecs,
 		ValidationKeys:  validationKeys,
-		TestSuites:      findTypesThatEmbed(revel.REVEL_IMPORT_PATH+".TestSuite", structSpecs),
 		InitImportPaths: initImportPaths,
 	}
 }
@@ -617,14 +616,16 @@ func getStructTypeDecl(decl ast.Decl) (spec *ast.TypeSpec, found bool) {
 	return
 }
 
-// Returnall types that (directly or indirectly) embed the target type.
-func findTypesThatEmbed(targetType string, specs []*TypeInfo) (filtered []*TypeInfo) {
+// TypesThatEmbed returns all types that (directly or indirectly) embed the
+// target type, which must be a fully qualified type name,
+// e.g. "github.com/robfig/revel.Controller"
+func (s *SourceInfo) TypesThatEmbed(targetType string) (filtered []*TypeInfo) {
 	// Do a search in the "embedded type graph", starting with the target type.
 	nodeQueue := []string{targetType}
 	for len(nodeQueue) > 0 {
 		controllerSimpleName := nodeQueue[0]
 		nodeQueue = nodeQueue[1:]
-		for _, spec := range specs {
+		for _, spec := range s.StructSpecs {
 			if revel.ContainsString(nodeQueue, spec.String()) {
 				continue // Already added
 			}
@@ -643,6 +644,20 @@ func findTypesThatEmbed(targetType string, specs []*TypeInfo) (filtered []*TypeI
 		}
 	}
 	return
+}
+
+func (s *SourceInfo) ControllerSpecs() []*TypeInfo {
+	if s.controllerSpecs == nil {
+		s.controllerSpecs = s.TypesThatEmbed(revel.REVEL_IMPORT_PATH + ".Controller")
+	}
+	return s.controllerSpecs
+}
+
+func (s *SourceInfo) TestSuites() []*TypeInfo {
+	if s.testSuites == nil {
+		s.testSuites = s.TypesThatEmbed(revel.REVEL_IMPORT_PATH + ".TestSuite")
+	}
+	return s.testSuites
 }
 
 // TypeExpr provides a type name that may be rewritten to use a package name.

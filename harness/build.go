@@ -34,10 +34,10 @@ func Build() (app *App, compileError *revel.Error) {
 
 	tmpl := template.Must(template.New("").Parse(REGISTER_CONTROLLERS))
 	registerControllerSource := revel.ExecuteTemplate(tmpl, map[string]interface{}{
-		"Controllers":    sourceInfo.ControllerSpecs,
+		"Controllers":    sourceInfo.ControllerSpecs(),
 		"ValidationKeys": sourceInfo.ValidationKeys,
 		"ImportPaths":    calcImportAliases(sourceInfo),
-		"TestSuites":     sourceInfo.TestSuites,
+		"TestSuites":     sourceInfo.TestSuites(),
 	})
 
 	// Create a fresh temp dir.
@@ -129,7 +129,7 @@ func Build() (app *App, compileError *revel.Error) {
 // Additionally, assign package aliases when necessary to resolve ambiguity.
 func calcImportAliases(src *SourceInfo) map[string]string {
 	aliases := make(map[string]string)
-	typeArrays := [][]*TypeInfo{src.ControllerSpecs, src.TestSuites}
+	typeArrays := [][]*TypeInfo{src.ControllerSpecs(), src.TestSuites()}
 	for _, specs := range typeArrays {
 		for _, spec := range specs {
 			addAlias(aliases, spec.ImportPath, spec.PackageName)
