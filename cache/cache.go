@@ -11,8 +11,20 @@ const (
 	FOREVER = time.Duration(-1)
 )
 
+// Getter is an interface for getting / decoding an element from a cache.
+type Getter interface {
+	// Get the content associated with the given key. decoding it into the given
+	// pointer.
+	//
+	// Returns:
+	//   - nil if the value was successfully retrieved and ptrValue set
+	//   - ErrCacheMiss if the value was not in the cache
+	//   - an implementation specific error otherwise
+	Get(key string, ptrValue interface{}) error
+}
+
 // Cache is an interface to an expiring cache.  It behaves (and is modeled) like
-// the Memcached interface.
+// the Memcached interface.  It is keyed by strings (250 bytes at most).
 //
 // Many callers will make exclusive use of Set and Get, but more exotic
 // functions are also available.
@@ -37,22 +49,24 @@ const (
 // revel.ERROR, so that the developer does not need to check the return value to
 // discover things like deserialization or connection errors.
 type Cache interface {
-	// Set the given key/value in the cache.  overwriting any existing value
-	// associated with that key.
+	// The Cache implements a Getter.
+	Getter
+
+	// Set the given key/value in the cache, overwriting any existing value
+	// associated with that key.  Keys may be at most 250 bytes in length.
 	//
 	// Returns:
 	//   - nil on success
 	//   - an implementation specific error otherwise
 	Set(key string, value interface{}, expires time.Duration) error
 
-	// Get the content associated with the given key. decoding it into the given
-	// pointer.
+	// Get the content associated multiple keys at once.  On success, the caller
+	// may decode the values one at a time from the returned Getter.
 	//
 	// Returns:
-	//   - nil if the value was successfully retrieved and ptrValue set
-	//   - ErrCacheMiss if the value was not in the cache
+	//   - the value getter, and a nil error if the operation completed.
 	//   - an implementation specific error otherwise
-	Get(key string, ptrValue interface{}) error
+	GetMulti(keys ...string) (Getter, error)
 
 	// Delete the given key from the cache.
 	//
@@ -110,6 +124,7 @@ var (
 // The package implements the Cache interface (as sugar).
 
 func Get(key string, ptrValue interface{}) error                  { return Instance.Get(key, ptrValue) }
+func GetMulti(keys ...string) (Getter, error)                     { return Instance.GetMulti(keys...) }
 func Delete(key string) error                                     { return Instance.Delete(key) }
 func Increment(key string, n uint64) (newValue uint64, err error) { return Instance.Increment(key, n) }
 func Decrement(key string, n uint64) (newValue uint64, err error) { return Instance.Decrement(key, n) }

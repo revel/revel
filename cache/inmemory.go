@@ -33,6 +33,10 @@ func (c InMemoryCache) Get(key string, ptrValue interface{}) error {
 	return err
 }
 
+func (c InMemoryCache) GetMulti(keys ...string) (Getter, error) {
+	return c, nil
+}
+
 func (c InMemoryCache) Set(key string, value interface{}, expires time.Duration) error {
 	// NOTE: go-cache understands the values of DEFAULT and FOREVER
 	c.Cache.Set(key, value, expires)

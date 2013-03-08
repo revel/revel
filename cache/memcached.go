@@ -37,6 +37,14 @@ func (c MemcachedCache) Get(key string, ptrValue interface{}) error {
 	return Deserialize(item.Value, ptrValue)
 }
 
+func (c MemcachedCache) GetMulti(keys ...string) (Getter, error) {
+	items, err := c.Client.GetMulti(keys)
+	if err != nil {
+		return nil, convertMemcacheError(err)
+	}
+	return ItemMapGetter(items), nil
+}
+
 func (c MemcachedCache) Delete(key string) error {
 	return convertMemcacheError(c.Client.Delete(key))
 }
@@ -76,6 +84,18 @@ func (c MemcachedCache) invoke(f func(*memcache.Client, *memcache.Item) error,
 		Value:      b,
 		Expiration: int32(expires / time.Second),
 	}))
+}
+
+// Implement a Getter on top of the returned item map.
+type ItemMapGetter map[string]*memcache.Item
+
+func (g ItemMapGetter) Get(key string, ptrValue interface{}) error {
+	item, ok := g[key]
+	if !ok {
+		return ErrCacheMiss
+	}
+
+	return Deserialize(item.Value, ptrValue)
 }
 
 func convertMemcacheError(err error) error {
