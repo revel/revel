@@ -8,7 +8,7 @@ storage.  It is a good replacement for frequent database access to slowly
 changing data, and it can also be using for implementing user sessions (if the
 cookie-based sessions are insufficient).
 
-Read the [interface](http://godoc.org/github.com/robfig/revel/cache)
+Read the [interface](http://godoc.org/github.com/robfig/revel/cache#Cache)
 
 ## Expiration
 
