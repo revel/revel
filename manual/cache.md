@@ -21,6 +21,15 @@ Cache items are set with an expiration time, in one of three forms:
 **Important**: Callers can **not** rely on items being present in the cache, as
   the data is not durable, and a cache restart may clear all data.
 
+## Serialization
+
+The Cache getters and setters automatically serializate values for callers, to
+and from any type.  It uses the following mechanisms:
+
+* if the value is already of type `[]byte`, the data is not touched
+* if the value is of any integer type, it is stored as the ASCII representation
+* else, the value is encoded using [`encoding/gob`](http://golang.org/pkg/encoding/gob/)
+
 ## Implementations
 
 The Cache may be configured to be backed by one of the following implementations:
@@ -32,28 +41,15 @@ The Cache may be configured to be backed by one of the following implementations
 
 Configure the cache using these keys in `app.conf`:
 
-* `cache.expires` - a string accepted by `time.ParseDuration` to specify the
-  default expiration duration.  (default 1 hour)
+* `cache.expires` - a string accepted by
+  [`time.ParseDuration`](http://golang.org/pkg/time/#ParseDuration) to specify
+  the default expiration duration.  (default 1 hour)
 * `cache.memcached` - a boolean indicating whether or not memcached should be
   used. (default false)
 * `cache.hosts` - a comma separated list of hosts to use as backends.  this is
   only used when memcached is enabled.
 
-## Session usage
-
-The Cache has a global key space -- to use it as a session store, callers should
-take advantage of the session's UUID, as shown below:
-
-{% raw %}
-<pre class="prettyprint lang-go">
-cache.Set(c.Session.Id(), products)
-
-// and then in subsequent requests
-products, err := cache.Get(c.Session.Id())
-</pre>
-{% endraw %}
-
-## Example
+## Example usage
 
 Here's an example of the common operations.  Note that callers may invoke cache
 operations in a new goroutine if they do not require the result of the
@@ -95,5 +91,19 @@ func (c App) DeleteProduct(id string) revel.Result {
 	go cache.Delete("product_"+id)
 	return c.Redirect("/products")
 }
+</pre>
+{% endraw %}
+
+## Session usage
+
+The Cache has a global key space -- to use it as a session store, callers should
+take advantage of the session's UUID, as shown below:
+
+{% raw %}
+<pre class="prettyprint lang-go">
+cache.Set(c.Session.Id(), products)
+
+// and then in subsequent requests
+products, err := cache.Get(c.Session.Id())
 </pre>
 {% endraw %}
