@@ -86,8 +86,8 @@ func (c App) EditProduct(id, name string, price int) revel.Result {
 }
 
 func (c App) DeleteProduct(id string) revel.Result {
-	product := deleteProduct(id)
-	product.delete()
+	product := loadProduct(id)
+	product.Delete()
 	go cache.Delete("product_"+id)
 	return c.Redirect("/products")
 }
