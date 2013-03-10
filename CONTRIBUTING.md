@@ -39,7 +39,6 @@ These are outstanding feature requests, roughly ordered by priority.
 4.	GAE support (some progress made in the appengine branch, just lacking running the appengine services in development)
 3.  Form helpers in general.
 5.	A Mongo module (perhaps with a sample app)
-8.	A Cache interface (a la Play)
 9.	Easy emailer support (e.g. to email exception logs to developer, or even to email users),
 10.	Cross-compilation in the "package" command. (Generally, working on easy deployment or having a full article on deploying to Heroku)
 11.	ETags, cache controls
