@@ -4,6 +4,7 @@ import (
 	"github.com/robfig/revel"
 	"os"
 	fpath "path/filepath"
+	"strings"
 )
 
 type Static struct {
@@ -47,7 +48,12 @@ func (c Static) Serve(prefix, filepath string) revel.Result {
 		basePath = revel.BasePath
 	}
 
-	fname := fpath.Join(basePath, fpath.FromSlash(prefix), fpath.FromSlash(filepath))
+	basePathPrefix := fpath.Join(basePath, fpath.FromSlash(prefix))
+	fname := fpath.Join(basePathPrefix, fpath.FromSlash(filepath))
+	if !strings.HasPrefix(fname, basePathPrefix) {
+		revel.WARN.Printf("Attempted to read file outside of base path: %s", fname)
+		return c.NotFound("")
+	}
 
 	finfo, err := os.Stat(fname)
 
