@@ -81,7 +81,7 @@ func handleInternal(w http.ResponseWriter, r *http.Request, ws *websocket.Conn) 
 	for i, value := range route.FixedParams {
 		if i < len(controller.MethodType.Args) {
 			arg := controller.MethodType.Args[i]
-			controller.Params.Values.Add(arg.Name, value)
+			controller.Params.Values.Set(arg.Name, value)
 		} else {
 			WARN.Println("Too many parameters to", route.Action, "trying to add", value)
 			break
