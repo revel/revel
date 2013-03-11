@@ -71,7 +71,7 @@ func (c Static) Serve(prefix, filepath string) revel.Result {
 	}
 
 	file, err := os.Open(fname)
-	return c.RenderFile(file, "")
+	return c.RenderFile(file, revel.Inline)
 }
 
 // This method allows modules to serve binary files. The parameters are the same
