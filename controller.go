@@ -261,22 +261,22 @@ func (c *Controller) Forbidden(msg string, objs ...interface{}) Result {
 // Return a file, either displayed inline or downloaded as an attachment.
 // The name and size are taken from the file info.
 func (c *Controller) RenderFile(file *os.File, delivery ContentDisposition) Result {
-	var length int64 = -1
-	modtime := time.Now()
-	fileInfo, err := file.Stat()
+	var (
+		modtime       = time.Now()
+		fileInfo, err = file.Stat()
+	)
 	if err != nil {
 		WARN.Println("RenderFile error:", err)
 	}
 	if fileInfo != nil {
-		length = fileInfo.Size()
 		modtime = fileInfo.ModTime()
 	}
 	return &BinaryResult{
-		ReadSeeker: file,
-		Name:       filepath.Base(file.Name()),
-		Length:     length,
-		Delivery:   delivery,
-		ModTime:    modtime,
+		Reader:   file,
+		Name:     filepath.Base(file.Name()),
+		Delivery: delivery,
+		Length:   -1, // http.ServeContent gets the length itself
+		ModTime:  modtime,
 	}
 }
 

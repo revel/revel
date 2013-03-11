@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"reflect"
+	"strconv"
 	"time"
 )
 
@@ -231,11 +232,11 @@ var (
 )
 
 type BinaryResult struct {
-	ReadSeeker io.ReadSeeker
-	Name       string
-	Length     int64
-	Delivery   ContentDisposition
-	ModTime    time.Time
+	Reader   io.Reader
+	Name     string
+	Length   int64
+	Delivery ContentDisposition
+	ModTime  time.Time
 }
 
 func (r *BinaryResult) Apply(req *Request, resp *Response) {
@@ -245,13 +246,22 @@ func (r *BinaryResult) Apply(req *Request, resp *Response) {
 	}
 	resp.Out.Header().Set("Content-Disposition", disposition)
 
-	http.ServeContent(resp.Out, req.Request, r.Name, r.ModTime, r.ReadSeeker)
-
-	// Close the Reader if we can
-	if v, ok := r.ReadSeeker.(io.Closer); ok {
-		v.Close()
+	// If we have a ReadSeeker, delegate to http.ServeContent
+	if rs, ok := r.Reader.(io.ReadSeeker); ok {
+		http.ServeContent(resp.Out, req.Request, r.Name, r.ModTime, rs)
+	} else {
+		// Else, do a simple io.Copy.
+		if r.Length != -1 {
+			resp.Out.Header().Set("Content-Length", strconv.FormatInt(r.Length, 10))
+		}
+		resp.WriteHeader(http.StatusOK, ContentTypeByFilename(r.Name))
+		io.Copy(resp.Out, r.Reader)
 	}
 
+	// Close the Reader if we can
+	if v, ok := r.Reader.(io.Closer); ok {
+		v.Close()
+	}
 }
 
 type RedirectToUrlResult struct {
