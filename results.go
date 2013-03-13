@@ -74,6 +74,9 @@ func (r ErrorResult) Apply(req *Request, resp *Response) {
 		panic("no error provided")
 	}
 
+	if r.RenderArgs == nil {
+		r.RenderArgs = make(map[string]interface{})
+	}
 	r.RenderArgs["RunMode"] = RunMode
 	r.RenderArgs["Error"] = revelError
 	r.RenderArgs["Router"] = MainRouter
