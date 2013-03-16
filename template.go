@@ -40,7 +40,54 @@ var (
 	// The functions available for use in the templates.
 	TemplateFuncs = map[string]interface{}{
 		"url": ReverseUrl,
-		"eq":  func(a, b interface{}) bool { return a == b },
+		"eq": func(a, b interface{}) bool {
+			// both types are same don't cast anything
+			if reflect.TypeOf(a) == reflect.TypeOf(b) {
+				return a == b
+			}
+			// switch first parameter for int, uint, float and string types
+			// and look for equivalent types in other parameter
+			// if not equivalent no need to compare - return false
+			switch a.(type) {
+			case int, int8, int16, int32, int64:
+				switch b.(type) {
+				case int, int8, int16, int32, int64:
+					return reflect.ValueOf(a).Int() == reflect.ValueOf(b).Int()
+				default:
+					return false
+				}
+			case uint, uint8, uint16, uint32, uint64:
+				switch b.(type) {
+				case uint, uint8, uint16, uint32, uint64:
+					return reflect.ValueOf(a).Uint() == reflect.ValueOf(b).Uint()
+				default:
+					return false
+				}
+			case float32, float64:
+				switch b.(type) {
+				case float32, float64:
+					return reflect.ValueOf(a).Float() == reflect.ValueOf(b).Float()
+				default:
+					return false
+				}
+			case string:
+				switch b.(type) {
+				case []byte:
+					return reflect.ValueOf(a).String() == string(reflect.ValueOf(b).Bytes())
+				default:
+					return false
+				}
+			case []byte:
+				switch b.(type) {
+				case string:
+					return reflect.ValueOf(b).String() == string(reflect.ValueOf(a).Bytes())
+				default:
+					return false
+				}
+			}
+			// a and b are not of equivalent types
+			return false
+		},
 		"set": func(renderArgs map[string]interface{}, key string, value interface{}) template.HTML {
 			renderArgs[key] = value
 			return template.HTML("")
