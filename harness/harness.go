@@ -83,6 +83,11 @@ func NewHarness() *Harness {
 	addr := revel.HttpAddr
 	port := revel.Config.IntDefault("harness.port", 0)
 
+	// If the server is running on the wildcard address, use "localhost"
+	if addr == "" {
+		addr = "localhost"
+	}
+
 	if port == 0 {
 		port = getFreePort()
 	}
