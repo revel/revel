@@ -1,6 +1,7 @@
 package revel
 
 import (
+	"bytes"
 	"fmt"
 	"html"
 	"html/template"
@@ -42,7 +43,12 @@ var (
 		"url": ReverseUrl,
 		"eq": func(a, b interface{}) bool {
 			// both types are same don't cast anything
-			if reflect.TypeOf(a) == reflect.TypeOf(b) {
+			at, bt := reflect.TypeOf(a), reflect.TypeOf(b)
+			if at == bt {
+				// special case comparing two []bytes containing strings
+				if at.Kind() == reflect.Slice && bt.Kind() == reflect.Slice {
+					return bytes.Compare(a.([]byte), b.([]byte)) == 0
+				}
 				return a == b
 			}
 			// switch first parameter for int, uint, float and string types
@@ -60,29 +66,21 @@ var (
 				switch b.(type) {
 				case uint, uint8, uint16, uint32, uint64:
 					return reflect.ValueOf(a).Uint() == reflect.ValueOf(b).Uint()
-				default:
-					return false
 				}
 			case float32, float64:
 				switch b.(type) {
 				case float32, float64:
 					return reflect.ValueOf(a).Float() == reflect.ValueOf(b).Float()
-				default:
-					return false
 				}
 			case string:
 				switch b.(type) {
 				case []byte:
-					return reflect.ValueOf(a).String() == string(reflect.ValueOf(b).Bytes())
-				default:
-					return false
+					return a.(string) == string(b.([]byte))
 				}
 			case []byte:
 				switch b.(type) {
 				case string:
-					return reflect.ValueOf(b).String() == string(reflect.ValueOf(a).Bytes())
-				default:
-					return false
+					return b.(string) == string(a.([]byte))
 				}
 			}
 			// a and b are not of equivalent types
