@@ -1,7 +1,6 @@
 package revel
 
 import (
-	"bytes"
 	"fmt"
 	"html"
 	"html/template"
@@ -42,25 +41,43 @@ var (
 	TemplateFuncs = map[string]interface{}{
 		"url": ReverseUrl,
 		"eq": func(a, b interface{}) bool {
-			// both types are same don't cast anything
-			at, bt := reflect.TypeOf(a), reflect.TypeOf(b)
-			if at == bt {
-				// special case comparing two []bytes containing strings
-				if at.Kind() == reflect.Slice && bt.Kind() == reflect.Slice {
-					return bytes.Compare(a.([]byte), b.([]byte)) == 0
+			if reflect.TypeOf(a) == reflect.TypeOf(b) {
+				// both types are same now check if
+				// its a slice of stuff that can resemble strings or is simple types
+				switch a.(type) {
+				case []byte:
+					return string(a.([]byte)) == string(b.([]byte))
+				case []int32:
+					return string(a.([]int32)) == string(b.([]int32))
+				case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, float32, float64, string:
+					return a == b
 				}
-				return a == b
+				// if its a pointer compare if its pointing to same
+				if reflect.TypeOf(a).Kind() == reflect.Ptr {
+					return a == b
+				}
+				// otherwise it must be two uncomparable types
+				return false
 			}
 			// switch first parameter for int, uint, float and string types
 			// and look for equivalent types in other parameter
 			// if not equivalent no need to compare - return false
+			aN := "" // version of "a" normalized to string
 			switch a.(type) {
-			case int, int8, int16, int32, int64:
+			case int, int8, int16, int64:
 				switch b.(type) {
 				case int, int8, int16, int32, int64:
 					return reflect.ValueOf(a).Int() == reflect.ValueOf(b).Int()
-				default:
-					return false
+				}
+				// might be a rune
+			case int32:
+				switch b.(type) {
+				case int, int8, int16, int64:
+					return reflect.ValueOf(a).Int() == reflect.ValueOf(b).Int()
+				case []byte:
+					return string(a.(int32)) == string(b.([]byte))
+				case string:
+					return string(a.(int32)) == b.(string)
 				}
 			case uint, uint8, uint16, uint32, uint64:
 				switch b.(type) {
@@ -72,16 +89,25 @@ var (
 				case float32, float64:
 					return reflect.ValueOf(a).Float() == reflect.ValueOf(b).Float()
 				}
+				// from here normalize "a" to a string variable aN
 			case string:
-				switch b.(type) {
-				case []byte:
-					return a.(string) == string(b.([]byte))
-				}
+				aN = a.(string)
 			case []byte:
-				switch b.(type) {
-				case string:
-					return b.(string) == string(a.([]byte))
-				}
+				aN = string(a.([]byte))
+			case []int32:
+				aN = string(a.([]int32))
+			}
+
+			switch b.(type) {
+			// at this point we are just interested in string and rune types and byte arrays
+			case string:
+				return aN == b.(string)
+			case []byte:
+				return aN == string(b.([]byte))
+			case int32:
+				return aN == string(b.(int32))
+			case []int32:
+				return aN == string(b.([]int32))
 			}
 			// a and b are not of equivalent types
 			return false

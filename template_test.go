@@ -171,6 +171,37 @@ func TestEq(t *testing.T) {
 			f(t, a, b, false)
 		}
 	}
+	// runes vs strings and []bytes
+	f(t, 'a', []byte("a"), true)
+	f(t, []byte("a"), 'a', true)
+	f(t, 'a', "a", true)
+	f(t, "a", 'a', true)
+	f(t, 'a', "b", false)
+	f(t, "a", 'b', false)
+	// runearrays vs strings and []bytes
+	runes := []rune{'a', 'b', 'c'}
+	runes2 := []rune{'a', 'b', 'd'}
+	f(t, runes, "abc", true)
+	f(t, "abc", runes, true)
+	f(t, runes, []byte("abc"), true)
+	f(t, []byte("abc"), runes, true)
+	f(t, runes2, "abc", false)
+	f(t, "abc", runes2, false)
+	f(t, runes2, runes, false)
+	f(t, runes, runes, true)
+
+	//testing pointers and uncomparable types
+	type ptrTest struct {
+	}
+	ptr := new(ptrTest)
+	ptr2 := new(ptrTest)
+	m := make(map[int]int)
+	f(t, ptr, ptr2, false)
+	f(t, ptr2, ptr, false)
+	f(t, ptr2, ptr2, true)
+	f(t, ptr, ptr, true)
+	f(t, *ptr, *ptr, false) // struct vs same struct
+	f(t, m, m, false)       //map vs same map
 }
 func BenchmarkEqFunction(b *testing.B) {
 	b.StopTimer()
