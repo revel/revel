@@ -66,6 +66,7 @@ Revel uses the following properties internally:
 * watch.code - should Revel watch for changes to code and reload?  (default True)
 * cookie.prefix - how should the Revel-produced cookies be named?  (default "REVEL")
 * log.* - Logging configuration
+* session.expires - time.ParseDuration format string for when to expire the session cookie (default is browser lifetime)
 
 ### Jobs
 
