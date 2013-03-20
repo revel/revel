@@ -5,209 +5,66 @@ import (
 	"testing"
 )
 
-func TestEq(t *testing.T) {
-	f := func(t *testing.T, a, b interface{}, result bool) {
-		eq := TemplateFuncs["eq"].(func(a, b interface{}) bool)
-		ok := eq(a, b)
-		ak := reflect.TypeOf(a).Kind()
-		bk := reflect.TypeOf(b).Kind()
-		if ok != result {
-			t.Errorf("eq(%s=%v,%s=%v) want %t got %t", ak, a, bk, b, result, ok)
+func TestTplEq(t *testing.T) {
+	testRow := func(t *testing.T, row, row2 []interface{}, expected bool) {
+		for _, a := range row {
+			for _, b := range row2 {
+				ok := tplEq(a, b)
+				if ok != expected {
+					ak := reflect.TypeOf(a).Kind()
+					bk := reflect.TypeOf(b).Kind()
+					t.Errorf("eq(%s=%v,%s=%v) want %t got %t", ak, a, bk, b, expected, ok)
+				}
+			}
 		}
 	}
+	tm := make(map[string][]interface{})
+	type testStruct struct{}
+	type testStruct2 struct{}
 	i, i2 := 8, 9
 	s, s2 := "@æœ•µ\n\tüöäß", "@æœ•µ\n\tüöäss"
+	slice, slice2 := []int{1, 2, 3, 4, 5}, []int{1, 2, 3, 4, 5}
+	slice3, slice4 := []int{5, 4, 3, 2, 1}, []int{5, 4, 3, 2, 1}
 
-	ints := [...]interface{}{int8(i), int16(i), int32(i), int64(i)}
-	ints2 := [...]interface{}{int8(i2), int16(i2), int32(i2), int64(i2)}
-	uints := [...]interface{}{uint8(i), uint16(i), uint32(i), uint64(i)}
-	uints2 := [...]interface{}{uint8(i2), uint16(i2), uint32(i2), uint64(i2)}
-	floats := [...]interface{}{float32(i), float64(i)}
-	floats2 := [...]interface{}{float32(i2), float64(i2)}
-	strings := [...]interface{}{[]byte(s), s}
-	strings2 := [...]interface{}{[]byte(s2), s2}
+	tm["slices"] = []interface{}{slice, slice2}
+	tm["slices2"] = []interface{}{slice3, slice4}
+	tm["types"] = []interface{}{new(testStruct), new(testStruct)}
+	tm["types2"] = []interface{}{new(testStruct2), new(testStruct2)}
+	tm["ints"] = []interface{}{int(i), int8(i), int16(i), int32(i), int64(i)}
+	tm["ints2"] = []interface{}{int(i2), int8(i2), int16(i2), int32(i2), int64(i2)}
+	tm["uints"] = []interface{}{uint(i), uint8(i), uint16(i), uint32(i), uint64(i)}
+	tm["uints2"] = []interface{}{uint(i2), uint8(i2), uint16(i2), uint32(i2), uint64(i2)}
+	tm["floats"] = []interface{}{float32(i), float64(i)}
+	tm["floats2"] = []interface{}{float32(i2), float64(i2)}
+	tm["strings"] = []interface{}{[]byte(s), s}
+	tm["strings2"] = []interface{}{[]byte(s2), s2}
 
-	// ints against ints
-	for _, a := range ints {
-		for _, b := range ints {
-			f(t, a, b, true)
-		}
-	}
+	testRow(t, tm["slices"], tm["slices"], true)
+	testRow(t, tm["slices"], tm["slices2"], false)
+	testRow(t, tm["slices2"], tm["slices"], false)
 
-	// ints against ints of diff value and vice versa
-	for _, a := range ints {
-		for _, b := range ints2 {
-			f(t, a, b, false)
-		}
-	}
-	for _, a := range ints2 {
-		for _, b := range ints {
-			f(t, a, b, false)
-		}
-	}
+	testRow(t, tm["types"], tm["types"], true)
+	testRow(t, tm["types2"], tm["types"], false)
+	testRow(t, tm["types"], tm["types2"], false)
 
-	// ints against uints and vice versa
-	for _, a := range ints {
-		for _, b := range uints {
-			f(t, a, b, false)
-		}
-	}
-	for _, a := range uints {
-		for _, b := range ints {
-			f(t, a, b, false)
-		}
-	}
-	// ints against floats and vice versa
-	for _, a := range ints {
-		for _, b := range floats {
-			f(t, a, b, false)
-		}
-	}
-	for _, a := range floats {
-		for _, b := range ints {
-			f(t, a, b, false)
-		}
-	}
-	// ints against strings and vice versa
-	for _, a := range ints {
-		for _, b := range strings {
-			f(t, a, b, false)
-		}
-	}
-	for _, a := range strings {
-		for _, b := range ints {
-			f(t, a, b, false)
-		}
-	}
+	testRow(t, tm["ints"], tm["ints"], true)
+	testRow(t, tm["ints"], tm["ints2"], false)
+	testRow(t, tm["ints2"], tm["ints"], false)
 
-	// uints vs uints
-	for _, a := range uints {
-		for _, b := range uints {
-			f(t, a, b, true)
-		}
-	}
+	testRow(t, tm["uints"], tm["uints"], true)
+	testRow(t, tm["uints2"], tm["uints"], false)
+	testRow(t, tm["uints"], tm["uints2"], false)
 
-	// uints vs uints of other value and vice versa
-	for _, a := range uints {
-		for _, b := range uints2 {
-			f(t, a, b, false)
-		}
-	}
-	for _, a := range uints2 {
-		for _, b := range uints {
-			f(t, a, b, false)
-		}
-	}
+	testRow(t, tm["floats"], tm["floats"], true)
+	testRow(t, tm["floats2"], tm["floats"], false)
+	testRow(t, tm["floats"], tm["floats2"], false)
 
-	// uints vs floats and vice versa
-	for _, a := range uints {
-		for _, b := range floats {
-			f(t, a, b, false)
-		}
-	}
-	for _, a := range floats {
-		for _, b := range uints {
-			f(t, a, b, false)
-		}
-	}
-
-	// uints vs strings and vice versa
-	for _, a := range uints {
-		for _, b := range strings {
-			f(t, a, b, false)
-		}
-	}
-	for _, a := range strings {
-		for _, b := range uints {
-			f(t, a, b, false)
-		}
-	}
-
-	// floats vs floats
-	for _, a := range floats {
-		for _, b := range floats {
-			f(t, a, b, true)
-		}
-	}
-
-	// floats vs floats of other value and vice versa
-	for _, a := range floats {
-		for _, b := range floats2 {
-			f(t, a, b, false)
-		}
-	}
-	for _, a := range floats2 {
-		for _, b := range floats {
-			f(t, a, b, false)
-		}
-	}
-
-	// floats vs strings and vice versa
-	for _, a := range floats {
-		for _, b := range strings {
-			f(t, a, b, false)
-		}
-	}
-	for _, a := range strings {
-		for _, b := range floats {
-			f(t, a, b, false)
-		}
-	}
-
-	// strings vs strings
-	for _, a := range strings {
-		for _, b := range strings {
-			f(t, a, b, true)
-		}
-	}
-	// strings vs different strings
-	for _, a := range strings {
-		for _, b := range strings2 {
-			f(t, a, b, false)
-		}
-	}
-	for _, a := range strings2 {
-		for _, b := range strings {
-			f(t, a, b, false)
-		}
-	}
-	// runes vs strings and []bytes
-	f(t, 'a', []byte("a"), true)
-	f(t, []byte("a"), 'a', true)
-	f(t, 'a', "a", true)
-	f(t, "a", 'a', true)
-	f(t, 'a', "b", false)
-	f(t, "a", 'b', false)
-	// runearrays vs strings and []bytes
-	runes := []rune{'a', 'b', 'c'}
-	runes2 := []rune{'a', 'b', 'd'}
-	f(t, runes, "abc", true)
-	f(t, "abc", runes, true)
-	f(t, runes, []byte("abc"), true)
-	f(t, []byte("abc"), runes, true)
-	f(t, runes2, "abc", false)
-	f(t, "abc", runes2, false)
-	f(t, runes2, runes, false)
-	f(t, runes, runes, true)
-
-	//testing pointers and uncomparable types
-	type ptrTest struct {
-	}
-	ptr := new(ptrTest)
-	ptr2 := new(ptrTest)
-	m := make(map[int]int)
-	f(t, ptr, ptr2, false)
-	f(t, ptr2, ptr, false)
-	f(t, ptr2, ptr2, true)
-	f(t, ptr, ptr, true)
-	f(t, *ptr, *ptr, false) // struct vs same struct
-	f(t, m, m, false)       //map vs same map
+	testRow(t, tm["strings"], tm["strings"], true)
+	testRow(t, tm["strings2"], tm["strings"], false)
+	testRow(t, tm["strings"], tm["strings2"], false)
 }
 func BenchmarkEqFunction(b *testing.B) {
-	b.StopTimer()
-	eq := TemplateFuncs["eq"].(func(a, b interface{}) bool)
-	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		eq([]byte("Hello You"), "Hello You")
+		tplEq([]byte("Hello You"), "Hello You")
 	}
 }

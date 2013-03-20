@@ -36,82 +36,54 @@ type Template interface {
 	Render(wr io.Writer, arg interface{}) error
 }
 
+// eq, a helper for comparing values of equivalent data types
+// it treats all int types as int64 all float types as float64 all uint types as uint64
+// also strings and byte slices are treated as equivalent types
+// conceptually similar values like 'a' vs "a" and 52 vs "52" are not treated as equivalent
+// it can also handle arrays, slices, maps, and fields of structs even recursive types
+// functions are reported equal if both are nil
+// don't use it to compare pointer types, it will compare the underlying types - not the memory address
+// if you wish to compare two instances of the same type compare fields under given type holding a unique value
+func tplEq(a, b interface{}) bool {
+	if reflect.TypeOf(a) == reflect.TypeOf(b) {
+		return reflect.DeepEqual(a, b)
+	}
+	switch a.(type) {
+	case int, int8, int16, int32, int64:
+		switch b.(type) {
+		case int, int8, int16, int32, int64:
+			return reflect.ValueOf(a).Int() == reflect.ValueOf(b).Int()
+		}
+	case uint, uint8, uint16, uint32, uint64:
+		switch b.(type) {
+		case uint, uint8, uint16, uint32, uint64:
+			return reflect.ValueOf(a).Uint() == reflect.ValueOf(b).Uint()
+		}
+	case float32, float64:
+		switch b.(type) {
+		case float32, float64:
+			return reflect.ValueOf(a).Float() == reflect.ValueOf(b).Float()
+		}
+	case string:
+		switch b.(type) {
+		case []byte:
+			return a.(string) == string(b.([]byte))
+		}
+
+	case []byte:
+		switch b.(type) {
+		case string:
+			return b.(string) == string(a.([]byte))
+		}
+	}
+	return false
+}
+
 var (
 	// The functions available for use in the templates.
 	TemplateFuncs = map[string]interface{}{
 		"url": ReverseUrl,
-		"eq": func(a, b interface{}) bool {
-			if reflect.TypeOf(a) == reflect.TypeOf(b) {
-				// both types are same now check if
-				// its a slice of stuff that can resemble strings or is simple types
-				switch a.(type) {
-				case []byte:
-					return string(a.([]byte)) == string(b.([]byte))
-				case []int32:
-					return string(a.([]int32)) == string(b.([]int32))
-				case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, float32, float64, string:
-					return a == b
-				}
-				// if its a pointer compare if its pointing to same
-				if reflect.TypeOf(a).Kind() == reflect.Ptr {
-					return a == b
-				}
-				// otherwise it must be two uncomparable types
-				return false
-			}
-			// switch first parameter for int, uint, float and string types
-			// and look for equivalent types in other parameter
-			// if not equivalent no need to compare - return false
-			aN := "" // version of "a" normalized to string
-			switch a.(type) {
-			case int, int8, int16, int64:
-				switch b.(type) {
-				case int, int8, int16, int32, int64:
-					return reflect.ValueOf(a).Int() == reflect.ValueOf(b).Int()
-				}
-				// might be a rune
-			case int32:
-				switch b.(type) {
-				case int, int8, int16, int64:
-					return reflect.ValueOf(a).Int() == reflect.ValueOf(b).Int()
-				case []byte:
-					return string(a.(int32)) == string(b.([]byte))
-				case string:
-					return string(a.(int32)) == b.(string)
-				}
-			case uint, uint8, uint16, uint32, uint64:
-				switch b.(type) {
-				case uint, uint8, uint16, uint32, uint64:
-					return reflect.ValueOf(a).Uint() == reflect.ValueOf(b).Uint()
-				}
-			case float32, float64:
-				switch b.(type) {
-				case float32, float64:
-					return reflect.ValueOf(a).Float() == reflect.ValueOf(b).Float()
-				}
-				// from here normalize "a" to a string variable aN
-			case string:
-				aN = a.(string)
-			case []byte:
-				aN = string(a.([]byte))
-			case []int32:
-				aN = string(a.([]int32))
-			}
-
-			switch b.(type) {
-			// at this point we are just interested in string and rune types and byte arrays
-			case string:
-				return aN == b.(string)
-			case []byte:
-				return aN == string(b.([]byte))
-			case int32:
-				return aN == string(b.(int32))
-			case []int32:
-				return aN == string(b.([]int32))
-			}
-			// a and b are not of equivalent types
-			return false
-		},
+		"eq":  tplEq,
 		"set": func(renderArgs map[string]interface{}, key string, value interface{}) template.HTML {
 			renderArgs[key] = value
 			return template.HTML("")
