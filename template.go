@@ -36,49 +36,6 @@ type Template interface {
 	Render(wr io.Writer, arg interface{}) error
 }
 
-// eq, a helper for comparing values of equivalent data types
-// it treats all int types as int64 all float types as float64 all uint types as uint64
-// also strings and byte slices are treated as equivalent types
-// conceptually similar values like 'a' vs "a" and 52 vs "52" are not treated as equivalent
-// it can also handle arrays, slices, maps, and fields of structs even recursive types
-// functions are reported equal if both are nil
-// don't use it to compare pointer types, it will compare the underlying types - not the memory address
-// if you wish to compare two instances of the same type compare fields under given type holding a unique value
-func tplEq(a, b interface{}) bool {
-	if reflect.TypeOf(a) == reflect.TypeOf(b) {
-		return reflect.DeepEqual(a, b)
-	}
-	switch a.(type) {
-	case int, int8, int16, int32, int64:
-		switch b.(type) {
-		case int, int8, int16, int32, int64:
-			return reflect.ValueOf(a).Int() == reflect.ValueOf(b).Int()
-		}
-	case uint, uint8, uint16, uint32, uint64:
-		switch b.(type) {
-		case uint, uint8, uint16, uint32, uint64:
-			return reflect.ValueOf(a).Uint() == reflect.ValueOf(b).Uint()
-		}
-	case float32, float64:
-		switch b.(type) {
-		case float32, float64:
-			return reflect.ValueOf(a).Float() == reflect.ValueOf(b).Float()
-		}
-	case string:
-		switch b.(type) {
-		case []byte:
-			return a.(string) == string(b.([]byte))
-		}
-
-	case []byte:
-		switch b.(type) {
-		case string:
-			return b.(string) == string(a.([]byte))
-		}
-	}
-	return false
-}
-
 var (
 	// The functions available for use in the templates.
 	TemplateFuncs = map[string]interface{}{
@@ -111,14 +68,6 @@ var (
 				checked = " checked"
 			}
 			return template.HTML(fmt.Sprintf(`<input type="radio" name="%s" value="%s"%s>`,
-				html.EscapeString(f.Name), html.EscapeString(val), checked))
-		},
-		"checkbox": func(f *Field, val string) template.HTML {
-			checked := ""
-			if f.Flash() == val {
-				checked = " checked"
-			}
-			return template.HTML(fmt.Sprintf(`<input type="checkbox" name="%s" value="%s"%s>`,
 				html.EscapeString(f.Name), html.EscapeString(val), checked))
 		},
 		// Pads the given string with &nbsp;'s up to the given width.
@@ -407,4 +356,47 @@ func ReverseUrl(args ...interface{}) string {
 	}
 
 	return MainRouter.Reverse(args[0].(string), argsByName).Url
+}
+
+// tplEq is a helper for comparing values of equivalent data types.
+// It treats all int types as int64 all float types as float64 and all uint types as uint64.
+// Also strings and byte slices are treated as being equivalent types.
+// Conceptually similar values like 'a' vs "a" and 52 vs "52" are not treated as equivalent types.
+// It can also handle arrays, slices, maps, and fields of structs even recursive types.
+// Functions are reported equal if both are nil.
+// Don't use it to compare pointer types, it will compare the underlying types - not the memory address.
+// If you wish to compare two instances of the same type compare fields under given type holding a unique value.
+func tplEq(a, b interface{}) bool {
+	if reflect.TypeOf(a) == reflect.TypeOf(b) {
+		return reflect.DeepEqual(a, b)
+	}
+	switch a.(type) {
+	case int, int8, int16, int32, int64:
+		switch b.(type) {
+		case int, int8, int16, int32, int64:
+			return reflect.ValueOf(a).Int() == reflect.ValueOf(b).Int()
+		}
+	case uint, uint8, uint16, uint32, uint64:
+		switch b.(type) {
+		case uint, uint8, uint16, uint32, uint64:
+			return reflect.ValueOf(a).Uint() == reflect.ValueOf(b).Uint()
+		}
+	case float32, float64:
+		switch b.(type) {
+		case float32, float64:
+			return reflect.ValueOf(a).Float() == reflect.ValueOf(b).Float()
+		}
+	case string:
+		switch b.(type) {
+		case []byte:
+			return a.(string) == string(b.([]byte))
+		}
+
+	case []byte:
+		switch b.(type) {
+		case string:
+			return b.(string) == string(a.([]byte))
+		}
+	}
+	return false
 }
