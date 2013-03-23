@@ -70,6 +70,7 @@ var (
 			return template.HTML(fmt.Sprintf(`<input type="radio" name="%s" value="%s"%s>`,
 				html.EscapeString(f.Name), html.EscapeString(val), checked))
 		},
+
 		// Pads the given string with &nbsp;'s up to the given width.
 		"pad": func(str string, width int) template.HTML {
 			if len(str) >= width {
@@ -358,14 +359,12 @@ func ReverseUrl(args ...interface{}) string {
 	return MainRouter.Reverse(args[0].(string), argsByName).Url
 }
 
-// tplEq is a helper for comparing values of equivalent data types.
-// It treats all int types as int64 all float types as float64 and all uint types as uint64.
-// Also strings and byte slices are treated as being equivalent types.
-// Conceptually similar values like 'a' vs "a" and 52 vs "52" are not treated as equivalent types.
-// It can also handle arrays, slices, maps, and fields of structs even recursive types.
-// Functions are reported equal if both are nil.
-// Don't use it to compare pointer types, it will compare the underlying types - not the memory address.
-// If you wish to compare two instances of the same type compare fields under given type holding a unique value.
+// tplEq is a helper for comparing value equality, following these rules:
+//  - Values with equivalent types are compared with reflect.DeepEqual
+//  - int, uint, and float values are compared without regard to the type width.
+//    for example, tplEq(int32(5), int64(5)) == true
+//  - strings and byte slices are converted to strings before comparison.
+//  - else, return false.
 func tplEq(a, b interface{}) bool {
 	if reflect.TypeOf(a) == reflect.TypeOf(b) {
 		return reflect.DeepEqual(a, b)
@@ -391,7 +390,6 @@ func tplEq(a, b interface{}) bool {
 		case []byte:
 			return a.(string) == string(b.([]byte))
 		}
-
 	case []byte:
 		switch b.(type) {
 		case string:

@@ -6,7 +6,6 @@ import (
 )
 
 func TestTplEq(t *testing.T) {
-	type list []interface{}
 	type testStruct struct{}
 	type testStruct2 struct{}
 	i, i2 := 8, 9
@@ -14,10 +13,10 @@ func TestTplEq(t *testing.T) {
 	slice, slice2 := []int{1, 2, 3, 4, 5}, []int{1, 2, 3, 4, 5}
 	slice3, slice4 := []int{5, 4, 3, 2, 1}, []int{5, 4, 3, 2, 1}
 
-	tm := map[string]list{
-		"slices":   list{slice, slice2},
-		"slices2":  list{slice3, slice4},
-		"types":    list{new(testStruct), new(testStruct)},
+	tm := map[string][]interface{}{
+		"slices":   {slice, slice2},
+		"slices2":  {slice3, slice4},
+		"types":    {new(testStruct), new(testStruct)},
 		"types2":   {new(testStruct2), new(testStruct2)},
 		"ints":     {int(i), int8(i), int16(i), int32(i), int64(i)},
 		"ints2":    {int(i2), int8(i2), int16(i2), int32(i2), int64(i2)},
@@ -29,9 +28,9 @@ func TestTplEq(t *testing.T) {
 		"strings2": {[]byte(s2), s2},
 	}
 
-	testRow := func(row, row2 list, expected bool) {
-		for _, a := range row {
-			for _, b := range row2 {
+	testRow := func(row, row2 string, expected bool) {
+		for _, a := range tm[row] {
+			for _, b := range tm[row2] {
 				ok := tplEq(a, b)
 				if ok != expected {
 					ak := reflect.TypeOf(a).Kind()
@@ -42,27 +41,27 @@ func TestTplEq(t *testing.T) {
 		}
 	}
 
-	testRow(tm["slices"], tm["slices"], true)
-	testRow(tm["slices"], tm["slices2"], false)
-	testRow(tm["slices2"], tm["slices"], false)
+	testRow("slices", "slices", true)
+	testRow("slices", "slices2", false)
+	testRow("slices2", "slices", false)
 
-	testRow(tm["types"], tm["types"], true)
-	testRow(tm["types2"], tm["types"], false)
-	testRow(tm["types"], tm["types2"], false)
+	testRow("types", "types", true)
+	testRow("types2", "types", false)
+	testRow("types", "types2", false)
 
-	testRow(tm["ints"], tm["ints"], true)
-	testRow(tm["ints"], tm["ints2"], false)
-	testRow(tm["ints2"], tm["ints"], false)
+	testRow("ints", "ints", true)
+	testRow("ints", "ints2", false)
+	testRow("ints2", "ints", false)
 
-	testRow(tm["uints"], tm["uints"], true)
-	testRow(tm["uints2"], tm["uints"], false)
-	testRow(tm["uints"], tm["uints2"], false)
+	testRow("uints", "uints", true)
+	testRow("uints2", "uints", false)
+	testRow("uints", "uints2", false)
 
-	testRow(tm["floats"], tm["floats"], true)
-	testRow(tm["floats2"], tm["floats"], false)
-	testRow(tm["floats"], tm["floats2"], false)
+	testRow("floats", "floats", true)
+	testRow("floats2", "floats", false)
+	testRow("floats", "floats2", false)
 
-	testRow(tm["strings"], tm["strings"], true)
-	testRow(tm["strings2"], tm["strings"], false)
-	testRow(tm["strings"], tm["strings2"], false)
+	testRow("strings", "strings", true)
+	testRow("strings2", "strings", false)
+	testRow("strings", "strings2", false)
 }
