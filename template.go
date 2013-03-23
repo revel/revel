@@ -70,7 +70,14 @@ var (
 			return template.HTML(fmt.Sprintf(`<input type="radio" name="%s" value="%s"%s>`,
 				html.EscapeString(f.Name), html.EscapeString(val), checked))
 		},
-
+		"checkbox": func(f *Field, val string) template.HTML {
+			checked := ""
+			if f.Flash() == val {
+				checked = " checked"
+			}
+			return template.HTML(fmt.Sprintf(`<input type="checkbox" name="%s" value="%s"%s>`,
+				html.EscapeString(f.Name), html.EscapeString(val), checked))
+		},
 		// Pads the given string with &nbsp;'s up to the given width.
 		"pad": func(str string, width int) template.HTML {
 			if len(str) >= width {
