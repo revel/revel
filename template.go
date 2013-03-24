@@ -149,8 +149,6 @@ var (
 			return date.Format(DateTimeFormat)
 		},
 	}
-
-	Funcs = TemplateFuncs
 )
 
 func NewTemplateLoader(paths []string) *TemplateLoader {
