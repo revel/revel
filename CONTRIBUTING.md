@@ -31,7 +31,7 @@ In other words, not much red tape.
 
 These are outstanding feature requests, roughly ordered by priority.
 Additionally, there are frequently smaller feature requests or items in the
-[issues](https://github.com/robfig/revel/issues).
+[issues](https://github.com/robfig/revel/issues?labels=contributor+ready&page=1&state=open).
 
 1.  Better ORM support.  Investigate [Hood](https://github.com/eaigner/hood), [Jet](https://github.com/eaigner/jet), or [QBS](https://github.com/coocood/qbs) as possible improvement over Gorp.  Provide more samples (or modules) and better documentation for setting up common situations like SQL database, Mongo, LevelDB, etc.
 2.	Support for other templating languages (e.g. mustache, HAML).  Make TemplateLoader pluggable.  Use Pongo instead of vanilla Go templates (and update the samples)
