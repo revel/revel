@@ -191,9 +191,20 @@ func newLogger(wr io.Writer) *log.Logger {
 // findSrcPaths uses the "go/build" package to find the source root for Revel
 // and the app.
 func findSrcPaths(importPath string) (revelSourcePath, appSourcePath string) {
-	if gopath := os.Getenv("GOPATH"); gopath == "" {
+	var (
+		gopaths = filepath.SplitList(build.Default.GOPATH)
+		goroot  = build.Default.GOROOT
+	)
+
+	if len(gopaths) == 0 {
 		ERROR.Fatalln("GOPATH environment variable is not set. ",
 			"Please refer to http://golang.org/doc/code.html to configure your Go environment.")
+	}
+
+	if ContainsString(gopaths, goroot) {
+		ERROR.Fatalf("GOPATH (%s) must not include your GOROOT (%s). "+
+			"Please refer to http://golang.org/doc/code.html to configure your Go environment.",
+			gopaths, goroot)
 	}
 
 	appPkg, err := build.Import(importPath, "", build.FindOnly)
