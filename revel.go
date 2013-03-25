@@ -26,6 +26,7 @@ var (
 
 	Config  *MergedConfig
 	RunMode string // Application-defined (by default, "dev" or "prod")
+	DevMode bool   // if true, RunMode is a development mode.
 
 	// Revel installation details
 	RevelPath string // e.g. "/Users/robfig/gocode/src/revel"
@@ -124,6 +125,7 @@ func Init(mode, importPath, srcPath string) {
 	Config.SetSection(mode)
 
 	// Configure properties from app.conf
+	DevMode = Config.BoolDefault("mode.dev", false)
 	HttpPort = Config.IntDefault("http.port", 9000)
 	HttpAddr = Config.StringDefault("http.addr", "")
 	AppName = Config.StringDefault("app.name", "(not set)")
@@ -244,10 +246,11 @@ func addModule(name, importPath, modulePath string) {
 	Modules = append(Modules, Module{Name: name, ImportPath: importPath, Path: modulePath})
 	if codePath := path.Join(modulePath, "app"); DirExists(codePath) {
 		CodePaths = append(CodePaths, codePath)
+		if viewsPath := path.Join(modulePath, "app", "views"); DirExists(viewsPath) {
+			TemplatePaths = append(TemplatePaths, viewsPath)
+		}
 	}
-	if viewsPath := path.Join(modulePath, "app", "views"); DirExists(viewsPath) {
-		TemplatePaths = append(TemplatePaths, viewsPath)
-	}
+
 	INFO.Print("Loaded module ", path.Base(modulePath))
 
 	// Hack: There is presently no way for the testrunner module to add the

@@ -12,6 +12,7 @@ i18n.default_language=en
 module.static=github.com/robfig/revel/modules/static
 
 [dev]
+mode.dev=true
 results.pretty=true
 results.staging=true
 watch=true
@@ -24,6 +25,7 @@ log.warn.output  = stderr
 log.error.output = stderr
 
 [prod]
+mode.dev=false
 results.pretty=false
 results.staging=false
 watch=false

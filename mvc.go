@@ -86,6 +86,7 @@ func stubController(req *Request, resp *Response) *Controller {
 		Response: resp,
 		RenderArgs: map[string]interface{}{
 			"RunMode": RunMode,
+			"DevMode": DevMode,
 		},
 	}
 }

@@ -43,6 +43,7 @@ func NewController(req *Request, resp *Response, ct *ControllerType) *Controller
 		Args:     map[string]interface{}{},
 		RenderArgs: map[string]interface{}{
 			"RunMode": RunMode,
+			"DevMode": DevMode,
 		},
 	}
 	c.RenderArgs["Controller"] = c
