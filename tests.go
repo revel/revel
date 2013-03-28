@@ -95,6 +95,12 @@ func (t *TestSuite) AssertHeader(name, value string) {
 	}
 }
 
+func (t *TestSuite) AssertEqual(expected interface{}, actual interface{}) {
+	if(expected != actual) {
+		panic(fmt.Errorf("(expected) %v != %v (actual)", expected, actual))
+	}
+}
+
 func (t *TestSuite) Assert(exp bool) {
 	t.Assertf(exp, "Assertion failed")
 }
