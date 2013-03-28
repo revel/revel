@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"reflect"
 )
 
 type TestSuite struct {
@@ -92,6 +93,12 @@ func (t *TestSuite) AssertHeader(name, value string) {
 	actual := t.Response.Header.Get(name)
 	if actual != value {
 		panic(fmt.Errorf("Header %s: (expected) %s != %s (actual)", name, value, actual))
+	}
+}
+
+func (t *TestSuite) AssertEqual(expected interface{}, actual interface{}) {
+	if(!reflect.DeepEqual(expected, actual)) {
+		panic(fmt.Errorf("(expected) %v != %v (actual)", expected, actual))
 	}
 }
 
