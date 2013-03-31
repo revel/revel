@@ -47,6 +47,10 @@ will watch all directories under `app/` and rebuild the app when it
 notices any changes.  Any dependencies outside of `app/` will not be watched for
 changes -- it is the developer's responsibility to recompile when necessary.
 
+Additionally, Revel will import any packages within `app/` (or imported
+[modules](modules.html)) that contain `init()` functions on startup, to ensure
+that all of the developer's code is initialized.
+
 ## The conf/ directory
 
 The `conf` directory contains the application's configuration files. There are
