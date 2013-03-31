@@ -8,23 +8,28 @@ import (
 // These tests verify that Controllers are initialized properly, given the range
 // of embedding possibilities..
 
-type N struct{ Controller }
 type P struct{ *Controller }
 
-type NN struct{ N }
-type NP struct{ *N }
 type PN struct{ P }
 type PP struct{ *P }
 
-type NNN struct{ NN }
-type NPN struct{ NP }
+type PNN struct{ PN }
+type PPN struct{ PP }
 type PNP struct{ *PN }
 type PPP struct{ *PP }
 
+// Embedded via two paths
+type P2 struct{ *Controller }
+type PP2 struct {
+	*Controller // Need to embed this explicitly to avoid duplicate selector.
+	P
+	P2
+}
+
 var GENERATIONS = [][]interface{}{
-	{N{}, P{}},
-	{NN{}, NP{}, PN{}, PP{}},
-	{NNN{}, NPN{}, PNP{}, PPP{}},
+	{P{}},
+	{PN{}, PP{}},
+	{PNN{}, PPN{}, PNP{}, PPP{}},
 }
 
 // This test constructs a bunch of hypothetical app controllers, and verifies
@@ -63,7 +68,31 @@ func TestNewAppController(t *testing.T) {
 // simple.
 func TestNewAppController2(t *testing.T) {
 	val := initNewAppController(reflect.TypeOf(PNP{}), &Controller{Name: "Test"})
-	if val.Interface().(*PNP).PN.P.Controller.Name != "Test" {
+	pnp := val.Interface().(*PNP)
+	if pnp.PN.P.Controller.Name != "Test" {
 		t.Error("PNP not initialized.")
+	}
+	if pnp.Controller.Name != "Test" {
+		t.Error("PNP promotion not working.")
+	}
+}
+
+func TestMultiEmbedding(t *testing.T) {
+	val := initNewAppController(reflect.TypeOf(PP2{}), &Controller{Name: "Test"})
+	pp2 := val.Interface().(*PP2)
+	if pp2.P.Controller.Name != "Test" {
+		t.Error("P not initialized.")
+	}
+
+	if pp2.P2.Controller.Name != "Test" {
+		t.Error("P2 not initialized.")
+	}
+
+	if pp2.Controller.Name != "Test" {
+		t.Error("PP2 promotion not working.")
+	}
+
+	if pp2.P.Controller != pp2.P2.Controller || pp2.Controller != pp2.P.Controller {
+		t.Error("Controllers not pointing to the same thing.")
 	}
 }

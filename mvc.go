@@ -40,32 +40,45 @@ func NewAppController(req *Request, resp *Response, controllerName, methodName s
 // Returns a value representing a pointer to the new app controller.
 func initNewAppController(appControllerType reflect.Type, c *Controller) reflect.Value {
 	// It might be a multi-level embedding, so we have to create new controllers
-	// at every level of the hierarchy.
-	// ASSUME: the first field in each type is the way up to revel.Controller.
+	// at every level of the hierarchy.  To find the controllers, we follow every
+	// anonymous field, using breadth-first search.
 	appControllerPtr := reflect.New(appControllerType)
-	ptr := appControllerPtr
-	for {
+	valueQueue := []reflect.Value{appControllerPtr}
+	for len(valueQueue) > 0 {
+		// Get the next value and de-reference it if necessary.
 		var (
-			embeddedField     reflect.Value = ptr.Elem().Field(0)
-			embeddedFieldType reflect.Type  = embeddedField.Type()
+			value    = valueQueue[0]
+			elem     = value
+			elemType = value.Type()
 		)
-
-		// Check if it's the controller.
-		if embeddedFieldType == controllerType {
-			embeddedField.Set(reflect.ValueOf(c).Elem())
-			break
-		} else if embeddedFieldType == controllerPtrType {
-			embeddedField.Set(reflect.ValueOf(c))
-			break
+		if elemType.Kind() == reflect.Ptr {
+			elem = value.Elem()
+			elemType = elem.Type()
 		}
+		valueQueue = valueQueue[1:]
 
-		// If the embedded field is a pointer, then instantiate an object and set it.
-		// (If it's not a pointer, then it's already initialized)
-		if embeddedFieldType.Kind() == reflect.Ptr {
-			embeddedField.Set(reflect.New(embeddedFieldType.Elem()))
-			ptr = embeddedField
-		} else {
-			ptr = embeddedField.Addr()
+		// Look at all the struct fields.
+		for i := 0; i < elem.NumField(); i++ {
+			// If this is not an anonymous field, skip it.
+			structField := elemType.Field(i)
+			if !structField.Anonymous {
+				continue
+			}
+
+			fieldValue := elem.Field(i)
+			fieldType := structField.Type
+
+			// If it's a Controller, set it to the new instance.
+			if fieldType == controllerPtrType {
+				fieldValue.Set(reflect.ValueOf(c))
+				continue
+			}
+
+			// Else, add it to the valueQueue, after instantiating (if necessary).
+			if fieldValue.Kind() == reflect.Ptr {
+				fieldValue.Set(reflect.New(fieldType.Elem()))
+			}
+			valueQueue = append(valueQueue, fieldValue)
 		}
 	}
 	return appControllerPtr
