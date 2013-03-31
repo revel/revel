@@ -18,6 +18,7 @@ typical Go installation.
 	    sample              App root
 	      app               App sources
 	        controllers     App controllers
+	          init.go       Interceptor registration
 	        models          App domain models
 	        views           Templates
 	      tests             Test suites
@@ -50,6 +51,13 @@ changes -- it is the developer's responsibility to recompile when necessary.
 Additionally, Revel will import any packages within `app/` (or imported
 [modules](modules.html)) that contain `init()` functions on startup, to ensure
 that all of the developer's code is initialized.
+
+The `controllers/init.go` file is a conventional location to register all of the
+[interceptor](interceptors.html) hooks.  The order of `init()` functions is
+undefined between source files from the same package, so collecting all of the
+interceptor definitions into the same file allows the developer to specify (and
+know) the order in which they are run.  (It could also be used for other
+order-sensitive initialization in the future.)
 
 ## The conf/ directory
 
