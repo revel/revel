@@ -30,7 +30,7 @@ var (
     <span class="comment">// The functions available for use in the templates.</span>
     TemplateFuncs = map[string]interface{}{
         &#34;url&#34;: ReverseUrl,
-        &#34;eq&#34;:  func(a, b interface{}) bool { return a == b },
+        &#34;eq&#34;:  tplEq,
         &#34;set&#34;: func(renderArgs map[string]interface{}, key string, value interface{}) template.HTML {
             renderArgs[key] = value
             return template.HTML(&#34;&#34;)
@@ -60,7 +60,14 @@ var (
             return template.HTML(fmt.Sprintf(`&lt;input type=&#34;radio&#34; name=&#34;%s&#34; value=&#34;%s&#34;%s&gt;`,
                 html.EscapeString(f.Name), html.EscapeString(val), checked))
         },
-
+        &#34;checkbox&#34;: func(f *Field, val string) template.HTML {
+            checked := &#34;&#34;
+            if f.Flash() == val {
+                checked = &#34; checked&#34;
+            }
+            return template.HTML(fmt.Sprintf(`&lt;input type=&#34;checkbox&#34; name=&#34;%s&#34; value=&#34;%s&#34;%s&gt;`,
+                html.EscapeString(f.Name), html.EscapeString(val), checked))
+        },
         <span class="comment">// Pads the given string with &amp;nbsp;&#39;s up to the given width.</span>
         &#34;pad&#34;: func(str string, width int) template.HTML {
             if len(str) &gt;= width {
@@ -132,8 +139,6 @@ var (
             return date.Format(DateTimeFormat)
         },
     }
-
-    Funcs = TemplateFuncs
 )
 
 func NewTemplateLoader(paths []string) *TemplateLoader {

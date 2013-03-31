@@ -42,6 +42,7 @@ func NewController(req *Request, resp *Response, ct *ControllerType) *Controller
         Args:     map[string]interface{}{},
         RenderArgs: map[string]interface{}{
             &#34;RunMode&#34;: RunMode,
+            &#34;DevMode&#34;: DevMode,
         },
     }
     c.RenderArgs[&#34;Controller&#34;] = c
@@ -244,22 +245,22 @@ func (c *Controller) Forbidden(msg string, objs ...interface{}) Result {
 <span class="comment">// Return a file, either displayed inline or downloaded as an attachment.</span>
 <span class="comment">// The name and size are taken from the file info.</span>
 func (c *Controller) RenderFile(file *os.File, delivery ContentDisposition) Result {
-    var length int64 = -1
-    modtime := time.Now()
-    fileInfo, err := file.Stat()
+    var (
+        modtime       = time.Now()
+        fileInfo, err = file.Stat()
+    )
     if err != nil {
         WARN.Println(&#34;RenderFile error:&#34;, err)
     }
     if fileInfo != nil {
-        length = fileInfo.Size()
         modtime = fileInfo.ModTime()
     }
     return &amp;BinaryResult{
-        ReadSeeker: file,
-        Name:       filepath.Base(file.Name()),
-        Length:     length,
-        Delivery:   delivery,
-        ModTime:    modtime,
+        Reader:   file,
+        Name:     filepath.Base(file.Name()),
+        Delivery: delivery,
+        Length:   -1, <span class="comment">// http.ServeContent gets the length itself</span>
+        ModTime:  modtime,
     }
 }
 

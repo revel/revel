@@ -35,7 +35,7 @@ layout: godoc
 				<dd><a href="#ExecuteTemplate">func ExecuteTemplate(tmpl ExecutableTemplate, data interface{}) string</a></dd>
 			
 				
-				<dd><a href="#FindMethod">func FindMethod(recvType reflect.Type, funcVal *reflect.Value) *reflect.Method</a></dd>
+				<dd><a href="#FindMethod">func FindMethod(recvType reflect.Type, funcVal reflect.Value) *reflect.Method</a></dd>
 			
 				
 				<dd><a href="#FirstNonEmpty">func FirstNonEmpty(strs ...string) string</a></dd>
@@ -92,7 +92,7 @@ layout: godoc
 		
 			
 			
-			<h2 id="ContentTypeByFilename">func <a href="../src/util.html?s=2387:2437#L90">ContentTypeByFilename</a></h2>
+			<h2 id="ContentTypeByFilename">func <a href="../src/util.html?s=2405:2455#L90">ContentTypeByFilename</a></h2>
 			<pre>func ContentTypeByFilename(filename string) string</pre>
 			<p>
 Returns a MIME content type based on the filename&#39;s extension.
@@ -104,7 +104,7 @@ Additionally, specifies the charset as UTF-8 for text/* types.
 		
 			
 			
-			<h2 id="DirExists">func <a href="../src/util.html?s=2891:2927#L110">DirExists</a></h2>
+			<h2 id="DirExists">func <a href="../src/util.html?s=2909:2945#L110">DirExists</a></h2>
 			<pre>func DirExists(filename string) bool</pre>
 			<p>
 DirExists returns true if the given path exists and is a directory.
@@ -124,8 +124,8 @@ Execute a template and returns the result as a string.
 		
 			
 			
-			<h2 id="FindMethod">func <a href="../src/util.html?s=1082:1160#L44">FindMethod</a></h2>
-			<pre>func FindMethod(recvType reflect.Type, funcVal *reflect.Value) *reflect.Method</pre>
+			<h2 id="FindMethod">func <a href="../src/util.html?s=1082:1159#L44">FindMethod</a></h2>
+			<pre>func FindMethod(recvType reflect.Type, funcVal reflect.Value) *reflect.Method</pre>
 			<p>
 Return the reflect.Method, given a Receiver type and Func value.
 </p>
@@ -134,14 +134,14 @@ Return the reflect.Method, given a Receiver type and Func value.
 		
 			
 			
-			<h2 id="FirstNonEmpty">func <a href="../src/util.html?s=3008:3049#L115">FirstNonEmpty</a></h2>
+			<h2 id="FirstNonEmpty">func <a href="../src/util.html?s=3026:3067#L115">FirstNonEmpty</a></h2>
 			<pre>func FirstNonEmpty(strs ...string) string</pre>
 			
 			
 		
 			
 			
-			<h2 id="LoadMimeConfig">func <a href="../src/util.html?s=1960:1981#L75">LoadMimeConfig</a></h2>
+			<h2 id="LoadMimeConfig">func <a href="../src/util.html?s=1978:1999#L75">LoadMimeConfig</a></h2>
 			<pre>func LoadMimeConfig()</pre>
 			<p>
 Load mime-types.conf on init.
@@ -161,7 +161,7 @@ Reads the lines of the given file.  Panics in the case of error.
 		
 			
 			
-			<h2 id="ParseKeyValueCookie">func <a href="../src/util.html?s=1585:1647#L61">ParseKeyValueCookie</a></h2>
+			<h2 id="ParseKeyValueCookie">func <a href="../src/util.html?s=1603:1665#L61">ParseKeyValueCookie</a></h2>
 			<pre>func ParseKeyValueCookie(val string, cb func(key, val string))</pre>
 			<p>
 Takes the raw (escaped) cookie value and parses out key values.

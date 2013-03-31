@@ -27,6 +27,7 @@ var (
 
     Config  *MergedConfig
     RunMode string <span class="comment">// Application-defined (by default, &#34;dev&#34; or &#34;prod&#34;)</span>
+    DevMode bool   <span class="comment">// if true, RunMode is a development mode.</span>
 
     <span class="comment">// Revel installation details</span>
     RevelPath string <span class="comment">// e.g. &#34;/Users/robfig/gocode/src/revel&#34;</span>
@@ -118,6 +119,7 @@ func Init(mode, importPath, srcPath string) {
     Config.SetSection(mode)
 
     <span class="comment">// Configure properties from app.conf</span>
+    DevMode = Config.BoolDefault(&#34;mode.dev&#34;, false)
     HttpPort = Config.IntDefault(&#34;http.port&#34;, 9000)
     HttpAddr = Config.StringDefault(&#34;http.addr&#34;, &#34;&#34;)
     AppName = Config.StringDefault(&#34;app.name&#34;, &#34;(not set)&#34;)

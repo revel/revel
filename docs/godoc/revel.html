@@ -75,6 +75,7 @@ layout: godoc
 
     Config  *MergedConfig
     RunMode string <span class="comment">// Application-defined (by default, &#34;dev&#34; or &#34;prod&#34;)</span>
+    DevMode bool   <span class="comment">// if true, RunMode is a development mode.</span>
 
     <span class="comment">// Revel installation details</span>
     RevelPath string <span class="comment">// e.g. &#34;/Users/robfig/gocode/src/revel&#34;</span>
@@ -114,14 +115,14 @@ layout: godoc
 		
 			
 			
-			<h2 id="CheckInit">func <a href="../src/revel.html?s=6949:6965#L239">CheckInit</a></h2>
+			<h2 id="CheckInit">func <a href="../src/revel.html?s=7348:7364#L253">CheckInit</a></h2>
 			<pre>func CheckInit()</pre>
 			
 			
 		
 			
 			
-			<h2 id="Init">func <a href="../src/revel.html?s=2033:2076#L67">Init</a></h2>
+			<h2 id="Init">func <a href="../src/revel.html?s=2092:2135#L68">Init</a></h2>
 			<pre>func Init(mode, importPath, srcPath string)</pre>
 			<p>
 Init initializes Revel -- it provides paths for getting around the app.
@@ -140,7 +141,7 @@ srcPath - the path to the source directory, containing Revel and the app.
 		
 			
 			
-			<h2 id="Module">type <a href="../src/revel.html?s=5761:5814#L202">Module</a></h2>
+			<h2 id="Module">type <a href="../src/revel.html?s=6156:6209#L215">Module</a></h2>
 			<pre>type Module struct {
     Name, ImportPath, Path string
 }</pre>

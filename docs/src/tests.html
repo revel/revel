@@ -98,6 +98,12 @@ func (t *TestSuite) AssertHeader(name, value string) {
     }
 }
 
+func (t *TestSuite) AssertEqual(expected interface{}, actual interface{}) {
+    if !reflect.DeepEqual(expected, actual) {
+        panic(fmt.Errorf(&#34;(expected) %v != %v (actual)&#34;, expected, actual))
+    }
+}
+
 func (t *TestSuite) Assert(exp bool) {
     t.Assertf(exp, &#34;Assertion failed&#34;)
 }

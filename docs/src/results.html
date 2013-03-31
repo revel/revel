@@ -73,6 +73,9 @@ func (r ErrorResult) Apply(req *Request, resp *Response) {
         panic(&#34;no error provided&#34;)
     }
 
+    if r.RenderArgs == nil {
+        r.RenderArgs = make(map[string]interface{})
+    }
     r.RenderArgs[&#34;RunMode&#34;] = RunMode
     r.RenderArgs[&#34;Error&#34;] = revelError
     r.RenderArgs[&#34;Router&#34;] = MainRouter
@@ -231,11 +234,11 @@ var (
 )
 
 type BinaryResult struct {
-    ReadSeeker io.ReadSeeker
-    Name       string
-    Length     int64
-    Delivery   ContentDisposition
-    ModTime    time.Time
+    Reader   io.Reader
+    Name     string
+    Length   int64
+    Delivery ContentDisposition
+    ModTime  time.Time
 }
 
 func (r *BinaryResult) Apply(req *Request, resp *Response) {
@@ -245,17 +248,22 @@ func (r *BinaryResult) Apply(req *Request, resp *Response) {
     }
     resp.Out.Header().Set(&#34;Content-Disposition&#34;, disposition)
 
-    if r.Length != -1 {
-        resp.Out.Header().Set(&#34;Content-Length&#34;, fmt.Sprintf(&#34;%d&#34;, r.Length))
+    <span class="comment">// If we have a ReadSeeker, delegate to http.ServeContent</span>
+    if rs, ok := r.Reader.(io.ReadSeeker); ok {
+        http.ServeContent(resp.Out, req.Request, r.Name, r.ModTime, rs)
+    } else {
+        <span class="comment">// Else, do a simple io.Copy.</span>
+        if r.Length != -1 {
+            resp.Out.Header().Set(&#34;Content-Length&#34;, strconv.FormatInt(r.Length, 10))
+        }
+        resp.WriteHeader(http.StatusOK, ContentTypeByFilename(r.Name))
+        io.Copy(resp.Out, r.Reader)
     }
-
-    http.ServeContent(resp.Out, req.Request, r.Name, r.ModTime, r.ReadSeeker)
 
     <span class="comment">// Close the Reader if we can</span>
-    if v, ok := r.ReadSeeker.(io.Closer); ok {
+    if v, ok := r.Reader.(io.Closer); ok {
         v.Close()
     }
-
 }
 
 type RedirectToUrlResult struct {
