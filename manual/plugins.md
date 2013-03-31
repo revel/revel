@@ -24,7 +24,9 @@ type Plugin interface {
 }
 </pre>
 
-To define a Plugin of your own, declare a type that embeds `revel.EmptyPlugin`, and override just the methods that you want.  Then register it with `revel.RegisterPlugin`.
+To define a Plugin of your own, declare a type that embeds `revel.EmptyPlugin`,
+and override just the methods that you want.  Then register it with
+`revel.RegisterPlugin`.
 
 <pre class="prettyprint lang-go">
 type DbPlugin struct {
@@ -40,9 +42,30 @@ func init() {
 }
 </pre>
 
-Revel will invoke all methods on the single instance provided to `RegisterPlugin`, so ensure that the methods are threadsafe.
+Revel will invoke all methods on the single instance provided to
+`RegisterPlugin`, so ensure that the methods are threadsafe.
+
+One limitation of Plugins is that they receive the base `*Controller` type as an
+argument, rather than the actual Controller type that was invoked.  If your
+plugin requires access to the actual Controller type that was invoked, it may
+grab it with the following trick:
+
+<pre class="prettyprint lang-go">
+func (p DbPlugin) BeforeRequest(c *revel.Controller) revel.Result {
+	ac, err := c.AppController.(*MyController)
+	if err != nil {
+		return nil  // Not the desired controller type
+	}
+
+	// Have an instance of *MyController
+}
+</pre>
+
+Note: this pattern is frequently an indicator that
+[interceptors](interceptors.html) may be a better mechanism to accomplish the
+desired functionality.
 
 ### Areas for development
 
-* Add more things that plugins can handle: the entire request, rendering a template, a "Finally" that gets invoked after a request regardless of whether there was a panic.
+* Add more things that plugins can handle: the entire request, rendering a template, etc.
 * Provide an "official" place to put calls to RegisterPlugin.
