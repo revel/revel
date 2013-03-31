@@ -34,7 +34,7 @@ An interceptor can be registered to run at four points in the request lifecycle:
 
 ## Results
 
-Interceptors typically return `nil`, in which case they the request continues to
+Interceptors typically return `nil`, in which case the request continues to
 be processed without interruption.
 
 The effect of returning a non-`nil` `revel.Result` depends on when the interceptor

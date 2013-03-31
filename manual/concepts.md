@@ -36,7 +36,7 @@ response. Related **actions** are grouped into **controllers**.
 
 ***
 
-A **Controller** is any type that embeds `revel.Controller` (directly or indirectly).
+A **Controller** is any type that embeds `*revel.Controller` as the first field.
 
 Typically:
 <pre class="prettyprint lang-go">
@@ -44,8 +44,6 @@ type AppController struct {
   *revel.Controller
 }
 </pre>
-
-(Currently `revel.Controller` must be embedded as the first type in your struct)
 
 The `revel.Controller` is the context for the request.  It contains the request
 and response data.  Please refer to [the godoc](../docs/godoc/controller.html#Controller)
@@ -108,8 +106,7 @@ type Response struct {
 
 As part of handling a HTTP request, Revel instantiates an instance of your
 Controller, and it sets all of these properties on the embedded
-`revel.Controller`.  Therefore, Revel does not share Controller instances between
-requests.
+`revel.Controller`.  Revel does not share Controller instances between requests.
 
 ***
 
@@ -126,7 +123,7 @@ func (c AppController) ShowLogin(username string) revel.Result {
 }
 </pre>
 
-The example invokes revel.Controller.Render to execute a template, passing it the
+The example invokes `revel.Controller.Render` to execute a template, passing it the
 username as a parameter.  There are many methods on **revel.Controller** that
 produce **revel.Result**, but applications are also free to create their own.
 
