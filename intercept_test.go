@@ -11,6 +11,11 @@ var funcP2 = func(c *Controller) Result { return nil }
 type InterceptController struct{ *Controller }
 type InterceptControllerN struct{ InterceptController }
 type InterceptControllerP struct{ *InterceptController }
+type InterceptControllerNP struct {
+	*Controller
+	InterceptControllerN
+	InterceptControllerP
+}
 
 func (c InterceptController) methN() Result  { return nil }
 func (c *InterceptController) methP() Result { return nil }
@@ -28,7 +33,7 @@ var METHODS_N = []interface{}{
 	(*InterceptControllerN).methNP,
 }
 
-// Methods accessible from InterceptControllerN
+// Methods accessible from InterceptControllerP
 var METHODS_P = []interface{}{
 	InterceptController.methN,
 	(*InterceptController).methP,
@@ -41,8 +46,11 @@ var METHODS_P = []interface{}{
 func TestInvokeArgType(t *testing.T) {
 	n := InterceptControllerN{InterceptController{&Controller{}}}
 	p := InterceptControllerP{&InterceptController{&Controller{}}}
+	np := InterceptControllerNP{&Controller{}, n, p}
 	testInterceptorController(t, reflect.ValueOf(&n), METHODS_N)
 	testInterceptorController(t, reflect.ValueOf(&p), METHODS_P)
+	testInterceptorController(t, reflect.ValueOf(&np), METHODS_N)
+	testInterceptorController(t, reflect.ValueOf(&np), METHODS_P)
 }
 
 func testInterceptorController(t *testing.T, appControllerPtr reflect.Value, methods []interface{}) {

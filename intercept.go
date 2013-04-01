@@ -178,7 +178,10 @@ func getInterceptors(when InterceptTime, val reflect.Value) []*Interception {
 // If the target couldn't be found, the returned Value will have IsValid() == false
 func findTarget(val reflect.Value, target reflect.Type) reflect.Value {
 	// Look through the embedded types (until we reach the *revel.Controller at the top).
-	for {
+	valueQueue := []reflect.Value{val}
+	for len(valueQueue) > 0 {
+		val, valueQueue = valueQueue[0], valueQueue[1:]
+
 		// Check if val is of a similar type to the target type.
 		if val.Type() == target {
 			return val
@@ -193,14 +196,19 @@ func findTarget(val reflect.Value, target reflect.Type) reflect.Value {
 		// If we reached the *revel.Controller and still didn't find what we were
 		// looking for, give up.
 		if val.Type() == controllerPtrType {
-			break
+			continue
 		}
 
-		// Else, drill into the first field (which had better be an embedded type).
+		// Else, add each anonymous field to the queue.
 		if val.Kind() == reflect.Ptr {
 			val = val.Elem()
 		}
-		val = val.Field(0)
+
+		for i := 0; i < val.NumField(); i++ {
+			if val.Type().Field(i).Anonymous {
+				valueQueue = append(valueQueue, val.Field(i))
+			}
+		}
 	}
 
 	return reflect.Value{}
