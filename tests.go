@@ -96,8 +96,14 @@ func (t *TestSuite) AssertHeader(name, value string) {
 	}
 }
 
-func (t *TestSuite) AssertEqual(expected interface{}, actual interface{}) {
+func (t *TestSuite) AssertDeepEqual(expected interface{}, actual interface{}) {
 	if(!reflect.DeepEqual(expected, actual)) {
+		panic(fmt.Errorf("(expected) %v != %v (actual)", expected, actual))
+	}
+}
+
+func (t *TestSuite) AssertEqual(expected interface{}, actual interface{}) {
+	if(expected != actual) {
 		panic(fmt.Errorf("(expected) %v != %v (actual)", expected, actual))
 	}
 }
