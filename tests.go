@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"reflect"
 )
 
 type TestSuite struct {
@@ -96,8 +95,8 @@ func (t *TestSuite) AssertHeader(name, value string) {
 	}
 }
 
-func (t *TestSuite) AssertEqual(expected interface{}, actual interface{}) {
-	if(!reflect.DeepEqual(expected, actual)) {
+func (t *TestSuite) AssertEqual(expected, actual interface{}) {
+	if !Equal(expected, actual) {
 		panic(fmt.Errorf("(expected) %v != %v (actual)", expected, actual))
 	}
 }
