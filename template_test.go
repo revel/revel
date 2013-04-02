@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestTplEq(t *testing.T) {
+func TestEqual(t *testing.T) {
 	type testStruct struct{}
 	type testStruct2 struct{}
 	i, i2 := 8, 9
@@ -31,7 +31,7 @@ func TestTplEq(t *testing.T) {
 	testRow := func(row, row2 string, expected bool) {
 		for _, a := range tm[row] {
 			for _, b := range tm[row2] {
-				ok := tplEq(a, b)
+				ok := Equal(a, b)
 				if ok != expected {
 					ak := reflect.TypeOf(a).Kind()
 					bk := reflect.TypeOf(b).Kind()

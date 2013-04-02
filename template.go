@@ -40,7 +40,7 @@ var (
 	// The functions available for use in the templates.
 	TemplateFuncs = map[string]interface{}{
 		"url": ReverseUrl,
-		"eq":  tplEq,
+		"eq":  Equal,
 		"set": func(renderArgs map[string]interface{}, key string, value interface{}) template.HTML {
 			renderArgs[key] = value
 			return template.HTML("")
@@ -364,13 +364,13 @@ func ReverseUrl(args ...interface{}) string {
 	return MainRouter.Reverse(args[0].(string), argsByName).Url
 }
 
-// tplEq is a helper for comparing value equality, following these rules:
+// Equal is a helper for comparing value equality, following these rules:
 //  - Values with equivalent types are compared with reflect.DeepEqual
 //  - int, uint, and float values are compared without regard to the type width.
-//    for example, tplEq(int32(5), int64(5)) == true
+//    for example, Equal(int32(5), int64(5)) == true
 //  - strings and byte slices are converted to strings before comparison.
 //  - else, return false.
-func tplEq(a, b interface{}) bool {
+func Equal(a, b interface{}) bool {
 	if reflect.TypeOf(a) == reflect.TypeOf(b) {
 		return reflect.DeepEqual(a, b)
 	}
