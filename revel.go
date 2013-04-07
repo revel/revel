@@ -61,7 +61,7 @@ var (
 	Initialized bool
 
 	// Private
-	secretKey []byte
+	secretKey []byte // Key used to sign cookies. An empty key disables signing.
 )
 
 func init() {
@@ -130,11 +130,9 @@ func Init(mode, importPath, srcPath string) {
 	HttpAddr = Config.StringDefault("http.addr", "")
 	AppName = Config.StringDefault("app.name", "(not set)")
 	CookiePrefix = Config.StringDefault("cookie.prefix", "REVEL")
-	secretStr := Config.StringDefault("app.secret", "")
-	if secretStr == "" {
-		log.Fatalln("No app.secret provided.")
+	if secretStr := Config.StringDefault("app.secret", ""); secretStr != "" {
+		secretKey = []byte(secretStr)
 	}
-	secretKey = []byte(secretStr)
 
 	// Configure logging.
 	TRACE = getLogger("trace")
