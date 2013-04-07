@@ -43,6 +43,12 @@ func (p SessionPlugin) AfterRequest(c *Controller) {
 		if strings.Contains(key, ":") {
 			panic("Session keys may not have colons")
 		}
+		if strings.Contains(key, "\x00") {
+			panic("Session keys may not have null bytes")
+		}
+		if strings.Contains(value, "\x00") {
+			panic("Session values may not have null bytes")
+		}
 		sessionValue += "\x00" + key + ":" + value + "\x00"
 	}
 	sessionData := url.QueryEscape(sessionValue)
