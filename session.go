@@ -40,8 +40,11 @@ func (p SessionPlugin) AfterRequest(c *Controller) {
 	// Store the session (and sign it).
 	var sessionValue string
 	for key, value := range c.Session {
-		if strings.Contains(key, ":") {
-			panic("Session keys may not have colons")
+		if strings.ContainsAny(key, ":\x00") {
+			panic("Session keys may not have colons or null bytes")
+		}
+		if strings.Contains(value, "\x00") {
+			panic("Session values may not have null bytes")
 		}
 		sessionValue += "\x00" + key + ":" + value + "\x00"
 	}
