@@ -166,6 +166,18 @@ previous and next run times.
 For security purposes, the status page is restricted to requests that originate
 from 127.0.0.1.
 
+## Constrained pool size
+
+It is possible to configure the job module to limit the number of jobs that are
+allowed to run at the same time.  This allows the developer to restrict the
+resources that could be potentially in use by asynchronous jobs -- typically
+interactive responsiveness if valued above asynchronous processing.  When a pool
+is full of running jobs, new jobs block to wait for running jobs to complete.
+
+Implementation note: The implementation blocks on a channel receive, which is
+implemented to be FIFO for waiting goroutines (but not specified/required to be
+so). [See here for discussion](https://groups.google.com/forum/?fromgroups=#!topic/golang-nuts/CPwv8WlqKag).
+
 ## Areas for development
 
 * Allow access to the job status page with HTTP Basic Authentication credentials
