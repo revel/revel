@@ -89,7 +89,7 @@ func parseLocale(locale string) (language, region string) {
 func loadMessages(path string) {
 	messages = make(map[string]*config.Config)
 
-	if error := filepath.Walk(path, loadMessageFile); error != nil {
+	if error := filepath.Walk(path, loadMessageFile); !os.IsNotExist(error) {
 		ERROR.Println("Error reading messages files:", error)
 	}
 }
