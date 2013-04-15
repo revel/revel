@@ -25,7 +25,7 @@ func NewTestSuite() TestSuite {
 }
 
 // Return the address and port of the server, e.g. "127.0.0.1:8557"
-func (t *TestSuite) AddrAndPort() string {
+func (t *TestSuite) Host() string {
 	if Server.Addr[0] == ':' {
 		return "127.0.0.1" + Server.Addr
 	}
@@ -34,13 +34,14 @@ func (t *TestSuite) AddrAndPort() string {
 
 // Return the base http URL of the server, e.g. "http://127.0.0.1:8557"
 func (t *TestSuite) BaseUrl() string {
-	return "http://" + t.AddrAndPort()
+	return "http://" + t.Host()
 }
 
 // Return the base websocket URL of the server, e.g. "ws://127.0.0.1:8557"
 func (t *TestSuite) WebSocketUrl() string {
-	return "ws://" + t.AddrAndPort()
+	return "ws://" + t.Host()
 }
+
 // Issue a GET request to the given path and store the result in Request and
 // RequestBody.
 func (t *TestSuite) Get(path string) {
