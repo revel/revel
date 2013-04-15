@@ -1,13 +1,13 @@
 package revel
 
 import (
+	"code.google.com/p/go.net/websocket"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
-	"code.google.com/p/go.net/websocket"
 )
 
 type TestSuite struct {
@@ -82,7 +82,7 @@ func (t *TestSuite) MakeRequest(req *http.Request) {
 }
 
 // Create a websocket connection to the given path and return the connection
-func (t *TestSuite) WebSocket(path string) *websocket.Conn{
+func (t *TestSuite) WebSocket(path string) *websocket.Conn {
 	origin := t.BaseUrl() + "/"
 	url := t.WebSocketUrl() + path
 	ws, err := websocket.Dial(url, "", origin)
