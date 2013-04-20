@@ -112,57 +112,59 @@ type RenderTemplateResult struct {
 }
 
 func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
-	// If "result staging" is on..
+	// Handle panics when rendering templates.
+	defer func() {
+		if err := recover(); err != nil {
+			ERROR.Println(err)
+			PlaintextErrorResult{fmt.Errorf("Template Execution Panic in %s:\n%s",
+				r.Template.Name(), err)}.Apply(req, resp)
+		}
+	}()
+
+	if Config.BoolDefault("results.chunked", false) {
+		// Write the status, render, and hope for the best.
+		resp.WriteHeader(http.StatusOK, "text/html")
+		r.render(req, resp, resp.Out)
+		return
+	}
+
 	// Render the template into a temporary buffer, to see if there was an error
 	// rendering the template.  If not, then copy it into the response buffer.
 	// Otherwise, template render errors may result in unpredictable HTML (and
 	// would carry a 200 status code)
-	if Config.BoolDefault("results.staging", true) {
-		// Handle panics when rendering templates.
-		defer func() {
-			if err := recover(); err != nil {
-				ERROR.Println(err)
-				PlaintextErrorResult{fmt.Errorf("Template Execution Panic in %s:\n%s",
-					r.Template.Name(), err)}.Apply(req, resp)
-			}
-		}()
+	var b bytes.Buffer
+	r.render(req, resp, &b)
+	resp.Out.Header().Set("Content-Length", strconv.Itoa(b.Len()))
+	resp.WriteHeader(http.StatusOK, "text/html")
+	b.WriteTo(resp.Out)
+}
 
-		var b bytes.Buffer
-		err := r.Template.Render(&b, r.RenderArgs)
-		if err != nil {
-			var templateContent []string
-			templateName, line, description := parseTemplateError(err)
-			if templateName == "" {
-				templateName = r.Template.Name()
-				templateContent = r.Template.Content()
-			} else {
-				if tmpl, err := MainTemplateLoader.Template(templateName); err == nil {
-					templateContent = tmpl.Content()
-				}
-			}
-			compileError := &Error{
-				Title:       "Template Execution Error",
-				Path:        templateName,
-				Description: description,
-				Line:        line,
-				SourceLines: templateContent,
-			}
-			ERROR.Printf("Template Execution Error (in %s): %s", templateName, description)
-			ErrorResult{r.RenderArgs, compileError}.Apply(req, resp)
-			return
-		}
-
-		resp.WriteHeader(http.StatusOK, "text/html")
-		b.WriteTo(resp.Out)
+func (r *RenderTemplateResult) render(req *Request, resp *Response, wr io.Writer) {
+	err := r.Template.Render(wr, r.RenderArgs)
+	if err == nil {
 		return
 	}
 
-	// Else, write the status, render, and hope for the best.
-	resp.WriteHeader(http.StatusOK, "text/html")
-	err := r.Template.Render(resp.Out, r.RenderArgs)
-	if err != nil {
-		ERROR.Println("Failed to render template", r.Template.Name(), "\n", err)
+	var templateContent []string
+	templateName, line, description := parseTemplateError(err)
+	if templateName == "" {
+		templateName = r.Template.Name()
+		templateContent = r.Template.Content()
+	} else {
+		if tmpl, err := MainTemplateLoader.Template(templateName); err == nil {
+			templateContent = tmpl.Content()
+		}
 	}
+	compileError := &Error{
+		Title:       "Template Execution Error",
+		Path:        templateName,
+		Description: description,
+		Line:        line,
+		SourceLines: templateContent,
+	}
+	resp.Status = 500
+	ERROR.Printf("Template Execution Error (in %s): %s", templateName, description)
+	ErrorResult{r.RenderArgs, compileError}.Apply(req, resp)
 }
 
 type RenderHtmlResult struct {
