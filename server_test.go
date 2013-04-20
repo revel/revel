@@ -111,7 +111,7 @@ func startFakeBookingApp(b *testing.B) {
 				Args: []*MethodArg{
 					{"id", reflect.TypeOf((*int)(nil))},
 				},
-				RenderArgNames: map[int][]string{30: []string{"title", "hotel"}},
+				RenderArgNames: map[int][]string{36: []string{"title", "hotel"}},
 			},
 		})
 
