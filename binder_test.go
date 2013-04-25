@@ -7,6 +7,7 @@ import (
 	"os"
 	"reflect"
 	"sort"
+	"strings"
 	"testing"
 	"time"
 )
@@ -34,8 +35,8 @@ var (
 		"uint16":          {"1"},
 		"uint32":          {"1"},
 		"uint64":          {"1"},
-		"float32":         {"1.0"},
-		"float64":         {"1.0"},
+		"float32":         {"1.000000"},
+		"float64":         {"1.000000"},
 		"str":             {"hello"},
 		"bool-true":       {"true"},
 		"bool-1":          {"1"},
@@ -74,6 +75,8 @@ var (
 		"invalidInt2":     {""},
 		"invalidBool":     {"xyz"},
 		"invalidArr":      {"xyz"},
+		"int8-overflow":   {"1024"},
+		"uint8-overflow":  {"1024"},
 	}
 
 	testDate     = time.Date(1982, time.July, 9, 0, 0, 0, 0, time.UTC)
@@ -126,14 +129,18 @@ var binderTestCases = map[string]interface{}{
 
 	// Invalid value tests (the result should always be the zero value for that type)
 	// The point of these is to ensure that invalid user input does not cause panics.
-	"invalidInt":  0,
-	"invalidInt2": 0,
-	"invalidBool": false,
-	"invalidArr":  []int{},
-	"priv":        A{},
+	"invalidInt":     0,
+	"invalidInt2":    0,
+	"invalidBool":    false,
+	"invalidArr":     []int{},
+	"priv":           A{},
+	"int8-overflow":  int8(0),
+	"uint8-overflow": uint8(0),
 }
 
 func init() {
+	DateFormat = DEFAULT_DATE_FORMAT
+	DateTimeFormat = DEFAULT_DATETIME_FORMAT
 	TimeFormats = append(TimeFormats, DEFAULT_DATE_FORMAT, DEFAULT_DATETIME_FORMAT, "01/02/2006")
 }
 
@@ -213,6 +220,97 @@ func TestBinder(t *testing.T) {
 	}
 }
 
+// Unbinding tests
+
+var unbinderTestCases = map[string]interface{}{
+	"int":        1,
+	"int8":       int8(1),
+	"int16":      int16(1),
+	"int32":      int32(1),
+	"int64":      int64(1),
+	"uint":       1,
+	"uint8":      uint8(1),
+	"uint16":     uint16(1),
+	"uint32":     uint32(1),
+	"uint64":     uint64(1),
+	"float32":    float32(1.0),
+	"float64":    float64(1.0),
+	"str":        "hello",
+	"bool-true":  true,
+	"bool-false": false,
+	"date":       testDate,
+	"datetime":   testDatetime,
+	"arr":        []int{1, 2, 0, 3},
+	"2darr":      [][]int{{0, 1}, {10, 11}},
+	"A":          A{Id: 123, Name: "rob"},
+	"B":          A{Id: 123, Name: "rob", B: B{Extra: "hello"}},
+	"pB":         &A{Id: 123, Name: "rob", B: B{Extra: "hello"}},
+	"arrC": []A{
+		{
+			Id:   5,
+			Name: "rob",
+			B:    B{"foo"},
+		},
+		{
+			Id:   8,
+			Name: "bill",
+		},
+	},
+}
+
+// Some of the unbinding results are not exactly what is in PARAMS, since it
+// serializes implicit zero values explicitly.
+var unbinderOverrideAnswers = map[string]map[string]string{
+	"arr": map[string]string{
+		"arr[0]": "1",
+		"arr[1]": "2",
+		"arr[2]": "0",
+		"arr[3]": "3",
+	},
+	"A": map[string]string{
+		"A.Id":      "123",
+		"A.Name":    "rob",
+		"A.B.Extra": "",
+	},
+	"arrC": map[string]string{
+		"arrC[0].Id":      "5",
+		"arrC[0].Name":    "rob",
+		"arrC[0].B.Extra": "foo",
+		"arrC[1].Id":      "8",
+		"arrC[1].Name":    "bill",
+		"arrC[1].B.Extra": "",
+	},
+}
+
+func TestUnbinder(t *testing.T) {
+	for k, v := range unbinderTestCases {
+		actual := make(map[string]string)
+		Unbind(actual, k, v)
+
+		// Get the expected key/values.
+		expected, ok := unbinderOverrideAnswers[k]
+		if !ok {
+			expected = make(map[string]string)
+			for k2, v2 := range PARAMS {
+				if k == k2 || strings.HasPrefix(k2, k+".") || strings.HasPrefix(k2, k+"[") {
+					expected[k2] = v2[0]
+				}
+			}
+		}
+
+		// Compare length and values.
+		if len(actual) != len(expected) {
+			t.Errorf("Length mismatch\nExpected length %d, actual %d\nExpected: %s\nActual: %s",
+				len(expected), len(actual), expected, actual)
+		}
+		for k, v := range actual {
+			if expected[k] != v {
+				t.Errorf("Value mismatch.\nExpected: %s\nActual: %s", expected, actual)
+			}
+		}
+	}
+}
+
 // Helpers
 
 func valEq(t *testing.T, name string, actual, expected reflect.Value) {
@@ -229,6 +327,7 @@ func valEq(t *testing.T, name string, actual, expected reflect.Value) {
 		for i := 0; i < actual.Len(); i++ {
 			valEq(t, fmt.Sprintf("%s[%d]", name, i), actual.Index(i), expected.Index(i))
 		}
+
 	case reflect.Ptr:
 		// Check equality on the element type.
 		valEq(t, name, actual.Elem(), expected.Elem())
