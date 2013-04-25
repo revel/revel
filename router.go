@@ -263,7 +263,7 @@ func (router *Router) validate(route *Route) *Error {
 // 5: action
 // 6: fixedargs
 var routePattern *regexp.Regexp = regexp.MustCompile(
-	"(?i)^(GET|POST|PUT|DELETE|OPTIONS|HEAD|WS|\\*)" +
+	"(?i)^(GET|POST|PUT|DELETE|PATCH|OPTIONS|HEAD|WS|\\*)" +
 		"[(]?([^)]*)(\\))?[ \t]+" +
 		"(.*/[^ \t]*)[ \t]+([^ \t(]+)" +
 		`\(?([^)]*)\)?[ \t]*$`)
