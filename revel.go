@@ -4,6 +4,7 @@ import (
 	"github.com/robfig/config"
 	"go/build"
 	"io"
+	"io/ioutil"
 	"log"
 	"os"
 	"path"
@@ -52,7 +53,7 @@ var (
 	CookiePrefix string
 
 	// Loggers
-	DEFAULT = log.New(os.Stderr, "", log.Ldate|log.Ltime|log.Lshortfile)
+	DEFAULT = log.New(ioutil.Discard, "", log.Ldate|log.Ltime|log.Lshortfile)
 	TRACE   = DEFAULT
 	INFO    = DEFAULT
 	WARN    = DEFAULT
