@@ -4,6 +4,7 @@ import (
 	"code.google.com/p/go.crypto/bcrypt"
 	"github.com/robfig/revel"
 	"github.com/robfig/revel/samples/booking/app/models"
+	"github.com/robfig/revel/samples/booking/app/routes"
 )
 
 type Application struct {
@@ -59,7 +60,7 @@ func (c Application) SaveUser(user models.User, verifyPassword string) revel.Res
 	if c.Validation.HasErrors() {
 		c.Validation.Keep()
 		c.FlashParams()
-		return c.Redirect(Application.Register)
+		return c.Redirect(routes.Application.Register())
 	}
 
 	user.HashedPassword, _ = bcrypt.GenerateFromPassword(
@@ -71,7 +72,7 @@ func (c Application) SaveUser(user models.User, verifyPassword string) revel.Res
 
 	c.Session["user"] = user.Username
 	c.Flash.Success("Welcome, " + user.Name)
-	return c.Redirect(Hotels.Index)
+	return c.Redirect(routes.Hotels.Index())
 }
 
 func (c Application) Login(username, password string) revel.Result {
@@ -81,18 +82,18 @@ func (c Application) Login(username, password string) revel.Result {
 		if err == nil {
 			c.Session["user"] = username
 			c.Flash.Success("Welcome, " + username)
-			return c.Redirect(Hotels.Index)
+			return c.Redirect(routes.Hotels.Index())
 		}
 	}
 
 	c.Flash.Out["username"] = username
 	c.Flash.Error("Login failed")
-	return c.Redirect(Application.Index)
+	return c.Redirect(routes.Application.Index())
 }
 
 func (c Application) Logout() revel.Result {
 	for k := range c.Session {
 		delete(c.Session, k)
 	}
-	return c.Redirect(Application.Index)
+	return c.Redirect(routes.Application.Index())
 }

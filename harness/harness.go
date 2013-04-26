@@ -27,7 +27,7 @@ import (
 
 var (
 	watcher    *revel.Watcher
-	doNotWatch = []string{"tmp", "views"}
+	doNotWatch = []string{"tmp", "views", "routes"}
 
 	lastRequestHadError int32
 )

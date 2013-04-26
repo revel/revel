@@ -32,35 +32,15 @@ func Build() (app *App, compileError *revel.Error) {
 		sourceInfo.InitImportPaths = append(sourceInfo.InitImportPaths, dbImportPath)
 	}
 
-	tmpl := template.Must(template.New("").Parse(REGISTER_CONTROLLERS))
-	registerControllerSource := revel.ExecuteTemplate(tmpl, map[string]interface{}{
+	// Generate two source files.
+	templateArgs := map[string]interface{}{
 		"Controllers":    sourceInfo.ControllerSpecs(),
 		"ValidationKeys": sourceInfo.ValidationKeys,
 		"ImportPaths":    calcImportAliases(sourceInfo),
 		"TestSuites":     sourceInfo.TestSuites(),
-	})
-
-	// Create a fresh temp dir.
-	tmpPath := path.Join(revel.AppPath, "tmp")
-	err := os.RemoveAll(tmpPath)
-	if err != nil {
-		revel.ERROR.Println("Failed to remove tmp dir:", err)
 	}
-	err = os.Mkdir(tmpPath, 0777)
-	if err != nil {
-		revel.ERROR.Fatalf("Failed to make tmp directory: %v", err)
-	}
-
-	// Create the main.go file
-	controllersFile, err := os.Create(path.Join(tmpPath, "main.go"))
-	defer controllersFile.Close()
-	if err != nil {
-		revel.ERROR.Fatalf("Failed to create main.go: %v", err)
-	}
-	_, err = controllersFile.WriteString(registerControllerSource)
-	if err != nil {
-		revel.ERROR.Fatalf("Failed to write to main.go: %v", err)
-	}
+	genSource("tmp", "main.go", MAIN, templateArgs)
+	genSource("routes", "routes.go", ROUTES, templateArgs)
 
 	// Read build config.
 	buildTags := revel.Config.StringDefault("build.tags", "")
@@ -72,8 +52,7 @@ func Build() (app *App, compileError *revel.Error) {
 		revel.ERROR.Fatalf("Go executable not found in PATH.")
 	}
 
-	ctx := build.Default
-	pkg, err := ctx.Import(revel.ImportPath, "", build.FindOnly)
+	pkg, err := build.Default.Import(revel.ImportPath, "", build.FindOnly)
 	if err != nil {
 		revel.ERROR.Fatalln("Failure importing", revel.ImportPath)
 	}
@@ -122,6 +101,36 @@ func Build() (app *App, compileError *revel.Error) {
 	}
 	revel.ERROR.Fatalf("Not reachable")
 	return nil, nil
+}
+
+// getSource renders the given template to produce source code, which it writes
+// to the given directory and file.
+func genSource(dir, filename, templateSource string, args map[string]interface{}) {
+	sourceCode := revel.ExecuteTemplate(
+		template.Must(template.New("").Parse(templateSource)),
+		args)
+
+	// Create a fresh dir.
+	tmpPath := path.Join(revel.AppPath, dir)
+	err := os.RemoveAll(tmpPath)
+	if err != nil {
+		revel.ERROR.Println("Failed to remove dir:", err)
+	}
+	err = os.Mkdir(tmpPath, 0777)
+	if err != nil {
+		revel.ERROR.Fatalf("Failed to make tmp directory: %v", err)
+	}
+
+	// Create the file
+	file, err := os.Create(path.Join(tmpPath, filename))
+	defer file.Close()
+	if err != nil {
+		revel.ERROR.Fatalf("Failed to create file: %v", err)
+	}
+	_, err = file.WriteString(sourceCode)
+	if err != nil {
+		revel.ERROR.Fatalf("Failed to write to file: %v", err)
+	}
 }
 
 // Looks through all the method args and returns a set of unique import paths
@@ -224,7 +233,8 @@ func newCompileError(output []byte) *revel.Error {
 	return compileError
 }
 
-const REGISTER_CONTROLLERS = `package main
+const MAIN = `// GENERATED CODE - DO NOT EDIT
+package main
 
 import (
 	"flag"
@@ -275,4 +285,25 @@ func main() {
 
 	revel.Run(*port)
 }
+`
+const ROUTES = `// GENERATED CODE - DO NOT EDIT
+package routes
+
+import "github.com/robfig/revel"
+
+{{range $i, $c := .Controllers}}
+type t{{.StructName}} struct {}
+var {{.StructName}} t{{.StructName}}
+
+{{range .MethodSpecs}}
+func (p t{{$c.StructName}}) {{.Name}}({{range .Args}}
+		{{.Name}} {{if .ImportPath}}interface{}{{else}}{{.TypeExpr.TypeName ""}}{{end}},{{end}}
+		) string {
+	args := make(map[string]string)
+	{{range .Args}}
+	revel.Unbind(args, "{{.Name}}", {{.Name}}){{end}}
+	return revel.MainRouter.Reverse("{{$c.StructName}}.{{.Name}}", args).Url
+}
+{{end}}
+{{end}}
 `
