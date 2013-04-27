@@ -3,8 +3,8 @@ package revel
 import (
 	"path"
 	"path/filepath"
-	"testing"
 	"reflect"
+	"testing"
 )
 
 func TestContentTypeByFilename(t *testing.T) {
