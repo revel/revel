@@ -213,7 +213,7 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 		Params:         map[string]string{"id": "123"},
 	},
 
-    &http.Request{
+	&http.Request{
 		Method: "PATCH",
 		URL:    &url.URL{Path: "/app/123"},
 	}: &RouteMatch{
@@ -221,7 +221,7 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 		MethodName:     "Update",
 		FixedParams:    []string{},
 		Params:         map[string]string{"id": "123"},
-    },
+	},
 
 	&http.Request{
 		Method: "POST",
