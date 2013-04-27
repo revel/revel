@@ -184,6 +184,7 @@ const TEST_ROUTES = `
 GET  /                       Application.Index
 GET  /app/{id}/?             Application.Show
 POST /app/{id}               Application.Save
+PATCH  /app/{id}/?             Application.Update
 GET /javascript/{<.+>filepath} Static.Serve("public/js")
 GET /public/{<.+>filepath}   Static.Serve("public")
 *		/{controller}/{action}		{controller}.{action}
@@ -208,6 +209,16 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 	}: &RouteMatch{
 		ControllerName: "Application",
 		MethodName:     "Show",
+		FixedParams:    []string{},
+		Params:         map[string]string{"id": "123"},
+	},
+
+	&http.Request{
+		Method: "PATCH",
+		URL:    &url.URL{Path: "/app/123"},
+	}: &RouteMatch{
+		ControllerName: "Application",
+		MethodName:     "Update",
 		FixedParams:    []string{},
 		Params:         map[string]string{"id": "123"},
 	},
