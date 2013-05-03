@@ -121,8 +121,12 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
 		}
 	}()
 
-	if Config.BoolDefault("results.chunked", false) {
-		// Write the status, render, and hope for the best.
+	chunked := Config.BoolDefault("results.chunked", false)
+
+	// In a prod mode, write the status, render, and hope for the best.
+	// (In a dev mode, always render to a temporary buffer first to avoid having
+	// error pages distorted by HTML already written)
+	if chunked && !DevMode {
 		resp.WriteHeader(http.StatusOK, "text/html")
 		r.render(req, resp, resp.Out)
 		return
@@ -134,7 +138,9 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
 	// would carry a 200 status code)
 	var b bytes.Buffer
 	r.render(req, resp, &b)
-	resp.Out.Header().Set("Content-Length", strconv.Itoa(b.Len()))
+	if !chunked {
+		resp.Out.Header().Set("Content-Length", strconv.Itoa(b.Len()))
+	}
 	resp.WriteHeader(http.StatusOK, "text/html")
 	b.WriteTo(resp.Out)
 }
