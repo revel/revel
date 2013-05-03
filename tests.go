@@ -1,6 +1,7 @@
 package revel
 
 import (
+	"code.google.com/p/go.net/websocket"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -23,12 +24,22 @@ func NewTestSuite() TestSuite {
 	return TestSuite{Client: &http.Client{}}
 }
 
-// Return the base URL of the server, e.g. "http://127.0.0.1:8557"
-func (t *TestSuite) BaseUrl() string {
+// Return the address and port of the server, e.g. "127.0.0.1:8557"
+func (t *TestSuite) Host() string {
 	if Server.Addr[0] == ':' {
-		return "http://127.0.0.1" + Server.Addr
+		return "127.0.0.1" + Server.Addr
 	}
-	return "http://" + Server.Addr
+	return Server.Addr
+}
+
+// Return the base http URL of the server, e.g. "http://127.0.0.1:8557"
+func (t *TestSuite) BaseUrl() string {
+	return "http://" + t.Host()
+}
+
+// Return the base websocket URL of the server, e.g. "ws://127.0.0.1:8557"
+func (t *TestSuite) WebSocketUrl() string {
+	return "ws://" + t.Host()
 }
 
 // Issue a GET request to the given path and store the result in Request and
@@ -68,6 +79,17 @@ func (t *TestSuite) MakeRequest(req *http.Request) {
 	if t.ResponseBody, err = ioutil.ReadAll(t.Response.Body); err != nil {
 		panic(err)
 	}
+}
+
+// Create a websocket connection to the given path and return the connection
+func (t *TestSuite) WebSocket(path string) *websocket.Conn {
+	origin := t.BaseUrl() + "/"
+	url := t.WebSocketUrl() + path
+	ws, err := websocket.Dial(url, "", origin)
+	if err != nil {
+		panic(err)
+	}
+	return ws
 }
 
 func (t *TestSuite) AssertOk() {
