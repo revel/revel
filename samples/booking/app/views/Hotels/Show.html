@@ -3,7 +3,7 @@
 <h1>View hotel</h1>
 
 {{with .hotel}}
-<form action="/hotels/{{.HotelId}}/booking">
+<form action="{{url "Hotels.Book" .HotelId}}">
 
   <p>
     <strong>Name:</strong> {{.Name}}

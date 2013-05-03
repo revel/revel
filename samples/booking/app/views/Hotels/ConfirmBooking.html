@@ -2,7 +2,7 @@
 
 <h1>Confirm hotel booking</h1>
 
-<form method="POST" action="/hotels/{{.hotel.HotelId}}/booking">
+<form method="POST" action="{{url "Hotels.ConfirmBooking" .hotel.HotelId}}">
   <p>
     <strong>Name:</strong> {{.hotel.Name}}
   </p>
@@ -51,7 +51,7 @@
   <p class="buttons">
     <input type="submit" value="Confirm" name="confirm">
     <input type="submit" value="Revise" name="revise">
-    <a href="/hotels/{{.hotel.HotelId}}">Cancel</a>
+    <a href="{{url "Hotels.Show" .hotel.HotelId}}">Cancel</a>
   </p>
 </form>
 
