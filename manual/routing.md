@@ -22,7 +22,8 @@ This example demonstrates all of the features:
 	GET    /public/{<.*>filepath} Static.Serve("public") # Map /app/public resources under /public/...
 	*      /{controller}/{action} {controller}.{action}  # Catch all; Automatic URL generation
 
-Let's go through the lines one at a time.
+Let's go through the lines one at a time.  At the end, we'll see how to
+accomplish **reverse routing** -- generating the URL to invoke a particular action.
 
 ## A simple path
 
@@ -154,3 +155,53 @@ routes would also work:
 Using auto-routing as a catch-all (e.g. last route in the file) is useful for
 quickly hooking up actions to non-vanity URLs.
 
+## Reverse Routing
+
+It is good practice to use a reverse router to generate URLs for a couple reasons:
+
+* Avoids misspellings
+* The compiler ensures that reverse routes have the right number and type of
+  parameters.
+* Localizes URL changes to one place: the routes file.
+
+Upon building your application, Revel generates an `app/routes` package.  Use it
+with a statement of the form:
+
+<pre class="prettyprint lang-go">
+routes.Controller.Action(params)
+</pre>
+
+The above statement returns a URL (type string) to Controller.Action with the
+given parameters.  Here is a more complete example:
+
+<pre class="prettyprint lang-go">{% capture html %}
+import (
+	"github.com/robfig/revel"
+	"project/app/routes"
+)
+
+type App struct { *revel.Controller }
+
+// Show a form
+func (c App) ViewForm(username string) revel.Result {
+	return c.Render(username)
+}
+
+// Process the submitted form.
+func (c App) ProcessForm(username, input string) revel.Result {
+	...
+	if c.Validation.HasErrors() {
+		c.Validation.Keep()
+		c.Flash.Error("Form invalid. Try again.")
+		return c.Redirect(routes.App.ViewForm(username))  // <--- REVERSE ROUTE
+	}
+	c.Flash.Success("Form processed!")
+	return c.Redirect(routes.App.ViewConfirmation(username, input))  // <--- REVERSE ROUTE
+}{% endcapture %}{{ html|escape }}
+</pre>
+
+
+<div class="alert alert-info"><strong>Limitation:</strong> Only primitive
+parameters to a route are typed due to the possibility of circular imports.
+Non-primitive parameters are typed as interface{}.
+</div>

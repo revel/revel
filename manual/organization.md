@@ -20,6 +20,7 @@ typical Go installation.
 	        controllers     App controllers
 	          init.go       Interceptor registration
 	        models          App domain models
+	        routes          Reverse routes (generated code)
 	        views           Templates
 	      tests             Test suites
 	      conf              Configuration files
