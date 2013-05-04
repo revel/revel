@@ -1,3 +1,12 @@
 language: go
 services:
   - memcache # github.com/robfig/revel/cache
+install:
+  - go get -d -v ./...
+script:
+  - go test github.com/robfig/revel
+  - go test github.com/robfig/revel/cache
+  - go test github.com/robfig/revel/harness
+  - go build github.com/robfig/cmd
+  
+# TODO: Add sample app testing
