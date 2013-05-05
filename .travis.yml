@@ -7,9 +7,9 @@ install:
   - go get -d -v github.com/robfig/revel/cmd
   - go get -d -v github.com/robfig/revel/harness
 script:
+  - go build -o $GOPATH/bin/revel github.com/robfig/revel/cmd
   - go test github.com/robfig/revel
   - go test github.com/robfig/revel/cache
   - go test github.com/robfig/revel/harness
-  - go build github.com/robfig/revel/cmd
   
 # TODO: Add sample app testing
