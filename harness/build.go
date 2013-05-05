@@ -14,7 +14,7 @@ import (
 	"text/template"
 )
 
-var importErrorPattern = regexp.MustCompile("import \"([^\"]+)\": cannot find package")
+var importErrorPattern = regexp.MustCompile("cannot find package \"([^\"]+)\"")
 
 // Build the app:
 // 1. Generate the the main.go file.
