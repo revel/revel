@@ -1,6 +1,7 @@
 ---
 layout: godoc
 ---
+
 <!--
 	Copyright 2009 The Go Authors. All rights reserved.
 	Use of this source code is governed by a BSD-style
@@ -9,13 +10,28 @@ layout: godoc
 <h1>Intercept</h1>
 
 	
+		
 		<!-- The package's Name is printed as title by the top-level template -->
-                
+		<div id="pkg-overview" class="toggleVisible">
+			<div class="collapsed">
+				<h2 class="toggleButton" title="Click to show Overview section">Overview ¹</h2>
+			</div>
+			<div class="expanded">
+				<h2 class="toggleButton" title="Click to hide Overview section">Overview ¾</h2>
+				
+			</div>
+		</div>
 		
 
-		<h2 id="index">Index</h2>
+		<div id="pkg-index" class="toggleVisible">
+		<div class="collapsed">
+			<h2 class="toggleButton" title="Click to show Index section">Index ¹</h2>
+		</div>
+		<div class="expanded">
+			<h2 class="toggleButton" title="Click to hide Index section">Index ¾</h2>
+
 		<!-- Table of contents for API; must be named manual-nav to turn off auto nav. -->
-		<div id="manual-nav">
+			<div id="manual-nav">
 			<dl>
 			
 			
@@ -73,12 +89,13 @@ layout: godoc
 				
 			
 			
-		</dl>
+			</dl>
+			</div><!-- #manual-nav -->
 
 		
 
 		
-			<h4>Package files</h4>
+			<h4>File</h4>
 			<p>
 			<span style="font-size:90%">
 			
@@ -87,6 +104,8 @@ layout: godoc
 			</span>
 			</p>
 		
+		</div><!-- .expanded -->
+		</div><!-- #pkg-index -->
 
 		
 		
@@ -94,7 +113,7 @@ layout: godoc
 			
 			
 			<h2 id="InterceptFunc">func <a href="../src/intercept.html?s=3314:3394#L125">InterceptFunc</a></h2>
-			<pre>func InterceptFunc(intc InterceptorFunc, when InterceptTime, target interface{})</pre>
+			<pre>func InterceptFunc(intc <a href="#InterceptorFunc">InterceptorFunc</a>, when <a href="#InterceptTime">InterceptTime</a>, target interface{})</pre>
 			<p>
 Install a general interceptor.
 This can be applied to any Controller.
@@ -108,7 +127,7 @@ It must have the signature of:
 			
 			
 			<h2 id="InterceptMethod">func <a href="../src/intercept.html?s=3794:3858#L138">InterceptMethod</a></h2>
-			<pre>func InterceptMethod(intc InterceptorMethod, when InterceptTime)</pre>
+			<pre>func InterceptMethod(intc <a href="#InterceptorMethod">InterceptorMethod</a>, when <a href="#InterceptTime">InterceptTime</a>)</pre>
 			<p>
 Install an interceptor method that applies to its own Controller.
 </p>
@@ -122,12 +141,12 @@ func (c *AppController) example() revel.Result
 			
 			
 			<h2 id="InterceptTarget">type <a href="../src/intercept.html?s=1295:1319#L38">InterceptTarget</a></h2>
-			<pre>type InterceptTarget int</pre>
+			<pre>type InterceptTarget <a href="/pkg/builtin/#int">int</a></pre>
 			
 
 			
 				<pre>const (
-    ALL_CONTROLLERS InterceptTarget = iota
+    <span id="ALL_CONTROLLERS">ALL_CONTROLLERS</span> <a href="#InterceptTarget">InterceptTarget</a> = <a href="/pkg/builtin/#iota">iota</a>
 )</pre>
 				
 			
@@ -143,15 +162,15 @@ func (c *AppController) example() revel.Result
 			
 			
 			<h2 id="InterceptTime">type <a href="../src/intercept.html?s=1208:1230#L29">InterceptTime</a></h2>
-			<pre>type InterceptTime int</pre>
+			<pre>type InterceptTime <a href="/pkg/builtin/#int">int</a></pre>
 			
 
 			
 				<pre>const (
-    BEFORE InterceptTime = iota
-    AFTER
-    PANIC
-    FINALLY
+    <span id="BEFORE">BEFORE</span> <a href="#InterceptTime">InterceptTime</a> = <a href="/pkg/builtin/#iota">iota</a>
+    <span id="AFTER">AFTER</span>
+    <span id="PANIC">PANIC</span>
+    <span id="FINALLY">FINALLY</span>
 )</pre>
 				
 			
@@ -168,7 +187,7 @@ func (c *AppController) example() revel.Result
 			
 			<h2 id="Interception">type <a href="../src/intercept.html?s=1372:1550#L44">Interception</a></h2>
 			<pre>type Interception struct {
-    When InterceptTime
+    When <a href="#InterceptTime">InterceptTime</a>
     <span class="comment">// contains filtered or unexported fields</span>
 }</pre>
 			
@@ -184,7 +203,7 @@ func (c *AppController) example() revel.Result
 			
 				
 				<h3 id="Interception.Invoke">func (Interception) <a href="../src/intercept.html?s=1630:1691#L57">Invoke</a></h3>
-				<pre>func (i Interception) Invoke(val reflect.Value) reflect.Value</pre>
+				<pre>func (i <a href="#Interception">Interception</a>) Invoke(val <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Value">Value</a>) <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Value">Value</a></pre>
 				<p>
 Perform the given interception.
 val is a pointer to the App Controller.
@@ -197,7 +216,7 @@ val is a pointer to the App Controller.
 			
 			
 			<h2 id="InterceptorFunc">type <a href="../src/intercept.html?s=1127:1172#L27">InterceptorFunc</a></h2>
-			<pre>type InterceptorFunc func(*Controller) Result</pre>
+			<pre>type InterceptorFunc func(*<a href="#Controller">Controller</a>) <a href="#Result">Result</a></pre>
 			<p>
 An &#34;interceptor&#34; is functionality invoked by the framework BEFORE or AFTER
 an action.
@@ -267,7 +286,7 @@ func (c *AppController) example() revel.Result
 			
 			<h2 id="InterceptorPlugin">type <a href="../src/intercept.html?s=2205:2251#L78">InterceptorPlugin</a></h2>
 			<pre>type InterceptorPlugin struct {
-    EmptyPlugin
+    <a href="#EmptyPlugin">EmptyPlugin</a>
 }</pre>
 			
 
@@ -282,37 +301,37 @@ func (c *AppController) example() revel.Result
 			
 				
 				<h3 id="InterceptorPlugin.AfterRequest">func (InterceptorPlugin) <a href="../src/intercept.html?s=2345:2399#L86">AfterRequest</a></h3>
-				<pre>func (p InterceptorPlugin) AfterRequest(c *Controller)</pre>
+				<pre>func (p <a href="#InterceptorPlugin">InterceptorPlugin</a>) AfterRequest(c *<a href="#Controller">Controller</a>)</pre>
 				
 				
 				
 			
 				
 				<h3 id="InterceptorPlugin.BeforeRequest">func (InterceptorPlugin) <a href="../src/intercept.html?s=2253:2308#L82">BeforeRequest</a></h3>
-				<pre>func (p InterceptorPlugin) BeforeRequest(c *Controller)</pre>
+				<pre>func (p <a href="#InterceptorPlugin">InterceptorPlugin</a>) BeforeRequest(c *<a href="#Controller">Controller</a>)</pre>
 				
 				
 				
 			
 				
 				<h3 id="InterceptorPlugin.Finally">func (InterceptorPlugin) <a href="../src/intercept.html?s=2541:2590#L94">Finally</a></h3>
-				<pre>func (p InterceptorPlugin) Finally(c *Controller)</pre>
+				<pre>func (p <a href="#InterceptorPlugin">InterceptorPlugin</a>) Finally(c *<a href="#Controller">Controller</a>)</pre>
 				
 				
 				
 			
 				
 				<h3 id="InterceptorPlugin.OnException">func (InterceptorPlugin) <a href="../src/intercept.html?s=2435:2505#L90">OnException</a></h3>
-				<pre>func (p InterceptorPlugin) OnException(c *Controller, err interface{})</pre>
+				<pre>func (p <a href="#InterceptorPlugin">InterceptorPlugin</a>) OnException(c *<a href="#Controller">Controller</a>, err interface{})</pre>
 				
 				
 				
 			
 		
-		</div>
 	
 
 	
+
 
 
 

@@ -1,6 +1,7 @@
 ---
 layout: godoc
 ---
+
 <!--
 	Copyright 2009 The Go Authors. All rights reserved.
 	Use of this source code is governed by a BSD-style
@@ -9,16 +10,31 @@ layout: godoc
 <h1>Session</h1>
 
 	
+		
 		<!-- The package's Name is printed as title by the top-level template -->
-                
+		<div id="pkg-overview" class="toggleVisible">
+			<div class="collapsed">
+				<h2 class="toggleButton" title="Click to show Overview section">Overview ¹</h2>
+			</div>
+			<div class="expanded">
+				<h2 class="toggleButton" title="Click to hide Overview section">Overview ¾</h2>
+				
+			</div>
+		</div>
 		
 
-		<h2 id="index">Index</h2>
+		<div id="pkg-index" class="toggleVisible">
+		<div class="collapsed">
+			<h2 class="toggleButton" title="Click to show Index section">Index ¹</h2>
+		</div>
+		<div class="expanded">
+			<h2 class="toggleButton" title="Click to hide Index section">Index ¾</h2>
+
 		<!-- Table of contents for API; must be named manual-nav to turn off auto nav. -->
-		<div id="manual-nav">
+			<div id="manual-nav">
 			<dl>
 			
-				<dd><a href="#constants">Constants</a></dd>
+				<dd><a href="#pkg-constants">Constants</a></dd>
 			
 			
 			
@@ -43,12 +59,13 @@ layout: godoc
 				
 			
 			
-		</dl>
+			</dl>
+			</div><!-- #manual-nav -->
 
 		
 
 		
-			<h4>Package files</h4>
+			<h4>File</h4>
 			<p>
 			<span style="font-size:90%">
 			
@@ -57,12 +74,14 @@ layout: godoc
 			</span>
 			</p>
 		
+		</div><!-- .expanded -->
+		</div><!-- #pkg-index -->
 
 		
-			<h2 id="constants">Constants</h2>
+			<h2 id="pkg-constants">Constants</h2>
 			
 				<pre>const (
-    SESSION_ID_KEY = &#34;_ID&#34;
+    <span id="SESSION_ID_KEY">SESSION_ID_KEY</span> = &#34;_ID&#34;
 )</pre>
 				
 			
@@ -73,7 +92,7 @@ layout: godoc
 			
 			
 			<h2 id="Session">type <a href="../src/session.html?s=209:239#L3">Session</a></h2>
-			<pre>type Session map[string]string</pre>
+			<pre>type Session map[<a href="/pkg/builtin/#string">string</a>]<a href="/pkg/builtin/#string">string</a></pre>
 			<p>
 A signed cookie (and thus limited to 4kb in size).
 Restriction: Keys may not have a colon in them.
@@ -91,7 +110,7 @@ Restriction: Keys may not have a colon in them.
 			
 				
 				<h3 id="Session.Id">func (Session) <a href="../src/session.html?s=319:347#L10">Id</a></h3>
-				<pre>func (s Session) Id() string</pre>
+				<pre>func (s <a href="#Session">Session</a>) Id() <a href="/pkg/builtin/#string">string</a></pre>
 				<p>
 Return a UUID identifying this session.
 </p>
@@ -103,7 +122,7 @@ Return a UUID identifying this session.
 			
 			
 			<h2 id="SessionPlugin">type <a href="../src/session.html?s=599:639#L23">SessionPlugin</a></h2>
-			<pre>type SessionPlugin struct{ EmptyPlugin }</pre>
+			<pre>type SessionPlugin struct{ <a href="#EmptyPlugin">EmptyPlugin</a> }</pre>
 			
 
 			
@@ -117,23 +136,23 @@ Return a UUID identifying this session.
 			
 				
 				<h3 id="SessionPlugin.AfterRequest">func (SessionPlugin) <a href="../src/session.html?s=745:795#L29">AfterRequest</a></h3>
-				<pre>func (p SessionPlugin) AfterRequest(c *Controller)</pre>
+				<pre>func (p <a href="#SessionPlugin">SessionPlugin</a>) AfterRequest(c *<a href="#Controller">Controller</a>)</pre>
 				
 				
 				
 			
 				
 				<h3 id="SessionPlugin.BeforeRequest">func (SessionPlugin) <a href="../src/session.html?s=641:692#L25">BeforeRequest</a></h3>
-				<pre>func (p SessionPlugin) BeforeRequest(c *Controller)</pre>
+				<pre>func (p <a href="#SessionPlugin">SessionPlugin</a>) BeforeRequest(c *<a href="#Controller">Controller</a>)</pre>
 				
 				
 				
 			
 		
-		</div>
 	
 
 	
+
 
 
 

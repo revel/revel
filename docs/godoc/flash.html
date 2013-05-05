@@ -1,6 +1,7 @@
 ---
 layout: godoc
 ---
+
 <!--
 	Copyright 2009 The Go Authors. All rights reserved.
 	Use of this source code is governed by a BSD-style
@@ -9,13 +10,28 @@ layout: godoc
 <h1>Flash</h1>
 
 	
+		
 		<!-- The package's Name is printed as title by the top-level template -->
-                
+		<div id="pkg-overview" class="toggleVisible">
+			<div class="collapsed">
+				<h2 class="toggleButton" title="Click to show Overview section">Overview ¹</h2>
+			</div>
+			<div class="expanded">
+				<h2 class="toggleButton" title="Click to hide Overview section">Overview ¾</h2>
+				
+			</div>
+		</div>
 		
 
-		<h2 id="index">Index</h2>
+		<div id="pkg-index" class="toggleVisible">
+		<div class="collapsed">
+			<h2 class="toggleButton" title="Click to show Index section">Index ¹</h2>
+		</div>
+		<div class="expanded">
+			<h2 class="toggleButton" title="Click to hide Index section">Index ¾</h2>
+
 		<!-- Table of contents for API; must be named manual-nav to turn off auto nav. -->
-		<div id="manual-nav">
+			<div id="manual-nav">
 			<dl>
 			
 			
@@ -44,12 +60,13 @@ layout: godoc
 				
 			
 			
-		</dl>
+			</dl>
+			</div><!-- #manual-nav -->
 
 		
 
 		
-			<h4>Package files</h4>
+			<h4>File</h4>
 			<p>
 			<span style="font-size:90%">
 			
@@ -58,6 +75,8 @@ layout: godoc
 			</span>
 			</p>
 		
+		</div><!-- .expanded -->
+		</div><!-- #pkg-index -->
 
 		
 		
@@ -67,7 +86,7 @@ layout: godoc
 			
 			<h2 id="Flash">type <a href="../src/flash.html?s=334:384#L3">Flash</a></h2>
 			<pre>type Flash struct {
-    Data, Out map[string]string
+    Data, Out map[<a href="/pkg/builtin/#string">string</a>]<a href="/pkg/builtin/#string">string</a>
 }</pre>
 			<p>
 Flash represents a cookie that gets overwritten on each request.
@@ -88,14 +107,14 @@ e.g. the Post/Redirect/Get pattern: <a href="http://en.wikipedia.org/wiki/Post/R
 			
 				
 				<h3 id="Flash.Error">func (Flash) <a href="../src/flash.html?s=386:439#L7">Error</a></h3>
-				<pre>func (f Flash) Error(msg string, args ...interface{})</pre>
+				<pre>func (f <a href="#Flash">Flash</a>) Error(msg <a href="/pkg/builtin/#string">string</a>, args ...interface{})</pre>
 				
 				
 				
 			
 				
 				<h3 id="Flash.Success">func (Flash) <a href="../src/flash.html?s=547:602#L15">Success</a></h3>
-				<pre>func (f Flash) Success(msg string, args ...interface{})</pre>
+				<pre>func (f <a href="#Flash">Flash</a>) Success(msg <a href="/pkg/builtin/#string">string</a>, args ...interface{})</pre>
 				
 				
 				
@@ -104,7 +123,7 @@ e.g. the Post/Redirect/Get pattern: <a href="http://en.wikipedia.org/wiki/Post/R
 			
 			
 			<h2 id="FlashPlugin">type <a href="../src/flash.html?s=714:752#L23">FlashPlugin</a></h2>
-			<pre>type FlashPlugin struct{ EmptyPlugin }</pre>
+			<pre>type FlashPlugin struct{ <a href="#EmptyPlugin">EmptyPlugin</a> }</pre>
 			
 
 			
@@ -118,23 +137,23 @@ e.g. the Post/Redirect/Get pattern: <a href="http://en.wikipedia.org/wiki/Post/R
 			
 				
 				<h3 id="FlashPlugin.AfterRequest">func (FlashPlugin) <a href="../src/flash.html?s=890:938#L30">AfterRequest</a></h3>
-				<pre>func (p FlashPlugin) AfterRequest(c *Controller)</pre>
+				<pre>func (p <a href="#FlashPlugin">FlashPlugin</a>) AfterRequest(c *<a href="#Controller">Controller</a>)</pre>
 				
 				
 				
 			
 				
 				<h3 id="FlashPlugin.BeforeRequest">func (FlashPlugin) <a href="../src/flash.html?s=754:803#L25">BeforeRequest</a></h3>
-				<pre>func (p FlashPlugin) BeforeRequest(c *Controller)</pre>
+				<pre>func (p <a href="#FlashPlugin">FlashPlugin</a>) BeforeRequest(c *<a href="#Controller">Controller</a>)</pre>
 				
 				
 				
 			
 		
-		</div>
 	
 
 	
+
 
 
 

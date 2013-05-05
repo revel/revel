@@ -1,6 +1,7 @@
 ---
 layout: godoc
 ---
+
 <!--
 	Copyright 2009 The Go Authors. All rights reserved.
 	Use of this source code is governed by a BSD-style
@@ -9,13 +10,28 @@ layout: godoc
 <h1>Field</h1>
 
 	
+		
 		<!-- The package's Name is printed as title by the top-level template -->
-                
+		<div id="pkg-overview" class="toggleVisible">
+			<div class="collapsed">
+				<h2 class="toggleButton" title="Click to show Overview section">Overview ¹</h2>
+			</div>
+			<div class="expanded">
+				<h2 class="toggleButton" title="Click to hide Overview section">Overview ¾</h2>
+				
+			</div>
+		</div>
 		
 
-		<h2 id="index">Index</h2>
+		<div id="pkg-index" class="toggleVisible">
+		<div class="collapsed">
+			<h2 class="toggleButton" title="Click to show Index section">Index ¹</h2>
+		</div>
+		<div class="expanded">
+			<h2 class="toggleButton" title="Click to hide Index section">Index ¾</h2>
+
 		<!-- Table of contents for API; must be named manual-nav to turn off auto nav. -->
-		<div id="manual-nav">
+			<div id="manual-nav">
 			<dl>
 			
 			
@@ -45,12 +61,13 @@ layout: godoc
 				
 			
 			
-		</dl>
+			</dl>
+			</div><!-- #manual-nav -->
 
 		
 
 		
-			<h4>Package files</h4>
+			<h4>File</h4>
 			<p>
 			<span style="font-size:90%">
 			
@@ -59,6 +76,8 @@ layout: godoc
 			</span>
 			</p>
 		
+		</div><!-- .expanded -->
+		</div><!-- #pkg-index -->
 
 		
 		
@@ -68,8 +87,8 @@ layout: godoc
 			
 			<h2 id="Field">type <a href="../src/field.html?s=119:223#L1">Field</a></h2>
 			<pre>type Field struct {
-    Name  string
-    Error *ValidationError
+    Name  <a href="/pkg/builtin/#string">string</a>
+    Error *<a href="#ValidationError">ValidationError</a>
     <span class="comment">// contains filtered or unexported fields</span>
 }</pre>
 			<p>
@@ -86,7 +105,7 @@ Field represents a data fieid that may be collected in a web form.
 			
 				
 				<h3 id="NewField">func <a href="../src/field.html?s=225:293#L5">NewField</a></h3>
-				<pre>func NewField(name string, renderArgs map[string]interface{}) *Field</pre>
+				<pre>func NewField(name <a href="/pkg/builtin/#string">string</a>, renderArgs map[<a href="/pkg/builtin/#string">string</a>]interface{}) *<a href="#Field">Field</a></pre>
 				
 				
 			
@@ -94,7 +113,7 @@ Field represents a data fieid that may be collected in a web form.
 			
 				
 				<h3 id="Field.ErrorClass">func (*Field) <a href="../src/field.html?s=1411:1446#L57">ErrorClass</a></h3>
-				<pre>func (f *Field) ErrorClass() string</pre>
+				<pre>func (f *<a href="#Field">Field</a>) ErrorClass() <a href="/pkg/builtin/#string">string</a></pre>
 				<p>
 Return ERROR_CLASS if this field has a validation error, else empty string.
 </p>
@@ -104,7 +123,7 @@ Return ERROR_CLASS if this field has a validation error, else empty string.
 			
 				
 				<h3 id="Field.Flash">func (*Field) <a href="../src/field.html?s=632:662#L20">Flash</a></h3>
-				<pre>func (f *Field) Flash() string</pre>
+				<pre>func (f *<a href="#Field">Field</a>) Flash() <a href="/pkg/builtin/#string">string</a></pre>
 				<p>
 Returned the flashed value of this field.
 </p>
@@ -114,7 +133,7 @@ Returned the flashed value of this field.
 			
 				
 				<h3 id="Field.FlashArray">func (*Field) <a href="../src/field.html?s=792:829#L26">FlashArray</a></h3>
-				<pre>func (f *Field) FlashArray() []string</pre>
+				<pre>func (f *<a href="#Field">Field</a>) FlashArray() []<a href="/pkg/builtin/#string">string</a></pre>
 				<p>
 Returned the flashed value of this field as a list.
 </p>
@@ -124,7 +143,7 @@ Returned the flashed value of this field as a list.
 			
 				
 				<h3 id="Field.Id">func (*Field) <a href="../src/field.html?s=508:535#L15">Id</a></h3>
-				<pre>func (f *Field) Id() string</pre>
+				<pre>func (f *<a href="#Field">Field</a>) Id() <a href="/pkg/builtin/#string">string</a></pre>
 				<p>
 Returns an identifier suitable for use as an HTML id.
 </p>
@@ -134,7 +153,7 @@ Returns an identifier suitable for use as an HTML id.
 			
 				
 				<h3 id="Field.Value">func (*Field) <a href="../src/field.html?s=961:996#L35">Value</a></h3>
-				<pre>func (f *Field) Value() interface{}</pre>
+				<pre>func (f *<a href="#Field">Field</a>) Value() interface{}</pre>
 				<p>
 Return the current value of this field.
 </p>
@@ -143,10 +162,10 @@ Return the current value of this field.
 				
 			
 		
-		</div>
 	
 
 	
+
 
 
 

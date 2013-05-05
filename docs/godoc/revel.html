@@ -1,6 +1,7 @@
 ---
 layout: godoc
 ---
+
 <!--
 	Copyright 2009 The Go Authors. All rights reserved.
 	Use of this source code is governed by a BSD-style
@@ -9,19 +10,34 @@ layout: godoc
 <h1>Revel</h1>
 
 	
+		
 		<!-- The package's Name is printed as title by the top-level template -->
-                
+		<div id="pkg-overview" class="toggleVisible">
+			<div class="collapsed">
+				<h2 class="toggleButton" title="Click to show Overview section">Overview ¹</h2>
+			</div>
+			<div class="expanded">
+				<h2 class="toggleButton" title="Click to hide Overview section">Overview ¾</h2>
+				
+			</div>
+		</div>
 		
 
-		<h2 id="index">Index</h2>
+		<div id="pkg-index" class="toggleVisible">
+		<div class="collapsed">
+			<h2 class="toggleButton" title="Click to show Index section">Index ¹</h2>
+		</div>
+		<div class="expanded">
+			<h2 class="toggleButton" title="Click to hide Index section">Index ¾</h2>
+
 		<!-- Table of contents for API; must be named manual-nav to turn off auto nav. -->
-		<div id="manual-nav">
+			<div id="manual-nav">
 			<dl>
 			
-				<dd><a href="#constants">Constants</a></dd>
+				<dd><a href="#pkg-constants">Constants</a></dd>
 			
 			
-				<dd><a href="#variables">Variables</a></dd>
+				<dd><a href="#pkg-variables">Variables</a></dd>
 			
 			
 				
@@ -37,12 +53,13 @@ layout: godoc
 				
 			
 			
-		</dl>
+			</dl>
+			</div><!-- #manual-nav -->
 
 		
 
 		
-			<h4>Package files</h4>
+			<h4>File</h4>
 			<p>
 			<span style="font-size:90%">
 			
@@ -51,42 +68,44 @@ layout: godoc
 			</span>
 			</p>
 		
+		</div><!-- .expanded -->
+		</div><!-- #pkg-index -->
 
 		
-			<h2 id="constants">Constants</h2>
+			<h2 id="pkg-constants">Constants</h2>
 			
 				<pre>const (
-    REVEL_IMPORT_PATH = &#34;github.com/robfig/revel&#34;
+    <span id="REVEL_IMPORT_PATH">REVEL_IMPORT_PATH</span> = &#34;github.com/robfig/revel&#34;
 )</pre>
 				
 			
 		
 		
-			<h2 id="variables">Variables</h2>
+			<h2 id="pkg-variables">Variables</h2>
 			
 				<pre>var (
     <span class="comment">// App details</span>
-    AppName    string <span class="comment">// e.g. &#34;sample&#34;</span>
-    BasePath   string <span class="comment">// e.g. &#34;/Users/robfig/gocode/src/corp/sample&#34;</span>
-    AppPath    string <span class="comment">// e.g. &#34;/Users/robfig/gocode/src/corp/sample/app&#34;</span>
-    ViewsPath  string <span class="comment">// e.g. &#34;/Users/robfig/gocode/src/corp/sample/app/views&#34;</span>
-    ImportPath string <span class="comment">// e.g. &#34;corp/sample&#34;</span>
-    SourcePath string <span class="comment">// e.g. &#34;/Users/robfig/gocode/src&#34;</span>
+    <span id="AppName">AppName</span>    <a href="/pkg/builtin/#string">string</a> <span class="comment">// e.g. &#34;sample&#34;</span>
+    <span id="BasePath">BasePath</span>   <a href="/pkg/builtin/#string">string</a> <span class="comment">// e.g. &#34;/Users/robfig/gocode/src/corp/sample&#34;</span>
+    <span id="AppPath">AppPath</span>    <a href="/pkg/builtin/#string">string</a> <span class="comment">// e.g. &#34;/Users/robfig/gocode/src/corp/sample/app&#34;</span>
+    <span id="ViewsPath">ViewsPath</span>  <a href="/pkg/builtin/#string">string</a> <span class="comment">// e.g. &#34;/Users/robfig/gocode/src/corp/sample/app/views&#34;</span>
+    <span id="ImportPath">ImportPath</span> <a href="/pkg/builtin/#string">string</a> <span class="comment">// e.g. &#34;corp/sample&#34;</span>
+    <span id="SourcePath">SourcePath</span> <a href="/pkg/builtin/#string">string</a> <span class="comment">// e.g. &#34;/Users/robfig/gocode/src&#34;</span>
 
-    Config  *MergedConfig
-    RunMode string <span class="comment">// Application-defined (by default, &#34;dev&#34; or &#34;prod&#34;)</span>
-    DevMode bool   <span class="comment">// if true, RunMode is a development mode.</span>
+    <span id="Config">Config</span>  *<a href="#MergedConfig">MergedConfig</a>
+    <span id="RunMode">RunMode</span> <a href="/pkg/builtin/#string">string</a> <span class="comment">// Application-defined (by default, &#34;dev&#34; or &#34;prod&#34;)</span>
+    <span id="DevMode">DevMode</span> <a href="/pkg/builtin/#bool">bool</a>   <span class="comment">// if true, RunMode is a development mode.</span>
 
     <span class="comment">// Revel installation details</span>
-    RevelPath string <span class="comment">// e.g. &#34;/Users/robfig/gocode/src/revel&#34;</span>
+    <span id="RevelPath">RevelPath</span> <a href="/pkg/builtin/#string">string</a> <span class="comment">// e.g. &#34;/Users/robfig/gocode/src/revel&#34;</span>
 
     <span class="comment">// Where to look for templates and configuration.</span>
     <span class="comment">// Ordered by priority.  (Earlier paths take precedence over later paths.)</span>
-    CodePaths     []string
-    ConfPaths     []string
-    TemplatePaths []string
+    <span id="CodePaths">CodePaths</span>     []<a href="/pkg/builtin/#string">string</a>
+    <span id="ConfPaths">ConfPaths</span>     []<a href="/pkg/builtin/#string">string</a>
+    <span id="TemplatePaths">TemplatePaths</span> []<a href="/pkg/builtin/#string">string</a>
 
-    Modules []Module
+    <span id="Modules">Modules</span> []<a href="#Module">Module</a>
 
     <span class="comment">// Server config.</span>
     <span class="comment">//</span>
@@ -94,20 +113,20 @@ layout: godoc
     <span class="comment">// the current process reality.  For example, if the app is configured for</span>
     <span class="comment">// port 9000, HttpPort will always be 9000, even though in dev mode it is</span>
     <span class="comment">// run on a random port and proxied.</span>
-    HttpPort int    <span class="comment">// e.g. 9000</span>
-    HttpAddr string <span class="comment">// e.g. &#34;&#34;, &#34;127.0.0.1&#34;</span>
+    <span id="HttpPort">HttpPort</span> <a href="/pkg/builtin/#int">int</a>    <span class="comment">// e.g. 9000</span>
+    <span id="HttpAddr">HttpAddr</span> <a href="/pkg/builtin/#string">string</a> <span class="comment">// e.g. &#34;&#34;, &#34;127.0.0.1&#34;</span>
 
     <span class="comment">// All cookies dropped by the framework begin with this prefix.</span>
-    CookiePrefix string
+    <span id="CookiePrefix">CookiePrefix</span> <a href="/pkg/builtin/#string">string</a>
 
     <span class="comment">// Loggers</span>
-    DEFAULT = log.New(os.Stderr, &#34;&#34;, log.Ldate|log.Ltime|log.Lshortfile)
-    TRACE   = DEFAULT
-    INFO    = DEFAULT
-    WARN    = DEFAULT
-    ERROR   = DEFAULT
+    <span id="DEFAULT">DEFAULT</span> = <a href="/pkg/log/">log</a>.<a href="/pkg/log/#New">New</a>(<a href="/pkg/io/ioutil/">ioutil</a>.<a href="/pkg/io/ioutil/#Discard">Discard</a>, &#34;&#34;, <a href="/pkg/log/">log</a>.<a href="/pkg/log/#Ldate">Ldate</a>|<a href="/pkg/log/">log</a>.<a href="/pkg/log/#Ltime">Ltime</a>|<a href="/pkg/log/">log</a>.<a href="/pkg/log/#Lshortfile">Lshortfile</a>)
+    <span id="TRACE">TRACE</span>   = <a href="#DEFAULT">DEFAULT</a>
+    <span id="INFO">INFO</span>    = <a href="#DEFAULT">DEFAULT</a>
+    <span id="WARN">WARN</span>    = <a href="#DEFAULT">DEFAULT</a>
+    <span id="ERROR">ERROR</span>   = <a href="#DEFAULT">DEFAULT</a>
 
-    Initialized bool
+    <span id="Initialized">Initialized</span> <a href="/pkg/builtin/#bool">bool</a>
 )</pre>
 				
 			
@@ -115,15 +134,15 @@ layout: godoc
 		
 			
 			
-			<h2 id="CheckInit">func <a href="../src/revel.html?s=7348:7364#L253">CheckInit</a></h2>
+			<h2 id="CheckInit">func <a href="../src/revel.html?s=7386:7402#L252">CheckInit</a></h2>
 			<pre>func CheckInit()</pre>
 			
 			
 		
 			
 			
-			<h2 id="Init">func <a href="../src/revel.html?s=2092:2135#L68">Init</a></h2>
-			<pre>func Init(mode, importPath, srcPath string)</pre>
+			<h2 id="Init">func <a href="../src/revel.html?s=2170:2213#L69">Init</a></h2>
+			<pre>func Init(mode, importPath, srcPath <a href="/pkg/builtin/#string">string</a>)</pre>
 			<p>
 Init initializes Revel -- it provides paths for getting around the app.
 </p>
@@ -141,9 +160,9 @@ srcPath - the path to the source directory, containing Revel and the app.
 		
 			
 			
-			<h2 id="Module">type <a href="../src/revel.html?s=6156:6209#L215">Module</a></h2>
+			<h2 id="Module">type <a href="../src/revel.html?s=6194:6247#L214">Module</a></h2>
 			<pre>type Module struct {
-    Name, ImportPath, Path string
+    Name, ImportPath, Path <a href="/pkg/builtin/#string">string</a>
 }</pre>
 			
 
@@ -157,10 +176,10 @@ srcPath - the path to the source directory, containing Revel and the app.
 
 			
 		
-		</div>
 	
 
 	
+
 
 
 

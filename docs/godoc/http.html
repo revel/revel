@@ -1,6 +1,7 @@
 ---
 layout: godoc
 ---
+
 <!--
 	Copyright 2009 The Go Authors. All rights reserved.
 	Use of this source code is governed by a BSD-style
@@ -9,13 +10,28 @@ layout: godoc
 <h1>Http</h1>
 
 	
+		
 		<!-- The package's Name is printed as title by the top-level template -->
-                
+		<div id="pkg-overview" class="toggleVisible">
+			<div class="collapsed">
+				<h2 class="toggleButton" title="Click to show Overview section">Overview ¹</h2>
+			</div>
+			<div class="expanded">
+				<h2 class="toggleButton" title="Click to hide Overview section">Overview ¾</h2>
+				
+			</div>
+		</div>
 		
 
-		<h2 id="index">Index</h2>
+		<div id="pkg-index" class="toggleVisible">
+		<div class="collapsed">
+			<h2 class="toggleButton" title="Click to show Index section">Index ¹</h2>
+		</div>
+		<div class="expanded">
+			<h2 class="toggleButton" title="Click to hide Index section">Index ¾</h2>
+
 		<!-- Table of contents for API; must be named manual-nav to turn off auto nav. -->
-		<div id="manual-nav">
+			<div id="manual-nav">
 			<dl>
 			
 			
@@ -69,12 +85,13 @@ layout: godoc
 				
 			
 			
-		</dl>
+			</dl>
+			</div><!-- #manual-nav -->
 
 		
 
 		
-			<h4>Package files</h4>
+			<h4>File</h4>
 			<p>
 			<span style="font-size:90%">
 			
@@ -83,6 +100,8 @@ layout: godoc
 			</span>
 			</p>
 		
+		</div><!-- .expanded -->
+		</div><!-- #pkg-index -->
 
 		
 		
@@ -90,7 +109,7 @@ layout: godoc
 			
 			
 			<h2 id="ResolveContentType">func <a href="../src/http.html?s=805:854#L33">ResolveContentType</a></h2>
-			<pre>func ResolveContentType(req *http.Request) string</pre>
+			<pre>func ResolveContentType(req *<a href="/pkg/net/http/">http</a>.<a href="/pkg/net/http/#Request">Request</a>) <a href="/pkg/builtin/#string">string</a></pre>
 			<p>
 Get the content type.
 e.g. From &#34;multipart/form-data; boundary=--&#34; to &#34;multipart/form-data&#34;
@@ -102,7 +121,7 @@ If none is specified, returns &#34;text/html&#34; by default.
 			
 			
 			<h2 id="ResolveFormat">func <a href="../src/http.html?s=1072:1116#L42">ResolveFormat</a></h2>
-			<pre>func ResolveFormat(req *http.Request) string</pre>
+			<pre>func ResolveFormat(req *<a href="/pkg/net/http/">http</a>.<a href="/pkg/net/http/#Request">Request</a>) <a href="/pkg/builtin/#string">string</a></pre>
 			<p>
 Resolve the accept request header.
 </p>
@@ -114,8 +133,8 @@ Resolve the accept request header.
 			
 			<h2 id="AcceptLanguage">type <a href="../src/http.html?s=1697:1762#L65">AcceptLanguage</a></h2>
 			<pre>type AcceptLanguage struct {
-    Language string
-    Quality  float32
+    Language <a href="/pkg/builtin/#string">string</a>
+    Quality  <a href="/pkg/builtin/#float32">float32</a>
 }</pre>
 			<p>
 A single language from the Accept-Language HTTP header.
@@ -135,7 +154,7 @@ A single language from the Accept-Language HTTP header.
 			
 			
 			<h2 id="AcceptLanguages">type <a href="../src/http.html?s=1818:1855#L71">AcceptLanguages</a></h2>
-			<pre>type AcceptLanguages []AcceptLanguage</pre>
+			<pre>type AcceptLanguages []<a href="#AcceptLanguage">AcceptLanguage</a></pre>
 			<p>
 A collection of sortable AcceptLanguage instances.
 </p>
@@ -150,7 +169,7 @@ A collection of sortable AcceptLanguage instances.
 			
 				
 				<h3 id="ResolveAcceptLanguage">func <a href="../src/http.html?s=2718:2779#L94">ResolveAcceptLanguage</a></h3>
-				<pre>func ResolveAcceptLanguage(req *http.Request) AcceptLanguages</pre>
+				<pre>func ResolveAcceptLanguage(req *<a href="/pkg/net/http/">http</a>.<a href="/pkg/net/http/#Request">Request</a>) <a href="#AcceptLanguages">AcceptLanguages</a></pre>
 				<p>
 Resolve the Accept-Language header value.
 </p>
@@ -169,28 +188,28 @@ See the HTTP header fields specification
 			
 				
 				<h3 id="AcceptLanguages.Len">func (AcceptLanguages) <a href="../src/http.html?s=1857:1892#L73">Len</a></h3>
-				<pre>func (al AcceptLanguages) Len() int</pre>
+				<pre>func (al <a href="#AcceptLanguages">AcceptLanguages</a>) Len() <a href="/pkg/builtin/#int">int</a></pre>
 				
 				
 				
 			
 				
 				<h3 id="AcceptLanguages.Less">func (AcceptLanguages) <a href="../src/http.html?s=2000:2045#L75">Less</a></h3>
-				<pre>func (al AcceptLanguages) Less(i, j int) bool</pre>
+				<pre>func (al <a href="#AcceptLanguages">AcceptLanguages</a>) Less(i, j <a href="/pkg/builtin/#int">int</a>) <a href="/pkg/builtin/#bool">bool</a></pre>
 				
 				
 				
 			
 				
 				<h3 id="AcceptLanguages.String">func (AcceptLanguages) <a href="../src/http.html?s=2087:2128#L76">String</a></h3>
-				<pre>func (al AcceptLanguages) String() string</pre>
+				<pre>func (al <a href="#AcceptLanguages">AcceptLanguages</a>) String() <a href="/pkg/builtin/#string">string</a></pre>
 				
 				
 				
 			
 				
 				<h3 id="AcceptLanguages.Swap">func (AcceptLanguages) <a href="../src/http.html?s=1922:1962#L74">Swap</a></h3>
-				<pre>func (al AcceptLanguages) Swap(i, j int)</pre>
+				<pre>func (al <a href="#AcceptLanguages">AcceptLanguages</a>) Swap(i, j <a href="/pkg/builtin/#int">int</a>)</pre>
 				
 				
 				
@@ -200,11 +219,11 @@ See the HTTP header fields specification
 			
 			<h2 id="Request">type <a href="../src/http.html?s=85:264#L2">Request</a></h2>
 			<pre>type Request struct {
-    *http.Request
-    ContentType     string
-    Format          string <span class="comment">// &#34;html&#34;, &#34;xml&#34;, &#34;json&#34;, or &#34;text&#34;</span>
-    AcceptLanguages AcceptLanguages
-    Locale          string
+    *<a href="/pkg/net/http/">http</a>.<a href="/pkg/net/http/#Request">Request</a>
+    ContentType     <a href="/pkg/builtin/#string">string</a>
+    Format          <a href="/pkg/builtin/#string">string</a> <span class="comment">// &#34;html&#34;, &#34;xml&#34;, &#34;json&#34;, or &#34;text&#34;</span>
+    AcceptLanguages <a href="#AcceptLanguages">AcceptLanguages</a>
+    Locale          <a href="/pkg/builtin/#string">string</a>
 }</pre>
 			
 
@@ -217,7 +236,7 @@ See the HTTP header fields specification
 			
 				
 				<h3 id="NewRequest">func <a href="../src/http.html?s=436:477#L21">NewRequest</a></h3>
-				<pre>func NewRequest(r *http.Request) *Request</pre>
+				<pre>func NewRequest(r *<a href="/pkg/net/http/">http</a>.<a href="/pkg/net/http/#Request">Request</a>) *<a href="#Request">Request</a></pre>
 				
 				
 			
@@ -228,10 +247,10 @@ See the HTTP header fields specification
 			
 			<h2 id="Response">type <a href="../src/http.html?s=266:353#L10">Response</a></h2>
 			<pre>type Response struct {
-    Status      int
-    ContentType string
+    Status      <a href="/pkg/builtin/#int">int</a>
+    ContentType <a href="/pkg/builtin/#string">string</a>
 
-    Out http.ResponseWriter
+    Out <a href="/pkg/net/http/">http</a>.<a href="/pkg/net/http/#ResponseWriter">ResponseWriter</a>
 }</pre>
 			
 
@@ -244,17 +263,17 @@ See the HTTP header fields specification
 			
 				
 				<h3 id="NewResponse">func <a href="../src/http.html?s=355:404#L17">NewResponse</a></h3>
-				<pre>func NewResponse(w http.ResponseWriter) *Response</pre>
+				<pre>func NewResponse(w <a href="/pkg/net/http/">http</a>.<a href="/pkg/net/http/#ResponseWriter">ResponseWriter</a>) *<a href="#Response">Response</a></pre>
 				
 				
 			
 
 			
 		
-		</div>
 	
 
 	
+
 
 
 

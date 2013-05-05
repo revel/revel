@@ -1,6 +1,7 @@
 ---
 layout: godoc
 ---
+
 <!--
 	Copyright 2009 The Go Authors. All rights reserved.
 	Use of this source code is governed by a BSD-style
@@ -9,13 +10,28 @@ layout: godoc
 <h1>Watcher</h1>
 
 	
+		
 		<!-- The package's Name is printed as title by the top-level template -->
-                
+		<div id="pkg-overview" class="toggleVisible">
+			<div class="collapsed">
+				<h2 class="toggleButton" title="Click to show Overview section">Overview ¹</h2>
+			</div>
+			<div class="expanded">
+				<h2 class="toggleButton" title="Click to hide Overview section">Overview ¾</h2>
+				
+			</div>
+		</div>
 		
 
-		<h2 id="index">Index</h2>
+		<div id="pkg-index" class="toggleVisible">
+		<div class="collapsed">
+			<h2 class="toggleButton" title="Click to show Index section">Index ¹</h2>
+		</div>
+		<div class="expanded">
+			<h2 class="toggleButton" title="Click to hide Index section">Index ¾</h2>
+
 		<!-- Table of contents for API; must be named manual-nav to turn off auto nav. -->
-		<div id="manual-nav">
+			<div id="manual-nav">
 			<dl>
 			
 			
@@ -51,12 +67,13 @@ layout: godoc
 				
 			
 			
-		</dl>
+			</dl>
+			</div><!-- #manual-nav -->
 
 		
 
 		
-			<h4>Package files</h4>
+			<h4>File</h4>
 			<p>
 			<span style="font-size:90%">
 			
@@ -65,6 +82,8 @@ layout: godoc
 			</span>
 			</p>
 		
+		</div><!-- .expanded -->
+		</div><!-- #pkg-index -->
 
 		
 		
@@ -74,7 +93,7 @@ layout: godoc
 			
 			<h2 id="Auditor">type <a href="../src/watcher.html?s=621:677#L17">Auditor</a></h2>
 			<pre>type Auditor interface {
-    OnRefresh(listener Listener)
+    OnRefresh(listener <a href="#Listener">Listener</a>)
 }</pre>
 			<p>
 Auditor gets notified each time a listener gets refreshed.
@@ -95,9 +114,9 @@ Auditor gets notified each time a listener gets refreshed.
 			
 			<h2 id="DiscerningListener">type <a href="../src/watcher.html?s=444:557#L10">DiscerningListener</a></h2>
 			<pre>type DiscerningListener interface {
-    Listener
-    WatchDir(info os.FileInfo) bool
-    WatchFile(basename string) bool
+    <a href="#Listener">Listener</a>
+    WatchDir(info <a href="/pkg/os/">os</a>.<a href="/pkg/os/#FileInfo">FileInfo</a>) <a href="/pkg/builtin/#bool">bool</a>
+    WatchFile(basename <a href="/pkg/builtin/#string">string</a>) <a href="/pkg/builtin/#bool">bool</a>
 }</pre>
 			<p>
 DiscerningListener allows the receiver to selectively watch files.
@@ -120,7 +139,7 @@ DiscerningListener allows the receiver to selectively watch files.
 			<pre>type Listener interface {
     <span class="comment">// Refresh is invoked by the watcher on relevant filesystem events.</span>
     <span class="comment">// If the listener returns an error, it is served to the user on the current request.</span>
-    Refresh() *Error
+    Refresh() *<a href="#Error">Error</a>
 }</pre>
 			<p>
 Listener is an interface for receivers of filesystem events.
@@ -158,7 +177,7 @@ directory.
 			
 				
 				<h3 id="NewWatcher">func <a href="../src/watcher.html?s=988:1014#L33">NewWatcher</a></h3>
-				<pre>func NewWatcher() *Watcher</pre>
+				<pre>func NewWatcher() *<a href="#Watcher">Watcher</a></pre>
 				
 				
 			
@@ -166,7 +185,7 @@ directory.
 			
 				
 				<h3 id="Watcher.Listen">func (*Watcher) <a href="../src/watcher.html?s=1163:1223#L41">Listen</a></h3>
-				<pre>func (w *Watcher) Listen(listener Listener, roots ...string)</pre>
+				<pre>func (w *<a href="#Watcher">Watcher</a>) Listen(listener <a href="#Listener">Listener</a>, roots ...<a href="/pkg/builtin/#string">string</a>)</pre>
 				<p>
 Listen registers for events within the given root directories (recursively).
 </p>
@@ -176,7 +195,7 @@ Listen registers for events within the given root directories (recursively).
 			
 				
 				<h3 id="Watcher.Notify">func (*Watcher) <a href="../src/watcher.html?s=2799:2832#L102">Notify</a></h3>
-				<pre>func (w *Watcher) Notify() *Error</pre>
+				<pre>func (w *<a href="#Watcher">Watcher</a>) Notify() *<a href="#Error">Error</a></pre>
 				<p>
 Notify causes the watcher to forward any change events to listeners.
 It returns the first (if any) error returned.
@@ -186,10 +205,10 @@ It returns the first (if any) error returned.
 				
 			
 		
-		</div>
 	
 
 	
+
 
 
 

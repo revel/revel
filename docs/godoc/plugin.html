@@ -1,6 +1,7 @@
 ---
 layout: godoc
 ---
+
 <!--
 	Copyright 2009 The Go Authors. All rights reserved.
 	Use of this source code is governed by a BSD-style
@@ -9,13 +10,28 @@ layout: godoc
 <h1>Plugin</h1>
 
 	
+		
 		<!-- The package's Name is printed as title by the top-level template -->
-                
+		<div id="pkg-overview" class="toggleVisible">
+			<div class="collapsed">
+				<h2 class="toggleButton" title="Click to show Overview section">Overview ¹</h2>
+			</div>
+			<div class="expanded">
+				<h2 class="toggleButton" title="Click to hide Overview section">Overview ¾</h2>
+				
+			</div>
+		</div>
 		
 
-		<h2 id="index">Index</h2>
+		<div id="pkg-index" class="toggleVisible">
+		<div class="collapsed">
+			<h2 class="toggleButton" title="Click to show Index section">Index ¹</h2>
+		</div>
+		<div class="expanded">
+			<h2 class="toggleButton" title="Click to hide Index section">Index ¾</h2>
+
 		<!-- Table of contents for API; must be named manual-nav to turn off auto nav. -->
-		<div id="manual-nav">
+			<div id="manual-nav">
 			<dl>
 			
 			
@@ -76,12 +92,13 @@ layout: godoc
 				
 			
 			
-		</dl>
+			</dl>
+			</div><!-- #manual-nav -->
 
 		
 
 		
-			<h4>Package files</h4>
+			<h4>File</h4>
 			<p>
 			<span style="font-size:90%">
 			
@@ -90,6 +107,8 @@ layout: godoc
 			</span>
 			</p>
 		
+		</div><!-- .expanded -->
+		</div><!-- #pkg-index -->
 
 		
 		
@@ -97,7 +116,7 @@ layout: godoc
 			
 			
 			<h2 id="RegisterPlugin">func <a href="../src/plugin.html?s=1266:1295#L23">RegisterPlugin</a></h2>
-			<pre>func RegisterPlugin(p Plugin)</pre>
+			<pre>func RegisterPlugin(p <a href="#Plugin">Plugin</a>)</pre>
 			
 			
 		
@@ -122,42 +141,42 @@ It provides default (empty) implementations for all the required methods.
 			
 				
 				<h3 id="EmptyPlugin.AfterRequest">func (EmptyPlugin) <a href="../src/plugin.html?s=999:1047#L15">AfterRequest</a></h3>
-				<pre>func (p EmptyPlugin) AfterRequest(c *Controller)</pre>
+				<pre>func (p <a href="#EmptyPlugin">EmptyPlugin</a>) AfterRequest(c *<a href="#Controller">Controller</a>)</pre>
 				
 				
 				
 			
 				
 				<h3 id="EmptyPlugin.BeforeRequest">func (EmptyPlugin) <a href="../src/plugin.html?s=931:980#L14">BeforeRequest</a></h3>
-				<pre>func (p EmptyPlugin) BeforeRequest(c *Controller)</pre>
+				<pre>func (p <a href="#EmptyPlugin">EmptyPlugin</a>) BeforeRequest(c *<a href="#Controller">Controller</a>)</pre>
 				
 				
 				
 			
 				
 				<h3 id="EmptyPlugin.Finally">func (EmptyPlugin) <a href="../src/plugin.html?s=1135:1178#L17">Finally</a></h3>
-				<pre>func (p EmptyPlugin) Finally(c *Controller)</pre>
+				<pre>func (p <a href="#EmptyPlugin">EmptyPlugin</a>) Finally(c *<a href="#Controller">Controller</a>)</pre>
 				
 				
 				
 			
 				
 				<h3 id="EmptyPlugin.OnAppStart">func (EmptyPlugin) <a href="../src/plugin.html?s=795:828#L12">OnAppStart</a></h3>
-				<pre>func (p EmptyPlugin) OnAppStart()</pre>
+				<pre>func (p <a href="#EmptyPlugin">EmptyPlugin</a>) OnAppStart()</pre>
 				
 				
 				
 			
 				
 				<h3 id="EmptyPlugin.OnException">func (EmptyPlugin) <a href="../src/plugin.html?s=1067:1131#L16">OnException</a></h3>
-				<pre>func (p EmptyPlugin) OnException(c *Controller, err interface{})</pre>
+				<pre>func (p <a href="#EmptyPlugin">EmptyPlugin</a>) OnException(c *<a href="#Controller">Controller</a>, err interface{})</pre>
 				
 				
 				
 			
 				
 				<h3 id="EmptyPlugin.OnRoutesLoaded">func (EmptyPlugin) <a href="../src/plugin.html?s=863:914#L13">OnRoutesLoaded</a></h3>
-				<pre>func (p EmptyPlugin) OnRoutesLoaded(router *Router)</pre>
+				<pre>func (p <a href="#EmptyPlugin">EmptyPlugin</a>) OnRoutesLoaded(router *<a href="#Router">Router</a>)</pre>
 				
 				
 				
@@ -170,15 +189,15 @@ It provides default (empty) implementations for all the required methods.
     <span class="comment">// Called on server startup (and on each code reload).</span>
     OnAppStart()
     <span class="comment">// Called after the router has finished configuration.</span>
-    OnRoutesLoaded(router *Router)
+    OnRoutesLoaded(router *<a href="#Router">Router</a>)
     <span class="comment">// Called before every request.</span>
-    BeforeRequest(c *Controller)
+    BeforeRequest(c *<a href="#Controller">Controller</a>)
     <span class="comment">// Called after every non-panicking request, before the Result has been applied.</span>
-    AfterRequest(c *Controller)
+    AfterRequest(c *<a href="#Controller">Controller</a>)
     <span class="comment">// Called when a panic exits an action, with the recovered error value.</span>
-    OnException(c *Controller, err interface{})
+    OnException(c *<a href="#Controller">Controller</a>, err interface{})
     <span class="comment">// Called after every request (panic or not), after the Result has been applied.</span>
-    Finally(c *Controller)
+    Finally(c *<a href="#Controller">Controller</a>)
 }</pre>
 			<p>
 An plugin that allows the user to inject behavior at various points in the request cycle.
@@ -198,7 +217,7 @@ An plugin that allows the user to inject behavior at various points in the reque
 			
 			
 			<h2 id="PluginCollection">type <a href="../src/plugin.html?s=1204:1234#L19">PluginCollection</a></h2>
-			<pre>type PluginCollection []Plugin</pre>
+			<pre>type PluginCollection []<a href="#Plugin">Plugin</a></pre>
 			
 
 			
@@ -212,51 +231,51 @@ An plugin that allows the user to inject behavior at various points in the reque
 			
 				
 				<h3 id="PluginCollection.AfterRequest">func (PluginCollection) <a href="../src/plugin.html?s=1676:1735#L45">AfterRequest</a></h3>
-				<pre>func (plugins PluginCollection) AfterRequest(c *Controller)</pre>
+				<pre>func (plugins <a href="#PluginCollection">PluginCollection</a>) AfterRequest(c *<a href="#Controller">Controller</a>)</pre>
 				
 				
 				
 			
 				
 				<h3 id="PluginCollection.BeforeRequest">func (PluginCollection) <a href="../src/plugin.html?s=1557:1617#L39">BeforeRequest</a></h3>
-				<pre>func (plugins PluginCollection) BeforeRequest(c *Controller)</pre>
+				<pre>func (plugins <a href="#PluginCollection">PluginCollection</a>) BeforeRequest(c *<a href="#Controller">Controller</a>)</pre>
 				
 				
 				
 			
 				
 				<h3 id="PluginCollection.Finally">func (PluginCollection) <a href="../src/plugin.html?s=1930:1984#L57">Finally</a></h3>
-				<pre>func (plugins PluginCollection) Finally(c *Controller)</pre>
+				<pre>func (plugins <a href="#PluginCollection">PluginCollection</a>) Finally(c *<a href="#Controller">Controller</a>)</pre>
 				
 				
 				
 			
 				
 				<h3 id="PluginCollection.OnAppStart">func (PluginCollection) <a href="../src/plugin.html?s=1331:1375#L27">OnAppStart</a></h3>
-				<pre>func (plugins PluginCollection) OnAppStart()</pre>
+				<pre>func (plugins <a href="#PluginCollection">PluginCollection</a>) OnAppStart()</pre>
 				
 				
 				
 			
 				
 				<h3 id="PluginCollection.OnException">func (PluginCollection) <a href="../src/plugin.html?s=1793:1868#L51">OnException</a></h3>
-				<pre>func (plugins PluginCollection) OnException(c *Controller, err interface{})</pre>
+				<pre>func (plugins <a href="#PluginCollection">PluginCollection</a>) OnException(c *<a href="#Controller">Controller</a>, err interface{})</pre>
 				
 				
 				
 			
 				
 				<h3 id="PluginCollection.OnRoutesLoaded">func (PluginCollection) <a href="../src/plugin.html?s=1430:1492#L33">OnRoutesLoaded</a></h3>
-				<pre>func (plugins PluginCollection) OnRoutesLoaded(router *Router)</pre>
+				<pre>func (plugins <a href="#PluginCollection">PluginCollection</a>) OnRoutesLoaded(router *<a href="#Router">Router</a>)</pre>
 				
 				
 				
 			
 		
-		</div>
 	
 
 	
+
 
 
 

@@ -1,6 +1,7 @@
 ---
 layout: godoc
 ---
+
 <!--
 	Copyright 2009 The Go Authors. All rights reserved.
 	Use of this source code is governed by a BSD-style
@@ -9,13 +10,28 @@ layout: godoc
 <h1>Errors</h1>
 
 	
+		
 		<!-- The package's Name is printed as title by the top-level template -->
-                
+		<div id="pkg-overview" class="toggleVisible">
+			<div class="collapsed">
+				<h2 class="toggleButton" title="Click to show Overview section">Overview ¹</h2>
+			</div>
+			<div class="expanded">
+				<h2 class="toggleButton" title="Click to hide Overview section">Overview ¾</h2>
+				
+			</div>
+		</div>
 		
 
-		<h2 id="index">Index</h2>
+		<div id="pkg-index" class="toggleVisible">
+		<div class="collapsed">
+			<h2 class="toggleButton" title="Click to show Index section">Index ¹</h2>
+		</div>
+		<div class="expanded">
+			<h2 class="toggleButton" title="Click to hide Index section">Index ¾</h2>
+
 		<!-- Table of contents for API; must be named manual-nav to turn off auto nav. -->
-		<div id="manual-nav">
+			<div id="manual-nav">
 			<dl>
 			
 			
@@ -36,12 +52,13 @@ layout: godoc
 				
 			
 			
-		</dl>
+			</dl>
+			</div><!-- #manual-nav -->
 
 		
 
 		
-			<h4>Package files</h4>
+			<h4>File</h4>
 			<p>
 			<span style="font-size:90%">
 			
@@ -50,6 +67,8 @@ layout: godoc
 			</span>
 			</p>
 		
+		</div><!-- .expanded -->
+		</div><!-- #pkg-index -->
 
 		
 		
@@ -59,12 +78,12 @@ layout: godoc
 			
 			<h2 id="Error">type <a href="../src/errors.html?s=130:640#L1">Error</a></h2>
 			<pre>type Error struct {
-    SourceType               string   <span class="comment">// The type of source that failed to build.</span>
-    Title, Path, Description string   <span class="comment">// Description of the error, as presented to the user.</span>
-    Line, Column             int      <span class="comment">// Where the error was encountered.</span>
-    SourceLines              []string <span class="comment">// The entire source file, split into lines.</span>
-    Stack                    string   <span class="comment">// The raw stack trace string from debug.Stack().</span>
-    MetaError                string   <span class="comment">// Error that occurred producing the error page.</span>
+    SourceType               <a href="/pkg/builtin/#string">string</a>   <span class="comment">// The type of source that failed to build.</span>
+    Title, Path, Description <a href="/pkg/builtin/#string">string</a>   <span class="comment">// Description of the error, as presented to the user.</span>
+    Line, Column             <a href="/pkg/builtin/#int">int</a>      <span class="comment">// Where the error was encountered.</span>
+    SourceLines              []<a href="/pkg/builtin/#string">string</a> <span class="comment">// The entire source file, split into lines.</span>
+    Stack                    <a href="/pkg/builtin/#string">string</a>   <span class="comment">// The raw stack trace string from debug.Stack().</span>
+    MetaError                <a href="/pkg/builtin/#string">string</a>   <span class="comment">// Error that occurred producing the error page.</span>
 }</pre>
 			<p>
 An error description, used as an argument to the error template.
@@ -80,7 +99,7 @@ An error description, used as an argument to the error template.
 			
 				
 				<h3 id="NewErrorFromPanic">func <a href="../src/errors.html?s=952:998#L19">NewErrorFromPanic</a></h3>
-				<pre>func NewErrorFromPanic(err interface{}) *Error</pre>
+				<pre>func NewErrorFromPanic(err interface{}) *<a href="#Error">Error</a></pre>
 				<p>
 Find the deepest stack from in uesr code and provide a code listing of
 that, on the line that eventually triggered the panic.  Returns nil if no
@@ -93,7 +112,7 @@ relevant stack frame can be found.
 			
 				
 				<h3 id="Error.ContextSource">func (*Error) <a href="../src/errors.html?s=2484:2528#L74">ContextSource</a></h3>
-				<pre>func (e *Error) ContextSource() []sourceLine</pre>
+				<pre>func (e *<a href="#Error">Error</a>) ContextSource() []<a href="#sourceLine">sourceLine</a></pre>
 				<p>
 Returns a snippet of the source around where the error occurred.
 </p>
@@ -103,7 +122,7 @@ Returns a snippet of the source around where the error occurred.
 			
 				
 				<h3 id="Error.Error">func (*Error) <a href="../src/errors.html?s=2016:2046#L53">Error</a></h3>
-				<pre>func (e *Error) Error() string</pre>
+				<pre>func (e *<a href="#Error">Error</a>) Error() <a href="/pkg/builtin/#string">string</a></pre>
 				<p>
 Construct a plaintext version of the error, taking account that fields are optionally set.
 Returns e.g. Compilation Error (in views/header.html:51): expected right delim in end; got &#34;}&#34;
@@ -113,10 +132,10 @@ Returns e.g. Compilation Error (in views/header.html:51): expected right delim i
 				
 			
 		
-		</div>
 	
 
 	
+
 
 
 

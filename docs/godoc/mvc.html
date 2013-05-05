@@ -1,6 +1,7 @@
 ---
 layout: godoc
 ---
+
 <!--
 	Copyright 2009 The Go Authors. All rights reserved.
 	Use of this source code is governed by a BSD-style
@@ -9,13 +10,28 @@ layout: godoc
 <h1>Mvc</h1>
 
 	
+		
 		<!-- The package's Name is printed as title by the top-level template -->
-                
+		<div id="pkg-overview" class="toggleVisible">
+			<div class="collapsed">
+				<h2 class="toggleButton" title="Click to show Overview section">Overview ¹</h2>
+			</div>
+			<div class="expanded">
+				<h2 class="toggleButton" title="Click to hide Overview section">Overview ¾</h2>
+				
+			</div>
+		</div>
 		
 
-		<h2 id="index">Index</h2>
+		<div id="pkg-index" class="toggleVisible">
+		<div class="collapsed">
+			<h2 class="toggleButton" title="Click to show Index section">Index ¹</h2>
+		</div>
+		<div class="expanded">
+			<h2 class="toggleButton" title="Click to hide Index section">Index ¾</h2>
+
 		<!-- Table of contents for API; must be named manual-nav to turn off auto nav. -->
-		<div id="manual-nav">
+			<div id="manual-nav">
 			<dl>
 			
 			
@@ -52,12 +68,13 @@ layout: godoc
 				
 			
 			
-		</dl>
+			</dl>
+			</div><!-- #manual-nav -->
 
 		
 
 		
-			<h4>Package files</h4>
+			<h4>File</h4>
 			<p>
 			<span style="font-size:90%">
 			
@@ -66,6 +83,8 @@ layout: godoc
 			</span>
 			</p>
 		
+		</div><!-- .expanded -->
+		</div><!-- #pkg-index -->
 
 		
 		
@@ -73,7 +92,7 @@ layout: godoc
 			
 			
 			<h2 id="NotFound">func <a href="../src/mvc.html?s=2976:3031#L83">NotFound</a></h2>
-			<pre>func NotFound(req *Request, resp *Response, msg string)</pre>
+			<pre>func NotFound(req *<a href="#Request">Request</a>, resp *<a href="#Response">Response</a>, msg <a href="/pkg/builtin/#string">string</a>)</pre>
 			<p>
 This function is useful if there is no relevant Controller available.
 It writes the 404 response immediately.
@@ -84,7 +103,7 @@ It writes the 404 response immediately.
 			
 			
 			<h2 id="RegisterController">func <a href="../src/mvc.html?s=4468:4529#L144">RegisterController</a></h2>
-			<pre>func RegisterController(c interface{}, methods []*MethodType)</pre>
+			<pre>func RegisterController(c interface{}, methods []*<a href="#MethodType">MethodType</a>)</pre>
 			<p>
 Register a Controller and its Methods with Revel.
 </p>
@@ -94,7 +113,7 @@ Register a Controller and its Methods with Revel.
 			
 			
 			<h2 id="RenderError">func <a href="../src/mvc.html?s=2736:2793#L77">RenderError</a></h2>
-			<pre>func RenderError(req *Request, resp *Response, err error)</pre>
+			<pre>func RenderError(req *<a href="#Request">Request</a>, resp *<a href="#Response">Response</a>, err <a href="/pkg/builtin/#error">error</a>)</pre>
 			
 			
 		
@@ -103,8 +122,8 @@ Register a Controller and its Methods with Revel.
 			
 			<h2 id="ControllerType">type <a href="../src/mvc.html?s=3823:3898#L113">ControllerType</a></h2>
 			<pre>type ControllerType struct {
-    Type    reflect.Type
-    Methods []*MethodType
+    Type    <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Type">Type</a>
+    Methods []*<a href="#MethodType">MethodType</a>
 }</pre>
 			
 
@@ -117,7 +136,7 @@ Register a Controller and its Methods with Revel.
 			
 				
 				<h3 id="LookupControllerType">func <a href="../src/mvc.html?s=5043:5097#L162">LookupControllerType</a></h3>
-				<pre>func LookupControllerType(name string) *ControllerType</pre>
+				<pre>func LookupControllerType(name <a href="/pkg/builtin/#string">string</a>) *<a href="#ControllerType">ControllerType</a></pre>
 				
 				
 			
@@ -125,7 +144,7 @@ Register a Controller and its Methods with Revel.
 			
 				
 				<h3 id="ControllerType.Method">func (*ControllerType) <a href="../src/mvc.html?s=4154:4211#L131">Method</a></h3>
-				<pre>func (ct *ControllerType) Method(name string) *MethodType</pre>
+				<pre>func (ct *<a href="#ControllerType">ControllerType</a>) Method(name <a href="/pkg/builtin/#string">string</a>) *<a href="#MethodType">MethodType</a></pre>
 				<p>
 Searches for a given exported method (case insensitive)
 </p>
@@ -138,8 +157,8 @@ Searches for a given exported method (case insensitive)
 			
 			<h2 id="MethodArg">type <a href="../src/mvc.html?s=4036:4093#L125">MethodArg</a></h2>
 			<pre>type MethodArg struct {
-    Name string
-    Type reflect.Type
+    Name <a href="/pkg/builtin/#string">string</a>
+    Type <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Type">Type</a>
 }</pre>
 			
 
@@ -157,9 +176,9 @@ Searches for a given exported method (case insensitive)
 			
 			<h2 id="MethodType">type <a href="../src/mvc.html?s=3900:4034#L118">MethodType</a></h2>
 			<pre>type MethodType struct {
-    Name           string
-    Args           []*MethodArg
-    RenderArgNames map[int][]string
+    Name           <a href="/pkg/builtin/#string">string</a>
+    Args           []*<a href="#MethodArg">MethodArg</a>
+    RenderArgNames map[<a href="/pkg/builtin/#int">int</a>][]<a href="/pkg/builtin/#string">string</a>
     <span class="comment">// contains filtered or unexported fields</span>
 }</pre>
 			
@@ -174,10 +193,10 @@ Searches for a given exported method (case insensitive)
 
 			
 		
-		</div>
 	
 
 	
+
 
 
 

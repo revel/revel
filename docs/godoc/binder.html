@@ -1,6 +1,7 @@
 ---
 layout: godoc
 ---
+
 <!--
 	Copyright 2009 The Go Authors. All rights reserved.
 	Use of this source code is governed by a BSD-style
@@ -9,19 +10,34 @@ layout: godoc
 <h1>Binder</h1>
 
 	
+		
 		<!-- The package's Name is printed as title by the top-level template -->
-                
+		<div id="pkg-overview" class="toggleVisible">
+			<div class="collapsed">
+				<h2 class="toggleButton" title="Click to show Overview section">Overview ¹</h2>
+			</div>
+			<div class="expanded">
+				<h2 class="toggleButton" title="Click to hide Overview section">Overview ¾</h2>
+				
+			</div>
+		</div>
 		
 
-		<h2 id="index">Index</h2>
+		<div id="pkg-index" class="toggleVisible">
+		<div class="collapsed">
+			<h2 class="toggleButton" title="Click to show Index section">Index ¹</h2>
+		</div>
+		<div class="expanded">
+			<h2 class="toggleButton" title="Click to hide Index section">Index ¾</h2>
+
 		<!-- Table of contents for API; must be named manual-nav to turn off auto nav. -->
-		<div id="manual-nav">
+			<div id="manual-nav">
 			<dl>
 			
-				<dd><a href="#constants">Constants</a></dd>
+				<dd><a href="#pkg-constants">Constants</a></dd>
 			
 			
-				<dd><a href="#variables">Variables</a></dd>
+				<dd><a href="#pkg-variables">Variables</a></dd>
 			
 			
 				
@@ -33,22 +49,26 @@ layout: godoc
 				
 				<dd><a href="#BindValue">func BindValue(val string, typ reflect.Type) reflect.Value</a></dd>
 			
+				
+				<dd><a href="#Unbind">func Unbind(output map[string]string, name string, val interface{})</a></dd>
+			
+				
+				<dd><a href="#ValueBinder">func ValueBinder(f func(value string, typ reflect.Type) reflect.Value) func(*Params, string, reflect.Type) reflect.Value</a></dd>
+			
 			
 				
 				<dd><a href="#Binder">type Binder</a></dd>
 				
-					
-					<dd>&nbsp; &nbsp; <a href="#ValueBinder">func ValueBinder(f func(value string, typ reflect.Type) reflect.Value) Binder</a></dd>
-				
 				
 			
 			
-		</dl>
+			</dl>
+			</div><!-- #manual-nav -->
 
 		
 
 		
-			<h4>Package files</h4>
+			<h4>File</h4>
 			<p>
 			<span style="font-size:90%">
 			
@@ -57,32 +77,150 @@ layout: godoc
 			</span>
 			</p>
 		
+		</div><!-- .expanded -->
+		</div><!-- #pkg-index -->
 
 		
-			<h2 id="constants">Constants</h2>
+			<h2 id="pkg-constants">Constants</h2>
 			
 				<pre>const (
-    DEFAULT_DATE_FORMAT     = &#34;2006-01-02&#34;
-    DEFAULT_DATETIME_FORMAT = &#34;2006-01-02 15:04&#34;
+    <span id="DEFAULT_DATE_FORMAT">DEFAULT_DATE_FORMAT</span>     = &#34;2006-01-02&#34;
+    <span id="DEFAULT_DATETIME_FORMAT">DEFAULT_DATETIME_FORMAT</span> = &#34;2006-01-02 15:04&#34;
 )</pre>
 				
 			
 		
 		
-			<h2 id="variables">Variables</h2>
+			<h2 id="pkg-variables">Variables</h2>
 			
 				<pre>var (
     <span class="comment">// These are the lookups to find a Binder for any type of data.</span>
     <span class="comment">// The most specific binder found will be used (Type before Kind)</span>
-    TypeBinders = make(map[reflect.Type]Binder)
-    KindBinders = make(map[reflect.Kind]Binder)
+    <span id="TypeBinders">TypeBinders</span> = <a href="/pkg/builtin/#make">make</a>(map[<a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Type">Type</a>]<a href="#Binder">Binder</a>)
+    <span id="KindBinders">KindBinders</span> = <a href="/pkg/builtin/#make">make</a>(map[<a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Kind">Kind</a>]<a href="#Binder">Binder</a>)
 
     <span class="comment">// Applications can add custom time formats to this array, and they will be</span>
     <span class="comment">// automatically attempted when binding a time.Time.</span>
-    TimeFormats = []string{}
+    <span id="TimeFormats">TimeFormats</span> = []<a href="/pkg/builtin/#string">string</a>{}
 
-    DateFormat     string
-    DateTimeFormat string
+    <span id="DateFormat">DateFormat</span>     <a href="/pkg/builtin/#string">string</a>
+    <span id="DateTimeFormat">DateTimeFormat</span> <a href="/pkg/builtin/#string">string</a>
+
+    <span id="IntBinder">IntBinder</span> = <a href="#Binder">Binder</a>{
+        <a href="#Bind">Bind</a>: <a href="#ValueBinder">ValueBinder</a>(func(val <a href="/pkg/builtin/#string">string</a>, typ <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Type">Type</a>) <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Value">Value</a> {
+            if <a href="/pkg/builtin/#len">len</a>(<a href="#val">val</a>) == 0 {
+                return <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Zero">Zero</a>(<a href="#typ">typ</a>)
+            }
+            <span id="intValue">intValue</span>, <span id="err">err</span> := <a href="/pkg/strconv/">strconv</a>.<a href="/pkg/strconv/#ParseInt">ParseInt</a>(<a href="#val">val</a>, 10, 64)
+            if <a href="#err">err</a> != <a href="/pkg/builtin/#nil">nil</a> {
+                <a href="#WARN">WARN</a>.<a href="#Println">Println</a>(<a href="#err">err</a>)
+                return <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Zero">Zero</a>(<a href="#typ">typ</a>)
+            }
+            <span id="pValue">pValue</span> := <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#New">New</a>(<a href="#typ">typ</a>)
+            <a href="#pValue">pValue</a>.<a href="#Elem">Elem</a>().<a href="#SetInt">SetInt</a>(<a href="#intValue">intValue</a>)
+            return <a href="#pValue">pValue</a>.<a href="#Elem">Elem</a>()
+        }),
+        <a href="#Unbind">Unbind</a>: func(output map[<a href="/pkg/builtin/#string">string</a>]<a href="/pkg/builtin/#string">string</a>, key <a href="/pkg/builtin/#string">string</a>, val interface{}) {
+            <a href="#output">output</a>[<a href="#key">key</a>] = <a href="/pkg/fmt/">fmt</a>.<a href="/pkg/fmt/#Sprintf">Sprintf</a>(&#34;%d&#34;, <a href="#val">val</a>)
+        },
+    }
+
+    <span id="UintBinder">UintBinder</span> = <a href="#Binder">Binder</a>{
+        <a href="#Bind">Bind</a>: <a href="#ValueBinder">ValueBinder</a>(func(val <a href="/pkg/builtin/#string">string</a>, typ <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Type">Type</a>) <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Value">Value</a> {
+            if <a href="/pkg/builtin/#len">len</a>(<a href="#val">val</a>) == 0 {
+                return <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Zero">Zero</a>(<a href="#typ">typ</a>)
+            }
+            <span id="uintValue">uintValue</span>, <span id="err">err</span> := <a href="/pkg/strconv/">strconv</a>.<a href="/pkg/strconv/#ParseUint">ParseUint</a>(<a href="#val">val</a>, 10, 64)
+            if <a href="#err">err</a> != <a href="/pkg/builtin/#nil">nil</a> {
+                <a href="#WARN">WARN</a>.<a href="#Println">Println</a>(<a href="#err">err</a>)
+                return <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Zero">Zero</a>(<a href="#typ">typ</a>)
+            }
+            <span id="pValue">pValue</span> := <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#New">New</a>(<a href="#typ">typ</a>)
+            <a href="#pValue">pValue</a>.<a href="#Elem">Elem</a>().<a href="#SetUint">SetUint</a>(<a href="#uintValue">uintValue</a>)
+            return <a href="#pValue">pValue</a>.<a href="#Elem">Elem</a>()
+        }),
+        <a href="#Unbind">Unbind</a>: func(output map[<a href="/pkg/builtin/#string">string</a>]<a href="/pkg/builtin/#string">string</a>, key <a href="/pkg/builtin/#string">string</a>, val interface{}) {
+            <a href="#output">output</a>[<a href="#key">key</a>] = <a href="/pkg/fmt/">fmt</a>.<a href="/pkg/fmt/#Sprintf">Sprintf</a>(&#34;%d&#34;, <a href="#val">val</a>)
+        },
+    }
+
+    <span id="FloatBinder">FloatBinder</span> = <a href="#Binder">Binder</a>{
+        <a href="#Bind">Bind</a>: <a href="#ValueBinder">ValueBinder</a>(func(val <a href="/pkg/builtin/#string">string</a>, typ <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Type">Type</a>) <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Value">Value</a> {
+            if <a href="/pkg/builtin/#len">len</a>(<a href="#val">val</a>) == 0 {
+                return <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Zero">Zero</a>(<a href="#typ">typ</a>)
+            }
+            <span id="floatValue">floatValue</span>, <span id="err">err</span> := <a href="/pkg/strconv/">strconv</a>.<a href="/pkg/strconv/#ParseFloat">ParseFloat</a>(<a href="#val">val</a>, 64)
+            if <a href="#err">err</a> != <a href="/pkg/builtin/#nil">nil</a> {
+                <a href="#WARN">WARN</a>.<a href="#Println">Println</a>(<a href="#err">err</a>)
+                return <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Zero">Zero</a>(<a href="#typ">typ</a>)
+            }
+            <span id="pValue">pValue</span> := <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#New">New</a>(<a href="#typ">typ</a>)
+            <a href="#pValue">pValue</a>.<a href="#Elem">Elem</a>().<a href="#SetFloat">SetFloat</a>(<a href="#floatValue">floatValue</a>)
+            return <a href="#pValue">pValue</a>.<a href="#Elem">Elem</a>()
+        }),
+        <a href="#Unbind">Unbind</a>: func(output map[<a href="/pkg/builtin/#string">string</a>]<a href="/pkg/builtin/#string">string</a>, key <a href="/pkg/builtin/#string">string</a>, val interface{}) {
+            <a href="#output">output</a>[<a href="#key">key</a>] = <a href="/pkg/fmt/">fmt</a>.<a href="/pkg/fmt/#Sprintf">Sprintf</a>(&#34;%f&#34;, <a href="#val">val</a>)
+        },
+    }
+
+    <span id="StringBinder">StringBinder</span> = <a href="#Binder">Binder</a>{
+        <a href="#Bind">Bind</a>: <a href="#ValueBinder">ValueBinder</a>(func(val <a href="/pkg/builtin/#string">string</a>, typ <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Type">Type</a>) <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Value">Value</a> {
+            return <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#ValueOf">ValueOf</a>(<a href="#val">val</a>)
+        }),
+        <a href="#Unbind">Unbind</a>: func(output map[<a href="/pkg/builtin/#string">string</a>]<a href="/pkg/builtin/#string">string</a>, name <a href="/pkg/builtin/#string">string</a>, val interface{}) {
+            <a href="#output">output</a>[<a href="#name">name</a>] = <a href="#val">val</a>.(<a href="/pkg/builtin/#string">string</a>)
+        },
+    }
+
+    <span class="comment">// Booleans support a couple different value formats:</span>
+    <span class="comment">// &#34;true&#34; and &#34;false&#34;</span>
+    <span class="comment">// &#34;on&#34; and &#34;&#34; (a checkbox)</span>
+    <span class="comment">// &#34;1&#34; and &#34;0&#34; (why not)</span>
+    <span id="BoolBinder">BoolBinder</span> = <a href="#Binder">Binder</a>{
+        <a href="#Bind">Bind</a>: <a href="#ValueBinder">ValueBinder</a>(func(val <a href="/pkg/builtin/#string">string</a>, typ <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Type">Type</a>) <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Value">Value</a> {
+            <span id="v">v</span> := <a href="/pkg/strings/">strings</a>.<a href="/pkg/strings/#TrimSpace">TrimSpace</a>(<a href="/pkg/strings/">strings</a>.<a href="/pkg/strings/#ToLower">ToLower</a>(<a href="#val">val</a>))
+            switch <a href="#v">v</a> {
+            case &#34;true&#34;, &#34;on&#34;, &#34;1&#34;:
+                return <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#ValueOf">ValueOf</a>(<a href="/pkg/builtin/#true">true</a>)
+            }
+
+            return <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#ValueOf">ValueOf</a>(<a href="/pkg/builtin/#false">false</a>)
+        }),
+        <a href="#Unbind">Unbind</a>: func(output map[<a href="/pkg/builtin/#string">string</a>]<a href="/pkg/builtin/#string">string</a>, name <a href="/pkg/builtin/#string">string</a>, val interface{}) {
+            <a href="#output">output</a>[<a href="#name">name</a>] = <a href="/pkg/fmt/">fmt</a>.<a href="/pkg/fmt/#Sprintf">Sprintf</a>(&#34;%t&#34;, <a href="#val">val</a>)
+        },
+    }
+
+    <span id="PointerBinder">PointerBinder</span> = <a href="#Binder">Binder</a>{
+        <a href="#Bind">Bind</a>: func(params *<a href="#Params">Params</a>, name <a href="/pkg/builtin/#string">string</a>, typ <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Type">Type</a>) <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Value">Value</a> {
+            return <a href="#Bind">Bind</a>(<a href="#params">params</a>, <a href="#name">name</a>, <a href="#typ">typ</a>.<a href="#Elem">Elem</a>()).<a href="#Addr">Addr</a>()
+        },
+        <a href="#Unbind">Unbind</a>: func(output map[<a href="/pkg/builtin/#string">string</a>]<a href="/pkg/builtin/#string">string</a>, name <a href="/pkg/builtin/#string">string</a>, val interface{}) {
+            <a href="#Unbind">Unbind</a>(<a href="#output">output</a>, <a href="#name">name</a>, <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#ValueOf">ValueOf</a>(<a href="#val">val</a>).<a href="#Elem">Elem</a>().<a href="#Interface">Interface</a>())
+        },
+    }
+
+    <span id="TimeBinder">TimeBinder</span> = <a href="#Binder">Binder</a>{
+        <a href="#Bind">Bind</a>: <a href="#ValueBinder">ValueBinder</a>(func(val <a href="/pkg/builtin/#string">string</a>, typ <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Type">Type</a>) <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Value">Value</a> {
+            for <a href="#_">_</a>, <a href="#f">f</a> := range <a href="#TimeFormats">TimeFormats</a> {
+                if <span id="r">r</span>, <span id="err">err</span> := <a href="/pkg/time/">time</a>.<a href="/pkg/time/#Parse">Parse</a>(<a href="#f">f</a>, <a href="#val">val</a>); <a href="#err">err</a> == <a href="/pkg/builtin/#nil">nil</a> {
+                    return <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#ValueOf">ValueOf</a>(<a href="#r">r</a>)
+                }
+            }
+            return <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Zero">Zero</a>(<a href="#typ">typ</a>)
+        }),
+        <a href="#Unbind">Unbind</a>: func(output map[<a href="/pkg/builtin/#string">string</a>]<a href="/pkg/builtin/#string">string</a>, name <a href="/pkg/builtin/#string">string</a>, val interface{}) {
+            var (
+                <span id="t">t</span>       = <a href="#val">val</a>.(<a href="/pkg/time/">time</a>.<a href="/pkg/time/#Time">Time</a>)
+                <span id="format">format</span>  = <a href="#DateTimeFormat">DateTimeFormat</a>
+                <span id="h">h</span>, <span id="m">m</span>, <span id="s">s</span> = <a href="#t">t</a>.<a href="#Clock">Clock</a>()
+            )
+            if <a href="#h">h</a> == 0 &amp;&amp; <a href="#m">m</a> == 0 &amp;&amp; <a href="#s">s</a> == 0 {
+                <a href="#format">format</a> = <a href="#DateFormat">DateFormat</a>
+            }
+            <a href="#output">output</a>[<a href="#name">name</a>] = <a href="#t">t</a>.<a href="#Format">Format</a>(<a href="#format">format</a>)
+        },
+    }
 )</pre>
 				
 			
@@ -90,86 +228,95 @@ layout: godoc
 		
 			
 			
-			<h2 id="Bind">func <a href="../src/binder.html?s=11790:11860#L395">Bind</a></h2>
-			<pre>func Bind(params *Params, name string, typ reflect.Type) reflect.Value</pre>
+			<h2 id="Bind">func <a href="../src/binder.html?s=12992:13062#L437">Bind</a></h2>
+			<pre>func Bind(params *<a href="#Params">Params</a>, name <a href="/pkg/builtin/#string">string</a>, typ <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Type">Type</a>) <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Value">Value</a></pre>
 			<p>
-Parse the value string into a real Go value.
-Returns 0 values when things can not be parsed.
+Bind takes the name and type of the desired parameter and constructs it
+from one or more values from Params.
+Returns the zero value of the type upon any sort of failure.
 </p>
 
 			
 		
 			
 			
-			<h2 id="BindFile">func <a href="../src/binder.html?s=12257:12336#L415">BindFile</a></h2>
-			<pre>func BindFile(fileHeader *multipart.FileHeader, typ reflect.Type) reflect.Value</pre>
+			<h2 id="BindFile">func <a href="../src/binder.html?s=13321:13400#L448">BindFile</a></h2>
+			<pre>func BindFile(fileHeader *<a href="/pkg/mime/multipart/">multipart</a>.<a href="/pkg/mime/multipart/#FileHeader">FileHeader</a>, typ <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Type">Type</a>) <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Value">Value</a></pre>
 			
 			
 		
 			
 			
-			<h2 id="BindValue">func <a href="../src/binder.html?s=12122:12180#L411">BindValue</a></h2>
-			<pre>func BindValue(val string, typ reflect.Type) reflect.Value</pre>
+			<h2 id="BindValue">func <a href="../src/binder.html?s=13186:13244#L444">BindValue</a></h2>
+			<pre>func BindValue(val <a href="/pkg/builtin/#string">string</a>, typ <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Type">Type</a>) <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Value">Value</a></pre>
 			
 			
 		
+			
+			
+			<h2 id="Unbind">func <a href="../src/binder.html?s=13498:13565#L452">Unbind</a></h2>
+			<pre>func Unbind(output map[<a href="/pkg/builtin/#string">string</a>]<a href="/pkg/builtin/#string">string</a>, name <a href="/pkg/builtin/#string">string</a>, val interface{})</pre>
+			
+			
 		
 			
 			
-			<h2 id="Binder">type <a href="../src/binder.html?s=615:692#L19">Binder</a></h2>
-			<pre>type Binder func(params *Params, name string, typ reflect.Type) reflect.Value</pre>
+			<h2 id="ValueBinder">func <a href="../src/binder.html?s=1057:1177#L33">ValueBinder</a></h2>
+			<pre>func ValueBinder(f func(value <a href="/pkg/builtin/#string">string</a>, typ <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Type">Type</a>) <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Value">Value</a>) func(*<a href="#Params">Params</a>, <a href="/pkg/builtin/#string">string</a>, <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Type">Type</a>) <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Value">Value</a></pre>
 			<p>
-A Binder translates between string parameters and Go data structures.
-</p>
-<p>
-Here is an example.
-</p>
-<p>
-Request:
-</p>
-<pre>url?id=123&amp;ol[0]=1&amp;ol[1]=2&amp;ul[]=str&amp;ul[]=array&amp;user.Name=rob
-</pre>
-<p>
-Action:
-</p>
-<pre>Example.Action(id int, ol []int, ul []string, user User)
-</pre>
-<p>
-Calls:
-</p>
-<pre>Binder(params, &#34;id&#34;, int): 123
-Binder(params, &#34;ol&#34;, []int): {1, 2}
-Binder(params, &#34;ul&#34;, []string): {&#34;str&#34;, &#34;array&#34;}
-Binder(params, &#34;user&#34;, User): User{Name:&#34;rob&#34;}
-</pre>
-<p>
-Note that only exported struct fields may be bound.
-</p>
-
-
-			
-
-			
-
-			
-
-			
-				
-				<h3 id="ValueBinder">func <a href="../src/binder.html?s=749:826#L22">ValueBinder</a></h3>
-				<pre>func ValueBinder(f func(value string, typ reflect.Type) reflect.Value) Binder</pre>
-				<p>
 An adapter for easily making one-key-value binders.
 </p>
 
-				
+			
+		
+		
+			
+			
+			<h2 id="Binder">type <a href="../src/binder.html?s=191:1000#L6">Binder</a></h2>
+			<pre>type Binder struct {
+    <span class="comment">// Bind takes the name and type of the desired parameter and constructs it</span>
+    <span class="comment">// from one or more values from Params.</span>
+    <span class="comment">//</span>
+    <span class="comment">// Example</span>
+    <span class="comment">//</span>
+    <span class="comment">//   Request:</span>
+    <span class="comment">//   url?id=123&amp;ol[0]=1&amp;ol[1]=2&amp;ul[]=str&amp;ul[]=array&amp;user.Name=rob</span>
+    <span class="comment">//</span>
+    <span class="comment">//   Action:</span>
+    <span class="comment">//   Example.Action(id int, ol []int, ul []string, user User)</span>
+    <span class="comment">//</span>
+    <span class="comment">//   Calls:</span>
+    <span class="comment">//   Bind(params, &#34;id&#34;, int): 123</span>
+    <span class="comment">//   Bind(params, &#34;ol&#34;, []int): {1, 2}</span>
+    <span class="comment">//   Bind(params, &#34;ul&#34;, []string): {&#34;str&#34;, &#34;array&#34;}</span>
+    <span class="comment">//   Bind(params, &#34;user&#34;, User): User{Name:&#34;rob&#34;}</span>
+    <span class="comment">//</span>
+    <span class="comment">// Note that only exported struct fields may be bound.</span>
+    Bind func(params *<a href="#Params">Params</a>, name <a href="/pkg/builtin/#string">string</a>, typ <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Type">Type</a>) <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Value">Value</a>
+
+    <span class="comment">// Unbind serializes a given value to one or more URL parameters of the given</span>
+    <span class="comment">// name.</span>
+    Unbind func(output map[<a href="/pkg/builtin/#string">string</a>]<a href="/pkg/builtin/#string">string</a>, name <a href="/pkg/builtin/#string">string</a>, val interface{})
+}</pre>
+			<p>
+A Binder translates between string parameters and Go data structures.
+</p>
+
+
+			
+
+			
+
+			
+
 			
 
 			
 		
-		</div>
 	
 
 	
+
 
 
 

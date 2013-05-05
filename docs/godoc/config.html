@@ -1,6 +1,7 @@
 ---
 layout: godoc
 ---
+
 <!--
 	Copyright 2009 The Go Authors. All rights reserved.
 	Use of this source code is governed by a BSD-style
@@ -9,13 +10,28 @@ layout: godoc
 <h1>Config</h1>
 
 	
+		
 		<!-- The package's Name is printed as title by the top-level template -->
-                
+		<div id="pkg-overview" class="toggleVisible">
+			<div class="collapsed">
+				<h2 class="toggleButton" title="Click to show Overview section">Overview ¹</h2>
+			</div>
+			<div class="expanded">
+				<h2 class="toggleButton" title="Click to hide Overview section">Overview ¾</h2>
+				
+			</div>
+		</div>
 		
 
-		<h2 id="index">Index</h2>
+		<div id="pkg-index" class="toggleVisible">
+		<div class="collapsed">
+			<h2 class="toggleButton" title="Click to show Index section">Index ¹</h2>
+		</div>
+		<div class="expanded">
+			<h2 class="toggleButton" title="Click to hide Index section">Index ¾</h2>
+
 		<!-- Table of contents for API; must be named manual-nav to turn off auto nav. -->
-		<div id="manual-nav">
+			<div id="manual-nav">
 			<dl>
 			
 			
@@ -60,12 +76,13 @@ layout: godoc
 				
 			
 			
-		</dl>
+			</dl>
+			</div><!-- #manual-nav -->
 
 		
 
 		
-			<h4>Package files</h4>
+			<h4>File</h4>
 			<p>
 			<span style="font-size:90%">
 			
@@ -74,6 +91,8 @@ layout: godoc
 			</span>
 			</p>
 		
+		</div><!-- .expanded -->
+		</div><!-- #pkg-index -->
 
 		
 		
@@ -102,7 +121,7 @@ checked fallback.
 			
 				
 				<h3 id="LoadConfig">func <a href="../src/config.html?s=421:476#L9">LoadConfig</a></h3>
-				<pre>func LoadConfig(confName string) (*MergedConfig, error)</pre>
+				<pre>func LoadConfig(confName <a href="/pkg/builtin/#string">string</a>) (*<a href="#MergedConfig">MergedConfig</a>, <a href="/pkg/builtin/#error">error</a>)</pre>
 				
 				
 			
@@ -110,42 +129,42 @@ checked fallback.
 			
 				
 				<h3 id="MergedConfig.Bool">func (*MergedConfig) <a href="../src/config.html?s=1429:1492#L52">Bool</a></h3>
-				<pre>func (c *MergedConfig) Bool(option string) (result, found bool)</pre>
+				<pre>func (c *<a href="#MergedConfig">MergedConfig</a>) Bool(option <a href="/pkg/builtin/#string">string</a>) (result, found <a href="/pkg/builtin/#bool">bool</a>)</pre>
 				
 				
 				
 			
 				
 				<h3 id="MergedConfig.BoolDefault">func (*MergedConfig) <a href="../src/config.html?s=1816:1883#L66">BoolDefault</a></h3>
-				<pre>func (c *MergedConfig) BoolDefault(option string, dfault bool) bool</pre>
+				<pre>func (c *<a href="#MergedConfig">MergedConfig</a>) BoolDefault(option <a href="/pkg/builtin/#string">string</a>, dfault <a href="/pkg/builtin/#bool">bool</a>) <a href="/pkg/builtin/#bool">bool</a></pre>
 				
 				
 				
 			
 				
 				<h3 id="MergedConfig.HasSection">func (*MergedConfig) <a href="../src/config.html?s=2293:2347#L87">HasSection</a></h3>
-				<pre>func (c *MergedConfig) HasSection(section string) bool</pre>
+				<pre>func (c *<a href="#MergedConfig">MergedConfig</a>) HasSection(section <a href="/pkg/builtin/#string">string</a>) <a href="/pkg/builtin/#bool">bool</a></pre>
 				
 				
 				
 			
 				
 				<h3 id="MergedConfig.Int">func (*MergedConfig) <a href="../src/config.html?s=911:977#L31">Int</a></h3>
-				<pre>func (c *MergedConfig) Int(option string) (result int, found bool)</pre>
+				<pre>func (c *<a href="#MergedConfig">MergedConfig</a>) Int(option <a href="/pkg/builtin/#string">string</a>) (result <a href="/pkg/builtin/#int">int</a>, found <a href="/pkg/builtin/#bool">bool</a>)</pre>
 				
 				
 				
 			
 				
 				<h3 id="MergedConfig.IntDefault">func (*MergedConfig) <a href="../src/config.html?s=1291:1355#L45">IntDefault</a></h3>
-				<pre>func (c *MergedConfig) IntDefault(option string, dfault int) int</pre>
+				<pre>func (c *<a href="#MergedConfig">MergedConfig</a>) IntDefault(option <a href="/pkg/builtin/#string">string</a>, dfault <a href="/pkg/builtin/#int">int</a>) <a href="/pkg/builtin/#int">int</a></pre>
 				
 				
 				
 			
 				
 				<h3 id="MergedConfig.Options">func (*MergedConfig) <a href="../src/config.html?s=2502:2556#L93">Options</a></h3>
-				<pre>func (c *MergedConfig) Options(prefix string) []string</pre>
+				<pre>func (c *<a href="#MergedConfig">MergedConfig</a>) Options(prefix <a href="/pkg/builtin/#string">string</a>) []<a href="/pkg/builtin/#string">string</a></pre>
 				<p>
 Options returns all configuration option keys.
 If a prefix is provided, then that is applied as a filter.
@@ -156,37 +175,37 @@ If a prefix is provided, then that is applied as a filter.
 			
 				
 				<h3 id="MergedConfig.SetOption">func (*MergedConfig) <a href="../src/config.html?s=809:861#L27">SetOption</a></h3>
-				<pre>func (c *MergedConfig) SetOption(name, value string)</pre>
+				<pre>func (c *<a href="#MergedConfig">MergedConfig</a>) SetOption(name, value <a href="/pkg/builtin/#string">string</a>)</pre>
 				
 				
 				
 			
 				
 				<h3 id="MergedConfig.SetSection">func (*MergedConfig) <a href="../src/config.html?s=733:782#L23">SetSection</a></h3>
-				<pre>func (c *MergedConfig) SetSection(section string)</pre>
+				<pre>func (c *<a href="#MergedConfig">MergedConfig</a>) SetSection(section <a href="/pkg/builtin/#string">string</a>)</pre>
 				
 				
 				
 			
 				
 				<h3 id="MergedConfig.String">func (*MergedConfig) <a href="../src/config.html?s=1958:2030#L73">String</a></h3>
-				<pre>func (c *MergedConfig) String(option string) (result string, found bool)</pre>
+				<pre>func (c *<a href="#MergedConfig">MergedConfig</a>) String(option <a href="/pkg/builtin/#string">string</a>) (result <a href="/pkg/builtin/#string">string</a>, found <a href="/pkg/builtin/#bool">bool</a>)</pre>
 				
 				
 				
 			
 				
 				<h3 id="MergedConfig.StringDefault">func (*MergedConfig) <a href="../src/config.html?s=2150:2216#L80">StringDefault</a></h3>
-				<pre>func (c *MergedConfig) StringDefault(option, dfault string) string</pre>
+				<pre>func (c *<a href="#MergedConfig">MergedConfig</a>) StringDefault(option, dfault <a href="/pkg/builtin/#string">string</a>) <a href="/pkg/builtin/#string">string</a></pre>
 				
 				
 				
 			
 		
-		</div>
 	
 
 	
+
 
 
 

@@ -1,6 +1,7 @@
 ---
 layout: godoc
 ---
+
 <!--
 	Copyright 2009 The Go Authors. All rights reserved.
 	Use of this source code is governed by a BSD-style
@@ -13,24 +14,34 @@ layout: godoc
 	<pre>package revel
 
 <span class="comment">// A Binder translates between string parameters and Go data structures.</span>
-<span class="comment">//</span>
-<span class="comment">// Here is an example.</span>
-<span class="comment">//</span>
-<span class="comment">// Request:</span>
-<span class="comment">//   url?id=123&amp;ol[0]=1&amp;ol[1]=2&amp;ul[]=str&amp;ul[]=array&amp;user.Name=rob</span>
-<span class="comment">// Action:</span>
-<span class="comment">//   Example.Action(id int, ol []int, ul []string, user User)</span>
-<span class="comment">// Calls:</span>
-<span class="comment">//   Binder(params, &#34;id&#34;, int): 123</span>
-<span class="comment">//   Binder(params, &#34;ol&#34;, []int): {1, 2}</span>
-<span class="comment">//   Binder(params, &#34;ul&#34;, []string): {&#34;str&#34;, &#34;array&#34;}</span>
-<span class="comment">//   Binder(params, &#34;user&#34;, User): User{Name:&#34;rob&#34;}</span>
-<span class="comment">//</span>
-<span class="comment">// Note that only exported struct fields may be bound.</span>
-type Binder func(params *Params, name string, typ reflect.Type) reflect.Value
+type Binder struct {
+    <span class="comment">// Bind takes the name and type of the desired parameter and constructs it</span>
+    <span class="comment">// from one or more values from Params.</span>
+    <span class="comment">//</span>
+    <span class="comment">// Example</span>
+    <span class="comment">//</span>
+    <span class="comment">//   Request:</span>
+    <span class="comment">//   url?id=123&amp;ol[0]=1&amp;ol[1]=2&amp;ul[]=str&amp;ul[]=array&amp;user.Name=rob</span>
+    <span class="comment">//</span>
+    <span class="comment">//   Action:</span>
+    <span class="comment">//   Example.Action(id int, ol []int, ul []string, user User)</span>
+    <span class="comment">//</span>
+    <span class="comment">//   Calls:</span>
+    <span class="comment">//   Bind(params, &#34;id&#34;, int): 123</span>
+    <span class="comment">//   Bind(params, &#34;ol&#34;, []int): {1, 2}</span>
+    <span class="comment">//   Bind(params, &#34;ul&#34;, []string): {&#34;str&#34;, &#34;array&#34;}</span>
+    <span class="comment">//   Bind(params, &#34;user&#34;, User): User{Name:&#34;rob&#34;}</span>
+    <span class="comment">//</span>
+    <span class="comment">// Note that only exported struct fields may be bound.</span>
+    Bind func(params *Params, name string, typ reflect.Type) reflect.Value
+
+    <span class="comment">// Unbind serializes a given value to one or more URL parameters of the given</span>
+    <span class="comment">// name.</span>
+    Unbind func(output map[string]string, name string, val interface{})
+}
 
 <span class="comment">// An adapter for easily making one-key-value binders.</span>
-func ValueBinder(f func(value string, typ reflect.Type) reflect.Value) Binder {
+func ValueBinder(f func(value string, typ reflect.Type) reflect.Value) func(*Params, string, reflect.Type) reflect.Value {
     return func(params *Params, name string, typ reflect.Type) reflect.Value {
         vals, ok := params.Values[name]
         if !ok || len(vals) == 0 {
@@ -57,24 +68,132 @@ var (
 
     DateFormat     string
     DateTimeFormat string
+
+    IntBinder = Binder{
+        Bind: ValueBinder(func(val string, typ reflect.Type) reflect.Value {
+            if len(val) == 0 {
+                return reflect.Zero(typ)
+            }
+            intValue, err := strconv.ParseInt(val, 10, 64)
+            if err != nil {
+                WARN.Println(err)
+                return reflect.Zero(typ)
+            }
+            pValue := reflect.New(typ)
+            pValue.Elem().SetInt(intValue)
+            return pValue.Elem()
+        }),
+        Unbind: func(output map[string]string, key string, val interface{}) {
+            output[key] = fmt.Sprintf(&#34;%d&#34;, val)
+        },
+    }
+
+    UintBinder = Binder{
+        Bind: ValueBinder(func(val string, typ reflect.Type) reflect.Value {
+            if len(val) == 0 {
+                return reflect.Zero(typ)
+            }
+            uintValue, err := strconv.ParseUint(val, 10, 64)
+            if err != nil {
+                WARN.Println(err)
+                return reflect.Zero(typ)
+            }
+            pValue := reflect.New(typ)
+            pValue.Elem().SetUint(uintValue)
+            return pValue.Elem()
+        }),
+        Unbind: func(output map[string]string, key string, val interface{}) {
+            output[key] = fmt.Sprintf(&#34;%d&#34;, val)
+        },
+    }
+
+    FloatBinder = Binder{
+        Bind: ValueBinder(func(val string, typ reflect.Type) reflect.Value {
+            if len(val) == 0 {
+                return reflect.Zero(typ)
+            }
+            floatValue, err := strconv.ParseFloat(val, 64)
+            if err != nil {
+                WARN.Println(err)
+                return reflect.Zero(typ)
+            }
+            pValue := reflect.New(typ)
+            pValue.Elem().SetFloat(floatValue)
+            return pValue.Elem()
+        }),
+        Unbind: func(output map[string]string, key string, val interface{}) {
+            output[key] = fmt.Sprintf(&#34;%f&#34;, val)
+        },
+    }
+
+    StringBinder = Binder{
+        Bind: ValueBinder(func(val string, typ reflect.Type) reflect.Value {
+            return reflect.ValueOf(val)
+        }),
+        Unbind: func(output map[string]string, name string, val interface{}) {
+            output[name] = val.(string)
+        },
+    }
+
+    <span class="comment">// Booleans support a couple different value formats:</span>
+    <span class="comment">// &#34;true&#34; and &#34;false&#34;</span>
+    <span class="comment">// &#34;on&#34; and &#34;&#34; (a checkbox)</span>
+    <span class="comment">// &#34;1&#34; and &#34;0&#34; (why not)</span>
+    BoolBinder = Binder{
+        Bind: ValueBinder(func(val string, typ reflect.Type) reflect.Value {
+            v := strings.TrimSpace(strings.ToLower(val))
+            switch v {
+            case &#34;true&#34;, &#34;on&#34;, &#34;1&#34;:
+                return reflect.ValueOf(true)
+            }
+            <span class="comment">// Return false by default.</span>
+            return reflect.ValueOf(false)
+        }),
+        Unbind: func(output map[string]string, name string, val interface{}) {
+            output[name] = fmt.Sprintf(&#34;%t&#34;, val)
+        },
+    }
+
+    PointerBinder = Binder{
+        Bind: func(params *Params, name string, typ reflect.Type) reflect.Value {
+            return Bind(params, name, typ.Elem()).Addr()
+        },
+        Unbind: func(output map[string]string, name string, val interface{}) {
+            Unbind(output, name, reflect.ValueOf(val).Elem().Interface())
+        },
+    }
+
+    TimeBinder = Binder{
+        Bind: ValueBinder(func(val string, typ reflect.Type) reflect.Value {
+            for _, f := range TimeFormats {
+                if r, err := time.Parse(f, val); err == nil {
+                    return reflect.ValueOf(r)
+                }
+            }
+            return reflect.Zero(typ)
+        }),
+        Unbind: func(output map[string]string, name string, val interface{}) {
+            var (
+                t       = val.(time.Time)
+                format  = DateTimeFormat
+                h, m, s = t.Clock()
+            )
+            if h == 0 &amp;&amp; m == 0 &amp;&amp; s == 0 {
+                format = DateFormat
+            }
+            output[name] = t.Format(format)
+        },
+    }
 )
 
-<span class="comment">// Parse the value string into a real Go value.</span>
-<span class="comment">// Returns 0 values when things can not be parsed.</span>
+<span class="comment">// Bind takes the name and type of the desired parameter and constructs it</span>
+<span class="comment">// from one or more values from Params.</span>
+<span class="comment">// Returns the zero value of the type upon any sort of failure.</span>
 func Bind(params *Params, name string, typ reflect.Type) reflect.Value {
-    if typ == nil {
-        return reflect.ValueOf(nil)
+    if binder, found := binderForType(typ); found {
+        return binder.Bind(params, name, typ)
     }
-
-    binder, ok := TypeBinders[typ]
-    if !ok {
-        binder, ok = KindBinders[typ.Kind()]
-        if !ok {
-            WARN.Println(&#34;No binder for type:&#34;, typ)
-            return reflect.Zero(typ)
-        }
-    }
-    return binder(params, name, typ)
+    return reflect.Zero(typ)
 }
 
 func BindValue(val string, typ reflect.Type) reflect.Value {
@@ -84,7 +203,18 @@ func BindValue(val string, typ reflect.Type) reflect.Value {
 func BindFile(fileHeader *multipart.FileHeader, typ reflect.Type) reflect.Value {
     return Bind(&amp;Params{Files: map[string][]*multipart.FileHeader{&#34;&#34;: {fileHeader}}}, &#34;&#34;, typ)
 }
+
+func Unbind(output map[string]string, name string, val interface{}) {
+    if binder, found := binderForType(reflect.TypeOf(val)); found {
+        if binder.Unbind != nil {
+            binder.Unbind(output, name, val)
+        } else {
+            ERROR.Printf(&#34;revel/binder: can not unbind %s=%s&#34;, name, val)
+        }
+    }
+}
 </pre>
+
 
 
 

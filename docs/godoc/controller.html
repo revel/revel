@@ -1,6 +1,7 @@
 ---
 layout: godoc
 ---
+
 <!--
 	Copyright 2009 The Go Authors. All rights reserved.
 	Use of this source code is governed by a BSD-style
@@ -9,13 +10,28 @@ layout: godoc
 <h1>Controller</h1>
 
 	
+		
 		<!-- The package's Name is printed as title by the top-level template -->
-                
+		<div id="pkg-overview" class="toggleVisible">
+			<div class="collapsed">
+				<h2 class="toggleButton" title="Click to show Overview section">Overview ¹</h2>
+			</div>
+			<div class="expanded">
+				<h2 class="toggleButton" title="Click to hide Overview section">Overview ¾</h2>
+				
+			</div>
+		</div>
 		
 
-		<h2 id="index">Index</h2>
+		<div id="pkg-index" class="toggleVisible">
+		<div class="collapsed">
+			<h2 class="toggleButton" title="Click to show Index section">Index ¹</h2>
+		</div>
+		<div class="expanded">
+			<h2 class="toggleButton" title="Click to hide Index section">Index ¾</h2>
+
 		<!-- Table of contents for API; must be named manual-nav to turn off auto nav. -->
-		<div id="manual-nav">
+			<div id="manual-nav">
 			<dl>
 			
 			
@@ -75,12 +91,13 @@ layout: godoc
 				
 			
 			
-		</dl>
+			</dl>
+			</div><!-- #manual-nav -->
 
 		
 
 		
-			<h4>Package files</h4>
+			<h4>File</h4>
 			<p>
 			<span style="font-size:90%">
 			
@@ -89,6 +106,8 @@ layout: godoc
 			</span>
 			</p>
 		
+		</div><!-- .expanded -->
+		</div><!-- #pkg-index -->
 
 		
 		
@@ -98,23 +117,23 @@ layout: godoc
 			
 			<h2 id="Controller">type <a href="../src/controller.html?s=143:1126#L6">Controller</a></h2>
 			<pre>type Controller struct {
-    Name          string          <span class="comment">// The controller name, e.g. &#34;Application&#34;</span>
-    Type          *ControllerType <span class="comment">// A description of the controller type.</span>
-    MethodType    *MethodType     <span class="comment">// A description of the invoked action type.</span>
+    Name          <a href="/pkg/builtin/#string">string</a>          <span class="comment">// The controller name, e.g. &#34;Application&#34;</span>
+    Type          *<a href="#ControllerType">ControllerType</a> <span class="comment">// A description of the controller type.</span>
+    MethodType    *<a href="#MethodType">MethodType</a>     <span class="comment">// A description of the invoked action type.</span>
     AppController interface{}     <span class="comment">// The controller that was instantiated.</span>
-    Action        string          <span class="comment">// The full action name, e.g. &#34;Application.Index&#34;</span>
+    Action        <a href="/pkg/builtin/#string">string</a>          <span class="comment">// The full action name, e.g. &#34;Application.Index&#34;</span>
 
-    Request  *Request
-    Response *Response
-    Result   Result
+    Request  *<a href="#Request">Request</a>
+    Response *<a href="#Response">Response</a>
+    Result   <a href="#Result">Result</a>
 
-    Flash      Flash                  <span class="comment">// User cookie, cleared after 1 request.</span>
-    Session    Session                <span class="comment">// Session, stored in cookie, signed.</span>
-    Params     *Params                <span class="comment">// Parameters from URL and form (including multipart).</span>
-    Args       map[string]interface{} <span class="comment">// Per-request scratch space.</span>
-    RenderArgs map[string]interface{} <span class="comment">// Args passed to the template.</span>
-    Validation *Validation            <span class="comment">// Data validation helpers</span>
-    Txn        *sql.Tx                <span class="comment">// Nil by default, but may be used by the app / plugins</span>
+    Flash      <a href="#Flash">Flash</a>                  <span class="comment">// User cookie, cleared after 1 request.</span>
+    Session    <a href="#Session">Session</a>                <span class="comment">// Session, stored in cookie, signed.</span>
+    Params     *<a href="#Params">Params</a>                <span class="comment">// Parameters from URL and form (including multipart).</span>
+    Args       map[<a href="/pkg/builtin/#string">string</a>]interface{} <span class="comment">// Per-request scratch space.</span>
+    RenderArgs map[<a href="/pkg/builtin/#string">string</a>]interface{} <span class="comment">// Args passed to the template.</span>
+    Validation *<a href="#Validation">Validation</a>            <span class="comment">// Data validation helpers</span>
+    Txn        *<a href="/pkg/database/sql/">sql</a>.<a href="/pkg/database/sql/#Tx">Tx</a>                <span class="comment">// Nil by default, but may be used by the app / plugins</span>
 }</pre>
 			
 
@@ -127,7 +146,7 @@ layout: godoc
 			
 				
 				<h3 id="NewController">func <a href="../src/controller.html?s=1128:1208#L26">NewController</a></h3>
-				<pre>func NewController(req *Request, resp *Response, ct *ControllerType) *Controller</pre>
+				<pre>func NewController(req *<a href="#Request">Request</a>, resp *<a href="#Response">Response</a>, ct *<a href="#ControllerType">ControllerType</a>) *<a href="#Controller">Controller</a></pre>
 				
 				
 			
@@ -135,21 +154,21 @@ layout: godoc
 			
 				
 				<h3 id="Controller.FlashParams">func (*Controller) <a href="../src/controller.html?s=1514:1548#L43">FlashParams</a></h3>
-				<pre>func (c *Controller) FlashParams()</pre>
+				<pre>func (c *<a href="#Controller">Controller</a>) FlashParams()</pre>
 				
 				
 				
 			
 				
 				<h3 id="Controller.Forbidden">func (*Controller) <a href="../src/controller.html?s=7036:7106#L240">Forbidden</a></h3>
-				<pre>func (c *Controller) Forbidden(msg string, objs ...interface{}) Result</pre>
+				<pre>func (c *<a href="#Controller">Controller</a>) Forbidden(msg <a href="/pkg/builtin/#string">string</a>, objs ...interface{}) <a href="#Result">Result</a></pre>
 				
 				
 				
 			
 				
 				<h3 id="Controller.Invoke">func (*Controller) <a href="../src/controller.html?s=1858:1967#L55">Invoke</a></h3>
-				<pre>func (c *Controller) Invoke(appControllerPtr reflect.Value, method reflect.Value, methodArgs []reflect.Value)</pre>
+				<pre>func (c *<a href="#Controller">Controller</a>) Invoke(appControllerPtr <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Value">Value</a>, method <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Value">Value</a>, methodArgs []<a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Value">Value</a>)</pre>
 				<p>
 Invoke the given method, save headers/cookies to the response, and apply the
 result.  (e.g. render a template to the response)
@@ -160,7 +179,7 @@ result.  (e.g. render a template to the response)
 			
 				
 				<h3 id="Controller.Message">func (*Controller) <a href="../src/controller.html?s=8532:8612#L292">Message</a></h3>
-				<pre>func (c *Controller) Message(message string, args ...interface{}) (value string)</pre>
+				<pre>func (c *<a href="#Controller">Controller</a>) Message(message <a href="/pkg/builtin/#string">string</a>, args ...interface{}) (value <a href="/pkg/builtin/#string">string</a>)</pre>
 				<p>
 Perform a message lookup for the given message name using the given arguments
 using the current language defined for this controller.
@@ -174,14 +193,14 @@ The current language is set by the i18n plugin.
 			
 				
 				<h3 id="Controller.NotFound">func (*Controller) <a href="../src/controller.html?s=6751:6820#L228">NotFound</a></h3>
-				<pre>func (c *Controller) NotFound(msg string, objs ...interface{}) Result</pre>
+				<pre>func (c *<a href="#Controller">Controller</a>) NotFound(msg <a href="/pkg/builtin/#string">string</a>, objs ...interface{}) <a href="#Result">Result</a></pre>
 				
 				
 				
 			
 				
 				<h3 id="Controller.Redirect">func (*Controller) <a href="../src/controller.html?s=8065:8139#L278">Redirect</a></h3>
-				<pre>func (c *Controller) Redirect(val interface{}, args ...interface{}) Result</pre>
+				<pre>func (c *<a href="#Controller">Controller</a>) Redirect(val interface{}, args ...interface{}) <a href="#Result">Result</a></pre>
 				<p>
 Redirect to an action or to a URL.
 </p>
@@ -195,7 +214,7 @@ c.Redirect(&#34;/controller/%d/action&#34;, id)
 			
 				
 				<h3 id="Controller.Render">func (*Controller) <a href="../src/controller.html?s=4093:4159#L142">Render</a></h3>
-				<pre>func (c *Controller) Render(extraRenderArgs ...interface{}) Result</pre>
+				<pre>func (c *<a href="#Controller">Controller</a>) Render(extraRenderArgs ...interface{}) <a href="#Result">Result</a></pre>
 				<p>
 Render a template corresponding to the calling Controller method.
 Arguments will be added to c.RenderArgs prior to rendering the template.
@@ -219,14 +238,14 @@ key-value &#34;user&#34;: (User).
 			
 				
 				<h3 id="Controller.RenderError">func (*Controller) <a href="../src/controller.html?s=3556:3606#L125">RenderError</a></h3>
-				<pre>func (c *Controller) RenderError(err error) Result</pre>
+				<pre>func (c *<a href="#Controller">Controller</a>) RenderError(err <a href="/pkg/builtin/#error">error</a>) <a href="#Result">Result</a></pre>
 				
 				
 				
 			
 				
 				<h3 id="Controller.RenderFile">func (*Controller) <a href="../src/controller.html?s=7448:7530#L254">RenderFile</a></h3>
-				<pre>func (c *Controller) RenderFile(file *os.File, delivery ContentDisposition) Result</pre>
+				<pre>func (c *<a href="#Controller">Controller</a>) RenderFile(file *<a href="/pkg/os/">os</a>.<a href="/pkg/os/#File">File</a>, delivery <a href="#ContentDisposition">ContentDisposition</a>) <a href="#Result">Result</a></pre>
 				<p>
 Return a file, either displayed inline or downloaded as an attachment.
 The name and size are taken from the file info.
@@ -237,7 +256,7 @@ The name and size are taken from the file info.
 			
 				
 				<h3 id="Controller.RenderJson">func (*Controller) <a href="../src/controller.html?s=6021:6074#L201">RenderJson</a></h3>
-				<pre>func (c *Controller) RenderJson(o interface{}) Result</pre>
+				<pre>func (c *<a href="#Controller">Controller</a>) RenderJson(o interface{}) <a href="#Result">Result</a></pre>
 				<p>
 Uses encoding/json.Marshal to return JSON to the client.
 </p>
@@ -247,7 +266,7 @@ Uses encoding/json.Marshal to return JSON to the client.
 			
 				
 				<h3 id="Controller.RenderTemplate">func (*Controller) <a href="../src/controller.html?s=5674:5737#L186">RenderTemplate</a></h3>
-				<pre>func (c *Controller) RenderTemplate(templatePath string) Result</pre>
+				<pre>func (c *<a href="#Controller">Controller</a>) RenderTemplate(templatePath <a href="/pkg/builtin/#string">string</a>) <a href="#Result">Result</a></pre>
 				<p>
 A less magical way to render a template.
 Renders the given template, using the current RenderArgs.
@@ -258,7 +277,7 @@ Renders the given template, using the current RenderArgs.
 			
 				
 				<h3 id="Controller.RenderText">func (*Controller) <a href="../src/controller.html?s=6298:6370#L211">RenderText</a></h3>
-				<pre>func (c *Controller) RenderText(text string, objs ...interface{}) Result</pre>
+				<pre>func (c *<a href="#Controller">Controller</a>) RenderText(text <a href="/pkg/builtin/#string">string</a>, objs ...interface{}) <a href="#Result">Result</a></pre>
 				<p>
 Render plaintext in response, printf style.
 </p>
@@ -268,7 +287,7 @@ Render plaintext in response, printf style.
 			
 				
 				<h3 id="Controller.RenderXml">func (*Controller) <a href="../src/controller.html?s=6166:6218#L206">RenderXml</a></h3>
-				<pre>func (c *Controller) RenderXml(o interface{}) Result</pre>
+				<pre>func (c *<a href="#Controller">Controller</a>) RenderXml(o interface{}) <a href="#Result">Result</a></pre>
 				<p>
 Uses encoding/xml.Marshal to return XML to the client.
 </p>
@@ -278,14 +297,14 @@ Uses encoding/xml.Marshal to return XML to the client.
 			
 				
 				<h3 id="Controller.SetCookie">func (*Controller) <a href="../src/controller.html?s=1628:1679#L49">SetCookie</a></h3>
-				<pre>func (c *Controller) SetCookie(cookie *http.Cookie)</pre>
+				<pre>func (c *<a href="#Controller">Controller</a>) SetCookie(cookie *<a href="/pkg/net/http/">http</a>.<a href="/pkg/net/http/#Cookie">Cookie</a>)</pre>
 				
 				
 				
 			
 				
 				<h3 id="Controller.Todo">func (*Controller) <a href="../src/controller.html?s=6558:6592#L220">Todo</a></h3>
-				<pre>func (c *Controller) Todo() Result</pre>
+				<pre>func (c *<a href="#Controller">Controller</a>) Todo() <a href="#Result">Result</a></pre>
 				<p>
 Render a &#34;todo&#34; indicating that the action isn&#39;t done yet.
 </p>
@@ -294,10 +313,10 @@ Render a &#34;todo&#34; indicating that the action isn&#39;t done yet.
 				
 			
 		
-		</div>
 	
 
 	
+
 
 
 

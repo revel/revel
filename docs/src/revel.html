@@ -1,6 +1,7 @@
 ---
 layout: godoc
 ---
+
 <!--
 	Copyright 2009 The Go Authors. All rights reserved.
 	Use of this source code is governed by a BSD-style
@@ -53,7 +54,7 @@ var (
     CookiePrefix string
 
     <span class="comment">// Loggers</span>
-    DEFAULT = log.New(os.Stderr, &#34;&#34;, log.Ldate|log.Ltime|log.Lshortfile)
+    DEFAULT = log.New(ioutil.Discard, &#34;&#34;, log.Ldate|log.Ltime|log.Lshortfile)
     TRACE   = DEFAULT
     INFO    = DEFAULT
     WARN    = DEFAULT
@@ -124,11 +125,9 @@ func Init(mode, importPath, srcPath string) {
     HttpAddr = Config.StringDefault(&#34;http.addr&#34;, &#34;&#34;)
     AppName = Config.StringDefault(&#34;app.name&#34;, &#34;(not set)&#34;)
     CookiePrefix = Config.StringDefault(&#34;cookie.prefix&#34;, &#34;REVEL&#34;)
-    secretStr := Config.StringDefault(&#34;app.secret&#34;, &#34;&#34;)
-    if secretStr == &#34;&#34; {
-        log.Fatalln(&#34;No app.secret provided.&#34;)
+    if secretStr := Config.StringDefault(&#34;app.secret&#34;, &#34;&#34;); secretStr != &#34;&#34; {
+        secretKey = []byte(secretStr)
     }
-    secretKey = []byte(secretStr)
 
     <span class="comment">// Configure logging.</span>
     TRACE = getLogger(&#34;trace&#34;)
@@ -151,6 +150,7 @@ func CheckInit() {
     }
 }
 </pre>
+
 
 
 

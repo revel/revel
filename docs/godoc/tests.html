@@ -1,6 +1,7 @@
 ---
 layout: godoc
 ---
+
 <!--
 	Copyright 2009 The Go Authors. All rights reserved.
 	Use of this source code is governed by a BSD-style
@@ -9,17 +10,32 @@ layout: godoc
 <h1>Tests</h1>
 
 	
+		
 		<!-- The package's Name is printed as title by the top-level template -->
-                
+		<div id="pkg-overview" class="toggleVisible">
+			<div class="collapsed">
+				<h2 class="toggleButton" title="Click to show Overview section">Overview ¹</h2>
+			</div>
+			<div class="expanded">
+				<h2 class="toggleButton" title="Click to hide Overview section">Overview ¾</h2>
+				
+			</div>
+		</div>
 		
 
-		<h2 id="index">Index</h2>
+		<div id="pkg-index" class="toggleVisible">
+		<div class="collapsed">
+			<h2 class="toggleButton" title="Click to show Index section">Index ¹</h2>
+		</div>
+		<div class="expanded">
+			<h2 class="toggleButton" title="Click to hide Index section">Index ¾</h2>
+
 		<!-- Table of contents for API; must be named manual-nav to turn off auto nav. -->
-		<div id="manual-nav">
+			<div id="manual-nav">
 			<dl>
 			
 			
-				<dd><a href="#variables">Variables</a></dd>
+				<dd><a href="#pkg-variables">Variables</a></dd>
 			
 			
 			
@@ -37,7 +53,7 @@ layout: godoc
 					<dd>&nbsp; &nbsp; <a href="#TestSuite.AssertContentType">func (t *TestSuite) AssertContentType(contentType string)</a></dd>
 				
 					
-					<dd>&nbsp; &nbsp; <a href="#TestSuite.AssertEqual">func (t *TestSuite) AssertEqual(expected interface{}, actual interface{})</a></dd>
+					<dd>&nbsp; &nbsp; <a href="#TestSuite.AssertEqual">func (t *TestSuite) AssertEqual(expected, actual interface{})</a></dd>
 				
 					
 					<dd>&nbsp; &nbsp; <a href="#TestSuite.AssertHeader">func (t *TestSuite) AssertHeader(name, value string)</a></dd>
@@ -71,12 +87,13 @@ layout: godoc
 				
 			
 			
-		</dl>
+			</dl>
+			</div><!-- #manual-nav -->
 
 		
 
 		
-			<h4>Package files</h4>
+			<h4>File</h4>
 			<p>
 			<span style="font-size:90%">
 			
@@ -85,12 +102,14 @@ layout: godoc
 			</span>
 			</p>
 		
+		</div><!-- .expanded -->
+		</div><!-- #pkg-index -->
 
 		
 		
-			<h2 id="variables">Variables</h2>
+			<h2 id="pkg-variables">Variables</h2>
 			
-				<pre>var TestSuites []interface{} <span class="comment">// Array of structs that embed TestSuite</span>
+				<pre>var <span id="TestSuites">TestSuites</span> []interface{} <span class="comment">// Array of structs that embed TestSuite</span>
 </pre>
 				
 			
@@ -99,11 +118,11 @@ layout: godoc
 		
 			
 			
-			<h2 id="TestSuite">type <a href="../src/tests.html?s=98:200#L3">TestSuite</a></h2>
+			<h2 id="TestSuite">type <a href="../src/tests.html?s=87:189#L2">TestSuite</a></h2>
 			<pre>type TestSuite struct {
-    Client       *http.Client
-    Response     *http.Response
-    ResponseBody []byte
+    Client       *<a href="/pkg/net/http/">http</a>.<a href="/pkg/net/http/#Client">Client</a>
+    Response     *<a href="/pkg/net/http/">http</a>.<a href="/pkg/net/http/#Response">Response</a>
+    ResponseBody []<a href="/pkg/builtin/#byte">byte</a>
 }</pre>
 			
 
@@ -115,8 +134,8 @@ layout: godoc
 
 			
 				
-				<h3 id="NewTestSuite">func <a href="../src/tests.html?s=429:458#L13">NewTestSuite</a></h3>
-				<pre>func NewTestSuite() TestSuite</pre>
+				<h3 id="NewTestSuite">func <a href="../src/tests.html?s=418:447#L12">NewTestSuite</a></h3>
+				<pre>func NewTestSuite() <a href="#TestSuite">TestSuite</a></pre>
 				<p>
 NewTestSuite returns an initialized TestSuite ready for use. It is invoked
 by the test harness to initialize the embedded field in application tests.
@@ -127,64 +146,64 @@ by the test harness to initialize the embedded field in application tests.
 
 			
 				
-				<h3 id="TestSuite.Assert">func (*TestSuite) <a href="../src/tests.html?s=2847:2883#L95">Assert</a></h3>
-				<pre>func (t *TestSuite) Assert(exp bool)</pre>
+				<h3 id="TestSuite.Assert">func (*TestSuite) <a href="../src/tests.html?s=2811:2847#L94">Assert</a></h3>
+				<pre>func (t *<a href="#TestSuite">TestSuite</a>) Assert(exp <a href="/pkg/builtin/#bool">bool</a>)</pre>
 				
 				
 				
 			
 				
-				<h3 id="TestSuite.AssertContentType">func (*TestSuite) <a href="../src/tests.html?s=2337:2394#L78">AssertContentType</a></h3>
-				<pre>func (t *TestSuite) AssertContentType(contentType string)</pre>
+				<h3 id="TestSuite.AssertContentType">func (*TestSuite) <a href="../src/tests.html?s=2326:2383#L77">AssertContentType</a></h3>
+				<pre>func (t *<a href="#TestSuite">TestSuite</a>) AssertContentType(contentType <a href="/pkg/builtin/#string">string</a>)</pre>
 				
 				
 				
 			
 				
-				<h3 id="TestSuite.AssertEqual">func (*TestSuite) <a href="../src/tests.html?s=2651:2724#L89">AssertEqual</a></h3>
-				<pre>func (t *TestSuite) AssertEqual(expected interface{}, actual interface{})</pre>
+				<h3 id="TestSuite.AssertEqual">func (*TestSuite) <a href="../src/tests.html?s=2640:2701#L88">AssertEqual</a></h3>
+				<pre>func (t *<a href="#TestSuite">TestSuite</a>) AssertEqual(expected, actual interface{})</pre>
 				
 				
 				
 			
 				
-				<h3 id="TestSuite.AssertHeader">func (*TestSuite) <a href="../src/tests.html?s=2445:2497#L82">AssertHeader</a></h3>
-				<pre>func (t *TestSuite) AssertHeader(name, value string)</pre>
+				<h3 id="TestSuite.AssertHeader">func (*TestSuite) <a href="../src/tests.html?s=2434:2486#L81">AssertHeader</a></h3>
+				<pre>func (t *<a href="#TestSuite">TestSuite</a>) AssertHeader(name, value <a href="/pkg/builtin/#string">string</a>)</pre>
 				
 				
 				
 			
 				
-				<h3 id="TestSuite.AssertNotFound">func (*TestSuite) <a href="../src/tests.html?s=2076:2112#L68">AssertNotFound</a></h3>
-				<pre>func (t *TestSuite) AssertNotFound()</pre>
+				<h3 id="TestSuite.AssertNotFound">func (*TestSuite) <a href="../src/tests.html?s=2065:2101#L67">AssertNotFound</a></h3>
+				<pre>func (t *<a href="#TestSuite">TestSuite</a>) AssertNotFound()</pre>
 				
 				
 				
 			
 				
-				<h3 id="TestSuite.AssertOk">func (*TestSuite) <a href="../src/tests.html?s=2009:2039#L64">AssertOk</a></h3>
-				<pre>func (t *TestSuite) AssertOk()</pre>
+				<h3 id="TestSuite.AssertOk">func (*TestSuite) <a href="../src/tests.html?s=1998:2028#L63">AssertOk</a></h3>
+				<pre>func (t *<a href="#TestSuite">TestSuite</a>) AssertOk()</pre>
 				
 				
 				
 			
 				
-				<h3 id="TestSuite.AssertStatus">func (*TestSuite) <a href="../src/tests.html?s=2155:2199#L72">AssertStatus</a></h3>
-				<pre>func (t *TestSuite) AssertStatus(status int)</pre>
+				<h3 id="TestSuite.AssertStatus">func (*TestSuite) <a href="../src/tests.html?s=2144:2188#L71">AssertStatus</a></h3>
+				<pre>func (t *<a href="#TestSuite">TestSuite</a>) AssertStatus(status <a href="/pkg/builtin/#int">int</a>)</pre>
 				
 				
 				
 			
 				
-				<h3 id="TestSuite.Assertf">func (*TestSuite) <a href="../src/tests.html?s=2925:3001#L99">Assertf</a></h3>
-				<pre>func (t *TestSuite) Assertf(exp bool, formatStr string, args ...interface{})</pre>
+				<h3 id="TestSuite.Assertf">func (*TestSuite) <a href="../src/tests.html?s=2889:2965#L98">Assertf</a></h3>
+				<pre>func (t *<a href="#TestSuite">TestSuite</a>) Assertf(exp <a href="/pkg/builtin/#bool">bool</a>, formatStr <a href="/pkg/builtin/#string">string</a>, args ...interface{})</pre>
 				
 				
 				
 			
 				
-				<h3 id="TestSuite.BaseUrl">func (*TestSuite) <a href="../src/tests.html?s=573:609#L18">BaseUrl</a></h3>
-				<pre>func (t *TestSuite) BaseUrl() string</pre>
+				<h3 id="TestSuite.BaseUrl">func (*TestSuite) <a href="../src/tests.html?s=562:598#L17">BaseUrl</a></h3>
+				<pre>func (t *<a href="#TestSuite">TestSuite</a>) BaseUrl() <a href="/pkg/builtin/#string">string</a></pre>
 				<p>
 Return the base URL of the server, e.g. &#34;<a href="http://127.0.0.1:8557">http://127.0.0.1:8557</a>&#34;
 </p>
@@ -193,8 +212,8 @@ Return the base URL of the server, e.g. &#34;<a href="http://127.0.0.1:8557">htt
 				
 			
 				
-				<h3 id="TestSuite.Get">func (*TestSuite) <a href="../src/tests.html?s=813:849#L27">Get</a></h3>
-				<pre>func (t *TestSuite) Get(path string)</pre>
+				<h3 id="TestSuite.Get">func (*TestSuite) <a href="../src/tests.html?s=802:838#L26">Get</a></h3>
+				<pre>func (t *<a href="#TestSuite">TestSuite</a>) Get(path <a href="/pkg/builtin/#string">string</a>)</pre>
 				<p>
 Issue a GET request to the given path and store the result in Request and
 RequestBody.
@@ -204,8 +223,8 @@ RequestBody.
 				
 			
 				
-				<h3 id="TestSuite.MakeRequest">func (*TestSuite) <a href="../src/tests.html?s=1781:1831#L54">MakeRequest</a></h3>
-				<pre>func (t *TestSuite) MakeRequest(req *http.Request)</pre>
+				<h3 id="TestSuite.MakeRequest">func (*TestSuite) <a href="../src/tests.html?s=1770:1820#L53">MakeRequest</a></h3>
+				<pre>func (t *<a href="#TestSuite">TestSuite</a>) MakeRequest(req *<a href="/pkg/net/http/">http</a>.<a href="/pkg/net/http/#Request">Request</a>)</pre>
 				<p>
 Issue any request and read the response. If successful, the caller may
 examine the Response and ResponseBody properties.
@@ -215,8 +234,8 @@ examine the Response and ResponseBody properties.
 				
 			
 				
-				<h3 id="TestSuite.Post">func (*TestSuite) <a href="../src/tests.html?s=1123:1198#L37">Post</a></h3>
-				<pre>func (t *TestSuite) Post(path string, contentType string, reader io.Reader)</pre>
+				<h3 id="TestSuite.Post">func (*TestSuite) <a href="../src/tests.html?s=1112:1187#L36">Post</a></h3>
+				<pre>func (t *<a href="#TestSuite">TestSuite</a>) Post(path <a href="/pkg/builtin/#string">string</a>, contentType <a href="/pkg/builtin/#string">string</a>, reader <a href="/pkg/io/">io</a>.<a href="/pkg/io/#Reader">Reader</a>)</pre>
 				<p>
 Issue a POST request to the given path, sending the given Content-Type and
 data, and store the result in Request and RequestBody.  &#34;data&#34; may be nil.
@@ -226,8 +245,8 @@ data, and store the result in Request and RequestBody.  &#34;data&#34; may be ni
 				
 			
 				
-				<h3 id="TestSuite.PostForm">func (*TestSuite) <a href="../src/tests.html?s=1505:1563#L48">PostForm</a></h3>
-				<pre>func (t *TestSuite) PostForm(path string, data url.Values)</pre>
+				<h3 id="TestSuite.PostForm">func (*TestSuite) <a href="../src/tests.html?s=1494:1552#L47">PostForm</a></h3>
+				<pre>func (t *<a href="#TestSuite">TestSuite</a>) PostForm(path <a href="/pkg/builtin/#string">string</a>, data <a href="/pkg/net/url/">url</a>.<a href="/pkg/net/url/#Values">Values</a>)</pre>
 				<p>
 Issue a POST request to the given path as a form post of the given key and
 values, and store the result in Request and RequestBody.
@@ -237,10 +256,10 @@ values, and store the result in Request and RequestBody.
 				
 			
 		
-		</div>
 	
 
 	
+
 
 
 

@@ -1,6 +1,7 @@
 ---
 layout: godoc
 ---
+
 <!--
 	Copyright 2009 The Go Authors. All rights reserved.
 	Use of this source code is governed by a BSD-style
@@ -9,13 +10,28 @@ layout: godoc
 <h1>Params</h1>
 
 	
+		
 		<!-- The package's Name is printed as title by the top-level template -->
-                
+		<div id="pkg-overview" class="toggleVisible">
+			<div class="collapsed">
+				<h2 class="toggleButton" title="Click to show Overview section">Overview ¹</h2>
+			</div>
+			<div class="expanded">
+				<h2 class="toggleButton" title="Click to hide Overview section">Overview ¾</h2>
+				
+			</div>
+		</div>
 		
 
-		<h2 id="index">Index</h2>
+		<div id="pkg-index" class="toggleVisible">
+		<div class="collapsed">
+			<h2 class="toggleButton" title="Click to show Index section">Index ¹</h2>
+		</div>
+		<div class="expanded">
+			<h2 class="toggleButton" title="Click to hide Index section">Index ¾</h2>
+
 		<!-- Table of contents for API; must be named manual-nav to turn off auto nav. -->
-		<div id="manual-nav">
+			<div id="manual-nav">
 			<dl>
 			
 			
@@ -33,12 +49,13 @@ layout: godoc
 				
 			
 			
-		</dl>
+			</dl>
+			</div><!-- #manual-nav -->
 
 		
 
 		
-			<h4>Package files</h4>
+			<h4>File</h4>
 			<p>
 			<span style="font-size:90%">
 			
@@ -47,6 +64,8 @@ layout: godoc
 			</span>
 			</p>
 		
+		</div><!-- .expanded -->
+		</div><!-- #pkg-index -->
 
 		
 		
@@ -56,8 +75,8 @@ layout: godoc
 			
 			<h2 id="Params">type <a href="../src/params.html?s=198:337#L5">Params</a></h2>
 			<pre>type Params struct {
-    url.Values
-    Files map[string][]*multipart.FileHeader
+    <a href="/pkg/net/url/">url</a>.<a href="/pkg/net/url/#Values">Values</a>
+    Files map[<a href="/pkg/builtin/#string">string</a>][]*<a href="/pkg/mime/multipart/">multipart</a>.<a href="/pkg/mime/multipart/#FileHeader">FileHeader</a>
     <span class="comment">// contains filtered or unexported fields</span>
 }</pre>
 			<p>
@@ -78,7 +97,7 @@ Includes:
 			
 				
 				<h3 id="ParseParams">func <a href="../src/params.html?s=339:377#L11">ParseParams</a></h3>
-				<pre>func ParseParams(req *Request) *Params</pre>
+				<pre>func ParseParams(req *<a href="#Request">Request</a>) *<a href="#Params">Params</a></pre>
 				
 				
 			
@@ -86,16 +105,16 @@ Includes:
 			
 				
 				<h3 id="Params.Bind">func (*Params) <a href="../src/params.html?s=1302:1368#L49">Bind</a></h3>
-				<pre>func (p *Params) Bind(name string, typ reflect.Type) reflect.Value</pre>
+				<pre>func (p *<a href="#Params">Params</a>) Bind(name <a href="/pkg/builtin/#string">string</a>, typ <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Type">Type</a>) <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Value">Value</a></pre>
 				
 				
 				
 			
 		
-		</div>
 	
 
 	
+
 
 
 

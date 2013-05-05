@@ -1,6 +1,7 @@
 ---
 layout: godoc
 ---
+
 <!--
 	Copyright 2009 The Go Authors. All rights reserved.
 	Use of this source code is governed by a BSD-style
@@ -9,17 +10,32 @@ layout: godoc
 <h1>Server</h1>
 
 	
+		
 		<!-- The package's Name is printed as title by the top-level template -->
-                
+		<div id="pkg-overview" class="toggleVisible">
+			<div class="collapsed">
+				<h2 class="toggleButton" title="Click to show Overview section">Overview ¹</h2>
+			</div>
+			<div class="expanded">
+				<h2 class="toggleButton" title="Click to hide Overview section">Overview ¾</h2>
+				
+			</div>
+		</div>
 		
 
-		<h2 id="index">Index</h2>
+		<div id="pkg-index" class="toggleVisible">
+		<div class="collapsed">
+			<h2 class="toggleButton" title="Click to show Index section">Index ¹</h2>
+		</div>
+		<div class="expanded">
+			<h2 class="toggleButton" title="Click to hide Index section">Index ¾</h2>
+
 		<!-- Table of contents for API; must be named manual-nav to turn off auto nav. -->
-		<div id="manual-nav">
+			<div id="manual-nav">
 			<dl>
 			
 			
-				<dd><a href="#variables">Variables</a></dd>
+				<dd><a href="#pkg-variables">Variables</a></dd>
 			
 			
 				
@@ -35,12 +51,13 @@ layout: godoc
 				
 			
 			
-		</dl>
+			</dl>
+			</div><!-- #manual-nav -->
 
 		
 
 		
-			<h4>Package files</h4>
+			<h4>File</h4>
 			<p>
 			<span style="font-size:90%">
 			
@@ -49,16 +66,18 @@ layout: godoc
 			</span>
 			</p>
 		
+		</div><!-- .expanded -->
+		</div><!-- #pkg-index -->
 
 		
 		
-			<h2 id="variables">Variables</h2>
+			<h2 id="pkg-variables">Variables</h2>
 			
 				<pre>var (
-    MainRouter         *Router
-    MainTemplateLoader *TemplateLoader
-    MainWatcher        *Watcher
-    Server             *http.Server
+    <span id="MainRouter">MainRouter</span>         *<a href="#Router">Router</a>
+    <span id="MainTemplateLoader">MainTemplateLoader</span> *<a href="#TemplateLoader">TemplateLoader</a>
+    <span id="MainWatcher">MainWatcher</span>        *<a href="#Watcher">Watcher</a>
+    <span id="Server">Server</span>             *<a href="/pkg/net/http/">http</a>.<a href="/pkg/net/http/#Server">Server</a>
 )</pre>
 				
 			
@@ -67,7 +86,7 @@ layout: godoc
 			
 			
 			<h2 id="Run">func <a href="../src/server.html?s=3091:3109#L103">Run</a></h2>
-			<pre>func Run(port int)</pre>
+			<pre>func Run(port <a href="/pkg/builtin/#int">int</a>)</pre>
 			<p>
 Run the server.
 This is called from the generated main file.
@@ -100,16 +119,16 @@ It audits refreshes and invokes the appropriate method to inform the plugins.
 			
 				
 				<h3 id="PluginNotifier.OnRefresh">func (PluginNotifier) <a href="../src/server.html?s=4569:4615#L155">OnRefresh</a></h3>
-				<pre>func (pn PluginNotifier) OnRefresh(l Listener)</pre>
+				<pre>func (pn <a href="#PluginNotifier">PluginNotifier</a>) OnRefresh(l <a href="#Listener">Listener</a>)</pre>
 				
 				
 				
 			
 		
-		</div>
 	
 
 	
+
 
 
 

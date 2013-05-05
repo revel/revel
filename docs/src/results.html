@@ -1,6 +1,7 @@
 ---
 layout: godoc
 ---
+
 <!--
 	Copyright 2009 The Go Authors. All rights reserved.
 	Use of this source code is governed by a BSD-style
@@ -111,57 +112,37 @@ type RenderTemplateResult struct {
 }
 
 func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
-    <span class="comment">// If &#34;result staging&#34; is on..</span>
+    <span class="comment">// Handle panics when rendering templates.</span>
+    defer func() {
+        if err := recover(); err != nil {
+            ERROR.Println(err)
+            PlaintextErrorResult{fmt.Errorf(&#34;Template Execution Panic in %s:\n%s&#34;,
+                r.Template.Name(), err)}.Apply(req, resp)
+        }
+    }()
+
+    chunked := Config.BoolDefault(&#34;results.chunked&#34;, false)
+
+    <span class="comment">// In a prod mode, write the status, render, and hope for the best.</span>
+    <span class="comment">// (In a dev mode, always render to a temporary buffer first to avoid having</span>
+    <span class="comment">// error pages distorted by HTML already written)</span>
+    if chunked &amp;&amp; !DevMode {
+        resp.WriteHeader(http.StatusOK, &#34;text/html&#34;)
+        r.render(req, resp, resp.Out)
+        return
+    }
+
     <span class="comment">// Render the template into a temporary buffer, to see if there was an error</span>
     <span class="comment">// rendering the template.  If not, then copy it into the response buffer.</span>
     <span class="comment">// Otherwise, template render errors may result in unpredictable HTML (and</span>
     <span class="comment">// would carry a 200 status code)</span>
-    if Config.BoolDefault(&#34;results.staging&#34;, true) {
-        <span class="comment">// Handle panics when rendering templates.</span>
-        defer func() {
-            if err := recover(); err != nil {
-                ERROR.Println(err)
-                PlaintextErrorResult{fmt.Errorf(&#34;Template Execution Panic in %s:\n%s&#34;,
-                    r.Template.Name(), err)}.Apply(req, resp)
-            }
-        }()
-
-        var b bytes.Buffer
-        err := r.Template.Render(&amp;b, r.RenderArgs)
-        if err != nil {
-            var templateContent []string
-            templateName, line, description := parseTemplateError(err)
-            if templateName == &#34;&#34; {
-                templateName = r.Template.Name()
-                templateContent = r.Template.Content()
-            } else {
-                if tmpl, err := MainTemplateLoader.Template(templateName); err == nil {
-                    templateContent = tmpl.Content()
-                }
-            }
-            compileError := &amp;Error{
-                Title:       &#34;Template Execution Error&#34;,
-                Path:        templateName,
-                Description: description,
-                Line:        line,
-                SourceLines: templateContent,
-            }
-            ERROR.Printf(&#34;Template Execution Error (in %s): %s&#34;, templateName, description)
-            ErrorResult{r.RenderArgs, compileError}.Apply(req, resp)
-            return
-        }
-
-        resp.WriteHeader(http.StatusOK, &#34;text/html&#34;)
-        b.WriteTo(resp.Out)
-        return
+    var b bytes.Buffer
+    r.render(req, resp, &amp;b)
+    if !chunked {
+        resp.Out.Header().Set(&#34;Content-Length&#34;, strconv.Itoa(b.Len()))
     }
-
-    <span class="comment">// Else, write the status, render, and hope for the best.</span>
     resp.WriteHeader(http.StatusOK, &#34;text/html&#34;)
-    err := r.Template.Render(resp.Out, r.RenderArgs)
-    if err != nil {
-        ERROR.Println(&#34;Failed to render template&#34;, r.Template.Name(), &#34;\n&#34;, err)
-    }
+    b.WriteTo(resp.Out)
 }
 
 type RenderHtmlResult struct {
@@ -290,6 +271,7 @@ func (r *RedirectToActionResult) Apply(req *Request, resp *Response) {
     resp.WriteHeader(http.StatusFound, &#34;&#34;)
 }
 </pre>
+
 
 
 

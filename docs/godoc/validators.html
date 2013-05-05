@@ -1,6 +1,7 @@
 ---
 layout: godoc
 ---
+
 <!--
 	Copyright 2009 The Go Authors. All rights reserved.
 	Use of this source code is governed by a BSD-style
@@ -9,13 +10,28 @@ layout: godoc
 <h1>Validators</h1>
 
 	
+		
 		<!-- The package's Name is printed as title by the top-level template -->
-                
+		<div id="pkg-overview" class="toggleVisible">
+			<div class="collapsed">
+				<h2 class="toggleButton" title="Click to show Overview section">Overview ¹</h2>
+			</div>
+			<div class="expanded">
+				<h2 class="toggleButton" title="Click to hide Overview section">Overview ¾</h2>
+				
+			</div>
+		</div>
 		
 
-		<h2 id="index">Index</h2>
+		<div id="pkg-index" class="toggleVisible">
+		<div class="collapsed">
+			<h2 class="toggleButton" title="Click to show Index section">Index ¹</h2>
+		</div>
+		<div class="expanded">
+			<h2 class="toggleButton" title="Click to hide Index section">Index ¾</h2>
+
 		<!-- Table of contents for API; must be named manual-nav to turn off auto nav. -->
-		<div id="manual-nav">
+			<div id="manual-nav">
 			<dl>
 			
 			
@@ -123,12 +139,13 @@ layout: godoc
 				
 			
 			
-		</dl>
+			</dl>
+			</div><!-- #manual-nav -->
 
 		
 
 		
-			<h4>Package files</h4>
+			<h4>File</h4>
 			<p>
 			<span style="font-size:90%">
 			
@@ -137,6 +154,8 @@ layout: godoc
 			</span>
 			</p>
 		
+		</div><!-- .expanded -->
+		</div><!-- #pkg-index -->
 
 		
 		
@@ -146,7 +165,7 @@ layout: godoc
 			
 			<h2 id="Email">type <a href="../src/validators.html?s=3010:3038#L152">Email</a></h2>
 			<pre>type Email struct {
-    Match
+    <a href="#Match">Match</a>
 }</pre>
 			
 
@@ -161,7 +180,7 @@ layout: godoc
 			
 				
 				<h3 id="Email.DefaultMessage">func (Email) <a href="../src/validators.html?s=3040:3078#L156">DefaultMessage</a></h3>
-				<pre>func (e Email) DefaultMessage() string</pre>
+				<pre>func (e <a href="#Email">Email</a>) DefaultMessage() <a href="/pkg/builtin/#string">string</a></pre>
 				
 				
 				
@@ -171,7 +190,7 @@ layout: godoc
 			
 			<h2 id="Length">type <a href="../src/validators.html?s=2237:2266#L118">Length</a></h2>
 			<pre>type Length struct {
-    N int
+    N <a href="/pkg/builtin/#int">int</a>
 }</pre>
 			<p>
 Requires an array or string to be exactly a given length.
@@ -189,14 +208,14 @@ Requires an array or string to be exactly a given length.
 			
 				
 				<h3 id="Length.DefaultMessage">func (Length) <a href="../src/validators.html?s=2468:2507#L132">DefaultMessage</a></h3>
-				<pre>func (s Length) DefaultMessage() string</pre>
+				<pre>func (s <a href="#Length">Length</a>) DefaultMessage() <a href="/pkg/builtin/#string">string</a></pre>
 				
 				
 				
 			
 				
 				<h3 id="Length.IsSatisfied">func (Length) <a href="../src/validators.html?s=2268:2317#L122">IsSatisfied</a></h3>
-				<pre>func (s Length) IsSatisfied(obj interface{}) bool</pre>
+				<pre>func (s <a href="#Length">Length</a>) IsSatisfied(obj interface{}) <a href="/pkg/builtin/#bool">bool</a></pre>
 				
 				
 				
@@ -206,7 +225,7 @@ Requires an array or string to be exactly a given length.
 			
 			<h2 id="Match">type <a href="../src/validators.html?s=2606:2650#L137">Match</a></h2>
 			<pre>type Match struct {
-    Regexp *regexp.Regexp
+    Regexp *<a href="/pkg/regexp/">regexp</a>.<a href="/pkg/regexp/#Regexp">Regexp</a>
 }</pre>
 			<p>
 Requires a string to match a given regex.
@@ -224,14 +243,14 @@ Requires a string to match a given regex.
 			
 				
 				<h3 id="Match.DefaultMessage">func (Match) <a href="../src/validators.html?s=2761:2799#L146">DefaultMessage</a></h3>
-				<pre>func (m Match) DefaultMessage() string</pre>
+				<pre>func (m <a href="#Match">Match</a>) DefaultMessage() <a href="/pkg/builtin/#string">string</a></pre>
 				
 				
 				
 			
 				
 				<h3 id="Match.IsSatisfied">func (Match) <a href="../src/validators.html?s=2652:2700#L141">IsSatisfied</a></h3>
-				<pre>func (m Match) IsSatisfied(obj interface{}) bool</pre>
+				<pre>func (m <a href="#Match">Match</a>) IsSatisfied(obj interface{}) <a href="/pkg/builtin/#bool">bool</a></pre>
 				
 				
 				
@@ -241,7 +260,7 @@ Requires a string to match a given regex.
 			
 			<h2 id="Max">type <a href="../src/validators.html?s=848:876#L49">Max</a></h2>
 			<pre>type Max struct {
-    Max int
+    Max <a href="/pkg/builtin/#int">int</a>
 }</pre>
 			
 
@@ -256,14 +275,14 @@ Requires a string to match a given regex.
 			
 				
 				<h3 id="Max.DefaultMessage">func (Max) <a href="../src/validators.html?s=1000:1036#L61">DefaultMessage</a></h3>
-				<pre>func (m Max) DefaultMessage() string</pre>
+				<pre>func (m <a href="#Max">Max</a>) DefaultMessage() <a href="/pkg/builtin/#string">string</a></pre>
 				
 				
 				
 			
 				
 				<h3 id="Max.IsSatisfied">func (Max) <a href="../src/validators.html?s=878:924#L53">IsSatisfied</a></h3>
-				<pre>func (m Max) IsSatisfied(obj interface{}) bool</pre>
+				<pre>func (m <a href="#Max">Max</a>) IsSatisfied(obj interface{}) <a href="/pkg/builtin/#bool">bool</a></pre>
 				
 				
 				
@@ -273,7 +292,7 @@ Requires a string to match a given regex.
 			
 			<h2 id="MaxSize">type <a href="../src/validators.html?s=1844:1876#L99">MaxSize</a></h2>
 			<pre>type MaxSize struct {
-    Max int
+    Max <a href="/pkg/builtin/#int">int</a>
 }</pre>
 			<p>
 Requires an array or string to be at most a given length.
@@ -291,14 +310,14 @@ Requires an array or string to be at most a given length.
 			
 				
 				<h3 id="MaxSize.DefaultMessage">func (MaxSize) <a href="../src/validators.html?s=2083:2123#L113">DefaultMessage</a></h3>
-				<pre>func (m MaxSize) DefaultMessage() string</pre>
+				<pre>func (m <a href="#MaxSize">MaxSize</a>) DefaultMessage() <a href="/pkg/builtin/#string">string</a></pre>
 				
 				
 				
 			
 				
 				<h3 id="MaxSize.IsSatisfied">func (MaxSize) <a href="../src/validators.html?s=1878:1928#L103">IsSatisfied</a></h3>
-				<pre>func (m MaxSize) IsSatisfied(obj interface{}) bool</pre>
+				<pre>func (m <a href="#MaxSize">MaxSize</a>) IsSatisfied(obj interface{}) <a href="/pkg/builtin/#bool">bool</a></pre>
 				
 				
 				
@@ -308,7 +327,7 @@ Requires an array or string to be at most a given length.
 			
 			<h2 id="Min">type <a href="../src/validators.html?s=612:640#L33">Min</a></h2>
 			<pre>type Min struct {
-    Min int
+    Min <a href="/pkg/builtin/#int">int</a>
 }</pre>
 			
 
@@ -323,14 +342,14 @@ Requires an array or string to be at most a given length.
 			
 				
 				<h3 id="Min.DefaultMessage">func (Min) <a href="../src/validators.html?s=764:800#L45">DefaultMessage</a></h3>
-				<pre>func (m Min) DefaultMessage() string</pre>
+				<pre>func (m <a href="#Min">Min</a>) DefaultMessage() <a href="/pkg/builtin/#string">string</a></pre>
 				
 				
 				
 			
 				
 				<h3 id="Min.IsSatisfied">func (Min) <a href="../src/validators.html?s=642:688#L37">IsSatisfied</a></h3>
-				<pre>func (m Min) IsSatisfied(obj interface{}) bool</pre>
+				<pre>func (m <a href="#Min">Min</a>) IsSatisfied(obj interface{}) <a href="/pkg/builtin/#bool">bool</a></pre>
 				
 				
 				
@@ -340,7 +359,7 @@ Requires an array or string to be at most a given length.
 			
 			<h2 id="MinSize">type <a href="../src/validators.html?s=1451:1483#L80">MinSize</a></h2>
 			<pre>type MinSize struct {
-    Min int
+    Min <a href="/pkg/builtin/#int">int</a>
 }</pre>
 			<p>
 Requires an array or string to be at least a given length.
@@ -358,14 +377,14 @@ Requires an array or string to be at least a given length.
 			
 				
 				<h3 id="MinSize.DefaultMessage">func (MinSize) <a href="../src/validators.html?s=1690:1730#L94">DefaultMessage</a></h3>
-				<pre>func (m MinSize) DefaultMessage() string</pre>
+				<pre>func (m <a href="#MinSize">MinSize</a>) DefaultMessage() <a href="/pkg/builtin/#string">string</a></pre>
 				
 				
 				
 			
 				
 				<h3 id="MinSize.IsSatisfied">func (MinSize) <a href="../src/validators.html?s=1485:1535#L84">IsSatisfied</a></h3>
-				<pre>func (m MinSize) IsSatisfied(obj interface{}) bool</pre>
+				<pre>func (m <a href="#MinSize">MinSize</a>) IsSatisfied(obj interface{}) <a href="/pkg/builtin/#bool">bool</a></pre>
 				
 				
 				
@@ -375,8 +394,8 @@ Requires an array or string to be at least a given length.
 			
 			<h2 id="Range">type <a href="../src/validators.html?s=1140:1171#L66">Range</a></h2>
 			<pre>type Range struct {
-    Min
-    Max
+    <a href="#Min">Min</a>
+    <a href="#Max">Max</a>
 }</pre>
 			<p>
 Requires an integer to be within Min, Max inclusive.
@@ -394,14 +413,14 @@ Requires an integer to be within Min, Max inclusive.
 			
 				
 				<h3 id="Range.DefaultMessage">func (Range) <a href="../src/validators.html?s=1284:1322#L75">DefaultMessage</a></h3>
-				<pre>func (r Range) DefaultMessage() string</pre>
+				<pre>func (r <a href="#Range">Range</a>) DefaultMessage() <a href="/pkg/builtin/#string">string</a></pre>
 				
 				
 				
 			
 				
 				<h3 id="Range.IsSatisfied">func (Range) <a href="../src/validators.html?s=1173:1221#L71">IsSatisfied</a></h3>
-				<pre>func (r Range) IsSatisfied(obj interface{}) bool</pre>
+				<pre>func (r <a href="#Range">Range</a>) IsSatisfied(obj interface{}) <a href="/pkg/builtin/#bool">bool</a></pre>
 				
 				
 				
@@ -424,14 +443,14 @@ Requires an integer to be within Min, Max inclusive.
 			
 				
 				<h3 id="Required.DefaultMessage">func (Required) <a href="../src/validators.html?s=546:587#L29">DefaultMessage</a></h3>
-				<pre>func (r Required) DefaultMessage() string</pre>
+				<pre>func (r <a href="#Required">Required</a>) DefaultMessage() <a href="/pkg/builtin/#string">string</a></pre>
 				
 				
 				
 			
 				
 				<h3 id="Required.IsSatisfied">func (Required) <a href="../src/validators.html?s=162:213#L6">IsSatisfied</a></h3>
-				<pre>func (r Required) IsSatisfied(obj interface{}) bool</pre>
+				<pre>func (r <a href="#Required">Required</a>) IsSatisfied(obj interface{}) <a href="/pkg/builtin/#bool">bool</a></pre>
 				
 				
 				
@@ -441,8 +460,8 @@ Requires an integer to be within Min, Max inclusive.
 			
 			<h2 id="Validator">type <a href="../src/validators.html?s=52:136#L1">Validator</a></h2>
 			<pre>type Validator interface {
-    IsSatisfied(interface{}) bool
-    DefaultMessage() string
+    IsSatisfied(interface{}) <a href="/pkg/builtin/#bool">bool</a>
+    DefaultMessage() <a href="/pkg/builtin/#string">string</a>
 }</pre>
 			
 
@@ -456,10 +475,10 @@ Requires an integer to be within Min, Max inclusive.
 
 			
 		
-		</div>
 	
 
 	
+
 
 
 

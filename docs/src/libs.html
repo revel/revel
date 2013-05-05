@@ -1,6 +1,7 @@
 ---
 layout: godoc
 ---
+
 <!--
 	Copyright 2009 The Go Authors. All rights reserved.
 	Use of this source code is governed by a BSD-style
@@ -13,13 +14,18 @@ layout: godoc
 	<pre>package revel
 
 <span class="comment">// Sign a given string with the app-configured secret key.</span>
+<span class="comment">// If no secret key is set, returns the empty string.</span>
 <span class="comment">// Return the signature in base64 (URLEncoding).</span>
 func Sign(message string) string {
+    if len(secretKey) == 0 {
+        return &#34;&#34;
+    }
     mac := hmac.New(sha1.New, secretKey)
     io.WriteString(mac, message)
     return hex.EncodeToString(mac.Sum(nil))
 }
 </pre>
+
 
 
 

@@ -1,6 +1,7 @@
 ---
 layout: godoc
 ---
+
 <!--
 	Copyright 2009 The Go Authors. All rights reserved.
 	Use of this source code is governed by a BSD-style
@@ -98,8 +99,8 @@ func (t *TestSuite) AssertHeader(name, value string) {
     }
 }
 
-func (t *TestSuite) AssertEqual(expected interface{}, actual interface{}) {
-    if !reflect.DeepEqual(expected, actual) {
+func (t *TestSuite) AssertEqual(expected, actual interface{}) {
+    if !Equal(expected, actual) {
         panic(fmt.Errorf(&#34;(expected) %v != %v (actual)&#34;, expected, actual))
     }
 }
@@ -114,6 +115,7 @@ func (t *TestSuite) Assertf(exp bool, formatStr string, args ...interface{}) {
     }
 }
 </pre>
+
 
 
 

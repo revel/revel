@@ -1,6 +1,7 @@
 ---
 layout: godoc
 ---
+
 <!--
 	Copyright 2009 The Go Authors. All rights reserved.
 	Use of this source code is governed by a BSD-style
@@ -9,13 +10,28 @@ layout: godoc
 <h1>Router</h1>
 
 	
+		
 		<!-- The package's Name is printed as title by the top-level template -->
-                
+		<div id="pkg-overview" class="toggleVisible">
+			<div class="collapsed">
+				<h2 class="toggleButton" title="Click to show Overview section">Overview ¹</h2>
+			</div>
+			<div class="expanded">
+				<h2 class="toggleButton" title="Click to hide Overview section">Overview ¾</h2>
+				
+			</div>
+		</div>
 		
 
-		<h2 id="index">Index</h2>
+		<div id="pkg-index" class="toggleVisible">
+		<div class="collapsed">
+			<h2 class="toggleButton" title="Click to show Index section">Index ¹</h2>
+		</div>
+		<div class="expanded">
+			<h2 class="toggleButton" title="Click to hide Index section">Index ¾</h2>
+
 		<!-- Table of contents for API; must be named manual-nav to turn off auto nav. -->
-		<div id="manual-nav">
+			<div id="manual-nav">
 			<dl>
 			
 			
@@ -63,12 +79,13 @@ layout: godoc
 				
 			
 			
-		</dl>
+			</dl>
+			</div><!-- #manual-nav -->
 
 		
 
 		
-			<h4>Package files</h4>
+			<h4>File</h4>
 			<p>
 			<span style="font-size:90%">
 			
@@ -77,6 +94,8 @@ layout: godoc
 			</span>
 			</p>
 		
+		</div><!-- .expanded -->
+		</div><!-- #pkg-index -->
 
 		
 		
@@ -84,11 +103,11 @@ layout: godoc
 		
 			
 			
-			<h2 id="ActionDefinition">type <a href="../src/router.html?s=7305:7448#L277">ActionDefinition</a></h2>
+			<h2 id="ActionDefinition">type <a href="../src/router.html?s=7311:7454#L277">ActionDefinition</a></h2>
 			<pre>type ActionDefinition struct {
-    Host, Method, Url, Action string
-    Star                      bool
-    Args                      map[string]string
+    Host, Method, Url, Action <a href="/pkg/builtin/#string">string</a>
+    Star                      <a href="/pkg/builtin/#bool">bool</a>
+    Args                      map[<a href="/pkg/builtin/#string">string</a>]<a href="/pkg/builtin/#string">string</a>
 }</pre>
 			
 
@@ -102,8 +121,8 @@ layout: godoc
 
 			
 				
-				<h3 id="ActionDefinition.String">func (*ActionDefinition) <a href="../src/router.html?s=7450:7492#L283">String</a></h3>
-				<pre>func (a *ActionDefinition) String() string</pre>
+				<h3 id="ActionDefinition.String">func (*ActionDefinition) <a href="../src/router.html?s=7456:7498#L283">String</a></h3>
+				<pre>func (a *<a href="#ActionDefinition">ActionDefinition</a>) String() <a href="/pkg/builtin/#string">string</a></pre>
 				
 				
 				
@@ -113,10 +132,10 @@ layout: godoc
 			
 			<h2 id="Route">type <a href="../src/router.html?s=113:479#L4">Route</a></h2>
 			<pre>type Route struct {
-    Method      string   <span class="comment">// e.g. GET</span>
-    Path        string   <span class="comment">// e.g. /app/{id}</span>
-    Action      string   <span class="comment">// e.g. Application.ShowApp</span>
-    FixedParams []string <span class="comment">// e.g. &#34;arg1&#34;,&#34;arg2&#34;,&#34;arg3&#34; (CSV formatting)</span>
+    Method      <a href="/pkg/builtin/#string">string</a>   <span class="comment">// e.g. GET</span>
+    Path        <a href="/pkg/builtin/#string">string</a>   <span class="comment">// e.g. /app/{id}</span>
+    Action      <a href="/pkg/builtin/#string">string</a>   <span class="comment">// e.g. Application.ShowApp</span>
+    FixedParams []<a href="/pkg/builtin/#string">string</a> <span class="comment">// e.g. &#34;arg1&#34;,&#34;arg2&#34;,&#34;arg3&#34; (CSV formatting)</span>
     <span class="comment">// contains filtered or unexported fields</span>
 }</pre>
 			
@@ -130,7 +149,7 @@ layout: godoc
 			
 				
 				<h3 id="NewRoute">func <a href="../src/router.html?s=1023:1087#L35">NewRoute</a></h3>
-				<pre>func NewRoute(method, path, action, fixedArgs string) (r *Route)</pre>
+				<pre>func NewRoute(method, path, action, fixedArgs <a href="/pkg/builtin/#string">string</a>) (r *<a href="#Route">Route</a>)</pre>
 				<p>
 Prepares the route to be used in matching.
 </p>
@@ -141,7 +160,7 @@ Prepares the route to be used in matching.
 			
 				
 				<h3 id="Route.Match">func (*Route) <a href="../src/router.html?s=3092:3156#L99">Match</a></h3>
-				<pre>func (r *Route) Match(method string, reqPath string) *RouteMatch</pre>
+				<pre>func (r *<a href="#Route">Route</a>) Match(method <a href="/pkg/builtin/#string">string</a>, reqPath <a href="/pkg/builtin/#string">string</a>) *<a href="#RouteMatch">RouteMatch</a></pre>
 				<p>
 Return nil if no match.
 </p>
@@ -154,11 +173,11 @@ Return nil if no match.
 			
 			<h2 id="RouteMatch">type <a href="../src/router.html?s=481:717#L15">RouteMatch</a></h2>
 			<pre>type RouteMatch struct {
-    Action         string <span class="comment">// e.g. Application.ShowApp</span>
-    ControllerName string <span class="comment">// e.g. Application</span>
-    MethodName     string <span class="comment">// e.g. ShowApp</span>
-    FixedParams    []string
-    Params         map[string]string <span class="comment">// e.g. {id: 123}</span>
+    Action         <a href="/pkg/builtin/#string">string</a> <span class="comment">// e.g. Application.ShowApp</span>
+    ControllerName <a href="/pkg/builtin/#string">string</a> <span class="comment">// e.g. Application</span>
+    MethodName     <a href="/pkg/builtin/#string">string</a> <span class="comment">// e.g. ShowApp</span>
+    FixedParams    []<a href="/pkg/builtin/#string">string</a>
+    Params         map[<a href="/pkg/builtin/#string">string</a>]<a href="/pkg/builtin/#string">string</a> <span class="comment">// e.g. {id: 123}</span>
 }</pre>
 			
 
@@ -176,7 +195,7 @@ Return nil if no match.
 			
 			<h2 id="Router">type <a href="../src/router.html?s=4341:4395#L148">Router</a></h2>
 			<pre>type Router struct {
-    Routes []*Route
+    Routes []*<a href="#Route">Route</a>
     <span class="comment">// contains filtered or unexported fields</span>
 }</pre>
 			
@@ -189,8 +208,8 @@ Return nil if no match.
 
 			
 				
-				<h3 id="NewRouter">func <a href="../src/router.html?s=7218:7259#L271">NewRouter</a></h3>
-				<pre>func NewRouter(routesPath string) *Router</pre>
+				<h3 id="NewRouter">func <a href="../src/router.html?s=7224:7265#L271">NewRouter</a></h3>
+				<pre>func NewRouter(routesPath <a href="/pkg/builtin/#string">string</a>) *<a href="#Router">Router</a></pre>
 				
 				
 			
@@ -198,7 +217,7 @@ Return nil if no match.
 			
 				
 				<h3 id="Router.Refresh">func (*Router) <a href="../src/router.html?s=4726:4764#L164">Refresh</a></h3>
-				<pre>func (router *Router) Refresh() *Error</pre>
+				<pre>func (router *<a href="#Router">Router</a>) Refresh() *<a href="#Error">Error</a></pre>
 				<p>
 Refresh re-reads the routes file and re-calculates the routing table.
 Returns an error if a specified action could not be found.
@@ -208,24 +227,24 @@ Returns an error if a specified action could not be found.
 				
 			
 				
-				<h3 id="Router.Reverse">func (*Router) <a href="../src/router.html?s=7512:7603#L287">Reverse</a></h3>
-				<pre>func (router *Router) Reverse(action string, argValues map[string]string) *ActionDefinition</pre>
+				<h3 id="Router.Reverse">func (*Router) <a href="../src/router.html?s=7518:7609#L287">Reverse</a></h3>
+				<pre>func (router *<a href="#Router">Router</a>) Reverse(action <a href="/pkg/builtin/#string">string</a>, argValues map[<a href="/pkg/builtin/#string">string</a>]<a href="/pkg/builtin/#string">string</a>) *<a href="#ActionDefinition">ActionDefinition</a></pre>
 				
 				
 				
 			
 				
 				<h3 id="Router.Route">func (*Router) <a href="../src/router.html?s=4397:4455#L153">Route</a></h3>
-				<pre>func (router *Router) Route(req *http.Request) *RouteMatch</pre>
+				<pre>func (router *<a href="#Router">Router</a>) Route(req *<a href="/pkg/net/http/">http</a>.<a href="/pkg/net/http/#Request">Request</a>) *<a href="#RouteMatch">RouteMatch</a></pre>
 				
 				
 				
 			
 		
-		</div>
 	
 
 	
+
 
 
 

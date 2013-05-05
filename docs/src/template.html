@@ -1,6 +1,7 @@
 ---
 layout: godoc
 ---
+
 <!--
 	Copyright 2009 The Go Authors. All rights reserved.
 	Use of this source code is governed by a BSD-style
@@ -30,7 +31,7 @@ var (
     <span class="comment">// The functions available for use in the templates.</span>
     TemplateFuncs = map[string]interface{}{
         &#34;url&#34;: ReverseUrl,
-        &#34;eq&#34;:  tplEq,
+        &#34;eq&#34;:  Equal,
         &#34;set&#34;: func(renderArgs map[string]interface{}, key string, value interface{}) template.HTML {
             renderArgs[key] = value
             return template.HTML(&#34;&#34;)
@@ -328,12 +329,13 @@ func ReverseUrl(args ...interface{}) string {
     methodType := controllerType.Method(meth)
     argsByName := make(map[string]string)
     for i, argValue := range args[1:] {
-        argsByName[methodType.Args[i].Name] = fmt.Sprint(argValue)
+        Unbind(argsByName, methodType.Args[i].Name, argValue)
     }
 
     return MainRouter.Reverse(args[0].(string), argsByName).Url
 }
 </pre>
+
 
 
 
