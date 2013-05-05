@@ -114,6 +114,16 @@ Default: 0
 
 ### Results
 
+#### results.chunked
+
+Determines whether the template rendering should use
+[chunked encoding](en.wikipedia.org/wiki/Chunked_transfer_encoding).  Chunked
+encoding can decrease the time to first byte on the client side by sending data
+before the entire template has been fully rendered.
+
+Default: false
+
+***
 #### results.pretty
 
 Configures [`RenderXml`](../docs/godoc/controller.html#RenderXml) and
