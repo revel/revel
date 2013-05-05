@@ -5,6 +5,12 @@ http.port=9000
 cookie.prefix=REVEL
 format.date=01/02/2006
 format.datetime=01/02/2006 15:04
+results.chunked=true
+
+log.trace.prefix = "TRACE "
+log.info.prefix  = "INFO  "
+log.warn.prefix  = "WARN  "
+log.error.prefix = "ERROR "
 
 # The default language of this application.
 i18n.default_language=en
@@ -14,7 +20,6 @@ module.static=github.com/robfig/revel/modules/static
 [dev]
 mode.dev=true
 results.pretty=true
-results.staging=true
 watch=true
 
 module.testrunner = github.com/robfig/revel/modules/testrunner
@@ -27,7 +32,6 @@ log.error.output = stderr
 [prod]
 mode.dev=false
 results.pretty=false
-results.staging=false
 watch=false
 
 module.testrunner =

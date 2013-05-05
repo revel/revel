@@ -2,20 +2,20 @@ package tests
 
 import "github.com/robfig/revel"
 
-type ApplicationTest struct {
+type AppTest struct {
 	revel.TestSuite
 }
 
-func (t ApplicationTest) Before() {
+func (t AppTest) Before() {
 	println("Set up")
 }
 
-func (t ApplicationTest) TestThatIndexPageWorks() {
+func (t AppTest) TestThatIndexPageWorks() {
 	t.Get("/")
 	t.AssertOk()
 	t.AssertContentType("text/html")
 }
 
-func (t ApplicationTest) After() {
+func (t AppTest) After() {
 	println("Tear down")
 }
