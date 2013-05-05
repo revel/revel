@@ -1,6 +1,7 @@
 ---
 layout: godoc
 ---
+{{/* Edits to the default package.html: remove #short-nav, "package files" -> "file". */}}
 <!--
 	Copyright 2009 The Go Authors. All rights reserved.
 	Use of this source code is governed by a BSD-style
@@ -8,60 +9,76 @@ layout: godoc
 -->
 <h1>%%TITLE%%</h1>
 {{with .PDoc}}
-	{{if $.IsPkg}}
+	{{if $.IsMain}}
+		{{/* command documentation */}}
+		{{comment_html .Doc}}
+	{{else}}
+		{{/* package documentation */}}
 		<!-- The package's Name is printed as title by the top-level template -->
-                {{if .Doc}}
-		<div id="overview" class="toggleVisible">
+		<div id="pkg-overview" class="toggleVisible">
+			<div class="collapsed">
+				<h2 class="toggleButton" title="Click to show Overview section">Overview ¹</h2>
+			</div>
 			<div class="expanded">
-				<h2>Overview</h2>
+				<h2 class="toggleButton" title="Click to hide Overview section">Overview ¾</h2>
 				{{comment_html .Doc}}
 			</div>
 		</div>
-		{{end}}
-		{{example_html "" $.Examples $.FSet}}
+		{{example_html $ ""}}
 
-		<h2 id="index">Index</h2>
+		<div id="pkg-index" class="toggleVisible">
+		<div class="collapsed">
+			<h2 class="toggleButton" title="Click to show Index section">Index ¹</h2>
+		</div>
+		<div class="expanded">
+			<h2 class="toggleButton" title="Click to hide Index section">Index ¾</h2>
+
 		<!-- Table of contents for API; must be named manual-nav to turn off auto nav. -->
-		<div id="manual-nav">
+			<div id="manual-nav">
 			<dl>
 			{{if .Consts}}
-				<dd><a href="#constants">Constants</a></dd>
+				<dd><a href="#pkg-constants">Constants</a></dd>
 			{{end}}
 			{{if .Vars}}
-				<dd><a href="#variables">Variables</a></dd>
+				<dd><a href="#pkg-variables">Variables</a></dd>
 			{{end}}
 			{{range .Funcs}}
 				{{$name_html := html .Name}}
-				<dd><a href="#{{$name_html}}">{{node_html .Decl $.FSet}}</a></dd>
+				<dd><a href="#{{$name_html}}">{{node_html $ .Decl false}}</a></dd>
 			{{end}}
 			{{range .Types}}
 				{{$tname_html := html .Name}}
 				<dd><a href="#{{$tname_html}}">type {{$tname_html}}</a></dd>
 				{{range .Funcs}}
 					{{$name_html := html .Name}}
-					<dd>&nbsp; &nbsp; <a href="#{{$name_html}}">{{node_html .Decl $.FSet}}</a></dd>
+					<dd>&nbsp; &nbsp; <a href="#{{$name_html}}">{{node_html $ .Decl false}}</a></dd>
 				{{end}}
 				{{range .Methods}}
 					{{$name_html := html .Name}}
-					<dd>&nbsp; &nbsp; <a href="#{{$tname_html}}.{{$name_html}}">{{node_html .Decl $.FSet}}</a></dd>
+					<dd>&nbsp; &nbsp; <a href="#{{$tname_html}}.{{$name_html}}">{{node_html $ .Decl false}}</a></dd>
 				{{end}}
 			{{end}}
-			{{if .Bugs}}
-				<dd><a href="#bugs">Bugs</a></dd>
+			{{if $.Notes}}
+				{{range $marker, $item := $.Notes}}
+				<dd><a href="#pkg-note-{{$marker}}">{{noteTitle $marker | html}}s</a></dd>
+				{{end}}
 			{{end}}
-		</dl>
+			</dl>
+			</div><!-- #manual-nav -->
 
 		{{if $.Examples}}
-			<h4 id="examples">Examples</h4>
+		<div id="pkg-examples">
+			<h4>Examples</h4>
 			<dl>
 			{{range $.Examples}}
 			<dd><a class="exampleLink" href="#example_{{.Name}}">{{example_name .Name}}</a></dd>
 			{{end}}
 			</dl>
+		</div>
 		{{end}}
 
 		{{with .Filenames}}
-			<h4>Package files</h4>
+			<h4>File</h4>
 			<p>
 			<span style="font-size:90%">
 			{{range .}}
@@ -70,86 +87,89 @@ layout: godoc
 			</span>
 			</p>
 		{{end}}
+		</div><!-- .expanded -->
+		</div><!-- #pkg-index -->
 
 		{{with .Consts}}
-			<h2 id="constants">Constants</h2>
+			<h2 id="pkg-constants">Constants</h2>
 			{{range .}}
-				<pre>{{node_html .Decl $.FSet}}</pre>
+				<pre>{{node_html $ .Decl true}}</pre>
 				{{comment_html .Doc}}
 			{{end}}
 		{{end}}
 		{{with .Vars}}
-			<h2 id="variables">Variables</h2>
+			<h2 id="pkg-variables">Variables</h2>
 			{{range .}}
-				<pre>{{node_html .Decl $.FSet}}</pre>
+				<pre>{{node_html $ .Decl true}}</pre>
 				{{comment_html .Doc}}
 			{{end}}
 		{{end}}
 		{{range .Funcs}}
 			{{/* Name is a string - no need for FSet */}}
 			{{$name_html := html .Name}}
-			<h2 id="{{$name_html}}">func <a href="{{posLink_url .Decl $.FSet}}">{{$name_html}}</a></h2>
-			<pre>{{node_html .Decl $.FSet}}</pre>
+			<h2 id="{{$name_html}}">func <a href="{{posLink_url $ .Decl}}">{{$name_html}}</a></h2>
+			<pre>{{node_html $ .Decl true}}</pre>
 			{{comment_html .Doc}}
-			{{example_html .Name $.Examples $.FSet}}
+			{{example_html $ .Name}}
 		{{end}}
 		{{range .Types}}
 			{{$tname := .Name}}
 			{{$tname_html := html .Name}}
-			<h2 id="{{$tname_html}}">type <a href="{{posLink_url .Decl $.FSet}}">{{$tname_html}}</a></h2>
-			<pre>{{node_html .Decl $.FSet}}</pre>
+			<h2 id="{{$tname_html}}">type <a href="{{posLink_url $ .Decl}}">{{$tname_html}}</a></h2>
+			<pre>{{node_html $ .Decl true}}</pre>
 			{{comment_html .Doc}}
 
 			{{range .Consts}}
-				<pre>{{node_html .Decl $.FSet}}</pre>
+				<pre>{{node_html $ .Decl true}}</pre>
 				{{comment_html .Doc}}
 			{{end}}
 
 			{{range .Vars}}
-				<pre>{{node_html .Decl $.FSet}}</pre>
+				<pre>{{node_html $ .Decl true}}</pre>
 				{{comment_html .Doc}}
 			{{end}}
 
-			{{example_html $tname $.Examples $.FSet}}
+			{{example_html $ $tname}}
 
 			{{range .Funcs}}
 				{{$name_html := html .Name}}
-				<h3 id="{{$name_html}}">func <a href="{{posLink_url .Decl $.FSet}}">{{$name_html}}</a></h3>
-				<pre>{{node_html .Decl $.FSet}}</pre>
+				<h3 id="{{$name_html}}">func <a href="{{posLink_url $ .Decl}}">{{$name_html}}</a></h3>
+				<pre>{{node_html $ .Decl true}}</pre>
 				{{comment_html .Doc}}
-				{{example_html .Name $.Examples $.FSet}}
+				{{example_html $ .Name}}
 			{{end}}
 
 			{{range .Methods}}
 				{{$name_html := html .Name}}
-				<h3 id="{{$tname_html}}.{{$name_html}}">func ({{html .Recv}}) <a href="{{posLink_url .Decl $.FSet}}">{{$name_html}}</a></h3>
-				<pre>{{node_html .Decl $.FSet}}</pre>
+				<h3 id="{{$tname_html}}.{{$name_html}}">func ({{html .Recv}}) <a href="{{posLink_url $ .Decl}}">{{$name_html}}</a></h3>
+				<pre>{{node_html $ .Decl true}}</pre>
 				{{comment_html .Doc}}
 				{{$name := printf "%s_%s" $tname .Name}}
-				{{example_html $name $.Examples $.FSet}}
+				{{example_html $ $name}}
 			{{end}}
 		{{end}}
-		</div>
-	{{else}}  {{/* not a package; is a command */}}
-		{{comment_html .Doc}}
 	{{end}}
 
-	{{with .Bugs}}
-		<h2 id="bugs">Bugs</h2>
-		{{range .}}
-		{{comment_html .}}
+	{{with $.Notes}}
+		{{range $marker, $content := .}}
+			<h2 id="pkg-note-{{$marker}}">{{noteTitle $marker | html}}s</h2>
+			<ul style="list-style: none; padding: 0;">
+			{{range .}}
+			<li><a href="{{posLink_url $ .}}">&#x261e;</a> {{html .Body}}</li>
+			{{end}}
+			</ul>
 		{{end}}
 	{{end}}
 {{end}}
 
 {{with .PAst}}
-	<pre>{{node_html . $.FSet}}</pre>
+	<pre>{{node_html $ . false}}</pre>
 {{end}}
 
 {{with .Dirs}}
 	{{/* DirList entries are numbers and strings - no need for FSet */}}
 	{{if $.PDoc}}
-		<h2 id="subdirectories">Subdirectories</h2>
+		<h2 id="pkg-subdirectories">Subdirectories</h2>
 	{{else}}
 		<div class="pkgGopher">
 			<img class="gopher" src="/doc/gopher/pkg.png"/>
@@ -170,14 +190,14 @@ layout: godoc
 		{{if $.DirFlat}}
 			{{if .HasPkg}}
 				<tr>
-				<td><a href="{{html .Path}}">{{html .Path}}</a></td>
+				<td class="name"><a href="{{html .Path}}/">{{html .Path}}</a></td>
 				<td>&nbsp;&nbsp;&nbsp;&nbsp;</td>
 				<td style="width: auto">{{html .Synopsis}}</td>
 				</tr>
 			{{end}}
 		{{else}}
 			<tr>
-			<td>{{repeat `&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;` .Depth}}<a href="{{html .Path}}">{{html .Name}}</a></td>
+			<td class="name">{{repeat `&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;` .Depth}}<a href="{{html .Path}}/">{{html .Name}}</a></td>
 			<td>&nbsp;&nbsp;&nbsp;&nbsp;</td>
 			<td style="width: auto">{{html .Synopsis}}</td>
 			</tr>
@@ -185,7 +205,47 @@ layout: godoc
 	{{end}}
 	</table>
 	{{if $.PDoc}}{{else}}
-	<p>Need more packages? Take a look at the <a href="http://godashboard.appspot.com/">Go Project Dashboard</a>.</p>
+	<p>Need more packages? Take a look at the <a href="http://code.google.com/p/go-wiki/wiki/Projects">Go Projects wiki page</a>.</p>
 	{{end}}
 {{end}}
 
+{{if $.Examples}}
+<script>
+$(document).ready(function() {
+	'use strict';
+	// Set up playground when each element is toggled.
+	$('div.play').each(function (i, el) {
+		var built = false;
+		$(el).closest('.toggle').click(function() {
+			// Only set up playground once.
+			if (built) {
+				return;
+			}
+			built = true;
+
+			// Set up playground.
+			var code = $('.code', el);
+			playground({
+				'codeEl':   code,
+				'outputEl': $('.output', el),
+				'runEl':    $('.run', el),
+				'fmtEl':    $('.fmt', el),
+				'shareEl':  $('.share', el),
+				'shareRedirect': 'http://play.golang.org/p/'
+			});
+
+			// Make the code textarea resize to fit content.
+			var resize = function() {
+				code.height(0);
+				var h = code[0].scrollHeight;
+				code.height(h+20); // minimize bouncing.
+				code.closest('.input').height(h);
+			};
+			code.on('keydown', resize);
+			code.on('keyup', resize);
+			code.keyup(); // resize now.
+		});
+	});
+});
+</script>
+{{end}}
