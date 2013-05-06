@@ -1,7 +1,7 @@
 ---
 layout: godoc
 ---
-{{/* Edits to the default package.html: remove #short-nav, "package files" -> "file". */}}
+{{/* Edits to the default package.html: remove #short-nav, "package files" -> "file", replace arrows with html entities and hide Overview if none present. */}}
 <!--
 	Copyright 2009 The Go Authors. All rights reserved.
 	Use of this source code is governed by a BSD-style
@@ -15,23 +15,25 @@ layout: godoc
 	{{else}}
 		{{/* package documentation */}}
 		<!-- The package's Name is printed as title by the top-level template -->
+		{{if comment_html .Doc}}
 		<div id="pkg-overview" class="toggleVisible">
 			<div class="collapsed">
-				<h2 class="toggleButton" title="Click to show Overview section">Overview ¹</h2>
+				<h2 class="toggleButton" title="Click to show Overview section">Overview &#9657;</h2>
 			</div>
 			<div class="expanded">
-				<h2 class="toggleButton" title="Click to hide Overview section">Overview ¾</h2>
+				<h2 class="toggleButton" title="Click to hide Overview section">Overview &#9662;</h2>
 				{{comment_html .Doc}}
 			</div>
 		</div>
+		{{end}}
 		{{example_html $ ""}}
 
 		<div id="pkg-index" class="toggleVisible">
 		<div class="collapsed">
-			<h2 class="toggleButton" title="Click to show Index section">Index ¹</h2>
+			<h2 class="toggleButton" title="Click to show Index section">Index &#9657;</h2>
 		</div>
 		<div class="expanded">
-			<h2 class="toggleButton" title="Click to hide Index section">Index ¾</h2>
+			<h2 class="toggleButton" title="Click to hide Index section">Index &#9662;</h2>
 
 		<!-- Table of contents for API; must be named manual-nav to turn off auto nav. -->
 			<div id="manual-nav">
