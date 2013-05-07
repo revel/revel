@@ -89,18 +89,18 @@ func TestGetValidationKeys(t *testing.T) {
 }
 
 var TypeExprs = map[string]TypeExpr{
-	"int":        TypeExpr{"int", "", 0},
-	"*int":       TypeExpr{"*int", "", 1},
-	"[]int":      TypeExpr{"[]int", "", 2},
-	"...int":     TypeExpr{"[]int", "", 2},
-	"[]*int":     TypeExpr{"[]*int", "", 3},
-	"...*int":    TypeExpr{"[]*int", "", 3},
-	"MyType":     TypeExpr{"MyType", "pkg", 0},
-	"*MyType":    TypeExpr{"*MyType", "pkg", 1},
-	"[]MyType":   TypeExpr{"[]MyType", "pkg", 2},
-	"...MyType":  TypeExpr{"[]MyType", "pkg", 2},
-	"[]*MyType":  TypeExpr{"[]*MyType", "pkg", 3},
-	"...*MyType": TypeExpr{"[]*MyType", "pkg", 3},
+	"int":        TypeExpr{"int", "", 0, true},
+	"*int":       TypeExpr{"*int", "", 1, true},
+	"[]int":      TypeExpr{"[]int", "", 2, true},
+	"...int":     TypeExpr{"[]int", "", 2, true},
+	"[]*int":     TypeExpr{"[]*int", "", 3, true},
+	"...*int":    TypeExpr{"[]*int", "", 3, true},
+	"MyType":     TypeExpr{"MyType", "pkg", 0, true},
+	"*MyType":    TypeExpr{"*MyType", "pkg", 1, true},
+	"[]MyType":   TypeExpr{"[]MyType", "pkg", 2, true},
+	"...MyType":  TypeExpr{"[]MyType", "pkg", 2, true},
+	"[]*MyType":  TypeExpr{"[]*MyType", "pkg", 3, true},
+	"...*MyType": TypeExpr{"[]*MyType", "pkg", 3, true},
 }
 
 func TestTypeExpr(t *testing.T) {

@@ -421,6 +421,9 @@ func appendAction(fset *token.FileSet, mm methodMap, decl ast.Decl, pkgImportPat
 		for _, name := range field.Names {
 			var importPath string
 			typeExpr := NewTypeExpr(pkgName, field.Type)
+			if !typeExpr.Valid {
+				return // We didn't understand one of the args.  Ignore this action. (Already logged)
+			}
 			if typeExpr.PkgName != "" {
 				var ok bool
 				if importPath, ok = imports[typeExpr.PkgName]; !ok {
@@ -551,7 +554,9 @@ func getValidationKeys(fset *token.FileSet, funcDecl *ast.FuncDecl, imports map[
 			return true
 		}
 
-		lineKeys[fset.Position(callExpr.End()).Line] = NewTypeExpr("", arg).TypeName("")
+		if typeExpr := NewTypeExpr("", arg); typeExpr.Valid {
+			lineKeys[fset.Position(callExpr.End()).Line] = typeExpr.TypeName("")
+		}
 		return true
 	})
 
@@ -665,6 +670,7 @@ type TypeExpr struct {
 	Expr     string // The unqualified type expression, e.g. "[]*MyType"
 	PkgName  string // The default package idenifier
 	pkgIndex int    // The index where the package identifier should be inserted.
+	Valid    bool
 }
 
 // TypeName returns the fully-qualified type name for this expression.
@@ -684,24 +690,24 @@ func NewTypeExpr(pkgName string, expr ast.Expr) TypeExpr {
 		if IsBuiltinType(t.Name) {
 			pkgName = ""
 		}
-		return TypeExpr{t.Name, pkgName, 0}
+		return TypeExpr{t.Name, pkgName, 0, true}
 	case *ast.SelectorExpr:
 		e := NewTypeExpr(pkgName, t.X)
-		return TypeExpr{t.Sel.Name, e.Expr, 0}
+		return TypeExpr{t.Sel.Name, e.Expr, 0, e.Valid}
 	case *ast.StarExpr:
 		e := NewTypeExpr(pkgName, t.X)
-		return TypeExpr{"*" + e.Expr, e.PkgName, e.pkgIndex + 1}
+		return TypeExpr{"*" + e.Expr, e.PkgName, e.pkgIndex + 1, e.Valid}
 	case *ast.ArrayType:
 		e := NewTypeExpr(pkgName, t.Elt)
-		return TypeExpr{"[]" + e.Expr, e.PkgName, e.pkgIndex + 2}
+		return TypeExpr{"[]" + e.Expr, e.PkgName, e.pkgIndex + 2, e.Valid}
 	case *ast.Ellipsis:
 		e := NewTypeExpr(pkgName, t.Elt)
-		return TypeExpr{"[]" + e.Expr, e.PkgName, e.pkgIndex + 2}
+		return TypeExpr{"[]" + e.Expr, e.PkgName, e.pkgIndex + 2, e.Valid}
 	default:
 		log.Println("Failed to generate name for field.")
 		ast.Print(nil, expr)
 	}
-	return TypeExpr{}
+	return TypeExpr{Valid: false}
 }
 
 var _BUILTIN_TYPES = map[string]struct{}{
