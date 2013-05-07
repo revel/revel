@@ -22,6 +22,9 @@ var importErrorPattern = regexp.MustCompile("cannot find package \"([^\"]+)\"")
 // Requires that revel.Init has been called previously.
 // Returns the path to the built binary, and an error if there was a problem building it.
 func Build() (app *App, compileError *revel.Error) {
+	// First, clear the generated files (to avoid them messing with ProcessSource).
+	cleanSource("tmp", "routes")
+
 	sourceInfo, compileError := ProcessSource(revel.CodePaths)
 	if compileError != nil {
 		return nil, compileError
@@ -101,6 +104,16 @@ func Build() (app *App, compileError *revel.Error) {
 	}
 	revel.ERROR.Fatalf("Not reachable")
 	return nil, nil
+}
+
+func cleanSource(dirs ...string) {
+	for _, dir := range dirs {
+		tmpPath := path.Join(revel.AppPath, dir)
+		err := os.RemoveAll(tmpPath)
+		if err != nil {
+			revel.ERROR.Println("Failed to remove dir:", err)
+		}
+	}
 }
 
 // getSource renders the given template to produce source code, which it writes
