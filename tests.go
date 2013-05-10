@@ -1,12 +1,14 @@
 package revel
 
 import (
+	"bytes"
 	"code.google.com/p/go.net/websocket"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
 )
 
@@ -143,5 +145,21 @@ func (t *TestSuite) Assert(exp bool) {
 func (t *TestSuite) Assertf(exp bool, formatStr string, args ...interface{}) {
 	if !exp {
 		panic(fmt.Errorf(formatStr, args))
+	}
+}
+
+// Assert that the response contains the given string.
+func (t *TestSuite) AssertContains(s string) {
+	if !bytes.Contains(t.ResponseBody, []byte(s)) {
+		panic(fmt.Errorf("Assertion failed. Expected response to contain %s", s))
+	}
+}
+
+// Assert that the response matches the given regular expression.BUG
+func (t *TestSuite) AssertContainsRegex(regex string) {
+	r := regexp.MustCompile(regex)
+
+	if !r.Match(t.ResponseBody) {
+		panic(fmt.Errorf("Assertion failed. Expected response to match regexp %s", regex))
 	}
 }
