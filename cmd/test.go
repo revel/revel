@@ -154,6 +154,16 @@ You can add it to a run mode configuration with the following line:
 		}
 		fmt.Printf("%8s%3s%6ds\n", suiteResultStr, suiteAlert, int(time.Since(startTime).Seconds()))
 
+		if !suiteResult.Passed {
+			fmt.Printf("\nFailures:\n")
+			for _, result := range suiteResult.Results {
+				if(!result.Passed){
+					fmt.Printf("%s.%s\n", suiteResult.Name, result.Name)
+					fmt.Printf("%s\n", result.ErrorSummary)
+				}
+			}
+		}
+
 		// Create the result HTML file.
 		suiteResultFilename := path.Join(resultPath,
 			fmt.Sprintf("%s.%s.html", suite.Name, strings.ToLower(suiteResultStr)))
