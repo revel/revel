@@ -117,6 +117,7 @@ You can add it to a run mode configuration with the following line:
 		errorf("Failed to load suite result template: %s", err)
 	}
 
+	failedResults := make([]controllers.TestSuiteResult, 0)
 	// Run each suite.
 	overallSuccess := true
 	for _, suite := range testSuites {
@@ -151,19 +152,9 @@ You can add it to a run mode configuration with the following line:
 		suiteResultStr, suiteAlert := "PASSED", ""
 		if !suiteResult.Passed {
 			suiteResultStr, suiteAlert = "FAILED", "!"
+			failedResults = append(failedResults, suiteResult)
 		}
 		fmt.Printf("%8s%3s%6ds\n", suiteResultStr, suiteAlert, int(time.Since(startTime).Seconds()))
-
-		if !suiteResult.Passed {
-			fmt.Printf("\nFailures:\n")
-			for _, result := range suiteResult.Results {
-				if !result.Passed {
-					fmt.Printf("%s.%s\n", suiteResult.Name, result.Name)
-					fmt.Printf("%s\n", result.ErrorSummary)
-				}
-			}
-		}
-
 		// Create the result HTML file.
 		suiteResultFilename := path.Join(resultPath,
 			fmt.Sprintf("%s.%s.html", suite.Name, strings.ToLower(suiteResultStr)))
@@ -181,6 +172,15 @@ You can add it to a run mode configuration with the following line:
 		writeResultFile(resultPath, "result.passed", "passed")
 		fmt.Println("All Tests Passed.")
 	} else {
+		for _, failedResult := range failedResults {
+			fmt.Printf("Failures:\n")
+			for _, result := range failedResult.Results {
+				if !result.Passed {
+					fmt.Printf("%s.%s\n", failedResult.Name, result.Name)
+					fmt.Printf("%s\n\n", result.ErrorSummary)
+				}
+			}
+		}
 		writeResultFile(resultPath, "result.failed", "failed")
 		errorf("Some tests failed.  See file://%s for results.", resultPath)
 	}
