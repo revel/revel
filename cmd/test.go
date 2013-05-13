@@ -157,7 +157,7 @@ You can add it to a run mode configuration with the following line:
 		if !suiteResult.Passed {
 			fmt.Printf("\nFailures:\n")
 			for _, result := range suiteResult.Results {
-				if(!result.Passed){
+				if !result.Passed {
 					fmt.Printf("%s.%s\n", suiteResult.Name, result.Name)
 					fmt.Printf("%s\n", result.ErrorSummary)
 				}

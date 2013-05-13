@@ -139,7 +139,7 @@ func DescribeSuite(testSuite interface{}) TestSuiteDesc {
 
 func errorSummary(error *revel.Error) string{
 	var message = fmt.Sprintf("%4sStatus: %s\n%4sIn %s", "", error.Description, "", error.Path)
-	if(error.Line != 0){
+	if error.Line != 0 {
 		message += fmt.Sprintf(" (around line %d): ", error.Line)
 		for _, line := range error.ContextSource() {
 			if line.IsError {
