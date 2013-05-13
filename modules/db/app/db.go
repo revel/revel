@@ -15,11 +15,9 @@ var (
 	Spec   string
 )
 
-type DbPlugin struct {
-	revel.EmptyPlugin
-}
+type DbFilter struct{}
 
-func (p DbPlugin) OnAppStart() {
+func (p DbFilter) OnAppStart() {
 	// Read configuration.
 	var found bool
 	if Driver, found = revel.Config.String("db.driver"); !found {
@@ -37,33 +35,30 @@ func (p DbPlugin) OnAppStart() {
 	}
 }
 
-// Begin a transaction.
-func (p DbPlugin) BeforeRequest(c *revel.Controller) {
+func (p DbFilter) Call(c *revel.Controller, fc revel.FilterChain) {
+	// Begin transaction
 	txn, err := Db.Begin()
 	if err != nil {
 		panic(err)
 	}
 	c.Txn = txn
-}
 
-// Commit the active transaction.
-func (p DbPlugin) AfterRequest(c *revel.Controller) {
+	// Catch panics and roll back.
+	defer func() {
+		if err := c.Txn.Rollback(); err != nil {
+			if err != sql.ErrTxDone {
+				panic(err)
+			}
+		}
+	}()
+
+	fc.Call(c)
+
+	// Commit
 	if err := c.Txn.Commit(); err != nil {
 		if err != sql.ErrTxDone {
 			panic(err)
 		}
 	}
 	c.Txn = nil
-}
-
-// Rollback the active transaction, if any.
-func (p DbPlugin) OnException(c *revel.Controller, err interface{}) {
-	if c.Txn == nil {
-		return
-	}
-	if err := c.Txn.Rollback(); err != nil {
-		if err != sql.ErrTxDone {
-			panic(err)
-		}
-	}
 }

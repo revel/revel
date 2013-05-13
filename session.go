@@ -30,13 +30,13 @@ func (s Session) Id() string {
 	return s[SESSION_ID_KEY]
 }
 
-type SessionPlugin struct{ EmptyPlugin }
+type SessionFilter struct{}
 
-func (p SessionPlugin) BeforeRequest(c *Controller) {
+func (p SessionFilter) Call(c *Controller, fc FilterChain) {
 	c.Session = restoreSession(c.Request.Request)
-}
 
-func (p SessionPlugin) AfterRequest(c *Controller) {
+	fc.Call(c)
+
 	// Store the session (and sign it).
 	var sessionValue string
 	for key, value := range c.Session {

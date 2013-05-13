@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/robfig/revel"
-	"github.com/robfig/revel/modules/testrunner/app"
 	"html"
 	"html/template"
 	"reflect"
@@ -133,8 +132,4 @@ func DescribeSuite(testSuite interface{}) TestSuiteDesc {
 		Name:  t.Elem().Name(),
 		Tests: tests,
 	}
-}
-
-func init() {
-	revel.RegisterPlugin(app.TestRunnerPlugin{})
 }

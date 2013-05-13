@@ -4,9 +4,6 @@ import (
 	"code.google.com/p/go.net/websocket"
 	"fmt"
 	"net/http"
-	"net/url"
-	"path"
-	"reflect"
 	"time"
 )
 
@@ -15,8 +12,6 @@ var (
 	MainTemplateLoader *TemplateLoader
 	MainWatcher        *Watcher
 	Server             *http.Server
-
-	websocketType = reflect.TypeOf((*websocket.Conn)(nil))
 )
 
 // This method handles all requests.  It dispatches to handleInternal after
@@ -33,78 +28,17 @@ func handle(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleInternal(w http.ResponseWriter, r *http.Request, ws *websocket.Conn) {
-	// TODO: StaticPathsCache
-	req, resp := NewRequest(r), NewResponse(w)
+	var (
+		req  = NewRequest(r)
+		resp = NewResponse(w)
+		c    = NewController(req, resp)
+	)
+	req.Websocket = ws
 
-	if MainWatcher != nil {
-		err := MainWatcher.Notify()
-		if err != nil {
-			RenderError(req, resp, err)
-			return
-		}
+	Filters.Call(&c)
+	if c.Result != nil {
+		c.Result.Apply(req, resp)
 	}
-
-	// Figure out the Controller/Action
-	var route *RouteMatch = MainRouter.Route(r)
-	if route == nil {
-		NotFound(req, resp, "No matching route found")
-		return
-	}
-
-	// The route may want to explicitly return a 404.
-	if route.Action == "404" {
-		NotFound(req, resp, "(intentionally)")
-		return
-	}
-
-	// Construct the controller and get the method to call.
-	controller, appControllerPtr := NewAppController(req, resp, route.ControllerName, route.MethodName)
-	if controller == nil {
-		NotFound(req, resp, fmt.Sprintln("No matching action found:", route.Action))
-		return
-	}
-
-	var method reflect.Value = appControllerPtr.MethodByName(controller.MethodType.Name)
-	if !method.IsValid() {
-		WARN.Printf("Function %s not found on Controller %s",
-			route.MethodName, route.ControllerName)
-		NotFound(req, resp, fmt.Sprintln("No matching action found:", route.Action))
-		return
-	}
-
-	// Add the route Params to the Request Params.
-	for key, value := range route.Params {
-		url.Values(controller.Params.Values).Add(key, value)
-	}
-
-	// Add the fixed parameters mapped by name.
-	for i, value := range route.FixedParams {
-		if i < len(controller.MethodType.Args) {
-			arg := controller.MethodType.Args[i]
-			controller.Params.Values.Set(arg.Name, value)
-		} else {
-			WARN.Println("Too many parameters to", route.Action, "trying to add", value)
-			break
-		}
-	}
-
-	// Collect the values for the method's arguments.
-	var actualArgs []reflect.Value
-	for _, arg := range controller.MethodType.Args {
-		// If they accept a websocket connection, treat that arg specially.
-		var boundArg reflect.Value
-		if arg.Type == websocketType {
-			boundArg = reflect.ValueOf(ws)
-		} else {
-			TRACE.Println("Binding:", arg.Name, "as", arg.Type)
-			boundArg = controller.Params.Bind(arg.Name, arg.Type)
-		}
-		actualArgs = append(actualArgs, boundArg)
-	}
-
-	// Invoke the method.
-	// (Note that the method Value is already bound to the appController receiver.)
-	controller.Invoke(appControllerPtr, method, actualArgs)
 }
 
 // Run the server.
@@ -116,13 +50,13 @@ func Run(port int) {
 		port = HttpPort
 	}
 
-	MainRouter = NewRouter(path.Join(BasePath, "conf", "routes"))
 	MainTemplateLoader = NewTemplateLoader(TemplatePaths)
 
 	// The "watch" config variable can turn on and off all watching.
 	// (As a convenient way to control it all together.)
 	if Config.BoolDefault("watch", true) {
 		MainWatcher = NewWatcher()
+		Filters = append([]Filter{WatchFilter{}}, Filters...)
 	}
 
 	// If desired (or by default), create a watcher for templates and routes.
@@ -133,20 +67,12 @@ func Run(port int) {
 		MainTemplateLoader.Refresh()
 	}
 
-	if MainWatcher != nil && Config.BoolDefault("watch.routes", true) {
-		MainWatcher.auditor = PluginNotifier{plugins}
-		MainWatcher.Listen(MainRouter, MainRouter.path)
-	} else {
-		MainRouter.Refresh()
-		plugins.OnRoutesLoaded(MainRouter)
-	}
-
 	Server = &http.Server{
 		Addr:    fmt.Sprintf("%s:%d", address, port),
 		Handler: http.HandlerFunc(handle),
 	}
 
-	plugins.OnAppStart()
+	runStartupHooks()
 
 	go func() {
 		time.Sleep(100 * time.Millisecond)
@@ -156,14 +82,20 @@ func Run(port int) {
 	ERROR.Fatalln("Failed to listen:", Server.ListenAndServe())
 }
 
-// The PluginNotifier glues the watcher and the plugin collection together.
-// It audits refreshes and invokes the appropriate method to inform the plugins.
-type PluginNotifier struct {
-	plugins PluginCollection
+func runStartupHooks() {
+	for _, filter := range Filters {
+		if initFilter, ok := filter.(InitializingFilter); ok {
+			initFilter.OnAppStart()
+		}
+	}
+
+	for _, hook := range startupHooks {
+		hook()
+	}
 }
 
-func (pn PluginNotifier) OnRefresh(l Listener) {
-	if l == MainRouter {
-		pn.plugins.OnRoutesLoaded(MainRouter)
-	}
+var startupHooks []func()
+
+func OnAppStart(f func()) {
+	startupHooks = append(startupHooks, f)
 }

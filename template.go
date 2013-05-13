@@ -194,7 +194,7 @@ func (loader *TemplateLoader) Refresh() *Error {
 			// Convert template names to use forward slashes, even on Windows.
 			templateName := path[len(basePath)+1:]
 			if os.PathSeparator == '\\' {
-				templateName = strings.Replace(templateName, `\`, `/`, -1)
+				templateName = strings.Replace(templateName, `\`, `/`, -1) // `
 			}
 
 			// If we already loaded a template of this name, skip it.
@@ -348,17 +348,19 @@ func ReverseUrl(args ...interface{}) string {
 
 	action := args[0].(string)
 	actionSplit := strings.Split(action, ".")
-	var ctrl, meth string
 	if len(actionSplit) != 2 {
 		ERROR.Println("Warning: Must provide Controller.Method for reverse router.")
 		return "#"
 	}
-	ctrl, meth = actionSplit[0], actionSplit[1]
-	controllerType := LookupControllerType(ctrl)
-	methodType := controllerType.Method(meth)
+
+	var c Controller
+	if err := c.SetAction(actionSplit[0], actionSplit[1]); err != nil {
+		ERROR.Println("revel/template: failed to reverse:", err)
+		return "#"
+	}
 	argsByName := make(map[string]string)
 	for i, argValue := range args[1:] {
-		Unbind(argsByName, methodType.Args[i].Name, argValue)
+		Unbind(argsByName, c.MethodType.Args[i].Name, argValue)
 	}
 
 	return MainRouter.Reverse(args[0].(string), argsByName).Url

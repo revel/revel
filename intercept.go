@@ -85,42 +85,41 @@ func (i Interception) Invoke(val reflect.Value) reflect.Value {
 	return vals[0]
 }
 
-type InterceptorPlugin struct {
-	EmptyPlugin
-}
+type InterceptorFilter struct{}
 
-func (p InterceptorPlugin) BeforeRequest(c *Controller) {
+func (p InterceptorFilter) Call(c *Controller, fc FilterChain) {
+	defer invokeInterceptors(FINALLY, c)
+	defer func() {
+		if err := recover(); err != nil {
+			invokeInterceptors(PANIC, c)
+		}
+	}()
+
+	// Invoke the BEFORE interceptors and return early, if we get a result.
 	invokeInterceptors(BEFORE, c)
-}
+	if c.Result != nil {
+		return
+	}
 
-func (p InterceptorPlugin) AfterRequest(c *Controller) {
+	fc.Call(c)
 	invokeInterceptors(AFTER, c)
 }
 
-func (p InterceptorPlugin) OnException(c *Controller, err interface{}) {
-	invokeInterceptors(PANIC, c)
-}
-
-func (p InterceptorPlugin) Finally(c *Controller) {
-	invokeInterceptors(FINALLY, c)
-}
-
 func invokeInterceptors(when InterceptTime, c *Controller) {
-	appControllerPtr := reflect.ValueOf(c.AppController)
-	result := func() Result {
-		var result Result
-		for _, intc := range getInterceptors(when, appControllerPtr) {
-			resultValue := intc.Invoke(appControllerPtr)
-			if !resultValue.IsNil() {
-				result = resultValue.Interface().(Result)
-			}
-			if when == BEFORE && result != nil {
-				return result
-			}
+	var (
+		app    = reflect.ValueOf(c.AppController)
+		result Result
+	)
+	for _, intc := range getInterceptors(when, app) {
+		resultValue := intc.Invoke(app)
+		if !resultValue.IsNil() {
+			result = resultValue.Interface().(Result)
 		}
-		return result
-	}()
-
+		if when == BEFORE && result != nil {
+			c.Result = result
+			return
+		}
+	}
 	if result != nil {
 		c.Result = result
 	}

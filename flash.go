@@ -30,14 +30,14 @@ func (f Flash) Success(msg string, args ...interface{}) {
 	}
 }
 
-type FlashPlugin struct{ EmptyPlugin }
+type FlashFilter struct{}
 
-func (p FlashPlugin) BeforeRequest(c *Controller) {
+func (p FlashFilter) Call(c *Controller, fc FilterChain) {
 	c.Flash = restoreFlash(c.Request.Request)
 	c.RenderArgs["flash"] = c.Flash.Data
-}
 
-func (p FlashPlugin) AfterRequest(c *Controller) {
+	fc.Call(c)
+
 	// Store the flash.
 	var flashValue string
 	for key, value := range c.Flash.Out {

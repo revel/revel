@@ -59,3 +59,29 @@ func ParseParams(req *Request) *Params {
 func (p *Params) Bind(name string, typ reflect.Type) reflect.Value {
 	return Bind(p, name, typ)
 }
+
+type ParamsFilter struct{}
+
+func (f ParamsFilter) Call(c *Controller, fc FilterChain) {
+	c.Params = ParseParams(c.Request)
+
+	// Clean up from the request.
+	defer func() {
+		// Delete temp files.
+		if c.Request.MultipartForm != nil {
+			err := c.Request.MultipartForm.RemoveAll()
+			if err != nil {
+				WARN.Println("Error removing temporary files:", err)
+			}
+		}
+
+		for _, tmpFile := range c.Params.tmpFiles {
+			err := os.Remove(tmpFile.Name())
+			if err != nil {
+				WARN.Println("Could not remove upload temp file:", err)
+			}
+		}
+	}()
+
+	fc.Call(c)
+}

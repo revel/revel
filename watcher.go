@@ -23,18 +23,12 @@ type DiscerningListener interface {
 	WatchFile(basename string) bool
 }
 
-// Auditor gets notified each time a listener gets refreshed.
-type Auditor interface {
-	OnRefresh(listener Listener)
-}
-
 // Watcher allows listeners to register to be notified of changes under a given
 // directory.
 type Watcher struct {
 	// Parallel arrays of watcher/listener pairs.
 	watchers     []*fsnotify.Watcher
 	listeners    []Listener
-	auditor      Auditor
 	forceRefresh bool
 	lastError    int
 	notifyMutex  sync.Mutex
@@ -48,7 +42,7 @@ func NewWatcher() *Watcher {
 }
 
 // Listen registers for events within the given root directories (recursively).
-func (w *Watcher) Listen(listener Listener, roots ...string) {
+func (w *Watcher) Listen(listener Listener, roots ...string) *Error {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		ERROR.Fatal(err)
@@ -105,6 +99,7 @@ func (w *Watcher) Listen(listener Listener, roots ...string) {
 
 	w.watchers = append(w.watchers, watcher)
 	w.listeners = append(w.listeners, listener)
+	return nil
 }
 
 // Notify causes the watcher to forward any change events to listeners.
@@ -147,13 +142,23 @@ func (w *Watcher) Notify() *Error {
 				w.lastError = i
 				return err
 			}
-			if w.auditor != nil {
-				w.auditor.OnRefresh(listener)
-			}
 		}
 	}
 
 	w.forceRefresh = false
 	w.lastError = -1
 	return nil
+}
+
+type WatchFilter struct{}
+
+func (f WatchFilter) Call(c *Controller, fc FilterChain) {
+	if MainWatcher != nil {
+		err := MainWatcher.Notify()
+		if err != nil {
+			c.Result = c.RenderError(err)
+			return
+		}
+	}
+	fc.Call(c)
 }

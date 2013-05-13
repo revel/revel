@@ -14,12 +14,8 @@ var (
 	dbm *gorp.DbMap
 )
 
-type GorpPlugin struct {
-	r.EmptyPlugin
-}
-
-func (p GorpPlugin) OnAppStart() {
-	db.DbPlugin{}.OnAppStart()
+func Init() {
+	db.DbFilter{}.OnAppStart()
 	dbm = &gorp.DbMap{Db: db.Db, Dialect: gorp.SqliteDialect{}}
 
 	setColumnSizes := func(t *gorp.TableMap, colSizes map[string]int) {

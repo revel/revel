@@ -19,30 +19,14 @@ var (
 	selfConcurrent bool
 )
 
-type JobsPlugin struct {
-	revel.EmptyPlugin
-}
-
-func (p JobsPlugin) OnAppStart() {
-	if size := revel.Config.IntDefault("jobs.pool", DEFAULT_JOB_POOL_SIZE); size > 0 {
-		workPermits = make(chan struct{}, size)
-	}
-	selfConcurrent = revel.Config.BoolDefault("jobs.selfconcurrent", false)
-	MainCron.Start()
-}
-
-func (p JobsPlugin) OnAppStop() {
-	MainCron.Stop()
-}
-
-func (t JobsPlugin) OnRoutesLoaded(router *revel.Router) {
-	router.Routes = append([]*revel.Route{
-		revel.NewRoute("GET", "/@jobs", "Jobs.Status", ""),
-	}, router.Routes...)
-	fmt.Println("Go to /@jobs to see job status.")
-}
-
 func init() {
 	MainCron = cron.New()
-	revel.RegisterPlugin(JobsPlugin{})
+	revel.OnAppStart(func() {
+		if size := revel.Config.IntDefault("jobs.pool", DEFAULT_JOB_POOL_SIZE); size > 0 {
+			workPermits = make(chan struct{}, size)
+		}
+		selfConcurrent = revel.Config.BoolDefault("jobs.selfconcurrent", false)
+		MainCron.Start()
+		fmt.Println("Go to /@jobs to see job status.")
+	})
 }

@@ -42,7 +42,9 @@ type Harness struct {
 }
 
 func renderError(w http.ResponseWriter, r *http.Request, err error) {
-	revel.RenderError(revel.NewRequest(r), revel.NewResponse(w), err)
+	req, resp := revel.NewRequest(r), revel.NewResponse(w)
+	c := revel.NewController(req, resp)
+	c.RenderError(err).Apply(req, resp)
 }
 
 // ServeHTTP handles all requests.
