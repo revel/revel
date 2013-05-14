@@ -117,8 +117,8 @@ You can add it to a run mode configuration with the following line:
 		errorf("Failed to load suite result template: %s", err)
 	}
 
-	failedResults := make([]controllers.TestSuiteResult, 0)
 	// Run each suite.
+	failedResults := make([]controllers.TestSuiteResult)
 	overallSuccess := true
 	for _, suite := range testSuites {
 		// Print the name of the suite we're running.
