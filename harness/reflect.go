@@ -542,19 +542,23 @@ func getValidationKeys(fset *token.FileSet, funcDecl *ast.FuncDecl, imports map[
 			return true
 		}
 
-		// If the argument is a binary expression, take the first expression.
-		// (e.g. c.Validation.Required(myName != ""))
-		arg := callExpr.Args[0]
-		if binExpr, ok := arg.(*ast.BinaryExpr); ok {
-			arg = binExpr.X
-		}
-
-		// If it's a literal, skip it.
-		if _, ok = arg.(*ast.BasicLit); ok {
+		// Given the validation expression, extract the key.
+		key := callExpr.Args[0]
+		switch expr := key.(type) {
+		case *ast.BinaryExpr:
+			// If the argument is a binary expression, take the first expression.
+			// (e.g. c.Validation.Required(myName != ""))
+			key = expr.X
+		case *ast.UnaryExpr:
+			// If the argument is a unary expression, drill in.
+			// (e.g. c.Validation.Required(!myBool)
+			key = expr.X
+		case *ast.BasicLit:
+			// If it's a literal, skip it.
 			return true
 		}
 
-		if typeExpr := NewTypeExpr("", arg); typeExpr.Valid {
+		if typeExpr := NewTypeExpr("", key); typeExpr.Valid {
 			lineKeys[fset.Position(callExpr.End()).Line] = typeExpr.TypeName("")
 		}
 		return true
