@@ -259,6 +259,16 @@ func addModule(name, importPath, modulePath string) {
 	}
 }
 
+// ModuleByName returns the module of the given name, if loaded.
+func ModuleByName(name string) (m Module, found bool) {
+	for _, module := range Modules {
+		if module.Name == name {
+			return module, true
+		}
+	}
+	return Module{}, false
+}
+
 func CheckInit() {
 	if !Initialized {
 		panic("Revel has not been initialized!")

@@ -2,11 +2,13 @@ package revel
 
 import (
 	"encoding/csv"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"path"
 	"regexp"
 	"strings"
 )
@@ -171,22 +173,26 @@ func (router *Router) Route(req *http.Request) *RouteMatch {
 
 // Refresh re-reads the routes file and re-calculates the routing table.
 // Returns an error if a specified action could not be found.
-func (router *Router) Refresh() *Error {
-	// Get the routes file content.
-	contentBytes, err := ioutil.ReadFile(router.path)
+func (router *Router) Refresh() (err *Error) {
+	router.Routes, err = parseRoutesFile(router.path)
+	return
+}
+
+// parseRoutesFile reads the given routes file and returns the contained routes.
+func parseRoutesFile(routesPath string) ([]*Route, *Error) {
+	contentBytes, err := ioutil.ReadFile(routesPath)
 	if err != nil {
-		return &Error{
+		return nil, &Error{
 			Title:       "Failed to load routes file",
 			Description: err.Error(),
 		}
 	}
-
-	return router.parse(string(contentBytes), true)
+	return parseRoutes(routesPath, string(contentBytes), true)
 }
 
-// parse takes the content of a routes file and turns it into the routing table.
-func (router *Router) parse(content string, validate bool) *Error {
-	routes := make([]*Route, 0, 10)
+// parseRoutes reads the content of a routes file into the routing table.
+func parseRoutes(routesPath, content string, validate bool) ([]*Route, *Error) {
+	var routes []*Route
 
 	// For each line..
 	for n, line := range strings.Split(content, "\n") {
@@ -195,6 +201,18 @@ func (router *Router) parse(content string, validate bool) *Error {
 			continue
 		}
 
+		// Handle included routes from modules.
+		// e.g. "module:testrunner" imports all routes from that module.
+		if strings.HasPrefix(line, "module:") {
+			moduleRoutes, err := getModuleRoutes(line[len("module:"):])
+			if err != nil {
+				return nil, routeError(err, routesPath, content, n)
+			}
+			routes = append(routes, moduleRoutes...)
+			continue
+		}
+
+		// A single route
 		method, path, action, fixedArgs, found := parseRouteLine(line)
 		if !found {
 			continue
@@ -204,21 +222,17 @@ func (router *Router) parse(content string, validate bool) *Error {
 		routes = append(routes, route)
 
 		if validate {
-			if err := router.validate(route); err != nil {
-				err.Path = router.path
-				err.Line = n + 1
-				err.SourceLines = strings.Split(content, "\n")
-				return err
+			if err := validateRoute(route); err != nil {
+				return nil, routeError(err, routesPath, content, n)
 			}
 		}
 	}
 
-	router.Routes = routes
-	return nil
+	return routes, nil
 }
 
-// Check that every specified action exists.
-func (router *Router) validate(route *Route) *Error {
+// validate checks that every specified action exists.
+func validateRoute(route *Route) error {
 	// Skip variable routes.
 	if strings.ContainsAny(route.Action, "{}") {
 		return nil
@@ -232,29 +246,47 @@ func (router *Router) validate(route *Route) *Error {
 	// We should be able to load the action.
 	parts := strings.Split(route.Action, ".")
 	if len(parts) != 2 {
-		return &Error{
-			Title: "Route validation error",
-			Description: fmt.Sprintf("Expected two parts (Controller.Action), but got %d: %s",
-				len(parts), route.Action),
-		}
+		return fmt.Errorf("Expected two parts (Controller.Action), but got %d: %s",
+			len(parts), route.Action)
 	}
 
 	ct := LookupControllerType(parts[0])
 	if ct == nil {
-		return &Error{
-			Title:       "Route validation error",
-			Description: "Unrecognized controller: " + parts[0],
-		}
+		return errors.New("Unrecognized controller: " + parts[0])
 	}
 
 	mt := ct.Method(parts[1])
 	if mt == nil {
-		return &Error{
-			Title:       "Route validation error",
-			Description: "Unrecognized method: " + parts[1],
-		}
+		return errors.New("Unrecognized method: " + parts[1])
 	}
 	return nil
+}
+
+// routeError adds context to a simple error message.
+func routeError(err error, routesPath, content string, n int) *Error {
+	if revelError, ok := err.(*Error); ok {
+		return revelError
+	}
+	return &Error{
+		Title:       "Route validation error",
+		Description: err.Error(),
+		Path:        routesPath,
+		Line:        n + 1,
+		SourceLines: strings.Split(content, "\n"),
+	}
+}
+
+// getModuleRoutes loads the routes file for the given module and returns the
+// list of routes.
+func getModuleRoutes(moduleName string) ([]*Route, *Error) {
+	// Look up the module.  It may be not found due to the common case of e.g. the
+	// testrunner module being active only in dev mode.
+	module, found := ModuleByName(moduleName)
+	if !found {
+		INFO.Println("Skipping routes for inactive module", moduleName)
+		return nil, nil
+	}
+	return parseRoutesFile(path.Join(module.Path, "conf", "routes"))
 }
 
 // Groups:

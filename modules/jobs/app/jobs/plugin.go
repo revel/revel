@@ -29,17 +29,11 @@ func (p JobsPlugin) OnAppStart() {
 	}
 	selfConcurrent = revel.Config.BoolDefault("jobs.selfconcurrent", false)
 	MainCron.Start()
+	fmt.Println("Go to /@jobs to see job status.")
 }
 
 func (p JobsPlugin) OnAppStop() {
 	MainCron.Stop()
-}
-
-func (t JobsPlugin) OnRoutesLoaded(router *revel.Router) {
-	router.Routes = append([]*revel.Route{
-		revel.NewRoute("GET", "/@jobs", "Jobs.Status", ""),
-	}, router.Routes...)
-	fmt.Println("Go to /@jobs to see job status.")
 }
 
 func init() {

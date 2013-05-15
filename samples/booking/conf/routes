@@ -2,6 +2,9 @@
 # This file defines all application routes (Higher priority routes first)
 # ~~~~
 
+module:testrunner
+module:jobs
+
 GET     /                                       Application.Index
 GET     /hotels                                 Hotels.Index
 GET     /hotels/list                            Hotels.List

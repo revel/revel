@@ -181,15 +181,15 @@ func TestComputeRoute(t *testing.T) {
 
 const TEST_ROUTES = `
 # This is a comment
-GET  /                       Application.Index
-GET  /app/{id}/?             Application.Show
-POST /app/{id}               Application.Save
-PATCH  /app/{id}/?             Application.Update
-GET /javascript/{<.+>filepath} Static.Serve("public/js")
-GET /public/{<.+>filepath}   Static.Serve("public")
-*		/{controller}/{action}		{controller}.{action}
+GET   /                          Application.Index
+GET   /app/{id}/?                Application.Show
+POST  /app/{id}                  Application.Save
+PATCH /app/{id}/?                Application.Update
+GET   /javascript/{<.+>filepath} Static.Serve("public/js")
+GET   /public/{<.+>filepath}     Static.Serve("public")
+*     /{controller}/{action}     {controller}.{action}
 
-GET  /favicon.ico            404
+GET   /favicon.ico               404
 `
 
 var routeMatchTestCases = map[*http.Request]*RouteMatch{
@@ -288,7 +288,7 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 func TestRouteMatches(t *testing.T) {
 	BasePath = "/BasePath"
 	router := NewRouter("")
-	router.parse(TEST_ROUTES, false)
+	router.Routes, _ = parseRoutes("", TEST_ROUTES, false)
 	for req, expected := range routeMatchTestCases {
 		t.Log("Routing:", req.Method, req.URL)
 		actual := router.Route(req)
@@ -355,7 +355,7 @@ var reverseRoutingTestCases = map[*ReverseRouteArgs]*ActionDefinition{
 
 func TestReverseRouting(t *testing.T) {
 	router := NewRouter("")
-	router.parse(TEST_ROUTES, false)
+	router.Routes, _ = parseRoutes("", TEST_ROUTES, false)
 	for routeArgs, expected := range reverseRoutingTestCases {
 		actual := router.Reverse(routeArgs.action, routeArgs.args)
 		if !eq(t, "Found route", actual != nil, expected != nil) {
@@ -370,7 +370,7 @@ func TestReverseRouting(t *testing.T) {
 
 func BenchmarkRouter(b *testing.B) {
 	router := NewRouter("")
-	router.parse(TEST_ROUTES, false)
+	router.Routes, _ = parseRoutes("", TEST_ROUTES, false)
 	b.ResetTimer()
 	for i := 0; i < b.N/len(routeMatchTestCases); i++ {
 		for req, _ := range routeMatchTestCases {
