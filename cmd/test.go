@@ -118,8 +118,10 @@ You can add it to a run mode configuration with the following line:
 	}
 
 	// Run each suite.
-	failedResults := make([]controllers.TestSuiteResult)
-	overallSuccess := true
+	var (
+		overallSuccess = true
+		failedResults []controllers.TestSuiteResult
+	)
 	for _, suite := range testSuites {
 		// Print the name of the suite we're running.
 		name := suite.Name
