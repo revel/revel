@@ -118,6 +118,7 @@ You can add it to a run mode configuration with the following line:
 	}
 
 	// Run each suite.
+	failedResults := make([]controllers.TestSuiteResult)
 	overallSuccess := true
 	for _, suite := range testSuites {
 		// Print the name of the suite we're running.
@@ -151,9 +152,9 @@ You can add it to a run mode configuration with the following line:
 		suiteResultStr, suiteAlert := "PASSED", ""
 		if !suiteResult.Passed {
 			suiteResultStr, suiteAlert = "FAILED", "!"
+			failedResults = append(failedResults, suiteResult)
 		}
 		fmt.Printf("%8s%3s%6ds\n", suiteResultStr, suiteAlert, int(time.Since(startTime).Seconds()))
-
 		// Create the result HTML file.
 		suiteResultFilename := path.Join(resultPath,
 			fmt.Sprintf("%s.%s.html", suite.Name, strings.ToLower(suiteResultStr)))
@@ -171,6 +172,15 @@ You can add it to a run mode configuration with the following line:
 		writeResultFile(resultPath, "result.passed", "passed")
 		fmt.Println("All Tests Passed.")
 	} else {
+		for _, failedResult := range failedResults {
+			fmt.Printf("Failures:\n")
+			for _, result := range failedResult.Results {
+				if !result.Passed {
+					fmt.Printf("%s.%s\n", failedResult.Name, result.Name)
+					fmt.Printf("%s\n\n", result.ErrorSummary)
+				}
+			}
+		}
 		writeResultFile(resultPath, "result.failed", "failed")
 		errorf("Some tests failed.  See file://%s for results.", resultPath)
 	}
