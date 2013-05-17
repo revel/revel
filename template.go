@@ -194,7 +194,7 @@ func (loader *TemplateLoader) Refresh() *Error {
 			// Convert template names to use forward slashes, even on Windows.
 			templateName := path[len(basePath)+1:]
 			if os.PathSeparator == '\\' {
-				templateName = strings.Replace(templateName, `\`, `/`, -1)
+				templateName = strings.Replace(templateName, `\`, `/`, -1) // `
 			}
 
 			// If we already loaded a template of this name, skip it.
@@ -340,26 +340,35 @@ func (gotmpl GoTemplate) Content() []string {
 
 // Return a url capable of invoking a given controller method:
 // "Application.ShowApp 123" => "/app/123"
-func ReverseUrl(args ...interface{}) string {
+func ReverseUrl(args ...interface{}) (string, error) {
 	if len(args) == 0 {
-		ERROR.Println("Warning: no arguments provided to url function")
-		return "#"
+		return "", fmt.Errorf("no arguments provided to reverse route")
 	}
 
 	action := args[0].(string)
 	actionSplit := strings.Split(action, ".")
 	var ctrl, meth string
 	if len(actionSplit) != 2 {
-		ERROR.Println("Warning: Must provide Controller.Method for reverse router.")
-		return "#"
+		return "", fmt.Errorf("reversing '%s', expected 'Controller.Action'", action)
 	}
 	ctrl, meth = actionSplit[0], actionSplit[1]
+
+	// Look up the types.
 	controllerType := LookupControllerType(ctrl)
+	if controllerType == nil {
+		return "", fmt.Errorf("reversing %s.%s, controller not found", ctrl, meth)
+	}
+
 	methodType := controllerType.Method(meth)
+	if methodType == nil {
+		return "", fmt.Errorf("reversing %s.%s, method not found", ctrl, meth)
+	}
+
+	// Unbind the arguments.
 	argsByName := make(map[string]string)
 	for i, argValue := range args[1:] {
 		Unbind(argsByName, methodType.Args[i].Name, argValue)
 	}
 
-	return MainRouter.Reverse(args[0].(string), argsByName).Url
+	return MainRouter.Reverse(args[0].(string), argsByName).Url, nil
 }
