@@ -77,11 +77,35 @@ func BenchmarkServeStatic(b *testing.B) {
 }
 
 func benchmarkRequest(b *testing.B, req *http.Request) {
+	startFakeBookingApp()
+	b.ResetTimer()
 	resp := httptest.NewRecorder()
-	startFakeBookingApp(b)
 	for i := 0; i < b.N; i++ {
 		handle(resp, req)
 	}
+}
+
+// Test that the booking app can be successfully run for a test.
+func TestFakeServer(t *testing.T) {
+	startFakeBookingApp()
+
+	resp := httptest.NewRecorder()
+
+	// First, test that the expected responses are actually generated
+	handle(resp, showRequest)
+	if !strings.Contains(resp.Body.String(), "300 Main St.") {
+		t.Errorf("Failed to find hotel address in action response:\n%s", resp.Body)
+		t.FailNow()
+	}
+	resp.Body.Reset()
+
+	handle(resp, staticRequest)
+	if resp.Body.Len() != 6712 {
+		t.Errorf("Expected sessvars.js to have 6712 bytes, got %d:\n%s", resp.Body.Len(), resp.Body)
+		t.FailNow()
+	}
+
+	resp.Body = nil
 }
 
 var (
@@ -89,7 +113,7 @@ var (
 	staticRequest, _ = http.NewRequest("GET", "/public/js/sessvars.js", nil)
 )
 
-func startFakeBookingApp(b *testing.B) {
+func startFakeBookingApp() {
 	Init("", "github.com/robfig/revel/samples/booking", "")
 
 	// Disable logging.
@@ -101,17 +125,26 @@ func startFakeBookingApp(b *testing.B) {
 	MainRouter = NewRouter("")
 	routesFile, _ := ioutil.ReadFile(filepath.Join(BasePath, "conf", "routes"))
 	MainRouter.Routes, _ = parseRoutes("", string(routesFile), false)
-	MainTemplateLoader = NewTemplateLoader([]string{ViewsPath})
+	MainTemplateLoader = NewTemplateLoader([]string{ViewsPath, path.Join(RevelPath, "templates")})
 	MainTemplateLoader.Refresh()
 
 	RegisterController((*Hotels)(nil),
 		[]*MethodType{
+			&MethodType{
+				Name: "Index",
+			},
 			&MethodType{
 				Name: "Show",
 				Args: []*MethodArg{
 					{"id", reflect.TypeOf((*int)(nil))},
 				},
 				RenderArgNames: map[int][]string{36: []string{"title", "hotel"}},
+			},
+			&MethodType{
+				Name: "Book",
+				Args: []*MethodArg{
+					{"id", reflect.TypeOf((*int)(nil))},
+				},
 			},
 		})
 
@@ -128,23 +161,4 @@ func startFakeBookingApp(b *testing.B) {
 		})
 
 	plugins.OnAppStart()
-
-	resp := httptest.NewRecorder()
-
-	// First, test that the expected responses are actually generated
-	handle(resp, showRequest)
-	if !strings.Contains(resp.Body.String(), "300 Main St.") {
-		b.Errorf("Failed to find hotel address in action response:\n%s", resp.Body)
-		b.FailNow()
-	}
-	resp.Body.Reset()
-
-	handle(resp, staticRequest)
-	if resp.Body.Len() != 6712 {
-		b.Errorf("Expected sessvars.js to have 6712 bytes, got %d:\n%s", resp.Body.Len(), resp.Body)
-		b.FailNow()
-	}
-
-	resp.Body = nil
-	b.ResetTimer()
 }
