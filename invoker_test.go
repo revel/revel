@@ -1,6 +1,7 @@
 package revel
 
 import (
+	"net/url"
 	"reflect"
 	"testing"
 )
@@ -94,5 +95,25 @@ func TestMultiEmbedding(t *testing.T) {
 
 	if pp2.P.Controller != pp2.P2.Controller || pp2.Controller != pp2.P.Controller {
 		t.Error("Controllers not pointing to the same thing.")
+	}
+}
+
+func BenchmarkInvoker(b *testing.B) {
+	startFakeBookingApp()
+	var (
+		f ActionInvoker
+		c Controller
+	)
+	if err := c.SetAction("Hotels", "Show"); err != nil {
+		b.Errorf("Failed to set action: %s", err)
+		return
+	}
+	c.Request = NewRequest(showRequest)
+	c.Params = &Params{Values: make(url.Values)}
+	c.Params.Set("id", "3")
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		f.Call(&c, nil)
 	}
 }
