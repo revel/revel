@@ -340,28 +340,28 @@ func (gotmpl GoTemplate) Content() []string {
 
 // Return a url capable of invoking a given controller method:
 // "Application.ShowApp 123" => "/app/123"
-func ReverseUrl(args ...interface{}) string {
+func ReverseUrl(args ...interface{}) (string, error) {
 	if len(args) == 0 {
-		ERROR.Println("Warning: no arguments provided to url function")
-		return "#"
+		return "", fmt.Errorf("no arguments provided to reverse route")
 	}
 
 	action := args[0].(string)
 	actionSplit := strings.Split(action, ".")
 	if len(actionSplit) != 2 {
-		ERROR.Println("Warning: Must provide Controller.Method for reverse router.")
-		return "#"
+		return "", fmt.Errorf("reversing '%s', expected 'Controller.Action'", action)
 	}
 
+	// Look up the types.
 	var c Controller
 	if err := c.SetAction(actionSplit[0], actionSplit[1]); err != nil {
-		ERROR.Println("revel/template: failed to reverse:", err)
-		return "#"
+		return "", fmt.Errorf("reversing %s: %s", action, err)
 	}
+
+	// Unbind the arguments.
 	argsByName := make(map[string]string)
 	for i, argValue := range args[1:] {
 		Unbind(argsByName, c.MethodType.Args[i].Name, argValue)
 	}
 
-	return MainRouter.Reverse(args[0].(string), argsByName).Url
+	return MainRouter.Reverse(args[0].(string), argsByName).Url, nil
 }

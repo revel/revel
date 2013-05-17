@@ -173,12 +173,12 @@ func (router *Router) Route(req *http.Request) *RouteMatch {
 // Refresh re-reads the routes file and re-calculates the routing table.
 // Returns an error if a specified action could not be found.
 func (router *Router) Refresh() (err *Error) {
-	router.Routes, err = parseRoutesFile(router.path)
+	router.Routes, err = parseRoutesFile(router.path, true)
 	return
 }
 
 // parseRoutesFile reads the given routes file and returns the contained routes.
-func parseRoutesFile(routesPath string) ([]*Route, *Error) {
+func parseRoutesFile(routesPath string, validate bool) ([]*Route, *Error) {
 	contentBytes, err := ioutil.ReadFile(routesPath)
 	if err != nil {
 		return nil, &Error{
@@ -186,7 +186,7 @@ func parseRoutesFile(routesPath string) ([]*Route, *Error) {
 			Description: err.Error(),
 		}
 	}
-	return parseRoutes(routesPath, string(contentBytes), true)
+	return parseRoutes(routesPath, string(contentBytes), validate)
 }
 
 // parseRoutes reads the content of a routes file into the routing table.
@@ -203,7 +203,7 @@ func parseRoutes(routesPath, content string, validate bool) ([]*Route, *Error) {
 		// Handle included routes from modules.
 		// e.g. "module:testrunner" imports all routes from that module.
 		if strings.HasPrefix(line, "module:") {
-			moduleRoutes, err := getModuleRoutes(line[len("module:"):])
+			moduleRoutes, err := getModuleRoutes(line[len("module:"):], validate)
 			if err != nil {
 				return nil, routeError(err, routesPath, content, n)
 			}
@@ -273,7 +273,7 @@ func routeError(err error, routesPath, content string, n int) *Error {
 
 // getModuleRoutes loads the routes file for the given module and returns the
 // list of routes.
-func getModuleRoutes(moduleName string) ([]*Route, *Error) {
+func getModuleRoutes(moduleName string, validate bool) ([]*Route, *Error) {
 	// Look up the module.  It may be not found due to the common case of e.g. the
 	// testrunner module being active only in dev mode.
 	module, found := ModuleByName(moduleName)
@@ -281,7 +281,7 @@ func getModuleRoutes(moduleName string) ([]*Route, *Error) {
 		INFO.Println("Skipping routes for inactive module", moduleName)
 		return nil, nil
 	}
-	return parseRoutesFile(path.Join(module.Path, "conf", "routes"))
+	return parseRoutesFile(path.Join(module.Path, "conf", "routes"), validate)
 }
 
 // Groups:
