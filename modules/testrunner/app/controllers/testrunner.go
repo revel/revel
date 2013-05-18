@@ -30,9 +30,10 @@ type TestSuiteResult struct {
 }
 
 type TestResult struct {
-	Name      string
-	Passed    bool
-	ErrorHtml template.HTML
+	Name         string
+	Passed       bool
+	ErrorHtml    template.HTML
+	ErrorSummary string
 }
 
 var NONE = []reflect.Value{}
@@ -66,6 +67,7 @@ func (c TestRunner) Run(suite, test string) revel.Result {
 						var buffer bytes.Buffer
 						tmpl, _ := revel.MainTemplateLoader.Template("TestRunner/FailureDetail.html")
 						tmpl.Render(&buffer, error)
+						result.ErrorSummary = errorSummary(error)
 						result.ErrorHtml = template.HTML(buffer.String())
 					}
 				}
@@ -132,4 +134,17 @@ func DescribeSuite(testSuite interface{}) TestSuiteDesc {
 		Name:  t.Elem().Name(),
 		Tests: tests,
 	}
+}
+
+func errorSummary(error *revel.Error) string {
+	var message = fmt.Sprintf("%4sStatus: %s\n%4sIn %s", "", error.Description, "", error.Path)
+	if error.Line != 0 {
+		message += fmt.Sprintf(" (around line %d): ", error.Line)
+		for _, line := range error.ContextSource() {
+			if line.IsError {
+				message += line.Source
+			}
+		}
+	}
+	return message
 }
