@@ -2,7 +2,6 @@ package revel
 
 import (
 	"encoding/csv"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
