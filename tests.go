@@ -1,12 +1,14 @@
 package revel
 
 import (
+	"bytes"
 	"code.google.com/p/go.net/websocket"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
 )
 
@@ -14,6 +16,7 @@ type TestSuite struct {
 	Client       *http.Client
 	Response     *http.Response
 	ResponseBody []byte
+	Session      Session
 }
 
 var TestSuites []interface{} // Array of structs that embed TestSuite
@@ -21,7 +24,7 @@ var TestSuites []interface{} // Array of structs that embed TestSuite
 // NewTestSuite returns an initialized TestSuite ready for use. It is invoked
 // by the test harness to initialize the embedded field in application tests.
 func NewTestSuite() TestSuite {
-	return TestSuite{Client: &http.Client{}}
+	return TestSuite{Client: &http.Client{}, Session: make(Session)}
 }
 
 // Return the address and port of the server, e.g. "127.0.0.1:8557"
@@ -49,7 +52,7 @@ func (t *TestSuite) Get(path string) {
 	if err != nil {
 		panic(err)
 	}
-	t.MakeRequest(req)
+	t.MakeRequestSession(req)
 }
 
 // Issue a POST request to the given path, sending the given Content-Type and
@@ -60,17 +63,27 @@ func (t *TestSuite) Post(path string, contentType string, reader io.Reader) {
 		panic(err)
 	}
 	req.Header.Set("Content-Type", contentType)
-	t.MakeRequest(req)
+	t.MakeRequestSession(req)
 }
 
 // Issue a POST request to the given path as a form post of the given key and
-// values, and store the result in Request and RequestBody.  
+// values, and store the result in Request and RequestBody.
 func (t *TestSuite) PostForm(path string, data url.Values) {
 	t.Post(path, "application/x-www-form-urlencoded", strings.NewReader(data.Encode()))
 }
 
 // Issue any request and read the response. If successful, the caller may
-// examine the Response and ResponseBody properties.
+// examine the Response and ResponseBody properties. Session data will be
+// added to the request cookies for you.
+func (t *TestSuite) MakeRequestSession(req *http.Request) {
+	req.AddCookie(t.Session.cookie())
+
+	t.MakeRequest(req)
+}
+
+// Issue any request and read the response. If successful, the caller may
+// examine the Response and ResponseBody properties. You will need to
+// manage session / cookie data manually
 func (t *TestSuite) MakeRequest(req *http.Request) {
 	var err error
 	if t.Response, err = t.Client.Do(req); err != nil {
@@ -79,6 +92,8 @@ func (t *TestSuite) MakeRequest(req *http.Request) {
 	if t.ResponseBody, err = ioutil.ReadAll(t.Response.Body); err != nil {
 		panic(err)
 	}
+
+	t.Session = restoreSession(req)
 }
 
 // Create a websocket connection to the given path and return the connection
@@ -130,5 +145,21 @@ func (t *TestSuite) Assert(exp bool) {
 func (t *TestSuite) Assertf(exp bool, formatStr string, args ...interface{}) {
 	if !exp {
 		panic(fmt.Errorf(formatStr, args))
+	}
+}
+
+// Assert that the response contains the given string.
+func (t *TestSuite) AssertContains(s string) {
+	if !bytes.Contains(t.ResponseBody, []byte(s)) {
+		panic(fmt.Errorf("Assertion failed. Expected response to contain %s", s))
+	}
+}
+
+// Assert that the response matches the given regular expression.BUG
+func (t *TestSuite) AssertContainsRegex(regex string) {
+	r := regexp.MustCompile(regex)
+
+	if !r.Match(t.ResponseBody) {
+		panic(fmt.Errorf("Assertion failed. Expected response to match regexp %s", regex))
 	}
 }

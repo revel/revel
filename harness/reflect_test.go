@@ -41,6 +41,7 @@ func (m Model) Validate(v *revel.Validation) {
 	v.Required(m.name)
 	v.Required(m.name == "something").
 		Message("Error Message")
+	v.Required(!m.bool)
 }
 `
 
@@ -58,6 +59,7 @@ var expectedValidationKeys = []map[int]string{
 	}, {
 		27: "m.name",
 		28: "m.name",
+		30: "m.bool",
 	},
 }
 

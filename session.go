@@ -38,8 +38,13 @@ func (p SessionFilter) Call(c *Controller, fc FilterChain) {
 	fc.Call(c)
 
 	// Store the session (and sign it).
+	c.SetCookie(c.Session.cookie())
+}
+
+// Returns an http.Cookie containing the signed session.
+func (s Session) cookie() *http.Cookie {
 	var sessionValue string
-	for key, value := range c.Session {
+	for key, value := range s {
 		if strings.ContainsAny(key, ":\x00") {
 			panic("Session keys may not have colons or null bytes")
 		}
@@ -48,12 +53,37 @@ func (p SessionFilter) Call(c *Controller, fc FilterChain) {
 		}
 		sessionValue += "\x00" + key + ":" + value + "\x00"
 	}
+
 	sessionData := url.QueryEscape(sessionValue)
-	c.SetCookie(&http.Cookie{
+	return &http.Cookie{
 		Name:  CookiePrefix + "_SESSION",
 		Value: Sign(sessionData) + "-" + sessionData,
 		Path:  "/",
+	}
+}
+
+// Returns a Session pulled from signed cookie.
+func getSessionFromCookie(cookie *http.Cookie) Session {
+	session := make(Session)
+
+	// Separate the data from the signature.
+	hyphen := strings.Index(cookie.Value, "-")
+	if hyphen == -1 || hyphen >= len(cookie.Value)-1 {
+		return session
+	}
+	sig, data := cookie.Value[:hyphen], cookie.Value[hyphen+1:]
+
+	// Verify the signature.
+	if Sign(data) != sig {
+		INFO.Println("Session cookie signature failed")
+		return session
+	}
+
+	ParseKeyValueCookie(data, func(key, val string) {
+		session[key] = val
 	})
+
+	return session
 }
 
 func restoreSession(req *http.Request) Session {
@@ -63,22 +93,5 @@ func restoreSession(req *http.Request) Session {
 		return Session(session)
 	}
 
-	// Separate the data from the signature.
-	hyphen := strings.Index(cookie.Value, "-")
-	if hyphen == -1 || hyphen >= len(cookie.Value)-1 {
-		return Session(session)
-	}
-	sig, data := cookie.Value[:hyphen], cookie.Value[hyphen+1:]
-
-	// Verify the signature.
-	if Sign(data) != sig {
-		INFO.Println("Session cookie signature failed")
-		return Session(session)
-	}
-
-	ParseKeyValueCookie(data, func(key, val string) {
-		session[key] = val
-	})
-
-	return Session(session)
+	return getSessionFromCookie(cookie)
 }
