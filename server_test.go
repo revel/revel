@@ -36,6 +36,11 @@ func (c Hotels) Show(id int) Result {
 	return c.Render(title, hotel)
 }
 
+func (c Hotels) Book(id int) Result {
+	hotel := &Hotel{id, "A Hotel", "300 Main St.", "New York", "NY", "10010", "USA", 300}
+	return c.RenderJson(hotel)
+}
+
 func (c Static) Serve(prefix, filepath string) Result {
 	var basePath, dirName string
 
@@ -68,6 +73,10 @@ func (c Static) Serve(prefix, filepath string) Result {
 // - Template rendering
 func BenchmarkServeAction(b *testing.B) {
 	benchmarkRequest(b, showRequest)
+}
+
+func BenchmarkServeJson(b *testing.B) {
+	benchmarkRequest(b, jsonRequest)
 }
 
 // This tries to benchmark the static serving overhead when serving an "average
@@ -104,6 +113,13 @@ func TestFakeServer(t *testing.T) {
 		t.Errorf("Expected sessvars.js to have 6712 bytes, got %d:\n%s", resp.Body.Len(), resp.Body)
 		t.FailNow()
 	}
+	resp.Body.Reset()
+
+	handle(resp, jsonRequest)
+	if !strings.Contains(resp.Body.String(), `"Address":"300 Main St."`) {
+		t.Errorf("Failed to find hotel address in JSON response:\n%s", resp.Body)
+		t.FailNow()
+	}
 
 	resp.Body = nil
 }
@@ -111,6 +127,7 @@ func TestFakeServer(t *testing.T) {
 var (
 	showRequest, _   = http.NewRequest("GET", "/hotels/3", nil)
 	staticRequest, _ = http.NewRequest("GET", "/public/js/sessvars.js", nil)
+	jsonRequest, _   = http.NewRequest("GET", "/hotels/3/booking", nil)
 )
 
 func startFakeBookingApp() {
