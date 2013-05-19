@@ -12,7 +12,7 @@ func TestBenchmarkRender(t *testing.T) {
 	resp := httptest.NewRecorder()
 	c := NewController(NewRequest(showRequest), NewResponse(resp))
 	c.SetAction("Hotels", "Show")
-	result := Hotels{&c}.Show(3)
+	result := Hotels{c}.Show(3)
 	result.Apply(c.Request, c.Response)
 	if !strings.Contains(resp.Body.String(), "300 Main St.") {
 		t.Errorf("Failed to find hotel address in action response:\n%s", resp.Body)
@@ -28,7 +28,7 @@ func BenchmarkRenderChunked(b *testing.B) {
 	Config.SetOption("results.chunked", "true")
 	b.ResetTimer()
 
-	hotels := Hotels{&c}
+	hotels := Hotels{c}
 	for i := 0; i < b.N; i++ {
 		hotels.Show(3).Apply(c.Request, c.Response)
 	}
@@ -43,7 +43,7 @@ func BenchmarkRenderNotChunked(b *testing.B) {
 	Config.SetOption("results.chunked", "false")
 	b.ResetTimer()
 
-	hotels := Hotels{&c}
+	hotels := Hotels{c}
 	for i := 0; i < b.N; i++ {
 		hotels.Show(3).Apply(c.Request, c.Response)
 	}

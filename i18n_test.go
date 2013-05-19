@@ -118,17 +118,17 @@ func TestBeforeRequest(t *testing.T) {
 	filter := I18nFilter{}
 
 	c := NewController(buildEmptyRequest(), nil)
-	if filter.Call(&c, NilChain); c.Request.Locale != "" {
+	if filter.Call(c, NilChain); c.Request.Locale != "" {
 		t.Errorf("Expected to find current language '%s' in controller, found '%s' instead", "", c.Request.Locale)
 	}
 
 	c = NewController(buildRequestWithCookie("APP_LANG", "en-US"), nil)
-	if filter.Call(&c, NilChain); c.Request.Locale != "en-US" {
+	if filter.Call(c, NilChain); c.Request.Locale != "en-US" {
 		t.Errorf("Expected to find current language '%s' in controller, found '%s' instead", "en-US", c.Request.Locale)
 	}
 
 	c = NewController(buildRequestWithAcceptLanguages("en-GB", "en-US"), nil)
-	if filter.Call(&c, NilChain); c.Request.Locale != "en-GB" {
+	if filter.Call(c, NilChain); c.Request.Locale != "en-GB" {
 		t.Errorf("Expected to find current language '%s' in controller, found '%s' instead", "en-GB", c.Request.Locale)
 	}
 }

@@ -33,8 +33,8 @@ type Controller struct {
 	Txn        *sql.Tx                // Nil by default, but may be used by the app / plugins
 }
 
-func NewController(req *Request, resp *Response) Controller {
-	return Controller{
+func NewController(req *Request, resp *Response) *Controller {
+	return &Controller{
 		Request:  req,
 		Response: resp,
 		Args:     map[string]interface{}{},
