@@ -101,7 +101,7 @@ func (p InterceptorFilter) Call(c *Controller, fc FilterChain) {
 		return
 	}
 
-	fc.Call(c)
+	fc[0].Call(c, fc[1:])
 	invokeInterceptors(AFTER, c)
 }
 

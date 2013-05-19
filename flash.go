@@ -36,7 +36,7 @@ func (p FlashFilter) Call(c *Controller, fc FilterChain) {
 	c.Flash = restoreFlash(c.Request.Request)
 	c.RenderArgs["flash"] = c.Flash.Data
 
-	fc.Call(c)
+	fc[0].Call(c, fc[1:])
 
 	// Store the flash.
 	var flashValue string

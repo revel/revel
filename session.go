@@ -35,7 +35,7 @@ type SessionFilter struct{}
 func (p SessionFilter) Call(c *Controller, fc FilterChain) {
 	c.Session = restoreSession(c.Request.Request)
 
-	fc.Call(c)
+	fc[0].Call(c, fc[1:])
 
 	// Store the session (and sign it).
 	c.SetCookie(c.Session.cookie())

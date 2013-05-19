@@ -14,7 +14,7 @@ func (f PanicFilter) Call(c *Controller, fc FilterChain) {
 			handleInvocationPanic(c, err)
 		}
 	}()
-	fc.Call(c)
+	fc[0].Call(c, fc[1:])
 }
 
 // This function handles a panic in an action invocation.

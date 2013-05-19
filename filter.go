@@ -2,11 +2,6 @@ package revel
 
 type FilterChain []Filter
 
-// TODO: Ensure this inlines
-func (fc FilterChain) Call(c *Controller) {
-	fc[0].Call(c, fc[1:])
-}
-
 type Filter interface {
 	Call(c *Controller, chain FilterChain)
 }

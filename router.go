@@ -441,5 +441,5 @@ func (f RouterFilter) Call(c *Controller, fc FilterChain) {
 		}
 	}
 
-	fc.Call(c)
+	fc[0].Call(c, fc[1:])
 }

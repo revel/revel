@@ -153,7 +153,7 @@ func (p I18nFilter) Call(c *Controller, fc FilterChain) {
 		TRACE.Println("Unable to find locale in cookie or header, using empty string")
 		setCurrentLocaleControllerArguments(c, "")
 	}
-	fc.Call(c)
+	fc[0].Call(c, fc[1:])
 }
 
 // Set the current locale controller argument (CurrentLocaleControllerArg) with the given locale.

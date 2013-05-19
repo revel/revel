@@ -160,5 +160,5 @@ func (f WatchFilter) Call(c *Controller, fc FilterChain) {
 			return
 		}
 	}
-	fc.Call(c)
+	fc[0].Call(c, fc[1:])
 }

@@ -13,8 +13,7 @@ var (
 
 type ActionInvoker struct{}
 
-// Invoke the given method, save headers/cookies to the response, and apply the
-// result.  (e.g. render a template to the response)
+// Instantiate, bind params, and invoke the given action.
 func (f ActionInvoker) Call(c *Controller, _ FilterChain) {
 	// Instantiate the method.
 	methodValue := reflect.ValueOf(c.AppController).MethodByName(c.MethodType.Name)

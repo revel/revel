@@ -173,7 +173,7 @@ func (p ValidationFilter) Call(c *Controller, fc FilterChain) {
 		keep:   false,
 	}
 
-	fc.Call(c)
+	fc[0].Call(c, fc[1:])
 
 	// Add Validation errors to RenderArgs.
 	c.RenderArgs["errors"] = c.Validation.ErrorMap()
