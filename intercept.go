@@ -36,10 +36,10 @@ import (
 //
 type InterceptorFunc func(*Controller) Result
 type InterceptorMethod interface{}
-type InterceptTime int
+type When int
 
 const (
-	BEFORE InterceptTime = iota
+	BEFORE When = iota
 	AFTER
 	PANIC
 	FINALLY
@@ -52,7 +52,7 @@ const (
 )
 
 type Interception struct {
-	When InterceptTime
+	When When
 
 	function InterceptorFunc
 	method   InterceptorMethod
@@ -107,7 +107,7 @@ func (p interceptorFilter) Call(c *Controller, fc FilterChain) {
 	invokeInterceptors(AFTER, c)
 }
 
-func invokeInterceptors(when InterceptTime, c *Controller) {
+func invokeInterceptors(when When, c *Controller) {
 	var (
 		app    = reflect.ValueOf(c.AppController)
 		result Result
@@ -133,7 +133,7 @@ var interceptors []*Interception
 // This can be applied to any Controller.
 // It must have the signature of:
 //   func example(c *revel.Controller) revel.Result
-func InterceptFunc(intc InterceptorFunc, when InterceptTime, target interface{}) {
+func InterceptFunc(intc InterceptorFunc, when When, target interface{}) {
 	interceptors = append(interceptors, &Interception{
 		When:         when,
 		function:     intc,
@@ -146,7 +146,7 @@ func InterceptFunc(intc InterceptorFunc, when InterceptTime, target interface{})
 // Install an interceptor method that applies to its own Controller.
 //   func (c AppController) example() revel.Result
 //   func (c *AppController) example() revel.Result
-func InterceptMethod(intc InterceptorMethod, when InterceptTime) {
+func InterceptMethod(intc InterceptorMethod, when When) {
 	methodType := reflect.TypeOf(intc)
 	if methodType.Kind() != reflect.Func || methodType.NumOut() != 1 || methodType.NumIn() != 1 {
 		log.Fatalln("Interceptor method should have signature like",
@@ -160,7 +160,7 @@ func InterceptMethod(intc InterceptorMethod, when InterceptTime) {
 	})
 }
 
-func getInterceptors(when InterceptTime, val reflect.Value) []*Interception {
+func getInterceptors(when When, val reflect.Value) []*Interception {
 	result := []*Interception{}
 	for _, intc := range interceptors {
 		if intc.When != when {
