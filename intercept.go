@@ -85,9 +85,11 @@ func (i Interception) Invoke(val reflect.Value) reflect.Value {
 	return vals[0]
 }
 
-type InterceptorFilter struct{}
+var InterceptorFilter interceptorFilter
 
-func (p InterceptorFilter) Call(c *Controller, fc FilterChain) {
+type interceptorFilter struct{}
+
+func (p interceptorFilter) Call(c *Controller, fc FilterChain) {
 	defer invokeInterceptors(FINALLY, c)
 	defer func() {
 		if err := recover(); err != nil {

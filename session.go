@@ -30,9 +30,11 @@ func (s Session) Id() string {
 	return s[SESSION_ID_KEY]
 }
 
-type SessionFilter struct{}
+var SessionFilter sessionFilter
 
-func (p SessionFilter) Call(c *Controller, fc FilterChain) {
+type sessionFilter struct{}
+
+func (p sessionFilter) Call(c *Controller, fc FilterChain) {
 	c.Session = restoreSession(c.Request.Request)
 
 	fc[0].Call(c, fc[1:])

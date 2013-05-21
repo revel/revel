@@ -60,9 +60,11 @@ func (p *Params) Bind(name string, typ reflect.Type) reflect.Value {
 	return Bind(p, name, typ)
 }
 
-type ParamsFilter struct{}
+var ParamsFilter paramsFilter
 
-func (f ParamsFilter) Call(c *Controller, fc FilterChain) {
+type paramsFilter struct{}
+
+func (f paramsFilter) Call(c *Controller, fc FilterChain) {
 	c.Params = ParseParams(c.Request)
 
 	// Clean up from the request.

@@ -30,9 +30,11 @@ func (f Flash) Success(msg string, args ...interface{}) {
 	}
 }
 
-type FlashFilter struct{}
+var FlashFilter flashFilter
 
-func (p FlashFilter) Call(c *Controller, fc FilterChain) {
+type flashFilter struct{}
+
+func (p flashFilter) Call(c *Controller, fc FilterChain) {
 	c.Flash = restoreFlash(c.Request.Request)
 	c.RenderArgs["flash"] = c.Flash.Data
 

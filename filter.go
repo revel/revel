@@ -11,16 +11,18 @@ type InitializingFilter interface {
 	OnAppStart()
 }
 
-var Filters = FilterChain{
-	PanicFilter{},
-	ParamsFilter{},
-	RouterFilter{},
-	SessionFilter{},
-	FlashFilter{},
-	ValidationFilter{},
-	I18nFilter{},
-	InterceptorFilter{},
-	ActionInvoker{},
+// Filters is the default set of global filters.
+// It may be set by the application on initialization.
+var Filters = []Filter{
+	PanicFilter,
+	ParamsFilter,
+	RouterFilter,
+	SessionFilter,
+	FlashFilter,
+	ValidationFilter,
+	I18nFilter,
+	InterceptorFilter,
+	ActionInvoker,
 }
 
 // NilFilter and NilChain are helpful in writing filter tests.

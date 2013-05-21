@@ -394,9 +394,11 @@ NEXT_ROUTE:
 	return nil
 }
 
-type RouterFilter struct{}
+var RouterFilter routerFilter
 
-func (f RouterFilter) OnAppStart() {
+type routerFilter struct{}
+
+func (f routerFilter) OnAppStart() {
 	MainRouter = NewRouter(path.Join(BasePath, "conf", "routes"))
 	if MainWatcher != nil && Config.BoolDefault("watch.routes", true) {
 		MainWatcher.Listen(MainRouter, MainRouter.path)
@@ -405,7 +407,7 @@ func (f RouterFilter) OnAppStart() {
 	}
 }
 
-func (f RouterFilter) Call(c *Controller, fc FilterChain) {
+func (f routerFilter) Call(c *Controller, fc FilterChain) {
 	// Figure out the Controller/Action
 	var route *RouteMatch = MainRouter.Route(c.Request.Request)
 	if route == nil {

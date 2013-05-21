@@ -165,9 +165,11 @@ func (v *Validation) Check(obj interface{}, checks ...Validator) *ValidationResu
 	return result
 }
 
-type ValidationFilter struct{}
+var ValidationFilter validationFilter
 
-func (p ValidationFilter) Call(c *Controller, fc FilterChain) {
+type validationFilter struct{}
+
+func (p validationFilter) Call(c *Controller, fc FilterChain) {
 	c.Validation = &Validation{
 		Errors: restoreValidationErrors(c.Request.Request),
 		keep:   false,

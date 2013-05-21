@@ -100,10 +100,7 @@ func TestMultiEmbedding(t *testing.T) {
 
 func BenchmarkInvoker(b *testing.B) {
 	startFakeBookingApp()
-	var (
-		f ActionInvoker
-		c Controller
-	)
+	var c Controller
 	if err := c.SetAction("Hotels", "Show"); err != nil {
 		b.Errorf("Failed to set action: %s", err)
 		return
@@ -114,6 +111,6 @@ func BenchmarkInvoker(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		f.Call(&c, nil)
+		ActionInvoker.Call(&c, nil)
 	}
 }
