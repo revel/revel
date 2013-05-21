@@ -38,7 +38,7 @@ action on the Application controller.
 
 Question marks are treated as in regular expressions: they allow the path to
 match with or without the preceeding character.  This route invokes Hotels.Index
-for both `/hotels` and `/hotels`
+for both `/hotels` and `/hotels/`.
 
 ## URL Parameters
 
