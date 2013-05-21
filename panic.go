@@ -31,5 +31,5 @@ func handleInvocationPanic(c *Controller, err interface{}) {
 	}
 
 	ERROR.Print(err, "\n", error.Stack)
-	c.RenderError(error).Apply(c.Request, c.Response)
+	c.Result = c.RenderError(error)
 }
