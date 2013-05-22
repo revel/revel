@@ -312,7 +312,7 @@ Default: ""
 
 The [jobs](jobs.html) module allows you to run scheduled or ad-hoc jobs.
 
-#### cron.[spec]
+#### Named schedules
 
 Named cron schedules may be configured by setting a key of the form:
 
