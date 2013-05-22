@@ -9,7 +9,7 @@ title: The Revel Web Framework for Go
     <link href="{{ page.root }}/css/prettify.css" type="text/css" rel="stylesheet" />
     <script src="{{ page.root }}/js/prettify.js" type="text/javascript"></script>
     <script src="{{ page.root }}/js/lang-go-rich.js" type="text/javascript"></script>
-		{% include analytics.html %}
+    {% include analytics.html %}
   </head>
 
   <body onload="prettyPrint()">
@@ -25,8 +25,7 @@ title: The Revel Web Framework for Go
           <div class="hero-img"><img src="img/RevelWhiteLines.png" height="500" width="350"></div>
           <div class="hero-text">
             <h1>Revel</h1>
-            <p>A high-productivity web framework for the Go language,
-              modeled on <a href="http://www.playframework.org">Play! Framework</a>.</p>
+            <p>A high-productivity web framework for the Go language.</p>
           </div>
         </div>
       </div>
@@ -38,7 +37,7 @@ title: The Revel Web Framework for Go
       </div>
       <div class="row">
         <div class="span4">
-          <h2>Hot Compile</h2>
+          <h2>Hot Code Reload</h2>
           <p>
             Edit, save, and refresh.  Revel compiles your code and templates for
             you, so you don't miss a beat.  Code doesn't compile?  It gives you a
@@ -48,24 +47,58 @@ title: The Revel Web Framework for Go
           </p>
         </div>
         <div class="span4">
-          <h2>Simplicity Optional</h2>
+          <h2>Comprehensive</h2>
           <p>
-            Revel tries to provide a comprehensive toolkit for making everyday
-            web apps.
-          </p>
-          <p>
-            Don't want to use some of the helpers?  Revel gets out of the way
-            and gives you direct access to the underlying request and response.
+            Revel provides
+            <a href="manual/routing.html">routing</a>,
+            <a href="manual/binding.html">parameter parsing</a>,
+            <a href="manual/validation.html">validation</a>,
+            <a href="manual/sessionflash.html">session/flash</a>,
+            <a href="manual/templates.html">templating</a>,
+            <a href="manual/cache.html">caching</a>,
+            <a href="manual/jobs.html">job running</a>,
+            <a href="manual/testing.html">a testing framework</a>,
+            and even <a href="manual/i18n-messages.html">internationalization</a>.
           </p>
         </div>
         <div class="span4">
+          <h2>High Performance</h2>
+          <p>
+            Revel builds on top of the Go HTTP server, which was
+            <a href="http://www.techempower.com/benchmarks/#section=data-r5">recently
+            benchmarked</a> to serve <b>three to ten times</b> as many requests
+            as Rails across a variety of loads.
+          </p>
+        </div>
+      </div>
+      <div class="page-header">
+        <h1>Design</h1>
+      </div>
+      <div class="row">
+        <div class="span4">
           <h2>Synchronous</h2>
           <p>
-            Revel builds on top of the
-            <a href="http://golang.org/pkg/net/http/">Go HTTP server</a>,
-            which runs each request in its own
+            The <a href="http://golang.org/pkg/net/http/">Go HTTP server</a>
+            runs each request in its own
             <a href="http://golang.org/doc/effective_go.html#goroutines">goroutine</a>.
             Write simple callback-free code without guilt.
+          </p>
+        </div>
+        <div class="span4">
+          <h2>Stateless</h2>
+          <p>
+            Revel provides primitives that keep the web tier stateless for
+            predictable scaling. For example, you store session data in the user
+            cookie, and cache data in a memcached cluster.
+          </p>
+        </div>
+        <div class="span4">
+          <h2>Simplicity Optional</h2>
+          <p>
+            Revel tries to provide a comprehensive toolkit for making everyday
+            web apps. Don't want to use some of the helpers?  Revel gets out of
+            the way and gives you direct access to the underlying request and
+            response.
           </p>
         </div>
       </div>
@@ -78,11 +111,11 @@ title: The Revel Web Framework for Go
         <div class="row">
           <div class="span6">
             <p>
-              Revel ships with a couple sample applications to provide examples
-              of real-world usage.
+              Revel ships with sample applications to provide examples of
+              real-world usage.
             </p>
             <p>
-              You will need a <a href="http://golang.org/doc/install">functioning Go
+              You will need a <a href="http://golang.org/doc/install">functioning Go 1.1
               installation</a> for this to work.
             </p>
             <p>
@@ -92,7 +125,8 @@ title: The Revel Web Framework for Go
                 <li>Build the Revel command-line tool
                 <li>Run the Chat sample application
               </ol>
-              Once it's running,
+              Once it's running, open a browser to
+              <a href="http://localhost:9000/">http://localhost:9000/</a>, and
               <a href="samples/chat.html">read how the chat demo is implemented</a>.
             </p>
           </div>
@@ -111,13 +145,23 @@ title: The Revel Web Framework for Go
         <div class="page-header">
           <h1>Development Status <small>Early adopters only.  Pull requests welcome.</small></h1>
         </div>
-				<p>
-					Development is still very early.  Expect to get your hands dirty.
-				</p>
-				<p style="font-weight:bold;">
-					Join <a href="https://groups.google.com/group/revel-framework-announce">our
-					announcement list</a> to get notified for new releases.
-				</p>
+        <p>
+          Development is closing in on the "final" 1.0 design, but the rate of
+          change is still high. Expect to get your hands dirty.
+        </p>
+        <p style="font-weight:bold;">
+          Join our <a href="https://groups.google.com/forum/#!forum/revel-framework">Google Group</a>
+          to take part in the design and development, or
+          <a href="https://groups.google.com/group/revel-framework-announce">our
+            announcement list</a> to only be notified for new releases.
+        </p>
+        <p>
+          <a href="https://twitter.com/revelframework" class="twitter-follow-button" data-show-count="false" data-size="large">Follow @revelframework</a>
+          <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+
+          <a href="https://twitter.com/share" class="twitter-share-button" data-via="revelframework" data-size="large" data-count="none" data-hashtags="golang">Tweet</a>
+          <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+        </p>
       </section>
 
       <section id="teaser">
@@ -421,13 +465,15 @@ func init() {
           <li> <b>ORM</b> -- A good ORM would make simple things simple.
             (Presently users can integrate something manually using a Plugin.)
             (e.g. <a href="http://github.com/coopernurse/gorp">gorp</a>,
-						<a href="https://github.com/eaigner/hood">hood</a>,
-						<a href="https://github.com/coocood/qbs">qbs</a>)
-          <li> <b>Reverse routing</b> -- A typesafe reverse router (usable from
-            Controllers and Templates).
-          <li> <b>Modules</b> -- Modules that share functionality across Revel
-            apps.  A module repository that anyone can contribute to and install from.
-          <li> <b>Testing</b> -- Tools to make it simple to test your web app.
+            <a href="https://github.com/eaigner/hood">hood</a>,
+            <a href="https://github.com/coocood/qbs">qbs</a>,
+            <a href="https://github.com/eaigner/jet">jet</a>,
+            <a href="https://github.com/astaxie/beedb">beedb</a>,
+            <a href="https://github.com/gosexy/db">gosexy</a>)
+          <li> <b>Pluggable template loader</b> -- Presently only Go templates
+          are supported by Revel (although the developer could use his own
+          library independently).  Providing an interface that makes any
+          template language pluggable would be ideal.
         </ul>
       </section>
 
