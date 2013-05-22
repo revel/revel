@@ -81,11 +81,12 @@ avoid potentially having to cross-compile.
 
 ## Heroku
 
-**jamesward** kindly made a
-  [Heroku buildpack for Revel apps](https://github.com/robfig/heroku-buildpack-go-revel).
-  He also wrote
-  [a blog post about getting a sample app up and running on Heroku](http://www.jamesward.com/2012/09/28/run-revel-apps-on-heroku).
+Revel maintains a Heroku Buildpack, allowing one-command deploys:
+https://github.com/robfig/heroku-buildpack-go-revel
 
+Please see the
+[README](https://github.com/robfig/heroku-buildpack-go-revel/blob/master/README.md)
+for usage instructions.
 
 ## Areas for development:
 
