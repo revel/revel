@@ -33,7 +33,7 @@ Let's follow this call to the code, in **app/controllers/app.go**:
 		return c.Render()
 	}
 
-All controllers must be structs that embed `revel.Controller` or `*revel.Controller`
+All controllers must be structs that embed `*revel.Controller`
 in the first slot (directly or indirectly). Any method on a controller that is
 exported and returns a `revel.Result` may be treated as an Action.
 
