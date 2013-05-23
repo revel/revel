@@ -39,7 +39,6 @@ func init() {
 }
 
 type AppController struct {
-	*revel.Controller
 	MongoController
 }
 </pre>
