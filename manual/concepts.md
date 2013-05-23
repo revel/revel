@@ -51,14 +51,14 @@ for the full story, but here is the definition (along with definitions of helper
 
 <pre class="prettyprint lang-go">
 type Controller struct {
-    Name          string          // The controller name, e.g. "Application"
-    Type          *ControllerType // A description of the controller type.
-    MethodType    *MethodType     // A description of the invoked action type.
-    AppController interface{}     // The controller that was instantiated.
+	Name          string          // The controller name, e.g. "Application"
+	Type          *ControllerType // A description of the controller type.
+	MethodType    *MethodType     // A description of the invoked action type.
+	AppController interface{}     // The controller that was instantiated.
 
-    Request  *Request
-    Response *Response
-    Result   Result
+	Request  *Request
+	Response *Response
+	Result   Result
 
 	Flash      Flash                  // User cookie, cleared after each request.
 	Session    Session                // Session, stored in cookie, signed.
