@@ -35,12 +35,6 @@ var filterOverrides = make(map[string]FilterChain)
 //
 //   => RouterFilter, FilterConfiguringFilter, OtherFilter, SessionFilter, ActionInvoker
 //
-// Set:
-//   FilterAction(App.Action).
-//     Set(SessionFilter, OtherFilter)
-//
-//   => RouterFilter, FilterConfiguringFilter, SessionFilter, OtherFilter, ActionInvoker
-//
 // Note: the last filter stage is not subject to the configurator.  In
 // particular, Add() adds a filter to the second-to-last place.
 type FilterConfigurator struct {

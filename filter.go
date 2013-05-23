@@ -17,6 +17,7 @@ var Filters = []Filter{
 	PanicFilter,
 	ParamsFilter,
 	RouterFilter,
+	FilterConfiguringFilter,
 	SessionFilter,
 	FlashFilter,
 	ValidationFilter,
