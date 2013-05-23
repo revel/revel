@@ -9,9 +9,9 @@ application from
 
 Let's start with the **myapp** project that [we created previously](createapp.html).
 
-Edit the **app/views/Application/Index.html** template to add this form:
+Edit the **app/views/App/Index.html** template to add this form:
 
-	<form action="/Application/Hello" method="GET">
+	<form action="/App/Hello" method="GET">
 	    <input type="text" name="myName" />
 	    <input type="submit" value="Say hello!" />
 	</form>
@@ -26,13 +26,13 @@ Let's try submitting that form.
 
 That makes sense.  Add the action to **app/controllers/app.go**:
 
-	func (c Application) Hello(myName string) revel.Result {
+	func (c App) Hello(myName string) revel.Result {
 		return c.Render(myName)
 	}
 
 
 Next, we have to create the view.  Create a file
-**app/views/Application/Hello.html**, with this content:
+**app/views/App/Hello.html**, with this content:
 
 {% raw %}
 	{{set . "title" "Home"}}
@@ -54,7 +54,7 @@ three characters.
 To do this, let's use the [validation module](../manual/validation.html).  Edit
 your action in **app/controllers/app.go**:
 
-	func (c Application) Hello(myName string) revel.Result {
+	func (c App) Hello(myName string) revel.Result {
 		c.Validation.Required(myName).Message("Your name is required!")
 		c.Validation.MinSize(myName, 3).Message("Your name is not long enough!")
 
@@ -71,7 +71,7 @@ Now it will send the user back to `Index()` if they have not entered a valid
 name. Their name and the validation error are kept in the
 [Flash](../manual/sessionflash.html), which is a temporary cookie.
 
-Let's use that data in the form.  Edit **app/views/Application/Index.html**:
+Let's use that data in the form.  Edit **app/views/App/Index.html**:
 
 {% raw %}
 
@@ -83,7 +83,7 @@ Let's use that data in the form.  Edit **app/views/Application/Index.html**:
 		</p>
 	{{end}}
 
-	<form action="/Application/Hello" method="GET">
+	<form action="/App/Hello" method="GET">
 		<input type="text" name="myName" value="{{.flash.myName}}" />
 		<input type="submit" value="Say hello!" />
 	</form>
