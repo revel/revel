@@ -15,10 +15,11 @@ import (
 
 type Controller struct {
 	Name          string          // The controller name, e.g. "Application"
-	Action        string          // The method name, e.g. "Index"
 	Type          *ControllerType // A description of the controller type.
+	MethodName    string          // The method name, e.g. "Index"
 	MethodType    *MethodType     // A description of the invoked action type.
 	AppController interface{}     // The controller that was instantiated.
+	Action        string          // The fully qualified action name, e.g. "App.Index"
 
 	Request  *Request
 	Response *Response
@@ -211,16 +212,17 @@ func (c *Controller) Message(message string, args ...interface{}) (value string)
 
 // SetAction sets the action that is being invoked in the current request.
 // It sets the following properties: Name, Action, Type, MethodType
-func (c *Controller) SetAction(controllerName, actionName string) error {
-	c.Name, c.Action = controllerName, actionName
+func (c *Controller) SetAction(controllerName, methodName string) error {
+	c.Name, c.MethodName = controllerName, methodName
+	c.Action = c.Name + "." + c.MethodName
 
-	// Look up the controller and action types.
+	// Look up the controller and method types.
 	var ok bool
 	if c.Type, ok = controllers[strings.ToLower(controllerName)]; !ok {
 		return errors.New("revel/controller: failed to find controller " + controllerName)
 	}
-	if c.MethodType = c.Type.Method(actionName); c.MethodType == nil {
-		return errors.New("revel/controller: failed to find action " + actionName)
+	if c.MethodType = c.Type.Method(methodName); c.MethodType == nil {
+		return errors.New("revel/controller: failed to find action " + methodName)
 	}
 
 	// Instantiate the controller.
