@@ -51,9 +51,8 @@ type FilterConfigurator struct {
 func newFilterConfigurator(controllerName, methodName string) FilterConfigurator {
 	if methodName == "" {
 		return FilterConfigurator{controllerName, controllerName}
-	} else {
-		return FilterConfigurator{controllerName + "." + methodName, controllerName}
 	}
+	return FilterConfigurator{controllerName + "." + methodName, controllerName}
 }
 
 // FilterController returns a configurator for the filters applied to all
