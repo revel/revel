@@ -42,7 +42,7 @@ func NewWatcher() *Watcher {
 }
 
 // Listen registers for events within the given root directories (recursively).
-func (w *Watcher) Listen(listener Listener, roots ...string) *Error {
+func (w *Watcher) Listen(listener Listener, roots ...string) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		ERROR.Fatal(err)
@@ -99,7 +99,6 @@ func (w *Watcher) Listen(listener Listener, roots ...string) *Error {
 
 	w.watchers = append(w.watchers, watcher)
 	w.listeners = append(w.listeners, listener)
-	return nil
 }
 
 // Notify causes the watcher to forward any change events to listeners.
