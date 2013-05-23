@@ -12,9 +12,9 @@ to http://localhost:9000/, resulting in the welcome message.
 The first thing that Revel does is check the **conf/routes** file -- the
 generated routes file contains a route:
 
-	GET     /                                       Application.Index
+	GET     /                                       App.Index
 
-This tells Revel to invoke the **Index** method of the **Application**
+This tells Revel to invoke the **Index** method of the **App**
 controller when it receives a **GET** request to **/**.
 
 ### Actions
@@ -25,11 +25,11 @@ Let's follow this call to the code, in **app/controllers/app.go**:
 
 	import "github.com/robfig/revel"
 
-	type Application struct {
+	type App struct {
 		*revel.Controller
 	}
 
-	func (c Application) Index() revel.Result {
+	func (c App) Index() revel.Result {
 		return c.Render()
 	}
 
@@ -37,15 +37,15 @@ All controllers must be structs that embed `*revel.Controller`
 in the first slot (directly or indirectly). Any method on a controller that is
 exported and returns a `revel.Result` may be treated as an Action.
 
-The Revel controller provides many useful methods for generating Results.  In
+The Revel controller provides many useful methods for generating Results. In
 this example, it calls [`Render()`](../docs/godoc/mvc.html#Controller.Render),
 which tells Revel to find and render a template as the response (**200 OK**).
 
 ### Templates
 
-All templates are kept in the **app/views** directory.  When an explicit
+All templates are kept in the **app/views** directory. When an explicit
 template name is not specified, Revel looks for a template matching the action.
-In this case, Revel finds the **app/views/Application/Index.html** file, and
+In this case, Revel finds the **app/views/App/Index.html** file, and
 renders it as a [Go template](http://www.golang.org/pkg/html/template).
 
 {% raw %}
@@ -142,7 +142,7 @@ to:
 	greeting := "Aloha World"
 	return c.Render(greeting)
 
-In **app/views/Application/Index.html**, change:
+In **app/views/App/Index.html**, change:
 
 {% raw %}
 
