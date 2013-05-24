@@ -29,7 +29,7 @@ func (f actionInvoker) Call(c *Controller, _ FilterChain) {
 			boundArg = reflect.ValueOf(c.Request.Websocket)
 		} else {
 			TRACE.Println("Binding:", arg.Name, "as", arg.Type)
-			boundArg = c.Params.Bind(arg.Name, arg.Type)
+			boundArg = Bind(c.Params, arg.Name, arg.Type)
 		}
 		methodArgs = append(methodArgs, boundArg)
 	}

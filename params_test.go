@@ -86,6 +86,7 @@ func getMultipartRequest() *http.Request {
 func BenchmarkParams(b *testing.B) {
 	c := Controller{
 		Request: NewRequest(getMultipartRequest()),
+		Params:  &Params{},
 	}
 	for i := 0; i < b.N; i++ {
 		ParamsFilter.Call(&c, NilChain)
@@ -95,6 +96,7 @@ func BenchmarkParams(b *testing.B) {
 func TestMultipartForm(t *testing.T) {
 	c := Controller{
 		Request: NewRequest(getMultipartRequest()),
+		Params:  &Params{},
 	}
 	ParamsFilter.Call(&c, NilChain)
 

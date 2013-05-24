@@ -427,16 +427,20 @@ func (f routerFilter) Call(c *Controller, fc FilterChain) {
 		return
 	}
 
-	// Add the route Params to the Request Params.
-	for key, value := range route.Params {
-		url.Values(c.Params.Values).Add(key, value)
+	// Add the route and fixed params to the Request Params.
+	for k, v := range route.Params {
+		if c.Params.Route == nil {
+			c.Params.Route = make(map[string][]string)
+		}
+		c.Params.Route[k] = []string{v}
 	}
 
 	// Add the fixed parameters mapped by name.
+	c.Params.Fixed = make(url.Values)
 	for i, value := range route.FixedParams {
 		if i < len(c.MethodType.Args) {
 			arg := c.MethodType.Args[i]
-			c.Params.Values.Set(arg.Name, value)
+			c.Params.Fixed.Set(arg.Name, value)
 		} else {
 			WARN.Println("Too many parameters to", route.Action, "trying to add", value)
 			break

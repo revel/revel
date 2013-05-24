@@ -15,9 +15,9 @@ type InitializingFilter interface {
 // It may be set by the application on initialization.
 var Filters = []Filter{
 	PanicFilter,
-	ParamsFilter,
 	RouterFilter,
 	FilterConfiguringFilter,
+	ParamsFilter,
 	SessionFilter,
 	FlashFilter,
 	ValidationFilter,

@@ -100,7 +100,9 @@ func TestMultiEmbedding(t *testing.T) {
 
 func BenchmarkInvoker(b *testing.B) {
 	startFakeBookingApp()
-	var c Controller
+	c := Controller{
+		RenderArgs: make(map[string]interface{}),
+	}
 	if err := c.SetAction("Hotels", "Show"); err != nil {
 		b.Errorf("Failed to set action: %s", err)
 		return

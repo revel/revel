@@ -386,7 +386,8 @@ func BenchmarkRouterFilter(b *testing.B) {
 		{Request: NewRequest(staticRequest)},
 	}
 	for _, c := range controllers {
-		c.Params = ParseParams(c.Request)
+		c.Params = &Params{}
+		ParseParams(c.Params, c.Request)
 	}
 
 	b.ResetTimer()
