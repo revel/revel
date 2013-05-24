@@ -94,6 +94,7 @@ func (p interceptorFilter) Call(c *Controller, fc FilterChain) {
 	defer func() {
 		if err := recover(); err != nil {
 			invokeInterceptors(PANIC, c)
+			panic(err)
 		}
 	}()
 
