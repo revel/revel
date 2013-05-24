@@ -15,9 +15,11 @@ var (
 	Spec   string
 )
 
-type DbFilter struct{}
+var DbFilter dbFilter
 
-func (p DbFilter) OnAppStart() {
+type dbFilter struct{}
+
+func (p dbFilter) OnAppStart() {
 	// Read configuration.
 	var found bool
 	if Driver, found = revel.Config.String("db.driver"); !found {
@@ -35,7 +37,7 @@ func (p DbFilter) OnAppStart() {
 	}
 }
 
-func (p DbFilter) Call(c *revel.Controller, fc revel.FilterChain) {
+func (p dbFilter) Call(c *revel.Controller, fc revel.FilterChain) {
 	// Begin transaction
 	txn, err := Db.Begin()
 	if err != nil {
@@ -52,7 +54,7 @@ func (p DbFilter) Call(c *revel.Controller, fc revel.FilterChain) {
 		}
 	}()
 
-	fc.Call(c)
+	fc[0].Call(c, fc[1:])
 
 	// Commit
 	if err := c.Txn.Commit(); err != nil {
