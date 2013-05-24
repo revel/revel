@@ -30,19 +30,6 @@ func (s Session) Id() string {
 	return s[SESSION_ID_KEY]
 }
 
-var SessionFilter sessionFilter
-
-type sessionFilter struct{}
-
-func (p sessionFilter) Call(c *Controller, fc FilterChain) {
-	c.Session = restoreSession(c.Request.Request)
-
-	fc[0].Call(c, fc[1:])
-
-	// Store the session (and sign it).
-	c.SetCookie(c.Session.cookie())
-}
-
 // Returns an http.Cookie containing the signed session.
 func (s Session) cookie() *http.Cookie {
 	var sessionValue string
@@ -86,6 +73,19 @@ func getSessionFromCookie(cookie *http.Cookie) Session {
 	})
 
 	return session
+}
+
+var SessionFilter sessionFilter
+
+type sessionFilter struct{}
+
+func (p sessionFilter) Call(c *Controller, fc FilterChain) {
+	c.Session = restoreSession(c.Request.Request)
+
+	fc[0].Call(c, fc[1:])
+
+	// Store the session (and sign it).
+	c.SetCookie(c.Session.cookie())
 }
 
 func restoreSession(req *http.Request) Session {
