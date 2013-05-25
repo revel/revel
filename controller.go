@@ -1,7 +1,6 @@
 package revel
 
 import (
-	"database/sql"
 	"errors"
 	"fmt"
 	"net/http"
@@ -31,7 +30,6 @@ type Controller struct {
 	Args       map[string]interface{} // Per-request scratch space.
 	RenderArgs map[string]interface{} // Args passed to the template.
 	Validation *Validation            // Data validation helpers
-	Txn        *sql.Tx                // Nil by default, but may be used by the app / plugins
 }
 
 func NewController(req *Request, resp *Response) *Controller {
