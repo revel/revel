@@ -6,17 +6,13 @@ import (
 
 // PanicFilter wraps the action invocation in a protective defer blanket that
 // converts panics into 500 error pages.
-var PanicFilter panicFilter
-
-type panicFilter struct{}
-
-func (f panicFilter) Call(c *Controller, fc FilterChain) {
+var PanicFilter = func(c *Controller, fc []Filter) {
 	defer func() {
 		if err := recover(); err != nil {
 			handleInvocationPanic(c, err)
 		}
 	}()
-	fc[0].Call(c, fc[1:])
+	fc[0](c, fc[1:])
 }
 
 // This function handles a panic in an action invocation.

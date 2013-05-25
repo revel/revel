@@ -113,6 +113,6 @@ func BenchmarkInvoker(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		ActionInvoker.Call(&c, nil)
+		ActionInvoker(&c, nil)
 	}
 }

@@ -1,9 +1,6 @@
 package revel
 
-import (
-	"reflect"
-	"testing"
-)
+import "testing"
 
 type FakeController struct{}
 
@@ -57,7 +54,7 @@ func TestFilterConfiguratorOps(t *testing.T) {
 		ActionInvoker,
 	}
 	actual := conf.getOverrideFilters()
-	if len(actual) != len(expected) || !reflect.DeepEqual(actual, expected) {
+	if len(actual) != len(expected) || !filterSliceEqual(actual, expected) {
 		t.Errorf("getOverrideFilter failed.\nActual: %#v\nExpect: %#v", actual, expected)
 	}
 
@@ -72,7 +69,16 @@ func TestFilterConfiguratorOps(t *testing.T) {
 		ActionInvoker,
 	}
 	actual = filterOverrides[conf.key]
-	if len(actual) != len(expected) || !reflect.DeepEqual(actual, expected) {
+	if len(actual) != len(expected) || !filterSliceEqual(actual, expected) {
 		t.Errorf("Ops failed.\nActual: %#v\nExpect: %#v", actual, expected)
 	}
+}
+
+func filterSliceEqual(a, e []Filter) bool {
+	for i, f := range a {
+		if !FilterEq(f, e[i]) {
+			return false
+		}
+	}
+	return true
 }

@@ -1,15 +1,6 @@
 package revel
 
-type FilterChain []Filter
-
-type Filter interface {
-	Call(c *Controller, chain FilterChain)
-}
-
-type InitializingFilter interface {
-	Filter
-	OnAppStart()
-}
+type Filter func(c *Controller, filterChain []Filter)
 
 // Filters is the default set of global filters.
 // It may be set by the application on initialization.
@@ -28,10 +19,6 @@ var Filters = []Filter{
 
 // NilFilter and NilChain are helpful in writing filter tests.
 var (
-	NilFilter nilFilter
-	NilChain  = FilterChain{NilFilter}
+	NilFilter = func(_ *Controller, _ []Filter) {}
+	NilChain  = []Filter{NilFilter}
 )
-
-type nilFilter struct{}
-
-func (f nilFilter) Call(_ *Controller, _ FilterChain) {}

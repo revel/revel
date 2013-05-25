@@ -35,7 +35,7 @@ func handleInternal(w http.ResponseWriter, r *http.Request, ws *websocket.Conn) 
 	)
 	req.Websocket = ws
 
-	Filters[0].Call(c, Filters[1:])
+	Filters[0](c, Filters[1:])
 	if c.Result != nil {
 		c.Result.Apply(req, resp)
 	}
@@ -56,7 +56,7 @@ func Run(port int) {
 	// (As a convenient way to control it all together.)
 	if Config.BoolDefault("watch", true) {
 		MainWatcher = NewWatcher()
-		Filters = append([]Filter{WatchFilter{}}, Filters...)
+		Filters = append([]Filter{WatchFilter}, Filters...)
 	}
 
 	// If desired (or by default), create a watcher for templates and routes.
@@ -83,12 +83,6 @@ func Run(port int) {
 }
 
 func runStartupHooks() {
-	for _, filter := range Filters {
-		if initFilter, ok := filter.(InitializingFilter); ok {
-			initFilter.OnAppStart()
-		}
-	}
-
 	for _, hook := range startupHooks {
 		hook()
 	}

@@ -394,20 +394,18 @@ NEXT_ROUTE:
 	return nil
 }
 
-var RouterFilter routerFilter
-
-type routerFilter struct{}
-
-func (f routerFilter) OnAppStart() {
-	MainRouter = NewRouter(path.Join(BasePath, "conf", "routes"))
-	if MainWatcher != nil && Config.BoolDefault("watch.routes", true) {
-		MainWatcher.Listen(MainRouter, MainRouter.path)
-	} else {
-		MainRouter.Refresh()
-	}
+func init() {
+	OnAppStart(func() {
+		MainRouter = NewRouter(path.Join(BasePath, "conf", "routes"))
+		if MainWatcher != nil && Config.BoolDefault("watch.routes", true) {
+			MainWatcher.Listen(MainRouter, MainRouter.path)
+		} else {
+			MainRouter.Refresh()
+		}
+	})
 }
 
-func (f routerFilter) Call(c *Controller, fc FilterChain) {
+var RouterFilter = func(c *Controller, fc []Filter) {
 	// Figure out the Controller/Action
 	var route *RouteMatch = MainRouter.Route(c.Request.Request)
 	if route == nil {
@@ -447,5 +445,5 @@ func (f routerFilter) Call(c *Controller, fc FilterChain) {
 		}
 	}
 
-	fc[0].Call(c, fc[1:])
+	fc[0](c, fc[1:])
 }

@@ -11,12 +11,7 @@ var (
 	websocketType     = reflect.TypeOf((*websocket.Conn)(nil))
 )
 
-var ActionInvoker actionInvoker
-
-type actionInvoker struct{}
-
-// Instantiate, bind params, and invoke the given action.
-func (f actionInvoker) Call(c *Controller, _ FilterChain) {
+var ActionInvoker = func(c *Controller, _ []Filter) {
 	// Instantiate the method.
 	methodValue := reflect.ValueOf(c.AppController).MethodByName(c.MethodType.Name)
 

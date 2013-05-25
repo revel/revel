@@ -136,15 +136,13 @@ func parseLocaleFromFileName(file string) string {
 	return strings.ToLower(extension)
 }
 
-var I18nFilter i18nFilter
-
-type i18nFilter struct{}
-
-func (p i18nFilter) OnAppStart() {
-	loadMessages(filepath.Join(BasePath, messageFilesDirectory))
+func init() {
+	OnAppStart(func() {
+		loadMessages(filepath.Join(BasePath, messageFilesDirectory))
+	})
 }
 
-func (p i18nFilter) Call(c *Controller, fc FilterChain) {
+var I18nFilter = func(c *Controller, fc []Filter) {
 	if foundCookie, cookieValue := hasLocaleCookie(c.Request); foundCookie {
 		TRACE.Printf("Found locale cookie value: %s", cookieValue)
 		setCurrentLocaleControllerArguments(c, cookieValue)
@@ -155,7 +153,7 @@ func (p i18nFilter) Call(c *Controller, fc FilterChain) {
 		TRACE.Println("Unable to find locale in cookie or header, using empty string")
 		setCurrentLocaleControllerArguments(c, "")
 	}
-	fc[0].Call(c, fc[1:])
+	fc[0](c, fc[1:])
 }
 
 // Set the current locale controller argument (CurrentLocaleControllerArg) with the given locale.

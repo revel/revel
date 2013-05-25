@@ -105,11 +105,7 @@ func (p *Params) calcValues() url.Values {
 	return values
 }
 
-var ParamsFilter paramsFilter
-
-type paramsFilter struct{}
-
-func (f paramsFilter) Call(c *Controller, fc FilterChain) {
+var ParamsFilter = func(c *Controller, fc []Filter) {
 	ParseParams(c.Params, c.Request)
 
 	// Clean up from the request.
@@ -130,5 +126,5 @@ func (f paramsFilter) Call(c *Controller, fc FilterChain) {
 		}
 	}()
 
-	fc[0].Call(c, fc[1:])
+	fc[0](c, fc[1:])
 }

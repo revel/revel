@@ -15,7 +15,7 @@ var (
 )
 
 func Init() {
-	db.DbFilter.OnAppStart()
+	db.Init()
 	dbm = &gorp.DbMap{Db: db.Db, Dialect: gorp.SqliteDialect{}}
 
 	setColumnSizes := func(t *gorp.TableMap, colSizes map[string]int) {

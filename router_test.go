@@ -393,7 +393,7 @@ func BenchmarkRouterFilter(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N/len(controllers); i++ {
 		for _, c := range controllers {
-			RouterFilter.Call(c, NilChain)
+			RouterFilter(c, NilChain)
 		}
 	}
 }

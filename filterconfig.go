@@ -2,8 +2,8 @@ package revel
 
 import "reflect"
 
-// Map from "Controller" or "Controller.Method" to FilterChain
-var filterOverrides = make(map[string]FilterChain)
+// Map from "Controller" or "Controller.Method" to the Filter chain
+var filterOverrides = make(map[string][]Filter)
 
 // FilterConfigurator allows the developer configure the filter chain on a
 // per-controller or per-action basis.  The filter configuration is applied by
@@ -96,17 +96,14 @@ func (conf FilterConfigurator) Add(f Filter) FilterConfigurator {
 
 // Remove a filter from the filter chain.
 func (conf FilterConfigurator) Remove(target Filter) FilterConfigurator {
-	var (
-		targetType = reflect.TypeOf(target)
-		filters    = conf.getOverrideFilters()
-	)
+	filters := conf.getOverrideFilters()
 	for i, f := range filters {
-		if reflect.TypeOf(f) == targetType {
+		if FilterEq(f, target) {
 			filterOverrides[conf.key] = append(filters[:i], filters[i+1:]...)
 			return conf
 		}
 	}
-	panic("Did not find target filter: " + targetType.Name())
+	panic("Did not find target filter to remove")
 }
 
 // Insert a filter into the filter chain before or after another.
@@ -118,17 +115,14 @@ func (conf FilterConfigurator) Insert(insert Filter, where When, target Filter) 
 	if where != BEFORE && where != AFTER {
 		panic("where must be BEFORE or AFTER")
 	}
-	var (
-		targetType = reflect.TypeOf(target)
-		filters    = conf.getOverrideFilters()
-	)
+	filters := conf.getOverrideFilters()
 	for i, f := range filters {
-		if reflect.TypeOf(f) == targetType {
+		if FilterEq(f, target) {
 			filterOverrides[conf.key] = append(filters[:i], append([]Filter{insert}, filters[i:]...)...)
 			return conf
 		}
 	}
-	panic("Did not find target filter: " + targetType.Name())
+	panic("Did not find target filter for insert")
 }
 
 // getOverrideFilters returns the filter chain that applies to the given
@@ -145,7 +139,7 @@ func (conf FilterConfigurator) getOverrideFilters() []Filter {
 		if !ok {
 			// The override starts with all filters after FilterConfiguringFilter
 			for i, f := range Filters {
-				if f == FilterConfiguringFilter {
+				if FilterEq(f, FilterConfiguringFilter) {
 					filters = make([]Filter, len(Filters)-i-1)
 					copy(filters, Filters[i+1:])
 					break
@@ -159,22 +153,23 @@ func (conf FilterConfigurator) getOverrideFilters() []Filter {
 	return filters
 }
 
+// FilterEq returns true if the two filters reference the same filter.
+func FilterEq(a, b Filter) bool {
+	return reflect.ValueOf(a).Pointer() == reflect.ValueOf(b).Pointer()
+}
+
 // FilterConfiguringFilter is a filter stage that customizes the remaining
 // filter chain for the action being invoked.
-var FilterConfiguringFilter filterConfiguringFilter
-
-type filterConfiguringFilter struct{}
-
-func (f filterConfiguringFilter) Call(c *Controller, fc FilterChain) {
+var FilterConfiguringFilter = func(c *Controller, fc []Filter) {
 	if newChain, ok := filterOverrides[c.Name+"."+c.Action]; ok {
-		newChain[0].Call(c, newChain[1:])
+		newChain[0](c, newChain[1:])
 		return
 	}
 
 	if newChain, ok := filterOverrides[c.Name]; ok {
-		newChain[0].Call(c, newChain[1:])
+		newChain[0](c, newChain[1:])
 		return
 	}
 
-	fc[0].Call(c, fc[1:])
+	fc[0](c, fc[1:])
 }

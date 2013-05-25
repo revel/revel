@@ -149,9 +149,7 @@ func (w *Watcher) Notify() *Error {
 	return nil
 }
 
-type WatchFilter struct{}
-
-func (f WatchFilter) Call(c *Controller, fc FilterChain) {
+var WatchFilter = func(c *Controller, fc []Filter) {
 	if MainWatcher != nil {
 		err := MainWatcher.Notify()
 		if err != nil {
@@ -159,5 +157,5 @@ func (f WatchFilter) Call(c *Controller, fc FilterChain) {
 			return
 		}
 	}
-	fc[0].Call(c, fc[1:])
+	fc[0](c, fc[1:])
 }

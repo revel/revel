@@ -89,7 +89,7 @@ func BenchmarkParams(b *testing.B) {
 		Params:  &Params{},
 	}
 	for i := 0; i < b.N; i++ {
-		ParamsFilter.Call(&c, NilChain)
+		ParamsFilter(&c, NilChain)
 	}
 }
 
@@ -98,7 +98,7 @@ func TestMultipartForm(t *testing.T) {
 		Request: NewRequest(getMultipartRequest()),
 		Params:  &Params{},
 	}
-	ParamsFilter.Call(&c, NilChain)
+	ParamsFilter(&c, NilChain)
 
 	if !reflect.DeepEqual(expectedValues, map[string][]string(c.Params.Values)) {
 		t.Errorf("Param values: (expected) %v != %v (actual)",
