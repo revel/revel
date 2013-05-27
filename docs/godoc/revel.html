@@ -42,6 +42,9 @@ layout: godoc
 				
 				<dd><a href="#Module">type Module</a></dd>
 				
+					
+					<dd>&nbsp; &nbsp; <a href="#ModuleByName">func ModuleByName(name string) (m Module, found bool)</a></dd>
+				
 				
 			
 			
@@ -112,11 +115,10 @@ layout: godoc
     <span id="CookiePrefix">CookiePrefix</span> <a href="/pkg/builtin/#string">string</a>
 
     <span class="comment">// Loggers</span>
-    <span id="DEFAULT">DEFAULT</span> = <a href="/pkg/log/">log</a>.<a href="/pkg/log/#New">New</a>(<a href="/pkg/io/ioutil/">ioutil</a>.<a href="/pkg/io/ioutil/#Discard">Discard</a>, &#34;&#34;, <a href="/pkg/log/">log</a>.<a href="/pkg/log/#Ldate">Ldate</a>|<a href="/pkg/log/">log</a>.<a href="/pkg/log/#Ltime">Ltime</a>|<a href="/pkg/log/">log</a>.<a href="/pkg/log/#Lshortfile">Lshortfile</a>)
-    <span id="TRACE">TRACE</span>   = <a href="#DEFAULT">DEFAULT</a>
-    <span id="INFO">INFO</span>    = <a href="#DEFAULT">DEFAULT</a>
-    <span id="WARN">WARN</span>    = <a href="#DEFAULT">DEFAULT</a>
-    <span id="ERROR">ERROR</span>   = <a href="#DEFAULT">DEFAULT</a>
+    <span id="TRACE">TRACE</span> = <a href="/pkg/log/">log</a>.<a href="/pkg/log/#New">New</a>(<a href="/pkg/io/ioutil/">ioutil</a>.<a href="/pkg/io/ioutil/#Discard">Discard</a>, &#34;TRACE &#34;, <a href="/pkg/log/">log</a>.<a href="/pkg/log/#Ldate">Ldate</a>|<a href="/pkg/log/">log</a>.<a href="/pkg/log/#Ltime">Ltime</a>|<a href="/pkg/log/">log</a>.<a href="/pkg/log/#Lshortfile">Lshortfile</a>)
+    <span id="INFO">INFO</span>  = <a href="/pkg/log/">log</a>.<a href="/pkg/log/#New">New</a>(<a href="/pkg/io/ioutil/">ioutil</a>.<a href="/pkg/io/ioutil/#Discard">Discard</a>, &#34;INFO  &#34;, <a href="/pkg/log/">log</a>.<a href="/pkg/log/#Ldate">Ldate</a>|<a href="/pkg/log/">log</a>.<a href="/pkg/log/#Ltime">Ltime</a>|<a href="/pkg/log/">log</a>.<a href="/pkg/log/#Lshortfile">Lshortfile</a>)
+    <span id="WARN">WARN</span>  = <a href="/pkg/log/">log</a>.<a href="/pkg/log/#New">New</a>(<a href="/pkg/io/ioutil/">ioutil</a>.<a href="/pkg/io/ioutil/#Discard">Discard</a>, &#34;WARN  &#34;, <a href="/pkg/log/">log</a>.<a href="/pkg/log/#Ldate">Ldate</a>|<a href="/pkg/log/">log</a>.<a href="/pkg/log/#Ltime">Ltime</a>|<a href="/pkg/log/">log</a>.<a href="/pkg/log/#Lshortfile">Lshortfile</a>)
+    <span id="ERROR">ERROR</span> = <a href="/pkg/log/">log</a>.<a href="/pkg/log/#New">New</a>(<a href="/pkg/os/">os</a>.<a href="/pkg/os/#Stderr">Stderr</a>, &#34;ERROR &#34;, <a href="/pkg/log/">log</a>.<a href="/pkg/log/#Ldate">Ldate</a>|<a href="/pkg/log/">log</a>.<a href="/pkg/log/#Ltime">Ltime</a>|<a href="/pkg/log/">log</a>.<a href="/pkg/log/#Lshortfile">Lshortfile</a>)
 
     <span id="Initialized">Initialized</span> <a href="/pkg/builtin/#bool">bool</a>
 )</pre>
@@ -126,14 +128,14 @@ layout: godoc
 		
 			
 			
-			<h2 id="CheckInit">func <a href="../src/revel.html?s=7386:7402#L252">CheckInit</a></h2>
+			<h2 id="CheckInit">func <a href="../src/revel.html?s=7765:7781#L261">CheckInit</a></h2>
 			<pre>func CheckInit()</pre>
 			
 			
 		
 			
 			
-			<h2 id="Init">func <a href="../src/revel.html?s=2170:2213#L69">Init</a></h2>
+			<h2 id="Init">func <a href="../src/revel.html?s=2327:2370#L68">Init</a></h2>
 			<pre>func Init(mode, importPath, srcPath <a href="/pkg/builtin/#string">string</a>)</pre>
 			<p>
 Init initializes Revel -- it provides paths for getting around the app.
@@ -152,7 +154,7 @@ srcPath - the path to the source directory, containing Revel and the app.
 		
 			
 			
-			<h2 id="Module">type <a href="../src/revel.html?s=6194:6247#L214">Module</a></h2>
+			<h2 id="Module">type <a href="../src/revel.html?s=6334:6387#L213">Module</a></h2>
 			<pre>type Module struct {
     Name, ImportPath, Path <a href="/pkg/builtin/#string">string</a>
 }</pre>
@@ -164,6 +166,15 @@ srcPath - the path to the source directory, containing Revel and the app.
 
 			
 
+			
+				
+				<h3 id="ModuleByName">func <a href="../src/revel.html?s=7591:7644#L252">ModuleByName</a></h3>
+				<pre>func ModuleByName(name <a href="/pkg/builtin/#string">string</a>) (m <a href="#Module">Module</a>, found <a href="/pkg/builtin/#bool">bool</a>)</pre>
+				<p>
+ModuleByName returns the module of the given name, if loaded.
+</p>
+
+				
 			
 
 			

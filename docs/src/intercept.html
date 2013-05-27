@@ -44,10 +44,10 @@ layout: godoc
 <span class="comment">//</span>
 type InterceptorFunc func(*Controller) Result
 type InterceptorMethod interface{}
-type InterceptTime int
+type When int
 
 const (
-    BEFORE InterceptTime = iota
+    BEFORE When = iota
     AFTER
     PANIC
     FINALLY
@@ -60,7 +60,7 @@ const (
 )
 
 type Interception struct {
-    When InterceptTime
+    When When
 
 }
 
@@ -87,31 +87,30 @@ func (i Interception) Invoke(val reflect.Value) reflect.Value {
     return vals[0]
 }
 
-type InterceptorPlugin struct {
-    EmptyPlugin
-}
+var InterceptorFilter = func(c *Controller, fc []Filter) {
+    defer invokeInterceptors(FINALLY, c)
+    defer func() {
+        if err := recover(); err != nil {
+            invokeInterceptors(PANIC, c)
+            panic(err)
+        }
+    }()
 
-func (p InterceptorPlugin) BeforeRequest(c *Controller) {
+    <span class="comment">// Invoke the BEFORE interceptors and return early, if we get a result.</span>
     invokeInterceptors(BEFORE, c)
-}
+    if c.Result != nil {
+        return
+    }
 
-func (p InterceptorPlugin) AfterRequest(c *Controller) {
+    fc[0](c, fc[1:])
     invokeInterceptors(AFTER, c)
-}
-
-func (p InterceptorPlugin) OnException(c *Controller, err interface{}) {
-    invokeInterceptors(PANIC, c)
-}
-
-func (p InterceptorPlugin) Finally(c *Controller) {
-    invokeInterceptors(FINALLY, c)
 }
 
 <span class="comment">// Install a general interceptor.</span>
 <span class="comment">// This can be applied to any Controller.</span>
 <span class="comment">// It must have the signature of:</span>
 <span class="comment">//   func example(c *revel.Controller) revel.Result</span>
-func InterceptFunc(intc InterceptorFunc, when InterceptTime, target interface{}) {
+func InterceptFunc(intc InterceptorFunc, when When, target interface{}) {
     interceptors = append(interceptors, &amp;Interception{
         When:         when,
         function:     intc,
@@ -124,7 +123,7 @@ func InterceptFunc(intc InterceptorFunc, when InterceptTime, target interface{})
 <span class="comment">// Install an interceptor method that applies to its own Controller.</span>
 <span class="comment">//   func (c AppController) example() revel.Result</span>
 <span class="comment">//   func (c *AppController) example() revel.Result</span>
-func InterceptMethod(intc InterceptorMethod, when InterceptTime) {
+func InterceptMethod(intc InterceptorMethod, when When) {
     methodType := reflect.TypeOf(intc)
     if methodType.Kind() != reflect.Func || methodType.NumOut() != 1 || methodType.NumIn() != 1 {
         log.Fatalln(&#34;Interceptor method should have signature like&#34;,

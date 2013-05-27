@@ -27,17 +27,19 @@ layout: godoc
 			<dl>
 			
 			
+				<dd><a href="#pkg-variables">Variables</a></dd>
+			
+			
+				
+				<dd><a href="#ParseParams">func ParseParams(params *Params, req *Request)</a></dd>
 			
 			
 				
 				<dd><a href="#Params">type Params</a></dd>
 				
-					
-					<dd>&nbsp; &nbsp; <a href="#ParseParams">func ParseParams(req *Request) *Params</a></dd>
-				
 				
 					
-					<dd>&nbsp; &nbsp; <a href="#Params.Bind">func (p *Params) Bind(name string, typ reflect.Type) reflect.Value</a></dd>
+					<dd>&nbsp; &nbsp; <a href="#Params.Bind">func (p *Params) Bind(dest interface{}, name string)</a></dd>
 				
 			
 			
@@ -61,22 +63,68 @@ layout: godoc
 
 		
 		
+			<h2 id="pkg-variables">Variables</h2>
+			
+				<pre>var <span id="ParamsFilter">ParamsFilter</span> = func(c *<a href="#Controller">Controller</a>, fc []<a href="#Filter">Filter</a>) {
+    <a href="#ParseParams">ParseParams</a>(<a href="#c">c</a>.<a href="#Params">Params</a>, <a href="#c">c</a>.<a href="#Request">Request</a>)
+
+    defer func() {
+
+        if <a href="#c">c</a>.<a href="#Request">Request</a>.<a href="#MultipartForm">MultipartForm</a> != <a href="/pkg/builtin/#nil">nil</a> {
+            <span id="err">err</span> := <a href="#c">c</a>.<a href="#Request">Request</a>.<a href="#MultipartForm">MultipartForm</a>.<a href="#RemoveAll">RemoveAll</a>()
+            if <a href="#err">err</a> != <a href="/pkg/builtin/#nil">nil</a> {
+                <a href="#WARN">WARN</a>.<a href="#Println">Println</a>(&#34;Error removing temporary files:&#34;, <a href="#err">err</a>)
+            }
+        }
+
+        for <a href="#_">_</a>, <a href="#tmpFile">tmpFile</a> := range <a href="#c">c</a>.<a href="#Params">Params</a>.<a href="#tmpFiles">tmpFiles</a> {
+            <span id="err">err</span> := <a href="/pkg/os/">os</a>.<a href="/pkg/os/#Remove">Remove</a>(<a href="#tmpFile">tmpFile</a>.<a href="#Name">Name</a>())
+            if <a href="#err">err</a> != <a href="/pkg/builtin/#nil">nil</a> {
+                <a href="#WARN">WARN</a>.<a href="#Println">Println</a>(&#34;Could not remove upload temp file:&#34;, <a href="#err">err</a>)
+            }
+        }
+    }()
+
+    <a href="#fc">fc</a>[0](<a href="#c">c</a>, <a href="#fc">fc</a>[1:])
+}</pre>
+				
+			
 		
 		
 			
 			
-			<h2 id="Params">type <a href="../src/params.html?s=198:337#L5">Params</a></h2>
+			<h2 id="ParseParams">func <a href="../src/params.html?s=885:931#L22">ParseParams</a></h2>
+			<pre>func ParseParams(params *<a href="#Params">Params</a>, req *<a href="#Request">Request</a>)</pre>
+			
+			
+		
+		
+			
+			
+			<h2 id="Params">type <a href="../src/params.html?s=275:883#L7">Params</a></h2>
 			<pre>type Params struct {
-    <a href="/pkg/net/url/">url</a>.<a href="/pkg/net/url/#Values">Values</a>
-    Files map[<a href="/pkg/builtin/#string">string</a>][]*<a href="/pkg/mime/multipart/">multipart</a>.<a href="/pkg/mime/multipart/#FileHeader">FileHeader</a>
+    <a href="/pkg/net/url/">url</a>.<a href="/pkg/net/url/#Values">Values</a> <span class="comment">// A unified view of all the individual param maps below.</span>
+
+    <span class="comment">// Set by the router</span>
+    Fixed <a href="/pkg/net/url/">url</a>.<a href="/pkg/net/url/#Values">Values</a> <span class="comment">// Fixed parameters from the route, e.g. App.Action(&#34;fixed param&#34;)</span>
+    Route <a href="/pkg/net/url/">url</a>.<a href="/pkg/net/url/#Values">Values</a> <span class="comment">// Parameters extracted from the route,  e.g. /customers/{id}</span>
+
+    <span class="comment">// Set by the ParamsFilter</span>
+    Query <a href="/pkg/net/url/">url</a>.<a href="/pkg/net/url/#Values">Values</a> <span class="comment">// Parameters from the query string, e.g. /index?limit=10</span>
+    Form  <a href="/pkg/net/url/">url</a>.<a href="/pkg/net/url/#Values">Values</a> <span class="comment">// Parameters from the request body.</span>
+
+    Files map[<a href="/pkg/builtin/#string">string</a>][]*<a href="/pkg/mime/multipart/">multipart</a>.<a href="/pkg/mime/multipart/#FileHeader">FileHeader</a> <span class="comment">// Files uploaded in a multipart form</span>
     <span class="comment">// contains filtered or unexported fields</span>
 }</pre>
 			<p>
-These provide a unified view of the request params.
+Params provides a unified view of the request params.
 Includes:
 - URL query string
 - Form values
 - File uploads
+</p>
+<p>
+Warning: param maps other than Values may be nil if there were none.
 </p>
 
 
@@ -87,18 +135,17 @@ Includes:
 			
 
 			
-				
-				<h3 id="ParseParams">func <a href="../src/params.html?s=339:377#L11">ParseParams</a></h3>
-				<pre>func ParseParams(req *<a href="#Request">Request</a>) *<a href="#Params">Params</a></pre>
-				
-				
-			
 
 			
 				
-				<h3 id="Params.Bind">func (*Params) <a href="../src/params.html?s=1302:1368#L49">Bind</a></h3>
-				<pre>func (p *<a href="#Params">Params</a>) Bind(name <a href="/pkg/builtin/#string">string</a>, typ <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Type">Type</a>) <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Value">Value</a></pre>
-				
+				<h3 id="Params.Bind">func (*Params) <a href="../src/params.html?s=1815:1867#L52">Bind</a></h3>
+				<pre>func (p *<a href="#Params">Params</a>) Bind(dest interface{}, name <a href="/pkg/builtin/#string">string</a>)</pre>
+				<p>
+Bind looks for the named parameter, converts it to the requested type, and
+writes it into &#34;dest&#34;, which must be settable.  If the value can not be
+parsed, &#34;dest&#34; is set to the zero value.
+</p>
+
 				
 				
 			

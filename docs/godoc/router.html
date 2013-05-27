@@ -27,6 +27,8 @@ layout: godoc
 			<dl>
 			
 			
+				<dd><a href="#pkg-variables">Variables</a></dd>
+			
 			
 			
 				
@@ -61,7 +63,7 @@ layout: godoc
 				
 				
 					
-					<dd>&nbsp; &nbsp; <a href="#Router.Refresh">func (router *Router) Refresh() *Error</a></dd>
+					<dd>&nbsp; &nbsp; <a href="#Router.Refresh">func (router *Router) Refresh() (err *Error)</a></dd>
 				
 					
 					<dd>&nbsp; &nbsp; <a href="#Router.Reverse">func (router *Router) Reverse(action string, argValues map[string]string) *ActionDefinition</a></dd>
@@ -91,11 +93,56 @@ layout: godoc
 
 		
 		
+			<h2 id="pkg-variables">Variables</h2>
+			
+				<pre>var <span id="RouterFilter">RouterFilter</span> = func(c *<a href="#Controller">Controller</a>, fc []<a href="#Filter">Filter</a>) {
+    <span class="comment">// Figure out the Controller/Action</span>
+    var <span id="route">route</span> *<a href="#RouteMatch">RouteMatch</a> = <a href="#MainRouter">MainRouter</a>.<a href="#Route">Route</a>(<a href="#c">c</a>.<a href="#Request">Request</a>.<a href="#Request">Request</a>)
+    if <a href="#route">route</a> == <a href="/pkg/builtin/#nil">nil</a> {
+        <a href="#c">c</a>.<a href="#Result">Result</a> = <a href="#c">c</a>.<a href="#NotFound">NotFound</a>(&#34;No matching route found&#34;)
+        return
+    }
+
+    if <a href="#route">route</a>.<a href="#Action">Action</a> == &#34;404&#34; {
+        <a href="#c">c</a>.<a href="#Result">Result</a> = <a href="#c">c</a>.<a href="#NotFound">NotFound</a>(&#34;(intentionally)&#34;)
+        return
+    }
+
+    if <span id="err">err</span> := <a href="#c">c</a>.<a href="#SetAction">SetAction</a>(<a href="#route">route</a>.<a href="#ControllerName">ControllerName</a>, <a href="#route">route</a>.<a href="#MethodName">MethodName</a>); <a href="#err">err</a> != <a href="/pkg/builtin/#nil">nil</a> {
+        <a href="#c">c</a>.<a href="#Result">Result</a> = <a href="#c">c</a>.<a href="#NotFound">NotFound</a>(<a href="#err">err</a>.<a href="#Error">Error</a>())
+        return
+    }
+
+    for <a href="#k">k</a>, <a href="#v">v</a> := range <a href="#route">route</a>.<a href="#Params">Params</a> {
+        if <a href="#c">c</a>.<a href="#Params">Params</a>.<a href="#Route">Route</a> == <a href="/pkg/builtin/#nil">nil</a> {
+            <a href="#c">c</a>.<a href="#Params">Params</a>.<a href="#Route">Route</a> = <a href="/pkg/builtin/#make">make</a>(map[<a href="/pkg/builtin/#string">string</a>][]<a href="/pkg/builtin/#string">string</a>)
+        }
+        <a href="#c">c</a>.<a href="#Params">Params</a>.<a href="#Route">Route</a>[<a href="#k">k</a>] = []<a href="/pkg/builtin/#string">string</a>{<a href="#v">v</a>}
+    }
+
+    for <a href="#i">i</a>, <a href="#value">value</a> := range <a href="#route">route</a>.<a href="#FixedParams">FixedParams</a> {
+        if <a href="#c">c</a>.<a href="#Params">Params</a>.<a href="#Fixed">Fixed</a> == <a href="/pkg/builtin/#nil">nil</a> {
+            <a href="#c">c</a>.<a href="#Params">Params</a>.<a href="#Fixed">Fixed</a> = <a href="/pkg/builtin/#make">make</a>(<a href="/pkg/net/url/">url</a>.<a href="/pkg/net/url/#Values">Values</a>)
+        }
+        if <a href="#i">i</a> &lt; <a href="/pkg/builtin/#len">len</a>(<a href="#c">c</a>.<a href="#MethodType">MethodType</a>.<a href="#Args">Args</a>) {
+            <span id="arg">arg</span> := <a href="#c">c</a>.<a href="#MethodType">MethodType</a>.<a href="#Args">Args</a>[<a href="#i">i</a>]
+            <a href="#c">c</a>.<a href="#Params">Params</a>.<a href="#Fixed">Fixed</a>.<a href="#Set">Set</a>(<a href="#arg">arg</a>.<a href="#Name">Name</a>, <a href="#value">value</a>)
+        } else {
+            <a href="#WARN">WARN</a>.<a href="#Println">Println</a>(&#34;Too many parameters to&#34;, <a href="#route">route</a>.<a href="#Action">Action</a>, &#34;trying to add&#34;, <a href="#value">value</a>)
+            break
+        }
+    }
+
+    <a href="#fc">fc</a>[0](<a href="#c">c</a>, <a href="#fc">fc</a>[1:])
+}</pre>
+				
+			
+		
 		
 		
 			
 			
-			<h2 id="ActionDefinition">type <a href="../src/router.html?s=7311:7454#L277">ActionDefinition</a></h2>
+			<h2 id="ActionDefinition">type <a href="../src/router.html?s=8429:8572#L304">ActionDefinition</a></h2>
 			<pre>type ActionDefinition struct {
     Host, Method, Url, Action <a href="/pkg/builtin/#string">string</a>
     Star                      <a href="/pkg/builtin/#bool">bool</a>
@@ -113,7 +160,7 @@ layout: godoc
 
 			
 				
-				<h3 id="ActionDefinition.String">func (*ActionDefinition) <a href="../src/router.html?s=7456:7498#L283">String</a></h3>
+				<h3 id="ActionDefinition.String">func (*ActionDefinition) <a href="../src/router.html?s=8574:8616#L310">String</a></h3>
 				<pre>func (a *<a href="#ActionDefinition">ActionDefinition</a>) String() <a href="/pkg/builtin/#string">string</a></pre>
 				
 				
@@ -122,7 +169,7 @@ layout: godoc
 		
 			
 			
-			<h2 id="Route">type <a href="../src/router.html?s=113:479#L4">Route</a></h2>
+			<h2 id="Route">type <a href="../src/router.html?s=121:487#L5">Route</a></h2>
 			<pre>type Route struct {
     Method      <a href="/pkg/builtin/#string">string</a>   <span class="comment">// e.g. GET</span>
     Path        <a href="/pkg/builtin/#string">string</a>   <span class="comment">// e.g. /app/{id}</span>
@@ -140,7 +187,7 @@ layout: godoc
 
 			
 				
-				<h3 id="NewRoute">func <a href="../src/router.html?s=1023:1087#L35">NewRoute</a></h3>
+				<h3 id="NewRoute">func <a href="../src/router.html?s=1031:1095#L36">NewRoute</a></h3>
 				<pre>func NewRoute(method, path, action, fixedArgs <a href="/pkg/builtin/#string">string</a>) (r *<a href="#Route">Route</a>)</pre>
 				<p>
 Prepares the route to be used in matching.
@@ -151,7 +198,7 @@ Prepares the route to be used in matching.
 
 			
 				
-				<h3 id="Route.Match">func (*Route) <a href="../src/router.html?s=3092:3156#L99">Match</a></h3>
+				<h3 id="Route.Match">func (*Route) <a href="../src/router.html?s=3100:3164#L100">Match</a></h3>
 				<pre>func (r *<a href="#Route">Route</a>) Match(method <a href="/pkg/builtin/#string">string</a>, reqPath <a href="/pkg/builtin/#string">string</a>) *<a href="#RouteMatch">RouteMatch</a></pre>
 				<p>
 Return nil if no match.
@@ -163,7 +210,7 @@ Return nil if no match.
 		
 			
 			
-			<h2 id="RouteMatch">type <a href="../src/router.html?s=481:717#L15">RouteMatch</a></h2>
+			<h2 id="RouteMatch">type <a href="../src/router.html?s=489:725#L16">RouteMatch</a></h2>
 			<pre>type RouteMatch struct {
     Action         <a href="/pkg/builtin/#string">string</a> <span class="comment">// e.g. Application.ShowApp</span>
     ControllerName <a href="/pkg/builtin/#string">string</a> <span class="comment">// e.g. Application</span>
@@ -185,7 +232,7 @@ Return nil if no match.
 		
 			
 			
-			<h2 id="Router">type <a href="../src/router.html?s=4341:4395#L148">Router</a></h2>
+			<h2 id="Router">type <a href="../src/router.html?s=4349:4403#L149">Router</a></h2>
 			<pre>type Router struct {
     Routes []*<a href="#Route">Route</a>
     <span class="comment">// contains filtered or unexported fields</span>
@@ -200,7 +247,7 @@ Return nil if no match.
 
 			
 				
-				<h3 id="NewRouter">func <a href="../src/router.html?s=7224:7265#L271">NewRouter</a></h3>
+				<h3 id="NewRouter">func <a href="../src/router.html?s=8342:8383#L298">NewRouter</a></h3>
 				<pre>func NewRouter(routesPath <a href="/pkg/builtin/#string">string</a>) *<a href="#Router">Router</a></pre>
 				
 				
@@ -208,8 +255,8 @@ Return nil if no match.
 
 			
 				
-				<h3 id="Router.Refresh">func (*Router) <a href="../src/router.html?s=4726:4764#L164">Refresh</a></h3>
-				<pre>func (router *<a href="#Router">Router</a>) Refresh() *<a href="#Error">Error</a></pre>
+				<h3 id="Router.Refresh">func (*Router) <a href="../src/router.html?s=4734:4778#L165">Refresh</a></h3>
+				<pre>func (router *<a href="#Router">Router</a>) Refresh() (err *<a href="#Error">Error</a>)</pre>
 				<p>
 Refresh re-reads the routes file and re-calculates the routing table.
 Returns an error if a specified action could not be found.
@@ -219,14 +266,14 @@ Returns an error if a specified action could not be found.
 				
 			
 				
-				<h3 id="Router.Reverse">func (*Router) <a href="../src/router.html?s=7518:7609#L287">Reverse</a></h3>
+				<h3 id="Router.Reverse">func (*Router) <a href="../src/router.html?s=8636:8727#L314">Reverse</a></h3>
 				<pre>func (router *<a href="#Router">Router</a>) Reverse(action <a href="/pkg/builtin/#string">string</a>, argValues map[<a href="/pkg/builtin/#string">string</a>]<a href="/pkg/builtin/#string">string</a>) *<a href="#ActionDefinition">ActionDefinition</a></pre>
 				
 				
 				
 			
 				
-				<h3 id="Router.Route">func (*Router) <a href="../src/router.html?s=4397:4455#L153">Route</a></h3>
+				<h3 id="Router.Route">func (*Router) <a href="../src/router.html?s=4405:4463#L154">Route</a></h3>
 				<pre>func (router *<a href="#Router">Router</a>) Route(req *<a href="/pkg/net/http/">http</a>.<a href="/pkg/net/http/#Request">Request</a>) *<a href="#RouteMatch">RouteMatch</a></pre>
 				
 				

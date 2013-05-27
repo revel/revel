@@ -90,17 +90,6 @@ layout: godoc
 				
 			
 				
-				<dd><a href="#ValidationPlugin">type ValidationPlugin</a></dd>
-				
-				
-					
-					<dd>&nbsp; &nbsp; <a href="#ValidationPlugin.AfterRequest">func (p ValidationPlugin) AfterRequest(c *Controller)</a></dd>
-				
-					
-					<dd>&nbsp; &nbsp; <a href="#ValidationPlugin.BeforeRequest">func (p ValidationPlugin) BeforeRequest(c *Controller)</a></dd>
-				
-			
-				
 				<dd><a href="#ValidationResult">type ValidationResult</a></dd>
 				
 				
@@ -142,6 +131,33 @@ E.g. &#34;myapp/controllers.helper&#34; or &#34;myapp/controllers.(*Application)
 This is set on initialization in the generated main.go file.
 </p>
 
+			
+				<pre>var <span id="ValidationFilter">ValidationFilter</span> = func(c *<a href="#Controller">Controller</a>, fc []<a href="#Filter">Filter</a>) {
+    <a href="#c">c</a>.<a href="#Validation">Validation</a> = &amp;<a href="#Validation">Validation</a>{
+        <a href="#Errors">Errors</a>: <a href="#restoreValidationErrors">restoreValidationErrors</a>(<a href="#c">c</a>.<a href="#Request">Request</a>.<a href="#Request">Request</a>),
+        <a href="#keep">keep</a>:   <a href="/pkg/builtin/#false">false</a>,
+    }
+
+    <a href="#fc">fc</a>[0](<a href="#c">c</a>, <a href="#fc">fc</a>[1:])
+
+    <a href="#c">c</a>.<a href="#RenderArgs">RenderArgs</a>[&#34;errors&#34;] = <a href="#c">c</a>.<a href="#Validation">Validation</a>.<a href="#ErrorMap">ErrorMap</a>()
+
+    <span class="comment">// Store the Validation errors</span>
+    var <span id="errorsValue">errorsValue</span> <a href="/pkg/builtin/#string">string</a>
+    if <a href="#c">c</a>.<a href="#Validation">Validation</a>.<a href="#keep">keep</a> {
+        for <a href="#_">_</a>, <a href="#error">error</a> := range <a href="#c">c</a>.<a href="#Validation">Validation</a>.<a href="#Errors">Errors</a> {
+            if <a href="#error">error</a>.<a href="#Message">Message</a> != &#34;&#34; {
+                <a href="#errorsValue">errorsValue</a> += &#34;\x00&#34; + <a href="#error">error</a>.<a href="#Key">Key</a> + &#34;:&#34; + <a href="#error">error</a>.<a href="#Message">Message</a> + &#34;\x00&#34;
+            }
+        }
+    }
+    <a href="#c">c</a>.<a href="#SetCookie">SetCookie</a>(&amp;<a href="/pkg/net/http/">http</a>.<a href="/pkg/net/http/#Cookie">Cookie</a>{
+        <a href="#Name">Name</a>:  <a href="#CookiePrefix">CookiePrefix</a> + &#34;_ERRORS&#34;,
+        <a href="#Value">Value</a>: <a href="/pkg/net/url/">url</a>.<a href="/pkg/net/url/#QueryEscape">QueryEscape</a>(<a href="#errorsValue">errorsValue</a>),
+        <a href="#Path">Path</a>:  &#34;/&#34;,
+    })
+}</pre>
+				
 			
 		
 		
@@ -313,36 +329,6 @@ Test that the argument is non-nil and non-empty (if string or list)
 Returns the Message.
 </p>
 
-				
-				
-			
-		
-			
-			
-			<h2 id="ValidationPlugin">type <a href="../src/validation.html?s=3892:3935#L158">ValidationPlugin</a></h2>
-			<pre>type ValidationPlugin struct{ <a href="#EmptyPlugin">EmptyPlugin</a> }</pre>
-			
-
-			
-
-			
-
-			
-
-			
-
-			
-				
-				<h3 id="ValidationPlugin.AfterRequest">func (ValidationPlugin) <a href="../src/validation.html?s=4100:4153#L167">AfterRequest</a></h3>
-				<pre>func (p <a href="#ValidationPlugin">ValidationPlugin</a>) AfterRequest(c *<a href="#Controller">Controller</a>)</pre>
-				
-				
-				
-			
-				
-				<h3 id="ValidationPlugin.BeforeRequest">func (ValidationPlugin) <a href="../src/validation.html?s=3937:3991#L160">BeforeRequest</a></h3>
-				<pre>func (p <a href="#ValidationPlugin">ValidationPlugin</a>) BeforeRequest(c *<a href="#Controller">Controller</a>)</pre>
-				
 				
 				
 			

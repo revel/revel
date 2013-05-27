@@ -54,11 +54,10 @@ var (
     CookiePrefix string
 
     <span class="comment">// Loggers</span>
-    DEFAULT = log.New(ioutil.Discard, &#34;&#34;, log.Ldate|log.Ltime|log.Lshortfile)
-    TRACE   = DEFAULT
-    INFO    = DEFAULT
-    WARN    = DEFAULT
-    ERROR   = DEFAULT
+    TRACE = log.New(ioutil.Discard, &#34;TRACE &#34;, log.Ldate|log.Ltime|log.Lshortfile)
+    INFO  = log.New(ioutil.Discard, &#34;INFO  &#34;, log.Ldate|log.Ltime|log.Lshortfile)
+    WARN  = log.New(ioutil.Discard, &#34;WARN  &#34;, log.Ldate|log.Ltime|log.Lshortfile)
+    ERROR = log.New(os.Stderr, &#34;ERROR &#34;, log.Ldate|log.Ltime|log.Lshortfile)
 
     Initialized bool
 )
@@ -142,6 +141,16 @@ func Init(mode, importPath, srcPath string) {
 
 type Module struct {
     Name, ImportPath, Path string
+}
+
+<span class="comment">// ModuleByName returns the module of the given name, if loaded.</span>
+func ModuleByName(name string) (m Module, found bool) {
+    for _, module := range Modules {
+        if module.Name == name {
+            return module, true
+        }
+    }
+    return Module{}, false
 }
 
 func CheckInit() {

@@ -1,0 +1,99 @@
+---
+layout: godoc
+---
+
+<!--
+	Copyright 2009 The Go Authors. All rights reserved.
+	Use of this source code is governed by a BSD-style
+	license that can be found in the LICENSE file.
+-->
+<h1>Invoker</h1>
+
+	
+		
+		<!-- The package's Name is printed as title by the top-level template -->
+		
+		
+
+		<div id="pkg-index" class="toggleVisible">
+		<div class="collapsed">
+			<h2 class="toggleButton" title="Click to show Index section">Index &#9657;</h2>
+		</div>
+		<div class="expanded">
+			<h2 class="toggleButton" title="Click to hide Index section">Index &#9662;</h2>
+
+		<!-- Table of contents for API; must be named manual-nav to turn off auto nav. -->
+			<div id="manual-nav">
+			<dl>
+			
+			
+				<dd><a href="#pkg-variables">Variables</a></dd>
+			
+			
+			
+			
+			</dl>
+			</div><!-- #manual-nav -->
+
+		
+
+		
+			<h4>File</h4>
+			<p>
+			<span style="font-size:90%">
+			
+				<a href="../src/invoker.html">invoker.go</a>
+			
+			</span>
+			</p>
+		
+		</div><!-- .expanded -->
+		</div><!-- #pkg-index -->
+
+		
+		
+			<h2 id="pkg-variables">Variables</h2>
+			
+				<pre>var <span id="ActionInvoker">ActionInvoker</span> = func(c *<a href="#Controller">Controller</a>, _ []<a href="#Filter">Filter</a>) {
+
+    <span id="methodValue">methodValue</span> := <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#ValueOf">ValueOf</a>(<a href="#c">c</a>.<a href="#AppController">AppController</a>).<a href="#MethodByName">MethodByName</a>(<a href="#c">c</a>.<a href="#MethodType">MethodType</a>.<a href="#Name">Name</a>)
+
+    <span class="comment">// Collect the values for the method&#39;s arguments.</span>
+    var <span id="methodArgs">methodArgs</span> []<a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Value">Value</a>
+    for <a href="#_">_</a>, <a href="#arg">arg</a> := range <a href="#c">c</a>.<a href="#MethodType">MethodType</a>.<a href="#Args">Args</a> {
+        <span class="comment">// If they accept a websocket connection, treat that arg specially.</span>
+        var <span id="boundArg">boundArg</span> <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Value">Value</a>
+        if <a href="#arg">arg</a>.<a href="#Type">Type</a> == <a href="#websocketType">websocketType</a> {
+            <a href="#boundArg">boundArg</a> = <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#ValueOf">ValueOf</a>(<a href="#c">c</a>.<a href="#Request">Request</a>.<a href="#Websocket">Websocket</a>)
+        } else {
+            <a href="#TRACE">TRACE</a>.<a href="#Println">Println</a>(&#34;Binding:&#34;, <a href="#arg">arg</a>.<a href="#Name">Name</a>, &#34;as&#34;, <a href="#arg">arg</a>.<a href="#Type">Type</a>)
+            <a href="#boundArg">boundArg</a> = <a href="#Bind">Bind</a>(<a href="#c">c</a>.<a href="#Params">Params</a>, <a href="#arg">arg</a>.<a href="#Name">Name</a>, <a href="#arg">arg</a>.<a href="#Type">Type</a>)
+        }
+        <a href="#methodArgs">methodArgs</a> = <a href="/pkg/builtin/#append">append</a>(<a href="#methodArgs">methodArgs</a>, <a href="#boundArg">boundArg</a>)
+    }
+
+    var <span id="resultValue">resultValue</span> <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Value">Value</a>
+    if <a href="#methodValue">methodValue</a>.<a href="#Type">Type</a>().<a href="#IsVariadic">IsVariadic</a>() {
+        <a href="#resultValue">resultValue</a> = <a href="#methodValue">methodValue</a>.<a href="#CallSlice">CallSlice</a>(<a href="#methodArgs">methodArgs</a>)[0]
+    } else {
+        <a href="#resultValue">resultValue</a> = <a href="#methodValue">methodValue</a>.<a href="#Call">Call</a>(<a href="#methodArgs">methodArgs</a>)[0]
+    }
+    if <a href="#resultValue">resultValue</a>.<a href="#Kind">Kind</a>() == <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Interface">Interface</a> &amp;&amp; !<a href="#resultValue">resultValue</a>.<a href="#IsNil">IsNil</a>() {
+        <a href="#c">c</a>.<a href="#Result">Result</a> = <a href="#resultValue">resultValue</a>.<a href="#Interface">Interface</a>().(<a href="#Result">Result</a>)
+    }
+}</pre>
+				
+			
+		
+		
+		
+	
+
+	
+
+
+
+
+
+
+

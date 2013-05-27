@@ -29,6 +29,8 @@ layout: godoc
 				<dd><a href="#pkg-constants">Constants</a></dd>
 			
 			
+				<dd><a href="#pkg-variables">Variables</a></dd>
+			
 			
 				
 				<dd><a href="#Message">func Message(locale, message string, args ...interface{}) string</a></dd>
@@ -36,17 +38,6 @@ layout: godoc
 				
 				<dd><a href="#MessageLanguages">func MessageLanguages() []string</a></dd>
 			
-			
-				
-				<dd><a href="#I18nPlugin">type I18nPlugin</a></dd>
-				
-				
-					
-					<dd>&nbsp; &nbsp; <a href="#I18nPlugin.BeforeRequest">func (p I18nPlugin) BeforeRequest(c *Controller)</a></dd>
-				
-					
-					<dd>&nbsp; &nbsp; <a href="#I18nPlugin.OnAppStart">func (p I18nPlugin) OnAppStart()</a></dd>
-				
 			
 			
 			</dl>
@@ -78,6 +69,24 @@ layout: godoc
 			
 		
 		
+			<h2 id="pkg-variables">Variables</h2>
+			
+				<pre>var <span id="I18nFilter">I18nFilter</span> = func(c *<a href="#Controller">Controller</a>, fc []<a href="#Filter">Filter</a>) {
+    if <span id="foundCookie">foundCookie</span>, <span id="cookieValue">cookieValue</span> := <a href="#hasLocaleCookie">hasLocaleCookie</a>(<a href="#c">c</a>.<a href="#Request">Request</a>); <a href="#foundCookie">foundCookie</a> {
+        <a href="#TRACE">TRACE</a>.<a href="#Printf">Printf</a>(&#34;Found locale cookie value: %s&#34;, <a href="#cookieValue">cookieValue</a>)
+        <a href="#setCurrentLocaleControllerArguments">setCurrentLocaleControllerArguments</a>(<a href="#c">c</a>, <a href="#cookieValue">cookieValue</a>)
+    } else if <span id="foundHeader">foundHeader</span>, <span id="headerValue">headerValue</span> := <a href="#hasAcceptLanguageHeader">hasAcceptLanguageHeader</a>(<a href="#c">c</a>.<a href="#Request">Request</a>); <a href="#foundHeader">foundHeader</a> {
+        <a href="#TRACE">TRACE</a>.<a href="#Printf">Printf</a>(&#34;Found Accept-Language header value: %s&#34;, <a href="#headerValue">headerValue</a>)
+        <a href="#setCurrentLocaleControllerArguments">setCurrentLocaleControllerArguments</a>(<a href="#c">c</a>, <a href="#headerValue">headerValue</a>)
+    } else {
+        <a href="#TRACE">TRACE</a>.<a href="#Println">Println</a>(&#34;Unable to find locale in cookie or header, using empty string&#34;)
+        <a href="#setCurrentLocaleControllerArguments">setCurrentLocaleControllerArguments</a>(<a href="#c">c</a>, &#34;&#34;)
+    }
+    <a href="#fc">fc</a>[0](<a href="#c">c</a>, <a href="#fc">fc</a>[1:])
+}</pre>
+				
+			
+		
 		
 			
 			
@@ -102,38 +111,6 @@ Return all currently loaded message languages.
 
 			
 		
-		
-			
-			
-			<h2 id="I18nPlugin">type <a href="../src/i18n.html?s=4137:4176#L129">I18nPlugin</a></h2>
-			<pre>type I18nPlugin struct {
-    <a href="#EmptyPlugin">EmptyPlugin</a>
-}</pre>
-			
-
-			
-
-			
-
-			
-
-			
-
-			
-				
-				<h3 id="I18nPlugin.BeforeRequest">func (I18nPlugin) <a href="../src/i18n.html?s=4278:4326#L137">BeforeRequest</a></h3>
-				<pre>func (p <a href="#I18nPlugin">I18nPlugin</a>) BeforeRequest(c *<a href="#Controller">Controller</a>)</pre>
-				
-				
-				
-			
-				
-				<h3 id="I18nPlugin.OnAppStart">func (I18nPlugin) <a href="../src/i18n.html?s=4178:4210#L133">OnAppStart</a></h3>
-				<pre>func (p <a href="#I18nPlugin">I18nPlugin</a>) OnAppStart()</pre>
-				
-				
-				
-			
 		
 	
 

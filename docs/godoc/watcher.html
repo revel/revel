@@ -27,12 +27,9 @@ layout: godoc
 			<dl>
 			
 			
+				<dd><a href="#pkg-variables">Variables</a></dd>
 			
 			
-				
-				<dd><a href="#Auditor">type Auditor</a></dd>
-				
-				
 			
 				
 				<dd><a href="#DiscerningListener">type DiscerningListener</a></dd>
@@ -79,28 +76,22 @@ layout: godoc
 
 		
 		
-		
-		
+			<h2 id="pkg-variables">Variables</h2>
 			
-			
-			<h2 id="Auditor">type <a href="../src/watcher.html?s=621:677#L17">Auditor</a></h2>
-			<pre>type Auditor interface {
-    OnRefresh(listener <a href="#Listener">Listener</a>)
+				<pre>var <span id="WatchFilter">WatchFilter</span> = func(c *<a href="#Controller">Controller</a>, fc []<a href="#Filter">Filter</a>) {
+    if <a href="#MainWatcher">MainWatcher</a> != <a href="/pkg/builtin/#nil">nil</a> {
+        <span id="err">err</span> := <a href="#MainWatcher">MainWatcher</a>.<a href="#Notify">Notify</a>()
+        if <a href="#err">err</a> != <a href="/pkg/builtin/#nil">nil</a> {
+            <a href="#c">c</a>.<a href="#Result">Result</a> = <a href="#c">c</a>.<a href="#RenderError">RenderError</a>(<a href="#err">err</a>)
+            return
+        }
+    }
+    <a href="#fc">fc</a>[0](<a href="#c">c</a>, <a href="#fc">fc</a>[1:])
 }</pre>
-			<p>
-Auditor gets notified each time a listener gets refreshed.
-</p>
-
-
+				
 			
-
-			
-
-			
-
-			
-
-			
+		
+		
 		
 			
 			
@@ -150,7 +141,7 @@ Listener is an interface for receivers of filesystem events.
 		
 			
 			
-			<h2 id="Watcher">type <a href="../src/watcher.html?s=773:986#L23">Watcher</a></h2>
+			<h2 id="Watcher">type <a href="../src/watcher.html?s=653:844#L18">Watcher</a></h2>
 			<pre>type Watcher struct {
     <span class="comment">// contains filtered or unexported fields</span>
 }</pre>
@@ -168,7 +159,7 @@ directory.
 
 			
 				
-				<h3 id="NewWatcher">func <a href="../src/watcher.html?s=988:1014#L33">NewWatcher</a></h3>
+				<h3 id="NewWatcher">func <a href="../src/watcher.html?s=846:872#L27">NewWatcher</a></h3>
 				<pre>func NewWatcher() *<a href="#Watcher">Watcher</a></pre>
 				
 				
@@ -176,7 +167,7 @@ directory.
 
 			
 				
-				<h3 id="Watcher.Listen">func (*Watcher) <a href="../src/watcher.html?s=1163:1223#L41">Listen</a></h3>
+				<h3 id="Watcher.Listen">func (*Watcher) <a href="../src/watcher.html?s=1021:1081#L35">Listen</a></h3>
 				<pre>func (w *<a href="#Watcher">Watcher</a>) Listen(listener <a href="#Listener">Listener</a>, roots ...<a href="/pkg/builtin/#string">string</a>)</pre>
 				<p>
 Listen registers for events within the given root directories (recursively).
@@ -186,7 +177,7 @@ Listen registers for events within the given root directories (recursively).
 				
 			
 				
-				<h3 id="Watcher.Notify">func (*Watcher) <a href="../src/watcher.html?s=2799:2832#L102">Notify</a></h3>
+				<h3 id="Watcher.Notify">func (*Watcher) <a href="../src/watcher.html?s=2657:2690#L96">Notify</a></h3>
 				<pre>func (w *<a href="#Watcher">Watcher</a>) Notify() *<a href="#Error">Error</a></pre>
 				<p>
 Notify causes the watcher to forward any change events to listeners.

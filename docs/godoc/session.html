@@ -29,6 +29,8 @@ layout: godoc
 				<dd><a href="#pkg-constants">Constants</a></dd>
 			
 			
+				<dd><a href="#pkg-variables">Variables</a></dd>
+			
 			
 			
 				
@@ -37,17 +39,6 @@ layout: godoc
 				
 					
 					<dd>&nbsp; &nbsp; <a href="#Session.Id">func (s Session) Id() string</a></dd>
-				
-			
-				
-				<dd><a href="#SessionPlugin">type SessionPlugin</a></dd>
-				
-				
-					
-					<dd>&nbsp; &nbsp; <a href="#SessionPlugin.AfterRequest">func (p SessionPlugin) AfterRequest(c *Controller)</a></dd>
-				
-					
-					<dd>&nbsp; &nbsp; <a href="#SessionPlugin.BeforeRequest">func (p SessionPlugin) BeforeRequest(c *Controller)</a></dd>
 				
 			
 			
@@ -79,6 +70,18 @@ layout: godoc
 			
 		
 		
+			<h2 id="pkg-variables">Variables</h2>
+			
+				<pre>var <span id="SessionFilter">SessionFilter</span> = func(c *<a href="#Controller">Controller</a>, fc []<a href="#Filter">Filter</a>) {
+    <a href="#c">c</a>.<a href="#Session">Session</a> = <a href="#restoreSession">restoreSession</a>(<a href="#c">c</a>.<a href="#Request">Request</a>.<a href="#Request">Request</a>)
+
+    <a href="#fc">fc</a>[0](<a href="#c">c</a>, <a href="#fc">fc</a>[1:])
+
+    <a href="#c">c</a>.<a href="#SetCookie">SetCookie</a>(<a href="#c">c</a>.<a href="#Session">Session</a>.<a href="#cookie">cookie</a>())
+}</pre>
+				
+			
+		
 		
 		
 			
@@ -107,36 +110,6 @@ Restriction: Keys may not have a colon in them.
 Return a UUID identifying this session.
 </p>
 
-				
-				
-			
-		
-			
-			
-			<h2 id="SessionPlugin">type <a href="../src/session.html?s=599:639#L23">SessionPlugin</a></h2>
-			<pre>type SessionPlugin struct{ <a href="#EmptyPlugin">EmptyPlugin</a> }</pre>
-			
-
-			
-
-			
-
-			
-
-			
-
-			
-				
-				<h3 id="SessionPlugin.AfterRequest">func (SessionPlugin) <a href="../src/session.html?s=745:795#L29">AfterRequest</a></h3>
-				<pre>func (p <a href="#SessionPlugin">SessionPlugin</a>) AfterRequest(c *<a href="#Controller">Controller</a>)</pre>
-				
-				
-				
-			
-				
-				<h3 id="SessionPlugin.BeforeRequest">func (SessionPlugin) <a href="../src/session.html?s=641:692#L25">BeforeRequest</a></h3>
-				<pre>func (p <a href="#SessionPlugin">SessionPlugin</a>) BeforeRequest(c *<a href="#Controller">Controller</a>)</pre>
-				
 				
 				
 			

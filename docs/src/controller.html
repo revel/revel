@@ -16,9 +16,10 @@ layout: godoc
 type Controller struct {
     Name          string          <span class="comment">// The controller name, e.g. &#34;Application&#34;</span>
     Type          *ControllerType <span class="comment">// A description of the controller type.</span>
+    MethodName    string          <span class="comment">// The method name, e.g. &#34;Index&#34;</span>
     MethodType    *MethodType     <span class="comment">// A description of the invoked action type.</span>
     AppController interface{}     <span class="comment">// The controller that was instantiated.</span>
-    Action        string          <span class="comment">// The full action name, e.g. &#34;Application.Index&#34;</span>
+    Action        string          <span class="comment">// The fully qualified action name, e.g. &#34;App.Index&#34;</span>
 
     Request  *Request
     Response *Response
@@ -30,24 +31,19 @@ type Controller struct {
     Args       map[string]interface{} <span class="comment">// Per-request scratch space.</span>
     RenderArgs map[string]interface{} <span class="comment">// Args passed to the template.</span>
     Validation *Validation            <span class="comment">// Data validation helpers</span>
-    Txn        *sql.Tx                <span class="comment">// Nil by default, but may be used by the app / plugins</span>
 }
 
-func NewController(req *Request, resp *Response, ct *ControllerType) *Controller {
-    c := &amp;Controller{
-        Name:     ct.Type.Name(),
-        Type:     ct,
+func NewController(req *Request, resp *Response) *Controller {
+    return &amp;Controller{
         Request:  req,
         Response: resp,
-        Params:   ParseParams(req),
+        Params:   new(Params),
         Args:     map[string]interface{}{},
         RenderArgs: map[string]interface{}{
             &#34;RunMode&#34;: RunMode,
             &#34;DevMode&#34;: DevMode,
         },
     }
-    c.RenderArgs[&#34;Controller&#34;] = c
-    return c
 }
 
 func (c *Controller) FlashParams() {
@@ -58,62 +54,6 @@ func (c *Controller) FlashParams() {
 
 func (c *Controller) SetCookie(cookie *http.Cookie) {
     http.SetCookie(c.Response.Out, cookie)
-}
-
-<span class="comment">// Invoke the given method, save headers/cookies to the response, and apply the</span>
-<span class="comment">// result.  (e.g. render a template to the response)</span>
-func (c *Controller) Invoke(appControllerPtr reflect.Value, method reflect.Value, methodArgs []reflect.Value) {
-
-    <span class="comment">// Handle panics.</span>
-    defer func() {
-        if err := recover(); err != nil {
-            handleInvocationPanic(c, err)
-        }
-
-        plugins.Finally(c)
-    }()
-
-    <span class="comment">// Clean up from the request.</span>
-    defer func() {
-        <span class="comment">// Delete temp files.</span>
-        if c.Request.MultipartForm != nil {
-            err := c.Request.MultipartForm.RemoveAll()
-            if err != nil {
-                WARN.Println(&#34;Error removing temporary files:&#34;, err)
-            }
-        }
-
-        for _, tmpFile := range c.Params.tmpFiles {
-            err := os.Remove(tmpFile.Name())
-            if err != nil {
-                WARN.Println(&#34;Could not remove upload temp file:&#34;, err)
-            }
-        }
-    }()
-
-    <span class="comment">// Run the plugins.</span>
-    plugins.BeforeRequest(c)
-
-    if c.Result == nil {
-        <span class="comment">// Invoke the action.</span>
-        var resultValue reflect.Value
-        if method.Type().IsVariadic() {
-            resultValue = method.CallSlice(methodArgs)[0]
-        } else {
-            resultValue = method.Call(methodArgs)[0]
-        }
-        if resultValue.Kind() == reflect.Interface &amp;&amp; !resultValue.IsNil() {
-            c.Result = resultValue.Interface().(Result)
-        }
-
-        plugins.AfterRequest(c)
-        if c.Result == nil {
-            return
-        }
-    }
-
-    <span class="comment">// Apply the result, which generally results in the ResponseWriter getting written.</span>
-    c.Result.Apply(c.Request, c.Response)
 }
 
 func (c *Controller) RenderError(err error) Result {
@@ -135,30 +75,13 @@ func (c *Controller) RenderError(err error) Result {
 <span class="comment">// key-value &#34;user&#34;: (User).</span>
 func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
     <span class="comment">// Get the calling function name.</span>
-    pc, _, line, ok := runtime.Caller(1)
+    _, _, line, ok := runtime.Caller(1)
     if !ok {
         ERROR.Println(&#34;Failed to get Caller information&#34;)
-        return nil
-    }
-    <span class="comment">// e.g. sample/app/controllers.(*Application).Index</span>
-    var fqViewName string = runtime.FuncForPC(pc).Name()
-    var viewName string = fqViewName[strings.LastIndex(fqViewName, &#34;.&#34;)+1 : len(fqViewName)]
-
-    <span class="comment">// Determine what method we are in.</span>
-    <span class="comment">// (e.g. the invoked controller method might have delegated to another method)</span>
-    methodType := c.MethodType
-    if methodType.Name != viewName {
-        methodType = c.Type.Method(viewName)
-        if methodType == nil {
-            return c.RenderError(fmt.Errorf(
-                &#34;No Method %s in Controller %s when loading the view.&#34;+
-                    &#34; (delegating Render is only supported within the same controller)&#34;,
-                viewName, c.Name))
-        }
     }
 
     <span class="comment">// Get the extra RenderArgs passed in.</span>
-    if renderArgNames, ok := methodType.RenderArgNames[line]; ok {
+    if renderArgNames, ok := c.MethodType.RenderArgNames[line]; ok {
         if len(renderArgNames) == len(extraRenderArgs) {
             for i, extraRenderArg := range extraRenderArgs {
                 c.RenderArgs[renderArgNames[i]] = extraRenderArg
@@ -169,10 +92,10 @@ func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
         }
     } else {
         ERROR.Println(&#34;No RenderArg names found for Render call on line&#34;, line,
-            &#34;(Method&#34;, methodType, &#34;, ViewName&#34;, viewName, &#34;)&#34;)
+            &#34;(Method&#34;, c.MethodType.Name, &#34;)&#34;)
     }
 
-    return c.RenderTemplate(c.Name + &#34;/&#34; + viewName + &#34;.&#34; + c.Request.Format)
+    return c.RenderTemplate(c.Name + &#34;/&#34; + c.MethodType.Name + &#34;.&#34; + c.Request.Format)
 }
 
 <span class="comment">// A less magical way to render a template.</span>
@@ -285,6 +208,76 @@ func (c *Controller) Redirect(val interface{}, args ...interface{}) Result {
 <span class="comment">// The current language is set by the i18n plugin.</span>
 func (c *Controller) Message(message string, args ...interface{}) (value string) {
     return Message(c.Request.Locale, message, args...)
+}
+
+<span class="comment">// SetAction sets the action that is being invoked in the current request.</span>
+<span class="comment">// It sets the following properties: Name, Action, Type, MethodType</span>
+func (c *Controller) SetAction(controllerName, methodName string) error {
+    c.Name, c.MethodName = controllerName, methodName
+    c.Action = c.Name + &#34;.&#34; + c.MethodName
+
+    <span class="comment">// Look up the controller and method types.</span>
+    var ok bool
+    if c.Type, ok = controllers[strings.ToLower(controllerName)]; !ok {
+        return errors.New(&#34;revel/controller: failed to find controller &#34; + controllerName)
+    }
+    if c.MethodType = c.Type.Method(methodName); c.MethodType == nil {
+        return errors.New(&#34;revel/controller: failed to find action &#34; + methodName)
+    }
+
+    <span class="comment">// Instantiate the controller.</span>
+    c.AppController = initNewAppController(c.Type.Type, c).Interface()
+
+    return nil
+}
+
+<span class="comment">// Controller registry and types.</span>
+
+type ControllerType struct {
+    Type    reflect.Type
+    Methods []*MethodType
+}
+
+type MethodType struct {
+    Name           string
+    Args           []*MethodArg
+    RenderArgNames map[int][]string
+
+}
+
+type MethodArg struct {
+    Name string
+    Type reflect.Type
+}
+
+<span class="comment">// Searches for a given exported method (case insensitive)</span>
+func (ct *ControllerType) Method(name string) *MethodType {
+    lowerName := strings.ToLower(name)
+    for _, method := range ct.Methods {
+        if method.lowerName == lowerName {
+            return method
+        }
+    }
+    return nil
+}
+
+<span class="comment">// Register a Controller and its Methods with Revel.</span>
+func RegisterController(c interface{}, methods []*MethodType) {
+    <span class="comment">// De-star the controller type</span>
+    <span class="comment">// (e.g. given TypeOf((*Application)(nil)), want TypeOf(Application))</span>
+    var t reflect.Type = reflect.TypeOf(c)
+    var elem reflect.Type = t.Elem()
+
+    <span class="comment">// De-star all of the method arg types too.</span>
+    for _, m := range methods {
+        m.lowerName = strings.ToLower(m.Name)
+        for _, arg := range m.Args {
+            arg.Type = arg.Type.Elem()
+        }
+    }
+
+    controllers[strings.ToLower(elem.Name())] = &amp;ControllerType{Type: elem, Methods: methods}
+    TRACE.Printf(&#34;Registered controller: %s&#34;, elem.Name())
 }
 </pre>
 

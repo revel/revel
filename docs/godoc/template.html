@@ -31,7 +31,7 @@ layout: godoc
 			
 			
 				
-				<dd><a href="#ReverseUrl">func ReverseUrl(args ...interface{}) string</a></dd>
+				<dd><a href="#ReverseUrl">func ReverseUrl(args ...interface{}) (string, error)</a></dd>
 			
 			
 				
@@ -209,8 +209,8 @@ layout: godoc
 		
 			
 			
-			<h2 id="ReverseUrl">func <a href="../src/template.html?s=10325:10368#L333">ReverseUrl</a></h2>
-			<pre>func ReverseUrl(args ...interface{}) <a href="/pkg/builtin/#string">string</a></pre>
+			<h2 id="ReverseUrl">func <a href="../src/template.html?s=10330:10382#L333">ReverseUrl</a></h2>
+			<pre>func ReverseUrl(args ...interface{}) (<a href="/pkg/builtin/#string">string</a>, <a href="/pkg/builtin/#error">error</a>)</pre>
 			<p>
 Return a url capable of invoking a given controller method:
 &#34;Application.ShowApp 123&#34; =&gt; &#34;/app/123&#34;
@@ -221,7 +221,7 @@ Return a url capable of invoking a given controller method:
 		
 			
 			
-			<h2 id="GoTemplate">type <a href="../src/template.html?s=9791:9861#L312">GoTemplate</a></h2>
+			<h2 id="GoTemplate">type <a href="../src/template.html?s=9796:9866#L312">GoTemplate</a></h2>
 			<pre>type GoTemplate struct {
     *<a href="/pkg/html/template/">template</a>.<a href="/pkg/html/template/#Template">Template</a>
     <span class="comment">// contains filtered or unexported fields</span>
@@ -241,14 +241,14 @@ Adapter for Go Templates.
 
 			
 				
-				<h3 id="GoTemplate.Content">func (GoTemplate) <a href="../src/template.html?s=10018:10061#L322">Content</a></h3>
+				<h3 id="GoTemplate.Content">func (GoTemplate) <a href="../src/template.html?s=10023:10066#L322">Content</a></h3>
 				<pre>func (gotmpl <a href="#GoTemplate">GoTemplate</a>) Content() []<a href="/pkg/builtin/#string">string</a></pre>
 				
 				
 				
 			
 				
-				<h3 id="GoTemplate.Render">func (GoTemplate) <a href="../src/template.html?s=9912:9980#L318">Render</a></h3>
+				<h3 id="GoTemplate.Render">func (GoTemplate) <a href="../src/template.html?s=9917:9985#L318">Render</a></h3>
 				<pre>func (gotmpl <a href="#GoTemplate">GoTemplate</a>) Render(wr <a href="/pkg/io/">io</a>.<a href="/pkg/io/#Writer">Writer</a>, arg interface{}) <a href="/pkg/builtin/#error">error</a></pre>
 				<p>
 return a &#39;revel.Template&#39; from Go&#39;s template.
@@ -318,7 +318,7 @@ If a template fails to parse, the error is set on the loader.
 				
 			
 				
-				<h3 id="TemplateLoader.Template">func (*TemplateLoader) <a href="../src/template.html?s=9212:9281#L292">Template</a></h3>
+				<h3 id="TemplateLoader.Template">func (*TemplateLoader) <a href="../src/template.html?s=9217:9286#L292">Template</a></h3>
 				<pre>func (loader *<a href="#TemplateLoader">TemplateLoader</a>) Template(name <a href="/pkg/builtin/#string">string</a>) (<a href="#Template">Template</a>, <a href="/pkg/builtin/#error">error</a>)</pre>
 				<p>
 Return the Template with the given name.  The name is the template&#39;s path
@@ -333,14 +333,14 @@ this case, if a template is returned, it may still be usable.)
 				
 			
 				
-				<h3 id="TemplateLoader.WatchDir">func (*TemplateLoader) <a href="../src/template.html?s=7841:7902#L257">WatchDir</a></h3>
+				<h3 id="TemplateLoader.WatchDir">func (*TemplateLoader) <a href="../src/template.html?s=7846:7907#L257">WatchDir</a></h3>
 				<pre>func (loader *<a href="#TemplateLoader">TemplateLoader</a>) WatchDir(info <a href="/pkg/os/">os</a>.<a href="/pkg/os/#FileInfo">FileInfo</a>) <a href="/pkg/builtin/#bool">bool</a></pre>
 				
 				
 				
 			
 				
-				<h3 id="TemplateLoader.WatchFile">func (*TemplateLoader) <a href="../src/template.html?s=8017:8078#L262">WatchFile</a></h3>
+				<h3 id="TemplateLoader.WatchFile">func (*TemplateLoader) <a href="../src/template.html?s=8022:8083#L262">WatchFile</a></h3>
 				<pre>func (loader *<a href="#TemplateLoader">TemplateLoader</a>) WatchFile(basename <a href="/pkg/builtin/#string">string</a>) <a href="/pkg/builtin/#bool">bool</a></pre>
 				
 				

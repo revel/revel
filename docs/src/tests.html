@@ -17,6 +17,7 @@ type TestSuite struct {
     Client       *http.Client
     Response     *http.Response
     ResponseBody []byte
+    Session      Session
 }
 
 var TestSuites []interface{} <span class="comment">// Array of structs that embed TestSuite</span>
@@ -24,15 +25,25 @@ var TestSuites []interface{} <span class="comment">// Array of structs that embe
 <span class="comment">// NewTestSuite returns an initialized TestSuite ready for use. It is invoked</span>
 <span class="comment">// by the test harness to initialize the embedded field in application tests.</span>
 func NewTestSuite() TestSuite {
-    return TestSuite{Client: &amp;http.Client{}}
+    return TestSuite{Client: &amp;http.Client{}, Session: make(Session)}
 }
 
-<span class="comment">// Return the base URL of the server, e.g. &#34;http://127.0.0.1:8557&#34;</span>
-func (t *TestSuite) BaseUrl() string {
+<span class="comment">// Return the address and port of the server, e.g. &#34;127.0.0.1:8557&#34;</span>
+func (t *TestSuite) Host() string {
     if Server.Addr[0] == &#39;:&#39; {
-        return &#34;http://127.0.0.1&#34; + Server.Addr
+        return &#34;127.0.0.1&#34; + Server.Addr
     }
-    return &#34;http://&#34; + Server.Addr
+    return Server.Addr
+}
+
+<span class="comment">// Return the base http URL of the server, e.g. &#34;http://127.0.0.1:8557&#34;</span>
+func (t *TestSuite) BaseUrl() string {
+    return &#34;http://&#34; + t.Host()
+}
+
+<span class="comment">// Return the base websocket URL of the server, e.g. &#34;ws://127.0.0.1:8557&#34;</span>
+func (t *TestSuite) WebSocketUrl() string {
+    return &#34;ws://&#34; + t.Host()
 }
 
 <span class="comment">// Issue a GET request to the given path and store the result in Request and</span>
@@ -42,7 +53,7 @@ func (t *TestSuite) Get(path string) {
     if err != nil {
         panic(err)
     }
-    t.MakeRequest(req)
+    t.MakeRequestSession(req)
 }
 
 <span class="comment">// Issue a POST request to the given path, sending the given Content-Type and</span>
@@ -53,7 +64,7 @@ func (t *TestSuite) Post(path string, contentType string, reader io.Reader) {
         panic(err)
     }
     req.Header.Set(&#34;Content-Type&#34;, contentType)
-    t.MakeRequest(req)
+    t.MakeRequestSession(req)
 }
 
 <span class="comment">// Issue a POST request to the given path as a form post of the given key and</span>
@@ -63,7 +74,17 @@ func (t *TestSuite) PostForm(path string, data url.Values) {
 }
 
 <span class="comment">// Issue any request and read the response. If successful, the caller may</span>
-<span class="comment">// examine the Response and ResponseBody properties.</span>
+<span class="comment">// examine the Response and ResponseBody properties. Session data will be</span>
+<span class="comment">// added to the request cookies for you.</span>
+func (t *TestSuite) MakeRequestSession(req *http.Request) {
+    req.AddCookie(t.Session.cookie())
+
+    t.MakeRequest(req)
+}
+
+<span class="comment">// Issue any request and read the response. If successful, the caller may</span>
+<span class="comment">// examine the Response and ResponseBody properties. You will need to</span>
+<span class="comment">// manage session / cookie data manually</span>
 func (t *TestSuite) MakeRequest(req *http.Request) {
     var err error
     if t.Response, err = t.Client.Do(req); err != nil {
@@ -72,6 +93,19 @@ func (t *TestSuite) MakeRequest(req *http.Request) {
     if t.ResponseBody, err = ioutil.ReadAll(t.Response.Body); err != nil {
         panic(err)
     }
+
+    t.Session = restoreSession(req)
+}
+
+<span class="comment">// Create a websocket connection to the given path and return the connection</span>
+func (t *TestSuite) WebSocket(path string) *websocket.Conn {
+    origin := t.BaseUrl() + &#34;/&#34;
+    url := t.WebSocketUrl() + path
+    ws, err := websocket.Dial(url, &#34;&#34;, origin)
+    if err != nil {
+        panic(err)
+    }
+    return ws
 }
 
 func (t *TestSuite) AssertOk() {
@@ -112,6 +146,22 @@ func (t *TestSuite) Assert(exp bool) {
 func (t *TestSuite) Assertf(exp bool, formatStr string, args ...interface{}) {
     if !exp {
         panic(fmt.Errorf(formatStr, args))
+    }
+}
+
+<span class="comment">// Assert that the response contains the given string.</span>
+func (t *TestSuite) AssertContains(s string) {
+    if !bytes.Contains(t.ResponseBody, []byte(s)) {
+        panic(fmt.Errorf(&#34;Assertion failed. Expected response to contain %s&#34;, s))
+    }
+}
+
+<span class="comment">// Assert that the response matches the given regular expression.BUG</span>
+func (t *TestSuite) AssertContainsRegex(regex string) {
+    r := regexp.MustCompile(regex)
+
+    if !r.Match(t.ResponseBody) {
+        panic(fmt.Errorf(&#34;Assertion failed. Expected response to match regexp %s&#34;, regex))
     }
 }
 </pre>

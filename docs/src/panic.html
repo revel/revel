@@ -1,0 +1,31 @@
+---
+layout: godoc
+---
+
+<!--
+	Copyright 2009 The Go Authors. All rights reserved.
+	Use of this source code is governed by a BSD-style
+	license that can be found in the LICENSE file.
+-->
+<h1>Panic</h1>
+
+
+
+	<pre>package revel
+
+<span class="comment">// PanicFilter wraps the action invocation in a protective defer blanket that</span>
+<span class="comment">// converts panics into 500 error pages.</span>
+var PanicFilter = func(c *Controller, fc []Filter) {
+    defer func() {
+        if err := recover(); err != nil {
+            handleInvocationPanic(c, err)
+        }
+    }()
+    fc[0](c, fc[1:])
+}
+</pre>
+
+
+
+
+

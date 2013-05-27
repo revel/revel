@@ -140,16 +140,14 @@ func (v *Validation) Check(obj interface{}, checks ...Validator) *ValidationResu
     return result
 }
 
-type ValidationPlugin struct{ EmptyPlugin }
-
-func (p ValidationPlugin) BeforeRequest(c *Controller) {
+var ValidationFilter = func(c *Controller, fc []Filter) {
     c.Validation = &amp;Validation{
         Errors: restoreValidationErrors(c.Request.Request),
         keep:   false,
     }
-}
 
-func (p ValidationPlugin) AfterRequest(c *Controller) {
+    fc[0](c, fc[1:])
+
     <span class="comment">// Add Validation errors to RenderArgs.</span>
     c.RenderArgs[&#34;errors&#34;] = c.Validation.ErrorMap()
 

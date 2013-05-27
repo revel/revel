@@ -16,9 +16,10 @@ layout: godoc
 type Request struct {
     *http.Request
     ContentType     string
-    Format          string <span class="comment">// &#34;html&#34;, &#34;xml&#34;, &#34;json&#34;, or &#34;text&#34;</span>
+    Format          string <span class="comment">// &#34;html&#34;, &#34;xml&#34;, &#34;json&#34;, or &#34;txt&#34;</span>
     AcceptLanguages AcceptLanguages
     Locale          string
+    Websocket       *websocket.Conn
 }
 
 type Response struct {
@@ -39,6 +40,20 @@ func NewRequest(r *http.Request) *Request {
         Format:          ResolveFormat(r),
         AcceptLanguages: ResolveAcceptLanguage(r),
     }
+}
+
+<span class="comment">// Write the header (for now, just the status code).</span>
+<span class="comment">// The status may be set directly by the application (c.Response.Status = 501).</span>
+<span class="comment">// if it isn&#39;t, then fall back to the provided status code.</span>
+func (resp *Response) WriteHeader(defaultStatusCode int, defaultContentType string) {
+    if resp.Status == 0 {
+        resp.Status = defaultStatusCode
+    }
+    if resp.ContentType == &#34;&#34; {
+        resp.ContentType = defaultContentType
+    }
+    resp.Out.Header().Set(&#34;Content-Type&#34;, resp.ContentType)
+    resp.Out.WriteHeader(resp.Status)
 }
 
 <span class="comment">// Get the content type.</span>

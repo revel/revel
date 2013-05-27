@@ -13,22 +13,30 @@ layout: godoc
 
 	<pre>package revel
 
-<span class="comment">// These provide a unified view of the request params.</span>
+<span class="comment">// Params provides a unified view of the request params.</span>
 <span class="comment">// Includes:</span>
 <span class="comment">// - URL query string</span>
 <span class="comment">// - Form values</span>
 <span class="comment">// - File uploads</span>
+<span class="comment">//</span>
+<span class="comment">// Warning: param maps other than Values may be nil if there were none.</span>
 type Params struct {
-    url.Values
-    Files map[string][]*multipart.FileHeader
+    url.Values <span class="comment">// A unified view of all the individual param maps below.</span>
+
+    <span class="comment">// Set by the router</span>
+    Fixed url.Values <span class="comment">// Fixed parameters from the route, e.g. App.Action(&#34;fixed param&#34;)</span>
+    Route url.Values <span class="comment">// Parameters extracted from the route,  e.g. /customers/{id}</span>
+
+    <span class="comment">// Set by the ParamsFilter</span>
+    Query url.Values <span class="comment">// Parameters from the query string, e.g. /index?limit=10</span>
+    Form  url.Values <span class="comment">// Parameters from the request body.</span>
+
+    Files map[string][]*multipart.FileHeader <span class="comment">// Files uploaded in a multipart form</span>
 
 }
 
-func ParseParams(req *Request) *Params {
-    var files map[string][]*multipart.FileHeader
-
-    <span class="comment">// Always want the url parameters.</span>
-    values := req.URL.Query()
+func ParseParams(params *Params, req *Request) {
+    params.Query = req.URL.Query()
 
     <span class="comment">// Parse the body depending on the content type.</span>
     switch req.ContentType {
@@ -37,11 +45,7 @@ func ParseParams(req *Request) *Params {
         if err := req.ParseForm(); err != nil {
             WARN.Println(&#34;Error parsing request body:&#34;, err)
         } else {
-            for key, vals := range req.Form {
-                for _, val := range vals {
-                    values.Add(key, val)
-                }
-            }
+            params.Form = req.Form
         }
 
     case &#34;multipart/form-data&#34;:
@@ -50,20 +54,47 @@ func ParseParams(req *Request) *Params {
         if err := req.ParseMultipartForm(32 &lt;&lt; 20 <span class="comment">/* 32 MB */</span>); err != nil {
             WARN.Println(&#34;Error parsing request body:&#34;, err)
         } else {
-            for key, vals := range req.MultipartForm.Value {
-                for _, val := range vals {
-                    values.Add(key, val)
-                }
-            }
-            files = req.MultipartForm.File
+            params.Form = req.MultipartForm.Value
+            params.Files = req.MultipartForm.File
         }
     }
 
-    return &amp;Params{Values: values, Files: files}
+    params.Values = params.calcValues()
 }
 
-func (p *Params) Bind(name string, typ reflect.Type) reflect.Value {
-    return Bind(p, name, typ)
+<span class="comment">// Bind looks for the named parameter, converts it to the requested type, and</span>
+<span class="comment">// writes it into &#34;dest&#34;, which must be settable.  If the value can not be</span>
+<span class="comment">// parsed, &#34;dest&#34; is set to the zero value.</span>
+func (p *Params) Bind(dest interface{}, name string) {
+    value := reflect.ValueOf(dest)
+    if !value.CanSet() {
+        panic(&#34;Passed a non-settable variable to Bind: &#34; + name)
+    }
+    value.Set(Bind(p, name, value.Type().Elem()))
+}
+
+var ParamsFilter = func(c *Controller, fc []Filter) {
+    ParseParams(c.Params, c.Request)
+
+    <span class="comment">// Clean up from the request.</span>
+    defer func() {
+        <span class="comment">// Delete temp files.</span>
+        if c.Request.MultipartForm != nil {
+            err := c.Request.MultipartForm.RemoveAll()
+            if err != nil {
+                WARN.Println(&#34;Error removing temporary files:&#34;, err)
+            }
+        }
+
+        for _, tmpFile := range c.Params.tmpFiles {
+            err := os.Remove(tmpFile.Name())
+            if err != nil {
+                WARN.Println(&#34;Could not remove upload temp file:&#34;, err)
+            }
+        }
+    }()
+
+    fc[0](c, fc[1:])
 }
 </pre>
 

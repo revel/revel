@@ -70,15 +70,7 @@ func Message(locale, message string, args ...interface{}) string {
     return value
 }
 
-type I18nPlugin struct {
-    EmptyPlugin
-}
-
-func (p I18nPlugin) OnAppStart() {
-    loadMessages(filepath.Join(BasePath, messageFilesDirectory))
-}
-
-func (p I18nPlugin) BeforeRequest(c *Controller) {
+var I18nFilter = func(c *Controller, fc []Filter) {
     if foundCookie, cookieValue := hasLocaleCookie(c.Request); foundCookie {
         TRACE.Printf(&#34;Found locale cookie value: %s&#34;, cookieValue)
         setCurrentLocaleControllerArguments(c, cookieValue)
@@ -89,6 +81,7 @@ func (p I18nPlugin) BeforeRequest(c *Controller) {
         TRACE.Println(&#34;Unable to find locale in cookie or header, using empty string&#34;)
         setCurrentLocaleControllerArguments(c, &#34;&#34;)
     }
+    fc[0](c, fc[1:])
 }
 </pre>
 

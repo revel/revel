@@ -31,16 +31,11 @@ layout: godoc
 			
 			
 				
+				<dd><a href="#OnAppStart">func OnAppStart(f func())</a></dd>
+			
+				
 				<dd><a href="#Run">func Run(port int)</a></dd>
 			
-			
-				
-				<dd><a href="#PluginNotifier">type PluginNotifier</a></dd>
-				
-				
-					
-					<dd>&nbsp; &nbsp; <a href="#PluginNotifier.OnRefresh">func (pn PluginNotifier) OnRefresh(l Listener)</a></dd>
-				
 			
 			
 			</dl>
@@ -77,7 +72,14 @@ layout: godoc
 		
 			
 			
-			<h2 id="Run">func <a href="../src/server.html?s=3091:3109#L103">Run</a></h2>
+			<h2 id="OnAppStart">func <a href="../src/server.html?s=2136:2161#L83">OnAppStart</a></h2>
+			<pre>func OnAppStart(f func())</pre>
+			
+			
+		
+			
+			
+			<h2 id="Run">func <a href="../src/server.html?s=1022:1040#L37">Run</a></h2>
 			<pre>func Run(port <a href="/pkg/builtin/#int">int</a>)</pre>
 			<p>
 Run the server.
@@ -87,35 +89,6 @@ If port is non-zero, use that.  Else, read the port from app.conf.
 
 			
 		
-		
-			
-			
-			<h2 id="PluginNotifier">type <a href="../src/server.html?s=4511:4567#L151">PluginNotifier</a></h2>
-			<pre>type PluginNotifier struct {
-    <span class="comment">// contains filtered or unexported fields</span>
-}</pre>
-			<p>
-The PluginNotifier glues the watcher and the plugin collection together.
-It audits refreshes and invokes the appropriate method to inform the plugins.
-</p>
-
-
-			
-
-			
-
-			
-
-			
-
-			
-				
-				<h3 id="PluginNotifier.OnRefresh">func (PluginNotifier) <a href="../src/server.html?s=4569:4615#L155">OnRefresh</a></h3>
-				<pre>func (pn <a href="#PluginNotifier">PluginNotifier</a>) OnRefresh(l <a href="#Listener">Listener</a>)</pre>
-				
-				
-				
-			
 		
 	
 

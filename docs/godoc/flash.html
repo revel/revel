@@ -27,6 +27,8 @@ layout: godoc
 			<dl>
 			
 			
+				<dd><a href="#pkg-variables">Variables</a></dd>
+			
 			
 			
 				
@@ -38,17 +40,6 @@ layout: godoc
 				
 					
 					<dd>&nbsp; &nbsp; <a href="#Flash.Success">func (f Flash) Success(msg string, args ...interface{})</a></dd>
-				
-			
-				
-				<dd><a href="#FlashPlugin">type FlashPlugin</a></dd>
-				
-				
-					
-					<dd>&nbsp; &nbsp; <a href="#FlashPlugin.AfterRequest">func (p FlashPlugin) AfterRequest(c *Controller)</a></dd>
-				
-					
-					<dd>&nbsp; &nbsp; <a href="#FlashPlugin.BeforeRequest">func (p FlashPlugin) BeforeRequest(c *Controller)</a></dd>
 				
 			
 			
@@ -71,6 +62,28 @@ layout: godoc
 		</div><!-- #pkg-index -->
 
 		
+		
+			<h2 id="pkg-variables">Variables</h2>
+			
+				<pre>var <span id="FlashFilter">FlashFilter</span> = func(c *<a href="#Controller">Controller</a>, fc []<a href="#Filter">Filter</a>) {
+    <a href="#c">c</a>.<a href="#Flash">Flash</a> = <a href="#restoreFlash">restoreFlash</a>(<a href="#c">c</a>.<a href="#Request">Request</a>.<a href="#Request">Request</a>)
+    <a href="#c">c</a>.<a href="#RenderArgs">RenderArgs</a>[&#34;flash&#34;] = <a href="#c">c</a>.<a href="#Flash">Flash</a>.<a href="#Data">Data</a>
+
+    <a href="#fc">fc</a>[0](<a href="#c">c</a>, <a href="#fc">fc</a>[1:])
+
+    <span class="comment">// Store the flash.</span>
+    var <span id="flashValue">flashValue</span> <a href="/pkg/builtin/#string">string</a>
+    for <a href="#key">key</a>, <a href="#value">value</a> := range <a href="#c">c</a>.<a href="#Flash">Flash</a>.<a href="#Out">Out</a> {
+        <a href="#flashValue">flashValue</a> += &#34;\x00&#34; + <a href="#key">key</a> + &#34;:&#34; + <a href="#value">value</a> + &#34;\x00&#34;
+    }
+    <a href="#c">c</a>.<a href="#SetCookie">SetCookie</a>(&amp;<a href="/pkg/net/http/">http</a>.<a href="/pkg/net/http/#Cookie">Cookie</a>{
+        <a href="#Name">Name</a>:  <a href="#CookiePrefix">CookiePrefix</a> + &#34;_FLASH&#34;,
+        <a href="#Value">Value</a>: <a href="/pkg/net/url/">url</a>.<a href="/pkg/net/url/#QueryEscape">QueryEscape</a>(<a href="#flashValue">flashValue</a>),
+        <a href="#Path">Path</a>:  &#34;/&#34;,
+    })
+}</pre>
+				
+			
 		
 		
 		
@@ -107,36 +120,6 @@ e.g. the Post/Redirect/Get pattern: <a href="http://en.wikipedia.org/wiki/Post/R
 				
 				<h3 id="Flash.Success">func (Flash) <a href="../src/flash.html?s=547:602#L15">Success</a></h3>
 				<pre>func (f <a href="#Flash">Flash</a>) Success(msg <a href="/pkg/builtin/#string">string</a>, args ...interface{})</pre>
-				
-				
-				
-			
-		
-			
-			
-			<h2 id="FlashPlugin">type <a href="../src/flash.html?s=714:752#L23">FlashPlugin</a></h2>
-			<pre>type FlashPlugin struct{ <a href="#EmptyPlugin">EmptyPlugin</a> }</pre>
-			
-
-			
-
-			
-
-			
-
-			
-
-			
-				
-				<h3 id="FlashPlugin.AfterRequest">func (FlashPlugin) <a href="../src/flash.html?s=890:938#L30">AfterRequest</a></h3>
-				<pre>func (p <a href="#FlashPlugin">FlashPlugin</a>) AfterRequest(c *<a href="#Controller">Controller</a>)</pre>
-				
-				
-				
-			
-				
-				<h3 id="FlashPlugin.BeforeRequest">func (FlashPlugin) <a href="../src/flash.html?s=754:803#L25">BeforeRequest</a></h3>
-				<pre>func (p <a href="#FlashPlugin">FlashPlugin</a>) BeforeRequest(c *<a href="#Controller">Controller</a>)</pre>
 				
 				
 				

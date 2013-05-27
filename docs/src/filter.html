@@ -1,0 +1,43 @@
+---
+layout: godoc
+---
+
+<!--
+	Copyright 2009 The Go Authors. All rights reserved.
+	Use of this source code is governed by a BSD-style
+	license that can be found in the LICENSE file.
+-->
+<h1>Filter</h1>
+
+
+
+	<pre>package revel
+
+type Filter func(c *Controller, filterChain []Filter)
+
+<span class="comment">// Filters is the default set of global filters.</span>
+<span class="comment">// It may be set by the application on initialization.</span>
+var Filters = []Filter{
+    PanicFilter,             <span class="comment">// Recover from panics and display an error page instead.</span>
+    RouterFilter,            <span class="comment">// Use the routing table to select the right Action</span>
+    FilterConfiguringFilter, <span class="comment">// A hook for adding or removing per-Action filters.</span>
+    ParamsFilter,            <span class="comment">// Parse parameters into Controller.Params.</span>
+    SessionFilter,           <span class="comment">// Restore and write the session cookie.</span>
+    FlashFilter,             <span class="comment">// Restore and write the flash cookie.</span>
+    ValidationFilter,        <span class="comment">// Restore kept validation errors and save new ones from cookie.</span>
+    I18nFilter,              <span class="comment">// Resolve the requested language</span>
+    InterceptorFilter,       <span class="comment">// Run interceptors around the action.</span>
+    ActionInvoker,           <span class="comment">// Invoke the action.</span>
+}
+
+<span class="comment">// NilFilter and NilChain are helpful in writing filter tests.</span>
+var (
+    NilFilter = func(_ *Controller, _ []Filter) {}
+    NilChain  = []Filter{NilFilter}
+)
+</pre>
+
+
+
+
+

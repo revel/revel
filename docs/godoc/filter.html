@@ -1,0 +1,117 @@
+---
+layout: godoc
+---
+
+<!--
+	Copyright 2009 The Go Authors. All rights reserved.
+	Use of this source code is governed by a BSD-style
+	license that can be found in the LICENSE file.
+-->
+<h1>Filter</h1>
+
+	
+		
+		<!-- The package's Name is printed as title by the top-level template -->
+		
+		
+
+		<div id="pkg-index" class="toggleVisible">
+		<div class="collapsed">
+			<h2 class="toggleButton" title="Click to show Index section">Index &#9657;</h2>
+		</div>
+		<div class="expanded">
+			<h2 class="toggleButton" title="Click to hide Index section">Index &#9662;</h2>
+
+		<!-- Table of contents for API; must be named manual-nav to turn off auto nav. -->
+			<div id="manual-nav">
+			<dl>
+			
+			
+				<dd><a href="#pkg-variables">Variables</a></dd>
+			
+			
+			
+				
+				<dd><a href="#Filter">type Filter</a></dd>
+				
+				
+			
+			
+			</dl>
+			</div><!-- #manual-nav -->
+
+		
+
+		
+			<h4>File</h4>
+			<p>
+			<span style="font-size:90%">
+			
+				<a href="../src/filter.html">filter.go</a>
+			
+			</span>
+			</p>
+		
+		</div><!-- .expanded -->
+		</div><!-- #pkg-index -->
+
+		
+		
+			<h2 id="pkg-variables">Variables</h2>
+			
+				<pre>var (
+    <span id="NilFilter">NilFilter</span> = func(_ *<a href="#Controller">Controller</a>, _ []<a href="#Filter">Filter</a>) {}
+    <span id="NilChain">NilChain</span>  = []<a href="#Filter">Filter</a>{<a href="#NilFilter">NilFilter</a>}
+)</pre>
+				<p>
+NilFilter and NilChain are helpful in writing filter tests.
+</p>
+
+			
+				<pre>var <span id="Filters">Filters</span> = []<a href="#Filter">Filter</a>{
+    <a href="#PanicFilter">PanicFilter</a>,
+    <a href="#RouterFilter">RouterFilter</a>,
+    <a href="#FilterConfiguringFilter">FilterConfiguringFilter</a>,
+    <a href="#ParamsFilter">ParamsFilter</a>,
+    <a href="#SessionFilter">SessionFilter</a>,
+    <a href="#FlashFilter">FlashFilter</a>,
+    <a href="#ValidationFilter">ValidationFilter</a>,
+    <a href="#I18nFilter">I18nFilter</a>,
+    <a href="#InterceptorFilter">InterceptorFilter</a>,
+    <a href="#ActionInvoker">ActionInvoker</a>,
+}</pre>
+				<p>
+Filters is the default set of global filters.
+It may be set by the application on initialization.
+</p>
+
+			
+		
+		
+		
+			
+			
+			<h2 id="Filter">type <a href="../src/filter.html?s=15:68#L1">Filter</a></h2>
+			<pre>type Filter func(c *<a href="#Controller">Controller</a>, filterChain []<a href="#Filter">Filter</a>)</pre>
+			
+
+			
+
+			
+
+			
+
+			
+
+			
+		
+	
+
+	
+
+
+
+
+
+
+

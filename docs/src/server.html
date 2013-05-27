@@ -29,13 +29,13 @@ func Run(port int) {
         port = HttpPort
     }
 
-    MainRouter = NewRouter(path.Join(BasePath, &#34;conf&#34;, &#34;routes&#34;))
     MainTemplateLoader = NewTemplateLoader(TemplatePaths)
 
     <span class="comment">// The &#34;watch&#34; config variable can turn on and off all watching.</span>
     <span class="comment">// (As a convenient way to control it all together.)</span>
     if Config.BoolDefault(&#34;watch&#34;, true) {
         MainWatcher = NewWatcher()
+        Filters = append([]Filter{WatchFilter}, Filters...)
     }
 
     <span class="comment">// If desired (or by default), create a watcher for templates and routes.</span>
@@ -46,20 +46,12 @@ func Run(port int) {
         MainTemplateLoader.Refresh()
     }
 
-    if MainWatcher != nil &amp;&amp; Config.BoolDefault(&#34;watch.routes&#34;, true) {
-        MainWatcher.auditor = PluginNotifier{plugins}
-        MainWatcher.Listen(MainRouter, MainRouter.path)
-    } else {
-        MainRouter.Refresh()
-        plugins.OnRoutesLoaded(MainRouter)
-    }
-
     Server = &amp;http.Server{
         Addr:    fmt.Sprintf(&#34;%s:%d&#34;, address, port),
         Handler: http.HandlerFunc(handle),
     }
 
-    plugins.OnAppStart()
+    runStartupHooks()
 
     go func() {
         time.Sleep(100 * time.Millisecond)
@@ -69,16 +61,8 @@ func Run(port int) {
     ERROR.Fatalln(&#34;Failed to listen:&#34;, Server.ListenAndServe())
 }
 
-<span class="comment">// The PluginNotifier glues the watcher and the plugin collection together.</span>
-<span class="comment">// It audits refreshes and invokes the appropriate method to inform the plugins.</span>
-type PluginNotifier struct {
-
-}
-
-func (pn PluginNotifier) OnRefresh(l Listener) {
-    if l == MainRouter {
-        pn.plugins.OnRoutesLoaded(MainRouter)
-    }
+func OnAppStart(f func()) {
+    startupHooks = append(startupHooks, f)
 }
 </pre>
 

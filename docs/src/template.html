@@ -185,7 +185,7 @@ func (loader *TemplateLoader) Refresh() *Error {
             <span class="comment">// Convert template names to use forward slashes, even on Windows.</span>
             templateName := path[len(basePath)+1:]
             if os.PathSeparator == &#39;\\&#39; {
-                templateName = strings.Replace(templateName, `\`, `/`, -1)
+                templateName = strings.Replace(templateName, `\`, `/`, -1) <span class="comment">// `</span>
             }
 
             <span class="comment">// If we already loaded a template of this name, skip it.</span>
@@ -311,28 +311,30 @@ func (gotmpl GoTemplate) Content() []string {
 
 <span class="comment">// Return a url capable of invoking a given controller method:</span>
 <span class="comment">// &#34;Application.ShowApp 123&#34; =&gt; &#34;/app/123&#34;</span>
-func ReverseUrl(args ...interface{}) string {
+func ReverseUrl(args ...interface{}) (string, error) {
     if len(args) == 0 {
-        ERROR.Println(&#34;Warning: no arguments provided to url function&#34;)
-        return &#34;#&#34;
+        return &#34;&#34;, fmt.Errorf(&#34;no arguments provided to reverse route&#34;)
     }
 
     action := args[0].(string)
     actionSplit := strings.Split(action, &#34;.&#34;)
-    var ctrl, meth string
     if len(actionSplit) != 2 {
-        ERROR.Println(&#34;Warning: Must provide Controller.Method for reverse router.&#34;)
-        return &#34;#&#34;
-    }
-    ctrl, meth = actionSplit[0], actionSplit[1]
-    controllerType := LookupControllerType(ctrl)
-    methodType := controllerType.Method(meth)
-    argsByName := make(map[string]string)
-    for i, argValue := range args[1:] {
-        Unbind(argsByName, methodType.Args[i].Name, argValue)
+        return &#34;&#34;, fmt.Errorf(&#34;reversing &#39;%s&#39;, expected &#39;Controller.Action&#39;&#34;, action)
     }
 
-    return MainRouter.Reverse(args[0].(string), argsByName).Url
+    <span class="comment">// Look up the types.</span>
+    var c Controller
+    if err := c.SetAction(actionSplit[0], actionSplit[1]); err != nil {
+        return &#34;&#34;, fmt.Errorf(&#34;reversing %s: %s&#34;, action, err)
+    }
+
+    <span class="comment">// Unbind the arguments.</span>
+    argsByName := make(map[string]string)
+    for i, argValue := range args[1:] {
+        Unbind(argsByName, c.MethodType.Args[i].Name, argValue)
+    }
+
+    return MainRouter.Reverse(args[0].(string), argsByName).Url, nil
 }
 </pre>
 

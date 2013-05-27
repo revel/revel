@@ -1,0 +1,49 @@
+---
+layout: godoc
+---
+
+<!--
+	Copyright 2009 The Go Authors. All rights reserved.
+	Use of this source code is governed by a BSD-style
+	license that can be found in the LICENSE file.
+-->
+<h1>Invoker</h1>
+
+
+
+	<pre>package revel
+
+var ActionInvoker = func(c *Controller, _ []Filter) {
+    <span class="comment">// Instantiate the method.</span>
+    methodValue := reflect.ValueOf(c.AppController).MethodByName(c.MethodType.Name)
+
+    <span class="comment">// Collect the values for the method&#39;s arguments.</span>
+    var methodArgs []reflect.Value
+    for _, arg := range c.MethodType.Args {
+        <span class="comment">// If they accept a websocket connection, treat that arg specially.</span>
+        var boundArg reflect.Value
+        if arg.Type == websocketType {
+            boundArg = reflect.ValueOf(c.Request.Websocket)
+        } else {
+            TRACE.Println(&#34;Binding:&#34;, arg.Name, &#34;as&#34;, arg.Type)
+            boundArg = Bind(c.Params, arg.Name, arg.Type)
+        }
+        methodArgs = append(methodArgs, boundArg)
+    }
+
+    var resultValue reflect.Value
+    if methodValue.Type().IsVariadic() {
+        resultValue = methodValue.CallSlice(methodArgs)[0]
+    } else {
+        resultValue = methodValue.Call(methodArgs)[0]
+    }
+    if resultValue.Kind() == reflect.Interface &amp;&amp; !resultValue.IsNil() {
+        c.Result = resultValue.Interface().(Result)
+    }
+}
+</pre>
+
+
+
+
+

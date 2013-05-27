@@ -75,6 +75,9 @@ layout: godoc
 					<dd>&nbsp; &nbsp; <a href="#NewResponse">func NewResponse(w http.ResponseWriter) *Response</a></dd>
 				
 				
+					
+					<dd>&nbsp; &nbsp; <a href="#Response.WriteHeader">func (resp *Response) WriteHeader(defaultStatusCode int, defaultContentType string)</a></dd>
+				
 			
 			
 			</dl>
@@ -100,7 +103,7 @@ layout: godoc
 		
 			
 			
-			<h2 id="ResolveContentType">func <a href="../src/http.html?s=805:854#L33">ResolveContentType</a></h2>
+			<h2 id="ResolveContentType">func <a href="../src/http.html?s=1381:1430#L49">ResolveContentType</a></h2>
 			<pre>func ResolveContentType(req *<a href="/pkg/net/http/">http</a>.<a href="/pkg/net/http/#Request">Request</a>) <a href="/pkg/builtin/#string">string</a></pre>
 			<p>
 Get the content type.
@@ -112,7 +115,7 @@ If none is specified, returns &#34;text/html&#34; by default.
 		
 			
 			
-			<h2 id="ResolveFormat">func <a href="../src/http.html?s=1072:1116#L42">ResolveFormat</a></h2>
+			<h2 id="ResolveFormat">func <a href="../src/http.html?s=1648:1692#L58">ResolveFormat</a></h2>
 			<pre>func ResolveFormat(req *<a href="/pkg/net/http/">http</a>.<a href="/pkg/net/http/#Request">Request</a>) <a href="/pkg/builtin/#string">string</a></pre>
 			<p>
 Resolve the accept request header.
@@ -123,7 +126,7 @@ Resolve the accept request header.
 		
 			
 			
-			<h2 id="AcceptLanguage">type <a href="../src/http.html?s=1697:1762#L65">AcceptLanguage</a></h2>
+			<h2 id="AcceptLanguage">type <a href="../src/http.html?s=2273:2338#L81">AcceptLanguage</a></h2>
 			<pre>type AcceptLanguage struct {
     Language <a href="/pkg/builtin/#string">string</a>
     Quality  <a href="/pkg/builtin/#float32">float32</a>
@@ -145,7 +148,7 @@ A single language from the Accept-Language HTTP header.
 		
 			
 			
-			<h2 id="AcceptLanguages">type <a href="../src/http.html?s=1818:1855#L71">AcceptLanguages</a></h2>
+			<h2 id="AcceptLanguages">type <a href="../src/http.html?s=2394:2431#L87">AcceptLanguages</a></h2>
 			<pre>type AcceptLanguages []<a href="#AcceptLanguage">AcceptLanguage</a></pre>
 			<p>
 A collection of sortable AcceptLanguage instances.
@@ -160,7 +163,7 @@ A collection of sortable AcceptLanguage instances.
 
 			
 				
-				<h3 id="ResolveAcceptLanguage">func <a href="../src/http.html?s=2718:2779#L94">ResolveAcceptLanguage</a></h3>
+				<h3 id="ResolveAcceptLanguage">func <a href="../src/http.html?s=3292:3353#L110">ResolveAcceptLanguage</a></h3>
 				<pre>func ResolveAcceptLanguage(req *<a href="/pkg/net/http/">http</a>.<a href="/pkg/net/http/#Request">Request</a>) <a href="#AcceptLanguages">AcceptLanguages</a></pre>
 				<p>
 Resolve the Accept-Language header value.
@@ -179,28 +182,28 @@ See the HTTP header fields specification
 
 			
 				
-				<h3 id="AcceptLanguages.Len">func (AcceptLanguages) <a href="../src/http.html?s=1857:1892#L73">Len</a></h3>
+				<h3 id="AcceptLanguages.Len">func (AcceptLanguages) <a href="../src/http.html?s=2433:2468#L89">Len</a></h3>
 				<pre>func (al <a href="#AcceptLanguages">AcceptLanguages</a>) Len() <a href="/pkg/builtin/#int">int</a></pre>
 				
 				
 				
 			
 				
-				<h3 id="AcceptLanguages.Less">func (AcceptLanguages) <a href="../src/http.html?s=2000:2045#L75">Less</a></h3>
+				<h3 id="AcceptLanguages.Less">func (AcceptLanguages) <a href="../src/http.html?s=2576:2621#L91">Less</a></h3>
 				<pre>func (al <a href="#AcceptLanguages">AcceptLanguages</a>) Less(i, j <a href="/pkg/builtin/#int">int</a>) <a href="/pkg/builtin/#bool">bool</a></pre>
 				
 				
 				
 			
 				
-				<h3 id="AcceptLanguages.String">func (AcceptLanguages) <a href="../src/http.html?s=2087:2128#L76">String</a></h3>
+				<h3 id="AcceptLanguages.String">func (AcceptLanguages) <a href="../src/http.html?s=2663:2704#L92">String</a></h3>
 				<pre>func (al <a href="#AcceptLanguages">AcceptLanguages</a>) String() <a href="/pkg/builtin/#string">string</a></pre>
 				
 				
 				
 			
 				
-				<h3 id="AcceptLanguages.Swap">func (AcceptLanguages) <a href="../src/http.html?s=1922:1962#L74">Swap</a></h3>
+				<h3 id="AcceptLanguages.Swap">func (AcceptLanguages) <a href="../src/http.html?s=2498:2538#L90">Swap</a></h3>
 				<pre>func (al <a href="#AcceptLanguages">AcceptLanguages</a>) Swap(i, j <a href="/pkg/builtin/#int">int</a>)</pre>
 				
 				
@@ -209,13 +212,14 @@ See the HTTP header fields specification
 		
 			
 			
-			<h2 id="Request">type <a href="../src/http.html?s=85:264#L2">Request</a></h2>
+			<h2 id="Request">type <a href="../src/http.html?s=123:334#L3">Request</a></h2>
 			<pre>type Request struct {
     *<a href="/pkg/net/http/">http</a>.<a href="/pkg/net/http/#Request">Request</a>
     ContentType     <a href="/pkg/builtin/#string">string</a>
-    Format          <a href="/pkg/builtin/#string">string</a> <span class="comment">// &#34;html&#34;, &#34;xml&#34;, &#34;json&#34;, or &#34;text&#34;</span>
+    Format          <a href="/pkg/builtin/#string">string</a> <span class="comment">// &#34;html&#34;, &#34;xml&#34;, &#34;json&#34;, or &#34;txt&#34;</span>
     AcceptLanguages <a href="#AcceptLanguages">AcceptLanguages</a>
     Locale          <a href="/pkg/builtin/#string">string</a>
+    Websocket       *<a href="/pkg/code.google.com/p/go.net/websocket/">websocket</a>.<a href="/pkg/code.google.com/p/go.net/websocket/#Conn">Conn</a>
 }</pre>
 			
 
@@ -227,7 +231,7 @@ See the HTTP header fields specification
 
 			
 				
-				<h3 id="NewRequest">func <a href="../src/http.html?s=436:477#L21">NewRequest</a></h3>
+				<h3 id="NewRequest">func <a href="../src/http.html?s=506:547#L23">NewRequest</a></h3>
 				<pre>func NewRequest(r *<a href="/pkg/net/http/">http</a>.<a href="/pkg/net/http/#Request">Request</a>) *<a href="#Request">Request</a></pre>
 				
 				
@@ -237,7 +241,7 @@ See the HTTP header fields specification
 		
 			
 			
-			<h2 id="Response">type <a href="../src/http.html?s=266:353#L10">Response</a></h2>
+			<h2 id="Response">type <a href="../src/http.html?s=336:423#L12">Response</a></h2>
 			<pre>type Response struct {
     Status      <a href="/pkg/builtin/#int">int</a>
     ContentType <a href="/pkg/builtin/#string">string</a>
@@ -254,12 +258,24 @@ See the HTTP header fields specification
 
 			
 				
-				<h3 id="NewResponse">func <a href="../src/http.html?s=355:404#L17">NewResponse</a></h3>
+				<h3 id="NewResponse">func <a href="../src/http.html?s=425:474#L19">NewResponse</a></h3>
 				<pre>func NewResponse(w <a href="/pkg/net/http/">http</a>.<a href="/pkg/net/http/#ResponseWriter">ResponseWriter</a>) *<a href="#Response">Response</a></pre>
 				
 				
 			
 
+			
+				
+				<h3 id="Response.WriteHeader">func (*Response) <a href="../src/http.html?s=913:996#L35">WriteHeader</a></h3>
+				<pre>func (resp *<a href="#Response">Response</a>) WriteHeader(defaultStatusCode <a href="/pkg/builtin/#int">int</a>, defaultContentType <a href="/pkg/builtin/#string">string</a>)</pre>
+				<p>
+Write the header (for now, just the status code).
+The status may be set directly by the application (c.Response.Status = 501).
+if it isn&#39;t, then fall back to the provided status code.
+</p>
+
+				
+				
 			
 		
 	

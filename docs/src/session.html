@@ -35,30 +35,13 @@ func (s Session) Id() string {
     return s[SESSION_ID_KEY]
 }
 
-type SessionPlugin struct{ EmptyPlugin }
-
-func (p SessionPlugin) BeforeRequest(c *Controller) {
+var SessionFilter = func(c *Controller, fc []Filter) {
     c.Session = restoreSession(c.Request.Request)
-}
 
-func (p SessionPlugin) AfterRequest(c *Controller) {
+    fc[0](c, fc[1:])
+
     <span class="comment">// Store the session (and sign it).</span>
-    var sessionValue string
-    for key, value := range c.Session {
-        if strings.ContainsAny(key, &#34;:\x00&#34;) {
-            panic(&#34;Session keys may not have colons or null bytes&#34;)
-        }
-        if strings.Contains(value, &#34;\x00&#34;) {
-            panic(&#34;Session values may not have null bytes&#34;)
-        }
-        sessionValue += &#34;\x00&#34; + key + &#34;:&#34; + value + &#34;\x00&#34;
-    }
-    sessionData := url.QueryEscape(sessionValue)
-    c.SetCookie(&amp;http.Cookie{
-        Name:  CookiePrefix + &#34;_SESSION&#34;,
-        Value: Sign(sessionData) + &#34;-&#34; + sessionData,
-        Path:  &#34;/&#34;,
-    })
+    c.SetCookie(c.Session.cookie())
 }
 </pre>
 
