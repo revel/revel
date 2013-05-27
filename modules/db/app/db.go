@@ -44,7 +44,7 @@ type Transactional struct {
 }
 
 // Begin a transaction
-func (c Transactional) Begin() revel.Result {
+func (c *Transactional) Begin() revel.Result {
 	txn, err := Db.Begin()
 	if err != nil {
 		panic(err)
@@ -54,28 +54,33 @@ func (c Transactional) Begin() revel.Result {
 }
 
 // Rollback if it's still going (must have panicked).
-func (c Transactional) Rollback() revel.Result {
-	if err := c.Txn.Rollback(); err != nil {
-		if err != sql.ErrTxDone {
-			panic(err)
+func (c *Transactional) Rollback() revel.Result {
+	if c.Txn != nil {
+		if err := c.Txn.Rollback(); err != nil {
+			if err != sql.ErrTxDone {
+				panic(err)
+			}
 		}
+		c.Txn = nil
 	}
 	return nil
 }
 
 // Commit the transaction.
-func (c Transactional) Commit() revel.Result {
-	if err := c.Txn.Commit(); err != nil {
-		if err != sql.ErrTxDone {
-			panic(err)
+func (c *Transactional) Commit() revel.Result {
+	if c.Txn != nil {
+		if err := c.Txn.Commit(); err != nil {
+			if err != sql.ErrTxDone {
+				panic(err)
+			}
 		}
+		c.Txn = nil
 	}
-	c.Txn = nil
 	return nil
 }
 
 func init() {
-	revel.InterceptMethod(Transactional.Begin, revel.BEFORE)
-	revel.InterceptMethod(Transactional.Commit, revel.AFTER)
-	revel.InterceptMethod(Transactional.Rollback, revel.FINALLY)
+	revel.InterceptMethod((*Transactional).Begin, revel.BEFORE)
+	revel.InterceptMethod((*Transactional).Commit, revel.AFTER)
+	revel.InterceptMethod((*Transactional).Rollback, revel.FINALLY)
 }
