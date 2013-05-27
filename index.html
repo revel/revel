@@ -72,7 +72,7 @@ title: The Revel Web Framework for Go
         </div>
       </div>
       <div class="page-header">
-        <h1>Design</h1>
+        <h1>Framework Design</h1>
       </div>
       <div class="row">
         <div class="span4">
@@ -88,17 +88,17 @@ title: The Revel Web Framework for Go
           <h2>Stateless</h2>
           <p>
             Revel provides primitives that keep the web tier stateless for
-            predictable scaling. For example, you store session data in the user
-            cookie, and cache data in a memcached cluster.
+            predictable scaling. For example, session data is stored in the user
+            cookie, and the cache is backed by a memcached cluster.
           </p>
         </div>
         <div class="span4">
-          <h2>Simplicity Optional</h2>
+          <h2>Modular</h2>
           <p>
-            Revel tries to provide a comprehensive toolkit for making everyday
-            web apps. Don't want to use some of the helpers?  Revel gets out of
-            the way and gives you direct access to the underlying request and
-            response.
+            Revel is built around composable middleware called <b>filters</b>,
+            which implement nearly all request-processing
+            functionality. Developers have the freedom to replace the default
+            filters with custom implementations (e.g. a custom router).
           </p>
         </div>
       </div>
@@ -166,7 +166,7 @@ title: The Revel Web Framework for Go
 
       <section id="teaser">
         <div class="page-header">
-          <h1>Teaser</h1>
+          <h1>Overview</h1>
         </div>
         <p>
           This section gives you a taste of various parts of the framework:
@@ -174,7 +174,7 @@ title: The Revel Web Framework for Go
 
         <dl class="dl-horizontal">
           <dt><a href="#routing">Routing</a></dt>
-          <dd>A simple declarative routing syntax</dd>
+          <dd>A simple declarative routing syntax.  Type-safe reverse routing.</dd>
 
           <dt><a href="#controllers">Controllers</a></dt>
           <dd>
@@ -188,13 +188,12 @@ title: The Revel Web Framework for Go
           <dt><a href="#interceptors">Interceptors</a></dt>
           <dd>
             Register functionality to be called before or after actions.  They
-            can be activated per action, per Controller, or globally.
+            can be activated per Controller.
           </dd>
 
-          <dt><a href="#plugins">Plugins</a></dt>
+          <dt><a href="#filters">Filters</a></dt>
           <dd>
-            More general functionality (e.g. transaction management) can be
-            implemented with Plugins.
+            More general functionality can be implemented with Filters.
           </dd>
 
         </dl>
@@ -225,6 +224,25 @@ GET    /public/{<.*>filepath} Static.Serve("public")  <b># Map /app/public resou
 *      /{controller}/{action} {controller}.{action}   <b># Catch all; Automatic URL generation</b></pre>
 
           </div>
+          <div class="span6">
+						<p>
+							Reverse routes can be generated in a type-safe manner.  For example:
+						</p>
+          </div>
+          <div class="span12">
+            <pre class="prettyprint lang-go">
+// Show the hotel information.
+func (c Hotels) Show(id int) revel.Result {
+	hotel := HotelById(id)
+	return c.Render(hotel)
+}
+
+// Save the updated hotel information and redirect back to Show.
+func (c Hotels) Save(hotel Hotel) revel.Result {
+	// validate and save hotel
+	return c.Redirect(<b>routes.Hotels.Show(hotel.Id)</b>)
+}</pre>
+					</div>
         </div>
 
         <div class="row">
@@ -272,7 +290,7 @@ func (c Application) SaveUser(user models.User, verifyPassword string) revel.Res
 	if c.Validation.HasErrors() {
 		c.Validation.Keep()
 		c.FlashParams()
-		return c.Redirect(Application.Register)
+		return c.Redirect(routes.Application.Register())
 	}
 
 	user.HashedPassword, _ = bcrypt.GenerateFromPassword(
@@ -284,7 +302,7 @@ func (c Application) SaveUser(user models.User, verifyPassword string) revel.Res
 
 	c.Session["user"] = user.Username
 	c.Flash.Success("Welcome, " + user.Name)
-	return c.Redirect(Hotels.Index)
+	return c.Redirect(routes.Hotels.Index())
 }
             </pre>
           </div>
@@ -343,115 +361,179 @@ func (c Application) SaveUser(user models.User, verifyPassword string) revel.Res
           <div class="span6">
             <h2 id="interceptors">Interceptors</h2>
             <p>
-              Interceptors are useful for checking pre-conditions (e.g. that the
-              user is logged in) and for cleaning up afterwards.
+              Interceptors are controller methods that are run before or after
+              requests, or in response to panics.  By embedding a controller
+              into another, a developer can share interceptors and fields across
+              many controllers.
             </p>
+						<p>
+							As an example, the database module may be used to open a
+							connection on initialzation, made available through a global
+							handle.  Additionally, embedding the <b>db.Transactional</b> type
+							adds a <b>sql.Txn</b> field plus interceptors that begin and commit
+							transactions (or rollback on panic).
+						</p>
+						<p>
+							Here's what the interceptor looks like (minus error handling):
+						</p>
           </div>
 
           <div class="span12">
             <pre class="prettyprint">
-// app/controllers/app.go
+// github.com/robfig/revel/modules/db/app/db.go
 
-// This interceptor loads the user (using a helper).
-// If it's nil, the user isn't logged in so it redirects them to the login page.
-// Otherwise, it adds the user to the render context.
-func checkLogin(c *revel.Controller) revel.Result {
-	if user := connected(c); user != nil {
-		c.RenderArgs["user"] = user
-	} else {
-		return c.Redirect(Application.Login)
-	}
+var Db *sql.DB
+
+func Init() {
+	// Read configuration.
+	Driver, _ = revel.Config.String("db.driver")
+	Spec, _ = revel.Config.String("db.spec")
+
+	// Open a connection.
+	Db, _ = sql.Open(Driver, Spec)
+}
+
+// Transactional adds transaction management to your controller.
+type Transactional struct {
+	*revel.Controller
+	Txn *sql.Tx
+}
+
+func (c *Transactional) Begin() revel.Result {
+	c.Txn, _ = Db.Begin()
+	return nil
+}
+
+func (c *Transactional) Commit() revel.Result {
+	_ = c.Txn.Commit()
+	c.Txn = nil
+	return nil
+}
+
+func (c *Transactional) Rollback() revel.Result {
+	_ = c.Txn.Rollback()
+	c.Txn = nil
+	return nil
 }
 
 func init() {
-	revel.InterceptFunc(checkLogin, revel.BEFORE, &Application{})
+	revel.InterceptMethod((*Transactional).Begin, revel.BEFORE)
+	revel.InterceptMethod((*Transactional).Commit, revel.AFTER)
+	revel.InterceptMethod((*Transactional).Rollback, revel.FINALLY)
+}</pre>
+
+						<p>
+							Here is how it can be mixed in to an application controller:
+						</p>
+
+            <pre class="prettyprint">
+type Bookings struct {
+	*revel.Controller
+	db.Transactional  // Adds .Txn
+	user.Login        // Adds .User
+}
+
+func (c Bookings) ShowFirstBooking() revel.Result {
+	row := c.Txn.QueryRow(`
+select id, hotel_id, user_id, price, nights
+  from Booking
+ where UserId = ?
+ limit 1`, c.User.Id)
+	...
+	return c.Render(booking)
 }</pre>
           </div>
         </div>
 
         <div class="row">
           <div class="span6">
-            <h2 id="plugins">Plugins</h2>
+            <h2 id="filters">Filters</h2>
             <p>
-              Any class that meets the Plugin interface may be registered.
+              Filters are the middleware of the application.  They are simply
+              funcs with a specific signature:
             </p>
             <pre class="prettyprint">
-type Plugin interface {
-	OnAppStart()
-	OnRoutesLoaded(router *Router)
-	BeforeRequest(c *Controller)
-	AfterRequest(c *Controller)
-	OnException(c *Controller, err interface{})
-	Finally(c *Controller)
-}</pre>
+type Filter func(c *Controller, filterChain []Filter)</pre>
             <p>
-              An empty implementation is provided; clients can embed that and
-              then implement only the hook of interest.  More hooks will be
-              added as they are found useful.
-            </p>
-            <p>
-              For example, this is how you can use a plugin to manage a SQLite
-              database.
+              Even complicated "built-in" functionality like the interceptor
+              framework is implemented as a filter:
             </p>
           </div>
 
           <div class="span12">
             <pre class="prettyprint">
-// app/controllers/db.go
+// github.com/robfig/revel/intercept.go
 
-import (
-	_ "github.com/mattn/go-sqlite3"
-	"github.com/robfig/revel"
-)
+var InterceptorFilter = func(c *Controller, fc []Filter) {
+	defer invokeInterceptors(FINALLY, c)
+	defer func() {
+		if err := recover(); err != nil {
+			invokeInterceptors(PANIC, c)
+			panic(err)
+		}
+	}()
 
-var (
-	db *sql.DB
-)
+	// Invoke the BEFORE interceptors and return early, if we get a result.
+	invokeInterceptors(BEFORE, c)
+	if c.Result != nil {
+		return
+	}
 
-type DbPlugin struct {
-	revel.EmptyPlugin
+	fc[0](c, fc[1:])
+	invokeInterceptors(AFTER, c)
+}</pre>
+						<p>
+							Revel provides a default stack of Filters which the developer can
+							override.  This makes it easy for the developer to select exactly
+							the parts of the framework that they want to use.
+						</p>
+
+            <pre class="prettyprint">
+// github.com/robfig/revel/filter.go
+
+// Filters is the default set of global filters.
+// It may be set by the application on initialization.
+var Filters = []Filter{
+	PanicFilter,
+	RouterFilter,
+	FilterConfiguringFilter,
+	ParamsFilter,
+	SessionFilter,
+	FlashFilter,
+	ValidationFilter,
+	I18nFilter,
+	InterceptorFilter,
+	ActionInvoker,
 }
+						</pre>
 
-func (p DbPlugin) OnAppStart() {
-	db, _ = sql.Open("sqlite3", ":memory:")
+						<p>
+							Nearly all framework functionality is implemented in the filters,
+							and the filter stack is directly exposed to the developer as part
+							of the configuration.  This makes Revel understandable and modular.
+						</p>
+						<p>
+							As proof of modularity, look how simple
+							the <a href="docs/src/server.go">main server handler</a> is:
+						</p>
+            <pre class="prettyprint">
+// github.com/robfig/revel/server.go
 
-	// Create tables and insert some records.
-	db.Exec(`
-create table User (
-  UserId         integer primary key autoincrement,
-  Username       varchar(20),
-  HashedPassword blob,
-  Name           varchar(100))`)
+func handleInternal(w http.ResponseWriter, r *http.Request, ws *websocket.Conn) {
+	var (
+		req  = NewRequest(r)
+		resp = NewResponse(w)
+		c    = NewController(req, resp)
+	)
+	req.Websocket = ws
 
-	bcryptPassword, _ := bcrypt.GenerateFromPassword(
-		[]byte("demo"), bcrypt.DefaultCost)
-	db.Exec("insert into User (Username, HashedPassword, Name)" +
-		" values ('demo', ?, 'Demo User')", bcryptPassword)
-}
-
-// Start a new transaction for each request.
-func (p DbPlugin) BeforeRequest(c *revel.Controller) {
-	txn, _ := db.Begin()
-	c.Txn = txn
-}
-
-// Commit the transaction at the conclusion.
-func (p DbPlugin) AfterRequest(c *revel.Controller) {
-	c.Txn.Commit()
-	c.Txn = nil
-}
-
-// Rollback in the case of exception.
-func (p DbPlugin) OnException(c *revel.Controller, err interface{}) {
-	c.Txn.Rollback()
-}
-
-func init() {
-	revel.RegisterPlugin(DbPlugin{})
-}
-            </pre>
+	Filters[0](c, Filters[1:])
+	if c.Result != nil {
+		c.Result.Apply(req, resp)
+	}
+}</pre>
           </div>
-
+				</div>
       </section>
 
       <section id="wishlist">
@@ -462,8 +544,8 @@ func init() {
           There are some areas that could benefit from some TLC.
         </p>
         <ul>
-          <li> <b>ORM</b> -- A good ORM would make simple things simple.
-            (Presently users can integrate something manually using a Plugin.)
+          <li> <b>ORM</b> -- Presently Revel is BYOORM (bring-your-own-ORM).  A
+            good ORM integration would make simple things simple.
             (e.g. <a href="http://github.com/coopernurse/gorp">gorp</a>,
             <a href="https://github.com/eaigner/hood">hood</a>,
             <a href="https://github.com/coocood/qbs">qbs</a>,

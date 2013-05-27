@@ -13,7 +13,7 @@ layout: godoc
 
 <b>Common request processing</b>
 <dl>
-  <dd><a href="controller.html">controller</a> - Manages the request lifecycle.</dd>
+  <dd><a href="controller.html">controller</a> - The request context and factory functions for Results.</dd>
   <dd><a href="http.html">http</a> - HTTP Request and response wrappers.</dd>
   <dd><a href="router.html">router</a> - Routes requests to a controller action.</dd>
   <dd><a href="params.html">params</a> - Parameter parsing and handling.</dd>
@@ -30,12 +30,13 @@ layout: godoc
 
 <b>Configuration and Libraries</b>
 <dl>
-  <dd><a href="revel.html">revel</a> - Basic configuration.</dd>
-  <dd><a href="plugin.html">plugin</a> - Plugins hook into application events.</dd>
+  <dd><a href="revel.html">revel</a> - Basic configuration and access to app.conf.</dd>
+  <dd><a href="filter.html">filter</a> - The default filter chain.</dd>
+  <dd><a href="filterconfig.html">filterconfig</a> - Action-specifc filter configuration.</dd>
   <dd><a href="config.html">config</a> - Configuration file interface (application.conf).</dd>
   <dd><a href="errors.html">errors</a> - Pretty error pages.</dd>
   <dd><a href="libs.html">libs</a> - Various libraries (crypto).</dd>
-  <dd><a href="mvc.html">mvc</a> - Plumbing for invoking user actions.</dd>
+  <dd><a href="invoker.html">invoker</a> - Terminal filter that invokes user actions.</dd>
   <dd><a href="server.html">server</a> - Interface to the go http server.</dd>
   <dd><a href="util.html">util</a> - Random utility functions.</dd>
   <dd><a href="watcher.html">watcher</a> - Watches files (Go code, templates, and routes).</dd>
