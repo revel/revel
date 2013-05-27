@@ -434,8 +434,10 @@ var RouterFilter = func(c *Controller, fc []Filter) {
 	}
 
 	// Add the fixed parameters mapped by name.
-	c.Params.Fixed = make(url.Values)
 	for i, value := range route.FixedParams {
+		if c.Params.Fixed == nil {
+			c.Params.Fixed = make(url.Values)
+		}
 		if i < len(c.MethodType.Args) {
 			arg := c.MethodType.Args[i]
 			c.Params.Fixed.Set(arg.Name, value)
