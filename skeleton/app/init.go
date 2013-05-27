@@ -3,7 +3,7 @@ package app
 import "github.com/robfig/revel"
 
 func init() {
-	revel.Filters = revel.FilterChain{
+	revel.Filters = []revel.Filter{
 		revel.PanicFilter,
 		revel.RouterFilter,
 		revel.FilterConfiguringFilter,
