@@ -12,6 +12,12 @@ log.info.prefix  = "INFO  "
 log.warn.prefix  = "WARN  "
 log.error.prefix = "ERROR "
 
+# Plugins
+plugin.session=true
+plugin.flash=true
+plugin.validation=true
+plugin.i18n=true
+
 # The default language of this application.
 i18n.default_language=en
 

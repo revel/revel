@@ -16,12 +16,3 @@ func (p StartupPlugin) OnAppStart() {
 		hook()
 	}
 }
-
-func init() {
-	RegisterPlugin(StartupPlugin{})
-	RegisterPlugin(SessionPlugin{})
-	RegisterPlugin(FlashPlugin{})
-	RegisterPlugin(ValidationPlugin{})
-	RegisterPlugin(InterceptorPlugin{})
-	RegisterPlugin(I18nPlugin{})
-}

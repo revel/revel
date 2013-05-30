@@ -143,6 +143,20 @@ func Init(mode, importPath, srcPath string) {
 
 	loadModules()
 
+	RegisterPlugin(StartupPlugin{})
+	if Config.BoolDefault("plugin.session", true) {
+		RegisterPlugin(SessionPlugin{})
+	}
+	if Config.BoolDefault("plugin.flash", true) {
+		RegisterPlugin(FlashPlugin{})
+	}
+	if Config.BoolDefault("plugin.validation", true) {
+		RegisterPlugin(ValidationPlugin{})
+	}
+	RegisterPlugin(InterceptorPlugin{})
+	if Config.BoolDefault("plugin.i18n", true) {
+		RegisterPlugin(I18nPlugin{})
+	}
 	Initialized = true
 }
 
