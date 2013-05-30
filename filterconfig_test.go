@@ -4,8 +4,8 @@ import "testing"
 
 type FakeController struct{}
 
-func (c FakeController) FakeAction()   {}
-func (c *FakeController) FakeAction2() {}
+func (c FakeController) Foo()  {}
+func (c *FakeController) Bar() {}
 
 func TestFilterConfiguratorKey(t *testing.T) {
 	conf := FilterController(FakeController{})
@@ -18,18 +18,18 @@ func TestFilterConfiguratorKey(t *testing.T) {
 		t.Errorf("Expected key 'FakeController', was %s", conf.key)
 	}
 
-	conf = FilterAction(FakeController.FakeAction)
-	if conf.key != "FakeController.FakeAction" {
-		t.Errorf("Expected key 'FakeController.FakeAction', was %s", conf.key)
+	conf = FilterAction(FakeController.Foo)
+	if conf.key != "FakeController.Foo" {
+		t.Errorf("Expected key 'FakeController.Foo', was %s", conf.key)
 	}
 
-	conf = FilterAction((*FakeController).FakeAction2)
-	if conf.key != "FakeController.FakeAction2" {
-		t.Errorf("Expected key 'FakeController.FakeAction2', was %s", conf.key)
+	conf = FilterAction((*FakeController).Bar)
+	if conf.key != "FakeController.Bar" {
+		t.Errorf("Expected key 'FakeController.Bar', was %s", conf.key)
 	}
 }
 
-func TestFilterConfiguratorOps(t *testing.T) {
+func TestFilterConfigurator(t *testing.T) {
 	// Filters is global state.  Restore it after this test.
 	oldFilters := make([]Filter, len(Filters))
 	copy(oldFilters, Filters)
@@ -45,32 +45,81 @@ func TestFilterConfiguratorOps(t *testing.T) {
 		ActionInvoker,
 	}
 
-	// First, verify getOverrideFilters returns just the filters after
-	// FilterConfiguringFilter
-	conf := FilterAction(FakeController.FakeAction)
+	// Do one of each operation.
+	conf := FilterAction(FakeController.Foo).
+		Add(NilFilter).
+		Remove(FlashFilter).
+		Insert(ValidationFilter, BEFORE, NilFilter).
+		Insert(I18nFilter, AFTER, NilFilter)
 	expected := []Filter{
 		SessionFilter,
-		FlashFilter,
+		ValidationFilter,
+		NilFilter,
+		I18nFilter,
 		ActionInvoker,
 	}
-	actual := conf.getOverrideFilters()
+	actual := getOverride("Foo")
 	if len(actual) != len(expected) || !filterSliceEqual(actual, expected) {
-		t.Errorf("getOverrideFilter failed.\nActual: %#v\nExpect: %#v", actual, expected)
+		t.Errorf("Ops failed.\nActual: %#v\nExpect: %#v\nConf:%v", actual, expected, conf)
 	}
 
-	// Now do one of each operation.
-	conf.Add(NilFilter).
-		Remove(FlashFilter).
-		Insert(ValidationFilter, BEFORE, NilFilter)
+	// Action2 should be unchanged
+	if getOverride("Bar") != nil {
+		t.Errorf("Filtering Action should not affect Action2.")
+	}
+
+	// Test that combining overrides on both the Controller and Action works.
+	FilterController(FakeController{}).
+		Add(PanicFilter)
 	expected = []Filter{
 		SessionFilter,
 		ValidationFilter,
 		NilFilter,
+		I18nFilter,
+		PanicFilter,
 		ActionInvoker,
 	}
-	actual = filterOverrides[conf.key]
+	actual = getOverride("Foo")
 	if len(actual) != len(expected) || !filterSliceEqual(actual, expected) {
-		t.Errorf("Ops failed.\nActual: %#v\nExpect: %#v", actual, expected)
+		t.Errorf("Expected PanicFilter added to Foo.\nActual: %#v\nExpect: %#v", actual, expected)
+	}
+
+	expected = []Filter{
+		SessionFilter,
+		FlashFilter,
+		PanicFilter,
+		ActionInvoker,
+	}
+	actual = getOverride("Bar")
+	if len(actual) != len(expected) || !filterSliceEqual(actual, expected) {
+		t.Errorf("Expected PanicFilter added to Bar.\nActual: %#v\nExpect: %#v", actual, expected)
+	}
+
+	FilterAction((*FakeController).Bar).
+		Add(NilFilter)
+	expected = []Filter{
+		SessionFilter,
+		ValidationFilter,
+		NilFilter,
+		I18nFilter,
+		PanicFilter,
+		ActionInvoker,
+	}
+	actual = getOverride("Foo")
+	if len(actual) != len(expected) || !filterSliceEqual(actual, expected) {
+		t.Errorf("Expected no change to Foo.\nActual: %#v\nExpect: %#v", actual, expected)
+	}
+
+	expected = []Filter{
+		SessionFilter,
+		FlashFilter,
+		PanicFilter,
+		NilFilter,
+		ActionInvoker,
+	}
+	actual = getOverride("Bar")
+	if len(actual) != len(expected) || !filterSliceEqual(actual, expected) {
+		t.Errorf("Expected NilFilter added to Bar.\nActual: %#v\nExpect: %#v", actual, expected)
 	}
 }
 
@@ -81,4 +130,8 @@ func filterSliceEqual(a, e []Filter) bool {
 		}
 	}
 	return true
+}
+
+func getOverride(methodName string) []Filter {
+	return getOverrideChain("FakeController", "FakeController."+methodName)
 }
