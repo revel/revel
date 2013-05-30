@@ -10,6 +10,7 @@ install:
   - go get -d -v github.com/coopernurse/gorp
   - go get -d -v code.google.com/p/go.crypto/bcrypt
   - go get -d -v github.com/mattn/go-sqlite3
+  - go get -d -v github.com/robfig/cron
   - go get -d -v github.com/robfig/revel/samples/chat/...
   - go get -d -v github.com/robfig/revel/samples/facebook-oauth2/...
   - go get -d -v github.com/robfig/revel/samples/twitter-oauth/...
@@ -26,7 +27,7 @@ script:
   - $GOPATH/bin/revel new     my/testapp
   - $GOPATH/bin/revel test    my/testapp
   - $GOPATH/bin/revel clean   my/testapp
-  - $GOPATH/bin/revel build   my/testapp $TMP/testapp
+  - $GOPATH/bin/revel build   my/testapp build/testapp
   - $GOPATH/bin/revel package my/testapp
 
   # Build & run the sample apps
