@@ -59,7 +59,7 @@ func testApp(args []string) {
 	if !testRunnerFound {
 		errorf(`Error: The testrunner module is not running.
 
-You can add it to a run mode configuration with the following line: 
+You can add it to a run mode configuration with the following line:
 
 	module.testrunner = github.com/robfig/revel/modules/testrunner
 
@@ -108,7 +108,8 @@ You can add it to a run mode configuration with the following line:
 	fmt.Println()
 
 	// Load the result template, which we execute for each suite.
-	TemplateLoader := revel.NewTemplateLoader(revel.TemplatePaths)
+	module, _ := revel.ModuleByName("testrunner")
+	TemplateLoader := revel.NewTemplateLoader([]string{path.Join(module.Path, "app", "views")})
 	if err := TemplateLoader.Refresh(); err != nil {
 		errorf("Failed to compile templates: %s", err)
 	}
@@ -120,7 +121,7 @@ You can add it to a run mode configuration with the following line:
 	// Run each suite.
 	var (
 		overallSuccess = true
-		failedResults []controllers.TestSuiteResult
+		failedResults  []controllers.TestSuiteResult
 	)
 	for _, suite := range testSuites {
 		// Print the name of the suite we're running.
