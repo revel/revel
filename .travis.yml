@@ -11,7 +11,7 @@ install:
   - go get -d -v code.google.com/p/go.crypto/bcrypt
   - go get -d -v github.com/mattn/go-sqlite3
   - go get -d -v github.com/robfig/cron
-  - go get -d -v github.com/robfig/goauth2
+  - go get -d -v github.com/robfig/goauth2/oauth
   - go get -d -v github.com/mrjones/oauth
 script:
   - go test github.com/robfig/revel
