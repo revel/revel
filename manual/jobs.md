@@ -13,7 +13,14 @@ The framework is included as an optional module, that is not included in your
 application by default.  To activate it, add the module to your app
 configuration:
 
-    module.jobs = github.com/robfig/revel/modules/jobs
+	module.jobs = github.com/robfig/revel/modules/jobs
+
+Additionally, in order to access the job monitoring page, you will need to add
+this line to your routes:
+
+	module:jobs
+
+This statement will insert the `/@jobs` route at that location.
 
 ## Options
 
