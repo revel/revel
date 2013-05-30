@@ -2,8 +2,18 @@ language: go
 services:
   - memcache # github.com/robfig/revel/cache
 install:
-  - find .
-  - go get -d -v github.com/robfig/revel/...
+  # Annoyingly, we can not use go get ... because references to app/routes package fail
+  - go get -d -v github.com/robfig/revel
+  - go get -d -v github.com/robfig/revel/cmd
+  - go get -d -v github.com/robfig/revel/cache
+  - go get -d -v github.com/robfig/revel/harness
+  - go get -d -v github.com/coopernurse/gorp
+  - go get -d -v code.google.com/p/go.crypto/bcrypt
+  - go get -d -v github.com/mattn/go-sqlite3
+  - go get -d -v github.com/robfig/revel/samples/chat/...
+  - go get -d -v github.com/robfig/revel/samples/facebook-oauth2/...
+  - go get -d -v github.com/robfig/revel/samples/twitter-oauth/...
+  - go get -d -v github.com/robfig/revel/samples/validation/...
 script:
   - go test github.com/robfig/revel
   - go test github.com/robfig/revel/cache
