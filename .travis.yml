@@ -2,6 +2,7 @@ language: go
 services:
   - memcache # github.com/robfig/revel/cache
 install:
+  - find .
   - go get -d -v github.com/robfig/revel/...
 script:
   - go test github.com/robfig/revel
