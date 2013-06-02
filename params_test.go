@@ -83,16 +83,30 @@ func getMultipartRequest() *http.Request {
 	return req
 }
 
-func TestMultipartForm(t *testing.T) {
-	params := ParseParams(NewRequest(getMultipartRequest()))
+func BenchmarkParams(b *testing.B) {
+	c := Controller{
+		Request: NewRequest(getMultipartRequest()),
+		Params:  &Params{},
+	}
+	for i := 0; i < b.N; i++ {
+		ParamsFilter(&c, NilChain)
+	}
+}
 
-	if !reflect.DeepEqual(expectedValues, map[string][]string(params.Values)) {
+func TestMultipartForm(t *testing.T) {
+	c := Controller{
+		Request: NewRequest(getMultipartRequest()),
+		Params:  &Params{},
+	}
+	ParamsFilter(&c, NilChain)
+
+	if !reflect.DeepEqual(expectedValues, map[string][]string(c.Params.Values)) {
 		t.Errorf("Param values: (expected) %v != %v (actual)",
-			expectedValues, map[string][]string(params.Values))
+			expectedValues, map[string][]string(c.Params.Values))
 	}
 
 	actualFiles := make(map[string][]fh)
-	for key, fileHeaders := range params.Files {
+	for key, fileHeaders := range c.Params.Files {
 		for _, fileHeader := range fileHeaders {
 			file, _ := fileHeader.Open()
 			content, _ := ioutil.ReadAll(file)

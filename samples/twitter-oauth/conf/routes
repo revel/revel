@@ -2,6 +2,8 @@
 # This file defines all application routes (Higher priority routes first)
 # ~~~~
 
+module:testrunner
+
 # Home page
 GET     /                                       Application.index
 GET     /auth                                   Application.authenticate

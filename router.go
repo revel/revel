@@ -2,7 +2,6 @@ package revel
 
 import (
 	"encoding/csv"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -231,7 +230,7 @@ func parseRoutes(routesPath, content string, validate bool) ([]*Route, *Error) {
 	return routes, nil
 }
 
-// validate checks that every specified action exists.
+// validateRoute checks that every specified action exists.
 func validateRoute(route *Route) error {
 	// Skip variable routes.
 	if strings.ContainsAny(route.Action, "{}") {
@@ -250,15 +249,11 @@ func validateRoute(route *Route) error {
 			len(parts), route.Action)
 	}
 
-	ct := LookupControllerType(parts[0])
-	if ct == nil {
-		return errors.New("Unrecognized controller: " + parts[0])
+	var c Controller
+	if err := c.SetAction(parts[0], parts[1]); err != nil {
+		return err
 	}
 
-	mt := ct.Method(parts[1])
-	if mt == nil {
-		return errors.New("Unrecognized method: " + parts[1])
-	}
 	return nil
 }
 
@@ -397,4 +392,60 @@ NEXT_ROUTE:
 	}
 	ERROR.Println("Failed to find reverse route:", action, argValues)
 	return nil
+}
+
+func init() {
+	OnAppStart(func() {
+		MainRouter = NewRouter(path.Join(BasePath, "conf", "routes"))
+		if MainWatcher != nil && Config.BoolDefault("watch.routes", true) {
+			MainWatcher.Listen(MainRouter, MainRouter.path)
+		} else {
+			MainRouter.Refresh()
+		}
+	})
+}
+
+var RouterFilter = func(c *Controller, fc []Filter) {
+	// Figure out the Controller/Action
+	var route *RouteMatch = MainRouter.Route(c.Request.Request)
+	if route == nil {
+		c.Result = c.NotFound("No matching route found")
+		return
+	}
+
+	// The route may want to explicitly return a 404.
+	if route.Action == "404" {
+		c.Result = c.NotFound("(intentionally)")
+		return
+	}
+
+	// Set the action.
+	if err := c.SetAction(route.ControllerName, route.MethodName); err != nil {
+		c.Result = c.NotFound(err.Error())
+		return
+	}
+
+	// Add the route and fixed params to the Request Params.
+	for k, v := range route.Params {
+		if c.Params.Route == nil {
+			c.Params.Route = make(map[string][]string)
+		}
+		c.Params.Route[k] = []string{v}
+	}
+
+	// Add the fixed parameters mapped by name.
+	for i, value := range route.FixedParams {
+		if c.Params.Fixed == nil {
+			c.Params.Fixed = make(url.Values)
+		}
+		if i < len(c.MethodType.Args) {
+			arg := c.MethodType.Args[i]
+			c.Params.Fixed.Set(arg.Name, value)
+		} else {
+			WARN.Println("Too many parameters to", route.Action, "trying to add", value)
+			break
+		}
+	}
+
+	fc[0](c, fc[1:])
 }

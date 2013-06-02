@@ -53,11 +53,10 @@ var (
 	CookiePrefix string
 
 	// Loggers
-	DEFAULT = log.New(ioutil.Discard, "", log.Ldate|log.Ltime|log.Lshortfile)
-	TRACE   = DEFAULT
-	INFO    = DEFAULT
-	WARN    = DEFAULT
-	ERROR   = DEFAULT
+	TRACE = log.New(ioutil.Discard, "TRACE ", log.Ldate|log.Ltime|log.Lshortfile)
+	INFO  = log.New(ioutil.Discard, "INFO  ", log.Ldate|log.Ltime|log.Lshortfile)
+	WARN  = log.New(ioutil.Discard, "WARN  ", log.Ldate|log.Ltime|log.Lshortfile)
+	ERROR = log.New(os.Stderr, "ERROR ", log.Ldate|log.Ltime|log.Lshortfile)
 
 	Initialized bool
 
@@ -66,7 +65,7 @@ var (
 )
 
 func init() {
-	log.SetFlags(DEFAULT.Flags())
+	log.SetFlags(INFO.Flags())
 }
 
 // Init initializes Revel -- it provides paths for getting around the app.
@@ -186,7 +185,7 @@ func getLogger(name string) *log.Logger {
 }
 
 func newLogger(wr io.Writer) *log.Logger {
-	return log.New(wr, DEFAULT.Prefix(), DEFAULT.Flags())
+	return log.New(wr, "", INFO.Flags())
 }
 
 // findSrcPaths uses the "go/build" package to find the source root for Revel

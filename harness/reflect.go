@@ -285,7 +285,11 @@ func addImports(imports map[string]string, decl ast.Decl, srcDir string) {
 		if pkgAlias == "" {
 			pkg, err := build.Import(fullPath, srcDir, 0)
 			if err != nil {
-				revel.TRACE.Println("Could not find import:", fullPath)
+				// We expect this to happen for apps using reverse routing (since we
+				// have not yet generated the routes).  Don't log that.
+				if !strings.HasSuffix(fullPath, "/app/routes") {
+					revel.TRACE.Println("Could not find import:", fullPath)
+				}
 				continue
 			}
 			pkgAlias = pkg.Name

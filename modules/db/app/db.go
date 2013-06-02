@@ -1,7 +1,12 @@
-// This plugin provides a database transaction to the application.
-// A transaction is begun before each request and committed on success.
-// If a panic occurred during the request, the transaction is rolled back.
-// (The application may also roll the transaction back itself.)
+// This module configures a database connection for the application.
+//
+// Developers use this module by importing and calling db.Init().
+// A "Transactional" controller type is provided as a way to import interceptors
+// that manage the transaction
+//
+// In particular, a transaction is begun before each request and committed on
+// success.  If a panic occurred during the request, the transaction is rolled
+// back.  (The application may also roll the transaction back itself.)
 package db
 
 import (
@@ -15,11 +20,7 @@ var (
 	Spec   string
 )
 
-type DbPlugin struct {
-	revel.EmptyPlugin
-}
-
-func (p DbPlugin) OnAppStart() {
+func Init() {
 	// Read configuration.
 	var found bool
 	if Driver, found = revel.Config.String("db.driver"); !found {
@@ -37,33 +38,49 @@ func (p DbPlugin) OnAppStart() {
 	}
 }
 
-// Begin a transaction.
-func (p DbPlugin) BeforeRequest(c *revel.Controller) {
+type Transactional struct {
+	*revel.Controller
+	Txn *sql.Tx
+}
+
+// Begin a transaction
+func (c *Transactional) Begin() revel.Result {
 	txn, err := Db.Begin()
 	if err != nil {
 		panic(err)
 	}
 	c.Txn = txn
+	return nil
 }
 
-// Commit the active transaction.
-func (p DbPlugin) AfterRequest(c *revel.Controller) {
-	if err := c.Txn.Commit(); err != nil {
-		if err != sql.ErrTxDone {
-			panic(err)
+// Rollback if it's still going (must have panicked).
+func (c *Transactional) Rollback() revel.Result {
+	if c.Txn != nil {
+		if err := c.Txn.Rollback(); err != nil {
+			if err != sql.ErrTxDone {
+				panic(err)
+			}
 		}
+		c.Txn = nil
 	}
-	c.Txn = nil
+	return nil
 }
 
-// Rollback the active transaction, if any.
-func (p DbPlugin) OnException(c *revel.Controller, err interface{}) {
-	if c.Txn == nil {
-		return
-	}
-	if err := c.Txn.Rollback(); err != nil {
-		if err != sql.ErrTxDone {
-			panic(err)
+// Commit the transaction.
+func (c *Transactional) Commit() revel.Result {
+	if c.Txn != nil {
+		if err := c.Txn.Commit(); err != nil {
+			if err != sql.ErrTxDone {
+				panic(err)
+			}
 		}
+		c.Txn = nil
 	}
+	return nil
+}
+
+func init() {
+	revel.InterceptMethod((*Transactional).Begin, revel.BEFORE)
+	revel.InterceptMethod((*Transactional).Commit, revel.AFTER)
+	revel.InterceptMethod((*Transactional).Rollback, revel.FINALLY)
 }

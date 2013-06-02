@@ -2,6 +2,7 @@ package revel
 
 import (
 	"bytes"
+	"code.google.com/p/go.net/websocket"
 	"fmt"
 	"net/http"
 	"sort"
@@ -12,9 +13,10 @@ import (
 type Request struct {
 	*http.Request
 	ContentType     string
-	Format          string // "html", "xml", "json", or "text"
+	Format          string // "html", "xml", "json", or "txt"
 	AcceptLanguages AcceptLanguages
 	Locale          string
+	Websocket       *websocket.Conn
 }
 
 type Response struct {
@@ -35,6 +37,20 @@ func NewRequest(r *http.Request) *Request {
 		Format:          ResolveFormat(r),
 		AcceptLanguages: ResolveAcceptLanguage(r),
 	}
+}
+
+// Write the header (for now, just the status code).
+// The status may be set directly by the application (c.Response.Status = 501).
+// if it isn't, then fall back to the provided status code.
+func (resp *Response) WriteHeader(defaultStatusCode int, defaultContentType string) {
+	if resp.Status == 0 {
+		resp.Status = defaultStatusCode
+	}
+	if resp.ContentType == "" {
+		resp.ContentType = defaultContentType
+	}
+	resp.Out.Header().Set("Content-Type", resp.ContentType)
+	resp.Out.WriteHeader(resp.Status)
 }
 
 // Get the content type.
@@ -96,10 +112,10 @@ func (al AcceptLanguages) String() string {
 
 // Resolve the Accept-Language header value.
 //
-// The results are sorted using the quality defined in the header for each language range with the 
+// The results are sorted using the quality defined in the header for each language range with the
 // most qualified language range as the first element in the slice.
 //
-// See the HTTP header fields specification 
+// See the HTTP header fields specification
 // (http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.4) for more details.
 func ResolveAcceptLanguage(req *http.Request) AcceptLanguages {
 	header := req.Header.Get("Accept-Language")

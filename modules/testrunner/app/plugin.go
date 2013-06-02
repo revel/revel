@@ -5,10 +5,8 @@ import (
 	"github.com/robfig/revel"
 )
 
-type TestRunnerPlugin struct {
-	revel.EmptyPlugin
-}
-
-func (t TestRunnerPlugin) OnAppStart() {
-	fmt.Println("Go to /@tests to run the tests.")
+func init() {
+	revel.OnAppStart(func() {
+		fmt.Println("Go to /@tests to run the tests.")
+	})
 }

@@ -7,25 +7,82 @@ This describes how developers may contribute to Revel.
 Revel's mission is to provide a batteries-included framework for making large
 scale web application development as efficient and maintainable as possible.
 
-The Play! Framework had a huge impact on ability of the author to deliver
-software of "business value" extremely rapidly.  Bringing a similar toolkit and
-API to the Go language could provide a framework that delivers both productivity
-*and* efficiency of computing resources.  (Go programs are generally quite
-efficient by Java or Scala standards in terms of both memory and CPU.)  Plus, Go
-subjectively is a much more pleasant and scalable language to develop in.
+The design should be configurable and modular so that it can grow with the
+developer. However, it should provide a wonderful un-boxing experience and
+default configuration that can woo new developers and make simple web apps
+straightforward. The framework should have an opinion about how to do all of the
+common tasks in web development to reduce unnecessary cognitive load.
 
 ## How to Contribute
 
-The ideal process for a successful contribution looks like this:
+Presently there are no versioning or compatibility guarantees in place, so the
+contribution process is not very formal.
 
-1. Send email to revel-framework@googlegroups.com with your idea.
-2. Within 24 hours (usually), @robfig will respond with a "yes", "no", or discussion.
-3. Upon "yes", fork the repository, and prepare + send a Pull Request
-4. Be sure to run the tests in the revel package, as well as the revel/harness package.
-5. (Optional) If your change affects the developer-facing functionality, it is appreciated (but not mandatory) to add it to the manual.  Switch to the gh-pages branch of the repository, document your change, and send a Pull Request for that as well.
-6. @robfig will provide a code review, and when no outstanding comments are left he will merge the pull request(s).
+### Discuss your idea
 
-In other words, not much red tape.
+For the greatest chance of success, start with an email to
+[revel-framework@googlegroups.com](mailto:revel-framework@googlegroups.com) to
+discuss your contribution idea and design.
+
+### How to fork (without breaking Go import paths)
+
+Go uses the repository URL to import packages, so forking and go-getting the
+forked project **will not work**.
+
+Instead, this is the recommended way:
+
+1. Fork the project on Github
+2. In `$GOPATH/src/github.com/robfig/revel`, run this command (replacing $USER with
+   your github username):
+	$ git remote add fork git@github.com:$USER/revel.git
+3. When you want to push to your fork, do this:
+	$ git push fork master
+
+### Gofmt your code
+
+Set your editor to run "go fmt" every time you save so that whitespace / style
+comments are kept to a minimum.
+
+Howtos:
+* [Emacs](http://blog.golang.org/2013/01/go-fmt-your-code.html)
+
+### Write a test (and maybe a benchmark)
+
+Significant new features require tests. Besides unit tests, it is also possible
+to test a feature by exercising it in one of the sample apps and verifying its
+operation using that app's test suite. This has the added benefit of providing
+example code for developers to refer to.
+
+Benchmarks are helpful but not required.
+
+### Run the tests
+
+Typically running the main set of unit tests will be sufficient:
+	$ go test github.com/robfig/revel
+
+Refer to the
+[Travis configuration](https://github.com/robfig/revel/blob/master/.travis.yml)
+for the full set of tests.  They take less than a minute to run.
+
+### Document your feature
+
+The [Revel web site](http://robfig.github.io/revel/) is hosted on Github-pages.
+
+To develop the site locally:
+
+	# Clone a second repository and check out the branch
+	$ git clone git@github.com:robfig/revel.git
+	$ cd revel
+	$ git checkout gh-pages
+
+	# Run Jekyll to generate the site, and serve the result
+	$ jekyll --auto --pygments --no-lsi --safe test/revel &
+	$ python -m SimpleHTTPServer 8088
+
+	# Now load in your browser
+	$ open http://localhost:8088/revel
+
+Any changes you make to the site should be reflected within a few seconds.
 
 ## Potential Projects
 
@@ -35,7 +92,6 @@ Additionally, there are frequently smaller feature requests or items in the
 
 1.  Better ORM support.  Investigate [Hood](https://github.com/eaigner/hood), [Jet](https://github.com/eaigner/jet), or [QBS](https://github.com/coocood/qbs) as possible improvement over Gorp.  Provide more samples (or modules) and better documentation for setting up common situations like SQL database, Mongo, LevelDB, etc.
 2.	Support for other templating languages (e.g. mustache, HAML).  Make TemplateLoader pluggable.  Use Pongo instead of vanilla Go templates (and update the samples)
-6.	Better reverse routing (the current thing sucks, the stuff Play has rocks)
 12.	Test Fixtures
 5. Coffeescript pre-processor.  Could potentially use [otto](https://github.com/robertkrimen/otto) as a native Go method to compiling.
 6.  SCSS/LESS pre-processor.

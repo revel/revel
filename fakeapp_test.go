@@ -55,13 +55,15 @@ func (c Static) Serve(prefix, filepath string) Result {
 }
 
 func startFakeBookingApp() {
-	Init("", "github.com/robfig/revel/samples/booking", "")
+	Init("prod", "github.com/robfig/revel/samples/booking", "")
 
 	// Disable logging.
 	TRACE = log.New(ioutil.Discard, "", 0)
 	INFO = TRACE
 	WARN = TRACE
 	ERROR = TRACE
+
+	runStartupHooks()
 
 	MainRouter = NewRouter("")
 	routesFile, _ := ioutil.ReadFile(filepath.Join(BasePath, "conf", "routes"))
@@ -100,6 +102,4 @@ func startFakeBookingApp() {
 				RenderArgNames: map[int][]string{},
 			},
 		})
-
-	plugins.OnAppStart()
 }

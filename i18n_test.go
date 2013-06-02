@@ -4,7 +4,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"reflect"
 	"testing"
 	"time"
 )
@@ -116,21 +115,20 @@ func TestHasAcceptLanguageHeader(t *testing.T) {
 
 func TestBeforeRequest(t *testing.T) {
 	loadTestI18nConfig(t)
-	plugin := I18nPlugin{}
 
-	controller := NewController(buildEmptyRequest(), nil, &ControllerType{reflect.TypeOf(Controller{}), nil})
-	if plugin.BeforeRequest(controller); controller.Request.Locale != "" {
-		t.Errorf("Expected to find current language '%s' in controller, found '%s' instead", "", controller.Request.Locale)
+	c := NewController(buildEmptyRequest(), nil)
+	if I18nFilter(c, NilChain); c.Request.Locale != "" {
+		t.Errorf("Expected to find current language '%s' in controller, found '%s' instead", "", c.Request.Locale)
 	}
 
-	controller = NewController(buildRequestWithCookie("APP_LANG", "en-US"), nil, &ControllerType{reflect.TypeOf(Controller{}), nil})
-	if plugin.BeforeRequest(controller); controller.Request.Locale != "en-US" {
-		t.Errorf("Expected to find current language '%s' in controller, found '%s' instead", "en-US", controller.Request.Locale)
+	c = NewController(buildRequestWithCookie("APP_LANG", "en-US"), nil)
+	if I18nFilter(c, NilChain); c.Request.Locale != "en-US" {
+		t.Errorf("Expected to find current language '%s' in controller, found '%s' instead", "en-US", c.Request.Locale)
 	}
 
-	controller = NewController(buildRequestWithAcceptLanguages("en-GB", "en-US"), nil, &ControllerType{reflect.TypeOf(Controller{}), nil})
-	if plugin.BeforeRequest(controller); controller.Request.Locale != "en-GB" {
-		t.Errorf("Expected to find current language '%s' in controller, found '%s' instead", "en-GB", controller.Request.Locale)
+	c = NewController(buildRequestWithAcceptLanguages("en-GB", "en-US"), nil)
+	if I18nFilter(c, NilChain); c.Request.Locale != "en-GB" {
+		t.Errorf("Expected to find current language '%s' in controller, found '%s' instead", "en-GB", c.Request.Locale)
 	}
 }
 

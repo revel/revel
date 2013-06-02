@@ -156,7 +156,8 @@ var fileBindings = []struct{ val, arrval, f interface{} }{
 
 func TestBinder(t *testing.T) {
 	// Reuse the mvc_test.go multipart request to test the binder.
-	params := ParseParams(NewRequest(getMultipartRequest()))
+	params := &Params{}
+	ParseParams(params, NewRequest(getMultipartRequest()))
 	params.Values = PARAMS
 
 	// Values
