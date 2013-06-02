@@ -23,7 +23,7 @@ Cache items are set with an expiration time, in one of three forms:
 
 ## Serialization
 
-The Cache getters and setters automatically serializate values for callers, to
+The Cache getters and setters automatically serialize values for callers, to
 and from any type.  It uses the following mechanisms:
 
 * if the value is already of type `[]byte`, the data is not touched
