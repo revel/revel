@@ -11,12 +11,12 @@ import (
 )
 
 var (
-	dbm *gorp.DbMap
+	Dbm *gorp.DbMap
 )
 
 func Init() {
 	db.Init()
-	dbm = &gorp.DbMap{Db: db.Db, Dialect: gorp.SqliteDialect{}}
+	Dbm = &gorp.DbMap{Db: db.Db, Dialect: gorp.SqliteDialect{}}
 
 	setColumnSizes := func(t *gorp.TableMap, colSizes map[string]int) {
 		for col, size := range colSizes {
@@ -24,14 +24,14 @@ func Init() {
 		}
 	}
 
-	t := dbm.AddTable(models.User{}).SetKeys(true, "UserId")
+	t := Dbm.AddTable(models.User{}).SetKeys(true, "UserId")
 	t.ColMap("Password").Transient = true
 	setColumnSizes(t, map[string]int{
 		"Username": 20,
 		"Name":     100,
 	})
 
-	t = dbm.AddTable(models.Hotel{}).SetKeys(true, "HotelId")
+	t = Dbm.AddTable(models.Hotel{}).SetKeys(true, "HotelId")
 	setColumnSizes(t, map[string]int{
 		"Name":    50,
 		"Address": 100,
@@ -41,7 +41,7 @@ func Init() {
 		"Country": 40,
 	})
 
-	t = dbm.AddTable(models.Booking{}).SetKeys(true, "BookingId")
+	t = Dbm.AddTable(models.Booking{}).SetKeys(true, "BookingId")
 	t.ColMap("User").Transient = true
 	t.ColMap("Hotel").Transient = true
 	t.ColMap("CheckInDate").Transient = true
@@ -51,13 +51,13 @@ func Init() {
 		"NameOnCard": 50,
 	})
 
-	dbm.TraceOn("[gorp]", r.INFO)
-	dbm.CreateTables()
+	Dbm.TraceOn("[gorp]", r.INFO)
+	Dbm.CreateTables()
 
 	bcryptPassword, _ := bcrypt.GenerateFromPassword(
 		[]byte("demo"), bcrypt.DefaultCost)
 	demoUser := &models.User{0, "Demo User", "demo", "demo", bcryptPassword}
-	if err := dbm.Insert(demoUser); err != nil {
+	if err := Dbm.Insert(demoUser); err != nil {
 		panic(err)
 	}
 
@@ -67,7 +67,7 @@ func Init() {
 		&models.Hotel{0, "Hotel Rouge", "1315 16th St NW", "Washington", "DC", "20036", "USA", 250},
 	}
 	for _, hotel := range hotels {
-		if err := dbm.Insert(hotel); err != nil {
+		if err := Dbm.Insert(hotel); err != nil {
 			panic(err)
 		}
 	}
@@ -79,7 +79,7 @@ type GorpController struct {
 }
 
 func (c *GorpController) Begin() r.Result {
-	txn, err := dbm.Begin()
+	txn, err := Dbm.Begin()
 	if err != nil {
 		panic(err)
 	}
