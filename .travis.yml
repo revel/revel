@@ -2,14 +2,37 @@ language: go
 services:
   - memcache # github.com/robfig/revel/cache
 install:
+  # Annoyingly, we can not use go get revel/... because references to app/routes package fail
   - go get -d -v github.com/robfig/revel
-  - go get -d -v github.com/robfig/revel/cache
   - go get -d -v github.com/robfig/revel/cmd
+  - go get -d -v github.com/robfig/revel/cache
   - go get -d -v github.com/robfig/revel/harness
+  - go get -d -v github.com/coopernurse/gorp
+  - go get -d -v code.google.com/p/go.crypto/bcrypt
+  - go get -d -v github.com/mattn/go-sqlite3
+  - go get -d -v github.com/robfig/cron
+  - go get -d -v github.com/robfig/goauth2/oauth
+  - go get -d -v github.com/mrjones/oauth
 script:
-  - go build -o $GOPATH/bin/revel github.com/robfig/revel/cmd
   - go test github.com/robfig/revel
   - go test github.com/robfig/revel/cache
   - go test github.com/robfig/revel/harness
-  
-# TODO: Add sample app testing
+
+  # Build the command line tool
+  - go build -o $GOPATH/bin/revel github.com/robfig/revel/cmd
+
+  # Ensure the new-app flow works (plus the other commands).
+  - $GOPATH/bin/revel new     my/testapp
+  - $GOPATH/bin/revel test    my/testapp
+  - $GOPATH/bin/revel clean   my/testapp
+  - $GOPATH/bin/revel build   my/testapp build/testapp
+  - $GOPATH/bin/revel package my/testapp
+
+  # Build & run the sample apps
+  - $GOPATH/bin/revel test github.com/robfig/revel/samples/booking
+  - $GOPATH/bin/revel test github.com/robfig/revel/samples/chat
+  - $GOPATH/bin/revel test github.com/robfig/revel/samples/facebook-oauth2
+  - $GOPATH/bin/revel test github.com/robfig/revel/samples/twitter-oauth
+  - $GOPATH/bin/revel test github.com/robfig/revel/samples/validation
+  - $GOPATH/bin/revel test github.com/robfig/revel/samples/chat
+

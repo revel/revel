@@ -1,14 +1,13 @@
 package revel
 
 import (
-	"database/sql"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
 	"reflect"
 	"runtime"
-	"runtime/debug"
 	"strings"
 	"time"
 )
@@ -16,9 +15,10 @@ import (
 type Controller struct {
 	Name          string          // The controller name, e.g. "Application"
 	Type          *ControllerType // A description of the controller type.
+	MethodName    string          // The method name, e.g. "Index"
 	MethodType    *MethodType     // A description of the invoked action type.
 	AppController interface{}     // The controller that was instantiated.
-	Action        string          // The full action name, e.g. "Application.Index"
+	Action        string          // The fully qualified action name, e.g. "App.Index"
 
 	Request  *Request
 	Response *Response
@@ -30,24 +30,19 @@ type Controller struct {
 	Args       map[string]interface{} // Per-request scratch space.
 	RenderArgs map[string]interface{} // Args passed to the template.
 	Validation *Validation            // Data validation helpers
-	Txn        *sql.Tx                // Nil by default, but may be used by the app / plugins
 }
 
-func NewController(req *Request, resp *Response, ct *ControllerType) *Controller {
-	c := &Controller{
-		Name:     ct.Type.Name(),
-		Type:     ct,
+func NewController(req *Request, resp *Response) *Controller {
+	return &Controller{
 		Request:  req,
 		Response: resp,
-		Params:   ParseParams(req),
+		Params:   new(Params),
 		Args:     map[string]interface{}{},
 		RenderArgs: map[string]interface{}{
 			"RunMode": RunMode,
 			"DevMode": DevMode,
 		},
 	}
-	c.RenderArgs["Controller"] = c
-	return c
 }
 
 func (c *Controller) FlashParams() {
@@ -58,78 +53,6 @@ func (c *Controller) FlashParams() {
 
 func (c *Controller) SetCookie(cookie *http.Cookie) {
 	http.SetCookie(c.Response.Out, cookie)
-}
-
-// Invoke the given method, save headers/cookies to the response, and apply the
-// result.  (e.g. render a template to the response)
-func (c *Controller) Invoke(appControllerPtr reflect.Value, method reflect.Value, methodArgs []reflect.Value) {
-
-	// Handle panics.
-	defer func() {
-		if err := recover(); err != nil {
-			handleInvocationPanic(c, err)
-		}
-
-		plugins.Finally(c)
-	}()
-
-	// Clean up from the request.
-	defer func() {
-		// Delete temp files.
-		if c.Request.MultipartForm != nil {
-			err := c.Request.MultipartForm.RemoveAll()
-			if err != nil {
-				WARN.Println("Error removing temporary files:", err)
-			}
-		}
-
-		for _, tmpFile := range c.Params.tmpFiles {
-			err := os.Remove(tmpFile.Name())
-			if err != nil {
-				WARN.Println("Could not remove upload temp file:", err)
-			}
-		}
-	}()
-
-	// Run the plugins.
-	plugins.BeforeRequest(c)
-
-	if c.Result == nil {
-		// Invoke the action.
-		var resultValue reflect.Value
-		if method.Type().IsVariadic() {
-			resultValue = method.CallSlice(methodArgs)[0]
-		} else {
-			resultValue = method.Call(methodArgs)[0]
-		}
-		if resultValue.Kind() == reflect.Interface && !resultValue.IsNil() {
-			c.Result = resultValue.Interface().(Result)
-		}
-
-		plugins.AfterRequest(c)
-		if c.Result == nil {
-			return
-		}
-	}
-
-	// Apply the result, which generally results in the ResponseWriter getting written.
-	c.Result.Apply(c.Request, c.Response)
-}
-
-// This function handles a panic in an action invocation.
-// It cleans up the stack trace, logs it, and displays an error page.
-func handleInvocationPanic(c *Controller, err interface{}) {
-	plugins.OnException(c, err)
-
-	error := NewErrorFromPanic(err)
-	if error == nil {
-		c.Response.Out.WriteHeader(500)
-		c.Response.Out.Write(debug.Stack())
-		return
-	}
-
-	ERROR.Print(err, "\n", error.Stack)
-	c.RenderError(error).Apply(c.Request, c.Response)
 }
 
 func (c *Controller) RenderError(err error) Result {
@@ -151,30 +74,13 @@ func (c *Controller) RenderError(err error) Result {
 // key-value "user": (User).
 func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
 	// Get the calling function name.
-	pc, _, line, ok := runtime.Caller(1)
+	_, _, line, ok := runtime.Caller(1)
 	if !ok {
 		ERROR.Println("Failed to get Caller information")
-		return nil
-	}
-	// e.g. sample/app/controllers.(*Application).Index
-	var fqViewName string = runtime.FuncForPC(pc).Name()
-	var viewName string = fqViewName[strings.LastIndex(fqViewName, ".")+1 : len(fqViewName)]
-
-	// Determine what method we are in.
-	// (e.g. the invoked controller method might have delegated to another method)
-	methodType := c.MethodType
-	if methodType.Name != viewName {
-		methodType = c.Type.Method(viewName)
-		if methodType == nil {
-			return c.RenderError(fmt.Errorf(
-				"No Method %s in Controller %s when loading the view."+
-					" (delegating Render is only supported within the same controller)",
-				viewName, c.Name))
-		}
 	}
 
 	// Get the extra RenderArgs passed in.
-	if renderArgNames, ok := methodType.RenderArgNames[line]; ok {
+	if renderArgNames, ok := c.MethodType.RenderArgNames[line]; ok {
 		if len(renderArgNames) == len(extraRenderArgs) {
 			for i, extraRenderArg := range extraRenderArgs {
 				c.RenderArgs[renderArgNames[i]] = extraRenderArg
@@ -185,10 +91,10 @@ func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
 		}
 	} else {
 		ERROR.Println("No RenderArg names found for Render call on line", line,
-			"(Method", methodType, ", ViewName", viewName, ")")
+			"(Method", c.MethodType.Name, ")")
 	}
 
-	return c.RenderTemplate(c.Name + "/" + viewName + "." + c.Request.Format)
+	return c.RenderTemplate(c.Name + "/" + c.MethodType.Name + "." + c.Request.Format)
 }
 
 // A less magical way to render a template.
@@ -301,4 +207,127 @@ func (c *Controller) Redirect(val interface{}, args ...interface{}) Result {
 // The current language is set by the i18n plugin.
 func (c *Controller) Message(message string, args ...interface{}) (value string) {
 	return Message(c.Request.Locale, message, args...)
+}
+
+// SetAction sets the action that is being invoked in the current request.
+// It sets the following properties: Name, Action, Type, MethodType
+func (c *Controller) SetAction(controllerName, methodName string) error {
+	c.Name, c.MethodName = controllerName, methodName
+	c.Action = c.Name + "." + c.MethodName
+
+	// Look up the controller and method types.
+	var ok bool
+	if c.Type, ok = controllers[strings.ToLower(controllerName)]; !ok {
+		return errors.New("revel/controller: failed to find controller " + controllerName)
+	}
+	if c.MethodType = c.Type.Method(methodName); c.MethodType == nil {
+		return errors.New("revel/controller: failed to find action " + methodName)
+	}
+
+	// Instantiate the controller.
+	c.AppController = initNewAppController(c.Type.Type, c).Interface()
+
+	return nil
+}
+
+// This is a helper that initializes (zeros) a new app controller value.
+// Generally, everything is set to its zero value, except:
+// 1. Embedded controller pointers are newed up.
+// 2. The revel.Controller embedded type is set to the value provided.
+// Returns a value representing a pointer to the new app controller.
+func initNewAppController(appControllerType reflect.Type, c *Controller) reflect.Value {
+	// It might be a multi-level embedding, so we have to create new controllers
+	// at every level of the hierarchy.  To find the controllers, we follow every
+	// anonymous field, using breadth-first search.
+	appControllerPtr := reflect.New(appControllerType)
+	valueQueue := []reflect.Value{appControllerPtr}
+	for len(valueQueue) > 0 {
+		// Get the next value and de-reference it if necessary.
+		var (
+			value    = valueQueue[0]
+			elem     = value
+			elemType = value.Type()
+		)
+		if elemType.Kind() == reflect.Ptr {
+			elem = value.Elem()
+			elemType = elem.Type()
+		}
+		valueQueue = valueQueue[1:]
+
+		// Look at all the struct fields.
+		for i := 0; i < elem.NumField(); i++ {
+			// If this is not an anonymous field, skip it.
+			structField := elemType.Field(i)
+			if !structField.Anonymous {
+				continue
+			}
+
+			fieldValue := elem.Field(i)
+			fieldType := structField.Type
+
+			// If it's a Controller, set it to the new instance.
+			if fieldType == controllerPtrType {
+				fieldValue.Set(reflect.ValueOf(c))
+				continue
+			}
+
+			// Else, add it to the valueQueue, after instantiating (if necessary).
+			if fieldValue.Kind() == reflect.Ptr {
+				fieldValue.Set(reflect.New(fieldType.Elem()))
+			}
+			valueQueue = append(valueQueue, fieldValue)
+		}
+	}
+	return appControllerPtr
+}
+
+// Controller registry and types.
+
+type ControllerType struct {
+	Type    reflect.Type
+	Methods []*MethodType
+}
+
+type MethodType struct {
+	Name           string
+	Args           []*MethodArg
+	RenderArgNames map[int][]string
+	lowerName      string
+}
+
+type MethodArg struct {
+	Name string
+	Type reflect.Type
+}
+
+// Searches for a given exported method (case insensitive)
+func (ct *ControllerType) Method(name string) *MethodType {
+	lowerName := strings.ToLower(name)
+	for _, method := range ct.Methods {
+		if method.lowerName == lowerName {
+			return method
+		}
+	}
+	return nil
+}
+
+var controllers = make(map[string]*ControllerType)
+
+// Register a Controller and its Methods with Revel.
+func RegisterController(c interface{}, methods []*MethodType) {
+	// De-star the controller type
+	// (e.g. given TypeOf((*Application)(nil)), want TypeOf(Application))
+	var t reflect.Type = reflect.TypeOf(c)
+	var elem reflect.Type = t.Elem()
+
+	// De-star all of the method arg types too.
+	for _, m := range methods {
+		m.lowerName = strings.ToLower(m.Name)
+		for _, arg := range m.Args {
+			arg.Type = arg.Type.Elem()
+		}
+	}
+
+	controllers[strings.ToLower(elem.Name())] = &ControllerType{Type: elem, Methods: methods}
+	TRACE.Printf("Registered controller: %s", elem.Name())
 }

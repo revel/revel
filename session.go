@@ -75,13 +75,11 @@ func getSessionFromCookie(cookie *http.Cookie) Session {
 	return session
 }
 
-type SessionPlugin struct{ EmptyPlugin }
-
-func (p SessionPlugin) BeforeRequest(c *Controller) {
+var SessionFilter = func(c *Controller, fc []Filter) {
 	c.Session = restoreSession(c.Request.Request)
-}
 
-func (p SessionPlugin) AfterRequest(c *Controller) {
+	fc[0](c, fc[1:])
+
 	// Store the session (and sign it).
 	c.SetCookie(c.Session.cookie())
 }

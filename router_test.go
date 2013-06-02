@@ -379,6 +379,25 @@ func BenchmarkRouter(b *testing.B) {
 	}
 }
 
+func BenchmarkRouterFilter(b *testing.B) {
+	startFakeBookingApp()
+	controllers := []*Controller{
+		{Request: NewRequest(showRequest)},
+		{Request: NewRequest(staticRequest)},
+	}
+	for _, c := range controllers {
+		c.Params = &Params{}
+		ParseParams(c.Params, c.Request)
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N/len(controllers); i++ {
+		for _, c := range controllers {
+			RouterFilter(c, NilChain)
+		}
+	}
+}
+
 // Helpers
 
 func eq(t *testing.T, name string, a, b interface{}) bool {

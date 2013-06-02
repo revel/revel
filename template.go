@@ -347,27 +347,20 @@ func ReverseUrl(args ...interface{}) (string, error) {
 
 	action := args[0].(string)
 	actionSplit := strings.Split(action, ".")
-	var ctrl, meth string
 	if len(actionSplit) != 2 {
 		return "", fmt.Errorf("reversing '%s', expected 'Controller.Action'", action)
 	}
-	ctrl, meth = actionSplit[0], actionSplit[1]
 
 	// Look up the types.
-	controllerType := LookupControllerType(ctrl)
-	if controllerType == nil {
-		return "", fmt.Errorf("reversing %s.%s, controller not found", ctrl, meth)
-	}
-
-	methodType := controllerType.Method(meth)
-	if methodType == nil {
-		return "", fmt.Errorf("reversing %s.%s, method not found", ctrl, meth)
+	var c Controller
+	if err := c.SetAction(actionSplit[0], actionSplit[1]); err != nil {
+		return "", fmt.Errorf("reversing %s: %s", action, err)
 	}
 
 	// Unbind the arguments.
 	argsByName := make(map[string]string)
 	for i, argValue := range args[1:] {
-		Unbind(argsByName, methodType.Args[i].Name, argValue)
+		Unbind(argsByName, c.MethodType.Args[i].Name, argValue)
 	}
 
 	return MainRouter.Reverse(args[0].(string), argsByName).Url, nil

@@ -36,10 +36,10 @@ import (
 //
 type InterceptorFunc func(*Controller) Result
 type InterceptorMethod interface{}
-type InterceptTime int
+type When int
 
 const (
-	BEFORE InterceptTime = iota
+	BEFORE When = iota
 	AFTER
 	PANIC
 	FINALLY
@@ -52,7 +52,7 @@ const (
 )
 
 type Interception struct {
-	When InterceptTime
+	When When
 
 	function InterceptorFunc
 	method   InterceptorMethod
@@ -85,42 +85,40 @@ func (i Interception) Invoke(val reflect.Value) reflect.Value {
 	return vals[0]
 }
 
-type InterceptorPlugin struct {
-	EmptyPlugin
-}
+var InterceptorFilter = func(c *Controller, fc []Filter) {
+	defer invokeInterceptors(FINALLY, c)
+	defer func() {
+		if err := recover(); err != nil {
+			invokeInterceptors(PANIC, c)
+			panic(err)
+		}
+	}()
 
-func (p InterceptorPlugin) BeforeRequest(c *Controller) {
+	// Invoke the BEFORE interceptors and return early, if we get a result.
 	invokeInterceptors(BEFORE, c)
-}
+	if c.Result != nil {
+		return
+	}
 
-func (p InterceptorPlugin) AfterRequest(c *Controller) {
+	fc[0](c, fc[1:])
 	invokeInterceptors(AFTER, c)
 }
 
-func (p InterceptorPlugin) OnException(c *Controller, err interface{}) {
-	invokeInterceptors(PANIC, c)
-}
-
-func (p InterceptorPlugin) Finally(c *Controller) {
-	invokeInterceptors(FINALLY, c)
-}
-
-func invokeInterceptors(when InterceptTime, c *Controller) {
-	appControllerPtr := reflect.ValueOf(c.AppController)
-	result := func() Result {
-		var result Result
-		for _, intc := range getInterceptors(when, appControllerPtr) {
-			resultValue := intc.Invoke(appControllerPtr)
-			if !resultValue.IsNil() {
-				result = resultValue.Interface().(Result)
-			}
-			if when == BEFORE && result != nil {
-				return result
-			}
+func invokeInterceptors(when When, c *Controller) {
+	var (
+		app    = reflect.ValueOf(c.AppController)
+		result Result
+	)
+	for _, intc := range getInterceptors(when, app) {
+		resultValue := intc.Invoke(app)
+		if !resultValue.IsNil() {
+			result = resultValue.Interface().(Result)
 		}
-		return result
-	}()
-
+		if when == BEFORE && result != nil {
+			c.Result = result
+			return
+		}
+	}
 	if result != nil {
 		c.Result = result
 	}
@@ -132,7 +130,7 @@ var interceptors []*Interception
 // This can be applied to any Controller.
 // It must have the signature of:
 //   func example(c *revel.Controller) revel.Result
-func InterceptFunc(intc InterceptorFunc, when InterceptTime, target interface{}) {
+func InterceptFunc(intc InterceptorFunc, when When, target interface{}) {
 	interceptors = append(interceptors, &Interception{
 		When:         when,
 		function:     intc,
@@ -145,7 +143,7 @@ func InterceptFunc(intc InterceptorFunc, when InterceptTime, target interface{})
 // Install an interceptor method that applies to its own Controller.
 //   func (c AppController) example() revel.Result
 //   func (c *AppController) example() revel.Result
-func InterceptMethod(intc InterceptorMethod, when InterceptTime) {
+func InterceptMethod(intc InterceptorMethod, when When) {
 	methodType := reflect.TypeOf(intc)
 	if methodType.Kind() != reflect.Func || methodType.NumOut() != 1 || methodType.NumIn() != 1 {
 		log.Fatalln("Interceptor method should have signature like",
@@ -159,7 +157,7 @@ func InterceptMethod(intc InterceptorMethod, when InterceptTime) {
 	})
 }
 
-func getInterceptors(when InterceptTime, val reflect.Value) []*Interception {
+func getInterceptors(when When, val reflect.Value) []*Interception {
 	result := []*Interception{}
 	for _, intc := range interceptors {
 		if intc.When != when {

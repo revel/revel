@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/robfig/revel"
-	"github.com/robfig/revel/modules/testrunner/app"
 	"html"
 	"html/template"
 	"reflect"
@@ -148,8 +147,4 @@ func errorSummary(error *revel.Error) string {
 		}
 	}
 	return message
-}
-
-func init() {
-	revel.RegisterPlugin(app.TestRunnerPlugin{})
 }
