@@ -66,11 +66,11 @@ func buildApp(args []string) {
 
 	mustRenderTemplate(
 		path.Join(destPath, "run.sh"),
-		path.Join(revel.RevelPath, "cmd", "package_run.sh.template"),
+		path.Join(revel.RevelPath, "revel", "package_run.sh.template"),
 		tmplData)
 
 	mustRenderTemplate(
 		path.Join(destPath, "run.bat"),
-		path.Join(revel.RevelPath, "cmd", "package_run.bat.template"),
+		path.Join(revel.RevelPath, "revel", "package_run.bat.template"),
 		tmplData)
 }
