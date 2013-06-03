@@ -42,12 +42,11 @@ This command does a couple things:
 
 The Revel command line tool is how you build, run, and package Revel applications.
 
-To build it, run this from the root of your GOPATH:
+Use `go get` to install it:
 
-	go build -o bin/revel github.com/robfig/revel/cmd
+	go get github.com/robfig/revel/revel
 
-Then, add that directory to your PATH so that you can reference the command from
-anywhere.
+Then, ensure the $GOPATH/bin directory is in your PATH so that you can reference the command from anywhere.
 
 	export PATH="$PATH:$GOPATH/bin"
 	echo 'PATH="$PATH:$GOPATH/bin"' >> .bash_profile

@@ -5,10 +5,9 @@ layout: manual
 
 ## Build and Run
 
-You must build the command line tool in order to use Revel.  From the root of
-your GOPATH:
+You must build the command line tool in order to use Revel:
 
-	$ go build -o bin/revel github.com/robfig/revel/cmd
+	$ go get github.com/robfig/revel/revel
 
 Now run it:
 
