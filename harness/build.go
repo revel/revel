@@ -116,7 +116,7 @@ func cleanSource(dirs ...string) {
 	}
 }
 
-// getSource renders the given template to produce source code, which it writes
+// genSource renders the given template to produce source code, which it writes
 // to the given directory and file.
 func genSource(dir, filename, templateSource string, args map[string]interface{}) {
 	sourceCode := revel.ExecuteTemplate(
@@ -309,7 +309,7 @@ type t{{.StructName}} struct {}
 var {{.StructName}} t{{.StructName}}
 
 {{range .MethodSpecs}}
-func (p t{{$c.StructName}}) {{.Name}}({{range .Args}}
+func (_ t{{$c.StructName}}) {{.Name}}({{range .Args}}
 		{{.Name}} {{if .ImportPath}}interface{}{{else}}{{.TypeExpr.TypeName ""}}{{end}},{{end}}
 		) string {
 	args := make(map[string]string)
