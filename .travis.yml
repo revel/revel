@@ -4,7 +4,7 @@ services:
 install:
   # Annoyingly, we can not use go get revel/... because references to app/routes package fail
   - go get -d -v github.com/robfig/revel
-  - go get -d -v github.com/robfig/revel/cmd
+  - go get -d -v github.com/robfig/revel/revel
   - go get -d -v github.com/robfig/revel/cache
   - go get -d -v github.com/robfig/revel/harness
   - go get -d -v github.com/coopernurse/gorp
@@ -17,9 +17,6 @@ script:
   - go test github.com/robfig/revel
   - go test github.com/robfig/revel/cache
   - go test github.com/robfig/revel/harness
-
-  # Build the command line tool
-  - go build -o $GOPATH/bin/revel github.com/robfig/revel/cmd
 
   # Ensure the new-app flow works (plus the other commands).
   - $GOPATH/bin/revel new     my/testapp
