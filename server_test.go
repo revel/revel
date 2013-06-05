@@ -27,6 +27,10 @@ func BenchmarkServeJson(b *testing.B) {
 	benchmarkRequest(b, jsonRequest)
 }
 
+func BenchmarkServePlaintext(b *testing.B) {
+	benchmarkRequest(b, plaintextRequest)
+}
+
 // This tries to benchmark the static serving overhead when serving an "average
 // size" 7k file.
 func BenchmarkServeStatic(b *testing.B) {
@@ -68,12 +72,20 @@ func TestFakeServer(t *testing.T) {
 		t.Errorf("Failed to find hotel address in JSON response:\n%s", resp.Body)
 		t.FailNow()
 	}
+	resp.Body.Reset()
+
+	handle(resp, plaintextRequest)
+	if resp.Body.String() != "Hello, World!" {
+		t.Errorf("Failed to find greeting in plaintext response:\n%s", resp.Body)
+		t.FailNow()
+	}
 
 	resp.Body = nil
 }
 
 var (
-	showRequest, _   = http.NewRequest("GET", "/hotels/3", nil)
-	staticRequest, _ = http.NewRequest("GET", "/public/js/sessvars.js", nil)
-	jsonRequest, _   = http.NewRequest("GET", "/hotels/3/booking", nil)
+	showRequest, _      = http.NewRequest("GET", "/hotels/3", nil)
+	staticRequest, _    = http.NewRequest("GET", "/public/js/sessvars.js", nil)
+	jsonRequest, _      = http.NewRequest("GET", "/hotels/3/booking", nil)
+	plaintextRequest, _ = http.NewRequest("GET", "/hotels", nil)
 )
