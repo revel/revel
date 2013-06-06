@@ -61,7 +61,7 @@ your action in **app/controllers/app.go**:
 		if c.Validation.HasErrors() {
 			c.Validation.Keep()
 			c.FlashParams()
-			return c.Redirect(Application.Index)
+			return c.Redirect(App.Index)
 		}
 
 		return c.Render(myName)
