@@ -12,6 +12,7 @@ var (
 	MainTemplateLoader *TemplateLoader
 	MainWatcher        *Watcher
 	Server             *http.Server
+	Handler            http.Handler = http.HandlerFunc(handle)
 )
 
 // This method handles all requests.  It dispatches to handleInternal after
@@ -69,7 +70,7 @@ func Run(port int) {
 
 	Server = &http.Server{
 		Addr:    fmt.Sprintf("%s:%d", address, port),
-		Handler: http.HandlerFunc(handle),
+		Handler: Handler,
 	}
 
 	runStartupHooks()
