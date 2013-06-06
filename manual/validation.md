@@ -105,10 +105,10 @@ func (c MyApp) SaveUser(username string) revel.Result {
 	{{/* app/views/Hotels/Settings.html */}}
 	...
 	{{if .errors}}
-	<div class="error>
+	<div class="error">
 		<ul>
 		{{range .errors}}
-			<li> {{.Message}}
+			<li> {{.Message}}</li>
 		{{end}}
 		</ul>
 	</div>
