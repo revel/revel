@@ -7,7 +7,7 @@ module:testrunner
 GET			/							Application.Index
 
 # Map static resources from the app/public folder to /public
-GET   /public/{<.+>filepath}              Static.Serve("public")
+GET   /public/:filepath              Static.Serve("public")
 
 # Catch all
-*			/{controller}/{action}		{controller}.{action}
+*			/:controller/:action		:controller.:action

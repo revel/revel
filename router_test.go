@@ -299,10 +299,14 @@ func TestReverseRouting(t *testing.T) {
 func BenchmarkRouter(b *testing.B) {
 	router := NewRouter("")
 	router.Routes, _ = parseRoutes("", TEST_ROUTES, false)
+	router.updateTree()
 	b.ResetTimer()
 	for i := 0; i < b.N/len(routeMatchTestCases); i++ {
 		for req, _ := range routeMatchTestCases {
 			router.Route(req)
+			if r == nil {
+				b.Errorf("Request not found: %s", req.URL.Path)
+			}
 		}
 	}
 }
@@ -311,7 +315,7 @@ func BenchmarkRouterFilter(b *testing.B) {
 	startFakeBookingApp()
 	controllers := []*Controller{
 		{Request: NewRequest(showRequest)},
-		{Request: NewRequest(staticRequest)},
+		// {Request: NewRequest(staticRequest)}
 	}
 	for _, c := range controllers {
 		c.Params = &Params{}

@@ -72,6 +72,7 @@ func startFakeBookingApp() {
 	MainRouter = NewRouter("")
 	routesFile, _ := ioutil.ReadFile(filepath.Join(BasePath, "conf", "routes"))
 	MainRouter.Routes, _ = parseRoutes("", string(routesFile), false)
+	MainRouter.updateTree()
 	MainTemplateLoader = NewTemplateLoader([]string{ViewsPath, path.Join(RevelPath, "templates")})
 	MainTemplateLoader.Refresh()
 

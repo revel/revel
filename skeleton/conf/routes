@@ -13,4 +13,4 @@ GET     /favicon.ico                            404
 GET     /public/{<.+>filepath}                  Static.Serve("public")
 
 # Catch all
-*       /{controller}/{action}                  {controller}.{action}
+*       /:controller/:action                  :controller.:action
