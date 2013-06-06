@@ -36,6 +36,10 @@ func (c Hotels) Book(id int) Result {
 	return c.RenderJson(hotel)
 }
 
+func (c Hotels) Index() Result {
+	return c.RenderText("Hello, World!")
+}
+
 func (c Static) Serve(prefix, filepath string) Result {
 	var basePath, dirName string
 

@@ -165,7 +165,7 @@ func (v *Validation) Check(obj interface{}, checks ...Validator) *ValidationResu
 	return result
 }
 
-var ValidationFilter = func(c *Controller, fc []Filter) {
+func ValidationFilter(c *Controller, fc []Filter) {
 	c.Validation = &Validation{
 		Errors: restoreValidationErrors(c.Request.Request),
 		keep:   false,

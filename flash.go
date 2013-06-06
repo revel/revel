@@ -30,7 +30,7 @@ func (f Flash) Success(msg string, args ...interface{}) {
 	}
 }
 
-var FlashFilter = func(c *Controller, fc []Filter) {
+func FlashFilter(c *Controller, fc []Filter) {
 	c.Flash = restoreFlash(c.Request.Request)
 	c.RenderArgs["flash"] = c.Flash.Data
 

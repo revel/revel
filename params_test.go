@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"reflect"
 	"testing"
 )
@@ -116,6 +117,19 @@ func TestMultipartForm(t *testing.T) {
 
 	if !reflect.DeepEqual(expectedFiles, actualFiles) {
 		t.Errorf("Param files: (expected) %v != %v (actual)", expectedFiles, actualFiles)
+	}
+}
+
+func TestBind(t *testing.T) {
+	params := Params{
+		Values: url.Values{
+			"x": {"5"},
+		},
+	}
+	var x int
+	params.Bind(&x, "x")
+	if x != 5 {
+		t.Errorf("Failed to bind x.  Value: %d", x)
 	}
 }
 

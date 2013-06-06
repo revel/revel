@@ -95,10 +95,21 @@ You can add it to a run mode configuration with the following line:
 	revel.INFO.Printf("Testing %s (%s) in %s mode\n", revel.AppName, revel.ImportPath, mode)
 
 	// Get a list of tests.
-	var testSuites []controllers.TestSuiteDesc
-	baseUrl := fmt.Sprintf("http://127.0.0.1:%d", revel.HttpPort)
-	resp, err := http.Get(baseUrl + "/@tests.list")
-	if err != nil {
+	// Since this is the first request to the server, retry/sleep a couple times
+	// in case it hasn't finished starting up yet.
+	var (
+		testSuites []controllers.TestSuiteDesc
+		resp       *http.Response
+		baseUrl    = fmt.Sprintf("http://127.0.0.1:%d", revel.HttpPort)
+	)
+	for i := 0; ; i++ {
+		if resp, err = http.Get(baseUrl + "/@tests.list"); err == nil {
+			break
+		}
+		if i < 3 {
+			time.Sleep(3 * time.Second)
+			continue
+		}
 		errorf("Failed to request test list: %s", err)
 	}
 	defer resp.Body.Close()

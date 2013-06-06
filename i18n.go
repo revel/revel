@@ -142,7 +142,7 @@ func init() {
 	})
 }
 
-var I18nFilter = func(c *Controller, fc []Filter) {
+func I18nFilter(c *Controller, fc []Filter) {
 	if foundCookie, cookieValue := hasLocaleCookie(c.Request); foundCookie {
 		TRACE.Printf("Found locale cookie value: %s", cookieValue)
 		setCurrentLocaleControllerArguments(c, cookieValue)

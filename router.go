@@ -405,7 +405,7 @@ func init() {
 	})
 }
 
-var RouterFilter = func(c *Controller, fc []Filter) {
+func RouterFilter(c *Controller, fc []Filter) {
 	// Figure out the Controller/Action
 	var route *RouteMatch = MainRouter.Route(c.Request.Request)
 	if route == nil {

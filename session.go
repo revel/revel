@@ -75,7 +75,7 @@ func getSessionFromCookie(cookie *http.Cookie) Session {
 	return session
 }
 
-var SessionFilter = func(c *Controller, fc []Filter) {
+func SessionFilter(c *Controller, fc []Filter) {
 	c.Session = restoreSession(c.Request.Request)
 
 	fc[0](c, fc[1:])
