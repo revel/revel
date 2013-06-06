@@ -180,7 +180,7 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 	}: &RouteMatch{
 		ControllerName: "Static",
 		MethodName:     "Serve",
-		FixedParams:    []string{"public"},
+		FixedParams:    []string{"public/js"},
 		Params:         map[string][]string{"filepath": {"sessvars.js"}},
 	},
 
@@ -215,9 +215,6 @@ func TestRouteMatches(t *testing.T) {
 	router := NewRouter("")
 	router.Routes, _ = parseRoutes("", TEST_ROUTES, false)
 	router.updateTree()
-	for _, r := range router.Routes {
-		t.Logf("PathTree: %s", r.TreePath)
-	}
 	for req, expected := range routeMatchTestCases {
 		t.Log("Routing:", req.Method, req.URL)
 		actual := router.Route(req)
@@ -229,6 +226,10 @@ func TestRouteMatches(t *testing.T) {
 		eq(t, "len(Params)", len(actual.Params), len(expected.Params))
 		for key, actualValue := range actual.Params {
 			eq(t, "Params", actualValue[0], expected.Params[key][0])
+		}
+		eq(t, "len(FixedParams)", len(actual.FixedParams), len(expected.FixedParams))
+		for i, actualValue := range actual.FixedParams {
+			eq(t, "FixedParams", actualValue, expected.FixedParams[i])
 		}
 	}
 }

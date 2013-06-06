@@ -124,6 +124,7 @@ func (router *Router) Route(req *http.Request) *RouteMatch {
 		ControllerName: controllerName,
 		MethodName:     methodName,
 		Params:         params,
+		FixedParams:    route.FixedParams,
 	}
 }
 
