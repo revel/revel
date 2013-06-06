@@ -107,7 +107,7 @@ You can add it to a run mode configuration with the following line:
 			break
 		}
 		if i < 3 {
-			time.Sleep(time.Second)
+			time.Sleep(3 * time.Second)
 			continue
 		}
 		errorf("Failed to request test list: %s", err)
