@@ -313,10 +313,12 @@ func (router *Router) Reverse(action string, argValues map[string]string) *Actio
 		}
 
 		// Build up the URL.
-		var queryValues url.Values = make(url.Values)
-		pathElements := strings.Split(route.Path, "/")
+		var (
+			queryValues  = make(url.Values)
+			pathElements = strings.Split(route.Path, "/")
+		)
 		for i, el := range pathElements {
-			if el[0] != ':' {
+			if el == "" || el[0] != ':' {
 				continue
 			}
 
