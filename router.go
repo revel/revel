@@ -136,6 +136,7 @@ func (router *Router) Refresh() (err *Error) {
 }
 
 func (router *Router) updateTree() {
+	router.Tree = pathtree.New()
 	for _, route := range router.Routes {
 		router.Tree.Add(route.TreePath, route)
 		if route.Method == "GET" {
