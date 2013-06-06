@@ -201,7 +201,7 @@ func parseRoutes(routesPath, content string, validate bool) ([]*Route, *Error) {
 // validateRoute checks that every specified action exists.
 func validateRoute(route *Route) error {
 	// Skip variable routes.
-	if strings.ContainsAny(route.Action, "{}") {
+	if route.Action[0] == ':' {
 		return nil
 	}
 
