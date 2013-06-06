@@ -1,6 +1,7 @@
 package revel
 
 import (
+	"fmt"
 	"net/http"
 	"net/url"
 	"testing"
@@ -303,9 +304,59 @@ func BenchmarkRouter(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N/len(routeMatchTestCases); i++ {
 		for req, _ := range routeMatchTestCases {
-			router.Route(req)
+			r := router.Route(req)
 			if r == nil {
 				b.Errorf("Request not found: %s", req.URL.Path)
+			}
+		}
+	}
+}
+
+// The benchmark from github.com/ant0ine/go-urlrouter
+func BenchmarkLargeRouter(b *testing.B) {
+	router := NewRouter("")
+
+	routePaths := []string{
+		"/",
+		"/signin",
+		"/signout",
+		"/profile",
+		"/settings",
+		"/upload/*file",
+	}
+	for i := 0; i < 10; i++ {
+		for j := 0; j < 5; j++ {
+			routePaths = append(routePaths, fmt.Sprintf("/resource%d/:id/property%d", i, j))
+		}
+		routePaths = append(routePaths, fmt.Sprintf("/resource%d/:id", i))
+		routePaths = append(routePaths, fmt.Sprintf("/resource%d", i))
+	}
+	routePaths = append(routePaths, "/:any")
+
+	for _, p := range routePaths {
+		router.Routes = append(router.Routes, NewRoute("GET", p, "Controller.Action", ""))
+	}
+	router.updateTree()
+
+	requestUrls := []string{
+		"http://example.org/",
+		"http://example.org/resource9/123",
+		"http://example.org/resource9/123/property1",
+		"http://example.org/doesnotexist",
+	}
+	var reqs []*http.Request
+	for _, url := range requestUrls {
+		req, _ := http.NewRequest("GET", url, nil)
+		reqs = append(reqs, req)
+	}
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N/len(reqs); i++ {
+		for _, req := range reqs {
+			route := router.Route(req)
+			if route == nil {
+				b.Errorf("Failed to route: %s", req.URL.Path)
 			}
 		}
 	}
