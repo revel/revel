@@ -200,7 +200,7 @@ func FilterEq(a, b Filter) bool {
 
 // FilterConfiguringFilter is a filter stage that customizes the remaining
 // filter chain for the action being invoked.
-var FilterConfiguringFilter = func(c *Controller, fc []Filter) {
+func FilterConfiguringFilter(c *Controller, fc []Filter) {
 	if newChain := getOverrideChain(c.Name, c.Action); newChain != nil {
 		newChain[0](c, newChain[1:])
 		return

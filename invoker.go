@@ -11,7 +11,7 @@ var (
 	websocketType     = reflect.TypeOf((*websocket.Conn)(nil))
 )
 
-var ActionInvoker = func(c *Controller, _ []Filter) {
+func ActionInvoker(c *Controller, _ []Filter) {
 	// Instantiate the method.
 	methodValue := reflect.ValueOf(c.AppController).MethodByName(c.MethodType.Name)
 

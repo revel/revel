@@ -109,7 +109,7 @@ func (p *Params) calcValues() url.Values {
 	return values
 }
 
-var ParamsFilter = func(c *Controller, fc []Filter) {
+func ParamsFilter(c *Controller, fc []Filter) {
 	ParseParams(c.Params, c.Request)
 
 	// Clean up from the request.
