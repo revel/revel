@@ -93,6 +93,10 @@ All assertions raise a panic if they are not fulfilled.  All panics are caught b
 In order to run any tests, the `testrunner` module must be activated.  This is done by including the following line in your `app.conf`:
 
 	module.testrunner = github.com/robfig/revel/modules/testrunner
+	
+You must also have the following line at the beginning of your `routes` file:
+
+	module:testrunner
 
 With that done, the tests may be run interactively or non-interactively.
 
