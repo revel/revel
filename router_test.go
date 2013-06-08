@@ -87,7 +87,7 @@ func TestComputeRoute(t *testing.T) {
 			t.Error("Failed to parse route line:", routeLine)
 			continue
 		}
-		actual := NewRoute(method, path, action, fixedArgs)
+		actual := NewRoute(method, path, action, fixedArgs, "", 0)
 		eq(t, "Method", actual.Method, expected.Method)
 		eq(t, "Path", actual.Path, expected.Path)
 		eq(t, "Action", actual.Action, expected.Action)
@@ -335,7 +335,8 @@ func BenchmarkLargeRouter(b *testing.B) {
 	routePaths = append(routePaths, "/:any")
 
 	for _, p := range routePaths {
-		router.Routes = append(router.Routes, NewRoute("GET", p, "Controller.Action", ""))
+		router.Routes = append(router.Routes,
+			NewRoute("GET", p, "Controller.Action", "", "", 0))
 	}
 	router.updateTree()
 
