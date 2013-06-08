@@ -21,6 +21,9 @@ type Route struct {
 	MethodName     string   // e.g. "ShowApp", ""
 	FixedParams    []string // e.g. "arg1","arg2","arg3" (CSV formatting)
 	TreePath       string   // e.g. "/GET/app/:id"
+
+	routesPath string // e.g. /Users/robfig/gocode/src/myapp/conf/routes
+	line       int    // e.g. 3
 }
 
 type RouteMatch struct {
@@ -38,7 +41,7 @@ type arg struct {
 }
 
 // Prepares the route to be used in matching.
-func NewRoute(method, path, action, fixedArgs string) (r *Route) {
+func NewRoute(method, path, action, fixedArgs, routesPath string, line int) (r *Route) {
 	// Handle fixed arguments
 	argsReader := strings.NewReader(fixedArgs)
 	csv := csv.NewReader(argsReader)
@@ -53,6 +56,8 @@ func NewRoute(method, path, action, fixedArgs string) (r *Route) {
 		Action:      action,
 		FixedParams: fargs,
 		TreePath:    treePath(strings.ToUpper(method), path),
+		routesPath:  routesPath,
+		line:        line,
 	}
 
 	// URL pattern
@@ -127,18 +132,29 @@ func (router *Router) Route(req *http.Request) *RouteMatch {
 // Returns an error if a specified action could not be found.
 func (router *Router) Refresh() (err *Error) {
 	router.Routes, err = parseRoutesFile(router.path, true)
-	router.updateTree()
+	if err != nil {
+		return
+	}
+	err = router.updateTree()
 	return
 }
 
-func (router *Router) updateTree() {
+func (router *Router) updateTree() *Error {
 	router.Tree = pathtree.New()
 	for _, route := range router.Routes {
-		router.Tree.Add(route.TreePath, route)
-		if route.Method == "GET" {
-			router.Tree.Add(treePath("HEAD", route.Path), route)
+		err := router.Tree.Add(route.TreePath, route)
+
+		// Allow GETs to respond to HEAD requests.
+		if err == nil && route.Method == "GET" {
+			err = router.Tree.Add(treePath("HEAD", route.Path), route)
+		}
+
+		// Error adding a route to the pathtree.
+		if err != nil {
+			return routeError(err, route.routesPath, "", route.line)
 		}
 	}
+	return nil
 }
 
 // parseRoutesFile reads the given routes file and returns the contained routes.
@@ -181,7 +197,7 @@ func parseRoutes(routesPath, content string, validate bool) ([]*Route, *Error) {
 			continue
 		}
 
-		route := NewRoute(method, path, action, fixedArgs)
+		route := NewRoute(method, path, action, fixedArgs, routesPath, n)
 		routes = append(routes, route)
 
 		if validate {
@@ -196,11 +212,6 @@ func parseRoutes(routesPath, content string, validate bool) ([]*Route, *Error) {
 
 // validateRoute checks that every specified action exists.
 func validateRoute(route *Route) error {
-	// Skip variable routes.
-	if route.Action[0] == ':' {
-		return nil
-	}
-
 	// Skip 404s
 	if route.Action == "404" {
 		return nil
@@ -211,6 +222,11 @@ func validateRoute(route *Route) error {
 	if len(parts) != 2 {
 		return fmt.Errorf("Expected two parts (Controller.Action), but got %d: %s",
 			len(parts), route.Action)
+	}
+
+	// Skip variable routes.
+	if parts[0][0] == ':' || parts[1][0] == ':' {
+		return nil
 	}
 
 	var c Controller
@@ -225,6 +241,15 @@ func validateRoute(route *Route) error {
 func routeError(err error, routesPath, content string, n int) *Error {
 	if revelError, ok := err.(*Error); ok {
 		return revelError
+	}
+	// Load the route file content if necessary
+	if content == "" {
+		contentBytes, err := ioutil.ReadFile(routesPath)
+		if err != nil {
+			ERROR.Println("Failed to read route file %s: %s", routesPath, err)
+		} else {
+			content = string(contentBytes)
+		}
 	}
 	return &Error{
 		Title:       "Route validation error",
