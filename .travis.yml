@@ -2,6 +2,7 @@ language: go
 services:
   - memcache # github.com/robfig/revel/cache
 install:
+  - export PATH=$PATH:$HOME/gopath/bin
   # Annoyingly, we can not use go get revel/... because references to app/routes package fail
   - go get -v github.com/robfig/revel/revel
   - go get -v github.com/robfig/revel/cache
@@ -18,17 +19,17 @@ script:
   - go test github.com/robfig/revel/harness
 
   # Ensure the new-app flow works (plus the other commands).
-  - $GOPATH/bin/revel new     my/testapp
-  - $GOPATH/bin/revel test    my/testapp
-  - $GOPATH/bin/revel clean   my/testapp
-  - $GOPATH/bin/revel build   my/testapp build/testapp
-  - $GOPATH/bin/revel package my/testapp
+  - revel new     my/testapp
+  - revel test    my/testapp
+  - revel clean   my/testapp
+  - revel build   my/testapp build/testapp
+  - revel package my/testapp
 
   # Build & run the sample apps
-  - $GOPATH/bin/revel test github.com/robfig/revel/samples/booking
-  - $GOPATH/bin/revel test github.com/robfig/revel/samples/chat
-  - $GOPATH/bin/revel test github.com/robfig/revel/samples/facebook-oauth2
-  - $GOPATH/bin/revel test github.com/robfig/revel/samples/twitter-oauth
-  - $GOPATH/bin/revel test github.com/robfig/revel/samples/validation
-  - $GOPATH/bin/revel test github.com/robfig/revel/samples/chat
+  - revel test github.com/robfig/revel/samples/booking
+  - revel test github.com/robfig/revel/samples/chat
+  - revel test github.com/robfig/revel/samples/facebook-oauth2
+  - revel test github.com/robfig/revel/samples/twitter-oauth
+  - revel test github.com/robfig/revel/samples/validation
+  - revel test github.com/robfig/revel/samples/chat
 
