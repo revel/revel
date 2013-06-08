@@ -23,11 +23,12 @@ type Response struct {
 	Status      int
 	ContentType string
 
-	Out http.ResponseWriter
+	Header http.Header
+	Out    http.ResponseWriter
 }
 
 func NewResponse(w http.ResponseWriter) *Response {
-	return &Response{Out: w}
+	return &Response{Out: w, Header: w.Header()}
 }
 
 func NewRequest(r *http.Request) *Request {
