@@ -38,6 +38,10 @@ Instead, this is the recommended way:
 3. When you want to push to your fork, do this:
 	$ git push fork master
 
+### Building
+To compile revel after making changes:
+	go build -o bin/revel.exe github.com/robfig/revel/revel	
+
 ### Gofmt your code
 
 Set your editor to run "go fmt" every time you save so that whitespace / style
