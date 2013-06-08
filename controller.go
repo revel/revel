@@ -226,7 +226,7 @@ func (c *Controller) SetAction(controllerName, methodName string) error {
 	c.Action = c.Name + "." + c.MethodName
 
 	// Instantiate the controller.
-	c.AppController = initNewAppController(c.Type.Type, c).Interface()
+	c.AppController = initNewAppController(c.Type, c).Interface()
 
 	return nil
 }
@@ -236,24 +236,40 @@ func (c *Controller) SetAction(controllerName, methodName string) error {
 // 1. Embedded controller pointers are newed up.
 // 2. The revel.Controller embedded type is set to the value provided.
 // Returns a value representing a pointer to the new app controller.
-func initNewAppController(appControllerType reflect.Type, c *Controller) reflect.Value {
+func initNewAppController(appControllerType *ControllerType, c *Controller) reflect.Value {
+	var (
+		appControllerPtr = reflect.New(appControllerType.Type)
+		appController    = appControllerPtr.Elem()
+		cValue           = reflect.ValueOf(c)
+	)
+	for _, index := range appControllerType.ControllerIndexes {
+		appController.FieldByIndex(index).Set(cValue)
+	}
+	return appControllerPtr
+}
+
+func findControllers(appControllerType reflect.Type) (indexes [][]int) {
 	// It might be a multi-level embedding, so we have to create new controllers
 	// at every level of the hierarchy.  To find the controllers, we follow every
-	// anonymous field, using breadth-first search.
+	// anonymous field, using depth-first search.
+	type nodeType struct {
+		val   reflect.Value
+		index []int
+	}
 	appControllerPtr := reflect.New(appControllerType)
-	valueQueue := []reflect.Value{appControllerPtr}
-	for len(valueQueue) > 0 {
+	queue := []nodeType{{appControllerPtr, []int{}}}
+	for len(queue) > 0 {
 		// Get the next value and de-reference it if necessary.
 		var (
-			value    = valueQueue[0]
-			elem     = value
-			elemType = value.Type()
+			node     = queue[0]
+			elem     = node.val
+			elemType = elem.Type()
 		)
 		if elemType.Kind() == reflect.Ptr {
-			elem = value.Elem()
+			elem = elem.Elem()
 			elemType = elem.Type()
 		}
-		valueQueue = valueQueue[1:]
+		queue = queue[1:]
 
 		// Look at all the struct fields.
 		for i := 0; i < elem.NumField(); i++ {
@@ -266,27 +282,29 @@ func initNewAppController(appControllerType reflect.Type, c *Controller) reflect
 			fieldValue := elem.Field(i)
 			fieldType := structField.Type
 
-			// If it's a Controller, set it to the new instance.
+			// If it's a Controller, record the field indexes to get here.
 			if fieldType == controllerPtrType {
-				fieldValue.Set(reflect.ValueOf(c))
+				indexes = append(indexes, append(node.index, i))
 				continue
 			}
 
-			// Else, add it to the valueQueue, after instantiating (if necessary).
+			// Else, add it to the queue, after instantiating (if necessary).
 			if fieldValue.Kind() == reflect.Ptr {
+				INFO.Println("WARNING: Pointer detected")
 				fieldValue.Set(reflect.New(fieldType.Elem()))
 			}
-			valueQueue = append(valueQueue, fieldValue)
+			queue = append(queue, nodeType{fieldValue, append(append([]int{}, node.index...), i)})
 		}
 	}
-	return appControllerPtr
+	return
 }
 
 // Controller registry and types.
 
 type ControllerType struct {
-	Type    reflect.Type
-	Methods []*MethodType
+	Type              reflect.Type
+	Methods           []*MethodType
+	ControllerIndexes [][]int // FieldByIndex to all embedded *Controllers
 }
 
 type MethodType struct {
@@ -329,6 +347,10 @@ func RegisterController(c interface{}, methods []*MethodType) {
 		}
 	}
 
-	controllers[strings.ToLower(elem.Name())] = &ControllerType{Type: elem, Methods: methods}
+	controllers[strings.ToLower(elem.Name())] = &ControllerType{
+		Type:              elem,
+		Methods:           methods,
+		ControllerIndexes: findControllers(elem),
+	}
 	TRACE.Printf("Registered controller: %s", elem.Name())
 }

@@ -33,70 +33,92 @@ var GENERATIONS = [][]interface{}{
 	{PNN{}, PPN{}, PNP{}, PPP{}},
 }
 
-// This test constructs a bunch of hypothetical app controllers, and verifies
-// that the embedded Controller field was set correctly.
-func TestNewAppController(t *testing.T) {
-	controller := &Controller{Name: "Test"}
-	for gen, structs := range GENERATIONS {
-		for _, st := range structs {
-			typ := reflect.TypeOf(st)
-			val := initNewAppController(typ, controller)
+func TestFindControllers(t *testing.T) {
+	controllers = make(map[string]*ControllerType)
+	RegisterController((*P)(nil), nil)
+	RegisterController((*PN)(nil), nil)
+	RegisterController((*PP)(nil), nil)
+	RegisterController((*PNN)(nil), nil)
+	RegisterController((*PP2)(nil), nil)
 
-			// Drill into the embedded fields to get to the Controller.
-			for i := 0; i < gen+1; i++ {
-				if val.Kind() == reflect.Ptr {
-					val = val.Elem()
-				}
-				val = val.Field(0)
-			}
+	checkSearchResults(t, P{}, [][]int{{0}})
+	checkSearchResults(t, PN{}, [][]int{{0, 0}})
+	// checkSearchResults(t, PP{}, [][]int{{0, 0}}) // maybe not
+	checkSearchResults(t, PNN{}, [][]int{{0, 0, 0}})
+	checkSearchResults(t, PP2{}, [][]int{{0}, {1, 0}, {2, 0}})
+}
 
-			var name string
-			if val.Type().Kind() == reflect.Ptr {
-				name = val.Interface().(*Controller).Name
-			} else {
-				name = val.Interface().(Controller).Name
-			}
-
-			if name != "Test" {
-				t.Error("Fail: " + typ.String())
-			}
-		}
+func checkSearchResults(t *testing.T, obj interface{}, expected [][]int) {
+	actual := findControllers(reflect.TypeOf(obj))
+	if !reflect.DeepEqual(expected, actual) {
+		t.Errorf("Indexes do not match.  expected %v actual %v", expected, actual)
 	}
 }
 
-// Since the test machinery that goes through all the structs is non-trivial,
-// have one redundant test that covers just one complicated case but is dead
-// simple.
-func TestNewAppController2(t *testing.T) {
-	val := initNewAppController(reflect.TypeOf(PNP{}), &Controller{Name: "Test"})
-	pnp := val.Interface().(*PNP)
-	if pnp.PN.P.Controller.Name != "Test" {
-		t.Error("PNP not initialized.")
-	}
-	if pnp.Controller.Name != "Test" {
-		t.Error("PNP promotion not working.")
-	}
-}
+// // This test constructs a bunch of hypothetical app controllers, and verifies
+// // that the embedded Controller field was set correctly.
+// func TestNewAppController(t *testing.T) {
+// 	controller := &Controller{Name: "Test"}
+// 	for gen, structs := range GENERATIONS {
+// 		for _, st := range structs {
+// 			typ := reflect.TypeOf(st)
+// 			val := initNewAppController(typ, controller)
 
-func TestMultiEmbedding(t *testing.T) {
-	val := initNewAppController(reflect.TypeOf(PP2{}), &Controller{Name: "Test"})
-	pp2 := val.Interface().(*PP2)
-	if pp2.P.Controller.Name != "Test" {
-		t.Error("P not initialized.")
-	}
+// 			// Drill into the embedded fields to get to the Controller.
+// 			for i := 0; i < gen+1; i++ {
+// 				if val.Kind() == reflect.Ptr {
+// 					val = val.Elem()
+// 				}
+// 				val = val.Field(0)
+// 			}
 
-	if pp2.P2.Controller.Name != "Test" {
-		t.Error("P2 not initialized.")
-	}
+// 			var name string
+// 			if val.Type().Kind() == reflect.Ptr {
+// 				name = val.Interface().(*Controller).Name
+// 			} else {
+// 				name = val.Interface().(Controller).Name
+// 			}
 
-	if pp2.Controller.Name != "Test" {
-		t.Error("PP2 promotion not working.")
-	}
+// 			if name != "Test" {
+// 				t.Error("Fail: " + typ.String())
+// 			}
+// 		}
+// 	}
+// }
 
-	if pp2.P.Controller != pp2.P2.Controller || pp2.Controller != pp2.P.Controller {
-		t.Error("Controllers not pointing to the same thing.")
-	}
-}
+// // // Since the test machinery that goes through all the structs is non-trivial,
+// // have one redundant test that covers just one complicated case but is dead
+// // simple.
+// func TestNewAppController2(t *testing.T) {
+// 	val := initNewAppController(reflect.TypeOf(PNP{}), &Controller{Name: "Test"})
+// 	pnp := val.Interface().(*PNP)
+// 	if pnp.PN.P.Controller.Name != "Test" {
+// 		t.Error("PNP not initialized.")
+// 	}
+// 	if pnp.Controller.Name != "Test" {
+// 		t.Error("PNP promotion not working.")
+// 	}
+// }
+
+// func TestMultiEmbedding(t *testing.T) {
+// 	val := initNewAppController(reflect.TypeOf(PP2{}), &Controller{Name: "Test"})
+// 	pp2 := val.Interface().(*PP2)
+// 	if pp2.P.Controller.Name != "Test" {
+// 		t.Error("P not initialized.")
+// 	}
+
+// 	if pp2.P2.Controller.Name != "Test" {
+// 		t.Error("P2 not initialized.")
+// 	}
+
+// 	if pp2.Controller.Name != "Test" {
+// 		t.Error("PP2 promotion not working.")
+// 	}
+
+// 	if pp2.P.Controller != pp2.P2.Controller || pp2.Controller != pp2.P.Controller {
+// 		t.Error("Controllers not pointing to the same thing.")
+// 	}
+// }
 
 func BenchmarkSetAction(b *testing.B) {
 	type Mixin1 struct {
