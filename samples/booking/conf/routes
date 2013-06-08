@@ -20,10 +20,8 @@ POST    /login                                  Application.Login
 GET     /logout                                 Application.Logout
 
 # Map static resources from the /app/public folder to the /public path
-GET /public/js/:filepath                   Static.Serve("public/js")
-GET /public/img/:filepath                  Static.Serve("public/img")
-GET /public/css/:filepath                  Static.Serve("public/css")
-GET /favicon.ico                           Static.Serve("public/img","favicon.png")
+GET     /public/*filepath                       Static.Serve("public")
+GET     /favicon.ico                            Static.Serve("public/img","favicon.png")
 
 # Catch all
 *       /:controller/:action                  :controller.:action

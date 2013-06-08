@@ -24,10 +24,7 @@ type Route struct {
 }
 
 type RouteMatch struct {
-	Route *Route
-	Args  []string
-
-	Action         string // e.g. Application.ShowApp
+	Action         string // e.g. 404
 	ControllerName string // e.g. Application
 	MethodName     string // e.g. ShowApp
 	FixedParams    []string
@@ -74,11 +71,10 @@ func NewRoute(method, path, action, fixedArgs string) (r *Route) {
 }
 
 func treePath(method, path string) string {
-	m := method
 	if method == "*" {
-		m = ":METHOD"
+		method = ":METHOD"
 	}
-	return "/" + m + path
+	return "/" + method + path
 }
 
 type Router struct {
@@ -120,7 +116,6 @@ func (router *Router) Route(req *http.Request) *RouteMatch {
 	}
 
 	return &RouteMatch{
-		Action:         controllerName + "." + methodName,
 		ControllerName: controllerName,
 		MethodName:     methodName,
 		Params:         params,
