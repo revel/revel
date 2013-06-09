@@ -91,8 +91,9 @@ func (r ErrorResult) Apply(req *Request, resp *Response) {
 		return
 	}
 
-	resp.WriteHeader(status, contentType)
-	b.WriteTo(resp.Out)
+	resp.SetStatus(status)
+	resp.SetContentType(contentType)
+	b.WriteTo(resp)
 }
 
 type PlaintextErrorResult struct {
@@ -101,8 +102,9 @@ type PlaintextErrorResult struct {
 
 // This method is used when the template loader or error template is not available.
 func (r PlaintextErrorResult) Apply(req *Request, resp *Response) {
-	resp.WriteHeader(http.StatusInternalServerError, "text/plain")
-	resp.Out.Write([]byte(r.Error.Error()))
+	resp.SetStatus(http.StatusInternalServerError)
+	resp.SetContentType("text/plain")
+	resp.Write([]byte(r.Error.Error()))
 }
 
 // Action methods return this result to request a template be rendered.
@@ -127,8 +129,9 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
 	// (In a dev mode, always render to a temporary buffer first to avoid having
 	// error pages distorted by HTML already written)
 	if chunked && !DevMode {
-		resp.WriteHeader(http.StatusOK, "text/html")
-		r.render(req, resp, resp.Out)
+		resp.SetStatus(http.StatusOK)
+		resp.SetContentType("text/html")
+		r.render(req, resp, resp)
 		return
 	}
 
@@ -139,10 +142,11 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
 	var b bytes.Buffer
 	r.render(req, resp, &b)
 	if !chunked {
-		resp.Out.Header().Set("Content-Length", strconv.Itoa(b.Len()))
+		resp.Header().Set("Content-Length", strconv.Itoa(b.Len()))
 	}
-	resp.WriteHeader(http.StatusOK, "text/html")
-	b.WriteTo(resp.Out)
+	resp.SetStatus(http.StatusOK)
+	resp.SetContentType("text/html")
+	b.WriteTo(resp)
 }
 
 func (r *RenderTemplateResult) render(req *Request, resp *Response, wr io.Writer) {
@@ -178,8 +182,9 @@ type RenderHtmlResult struct {
 }
 
 func (r RenderHtmlResult) Apply(req *Request, resp *Response) {
-	resp.WriteHeader(http.StatusOK, "text/html")
-	resp.Out.Write([]byte(r.html))
+	resp.SetStatus(http.StatusOK)
+	resp.SetContentType("text/html")
+	resp.Write([]byte(r.html))
 }
 
 type RenderJsonResult struct {
@@ -200,8 +205,9 @@ func (r RenderJsonResult) Apply(req *Request, resp *Response) {
 		return
 	}
 
-	resp.WriteHeader(http.StatusOK, "application/json")
-	resp.Out.Write(b)
+	resp.SetStatus(http.StatusOK)
+	resp.SetContentType("application/json")
+	resp.Write(b)
 }
 
 type RenderXmlResult struct {
@@ -222,8 +228,9 @@ func (r RenderXmlResult) Apply(req *Request, resp *Response) {
 		return
 	}
 
-	resp.WriteHeader(http.StatusOK, "application/xml")
-	resp.Out.Write(b)
+	resp.SetStatus(http.StatusOK)
+	resp.SetContentType("application/xml")
+	resp.Write(b)
 }
 
 type RenderTextResult struct {
@@ -231,8 +238,9 @@ type RenderTextResult struct {
 }
 
 func (r RenderTextResult) Apply(req *Request, resp *Response) {
-	resp.WriteHeader(http.StatusOK, "text/plain")
-	resp.Out.Write([]byte(r.text))
+	resp.SetStatus(http.StatusOK)
+	resp.SetContentType("text/plain")
+	resp.Write([]byte(r.text))
 }
 
 type ContentDisposition string
@@ -255,18 +263,19 @@ func (r *BinaryResult) Apply(req *Request, resp *Response) {
 	if r.Name != "" {
 		disposition += fmt.Sprintf("; filename=%s;", r.Name)
 	}
-	resp.Out.Header().Set("Content-Disposition", disposition)
+	resp.Header().Set("Content-Disposition", disposition)
 
 	// If we have a ReadSeeker, delegate to http.ServeContent
 	if rs, ok := r.Reader.(io.ReadSeeker); ok {
-		http.ServeContent(resp.Out, req.Request, r.Name, r.ModTime, rs)
+		http.ServeContent(resp, req.Request, r.Name, r.ModTime, rs)
 	} else {
 		// Else, do a simple io.Copy.
 		if r.Length != -1 {
-			resp.Out.Header().Set("Content-Length", strconv.FormatInt(r.Length, 10))
+			resp.Header().Set("Content-Length", strconv.FormatInt(r.Length, 10))
 		}
-		resp.WriteHeader(http.StatusOK, ContentTypeByFilename(r.Name))
-		io.Copy(resp.Out, r.Reader)
+		resp.SetStatus(http.StatusOK)
+		resp.SetContentType(ContentTypeByFilename(r.Name))
+		io.Copy(resp, r.Reader)
 	}
 
 	// Close the Reader if we can
@@ -280,8 +289,9 @@ type RedirectToUrlResult struct {
 }
 
 func (r *RedirectToUrlResult) Apply(req *Request, resp *Response) {
-	resp.Out.Header().Set("Location", r.url)
-	resp.WriteHeader(http.StatusFound, "")
+	resp.Header().Set("Location", r.url)
+	resp.SetStatus(http.StatusFound)
+	resp.SetContentType("")
 }
 
 type RedirectToActionResult struct {
@@ -295,8 +305,9 @@ func (r *RedirectToActionResult) Apply(req *Request, resp *Response) {
 		ErrorResult{Error: err}.Apply(req, resp)
 		return
 	}
-	resp.Out.Header().Set("Location", url)
-	resp.WriteHeader(http.StatusFound, "")
+	resp.Header().Set("Location", url)
+	resp.SetStatus(http.StatusFound)
+	resp.SetContentType("")
 }
 
 func getRedirectUrl(item interface{}) (string, error) {

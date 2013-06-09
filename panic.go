@@ -21,8 +21,8 @@ func handleInvocationPanic(c *Controller, err interface{}) {
 	error := NewErrorFromPanic(err)
 	if error == nil {
 		ERROR.Print(err, "\n", string(debug.Stack()))
-		c.Response.Out.WriteHeader(500)
-		c.Response.Out.Write(debug.Stack())
+		c.Response.WriteHeader(500)
+		c.Response.Write(debug.Stack())
 		return
 	}
 
