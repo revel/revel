@@ -232,9 +232,7 @@ func (c *Controller) SetAction(controllerName, methodName string) error {
 }
 
 // This is a helper that initializes (zeros) a new app controller value.
-// Generally, everything is set to its zero value, except:
-// 1. Embedded controller pointers are newed up.
-// 2. The revel.Controller embedded type is set to the value provided.
+// Specifically, it sets all *revel.Controller embedded types to the provided controller.
 // Returns a value representing a pointer to the new app controller.
 func initNewAppController(appControllerType *ControllerType, c *Controller) reflect.Value {
 	var (
@@ -249,9 +247,8 @@ func initNewAppController(appControllerType *ControllerType, c *Controller) refl
 }
 
 func findControllers(appControllerType reflect.Type) (indexes [][]int) {
-	// It might be a multi-level embedding, so we have to create new controllers
-	// at every level of the hierarchy.  To find the controllers, we follow every
-	// anonymous field, using depth-first search.
+	// It might be a multi-level embedding. To find the controllers, we follow
+	// every anonymous field, using breadth-first search.
 	type nodeType struct {
 		val   reflect.Value
 		index []int
@@ -288,12 +285,8 @@ func findControllers(appControllerType reflect.Type) (indexes [][]int) {
 				continue
 			}
 
-			// Else, add it to the queue, after instantiating (if necessary).
-			if fieldValue.Kind() == reflect.Ptr {
-				INFO.Println("WARNING: Pointer detected")
-				fieldValue.Set(reflect.New(fieldType.Elem()))
-			}
-			queue = append(queue, nodeType{fieldValue, append(append([]int{}, node.index...), i)})
+			queue = append(queue,
+				nodeType{fieldValue, append(append([]int{}, node.index...), i)})
 		}
 	}
 	return
