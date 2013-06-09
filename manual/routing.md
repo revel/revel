@@ -3,7 +3,7 @@ title: Routing
 layout: manual
 ---
 
-Routes are defined in a separate `routes` file, using the original Play! syntax.
+Routes are defined in a separate `routes` file.
 
 The basic syntax is:
 
@@ -14,13 +14,12 @@ This example demonstrates all of the features:
 	# conf/routes
 	# This file defines all application routes (Higher priority routes first)
 	GET    /login                 Application.Login      # A simple path
-	GET    /hotels/?              Hotels.Index           # Match /hotels and /hotels/ (optional trailing slash)
-	GET    /hotels/{id}           Hotels.Show            # Extract a URI argument (matching /[^/]+/)
-	POST   /hotels/{<[0-9]+>id}   Hotels.Save            # URI arg with custom regex
-	WS     /hotels/{id}/feed      Hotels.Feed            # WebSockets.
-	POST   /hotels/{id}/{action}  Hotels.{action}        # Automatically route some actions.
-	GET    /public/{<.*>filepath} Static.Serve("public") # Map /app/public resources under /public/...
-	*      /{controller}/{action} {controller}.{action}  # Catch all; Automatic URL generation
+	GET    /hotels/               Hotels.Index           # Match /hotels and /hotels/ (optional trailing slash)
+	GET    /hotels/:id            Hotels.Show            # Extract a URI argument
+	WS     /hotels/:id/feed       Hotels.Feed            # WebSockets.
+	POST   /hotels/:id/:action    Hotels.:action         # Automatically route some actions.
+	GET    /public/*filepath      Static.Serve("public") # Map /app/public resources under /public/...
+	*      /:controller/:action   :controller.:action    # Catch all; Automatic URL generation
 
 Let's go through the lines one at a time.  At the end, we'll see how to
 accomplish **reverse routing** -- generating the URL to invoke a particular action.
@@ -32,20 +31,22 @@ accomplish **reverse routing** -- generating the URL to invoke a particular acti
 The simplest route uses an exact match on method and path.  It invokes the Login
 action on the Application controller.
 
-## Optional trailing slash
+## Trailing slashes
 
-	GET    /hotels/?              Hotels.Index
+	GET    /hotels/               Hotels.Index
 
-Question marks are treated as in regular expressions: they allow the path to
-match with or without the preceeding character.  This route invokes Hotels.Index
-for both `/hotels` and `/hotels/`.
+This route invokes `Hotels.Index` for both `/hotels` and `/hotels/`. The
+reverse route to `Hotels.Index` will include the trailing slash.
+
+Trailing slashes should not be used to differentiate between actions. The
+simple path `/login` **will** be matched by a request to `/login/`.
 
 ## URL Parameters
 
-	GET    /hotels/{id}           Hotels.Show
+	GET    /hotels/:id            Hotels.Show
 
-Segments of the path may be matched and extracted.  By default, `{id}` will
-match anything except a slash (`[^/]+`).  In this case, `/hotels/123` and
+Segments of the path may be matched and extracted.  The `:id` variable will
+match anything except a slash.  For example, `/hotels/123` and
 `/hotels/abc` would both be matched by this route.
 
 Extracted parameters are available in the `Controller.Params` map, as well as
@@ -65,23 +66,24 @@ or
 or
 
 	func (c Hotels) Show() revel.Result {
-		var id int = c.Params.Bind("id", reflect.TypeOf(0))
+		var id int
+		c.Params.Bind(&id, "id")
 		...
 	}
 
-## URL Parameter with Custom Regex
+## Star parameters
 
-	POST   /hotels/{<[0-9]+>id}   Hotels.Save
+	GET    /public/*filepath            Static.Serve("public")
 
-Routes may also specify a regular expression with their parameters to restrict
-what they may match.  The regular expression goes between `<angle brackets>`, before the
-name.
+The router recognizes a second kind of wildcard. The starred parameter must be
+the last element in the path, and it matches all following path elements.
 
-In the example, we restrict the Hotel ID to be numerical.
+For example, in this case it will match any path beginning with "/public/", and
+its value will be exactly the path substring that follows that prefix.
 
 ## Websockets
 
-	WS     /hotels/{id}/feed      Hotels.Feed
+	WS     /hotels/:id/feed       Hotels.Feed
 
 Websockets are routed in the same way as other requests, using a method
 identifier of **WS**.
@@ -94,7 +96,7 @@ The corresponding action would have this signature:
 
 ## Static Serving
 
-	GET    /public/{<.*>filepath}       Static.Serve("public")
+	GET    /public/*filepath            Static.Serve("public")
 	GET    /favicon.ico                 Static.Serve("public", "img/favicon.png")
 
 For serving directories of static assets, Revel provides the **static** module,
@@ -112,8 +114,8 @@ controller.  Its Serve action takes two parameters:
 As demonstrated in the Static Serving section, routes may specify one or more
 parameters to the action.  For example:
 
-	GET    /products/{id}    ShowList("PRODUCT")
-	GET    /menus/{id}       ShowList("MENU")
+	GET    /products/:id     ShowList("PRODUCT")
+	GET    /menus/:id        ShowList("MENU")
 
 The provided argument(s) are bound to a parameter name using their position.  In
 this case, the list type string would be bound to the name of the first action
@@ -125,12 +127,10 @@ This could be helpful in situations where:
 * you have actions that do the same thing, but operate in different modes
 * you have actions that do the same thing, but operate on different data types
 
-
-
 ## Auto Routing
 
-	POST   /hotels/{id}/{action}  Hotels.{action}
-	*      /{controller}/{action} {controller}.{action}
+	POST   /hotels/:id/:action    Hotels.:action
+	*      /:controller/:action   :controller.:action
 
 URL argument extraction can also be used to determine the invoked action.
 Matching to controllers and actions is **case insensitive**.
@@ -153,7 +153,8 @@ routes would also work:
 	/Users/List        => Users.List
 
 Using auto-routing as a catch-all (e.g. last route in the file) is useful for
-quickly hooking up actions to non-vanity URLs.
+quickly hooking up actions to non-vanity URLs, especially in conjunction with
+the reverse router..
 
 ## Reverse Routing
 
@@ -168,7 +169,7 @@ Upon building your application, Revel generates an `app/routes` package.  Use it
 with a statement of the form:
 
 <pre class="prettyprint lang-go">
-routes.Controller.Action(params)
+routes.Controller.Action(param1, param2)
 </pre>
 
 The above statement returns a URL (type string) to Controller.Action with the
