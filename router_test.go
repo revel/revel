@@ -15,7 +15,6 @@ var routeTestCases = map[string]*Route{
 		Path:        "/",
 		Action:      "Application.Index",
 		FixedParams: []string{},
-		// actionPattern: regexp.MustCompile("Application\\.Index"),
 	},
 
 	"post /app/:id Application.SaveApp": &Route{
@@ -23,7 +22,6 @@ var routeTestCases = map[string]*Route{
 		Path:        "/app/:id",
 		Action:      "Application.SaveApp",
 		FixedParams: []string{},
-		// actionPattern: regexp.MustCompile("Application\\.SaveApp"),
 	},
 
 	"get /app/ Application.List": &Route{
@@ -31,7 +29,6 @@ var routeTestCases = map[string]*Route{
 		Path:        "/app/",
 		Action:      "Application.List",
 		FixedParams: []string{},
-		// actionPattern: regexp.MustCompile("Application\\.List"),
 	},
 
 	`get /apps/:appId/ Application.Show`: &Route{
@@ -39,7 +36,6 @@ var routeTestCases = map[string]*Route{
 		Path:        `/apps/:appId/`,
 		Action:      "Application.Show",
 		FixedParams: []string{},
-		// actionPattern: regexp.MustCompile("Application\\.Show"),
 	},
 
 	`GET /public/:filepath   Static.Serve("public")`: &Route{
@@ -49,7 +45,6 @@ var routeTestCases = map[string]*Route{
 		FixedParams: []string{
 			"public",
 		},
-		// actionPattern: regexp.MustCompile("Static\\.Serve"),
 	},
 
 	`GET /javascript/:filepath Static.Serve("public/js")`: &Route{
@@ -59,7 +54,6 @@ var routeTestCases = map[string]*Route{
 		FixedParams: []string{
 			"public",
 		},
-		// actionPattern: regexp.MustCompile("Static\\.Serve"),
 	},
 
 	"* /apps/:id/:action Application.:action": &Route{
@@ -67,7 +61,6 @@ var routeTestCases = map[string]*Route{
 		Path:        "/apps/:id/:action",
 		Action:      "Application.:action",
 		FixedParams: []string{},
-		// actionPattern: regexp.MustCompile("Application\\.(?P<action>[^/]+)"),
 	},
 
 	"* /:controller/:action :controller.:action": &Route{
@@ -75,7 +68,6 @@ var routeTestCases = map[string]*Route{
 		Path:        "/:controller/:action",
 		Action:      ":controller.:action",
 		FixedParams: []string{},
-		// actionPattern: regexp.MustCompile("(?P<controller>[^/]+)\\.(?P<action>[^/]+)"),
 	},
 }
 
@@ -91,7 +83,6 @@ func TestComputeRoute(t *testing.T) {
 		eq(t, "Method", actual.Method, expected.Method)
 		eq(t, "Path", actual.Path, expected.Path)
 		eq(t, "Action", actual.Action, expected.Action)
-		// eq(t, "actionPattern", fmt.Sprint(actual.actionPattern), fmt.Sprint(expected.actionPattern))
 		if t.Failed() {
 			t.Fatal("Failed on route:", routeLine)
 		}
@@ -107,7 +98,7 @@ GET   /app/:id/                  Application.Show
 POST  /app/:id                   Application.Save
 PATCH /app/:id/                  Application.Update
 GET   /javascript/:filepath      Static.Serve("public/js")
-GET   /public/:filepath          Static.Serve("public")
+GET   /public/*filepath          Static.Serve("public")
 *     /:controller/:action       :controller.:action
 
 GET   /favicon.ico               404
@@ -166,12 +157,12 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 
 	&http.Request{
 		Method: "GET",
-		URL:    &url.URL{Path: "/public/style.css"},
+		URL:    &url.URL{Path: "/public/css/style.css"},
 	}: &RouteMatch{
 		ControllerName: "Static",
 		MethodName:     "Serve",
 		FixedParams:    []string{"public"},
-		Params:         map[string][]string{"filepath": {"style.css"}},
+		Params:         map[string][]string{"filepath": {"css/style.css"}},
 	},
 
 	&http.Request{
@@ -368,7 +359,7 @@ func BenchmarkRouterFilter(b *testing.B) {
 	startFakeBookingApp()
 	controllers := []*Controller{
 		{Request: NewRequest(showRequest)},
-		// {Request: NewRequest(staticRequest)}
+		{Request: NewRequest(staticRequest)},
 	}
 	for _, c := range controllers {
 		c.Params = &Params{}
