@@ -139,7 +139,7 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
 	var b bytes.Buffer
 	r.render(req, resp, &b)
 	if !chunked {
-		resp.Out.Header().Set("Content-Length", strconv.Itoa(b.Len()))
+		resp.Headers.Set("Content-Length", strconv.Itoa(b.Len()))
 	}
 	resp.WriteHeader(http.StatusOK, "text/html")
 	b.WriteTo(resp.Out)
@@ -255,7 +255,7 @@ func (r *BinaryResult) Apply(req *Request, resp *Response) {
 	if r.Name != "" {
 		disposition += fmt.Sprintf("; filename=%s;", r.Name)
 	}
-	resp.Out.Header().Set("Content-Disposition", disposition)
+	resp.Headers.Set("Content-Disposition", disposition)
 
 	// If we have a ReadSeeker, delegate to http.ServeContent
 	if rs, ok := r.Reader.(io.ReadSeeker); ok {
@@ -263,7 +263,7 @@ func (r *BinaryResult) Apply(req *Request, resp *Response) {
 	} else {
 		// Else, do a simple io.Copy.
 		if r.Length != -1 {
-			resp.Out.Header().Set("Content-Length", strconv.FormatInt(r.Length, 10))
+			resp.Headers.Set("Content-Length", strconv.FormatInt(r.Length, 10))
 		}
 		resp.WriteHeader(http.StatusOK, ContentTypeByFilename(r.Name))
 		io.Copy(resp.Out, r.Reader)
@@ -280,7 +280,7 @@ type RedirectToUrlResult struct {
 }
 
 func (r *RedirectToUrlResult) Apply(req *Request, resp *Response) {
-	resp.Out.Header().Set("Location", r.url)
+	resp.Headers.Set("Location", r.url)
 	resp.WriteHeader(http.StatusFound, "")
 }
 
@@ -295,7 +295,7 @@ func (r *RedirectToActionResult) Apply(req *Request, resp *Response) {
 		ErrorResult{Error: err}.Apply(req, resp)
 		return
 	}
-	resp.Out.Header().Set("Location", url)
+	resp.Headers.Set("Location", url)
 	resp.WriteHeader(http.StatusFound, "")
 }
 

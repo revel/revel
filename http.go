@@ -23,11 +23,12 @@ type Response struct {
 	Status      int
 	ContentType string
 
-	Out http.ResponseWriter
+	Headers http.Header
+	Out     http.ResponseWriter
 }
 
 func NewResponse(w http.ResponseWriter) *Response {
-	return &Response{Out: w}
+	return &Response{Out: w, Headers: w.Header()}
 }
 
 func NewRequest(r *http.Request) *Request {
@@ -49,7 +50,7 @@ func (resp *Response) WriteHeader(defaultStatusCode int, defaultContentType stri
 	if resp.ContentType == "" {
 		resp.ContentType = defaultContentType
 	}
-	resp.Out.Header().Set("Content-Type", resp.ContentType)
+	resp.Headers.Set("Content-Type", resp.ContentType)
 	resp.Out.WriteHeader(resp.Status)
 }
 
