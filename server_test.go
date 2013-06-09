@@ -3,6 +3,8 @@ package revel
 import (
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path"
 	"strings"
 	"testing"
 )
@@ -61,8 +63,9 @@ func TestFakeServer(t *testing.T) {
 	resp.Body.Reset()
 
 	handle(resp, staticRequest)
-	if resp.Body.Len() != 6712 {
-		t.Errorf("Expected sessvars.js to have 6712 bytes, got %d:\n%s", resp.Body.Len(), resp.Body)
+	sessvarsSize := getFileSize(t, path.Join(".", "samples", "booking", "public", "js", "sessvars.js"))
+	if int64(resp.Body.Len()) != sessvarsSize {
+		t.Errorf("Expected sessvars.js to have %d bytes, got %d:\n%s", sessvarsSize, resp.Body.Len(), resp.Body)
 		t.FailNow()
 	}
 	resp.Body.Reset()
@@ -81,6 +84,15 @@ func TestFakeServer(t *testing.T) {
 	}
 
 	resp.Body = nil
+}
+
+func getFileSize(t *testing.T, name string) int64 {
+	fi, err := os.Stat(name)
+	if err != nil {
+		t.Errorf("Unable to stat file:\n%s", name)
+		t.FailNow()
+	}
+	return fi.Size()
 }
 
 var (
