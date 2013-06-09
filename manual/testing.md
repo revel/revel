@@ -94,7 +94,7 @@ In order to run any tests, the `testrunner` module must be activated.  This is d
 
 	module.testrunner = github.com/robfig/revel/modules/testrunner
 	
-You must also have the following line at the beginning of your `routes` file:
+You must also import the test module routes, by adding this line to your `routes` file:
 
 	module:testrunner
 
