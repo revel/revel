@@ -98,6 +98,41 @@ func TestMultiEmbedding(t *testing.T) {
 	}
 }
 
+func BenchmarkSetAction(b *testing.B) {
+	type Mixin1 struct {
+		*Controller
+		x, y int
+		foo  string
+	}
+	type Mixin2 struct {
+		*Controller
+		a, b float64
+		bar  string
+	}
+
+	type Benchmark struct {
+		*Controller
+		Mixin1
+		Mixin2
+		user interface{}
+		guy  string
+	}
+
+	RegisterController((*Mixin1)(nil), []*MethodType{{Name: "Method"}})
+	RegisterController((*Mixin2)(nil), []*MethodType{{Name: "Method"}})
+	RegisterController((*Benchmark)(nil), []*MethodType{{Name: "Method"}})
+	c := Controller{
+		RenderArgs: make(map[string]interface{}),
+	}
+
+	for i := 0; i < b.N; i++ {
+		if err := c.SetAction("Benchmark", "Method"); err != nil {
+			b.Errorf("Failed to set action: %s", err)
+			return
+		}
+	}
+}
+
 func BenchmarkInvoker(b *testing.B) {
 	startFakeBookingApp()
 	c := Controller{
