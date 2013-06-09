@@ -25,5 +25,5 @@ GET     /websocket/room                         WebSocket.Room
 WS      /websocket/room/socket                  WebSocket.RoomSocket
 
 # Map static resources from the /app/public folder to the /public path
-GET     /public/{<.+>filepath}                  Static.Serve("public")
+GET     /public/*filepath                       Static.Serve("public")
 
