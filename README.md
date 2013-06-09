@@ -1,8 +1,7 @@
 # Revel
 
-This is a port of the amazing [Play! framework](http://www.playframework.org) to the [Go language](http://www.golang.org).
+A high productivity full-stack web framework for the [Go language](http://www.golang.org).  
 
-It is a high productivity web framework.
 
 [Check out the web site.](http://robfig.github.com/revel)
 
