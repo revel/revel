@@ -66,7 +66,8 @@ for the full set of tests.  They take less than a minute to run.
 
 ### Document your feature
 
-The [Revel web site](http://robfig.github.io/revel/) is hosted on Github-pages.
+The [Revel web site](http://robfig.github.io/revel/) is hosted on Github-pages and 
+[built with Jekyll](https://help.github.com/articles/using-jekyll-with-pages).
 
 To develop the site locally:
 
