@@ -75,8 +75,10 @@ To develop the site locally:
 	$ cd revel
 	$ git checkout gh-pages
 
-	# Run Jekyll to generate the site, and serve the result
-	$ jekyll --auto --pygments --no-lsi --safe test/revel &
+	# Install / run Jekyll 1.0.2 to generate the site, and serve the result
+	$ gem install jekyll -v 1.0.2
+	$ jekyll build --watch --safe -d test/revel &
+	$ cd test
 	$ python -m SimpleHTTPServer 8088
 
 	# Now load in your browser
