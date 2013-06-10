@@ -66,6 +66,14 @@ Walking through this example:
 4. User fetches the settings page, whose template shows the flashed message. (GET)
 
 It uses two convenience functions:
-1. `Flash.Success(message string)` is an abbreviation of Flash.Out\["success"] = message
-2. `Flash.Error(message string)` is an abbreviation of Flash.Out\["error"] = message
+1. `Flash.Success(message string)` is an abbreviation of `Flash.Out["success"] = message`
+2. `Flash.Error(message string)` is an abbreviation of `Flash.Out["error"] = message`
 
+Flash messages may be referenced by key in templates.  For example, to access
+the success and error messages set by the convenience functions, use these
+expressions:
+
+{% raw %}
+	{{.flash.success}}
+	{{.flash.error}}
+{% endraw %}
