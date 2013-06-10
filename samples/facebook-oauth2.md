@@ -22,14 +22,14 @@ Here are the contents of the app:
 
 The entire OAuth process is governed by this configuration:
 
-<pre class="prettyprint lang-go">
+<pre class="prettyprint lang-go">{% capture guy %}{% raw %}
 var FACEBOOK = &oauth.Config{
 	ClientId:     "95341411595",
 	ClientSecret: "8eff1b488da7fe3426f9ecaf8de1ba54",
 	AuthURL:      "https://graph.facebook.com/oauth/authorize",
 	TokenURL:     "https://graph.facebook.com/oauth/access_token",
 	RedirectURL:  "http://loisant.org:9000/Application/Auth",
-}
+}{% endraw %}{% endcapture %}{{ guy|escape }}
 </pre>
 
 Here's an overview of the process:
@@ -84,7 +84,7 @@ don't, we just ask the user to log in to Facebook.
 Assuming the user does so, the next time we see them is when Facebook sends them
 to `Auth`:
 
-<pre class="prettyprint lang-go">
+<pre class="prettyprint lang-go">{% capture guy %}{% raw %}
 func (c Application) Auth(code string) revel.Result {
 	t := &oauth.Transport{Config: FACEBOOK}
 	tok, err := t.Exchange(code)
@@ -96,7 +96,7 @@ func (c Application) Auth(code string) revel.Result {
 	user := c.connected()
 	user.AccessToken = tok.AccessToken
 	return c.Redirect(Application.Index)
-}
+}{% endraw %}{% endcapture %}{{ guy|escape }}
 </pre>
 
 The `t.Exchange(code)` bit makes a request to the **TokenURL** to get the access

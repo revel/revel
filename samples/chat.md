@@ -267,7 +267,7 @@ user has loaded the chat room page.
 The first thing to do is to subscribe to new events, join the room, and send
 down the archive.  Here is what that looks like:
 
-<pre class="prettyprint lang-go">
+<pre class="prettyprint lang-go">{% capture guy %}{% raw %}
 func (c WebSocket) RoomSocket(user string, ws *websocket.Conn) revel.Result {
 	// Join the room.
 	subscription := chatroom.Subscribe()
@@ -283,6 +283,7 @@ func (c WebSocket) RoomSocket(user string, ws *websocket.Conn) revel.Result {
 			return nil
 		}
 	}
+{% endraw %}{% endcapture %}{{ guy|escape }}
 </pre>
 
 > [websocket.go](https://github.com/robfig/revel/tree/master/samples/chat/app/controllers/websocket.go#L17)

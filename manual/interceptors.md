@@ -57,8 +57,7 @@ own Result.
 
 Here's a simple example defining and registering a Func Interceptor.
 
-{% raw %}
-<pre class="prettyprint lang-go">
+<pre class="prettyprint lang-go">{% capture guy %}{% raw %}
 func checkUser(c *revel.Controller) revel.Result {
 	if user := connected(c); user == nil {
 		c.Flash.Error("Please log in first")
@@ -69,9 +68,8 @@ func checkUser(c *revel.Controller) revel.Result {
 
 func init() {
 	revel.InterceptFunc(checkUser, revel.BEFORE, &Hotels{})
-}
+}{% endraw %}{% endcapture %}{{ guy|escape }}
 </pre>
-{% endraw %}
 
 ### Method Interceptor
 
