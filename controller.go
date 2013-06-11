@@ -223,7 +223,7 @@ func (c *Controller) SetAction(controllerName, methodName string) error {
 	}
 
 	c.Name, c.MethodName = c.Type.Name(), methodName
-	c.Action = c.Name + "." + c.MethodName
+	c.Action = c.Type.Name() + "." + c.MethodName
 
 	// Instantiate the controller.
 	c.AppController = initNewAppController(c.Type.Type, c).Interface()
