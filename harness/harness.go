@@ -152,7 +152,7 @@ func (h *Harness) WatchFile(filename string) bool {
 // server, which it runs and rebuilds as necessary.
 func (h *Harness) Run() {
 	var paths []string
-	if revel.Config.BoolDefault("watch.gopath", true) {
+	if revel.Config.BoolDefault("watch.gopath", false) {
 		gopaths := filepath.SplitList(build.Default.GOPATH)
 		paths = append(paths, gopaths...)
 	}
