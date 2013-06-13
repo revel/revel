@@ -38,21 +38,18 @@ func NewRequest(r *http.Request) *Request {
 	}
 }
 
-// Write the header (for now, just the status code).
+// Write the inital headers: status code and content type
 // The status may be set directly by the application (c.Response.Status = 501).
 // if it isn't, then fall back to the provided status code.
-func (resp *Response) SetStatus(defaultStatusCode int) {
+func (resp *Response) WriteStatusHeader(defaultStatusCode int, defaultContentType string) {
 	if resp.Status == 0 {
 		resp.Status = defaultStatusCode
 	}
-	resp.WriteHeader(resp.Status)
-}
-
-func (resp *Response) SetContentType(defaultContentType string) {
 	if resp.ContentType == "" {
 		resp.ContentType = defaultContentType
 	}
 	resp.Header().Set("Content-Type", resp.ContentType)
+	resp.WriteHeader(resp.Status)
 }
 
 // Get the content type.
