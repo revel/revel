@@ -66,7 +66,8 @@ for the full set of tests.  They take less than a minute to run.
 
 ### Document your feature
 
-The [Revel web site](http://robfig.github.io/revel/) is hosted on Github-pages.
+The [Revel web site](http://robfig.github.io/revel/) is hosted on Github-pages and 
+[built with Jekyll](https://help.github.com/articles/using-jekyll-with-pages).
 
 To develop the site locally:
 
@@ -75,8 +76,10 @@ To develop the site locally:
 	$ cd revel
 	$ git checkout gh-pages
 
-	# Run Jekyll to generate the site, and serve the result
-	$ jekyll --auto --pygments --no-lsi --safe test/revel &
+	# Install / run Jekyll 1.0.2 to generate the site, and serve the result
+	$ gem install jekyll -v 1.0.2
+	$ jekyll build --watch --safe -d test/revel &
+	$ cd test
 	$ python -m SimpleHTTPServer 8088
 
 	# Now load in your browser

@@ -212,8 +212,6 @@ func (c *Controller) Message(message string, args ...interface{}) (value string)
 // SetAction sets the action that is being invoked in the current request.
 // It sets the following properties: Name, Action, Type, MethodType
 func (c *Controller) SetAction(controllerName, methodName string) error {
-	c.Name, c.MethodName = controllerName, methodName
-	c.Action = c.Name + "." + c.MethodName
 
 	// Look up the controller and method types.
 	var ok bool
@@ -223,6 +221,9 @@ func (c *Controller) SetAction(controllerName, methodName string) error {
 	if c.MethodType = c.Type.Method(methodName); c.MethodType == nil {
 		return errors.New("revel/controller: failed to find action " + methodName)
 	}
+
+	c.Name, c.MethodName = c.Type.Type.Name(), methodName
+	c.Action = c.Name + "." + c.MethodName
 
 	// Instantiate the controller.
 	c.AppController = initNewAppController(c.Type.Type, c).Interface()
