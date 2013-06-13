@@ -24,6 +24,12 @@ func (r Required) IsSatisfied(obj interface{}) bool {
 	if list, ok := obj.([]interface{}); ok {
 		return len(list) > 0
 	}
+	if strs, ok := obj.([]string); ok {
+		return len(strs) > 0
+	}
+	if is, ok := obj.([]int); ok {
+		return len(is) > 0
+	}
 	if b, ok := obj.(bool); ok {
 		return b
 	}
@@ -95,6 +101,12 @@ func (m MinSize) IsSatisfied(obj interface{}) bool {
 	if arr, ok := obj.([]interface{}); ok {
 		return len(arr) >= m.Min
 	}
+	if strs, ok := obj.([]string); ok {
+		return len(strs) >= m.Min
+	}
+	if is, ok := obj.([]int); ok {
+		return len(is) >= m.Min
+	}
 	if str, ok := obj.(string); ok {
 		return len(str) >= m.Min
 	}
@@ -114,6 +126,12 @@ func (m MaxSize) IsSatisfied(obj interface{}) bool {
 	if arr, ok := obj.([]interface{}); ok {
 		return len(arr) <= m.Max
 	}
+	if strs, ok := obj.([]string); ok {
+		return len(strs) <= m.Max
+	}
+	if is, ok := obj.([]int); ok {
+		return len(is) <= m.Max
+	}
 	if str, ok := obj.(string); ok {
 		return len(str) <= m.Max
 	}
@@ -132,6 +150,12 @@ type Length struct {
 func (s Length) IsSatisfied(obj interface{}) bool {
 	if arr, ok := obj.([]interface{}); ok {
 		return len(arr) == s.N
+	}
+	if strs, ok := obj.([]string); ok {
+		return len(strs) == s.N
+	}
+	if is, ok := obj.([]int); ok {
+		return len(is) == s.N
 	}
 	if str, ok := obj.(string); ok {
 		return len(str) == s.N
