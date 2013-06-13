@@ -320,6 +320,11 @@ func (router *Router) Reverse(action string, argValues map[string]string) *Actio
 	controllerName, methodName := actionSplit[0], actionSplit[1]
 
 	for _, route := range router.Routes {
+		// Skip routes without either a ControllerName or MethodName
+		if route.ControllerName == "" || route.MethodName == "" {
+			continue
+		}
+
 		// Check that the action matches or is a wildcard.
 		controllerWildcard := route.ControllerName[0] == ':'
 		methodWildcard := route.MethodName[0] == ':'
