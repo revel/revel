@@ -2,6 +2,7 @@ package revel
 
 import (
 	"fmt"
+	"reflect"
 	"regexp"
 	"time"
 )
@@ -32,6 +33,10 @@ func (r Required) IsSatisfied(obj interface{}) bool {
 	}
 	if t, ok := obj.(time.Time); ok {
 		return !t.IsZero()
+	}
+	v := reflect.ValueOf(obj)
+	if v.Kind() == reflect.Slice {
+		return v.Len() > 0
 	}
 	return true
 }
@@ -98,6 +103,10 @@ func (m MinSize) IsSatisfied(obj interface{}) bool {
 	if str, ok := obj.(string); ok {
 		return len(str) >= m.Min
 	}
+	v := reflect.ValueOf(obj)
+	if v.Kind() == reflect.Slice {
+		return v.Len() >= m.Min
+	}
 	return false
 }
 
@@ -117,6 +126,10 @@ func (m MaxSize) IsSatisfied(obj interface{}) bool {
 	if str, ok := obj.(string); ok {
 		return len(str) <= m.Max
 	}
+	v := reflect.ValueOf(obj)
+	if v.Kind() == reflect.Slice {
+		return v.Len() <= m.Max
+	}
 	return false
 }
 
@@ -135,6 +148,10 @@ func (s Length) IsSatisfied(obj interface{}) bool {
 	}
 	if str, ok := obj.(string); ok {
 		return len(str) == s.N
+	}
+	v := reflect.ValueOf(obj)
+	if v.Kind() == reflect.Slice {
+		return v.Len() == s.N
 	}
 	return false
 }
