@@ -6,6 +6,7 @@ import (
 	"github.com/robfig/revel"
 	"github.com/robfig/revel/harness"
 	"github.com/robfig/revel/modules/testrunner/app/controllers"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -86,11 +87,13 @@ You can add it to a run mode configuration with the following line:
 		errorf("Error building: %s", reverr)
 	}
 	cmd := app.Cmd()
-	cmd.Stderr = file
-	cmd.Stdout = file
+	cmd.Stderr = io.MultiWriter(cmd.Stderr, file)
+	cmd.Stdout = io.MultiWriter(cmd.Stderr, file)
 
 	// Start the app...
-	cmd.Start()
+	if err := cmd.Start(); err != nil {
+		errorf("%s", err)
+	}
 	defer cmd.Kill()
 	revel.INFO.Printf("Testing %s (%s) in %s mode\n", revel.AppName, revel.ImportPath, mode)
 
