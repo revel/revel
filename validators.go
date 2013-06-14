@@ -22,9 +22,6 @@ func (r Required) IsSatisfied(obj interface{}) bool {
 	if str, ok := obj.(string); ok {
 		return len(str) > 0
 	}
-	if list, ok := obj.([]interface{}); ok {
-		return len(list) > 0
-	}
 	if b, ok := obj.(bool); ok {
 		return b
 	}
@@ -97,9 +94,6 @@ type MinSize struct {
 }
 
 func (m MinSize) IsSatisfied(obj interface{}) bool {
-	if arr, ok := obj.([]interface{}); ok {
-		return len(arr) >= m.Min
-	}
 	if str, ok := obj.(string); ok {
 		return len(str) >= m.Min
 	}
@@ -120,9 +114,6 @@ type MaxSize struct {
 }
 
 func (m MaxSize) IsSatisfied(obj interface{}) bool {
-	if arr, ok := obj.([]interface{}); ok {
-		return len(arr) <= m.Max
-	}
 	if str, ok := obj.(string); ok {
 		return len(str) <= m.Max
 	}
@@ -143,9 +134,6 @@ type Length struct {
 }
 
 func (s Length) IsSatisfied(obj interface{}) bool {
-	if arr, ok := obj.([]interface{}); ok {
-		return len(arr) == s.N
-	}
 	if str, ok := obj.(string); ok {
 		return len(str) == s.N
 	}
