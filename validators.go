@@ -2,6 +2,7 @@ package revel
 
 import (
 	"fmt"
+	"reflect"
 	"regexp"
 	"time"
 )
@@ -21,9 +22,6 @@ func (r Required) IsSatisfied(obj interface{}) bool {
 	if str, ok := obj.(string); ok {
 		return len(str) > 0
 	}
-	if list, ok := obj.([]interface{}); ok {
-		return len(list) > 0
-	}
 	if b, ok := obj.(bool); ok {
 		return b
 	}
@@ -32,6 +30,10 @@ func (r Required) IsSatisfied(obj interface{}) bool {
 	}
 	if t, ok := obj.(time.Time); ok {
 		return !t.IsZero()
+	}
+	v := reflect.ValueOf(obj)
+	if v.Kind() == reflect.Slice {
+		return v.Len() > 0
 	}
 	return true
 }
@@ -92,11 +94,12 @@ type MinSize struct {
 }
 
 func (m MinSize) IsSatisfied(obj interface{}) bool {
-	if arr, ok := obj.([]interface{}); ok {
-		return len(arr) >= m.Min
-	}
 	if str, ok := obj.(string); ok {
 		return len(str) >= m.Min
+	}
+	v := reflect.ValueOf(obj)
+	if v.Kind() == reflect.Slice {
+		return v.Len() >= m.Min
 	}
 	return false
 }
@@ -111,11 +114,12 @@ type MaxSize struct {
 }
 
 func (m MaxSize) IsSatisfied(obj interface{}) bool {
-	if arr, ok := obj.([]interface{}); ok {
-		return len(arr) <= m.Max
-	}
 	if str, ok := obj.(string); ok {
 		return len(str) <= m.Max
+	}
+	v := reflect.ValueOf(obj)
+	if v.Kind() == reflect.Slice {
+		return v.Len() <= m.Max
 	}
 	return false
 }
@@ -130,11 +134,12 @@ type Length struct {
 }
 
 func (s Length) IsSatisfied(obj interface{}) bool {
-	if arr, ok := obj.([]interface{}); ok {
-		return len(arr) == s.N
-	}
 	if str, ok := obj.(string); ok {
 		return len(str) == s.N
+	}
+	v := reflect.ValueOf(obj)
+	if v.Kind() == reflect.Slice {
+		return v.Len() == s.N
 	}
 	return false
 }
