@@ -1,9 +1,11 @@
 package revel
 
 import (
+	"fmt"
 	"github.com/streadway/simpleuuid"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -14,7 +16,22 @@ type Session map[string]string
 
 const (
 	SESSION_ID_KEY = "_ID"
+	TS_KEY         = "_TS"
 )
+
+var expireAfterDuration time.Duration
+
+func init() {
+	// Set expireAfterDuration, default to 30 days if no value in config
+	OnAppStart(func() {
+		var err error
+		if expiresString, ok := Config.String("session.expires"); !ok {
+			expireAfterDuration = 30 * 24 * time.Hour
+		} else if expireAfterDuration, err = time.ParseDuration(expiresString); err != nil {
+			panic(fmt.Errorf("session.expires invalid: %s", err))
+		}
+	})
+}
 
 // Return a UUID identifying this session.
 func (s Session) Id() string {
@@ -28,6 +45,11 @@ func (s Session) Id() string {
 	}
 	s[SESSION_ID_KEY] = uuid.String()
 	return s[SESSION_ID_KEY]
+}
+
+// Return a time.Time with session expiration date
+func getSessionExpiration() time.Time {
+	return time.Now().Add(expireAfterDuration)
 }
 
 // Returns an http.Cookie containing the signed session.
@@ -45,10 +67,20 @@ func (s Session) cookie() *http.Cookie {
 
 	sessionData := url.QueryEscape(sessionValue)
 	return &http.Cookie{
-		Name:  CookiePrefix + "_SESSION",
-		Value: Sign(sessionData) + "-" + sessionData,
-		Path:  "/",
+		Name:    CookiePrefix + "_SESSION",
+		Value:   Sign(sessionData) + "-" + sessionData,
+		Path:    "/",
+		Expires: getSessionExpiration().UTC(),
 	}
+}
+
+func sessionTimeoutExpiredOrMissing(session Session) bool {
+	if exp, present := session[TS_KEY]; !present {
+		return true
+	} else if expInt, _ := strconv.Atoi(exp); int64(expInt) < time.Now().Unix() {
+		return true
+	}
+	return false
 }
 
 // Returns a Session pulled from signed cookie.
@@ -72,6 +104,11 @@ func getSessionFromCookie(cookie *http.Cookie) Session {
 		session[key] = val
 	})
 
+	if sessionTimeoutExpiredOrMissing(session) {
+		session = make(map[string]string)
+	}
+	session[TS_KEY] = strconv.FormatInt(getSessionExpiration().Unix(), 10)
+
 	return session
 }
 
@@ -88,6 +125,7 @@ func restoreSession(req *http.Request) Session {
 	session := make(map[string]string)
 	cookie, err := req.Cookie(CookiePrefix + "_SESSION")
 	if err != nil {
+		session[TS_KEY] = strconv.FormatInt(getSessionExpiration().Unix(), 10)
 		return Session(session)
 	}
 
