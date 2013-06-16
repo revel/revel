@@ -22,12 +22,11 @@ type Request struct {
 type Response struct {
 	Status      int
 	ContentType string
-
-	Out http.ResponseWriter
+	http.ResponseWriter
 }
 
 func NewResponse(w http.ResponseWriter) *Response {
-	return &Response{Out: w}
+	return &Response{ResponseWriter: w}
 }
 
 func NewRequest(r *http.Request) *Request {
@@ -42,15 +41,18 @@ func NewRequest(r *http.Request) *Request {
 // Write the header (for now, just the status code).
 // The status may be set directly by the application (c.Response.Status = 501).
 // if it isn't, then fall back to the provided status code.
-func (resp *Response) WriteHeader(defaultStatusCode int, defaultContentType string) {
+func (resp *Response) SetStatus(defaultStatusCode int) {
 	if resp.Status == 0 {
 		resp.Status = defaultStatusCode
 	}
+	resp.WriteHeader(resp.Status)
+}
+
+func (resp *Response) SetContentType(defaultContentType string) {
 	if resp.ContentType == "" {
 		resp.ContentType = defaultContentType
 	}
-	resp.Out.Header().Set("Content-Type", resp.ContentType)
-	resp.Out.WriteHeader(resp.Status)
+	resp.Header().Set("Content-Type", resp.ContentType)
 }
 
 // Get the content type.

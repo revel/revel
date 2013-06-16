@@ -52,7 +52,7 @@ func (c *Controller) FlashParams() {
 }
 
 func (c *Controller) SetCookie(cookie *http.Cookie) {
-	http.SetCookie(c.Response.Out, cookie)
+	http.SetCookie(c.Response, cookie)
 }
 
 func (c *Controller) RenderError(err error) Result {
