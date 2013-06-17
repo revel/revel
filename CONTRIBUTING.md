@@ -31,12 +31,17 @@ forked project **will not work**.
 
 Instead, this is the recommended way:
 
-1. Fork the project on Github
-2. In `$GOPATH/src/github.com/robfig/revel`, run this command (replacing $USER with
-   your github username):
-	$ git remote add fork git@github.com:$USER/revel.git
-3. When you want to push to your fork, do this:
-	$ git push fork master
+1. Fork Revel project on Github
+2. In your clone of github.com/robfig/revel, add your fork as a remote.
+3. Push to your fork to prepare a pull request.
+
+Here is the command line: 
+```
+$ cd $GOPATH/src/github.com/robfig/revel              # Change directory to revel repo
+$ git remote add fork git@github.com:$USER/revel.git  # Add your fork as a remote
+$ git push fork master                                # After new commits, push to your fork
+$ git pull origin master                              # Optionally, merge new changes from upstream
+```
 
 ### Gofmt your code
 
