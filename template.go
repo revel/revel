@@ -148,19 +148,19 @@ var (
 		"datetime": func(date time.Time) string {
 			return date.Format(DateTimeFormat)
 		},
-		"stub": func(str string) string {
+		"stub": func(text string) string {
 			seperator := "-"
-			str = strings.ToLower(str)
-			str = regexp.MustCompile("&.+?;").ReplaceAllString(str, "")
-			str = regexp.MustCompile("[^a-z0-9 _-]").ReplaceAllString(str, "")
-			str = regexp.MustCompile("\\s+").ReplaceAllString(str, seperator)
-			str = strings.Trim(str, seperator)
-			return str
+			text = strings.ToLower(text)
+			text = regexp.MustCompile("&.+?;").ReplaceAllString(text, "")
+			text = regexp.MustCompile("[^a-z0-9 _-]").ReplaceAllString(text, "")
+			text = regexp.MustCompile("\\s+").ReplaceAllString(text, seperator)
+			text = strings.Trim(text, seperator)
+			return text
 		},
 	}
 )
 
-func NewTemplateLoader(paths []string) *TemplateLoader {
+func NewTemplateLoader(paths []texting) *TemplateLoader {
 	loader := &TemplateLoader{
 		paths: paths,
 	}
