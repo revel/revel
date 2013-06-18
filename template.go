@@ -148,6 +148,15 @@ var (
 		"datetime": func(date time.Time) string {
 			return date.Format(DateTimeFormat)
 		},
+		"stub": func(str string) string {
+			seperator := "-"
+			str = strings.ToLower(str)
+			str = regexp.MustCompile("&.+?;").ReplaceAllString(str, "")
+			str = regexp.MustCompile("[^a-z0-9 _-]").ReplaceAllString(str, "")
+			str = regexp.MustCompile("\\s+").ReplaceAllString(str, seperator)
+			str = strings.Trim(str, seperator)
+			return str
+		},
 	}
 )
 
