@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 )
 
 var cmdBuild = &Command{
@@ -58,6 +59,30 @@ func buildApp(args []string) {
 	mustCopyDir(path.Join(tmpRevelPath, "conf"), path.Join(revel.RevelPath, "conf"), nil)
 	mustCopyDir(path.Join(tmpRevelPath, "templates"), path.Join(revel.RevelPath, "templates"), nil)
 	mustCopyDir(path.Join(srcPath, filepath.FromSlash(appImportPath)), revel.BasePath, nil)
+
+	// Find all the modules used and copy them over.
+	config := revel.Config.Raw()
+	modulePaths := make(map[string]string) // import path => filesystem path
+	for _, section := range config.Sections() {
+		options, _ := config.SectionOptions(section)
+		for _, key := range options {
+			if !strings.HasPrefix(key, "module.") {
+				continue
+			}
+			moduleImportPath, _ := config.String(section, key)
+			if moduleImportPath == "" {
+				continue
+			}
+			modulePath, err := revel.ResolveImportPath(moduleImportPath)
+			if err != nil {
+				revel.ERROR.Fatalln("Failed to load module %s: %s", key[len("module."):], err)
+			}
+			modulePaths[moduleImportPath] = modulePath
+		}
+	}
+	for importPath, fsPath := range modulePaths {
+		mustCopyDir(path.Join(srcPath, importPath), fsPath, nil)
+	}
 
 	tmplData := map[string]interface{}{
 		"BinName":    filepath.Base(app.BinaryPath),

@@ -62,6 +62,7 @@ var (
 
 	// Private
 	secretKey []byte // Key used to sign cookies. An empty key disables signing.
+	packaged  bool   // If true, this is running from a pre-built package.
 )
 
 func init() {
@@ -89,6 +90,7 @@ func Init(mode, importPath, srcPath string) {
 		// If the SourcePath was specified, assume both Revel and the app are within it.
 		SourcePath = path.Clean(SourcePath)
 		revelSourcePath = SourcePath
+		packaged = true
 	}
 
 	RevelPath = path.Join(revelSourcePath, filepath.FromSlash(REVEL_IMPORT_PATH))
@@ -231,13 +233,26 @@ func loadModules() {
 			continue
 		}
 
-		modPkg, err := build.Import(moduleImportPath, "", build.FindOnly)
+		modulePath, err := ResolveImportPath(moduleImportPath)
 		if err != nil {
 			log.Fatalln("Failed to load module.  Import of", moduleImportPath, "failed:", err)
 		}
-
-		addModule(key[len("module."):], moduleImportPath, modPkg.Dir)
+		addModule(key[len("module."):], moduleImportPath, modulePath)
 	}
+}
+
+// ResolveImportPath returns the filesystem path for the given import path.
+// Returns an error if the import path could not be found.
+func ResolveImportPath(importPath string) (string, error) {
+	if packaged {
+		return path.Join(SourcePath, importPath), nil
+	}
+
+	modPkg, err := build.Import(importPath, "", build.FindOnly)
+	if err != nil {
+		return "", err
+	}
+	return modPkg.Dir, nil
 }
 
 func addModule(name, importPath, modulePath string) {

@@ -30,6 +30,10 @@ func LoadConfig(confName string) (*MergedConfig, error) {
 	return nil, err
 }
 
+func (c *MergedConfig) Raw() *config.Config {
+	return c.config
+}
+
 func (c *MergedConfig) SetSection(section string) {
 	c.section = section
 }
