@@ -101,6 +101,7 @@ Additionally, there are frequently smaller feature requests or items in the
 1.  Better ORM support.  Investigate [Hood](https://github.com/eaigner/hood), [Jet](https://github.com/eaigner/jet), or [QBS](https://github.com/coocood/qbs) as possible improvement over Gorp.  Provide more samples (or modules) and better documentation for setting up common situations like SQL database, Mongo, LevelDB, etc.
 2.	Support for other templating languages (e.g. mustache, HAML).  Make TemplateLoader pluggable.  Use Pongo instead of vanilla Go templates (and update the samples)
 12.	Test Fixtures
+13.	Authenticity tokens for CSRF protection
 5. Coffeescript pre-processor.  Could potentially use [otto](https://github.com/robertkrimen/otto) as a native Go method to compiling.
 6.  SCSS/LESS pre-processor.
 4.	GAE support.  Some progress made in the 'appengine' branch -- the remaining piece is running the appengine services in development.
@@ -108,12 +109,8 @@ Additionally, there are frequently smaller feature requests or items in the
 5.	A Mongo module (perhaps with a sample app)
 9.	Easy emailer support (e.g. to email exception logs to developer, or even to email users),
 9.  Deployment to OpenShift (support, documentation, etc)
-9.  Deployment to Heroku (support, documentation, etc)
 16.	Improve the logging situation.  The configuration is a little awkward and not very powerful.  Integrating something more powerful would be good. (like [seelog](https://github.com/cihub/seelog) or [log4go](https://code.google.com/p/log4go/))
 10.	Cross-compilation in the "package" command.
 11.	ETags, cache controls
-3.	Performance tests. Overall QPS would be useful for marketing. Subsystem tests to direct optimization
-13.	Authenticity tokens for CSRF protection
 14.	A module or plugins for adding HTTP Basic Auth
 7.	Allowing the app to hook into the source code processing step
-15.	More tests for revel code
