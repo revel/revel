@@ -111,6 +111,29 @@ func (c *MergedConfig) Options(prefix string) []string {
 	return options
 }
 
+func (c *MergedConfig) Array(prefix string) interface{} {
+	var result interface{} = make(map[string]interface{})
+
+	for _, option := range c.Options(prefix) {
+		current := result
+
+		names := strings.Split(option, ".")
+		for k, name := range names[1:] { // We don't need the prefix in the result.
+			if _, ok := current.(map[string]interface{})[name]; !ok {
+				if k == (len(names) - 2) {
+					value, _ := c.String(option)
+					current.(map[string]interface{})[name] = value
+				} else {
+					current.(map[string]interface{})[name] = make(map[string]interface{})
+				}
+			}
+			current = current.(map[string]interface{})[name]
+		}
+	}
+
+	return result
+}
+
 // Helpers
 
 func stripQuotes(s string) string {
