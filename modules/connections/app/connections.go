@@ -3,10 +3,10 @@ package connections
 // Multiple named connections configuration module.
 // It support the following config format:
 
-// connection.mysql.drive = mysql
-// connection.mysql.spec = user:pass@localhost:3306
-// connection.pgsql.drive = pgsql
-// connection.pgsql.spec = postgres:pass@dbhost:5432
+// connections.mysql.drive = mysql
+// connections.mysql.spec = user:pass@localhost:3306
+// connections.pgsql.drive = pgsql
+// connections.pgsql.spec = postgres:pass@dbhost:5432
 //
 // Usage:
 // connections.Init()
@@ -14,7 +14,7 @@ package connections
 
 import (
 	"database/sql"
-	"github.com/3d0c/revel"
+	"github.com/robfig/revel"
 )
 
 type Connection struct {

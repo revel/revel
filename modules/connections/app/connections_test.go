@@ -1,11 +1,10 @@
 package connections
 
 import (
-	// "database/sql"
-	"github.com/3d0c/revel"
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
 	"github.com/robfig/config"
+	"github.com/robfig/revel"
 	"testing"
 )
 
