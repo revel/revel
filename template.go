@@ -36,6 +36,9 @@ type Template interface {
 	Render(wr io.Writer, arg interface{}) error
 }
 
+var invalidSlugPattern = regexp.MustCompile(`[^a-z0-9 _-]`)
+var whiteSpacePattern = regexp.MustCompile(`\s+`)
+
 var (
 	// The functions available for use in the templates.
 	TemplateFuncs = map[string]interface{}{
@@ -147,6 +150,14 @@ var (
 		},
 		"datetime": func(date time.Time) string {
 			return date.Format(DateTimeFormat)
+		},
+		"slug": func(text string) string {
+			separator := "-"
+			text = strings.ToLower(text)
+			text = invalidSlugPattern.ReplaceAllString(text, "")
+			text = whiteSpacePattern.ReplaceAllString(text, separator)
+			text = strings.Trim(text, separator)
+			return text
 		},
 	}
 )
