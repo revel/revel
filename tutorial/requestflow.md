@@ -53,7 +53,24 @@ renders it as a [Go template](http://www.golang.org/pkg/html/template).
 	{{set . "title" "Home"}}
 	{{template "header.html" .}}
 
-	<h1>Your Application Is Ready</h1>
+	<header class="hero-unit" style="background-color:#A9F16C">
+	  <div class="container">
+	    <div class="row">
+	      <div class="hero-text">
+	        <h1>It works!</h1>
+	        <p></p>
+	      </div>
+	    </div>
+	  </div>
+	</header>
+
+	<div class="container">
+	  <div class="row">
+	    <div class="span6">
+	      {{template "flash.html" .}}
+	    </div>
+	  </div>
+	</div>
 
 	{{template "footer.html" .}}
 
@@ -67,7 +84,8 @@ This template is very simple.  It:
 1. Adds a new **title** variable to the render context.
 2. Includes the **header.html** template (which uses the title).
 3. Displays a welcome message.
-4. Includes the **footer.html**.
+4. Includes the **flash.html** template, which shows any flashed messages.
+5. Includes the **footer.html**.
 
 If you look at header.html, you can see some more template tags in action:
 
@@ -100,7 +118,7 @@ variables.
 
 Let's change the welcome message.  In **Index.html**, change
 
-	<h1>Your Application Is Ready</h1>
+	<h1>It works!</h1>
 
 to
 

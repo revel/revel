@@ -9,10 +9,11 @@ application from
 
 Let's start with the **myapp** project that [we created previously](createapp.html).
 
-Edit the **app/views/App/Index.html** template to add this form:
+Edit the **app/views/App/Index.html** template to add this form, under the
+included `flash.html` template:
 
 	<form action="/App/Hello" method="GET">
-	    <input type="text" name="myName" />
+	    <input type="text" name="myName" /><br/>
 	    <input type="submit" value="Say hello!" />
 	</form>
 
@@ -71,24 +72,28 @@ Now it will send the user back to `Index()` if they have not entered a valid
 name. Their name and the validation error are kept in the
 [Flash](../manual/sessionflash.html), which is a temporary cookie.
 
-Let's use that data in the form.  Edit **app/views/App/Index.html**:
+The provided `flash.html` template will show any errors or flash messages:
 
-{% raw %}
-
-	<h1>Aloha World</h1>
-
-	{{range .errors}}
-		<p style="color:#c00">
-			{{.Message}}
-		</p>
+	{{if .flash.success}}
+	<div class="alert alert-success">
+		{{.flash.success}}
+	</div>
 	{{end}}
 
-	<form action="/App/Hello" method="GET">
-		<input type="text" name="myName" value="{{.flash.myName}}" />
-		<input type="submit" value="Say hello!" />
-	</form>
-
-{% endraw %}
+	{{if or .errors .flash.error}}
+	<div class="alert alert-error">
+		{{if .flash.error}}
+			{{.flash.error}}
+		{{end}}
+		{{if .errors}}
+		<ul style="margin-top:10px;">
+			{{range .errors}}
+				<li>{{.}}</li>
+			{{end}}
+		</ul>
+		{{end}}
+	</div>
+	{{end}}
 
 Now when we submit a single letter as our name:
 
