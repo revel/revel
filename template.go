@@ -151,14 +151,7 @@ var (
 		"datetime": func(date time.Time) string {
 			return date.Format(DateTimeFormat)
 		},
-		"slug": func(text string) string {
-			separator := "-"
-			text = strings.ToLower(text)
-			text = invalidSlugPattern.ReplaceAllString(text, "")
-			text = whiteSpacePattern.ReplaceAllString(text, separator)
-			text = strings.Trim(text, separator)
-			return text
-		},
+		"slug": Slug,
 	}
 )
 
@@ -375,4 +368,13 @@ func ReverseUrl(args ...interface{}) (string, error) {
 	}
 
 	return MainRouter.Reverse(args[0].(string), argsByName).Url, nil
+}
+
+func Slug(text string) string {
+	separator := "-"
+	text = strings.ToLower(text)
+	text = invalidSlugPattern.ReplaceAllString(text, "")
+	text = whiteSpacePattern.ReplaceAllString(text, separator)
+	text = strings.Trim(text, separator)
+	return text
 }
