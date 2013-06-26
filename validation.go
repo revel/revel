@@ -53,10 +53,12 @@ func (v *Validation) ErrorMap() map[string]*ValidationError {
 
 // Add an error to the validation context.
 func (v *Validation) Error(message string, args ...interface{}) *ValidationResult {
-	return (&ValidationResult{
+	result := (&ValidationResult{
 		Ok:    false,
 		Error: &ValidationError{},
 	}).Message(message, args)
+	v.Errors = append(v.Errors, result.Error)
+	return result
 }
 
 // A ValidationResult is returned from every validation method.
