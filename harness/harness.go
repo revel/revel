@@ -122,6 +122,7 @@ func (h *Harness) Refresh() (err *revel.Error) {
 		return
 	}
 
+	h.app.NoSsl = true
 	h.app.Port = h.port
 	if err2 := h.app.Cmd().Start(); err2 != nil {
 		return &revel.Error{

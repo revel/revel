@@ -69,5 +69,6 @@ func runApp(args []string) {
 		errorf("Failed to build app: %s", err)
 	}
 	app.Port = port
+	app.NoSsl = false
 	app.Cmd().Run()
 }
