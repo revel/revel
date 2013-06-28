@@ -46,8 +46,11 @@ var (
 	// the current process reality.  For example, if the app is configured for
 	// port 9000, HttpPort will always be 9000, even though in dev mode it is
 	// run on a random port and proxied.
-	HttpPort int    // e.g. 9000
-	HttpAddr string // e.g. "", "127.0.0.1"
+	HttpPort    int    // e.g. 9000
+	HttpAddr    string // e.g. "", "127.0.0.1"
+	HttpSSL     bool   // e.g. true
+	HttpSSLCert string // e.g. "/path/to/cert.pem"
+	HttpSSLKey  string // e.g. "/path/to/key.pem"
 
 	// All cookies dropped by the framework begin with this prefix.
 	CookiePrefix string
@@ -130,6 +133,18 @@ func Init(mode, importPath, srcPath string) {
 	DevMode = Config.BoolDefault("mode.dev", false)
 	HttpPort = Config.IntDefault("http.port", 9000)
 	HttpAddr = Config.StringDefault("http.addr", "")
+	HttpSSL = Config.BoolDefault("http.ssl", false)
+	HttpSSLCert = Config.StringDefault("http.sslcert", "")
+	HttpSSLKey = Config.StringDefault("http.sslkey", "")
+
+	if HttpSSL == true {
+		if HttpSSLCert == "" {
+			log.Fatalln("No http.sslcert provided.")
+		}
+		if HttpSSLKey == "" {
+			log.Fatalln("No http.sslkey provided.")
+		}
+	}
 	AppName = Config.StringDefault("app.name", "(not set)")
 	CookiePrefix = Config.StringDefault("cookie.prefix", "REVEL")
 	if secretStr := Config.StringDefault("app.secret", ""); secretStr != "" {

@@ -44,7 +44,8 @@ func NewAppCmd(binPath string, port int) AppCmd {
 	cmd := exec.Command(binPath,
 		fmt.Sprintf("-port=%d", port),
 		fmt.Sprintf("-importPath=%s", revel.ImportPath),
-		fmt.Sprintf("-runMode=%s", revel.RunMode))
+		fmt.Sprintf("-runMode=%s", revel.RunMode),
+		fmt.Sprint("-nossl=true"))
 	cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
 	return AppCmd{cmd}
 }
