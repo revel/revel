@@ -153,7 +153,6 @@ func (h *Harness) Run() {
 
 		var err error
 		if revel.HttpSSL == true {
-			revel.INFO.Println("Debug: HTTPS enabled.")
 			err = http.ListenAndServeTLS(addr, revel.HttpSSLCert,
 				revel.HttpSSLKey, h)
 		} else {
