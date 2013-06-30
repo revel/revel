@@ -55,6 +55,8 @@ func getSessionExpiration() time.Time {
 // Returns an http.Cookie containing the signed session.
 func (s Session) cookie() *http.Cookie {
 	var sessionValue string
+	ts := getSessionExpiration()
+	s[TS_KEY] = getSessionExpirationCookie(ts)
 	for key, value := range s {
 		if strings.ContainsAny(key, ":\x00") {
 			panic("Session keys may not have colons or null bytes")
@@ -70,7 +72,7 @@ func (s Session) cookie() *http.Cookie {
 		Name:    CookiePrefix + "_SESSION",
 		Value:   Sign(sessionData) + "-" + sessionData,
 		Path:    "/",
-		Expires: getSessionExpiration().UTC(),
+		Expires: ts.UTC(),
 	}
 }
 
@@ -107,7 +109,6 @@ func getSessionFromCookie(cookie *http.Cookie) Session {
 	if sessionTimeoutExpiredOrMissing(session) {
 		session = make(Session)
 	}
-	session[TS_KEY] = getSessionExpirationCookie()
 
 	return session
 }
@@ -125,13 +126,12 @@ func restoreSession(req *http.Request) Session {
 	session := make(Session)
 	cookie, err := req.Cookie(CookiePrefix + "_SESSION")
 	if err != nil {
-		session[TS_KEY] = getSessionExpirationCookie()
 		return session
 	}
 
 	return getSessionFromCookie(cookie)
 }
 
-func getSessionExpirationCookie() string {
-	return strconv.FormatInt(getSessionExpiration().Unix(), 10)
+func getSessionExpirationCookie(t time.Time) string {
+	return strconv.FormatInt(t.Unix(), 10)
 }
