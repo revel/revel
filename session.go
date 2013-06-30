@@ -105,7 +105,7 @@ func getSessionFromCookie(cookie *http.Cookie) Session {
 	})
 
 	if sessionTimeoutExpiredOrMissing(session) {
-		session = make(map[string]string)
+		session = make(Session)
 	}
 	session[TS_KEY] = strconv.FormatInt(getSessionExpiration().Unix(), 10)
 
@@ -122,7 +122,7 @@ func SessionFilter(c *Controller, fc []Filter) {
 }
 
 func restoreSession(req *http.Request) Session {
-	session := make(map[string]string)
+	session := make(Session)
 	cookie, err := req.Cookie(CookiePrefix + "_SESSION")
 	if err != nil {
 		session[TS_KEY] = strconv.FormatInt(getSessionExpiration().Unix(), 10)
