@@ -41,6 +41,10 @@ func main() {
 	args := flag.Args()
 
 	if len(args) < 1 || args[0] == "help" {
+		if len(args) == 1 {
+			tmpl(os.Stderr, usageTemplate, commands)
+			return
+		}
 		if len(args) > 1 {
 			for _, cmd := range commands {
 				if cmd.Name() == args[1] {
