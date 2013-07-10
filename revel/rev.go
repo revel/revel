@@ -42,8 +42,7 @@ func main() {
 
 	if len(args) < 1 || args[0] == "help" {
 		if len(args) == 1 {
-			tmpl(os.Stderr, usageTemplate, commands)
-			return
+			usage(0)
 		}
 		if len(args) > 1 {
 			for _, cmd := range commands {
@@ -53,7 +52,7 @@ func main() {
 				}
 			}
 		}
-		usage()
+		usage(2)
 	}
 
 	// Commands use panic to abort execution when something goes wrong.
@@ -105,9 +104,9 @@ var helpTemplate = `usage: revel {{.UsageLine}}
 {{.Long}}
 `
 
-func usage() {
+func usage(exitCode int) {
 	tmpl(os.Stderr, usageTemplate, commands)
-	os.Exit(2)
+	os.Exit(exitCode)
 }
 
 func tmpl(w io.Writer, text string, data interface{}) {
