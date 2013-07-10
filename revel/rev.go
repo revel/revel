@@ -36,7 +36,6 @@ var commands = []*Command{
 
 func main() {
 	fmt.Fprintf(os.Stdout, header)
-	flag.Usage = usage
 	flag.Parse()
 	args := flag.Args()
 
