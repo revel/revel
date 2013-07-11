@@ -5,7 +5,7 @@ import (
 	"github.com/robfig/revel"
 	"io/ioutil"
 	"os"
-	"path"
+	"path/filepath"
 )
 
 var cmdPackage = &Command{
@@ -35,11 +35,11 @@ func packageApp(args []string) {
 	revel.Init("", appImportPath, "")
 
 	// Remove the archive if it already exists.
-	destFile := path.Base(revel.BasePath) + ".tar.gz"
+	destFile := filepath.Base(revel.BasePath) + ".tar.gz"
 	os.Remove(destFile)
 
 	// Collect stuff in a temp directory.
-	tmpDir, err := ioutil.TempDir("", path.Base(revel.BasePath))
+	tmpDir, err := ioutil.TempDir("", filepath.Base(revel.BasePath))
 	panicOnError(err, "Failed to get temp dir")
 
 	buildApp([]string{args[0], tmpDir})
