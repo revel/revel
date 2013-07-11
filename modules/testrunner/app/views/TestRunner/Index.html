@@ -60,19 +60,23 @@ function runTest(button) {
 	var test = button.attr("test");
 	var row = button.parents("tr");
 	var resultCell = row.children(".result");
-	$.getJSON("/@tests/"+suite+"/"+test, function(result) {
-		row.attr("class", result.Passed ? "passed" : "failed");
-		if (result.Passed) {
-			resultCell.html("");
-		} else {
-			resultCell.html(result.ErrorHtml);			
-		}
-		button.removeClass("disabled").text("Run");
-		running -= 1;
-		if (running == 0) {
-			$("button[all-tests]").removeClass("disabled").text("Run All Tests");
-		}
-	});
+	$.ajax({
+		dataType: "json",
+		url: "/@tests/"+suite+"/"+test,
+		async: false,
+		success: function(result) {
+			row.attr("class", result.Passed ? "passed" : "failed");
+			if (result.Passed) {
+				resultCell.html("");
+			} else {
+				resultCell.html(result.ErrorHtml);
+			}
+			button.removeClass("disabled").text("Run");
+			running -= 1;
+			if (running == 0) {
+				$("button[all-tests]").removeClass("disabled").text("Run All Tests");
+			}
+		}});
 }
 </script>
 
