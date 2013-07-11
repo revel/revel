@@ -36,11 +36,14 @@ var commands = []*Command{
 
 func main() {
 	fmt.Fprintf(os.Stdout, header)
-	flag.Usage = usage
+	flag.Usage = func() { usage(1) }
 	flag.Parse()
 	args := flag.Args()
 
 	if len(args) < 1 || args[0] == "help" {
+		if len(args) == 1 {
+			usage(0)
+		}
 		if len(args) > 1 {
 			for _, cmd := range commands {
 				if cmd.Name() == args[1] {
@@ -49,7 +52,7 @@ func main() {
 				}
 			}
 		}
-		usage()
+		usage(2)
 	}
 
 	// Commands use panic to abort execution when something goes wrong.
@@ -101,9 +104,9 @@ var helpTemplate = `usage: revel {{.UsageLine}}
 {{.Long}}
 `
 
-func usage() {
+func usage(exitCode int) {
 	tmpl(os.Stderr, usageTemplate, commands)
-	os.Exit(2)
+	os.Exit(exitCode)
 }
 
 func tmpl(w io.Writer, text string, data interface{}) {
