@@ -52,6 +52,9 @@ var (
 	// All cookies dropped by the framework begin with this prefix.
 	CookiePrefix string
 
+	// Delimiters to use when rendering templates
+	TemplateDelims string
+
 	// Loggers
 	TRACE = log.New(ioutil.Discard, "TRACE ", log.Ldate|log.Ltime|log.Lshortfile)
 	INFO  = log.New(ioutil.Discard, "INFO  ", log.Ldate|log.Ltime|log.Lshortfile)
@@ -132,6 +135,7 @@ func Init(mode, importPath, srcPath string) {
 	HttpAddr = Config.StringDefault("http.addr", "")
 	AppName = Config.StringDefault("app.name", "(not set)")
 	CookiePrefix = Config.StringDefault("cookie.prefix", "REVEL")
+	TemplateDelims = Config.StringDefault("template.delimiters", "")
 	if secretStr := Config.StringDefault("app.secret", ""); secretStr != "" {
 		secretKey = []byte(secretStr)
 	}
