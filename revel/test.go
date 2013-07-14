@@ -231,14 +231,10 @@ func pluralize(num int, singular, plural string) string {
 }
 
 // Filters test suites and individual tests to match
-// the passed command line parameter
+// the parsed command line parameter
 func filterTestSuites(suites []controllers.TestSuiteDesc, suiteArgument string) []controllers.TestSuiteDesc {
-	// Parse optional specific test suite/method argument
 	var suiteName, testName string
 	argArray := strings.Split(suiteArgument, ".")
-	if len(argArray) == 0 {
-		return suites
-	}
 	suiteName = argArray[0]
 	if suiteName == "" {
 		return suites
@@ -247,25 +243,25 @@ func filterTestSuites(suites []controllers.TestSuiteDesc, suiteArgument string) 
 		testName = argArray[1]
 	}
 	for _, suite := range suites {
-		if suite.Name == suiteName {
-			// Run the whole test suite unmodified
-			if testName == "" {
-				return []controllers.TestSuiteDesc{suite}
-			} else {
-				// Only run a particular test in a suite
-				for _, test := range suite.Tests {
-					if test.Name == testName {
-						return []controllers.TestSuiteDesc{
-							controllers.TestSuiteDesc{
-								Name:  suite.Name,
-								Tests: []controllers.TestDesc{test},
-							},
-						}
-					}
-				}
-				errorf("Couldn't find test %s in suite %s", testName, suiteName)
+		if suite.Name != suiteName {
+			continue
+		}
+		if testName == "" {
+			return []controllers.TestSuiteDesc{suite}
+		}
+		// Only run a particular test in a suite
+		for _, test := range suite.Tests {
+			if test.Name != testName {
+				continue
+			}
+			return []controllers.TestSuiteDesc{
+				controllers.TestSuiteDesc{
+					Name:  suite.Name,
+					Tests: []controllers.TestDesc{test},
+				},
 			}
 		}
+		errorf("Couldn't find test %s in suite %s", testName, suiteName)
 	}
 	errorf("Couldn't find test suite %s", suiteName)
 	return nil
