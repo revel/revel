@@ -160,6 +160,11 @@ Here is an example session:
 
 	All Tests Passed.
 
+You can also run a single test suite, or method within that suite, with a period-separated parameter:
+
+	$ revel test github.com/robfig/revel/samples/booking dev ApplicationTest
+	$ revel test github.com/robfig/revel/samples/booking dev ApplicationTest.TestThatIndexPageWorks
+
 In the console only a simple PASSED/FAILED overview by test suite is displayed.  The tool writes more detailed results to the filesystem:
 
 	$ cd src/github.com/robfig/revel/samples/booking
