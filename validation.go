@@ -56,7 +56,7 @@ func (v *Validation) Error(message string, args ...interface{}) *ValidationResul
 	result := (&ValidationResult{
 		Ok:    false,
 		Error: &ValidationError{},
-	}).Message(message, args)
+	}).Message(message, args...)
 	v.Errors = append(v.Errors, result.Error)
 	return result
 }
