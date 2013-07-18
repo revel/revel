@@ -51,7 +51,8 @@ as the following example shows:
 
 <pre class="prettyprint lang-go">
 func (c SomeController) Action() revel.Result {
-	var ids []int = c.Params.Bind("ids[]", reflect.TypeOf([]int{}))
+	var ids []int
+	c.Params.Bind(&ids, "ids")
 	...
 }
 </pre>
