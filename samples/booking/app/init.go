@@ -21,9 +21,9 @@ func init() {
 
 var HeaderFilter = func(c *revel.Controller, fc []revel.Filter) {
 	// Add some common security headers
-	c.Response.Out.Header().Add("X-Frame-Options", "SAMEORIGIN")
-	c.Response.Out.Header().Add("X-XSS-Protection", "1; mode=block")
-	c.Response.Out.Header().Add("X-Content-Type-Options", "nosniff")
+	c.Response.Header().Add("X-Frame-Options", "SAMEORIGIN")
+	c.Response.Header().Add("X-XSS-Protection", "1; mode=block")
+	c.Response.Header().Add("X-Content-Type-Options", "nosniff")
 
 	fc[0](c, fc[1:]) // Execute the next filter stage.
 }
