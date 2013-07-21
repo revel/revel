@@ -49,7 +49,7 @@ func (c App) SaveSettings(setting string) revel.Result {
 	if c.Validation.HasErrors() {
 		c.Flash.Error("Settings invalid!")
 		c.Validation.Keep()
-		c.Params.Flash()
+		c.FlashParams()
 		return c.Redirect(App.ShowSettings)
 	}
 
