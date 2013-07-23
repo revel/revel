@@ -49,13 +49,15 @@ To bind a parameter to a data type, use Revel's Binder
 ([godoc](../docs/godoc/binder.html)).  It is integrated with the Params object
 as the following example shows:
 
+{% raw %}
 <pre class="prettyprint lang-go">
 func (c SomeController) Action() revel.Result {
 	var ids []int
-	c.Params.Bind(&ids, "ids")
+	c.Params.Bind(&amp;ids, "ids")
 	...
 }
 </pre>
+{% endraw %}
 
 The following data types are supported out of the box:
 * Ints of all widths
