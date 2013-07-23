@@ -40,9 +40,8 @@ which compiles and zips the app, along with a script to run it.
     $ tar xzvf app.tar.gz
 	$ bash run.sh
 
-Presently there is no explicit cross-compilation support, so this only works if
-you develop and deploy to the same architecture, or if you configure your go
-installation to build to the desired architecture by default.
+This only works if you develop and deploy to the same architecture, or if you configure your go
+installation to build to the desired architecture by default. See below for cross-compilation support.
 
 ### Incremental deployment
 
@@ -88,6 +87,32 @@ Please see the
 [README](https://github.com/robfig/heroku-buildpack-go-revel/blob/master/README.md)
 for usage instructions.
 
-## Areas for development:
+## Cross-compilation
 
-* Cross-compilation (e.g. develop on OSX, deploy on Linux).
+In order to create a cross-compile environment, we need to build go from source.
+If you have already done so, skip this part.
+
+    # Set the new GOPATH, GOROOT, PATH to your bashrc or equivalent.
+    # Remember, GOPATH and GOROOT must be different path.
+    $ export GOPATH=$HOME/workspace/go
+    $ export GOROOT=$HOME/go
+    $ export PATH="$GOROOT/bin:$PATH"
+    $ hg clone -u release https://code.google.com/p/go $GOROOT
+    $ cd $GOROOT/src
+    $ ./all.bash
+
+When you have a go toolchain successfully setup, build the cross-compiler.
+specify the target environment with GOOS and GOARCH environment variables. See
+[Installing Go from source](http://golang.org/doc/install/source#environment)
+for more information.
+
+    $ cd $GOROOT/src
+    $ GOOS=linux GOARCH=amd64 ./make.bash --no-clean
+    $ GOOS=windows GOARCH=386 ./make.bash --no-clean
+
+Install revel on the new environment and you are set to go with the packaging.
+
+    $ GOOS=linux GOARCH=amd64 revel package import/path/to/app
+
+Copy the resulting tarball to your target platform.
+
