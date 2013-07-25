@@ -90,23 +90,18 @@ for usage instructions.
 ## Cross-compilation
 
 In order to create a cross-compile environment, we need to build go from source.
-If you have already done so, skip this part.
+See
+[Installing Go from source](http://golang.org/doc/install/source)
+for more information.
+You must properly set your $PATH and $GOPATH variables, otherwise if there is an existing
+binary Go package, you will get into serious errors.
 
-    # Set the new GOPATH, GOROOT, PATH to your bashrc or equivalent.
-    # Remember, GOPATH and GOROOT must be different path.
-    $ export GOPATH=$HOME/workspace/go
-    $ export GOROOT=$HOME/go
-    $ export PATH="$GOROOT/bin:$PATH"
-    $ hg clone -u release https://code.google.com/p/go $GOROOT
-    $ cd $GOROOT/src
-    $ ./all.bash
-
-When you have a go toolchain successfully setup, build the cross-compiler.
-specify the target environment with GOOS and GOARCH environment variables. See
-[Installing Go from source](http://golang.org/doc/install/source#environment)
+When you have a go compiler successfully setup, build the cross-compiler by
+specifying the target environment with GOOS and GOARCH environment variables. See
+[Optional environment variables](http://golang.org/doc/install/source#environment)
 for more information.
 
-    $ cd $GOROOT/src
+    $ cd /path/to/goroot/src
     $ GOOS=linux GOARCH=amd64 ./make.bash --no-clean
     $ GOOS=windows GOARCH=386 ./make.bash --no-clean
 
