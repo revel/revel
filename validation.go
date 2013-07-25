@@ -168,10 +168,12 @@ func (v *Validation) Check(obj interface{}, checks ...Validator) *ValidationResu
 }
 
 func ValidationFilter(c *Controller, fc []Filter) {
+	errors, err := restoreValidationErrors(c.Request.Request)
 	c.Validation = &Validation{
-		Errors: restoreValidationErrors(c.Request.Request),
+		Errors: errors,
 		keep:   false,
 	}
+	hasCookie := (err != http.ErrNoCookie)
 
 	fc[0](c, fc[1:])
 
@@ -187,17 +189,33 @@ func ValidationFilter(c *Controller, fc []Filter) {
 			}
 		}
 	}
-	c.SetCookie(&http.Cookie{
-		Name:  CookiePrefix + "_ERRORS",
-		Value: url.QueryEscape(errorsValue),
-		Path:  "/",
-	})
+
+	// When there are errors from Validation and Keep() has been called, store the
+	// values in a cookie. If there previously was a cookie but no errors, remove
+	// the cookie.
+	if errorsValue != "" {
+		c.SetCookie(&http.Cookie{
+			Name:  CookiePrefix + "_ERRORS",
+			Value: url.QueryEscape(errorsValue),
+			Path:  "/",
+		})
+	} else if hasCookie {
+		c.SetCookie(&http.Cookie{
+			Name:   CookiePrefix + "_ERRORS",
+			MaxAge: -1,
+			Path:   "/",
+		})
+	}
 }
 
 // Restore Validation.Errors from a request.
-func restoreValidationErrors(req *http.Request) []*ValidationError {
-	errors := make([]*ValidationError, 0, 5)
-	if cookie, err := req.Cookie(CookiePrefix + "_ERRORS"); err == nil {
+func restoreValidationErrors(req *http.Request) ([]*ValidationError, error) {
+	var (
+		err    error
+		cookie *http.Cookie
+		errors = make([]*ValidationError, 0, 5)
+	)
+	if cookie, err = req.Cookie(CookiePrefix + "_ERRORS"); err == nil {
 		ParseKeyValueCookie(cookie.Value, func(key, val string) {
 			errors = append(errors, &ValidationError{
 				Key:     key,
@@ -205,7 +223,7 @@ func restoreValidationErrors(req *http.Request) []*ValidationError {
 			})
 		})
 	}
-	return errors
+	return errors, err
 }
 
 // Register default validation keys for all calls to Controller.Validation.Func().
