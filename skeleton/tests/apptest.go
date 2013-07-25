@@ -6,7 +6,7 @@ type AppTest struct {
 	revel.TestSuite
 }
 
-func (t AppTest) Before() {
+func (t *AppTest) Before() {
 	println("Set up")
 }
 
@@ -16,6 +16,6 @@ func (t AppTest) TestThatIndexPageWorks() {
 	t.AssertContentType("text/html")
 }
 
-func (t AppTest) After() {
+func (t *AppTest) After() {
 	println("Tear down")
 }
