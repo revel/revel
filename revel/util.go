@@ -131,3 +131,20 @@ func mustTarGzDir(destFilename, srcDir string) string {
 
 	return zipFile.Name()
 }
+
+func exists(filename string) bool {
+	_, err := os.Stat(filename)
+	return err == nil
+}
+
+// empty returns true if the given directory is empty.
+// the directory must exist.
+func empty(dirname string) bool {
+	dir, err := os.Open(dirname)
+	if err != nil {
+		errorf("error opening directory: %s", err)
+	}
+	defer dir.Close()
+	results, _ := dir.Readdir(1)
+	return len(results) == 0
+}

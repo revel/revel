@@ -16,7 +16,7 @@ import (
 )
 
 var cmdTest = &Command{
-	UsageLine: "test [import path] [run mode]",
+	UsageLine: "test [import path] [run mode] [suite.method]",
 	Short:     "run all tests from the command-line",
 	Long: `
 Run all tests for the Revel app named by the given import path.
@@ -28,7 +28,17 @@ For example, to run the booking sample application's tests:
 The run mode is used to select which set of app.conf configuration should
 apply and may be used to determine logic in the application itself.
 
-Run mode defaults to "dev".`,
+Run mode defaults to "dev".
+
+You can run a specific suite (and function) by specifying a third parameter.
+For example, to run all of UserTest:
+
+    revel test outspoken test UserTest
+
+or one of UserTest's methods:
+
+    revel test outspoken test UserTest.Test1
+`,
 }
 
 func init() {
@@ -42,7 +52,7 @@ func testApp(args []string) {
 	}
 
 	mode := "dev"
-	if len(args) == 2 {
+	if len(args) >= 2 {
 		mode = args[1]
 	}
 
@@ -118,6 +128,10 @@ You can add it to a run mode configuration with the following line:
 	defer resp.Body.Close()
 	json.NewDecoder(resp.Body).Decode(&testSuites)
 
+	// If a specific TestSuite[.Method] is specified, only run that suite/test
+	if len(args) == 3 {
+		testSuites = filterTestSuites(testSuites, args[2])
+	}
 	fmt.Printf("\n%d test suite%s to run.\n", len(testSuites), pluralize(len(testSuites), "", "s"))
 	fmt.Println()
 
@@ -214,4 +228,41 @@ func pluralize(num int, singular, plural string) string {
 		return singular
 	}
 	return plural
+}
+
+// Filters test suites and individual tests to match
+// the parsed command line parameter
+func filterTestSuites(suites []controllers.TestSuiteDesc, suiteArgument string) []controllers.TestSuiteDesc {
+	var suiteName, testName string
+	argArray := strings.Split(suiteArgument, ".")
+	suiteName = argArray[0]
+	if suiteName == "" {
+		return suites
+	}
+	if len(argArray) == 2 {
+		testName = argArray[1]
+	}
+	for _, suite := range suites {
+		if suite.Name != suiteName {
+			continue
+		}
+		if testName == "" {
+			return []controllers.TestSuiteDesc{suite}
+		}
+		// Only run a particular test in a suite
+		for _, test := range suite.Tests {
+			if test.Name != testName {
+				continue
+			}
+			return []controllers.TestSuiteDesc{
+				controllers.TestSuiteDesc{
+					Name:  suite.Name,
+					Tests: []controllers.TestDesc{test},
+				},
+			}
+		}
+		errorf("Couldn't find test %s in suite %s", testName, suiteName)
+	}
+	errorf("Couldn't find test suite %s", suiteName)
+	return nil
 }
