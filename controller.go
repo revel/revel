@@ -214,8 +214,7 @@ func (c *Controller) Message(message string, args ...interface{}) (value string)
 func (c *Controller) SetAction(controllerName, methodName string) error {
 
 	// Look up the controller and method types.
-	var ok bool
-	if c.Type, ok = controllers[strings.ToLower(controllerName)]; !ok {
+	if c.Type = GetController(controllerName); c.Type == nil {
 		return errors.New("revel/controller: failed to find controller " + controllerName)
 	}
 	if c.MethodType = c.Type.Method(methodName); c.MethodType == nil {
@@ -324,6 +323,11 @@ func (ct *ControllerType) Method(name string) *MethodType {
 }
 
 var controllers = make(map[string]*ControllerType)
+
+// GetController finds a controller from among the registered controllers
+func GetController(controllerName string) *ControllerType {
+	return controllers[strings.ToLower(controllerName)]
+}
 
 // Register a Controller and its Methods with Revel.
 func RegisterController(c interface{}, methods []*MethodType) {

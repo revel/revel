@@ -1,7 +1,9 @@
 package revel
 
 import (
+	"bitbucket.org/pkg/inflect"
 	"encoding/csv"
+	"errors"
 	"fmt"
 	"github.com/robfig/pathtree"
 	"io"
@@ -197,12 +199,77 @@ func parseRoutes(routesPath, content string, validate bool) ([]*Route, *Error) {
 			continue
 		}
 
-		route := NewRoute(method, path, action, fixedArgs, routesPath, n)
-		routes = append(routes, route)
+		appendRoute := func(method, path, action string) *Error {
+			route := NewRoute(method, path, action, fixedArgs, routesPath, n)
+			routes = append(routes, route)
 
-		if validate {
-			if err := validateRoute(route); err != nil {
-				return nil, routeError(err, routesPath, content, n)
+			if validate {
+				if err := validateRoute(route); err != nil {
+					return routeError(err, routesPath, content, n)
+				}
+			}
+			return nil
+		}
+
+		if method != "RESOURCE" {
+			// This is a regular route, append as normal
+			if err := appendRoute(method, path, action); err != nil {
+				return nil, err
+			}
+		} else {
+			// This is a resource, multiple routes will need to be added
+
+			// Lookup actions in the controller
+			controllerName := action
+			controllerType := GetController(controllerName)
+			if controllerType == nil {
+				return nil, routeError(errors.New("revel/router: failed to find controller "+controllerName), routesPath, content, n)
+			}
+
+			// Singular Resources (e.g. "Monkey") work differently than Plural Resources (e.g. "Monkeys")
+			isPlural := isPlural(controllerName)
+
+			//these are each of the routes we are going to try to add
+			//action - the RESTful verb associated with this action
+			//method - the HTTP method to access the route
+			//path - the path we append to the given path for this action
+			//isMember - whether this is a member route within the plural resources (will be a regular route for singular resources)
+			//pluralOnly - the Index action only applies to plural routes, not singular
+			restfulRoutes := []struct {
+				action, method, path string
+				isMember, pluralOnly bool
+			}{
+				{"Index", "GET", "", false, true},
+				{"New", "GET", "/new", false, false},
+				{"Create", "POST", "", false, false},
+				{"Show", "GET", "", true, false},
+				{"Edit", "GET", "/edit", true, false},
+				{"Update", "PUT", "", true, false},
+				{"Destroy", "DELETE", "", true, false},
+			}
+
+			// for each restful route type..
+			for _, route := range restfulRoutes {
+
+				if !isPlural && route.pluralOnly {
+					continue //Indexing only applies to plural resources, skip it
+				}
+
+				methodType := controllerType.Method(route.action)
+				if methodType == nil {
+					continue // controller doesn't have this method, so skip the route
+				}
+
+				// if we need to access an instance, we need to add an extra piece of the route
+				memberString := ""
+				if isPlural && route.isMember {
+					memberString = "/:" + inflect.Singularize(strings.ToLower(controllerName)) + "_id"
+				}
+
+				//try to add this route
+				if err := appendRoute(route.method, path+memberString+route.path, action+"."+route.action); err != nil {
+					return nil, err
+				}
 			}
 		}
 	}
@@ -279,7 +346,7 @@ func getModuleRoutes(moduleName string, validate bool) ([]*Route, *Error) {
 // 5: action
 // 6: fixedargs
 var routePattern *regexp.Regexp = regexp.MustCompile(
-	"(?i)^(GET|POST|PUT|DELETE|PATCH|OPTIONS|HEAD|WS|\\*)" +
+	"(?i)^(GET|POST|PUT|DELETE|PATCH|OPTIONS|HEAD|WS|RESOURCE|\\*)" +
 		"[(]?([^)]*)(\\))?[ \t]+" +
 		"(.*/[^ \t]*)[ \t]+([^ \t(]+)" +
 		`\(?([^)]*)\)?[ \t]*$`)
@@ -292,6 +359,10 @@ func parseRouteLine(line string) (method, path, action, fixedArgs string, found 
 	method, path, action, fixedArgs = matches[1], matches[4], matches[5], matches[6]
 	found = true
 	return
+}
+
+func isPlural(word string) bool {
+	return inflect.Pluralize(word) == word
 }
 
 func NewRouter(routesPath string) *Router {
