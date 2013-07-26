@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/http/cookiejar"
 	"net/url"
 	"regexp"
 	"strings"
@@ -24,7 +25,11 @@ var TestSuites []interface{} // Array of structs that embed TestSuite
 // NewTestSuite returns an initialized TestSuite ready for use. It is invoked
 // by the test harness to initialize the embedded field in application tests.
 func NewTestSuite() TestSuite {
-	return TestSuite{Client: &http.Client{}, Session: make(Session)}
+	jar, _ := cookiejar.New(nil)
+	return TestSuite{
+		Client:  &http.Client{Jar: jar},
+		Session: make(Session),
+	}
 }
 
 // Return the address and port of the server, e.g. "127.0.0.1:8557"
@@ -77,7 +82,6 @@ func (t *TestSuite) PostForm(path string, data url.Values) {
 // added to the request cookies for you.
 func (t *TestSuite) MakeRequestSession(req *http.Request) {
 	req.AddCookie(t.Session.cookie())
-
 	t.MakeRequest(req)
 }
 
@@ -93,7 +97,14 @@ func (t *TestSuite) MakeRequest(req *http.Request) {
 		panic(err)
 	}
 
-	t.Session = restoreSession(req)
+	// Look for a session cookie in the response and parse it.
+	sessionCookieName := t.Session.cookie().Name
+	for _, cookie := range t.Client.Jar.Cookies(req.URL) {
+		if cookie.Name == sessionCookieName {
+			t.Session = getSessionFromCookie(cookie)
+			break
+		}
+	}
 }
 
 // Create a websocket connection to the given path and return the connection

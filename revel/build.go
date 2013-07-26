@@ -40,6 +40,12 @@ func buildApp(args []string) {
 		revel.Init("", appImportPath, "")
 	}
 
+	// First, verify that it is either already empty or looks like a previous
+	// build (to avoid clobbering anything)
+	if exists(destPath) && !empty(destPath) && !exists(path.Join(destPath, "run.sh")) {
+		errorf("Abort: %s exists and does not look like a build directory.", destPath)
+	}
+
 	os.RemoveAll(destPath)
 	os.MkdirAll(destPath, 0777)
 

@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"io"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -171,6 +172,16 @@ func (loader *TemplateLoader) Refresh() *Error {
 	loader.compileError = nil
 	loader.templatePaths = map[string]string{}
 
+	// Set the template delimiters for the project if present, then split into left
+	// and right delimiters around a space character
+	var splitDelims []string
+	if TemplateDelims != "" {
+		splitDelims = strings.Split(TemplateDelims, " ")
+		if len(splitDelims) != 2 {
+			log.Fatalln("app.conf: Incorrect format for template.delimiters")
+		}
+	}
+
 	// Walk through the template loader's paths and build up a template set.
 	var templateSet *template.Template = nil
 	for _, basePath := range loader.paths {
@@ -214,6 +225,7 @@ func (loader *TemplateLoader) Refresh() *Error {
 			}
 
 			fileStr := string(fileBytes)
+
 			if templateSet == nil {
 				// Create the template set.  This panics if any of the funcs do not
 				// conform to expectations, so we wrap it in a func and handle those
@@ -229,6 +241,13 @@ func (loader *TemplateLoader) Refresh() *Error {
 						}
 					}()
 					templateSet = template.New(templateName).Funcs(TemplateFuncs)
+					// If alternate delimiters set for the project, change them for this set
+					if splitDelims != nil && basePath == ViewsPath {
+						templateSet.Delims(splitDelims[0], splitDelims[1])
+					} else {
+						// Reset to default otherwise
+						templateSet.Delims("", "")
+					}
 					_, err = templateSet.Parse(fileStr)
 				}()
 
@@ -237,6 +256,11 @@ func (loader *TemplateLoader) Refresh() *Error {
 				}
 
 			} else {
+				if splitDelims != nil && basePath == ViewsPath {
+					templateSet.Delims(splitDelims[0], splitDelims[1])
+				} else {
+					templateSet.Delims("", "")
+				}
 				_, err = templateSet.New(templateName).Parse(fileStr)
 			}
 
