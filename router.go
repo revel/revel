@@ -1,7 +1,9 @@
 package revel
 
 import (
+	"bitbucket.org/pkg/inflect"
 	"encoding/csv"
+	"errors"
 	"fmt"
 	"github.com/robfig/pathtree"
 	"io"
@@ -169,26 +171,38 @@ func parseRoutesFile(routesPath string, validate bool) ([]*Route, *Error) {
 	return parseRoutes(routesPath, string(contentBytes), validate)
 }
 
+type multiRouteLoader func(content, routesPath string, n int, validate bool) ([]*Route, *Error)
+
 // parseRoutes reads the content of a routes file into the routing table.
 func parseRoutes(routesPath, content string, validate bool) ([]*Route, *Error) {
 	var routes []*Route
 
 	// For each line..
+RouteLine:
 	for n, line := range strings.Split(content, "\n") {
 		line = strings.TrimSpace(line)
 		if len(line) == 0 || line[0] == '#' {
 			continue
 		}
 
-		// Handle included routes from modules.
+		// Handle included routes from modules or resources.
 		// e.g. "module:testrunner" imports all routes from that module.
-		if strings.HasPrefix(line, "module:") {
-			moduleRoutes, err := getModuleRoutes(line[len("module:"):], validate)
-			if err != nil {
-				return nil, routeError(err, routesPath, content, n)
+		multiRouteSources := map[string]multiRouteLoader{
+			"module:":    getModuleRoutes,
+			"resource:":  getSingularResourceRoutes,
+			"resources:": getPluralResourceRoutes,
+		}
+
+		for key, loader := range multiRouteSources {
+			if strings.HasPrefix(line, key) {
+				lineRoutes, err := loader(line[len(key):], routesPath, n, validate)
+				if err != nil {
+					return nil, routeError(err, routesPath, content, n)
+				}
+
+				routes = append(routes, lineRoutes...)
+				continue RouteLine
 			}
-			routes = append(routes, moduleRoutes...)
-			continue
 		}
 
 		// A single route
@@ -262,7 +276,7 @@ func routeError(err error, routesPath, content string, n int) *Error {
 
 // getModuleRoutes loads the routes file for the given module and returns the
 // list of routes.
-func getModuleRoutes(moduleName string, validate bool) ([]*Route, *Error) {
+func getModuleRoutes(moduleName, _ string, _ int, validate bool) ([]*Route, *Error) {
 	// Look up the module.  It may be not found due to the common case of e.g. the
 	// testrunner module being active only in dev mode.
 	module, found := ModuleByName(moduleName)
@@ -271,6 +285,83 @@ func getModuleRoutes(moduleName string, validate bool) ([]*Route, *Error) {
 		return nil, nil
 	}
 	return parseRoutesFile(path.Join(module.Path, "conf", "routes"), validate)
+}
+
+func getSingularResourceRoutes(content, routesPath string, n int, validate bool) ([]*Route, *Error) {
+	return getResourceRoutes(content, false, routesPath, n, validate)
+}
+
+func getPluralResourceRoutes(content, routesPath string, n int, validate bool) ([]*Route, *Error) {
+	return getResourceRoutes(content, true, routesPath, n, validate)
+}
+
+func getResourceRoutes(content string, isPlural bool, routesPath string, n int, validate bool) ([]*Route, *Error) {
+	// This is a resource, multiple routes will need to be added
+
+	routes := []*Route{}
+
+	sections := strings.Split(content, " ")
+	if len(sections) != 2 {
+		return nil, routeError(errors.New("revel/route: incorrectly formatted resource"), routesPath, "", n)
+	}
+
+	// Lookup actions in the controller
+	controllerName := sections[0]
+	controllerType, ok := GetController(controllerName)
+	if !ok {
+		return nil, routeError(errors.New("revel/router: failed to find controller "+controllerName), routesPath, "", n)
+	}
+
+	path := sections[1]
+
+	// These are each of the routes we are going to try to add
+	//
+	// action - the RESTful verb associated with this action
+	// method - the HTTP method to access the route
+	// path - the path we append to the given path for this action
+	// isMember - whether this is a member route within the plural resources (will be a regular route for singular resources)
+	// pluralOnly - the Index action only applies to plural routes, not singular
+	restfulRoutes := []struct {
+		action, method, path string
+		isMember, pluralOnly bool
+	}{
+		{"Index", "GET", "", false, true},
+		{"New", "GET", "/new", false, false},
+		{"Create", "POST", "", false, false},
+		{"Show", "GET", "", true, false},
+		{"Edit", "GET", "/edit", true, false},
+		{"Update", "PUT", "", true, false},
+		{"Destroy", "DELETE", "", true, false},
+	}
+
+	// For each restful route type..
+	for _, route := range restfulRoutes {
+
+		if !isPlural && route.pluralOnly {
+			continue // Indexing only applies to plural resources, skip it
+		}
+
+		methodType := controllerType.Method(route.action)
+		if methodType == nil {
+			continue // Controller doesn't have this method, so skip the route
+		}
+
+		// If we need to access an instance, we need to add an extra piece of the route
+		memberString := ""
+		if isPlural && route.isMember {
+			memberString = "/:" + inflect.Singularize(strings.ToLower(controllerName)) + "_id"
+		}
+
+		// Try to add this route
+		route := NewRoute(route.method, path+memberString+route.path, controllerName+"."+route.action, "", routesPath, n)
+		if validate {
+			if err := validateRoute(route); err != nil {
+				return nil, routeError(err, routesPath, "", n)
+			}
+		}
+		routes = append(routes, route)
+	}
+	return routes, nil
 }
 
 // Groups:
