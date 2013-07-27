@@ -53,7 +53,7 @@ func (c Application) Index() revel.Result {
 
 func (c Application) SetStatus(status string) revel.Result {
 	resp, err := TWITTER.PostForm(
-		"http://api.twitter.com/1/statuses/update.json",
+		"http://api.twitter.com/1.1/statuses/update.json",
 		map[string]string{"status": status},
 		getUser().AccessToken,
 	)
