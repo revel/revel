@@ -19,13 +19,13 @@ type Binder struct {
 	//
 	// Example
 	//
-	//   Request:
+	// Request:
 	//   url?id=123&ol[0]=1&ol[1]=2&ul[]=str&ul[]=array&user.Name=rob
 	//
-	//   Action:
+	// Action:
 	//   Example.Action(id int, ol []int, ul []string, user User)
 	//
-	//   Calls:
+	// Calls:
 	//   Bind(params, "id", int): 123
 	//   Bind(params, "ol", []int): {1, 2}
 	//   Bind(params, "ul", []string): {"str", "array"}
@@ -183,6 +183,11 @@ var (
 			output[name] = t.Format(format)
 		},
 	}
+
+	MapBinder = Binder{
+		Bind:   bindMap,
+		Unbind: unbindMap,
+	}
 )
 
 // Sadly, the binder lookups can not be declared initialized -- that results in
@@ -208,6 +213,7 @@ func init() {
 	KindBinders[reflect.Slice] = Binder{bindSlice, unbindSlice}
 	KindBinders[reflect.Struct] = Binder{bindStruct, unbindStruct}
 	KindBinders[reflect.Ptr] = PointerBinder
+	KindBinders[reflect.Map] = MapBinder
 
 	TypeBinders[reflect.TypeOf(time.Time{})] = TimeBinder
 
@@ -427,18 +433,38 @@ func bindByteArray(params *Params, name string, typ reflect.Type) reflect.Value 
 	return reflect.Zero(typ)
 }
 
-func bindReader(params *Params, name string, typ reflect.Type) reflect.Value {
-	if reader := getMultipartFile(params, name); reader != nil {
-		return reflect.ValueOf(reader.(io.Reader))
-	}
-	return reflect.Zero(typ)
-}
-
 func bindReadSeeker(params *Params, name string, typ reflect.Type) reflect.Value {
 	if reader := getMultipartFile(params, name); reader != nil {
 		return reflect.ValueOf(reader.(io.ReadSeeker))
 	}
 	return reflect.Zero(typ)
+}
+
+// bindMap converts parameters using map syntax into the corresponding map. e.g.:
+//   params["a[5]"]=foo, name="a", typ=map[int]string => map[int]string{5: "foo"}
+func bindMap(params *Params, name string, typ reflect.Type) reflect.Value {
+	var (
+		result    = reflect.MakeMap(typ)
+		keyType   = typ.Key()
+		valueType = typ.Elem()
+	)
+	for paramName, values := range params.Values {
+		if !strings.HasPrefix(paramName, name+"[") || paramName[len(paramName)-1] != ']' {
+			continue
+		}
+
+		key := paramName[len(name)+1 : len(paramName)-1]
+		result.SetMapIndex(BindValue(key, keyType), BindValue(values[0], valueType))
+	}
+	return result
+}
+
+func unbindMap(output map[string]string, name string, iface interface{}) {
+	mapValue := reflect.ValueOf(iface)
+	for _, key := range mapValue.MapKeys() {
+		Unbind(output, name+"["+fmt.Sprintf("%v", key.Interface())+"]",
+			mapValue.MapIndex(key).Interface())
+	}
 }
 
 // Bind takes the name and type of the desired parameter and constructs it
