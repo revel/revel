@@ -64,7 +64,7 @@ func Run(port int) {
 	// If desired (or by default), create a watcher for templates and routes.
 	// The watcher calls Refresh() on things on the first request.
 	if MainWatcher != nil && Config.BoolDefault("watch.templates", true) {
-		MainWatcher.Listen(MainTemplateLoader, MainTemplateLoader.paths...)
+		MainWatcher.Listen(MainTemplateLoader, TemplatePaths...)
 	} else {
 		MainTemplateLoader.Refresh()
 	}

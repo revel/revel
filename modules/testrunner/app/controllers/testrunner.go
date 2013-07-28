@@ -66,7 +66,7 @@ func (c TestRunner) Run(suite, test string) revel.Result {
 					} else {
 						var buffer bytes.Buffer
 						tmpl, _ := revel.MainTemplateLoader.Template("TestRunner/FailureDetail.html")
-						tmpl.Render(&buffer, error)
+						tmpl.Execute(&buffer, error)
 						result.ErrorSummary = errorSummary(error)
 						result.ErrorHtml = template.HTML(buffer.String())
 					}

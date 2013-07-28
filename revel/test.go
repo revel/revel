@@ -197,7 +197,7 @@ You can add it to a run mode configuration with the following line:
 		if err != nil {
 			errorf("Failed to create result file %s: %s", suiteResultFilename, err)
 		}
-		if err = resultTemplate.Render(suiteResultFile, suiteResult); err != nil {
+		if err = resultTemplate.Execute(suiteResultFile, suiteResult); err != nil {
 			errorf("Failed to render result template: %s", err)
 		}
 	}

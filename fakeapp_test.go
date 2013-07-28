@@ -29,7 +29,7 @@ type Static struct {
 func (c Hotels) Show(id int) Result {
 	title := "View Hotel"
 	hotel := &Hotel{id, "A Hotel", "300 Main St.", "New York", "NY", "10010", "USA", 300}
-	return c.Render(title, hotel)
+	return c.Render(hotel, title)
 }
 
 func (c Hotels) Book(id int) Result {
@@ -82,7 +82,7 @@ func startFakeBookingApp() {
 				Args: []*MethodArg{
 					{"id", reflect.TypeOf((*int)(nil))},
 				},
-				RenderArgNames: map[int][]string{32: []string{"title", "hotel"}},
+				RenderArgNames: map[int][]string{32: []string{"hotel", "title"}},
 			},
 			&MethodType{
 				Name: "Book",

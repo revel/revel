@@ -27,7 +27,6 @@ func handleInvocationPanic(c *Controller, err interface{}) {
 		c.Response.Out.Write(debug.Stack())
 		return
 	}
-
 	glog.Error(err, "\n", error.Stack)
 	c.Result = c.RenderError(error)
 }

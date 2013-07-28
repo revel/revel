@@ -49,9 +49,8 @@ var (
 	HttpPort int    // e.g. 9000
 	HttpAddr string // e.g. "", "127.0.0.1"
 
-	CookiePrefix   string // All cookies dropped by the framework begin with this prefix.
-	TemplateDelims string // Delimiters to use when rendering templates
-	LogToStderr    bool   // If true, hard code logging configuration to logtostderr
+	CookiePrefix string // All cookies dropped by the framework begin with this prefix.
+	LogToStderr  bool   // If true, hard code logging configuration to logtostderr
 
 	Initialized bool
 
@@ -123,7 +122,6 @@ func Init(mode, importPath, srcPath string) {
 	HttpAddr = Config.StringDefault("http.addr", "")
 	AppName = Config.StringDefault("app.name", "(not set)")
 	CookiePrefix = Config.StringDefault("cookie.prefix", "REVEL")
-	TemplateDelims = Config.StringDefault("template.delimiters", "")
 	if secretStr := Config.StringDefault("app.secret", ""); secretStr != "" {
 		secretKey = []byte(secretStr)
 	}
