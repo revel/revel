@@ -86,7 +86,7 @@ func (r ErrorResult) Apply(req *Request, resp *Response) {
 
 	// Render it.
 	var b bytes.Buffer
-	err = tmpl.Render(&b, r.RenderArgs)
+	err = tmpl.Execute(&b, r.RenderArgs)
 
 	// If there was an error, print it in plain text.
 	if err != nil {
@@ -135,8 +135,9 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
 	// In a prod mode, write the status, render, and hope for the best.
 	// (In a dev mode, always render to a temporary buffer first to avoid having
 	// error pages distorted by HTML already written)
+	defaultContentType := FormatToContentType(req.Format)
 	if chunked && !DevMode {
-		resp.WriteHeader(http.StatusOK, "text/html")
+		resp.WriteHeader(http.StatusOK, defaultContentType)
 		r.render(req, resp, out)
 		return
 	}
@@ -150,12 +151,12 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
 	if !chunked {
 		resp.Out.Header().Set("Content-Length", strconv.Itoa(b.Len()))
 	}
-	resp.WriteHeader(http.StatusOK, "text/html")
+	resp.WriteHeader(http.StatusOK, defaultContentType)
 	b.WriteTo(out)
 }
 
 func (r *RenderTemplateResult) render(req *Request, resp *Response, wr io.Writer) {
-	err := r.Template.Render(wr, r.RenderArgs)
+	err := r.Template.Execute(wr, r.RenderArgs)
 	if err == nil {
 		return
 	}
@@ -164,10 +165,10 @@ func (r *RenderTemplateResult) render(req *Request, resp *Response, wr io.Writer
 	templateName, line, description := parseTemplateError(err)
 	if templateName == "" {
 		templateName = r.Template.Name()
-		templateContent = r.Template.Content()
+		templateContent = MainTemplateLoader.SourceLines(templateName)
 	} else {
-		if tmpl, err := MainTemplateLoader.Template(templateName); err == nil {
-			templateContent = tmpl.Content()
+		if tmpl, _ := MainTemplateLoader.Template(templateName); tmpl != nil {
+			templateContent = MainTemplateLoader.SourceLines(templateName)
 		}
 	}
 	compileError := &Error{

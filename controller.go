@@ -75,11 +75,39 @@ func (c *Controller) RenderError(err error) Result {
 //
 // This action will render views/Users/ShowUser.html, passing in an extra
 // key-value "user": (User).
+//
+// Content negotiation
+//
+// The template selected depends on the request's format (html, json, xml, txt),
+// (which is derived from the Accepts header).  For example, if Request.Format
+// was "json", then the above example would look for the
+// views/Users/ShowUser.json template instead.
+//
+// If no template is found and the format is one of "json" or "xml",
+// then Render will instead serialize the first argument into that format.
 func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
+	templatePath := c.Name + "/" + c.MethodType.Name + "." + c.Request.Format
+
 	// Get the calling function name.
 	_, _, line, ok := runtime.Caller(1)
 	if !ok {
 		glog.Error("Failed to get Caller information")
+	}
+
+	// If not HTML, first check if the template is present.
+	template, err := MainTemplateLoader.Template(templatePath)
+	templateFound := err == nil && template != nil
+
+	// If not, and there is an arg, serialize that if it's xml or json.
+	if !templateFound && len(extraRenderArgs) > 0 {
+		switch c.Request.Format {
+		case "xml":
+			return c.RenderXml(extraRenderArgs[0])
+		case "json":
+			return c.RenderJson(extraRenderArgs[0])
+		}
+		// Else, render a 404 error saying we couldn't find the template.
+		return c.NotFound(err.Error())
 	}
 
 	// Get the extra RenderArgs passed in.
@@ -97,13 +125,15 @@ func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
 			"(Method", c.MethodType.Name, ")")
 	}
 
-	return c.RenderTemplate(c.Name + "/" + c.MethodType.Name + "." + c.Request.Format)
+	return &RenderTemplateResult{
+		Template:   template,
+		RenderArgs: c.RenderArgs,
+	}
 }
 
 // A less magical way to render a template.
 // Renders the given template, using the current RenderArgs.
 func (c *Controller) RenderTemplate(templatePath string) Result {
-
 	// Get the Template.
 	template, err := MainTemplateLoader.Template(templatePath)
 	if err != nil {

@@ -57,9 +57,8 @@ var (
 	CookieHttpOnly bool
 	CookieSecure   bool
 
-	CookiePrefix   string // All cookies dropped by the framework begin with this prefix.
-	TemplateDelims string // Delimiters to use when rendering templates
-	LogToStderr    bool   // If true, hard code logging configuration to logtostderr
+	CookiePrefix string // All cookies dropped by the framework begin with this prefix.
+	LogToStderr  bool   // If true, hard code logging configuration to logtostderr
 
 	Initialized bool
 

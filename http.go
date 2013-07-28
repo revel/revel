@@ -72,7 +72,7 @@ func ResolveFormat(req *http.Request) string {
 
 	switch {
 	case accept == "",
-		strings.HasPrefix(accept, "*/*"), // */
+		strings.HasPrefix(accept, "*/*"),
 		strings.Contains(accept, "application/xhtml"),
 		strings.Contains(accept, "text/html"):
 		return "html"
@@ -87,6 +87,22 @@ func ResolveFormat(req *http.Request) string {
 	}
 
 	return "html"
+}
+
+// FormatToContentType returns an appropriate default content type for the
+// response, given the request format.
+func FormatToContentType(format string) string {
+	switch format {
+	case "html":
+		return "text/html"
+	case "txt":
+		return "text/plain"
+	case "xml":
+		return "text/xml"
+	case "json":
+		return "application/json"
+	}
+	panic("unrecognized format: " + format)
 }
 
 // A single language from the Accept-Language HTTP header.
