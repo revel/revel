@@ -95,7 +95,7 @@ func (c Hotels) checkUser() revel.Result {
 }
 
 func init() {
-	revel.InterceptMethod(checkUser, revel.BEFORE)
+	revel.InterceptMethod(Hotels.checkUser, revel.BEFORE)
 }
 </pre>
 {% endraw %}
