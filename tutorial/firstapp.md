@@ -74,6 +74,7 @@ name. Their name and the validation error are kept in the
 
 The provided `flash.html` template will show any errors or flash messages:
 
+{% raw %}
 	{{if .flash.success}}
 	<div class="alert alert-success">
 		{{.flash.success}}
@@ -94,6 +95,7 @@ The provided `flash.html` template will show any errors or flash messages:
 		{{end}}
 	</div>
 	{{end}}
+{% endraw %}
 
 Now when we submit a single letter as our name:
 
