@@ -188,10 +188,11 @@ func (c *Controller) RenderFile(file *os.File, delivery ContentDisposition) Resu
 	}
 }
 
-// renderMemory is like RenderFile() expect that it renders a file that is kept
-// in memory rather than an ondisk os.File so content can be delivered
-// dynamically.
-func (c *Controller) RenderMemory(memfile io.Reader, filename string, delivery ContentDisposition) Result {
+// RenderBinary is like RenderFile() except that it instead of a file on disk,
+// it renders data from memory (which could be a file that has not been written,
+// the output from some function, or bytes streamed from somewhere else, as long
+// it implements io.Reader).
+func (c *Controller) RenderBinary(memfile io.Reader, filename string, delivery ContentDisposition) Result {
 	var (
 		modtime = time.Now()
 	)
