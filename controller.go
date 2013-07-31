@@ -3,6 +3,7 @@ package revel
 import (
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -181,6 +182,22 @@ func (c *Controller) RenderFile(file *os.File, delivery ContentDisposition) Resu
 	return &BinaryResult{
 		Reader:   file,
 		Name:     filepath.Base(file.Name()),
+		Delivery: delivery,
+		Length:   -1, // http.ServeContent gets the length itself
+		ModTime:  modtime,
+	}
+}
+
+// renderMemory is like RenderFile() expect that it renders a file that is kept
+// in memory rather than an ondisk os.File so content can be delivered
+// dynamically.
+func (c *Controller) RenderMemory(memfile io.Reader, filename string, delivery ContentDisposition) Result {
+	var (
+		modtime = time.Now()
+	)
+	return &BinaryResult{
+		Reader:   memfile,
+		Name:     filename,
 		Delivery: delivery,
 		Length:   -1, // http.ServeContent gets the length itself
 		ModTime:  modtime,
