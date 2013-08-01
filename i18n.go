@@ -44,7 +44,7 @@ func Message(locale, message string, args ...interface{}) string {
 
 	messageConfig, knownLanguage := messages[language]
 	if !knownLanguage {
-		WARN.Printf("Unsupported language for locale '%s' and message '%s', trying default language", locale, message)
+		TRACE.Printf("Unsupported language for locale '%s' and message '%s', trying default language", locale, message)
 
 		if defaultLanguage, found := Config.String(defaultLanguageOption); found {
 			TRACE.Printf("Using default language '%s'", defaultLanguage)
