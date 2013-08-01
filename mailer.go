@@ -10,7 +10,6 @@ import (
   "runtime"
   "strings"
   "reflect"
-  "errors"
   "bytes"
   "net"
   "fmt"
@@ -42,8 +41,8 @@ func (m *Mailer) new_config(template_name string, mail_args map[string]interface
   mail_config := MailConfig{}
   mail_config.renderargs = mail_args
   mail_config.template = template_name
-  ok := true
 
+  ok := true
   mail_config.from, ok = Config.String("mail.from") 
   if !ok {
     ERROR.Println("mail.from not set")
@@ -80,11 +79,7 @@ func (m *Mailer) new_config(template_name string, mail_args map[string]interface
     }
   }
 
-  if ok {
-    return mail_config, nil
-  } else {
-    return mail_config, errors.New("There was a problem with your config please check the logs")
-  }
+  return mail_config, nil
 }
 
 func (m *Mailer) Address() string {
@@ -156,6 +151,7 @@ func (m *Mailer) getClient() (*smtp.Client, error) {
   return c, nil
 }
 
+//user friendly version of Send
 func (m *Mailer) Send(mail_args map[string]interface{}) error {
   pc, _, _, _ := runtime.Caller(1)
   names := strings.Split(runtime.FuncForPC(pc).Name(), ".")
@@ -178,6 +174,7 @@ func (m *Mailer) Send(mail_args map[string]interface{}) error {
   }
 }
 
+//just render body and output to the log
 func (m *Mailer) sendDebug(mail_config MailConfig) error {
   mail, err := m.renderMail(mail_config, nil)
   if err != nil {
@@ -187,6 +184,7 @@ func (m *Mailer) sendDebug(mail_config MailConfig) error {
   return nil
 }
 
+//setup conection and render mail
 func (m *Mailer) send(mail_config MailConfig) error {
   c, err := m.getClient()
   if err != nil {
@@ -239,6 +237,7 @@ func (m *Mailer) send(mail_config MailConfig) error {
   return c.Quit()
 }
 
+//render parts and put it all together
 func (m *Mailer) renderMail(mail_config MailConfig, w io.WriteCloser) ([]byte, error) {
   multi := newMulti(w)
 
@@ -267,6 +266,7 @@ func (m *Mailer) renderMail(mail_config MailConfig, w io.WriteCloser) ([]byte, e
   return []byte(strings.Join(mail, CRLF)), nil
 }
 
+// render the text and html parts of the mail body
 func (m *Mailer) renderBody(mail_config MailConfig, w io.WriteCloser) (string, error) {
   multi := newMulti(w)
 
@@ -294,6 +294,7 @@ func (m *Mailer) renderBody(mail_config MailConfig, w io.WriteCloser) (string, e
   return body.String(), nil
 }
 
+// render the base64 encoded file parts of the mail
 func (m *Mailer) renderAttachments(mail_config MailConfig, boundary string) string {
   body := bytes.NewBuffer(nil)
 
@@ -315,6 +316,7 @@ func (m *Mailer) renderAttachments(mail_config MailConfig, boundary string) stri
   return body.String()
 }
 
+//call out to the revel template loader and pass in the render args
 func (m *Mailer) renderTemplate(mail_config MailConfig, mime string) string {
   var body bytes.Buffer
   template, err := MainTemplateLoader.Template(mail_config.template + "." + mime)
