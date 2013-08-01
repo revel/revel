@@ -185,13 +185,14 @@ func (c *Controller) RenderFile(file *os.File, delivery ContentDisposition) Resu
 // RenderBinary is like RenderFile() except that it instead of a file on disk,
 // it renders data from memory (which could be a file that has not been written,
 // the output from some function, or bytes streamed from somewhere else, as long
-// it implements io.Reader).
+// it implements io.Reader).  When called directly on something generated or
+// streamed, modtime should mostly likely be time.Now().
 func (c *Controller) RenderBinary(memfile io.Reader, filename string, delivery ContentDisposition, modtime time.Time) Result {
 	return &BinaryResult{
 		Reader:   memfile,
 		Name:     filename,
 		Delivery: delivery,
-		Length:   -1, // http.ServeContent gets the length itself
+		Length:   -1, // http.ServeContent gets the length itself unless memfile is a stream.
 		ModTime:  modtime,
 	}
 }
