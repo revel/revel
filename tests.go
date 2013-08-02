@@ -155,7 +155,7 @@ func (t *TestSuite) Assert(exp bool) {
 
 func (t *TestSuite) Assertf(exp bool, formatStr string, args ...interface{}) {
 	if !exp {
-		panic(fmt.Errorf(formatStr, args))
+		panic(fmt.Errorf(formatStr, args...))
 	}
 }
 
