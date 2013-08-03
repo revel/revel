@@ -261,6 +261,7 @@ var (
 	port       *int    = flag.Int("port", 0, "By default, read from app.conf")
 	importPath *string = flag.String("importPath", "", "Go Import Path for the app.")
 	srcPath    *string = flag.String("srcPath", "", "Path to the source root.")
+	noSsl      *bool   = flag.Bool("nossl", false, "Set to ignore SSL parameters.")
 
 	// So compiler won't complain if the generated code doesn't reference reflect package...
 	_ = reflect.Invalid
@@ -295,7 +296,9 @@ func main() {
 	revel.TestSuites = []interface{}{ {{range .TestSuites}}
 		(*{{index $.ImportPaths .ImportPath}}.{{.StructName}})(nil),{{end}}
 	}
-
+	if *noSsl == true {
+		revel.HttpSSL = false
+	}
 	revel.Run(*port)
 }
 `
