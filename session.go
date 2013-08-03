@@ -97,7 +97,7 @@ func getSessionFromCookie(cookie *http.Cookie) Session {
 	sig, data := cookie.Value[:hyphen], cookie.Value[hyphen+1:]
 
 	// Verify the signature.
-	if Sign(data) != sig {
+	if !Verify(data, sig) {
 		INFO.Println("Session cookie signature failed")
 		return session
 	}
