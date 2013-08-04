@@ -3,6 +3,7 @@ package revel
 import (
 	"flag"
 	"go/build"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -46,8 +47,11 @@ var (
 	// the current process reality.  For example, if the app is configured for
 	// port 9000, HttpPort will always be 9000, even though in dev mode it is
 	// run on a random port and proxied.
-	HttpPort int    // e.g. 9000
-	HttpAddr string // e.g. "", "127.0.0.1"
+	HttpPort    int    // e.g. 9000
+	HttpAddr    string // e.g. "", "127.0.0.1"
+	HttpSsl     bool   // e.g. true if using ssl
+	HttpSslCert string // e.g. "/path/to/cert.pem"
+	HttpSslKey  string // e.g. "/path/to/key.pem"
 
 	CookiePrefix string // All cookies dropped by the framework begin with this prefix.
 	LogToStderr  bool   // If true, hard code logging configuration to logtostderr
@@ -120,6 +124,18 @@ func Init(mode, importPath, srcPath string) {
 	DevMode = Config.BoolDefault("mode.dev", false)
 	HttpPort = Config.IntDefault("http.port", 9000)
 	HttpAddr = Config.StringDefault("http.addr", "")
+	HttpSsl = Config.BoolDefault("http.ssl", false)
+	HttpSslCert = Config.StringDefault("http.sslcert", "")
+	HttpSslKey = Config.StringDefault("http.sslkey", "")
+	if HttpSsl {
+		if HttpSslCert == "" {
+			log.Fatalln("No http.sslcert provided.")
+		}
+		if HttpSslKey == "" {
+			log.Fatalln("No http.sslkey provided.")
+		}
+	}
+
 	AppName = Config.StringDefault("app.name", "(not set)")
 	CookiePrefix = Config.StringDefault("cookie.prefix", "REVEL")
 	if secretStr := Config.StringDefault("app.secret", ""); secretStr != "" {
