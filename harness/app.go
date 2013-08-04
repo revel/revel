@@ -17,7 +17,6 @@ type App struct {
 	BinaryPath string // Path to the app executable
 	Port       int    // Port to pass as a command line argument.
 	cmd        AppCmd // The last cmd returned.
-	NoSsl      bool   // set to true to force-disable ssl
 }
 
 func NewApp(binPath string) *App {
@@ -26,7 +25,7 @@ func NewApp(binPath string) *App {
 
 // Return a command to run the app server using the current configuration.
 func (a *App) Cmd() AppCmd {
-	a.cmd = NewAppCmd(a.BinaryPath, a.Port, a.NoSsl)
+	a.cmd = NewAppCmd(a.BinaryPath, a.Port)
 	return a.cmd
 }
 
@@ -41,16 +40,11 @@ type AppCmd struct {
 	*exec.Cmd
 }
 
-func NewAppCmd(binPath string, port int, nossl bool) AppCmd {
-	var ssl_param string
-	if nossl == true {
-		ssl_param = fmt.Sprint("-nossl=true")
-	}
+func NewAppCmd(binPath string, port int) AppCmd {
 	cmd := exec.Command(binPath,
 		fmt.Sprintf("-port=%d", port),
 		fmt.Sprintf("-importPath=%s", revel.ImportPath),
-		fmt.Sprintf("-runMode=%s", revel.RunMode),
-		ssl_param)
+		fmt.Sprintf("-runMode=%s", revel.RunMode))
 	cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
 	return AppCmd{cmd}
 }

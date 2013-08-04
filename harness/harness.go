@@ -71,11 +71,6 @@ func (hp *Harness) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Header.Get("Upgrade") == "websocket" {
 		proxyWebsocket(w, r, hp.serverHost)
 	} else {
-		if revel.HttpSSL == true {
-			hp.proxy.Transport = &http.Transport{
-				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-			}
-		}
 		hp.proxy.ServeHTTP(w, r)
 	}
 }
@@ -90,6 +85,10 @@ func NewHarness() *Harness {
 
 	addr := revel.HttpAddr
 	port := revel.Config.IntDefault("harness.port", 0)
+	scheme := "http"
+	if revel.HttpSsl {
+		scheme = "https"
+	}
 
 	// If the server is running on the wildcard address, use "localhost"
 	if addr == "" {
@@ -100,12 +99,18 @@ func NewHarness() *Harness {
 		port = getFreePort()
 	}
 
-	serverUrl, _ := url.ParseRequestURI(fmt.Sprintf("http://%s:%d", addr, port))
+	serverUrl, _ := url.ParseRequestURI(fmt.Sprintf(scheme+"://%s:%d", addr, port))
 
 	harness := &Harness{
 		port:       port,
-		serverHost: serverUrl.String()[len("http://"):],
+		serverHost: serverUrl.String()[len(scheme+"://"):],
 		proxy:      httputil.NewSingleHostReverseProxy(serverUrl),
+	}
+
+	if revel.HttpSsl {
+		harness.proxy.Transport = &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		}
 	}
 	return harness
 }
@@ -122,7 +127,6 @@ func (h *Harness) Refresh() (err *revel.Error) {
 		return
 	}
 
-	h.app.NoSsl = true
 	h.app.Port = h.port
 	if err2 := h.app.Cmd().Start(); err2 != nil {
 		return &revel.Error{
@@ -153,9 +157,9 @@ func (h *Harness) Run() {
 		revel.INFO.Printf("Listening on %s", addr)
 
 		var err error
-		if revel.HttpSSL == true {
-			err = http.ListenAndServeTLS(addr, revel.HttpSSLCert,
-				revel.HttpSSLKey, h)
+		if revel.HttpSsl {
+			err = http.ListenAndServeTLS(addr, revel.HttpSslCert,
+				revel.HttpSslKey, h)
 		} else {
 			err = http.ListenAndServe(addr, h)
 		}
