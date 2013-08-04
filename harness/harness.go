@@ -157,7 +157,7 @@ func (h *Harness) Run() {
 
 	go func() {
 		addr := fmt.Sprintf("%s:%d", revel.HttpAddr, revel.HttpPort)
-		glog.Infof("Listening on %s:%d", revel.HttpAddr, revel.HttpPort)
+		glog.Infof("Listening on %s", addr)
 
 		var err error
 		if revel.HttpSsl {

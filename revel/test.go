@@ -101,7 +101,6 @@ You can add it to a run mode configuration with the following line:
 	}
 
 	// Direct all the output into a file in the test-results directory.
-	app.Flags = []string{"-logtostderr=false", "-log_dir=" + resultPath}
 	cmd := app.Cmd()
 
 	// Start the app...

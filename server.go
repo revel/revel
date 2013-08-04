@@ -87,7 +87,8 @@ func Run(port int) {
 	}()
 
 	if HttpSsl {
-		glog.Fatalln("Failed to listen:", Server.ListenAndServeTLS(HttpSslCert, HttpSslKey))
+		glog.Fatalln("Failed to listen:",
+			Server.ListenAndServeTLS(HttpSslCert, HttpSslKey))
 	} else {
 		glog.Fatalln("Failed to listen:", Server.ListenAndServe())
 	}
