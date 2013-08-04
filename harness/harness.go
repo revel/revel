@@ -11,6 +11,7 @@
 package harness
 
 import (
+	"crypto/tls"
 	"fmt"
 	"github.com/robfig/revel"
 	"io"
@@ -70,6 +71,11 @@ func (hp *Harness) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Header.Get("Upgrade") == "websocket" {
 		proxyWebsocket(w, r, hp.serverHost)
 	} else {
+		if revel.HttpSSL == true {
+			hp.proxy.Transport = &http.Transport{
+				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			}
+		}
 		hp.proxy.ServeHTTP(w, r)
 	}
 }
@@ -116,6 +122,7 @@ func (h *Harness) Refresh() (err *revel.Error) {
 		return
 	}
 
+	h.app.NoSsl = true
 	h.app.Port = h.port
 	if err2 := h.app.Cmd().Start(); err2 != nil {
 		return &revel.Error{
@@ -142,8 +149,16 @@ func (h *Harness) Run() {
 	watcher.Listen(h, revel.CodePaths...)
 
 	go func() {
-		revel.INFO.Printf("Listening on %s:%d", revel.HttpAddr, revel.HttpPort)
-		err := http.ListenAndServe(fmt.Sprintf("%s:%d", revel.HttpAddr, revel.HttpPort), h)
+		addr := fmt.Sprintf("%s:%d", revel.HttpAddr, revel.HttpPort)
+		revel.INFO.Printf("Listening on %s", addr)
+
+		var err error
+		if revel.HttpSSL == true {
+			err = http.ListenAndServeTLS(addr, revel.HttpSSLCert,
+				revel.HttpSSLKey, h)
+		} else {
+			err = http.ListenAndServe(addr, h)
+		}
 		if err != nil {
 			revel.ERROR.Fatalln("Failed to start reverse proxy:", err)
 		}
