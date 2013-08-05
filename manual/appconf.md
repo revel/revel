@@ -112,6 +112,26 @@ when running in an environment that restricts socket access by the program.
 
 Default: 0
 
+***
+#### http.ssl
+
+If true, Revel's web server will configure itself to accept SSL connections. This
+requires an X509 certificate and a key file.
+
+Default: false
+
+#### http.sslcert
+
+Specifies the path to an X509 certificate file.
+
+Default: ""
+
+#### http.sslkey
+
+Specifies the path to an X509 certificate key.
+
+Default: ""
+
 ### Results
 
 #### results.chunked
