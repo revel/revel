@@ -13,7 +13,7 @@ This example demonstrates all of the features:
 
 	# conf/routes
 	# This file defines all application routes (Higher priority routes first)
-	GET    /login                 Application.Login      # A simple path
+	GET    /login                 App.Login              # A simple path
 	GET    /hotels/?              Hotels.Index           # Match /hotels and /hotels/ (optional trailing slash)
 	GET    /hotels/{id}           Hotels.Show            # Extract a URI argument (matching /[^/]+/)
 	POST   /hotels/{<[0-9]+>id}   Hotels.Save            # URI arg with custom regex
@@ -27,10 +27,10 @@ accomplish **reverse routing** -- generating the URL to invoke a particular acti
 
 ## A simple path
 
-	GET    /login                 Application.Login
+	GET    /login                 App.Login
 
 The simplest route uses an exact match on method and path.  It invokes the Login
-action on the Application controller.
+action on the App controller.
 
 ## Optional trailing slash
 
@@ -143,13 +143,13 @@ The first example route line would effect the following routes:
 Similarly, the second example may be used to access any action in the
 application:
 
-	/application/login => Application.Login
+	/app/login         => App.Login
 	/users/list        => Users.List
 
 Since matching to controllers and actions is case insensitive, the following
 routes would also work:
 
-	/APPLICATION/LOGIN => Application.Login
+	/APP/LOGIN         => App.Login
 	/Users/List        => Users.List
 
 Using auto-routing as a catch-all (e.g. last route in the file) is useful for
