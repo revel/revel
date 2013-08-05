@@ -36,7 +36,7 @@ language. This means that you are free to organize the message files however you
 
 For example, you may want to take a traditional approach and define 1 single message file per language:
 
-    /application
+    /app
         /messages
             messages.en
             messages.fr
@@ -44,7 +44,7 @@ For example, you may want to take a traditional approach and define 1 single mes
 
 Another approach would be to create *multiple files* for the *same language* and organize them based on the kind of messages they contain:
 
-    /application
+    /app
         /messages
             labels.en
             warnings.en
@@ -160,7 +160,7 @@ When the requested message could not be resolved at all, a specially formatted s
 The application code can access the current locale from within a `Request` using the `Request.Locale` property. For example:
 
 <pre class="prettyprint lang-go">
-func (c Application) Index() revel.Result {
+func (c App) Index() revel.Result {
 	currentLocale := c.Request.Locale
 	c.Render(currentLocale)
 }
@@ -178,7 +178,7 @@ In case the application needs access to the `Accept-Language` HTTP header for th
 - which is a slice of `AcceptLanguage` instances - contains all parsed values from the respective header, sorted per qualification with the most qualified values first in the slice. For example:
 
 <pre class="prettyprint lang-go">
-func (c Application) Index() revel.Result {
+func (c App) Index() revel.Result {
     // Get the string representation of all parsed accept languages
     c.RenderArgs["acceptLanguageHeaderParsed"] = c.Request.AcceptLanguages.String()
     // Returns the most qualified AcceptLanguage instance
@@ -199,7 +199,7 @@ Messages can be resolved from either a *controller* or a *view template*.
 Each controller has a `Message(message string, args ...interface{})` function that can be used to resolve messages using the current locale. For example:
 
 <pre class="prettyprint lang-go">
-func (c Application) Index() revel.Result {
+func (c App) Index() revel.Result {
 	c.RenderArgs["controllerGreeting"] = c.Message("greeting")
 	c.Render()
 }
