@@ -3,6 +3,8 @@ package main
 import (
 	"github.com/robfig/revel"
 	"github.com/robfig/revel/harness"
+	"log"
+	"os"
 	"strconv"
 )
 
@@ -44,6 +46,12 @@ func runApp(args []string) {
 	// Find and parse app.conf
 	revel.Init(mode, args[0], "")
 	revel.LoadMimeConfig()
+
+	// Set working directory to BasePath, to make relative paths convenient and
+	// dependable.
+	if err := os.Chdir(revel.BasePath); err != nil {
+		log.Fatalln("Failed to change directory into app path: ", err)
+	}
 
 	// Determine the override port, if any.
 	port := revel.HttpPort
