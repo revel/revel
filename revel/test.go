@@ -8,6 +8,7 @@ import (
 	"github.com/robfig/revel/modules/testrunner/app/controllers"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"path"
@@ -58,6 +59,12 @@ func testApp(args []string) {
 
 	// Find and parse app.conf
 	revel.Init(mode, args[0], "")
+
+	// Set working directory to BasePath, to make relative paths convenient and
+	// dependable.
+	if err := os.Chdir(revel.BasePath); err != nil {
+		log.Fatalln("Failed to change directory into app path: ", err)
+	}
 
 	// Ensure that the testrunner is loaded in this mode.
 	testRunnerFound := false
