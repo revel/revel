@@ -40,9 +40,14 @@ func (t *TestSuite) Host() string {
 	return Server.Addr
 }
 
-// Return the base http URL of the server, e.g. "http://127.0.0.1:8557"
+// Return the base http/https URL of the server, e.g. "http://127.0.0.1:8557".
+// The scheme is set to https if http.ssl is set to true in the configuration file.
 func (t *TestSuite) BaseUrl() string {
-	return "http://" + t.Host()
+	if HttpSsl {
+		return "https://" + t.Host()
+	} else {
+		return "http://" + t.Host()
+	}
 }
 
 // Return the base websocket URL of the server, e.g. "ws://127.0.0.1:8557"
