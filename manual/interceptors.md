@@ -61,7 +61,7 @@ Here's a simple example defining and registering a Func Interceptor.
 func checkUser(c *revel.Controller) revel.Result {
 	if user := connected(c); user == nil {
 		c.Flash.Error("Please log in first")
-		return c.Redirect(Application.Index)
+		return c.Redirect(App.Index)
 	}
 	return nil
 }
@@ -89,7 +89,7 @@ Here's the same example that operates only on the app controller.
 func (c Hotels) checkUser() revel.Result {
 	if user := connected(c); user == nil {
 		c.Flash.Error("Please log in first")
-		return c.Redirect(Application.Index)
+		return c.Redirect(App.Index)
 	}
 	return nil
 }
