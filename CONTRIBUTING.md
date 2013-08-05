@@ -82,8 +82,8 @@ To develop the site locally:
 	$ cd revel
 	$ git checkout gh-pages
 
-	# Install / run Jekyll 1.0.2 to generate the site, and serve the result
-	$ gem install jekyll -v 1.0.2
+	# Install / run Jekyll 1.0.3 to generate the site, and serve the result
+	$ gem install jekyll -v 1.0.3
 	$ jekyll build --watch --safe -d test/revel &
 	$ cd test
 	$ python -m SimpleHTTPServer 8088
@@ -111,7 +111,6 @@ Additionally, there are frequently smaller feature requests or items in the
 9.	Easy emailer support (e.g. to email exception logs to developer, or even to email users),
 9.  Deployment to OpenShift (support, documentation, etc)
 16.	Improve the logging situation.  The configuration is a little awkward and not very powerful.  Integrating something more powerful would be good. (like [seelog](https://github.com/cihub/seelog) or [log4go](https://code.google.com/p/log4go/))
-10.	Cross-compilation in the "package" command.
 11.	ETags, cache controls
 14.	A module or plugins for adding HTTP Basic Auth
 7.	Allowing the app to hook into the source code processing step
