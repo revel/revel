@@ -20,7 +20,7 @@ Then write an action like this:
 <pre class="prettyprint lang-go">
 import "code.google.com/p/go.net/websocket"
 
-func (c Application) Feed(user string, ws *websocket.Conn) revel.Result {
+func (c App) Feed(user string, ws *websocket.Conn) revel.Result {
 	...
 }
 </pre>
