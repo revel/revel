@@ -20,21 +20,21 @@ Tests are kept in the tests directory:
 A simple test looks like the following:
 
 <pre class="prettyprint lang-go">
-type ApplicationTest struct {
+type AppTest struct {
   revel.TestSuite
 }
 
-func (t *ApplicationTest) Before() {
+func (t *AppTest) Before() {
 	println("Set up")
 }
 
-func (t *ApplicationTest) TestThatIndexPageWorks() {
+func (t *AppTest) TestThatIndexPageWorks() {
 	t.Get("/")
 	t.AssertOk()
 	t.AssertContentType("text/html")
 }
 
-func (t *ApplicationTest) After() {
+func (t *AppTest) After() {
 	println("Tear down")
 }
 </pre>
@@ -111,7 +111,7 @@ For example, the developer loads `/@tests` in their browser:
 Then they add a test method:
 
 <pre class="prettyprint lang-go">
-func (t ApplicationTest) TestSomethingImportant() {
+func (t AppTest) TestSomethingImportant() {
 	t.Get("/")
 	t.AssertOk()
 	t.AssertContentType("text/xml")
@@ -156,7 +156,7 @@ Here is an example session:
 
 	1 test suite to run.
 
-	ApplicationTest         PASSED        0s
+	AppTest                 PASSED        0s
 
 	All Tests Passed.
 
@@ -166,7 +166,7 @@ In the console only a simple PASSED/FAILED overview by test suite is displayed. 
 	$ find test-results
 	test-results
 	test-results/app.log
-	test-results/ApplicationTest.passed.html
+	test-results/AppTest.passed.html
 	test-results/result.passed
 
 It writes three different things:
