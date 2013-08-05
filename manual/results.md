@@ -31,7 +31,7 @@ Each built-in Result has a default Status Code and Content Type.  To override
 those defaults, simply set those properties on the response:
 
 <pre class="prettyprint lang-go">
-func (c Application) Action() revel.Result {
+func (c App) Action() revel.Result {
 	c.Response.Status = http.StatusTeapot
 	c.Response.ContentType = "application/dishware"
 	return c.Render()
@@ -115,7 +115,7 @@ func (r Html) Apply(req *Request, resp *Response) {
 Then use it in an action:
 
 <pre class="prettyprint lang-go">{% capture html %}
-func (c *Application) Action() revel.Result {
+func (c *App) Action() revel.Result {
 	return Html("<html><body>Hello World</body></html>")
 }{% endcapture %}{{ html|escape }}
 </pre>
@@ -126,7 +126,7 @@ Each Result will set a status code by default.  You can override the default
 status code by setting one yourself:
 
 <pre class="prettyprint lang-go">
-func (c *Application) CreateEntity() revel.Result {
+func (c *App) CreateEntity() revel.Result {
 	c.Response.Status = 201
 	return c.Render()
 }
