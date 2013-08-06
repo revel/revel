@@ -5,7 +5,7 @@ import (
 	"github.com/robfig/revel"
 	"github.com/robfig/revel/harness"
 	"os"
-	"path"
+
 	"path/filepath"
 	"strings"
 )
@@ -59,12 +59,12 @@ func buildApp(args []string) {
 	// - app
 
 	// Revel and the app are in a directory structure mirroring import path
-	srcPath := path.Join(destPath, "src")
-	tmpRevelPath := path.Join(srcPath, filepath.FromSlash(revel.REVEL_IMPORT_PATH))
-	mustCopyFile(path.Join(destPath, filepath.Base(app.BinaryPath)), app.BinaryPath)
-	mustCopyDir(path.Join(tmpRevelPath, "conf"), path.Join(revel.RevelPath, "conf"), nil)
-	mustCopyDir(path.Join(tmpRevelPath, "templates"), path.Join(revel.RevelPath, "templates"), nil)
-	mustCopyDir(path.Join(srcPath, filepath.FromSlash(appImportPath)), revel.BasePath, nil)
+	srcPath := filepath.Join(destPath, "src")
+	tmpRevelPath := filepath.Join(srcPath, filepath.FromSlash(revel.REVEL_IMPORT_PATH))
+	mustCopyFile(filepath.Join(destPath, filepath.Base(app.BinaryPath)), app.BinaryPath)
+	mustCopyDir(filepath.Join(tmpRevelPath, "conf"), filepath.Join(revel.RevelPath, "conf"), nil)
+	mustCopyDir(filepath.Join(tmpRevelPath, "templates"), filepath.Join(revel.RevelPath, "templates"), nil)
+	mustCopyDir(filepath.Join(srcPath, filepath.FromSlash(appImportPath)), revel.BasePath, nil)
 
 	// Find all the modules used and copy them over.
 	config := revel.Config.Raw()
@@ -87,7 +87,7 @@ func buildApp(args []string) {
 		}
 	}
 	for importPath, fsPath := range modulePaths {
-		mustCopyDir(path.Join(srcPath, importPath), fsPath, nil)
+		mustCopyDir(filepath.Join(srcPath, filepath.FromSlash(importPath)), fsPath, nil)
 	}
 
 	tmplData := map[string]interface{}{
@@ -96,12 +96,12 @@ func buildApp(args []string) {
 	}
 
 	mustRenderTemplate(
-		path.Join(destPath, "run.sh"),
-		path.Join(revel.RevelPath, "revel", "package_run.sh.template"),
+		filepath.Join(destPath, "run.sh"),
+		filepath.Join(revel.RevelPath, "revel", "package_run.sh.template"),
 		tmplData)
 
 	mustRenderTemplate(
-		path.Join(destPath, "run.bat"),
-		path.Join(revel.RevelPath, "revel", "package_run.bat.template"),
+		filepath.Join(destPath, "run.bat"),
+		filepath.Join(revel.RevelPath, "revel", "package_run.bat.template"),
 		tmplData)
 }

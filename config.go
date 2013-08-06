@@ -1,9 +1,10 @@
 package revel
 
 import (
+	"path/filepath"
 	"errors"
 	"github.com/robfig/config"
-	"path"
+
 	"strings"
 )
 
@@ -19,7 +20,7 @@ type MergedConfig struct {
 func LoadConfig(confName string) (*MergedConfig, error) {
 	var err error
 	for _, confPath := range ConfPaths {
-		conf, err := config.ReadDefault(path.Join(confPath, confName))
+		conf, err := config.ReadDefault(filepath.Join(confPath, confName))
 		if err == nil {
 			return &MergedConfig{conf, ""}, nil
 		}

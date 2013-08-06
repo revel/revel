@@ -59,7 +59,7 @@ func Build() (app *App, compileError *revel.Error) {
 	if err != nil {
 		revel.ERROR.Fatalln("Failure importing", revel.ImportPath)
 	}
-	binName := path.Join(pkg.BinDir, path.Base(revel.BasePath))
+	binName := filepath.Join(pkg.BinDir, filepath.Base(revel.BasePath))
 	if runtime.GOOS == "windows" {
 		binName += ".exe"
 	}
@@ -108,7 +108,7 @@ func Build() (app *App, compileError *revel.Error) {
 
 func cleanSource(dirs ...string) {
 	for _, dir := range dirs {
-		tmpPath := path.Join(revel.AppPath, dir)
+		tmpPath := filepath.Join(revel.AppPath, dir)
 		err := os.RemoveAll(tmpPath)
 		if err != nil {
 			revel.ERROR.Println("Failed to remove dir:", err)
@@ -124,7 +124,7 @@ func genSource(dir, filename, templateSource string, args map[string]interface{}
 		args)
 
 	// Create a fresh dir.
-	tmpPath := path.Join(revel.AppPath, dir)
+	tmpPath := filepath.Join(revel.AppPath, dir)
 	err := os.RemoveAll(tmpPath)
 	if err != nil {
 		revel.ERROR.Println("Failed to remove dir:", err)
@@ -135,7 +135,7 @@ func genSource(dir, filename, templateSource string, args map[string]interface{}
 	}
 
 	// Create the file
-	file, err := os.Create(path.Join(tmpPath, filename))
+	file, err := os.Create(filepath.Join(tmpPath, filename))
 	defer file.Close()
 	if err != nil {
 		revel.ERROR.Fatalf("Failed to create file: %v", err)

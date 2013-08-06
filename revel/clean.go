@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"go/build"
 	"os"
-	"path"
+	"path/filepath"
 )
 
 var cmdClean = &Command{
@@ -38,7 +38,7 @@ func cleanApp(args []string) {
 	}
 
 	// Remove the app/tmp directory.
-	tmpDir := path.Join(appPkg.Dir, "app", "tmp")
+	tmpDir := filepath.Join(appPkg.Dir, "app", "tmp")
 	fmt.Println("Removing:", tmpDir)
 	err = os.RemoveAll(tmpDir)
 	if err != nil {

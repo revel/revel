@@ -7,7 +7,7 @@ import (
 	"github.com/robfig/revel"
 	"io"
 	"os"
-	"path"
+
 	"path/filepath"
 	"strings"
 	"text/template"
@@ -64,7 +64,7 @@ func mustCopyDir(destDir, srcDir string, data map[string]interface{}) error {
 		// Get the relative path from the source base, and the corresponding path in
 		// the dest directory.
 		relSrcPath := strings.TrimLeft(srcPath[len(srcDir):], string(os.PathSeparator))
-		destPath := path.Join(destDir, relSrcPath)
+		destPath := filepath.Join(destDir, relSrcPath)
 
 		// Skip dot files and dot directories.
 		if strings.HasPrefix(relSrcPath, ".") {
@@ -76,7 +76,7 @@ func mustCopyDir(destDir, srcDir string, data map[string]interface{}) error {
 
 		// Create a subdirectory if necessary.
 		if info.IsDir() {
-			err := os.MkdirAll(path.Join(destDir, relSrcPath), 0777)
+			err := os.MkdirAll(filepath.Join(destDir, relSrcPath), 0777)
 			if !os.IsExist(err) {
 				panicOnError(err, "Failed to create directory")
 			}
