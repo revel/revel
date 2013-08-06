@@ -1,12 +1,14 @@
 package jobs
 
 import (
-	"github.com/robfig/cron"
-	"github.com/robfig/revel"
 	"reflect"
 	"runtime/debug"
 	"sync"
 	"sync/atomic"
+
+	"github.com/golang/glog"
+	"github.com/robfig/cron"
+	"github.com/robfig/revel"
 )
 
 type Job struct {
@@ -42,9 +44,9 @@ func (j *Job) Run() {
 	defer func() {
 		if err := recover(); err != nil {
 			if revelError := revel.NewErrorFromPanic(err); revelError != nil {
-				revel.ERROR.Print(err, "\n", revelError.Stack)
+				glog.Error(err, "\n", revelError.Stack)
 			} else {
-				revel.ERROR.Print(err, "\n", string(debug.Stack()))
+				glog.Error(err, "\n", string(debug.Stack()))
 			}
 		}
 	}()

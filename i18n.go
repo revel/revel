@@ -2,12 +2,13 @@ package revel
 
 import (
 	"fmt"
-	"github.com/robfig/config"
 	"os"
-
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	"github.com/golang/glog"
+	"github.com/robfig/config"
 )
 
 const (
@@ -41,22 +42,22 @@ func MessageLanguages() []string {
 // When either an unknown locale or message is detected, a specially formatted string is returned.
 func Message(locale, message string, args ...interface{}) string {
 	language, region := parseLocale(locale)
-	TRACE.Printf("Resolving message '%s' for language '%s' and region '%s'", message, language, region)
+	glog.V(1).Infof("Resolving message '%s' for language '%s' and region '%s'", message, language, region)
 
 	messageConfig, knownLanguage := messages[language]
 	if !knownLanguage {
-		WARN.Printf("Unsupported language for locale '%s' and message '%s', trying default language", locale, message)
+		glog.Warningf("Unsupported language for locale '%s' and message '%s', trying default language", locale, message)
 
 		if defaultLanguage, found := Config.String(defaultLanguageOption); found {
-			TRACE.Printf("Using default language '%s'", defaultLanguage)
+			glog.V(1).Infof("Using default language '%s'", defaultLanguage)
 
 			messageConfig, knownLanguage = messages[defaultLanguage]
 			if !knownLanguage {
-				WARN.Printf("Unsupported default language for locale '%s' and message '%s'", defaultLanguage, message)
+				glog.Warningf("Unsupported default language for locale '%s' and message '%s'", defaultLanguage, message)
 				return fmt.Sprintf(unknownValueFormat, message)
 			}
 		} else {
-			WARN.Printf("Unable to find default language option (%s); messages for unsupported locales will never be translated", defaultLanguageOption)
+			glog.Warningf("Unable to find default language option (%s); messages for unsupported locales will never be translated", defaultLanguageOption)
 			return fmt.Sprintf(unknownValueFormat, message)
 		}
 	}
@@ -65,12 +66,12 @@ func Message(locale, message string, args ...interface{}) string {
 	// try to resolve message in DEFAULT if it did not find it in the given section.
 	value, error := messageConfig.String(region, message)
 	if error != nil {
-		WARN.Printf("Unknown message '%s' for locale '%s'", message, locale)
+		glog.Warningf("Unknown message '%s' for locale '%s'", message, locale)
 		return fmt.Sprintf(unknownValueFormat, message)
 	}
 
 	if len(args) > 0 {
-		TRACE.Printf("Arguments detected, formatting '%s' with %v", value, args)
+		glog.V(1).Infof("Arguments detected, formatting '%s' with %v", value, args)
 		value = fmt.Sprintf(value, args...)
 	}
 
@@ -91,7 +92,7 @@ func loadMessages(path string) {
 	messages = make(map[string]*config.Config)
 
 	if error := filepath.Walk(path, loadMessageFile); error != nil && !os.IsNotExist(error) {
-		ERROR.Println("Error reading messages files:", error)
+		glog.Errorln("Error reading messages files:", error)
 	}
 }
 
@@ -113,15 +114,15 @@ func loadMessageFile(path string, info os.FileInfo, osError error) error {
 			// If we have already parsed a message file for this locale, merge both
 			if _, exists := messages[locale]; exists {
 				messages[locale].Merge(config)
-				TRACE.Printf("Successfully merged messages for locale '%s'", locale)
+				glog.V(1).Infof("Successfully merged messages for locale '%s'", locale)
 			} else {
 				messages[locale] = config
 			}
 
-			TRACE.Println("Successfully loaded messages from file", info.Name())
+			glog.V(1).Infoln("Successfully loaded messages from file", info.Name())
 		}
 	} else {
-		TRACE.Printf("Ignoring file %s because it did not have a valid extension", info.Name())
+		glog.V(1).Infof("Ignoring file %s because it did not have a valid extension", info.Name())
 	}
 
 	return nil
@@ -145,13 +146,13 @@ func init() {
 
 func I18nFilter(c *Controller, fc []Filter) {
 	if foundCookie, cookieValue := hasLocaleCookie(c.Request); foundCookie {
-		TRACE.Printf("Found locale cookie value: %s", cookieValue)
+		glog.V(1).Infof("Found locale cookie value: %s", cookieValue)
 		setCurrentLocaleControllerArguments(c, cookieValue)
 	} else if foundHeader, headerValue := hasAcceptLanguageHeader(c.Request); foundHeader {
-		TRACE.Printf("Found Accept-Language header value: %s", headerValue)
+		glog.V(1).Infof("Found Accept-Language header value: %s", headerValue)
 		setCurrentLocaleControllerArguments(c, headerValue)
 	} else {
-		TRACE.Println("Unable to find locale in cookie or header, using empty string")
+		glog.V(1).Info("Unable to find locale in cookie or header, using empty string")
 		setCurrentLocaleControllerArguments(c, "")
 	}
 	fc[0](c, fc[1:])
@@ -182,7 +183,7 @@ func hasLocaleCookie(request *Request) (bool, string) {
 		if cookie, error := request.Cookie(name); error == nil {
 			return true, cookie.Value
 		} else {
-			TRACE.Printf("Unable to read locale cookie with name '%s': %s", name, error.Error())
+			glog.V(1).Infof("Unable to read locale cookie with name '%s': %s", name, error.Error())
 		}
 	}
 

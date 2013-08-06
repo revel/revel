@@ -9,6 +9,8 @@ import (
 	"reflect"
 	"regexp"
 	"strings"
+
+	"github.com/golang/glog"
 )
 
 // Add some more methods to the default Template.
@@ -86,7 +88,7 @@ func LoadMimeConfig() {
 	var err error
 	mimeConfig, err = LoadConfig("mime-types.conf")
 	if err != nil {
-		ERROR.Fatalln("Failed to load mime type config:", err)
+		glog.Fatalln("Failed to load mime type config:", err)
 	}
 }
 

@@ -11,6 +11,8 @@ import (
 	"reflect"
 	"strconv"
 	"time"
+
+	"github.com/golang/glog"
 )
 
 type Result interface {
@@ -115,7 +117,7 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
 	// Handle panics when rendering templates.
 	defer func() {
 		if err := recover(); err != nil {
-			ERROR.Println(err)
+			glog.Error(err)
 			PlaintextErrorResult{fmt.Errorf("Template Execution Panic in %s:\n%s",
 				r.Template.Name(), err)}.Apply(req, resp)
 		}
@@ -169,7 +171,7 @@ func (r *RenderTemplateResult) render(req *Request, resp *Response, wr io.Writer
 		SourceLines: templateContent,
 	}
 	resp.Status = 500
-	ERROR.Printf("Template Execution Error (in %s): %s", templateName, description)
+	glog.Errorf("Template Execution Error (in %s): %s", templateName, description)
 	ErrorResult{r.RenderArgs, compileError}.Apply(req, resp)
 }
 
@@ -291,7 +293,7 @@ type RedirectToActionResult struct {
 func (r *RedirectToActionResult) Apply(req *Request, resp *Response) {
 	url, err := getRedirectUrl(r.val)
 	if err != nil {
-		ERROR.Println("Couldn't resolve redirect:", err.Error())
+		glog.Errorln("Couldn't resolve redirect:", err.Error())
 		ErrorResult{Error: err}.Apply(req, resp)
 		return
 	}

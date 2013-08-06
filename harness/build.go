@@ -2,7 +2,6 @@ package harness
 
 import (
 	"fmt"
-	"github.com/robfig/revel"
 	"go/build"
 	"os"
 	"os/exec"
@@ -12,6 +11,9 @@ import (
 	"runtime"
 	"strconv"
 	"text/template"
+
+	"github.com/golang/glog"
+	"github.com/robfig/revel"
 )
 
 var importErrorPattern = regexp.MustCompile("cannot find package \"([^\"]+)\"")
@@ -52,12 +54,12 @@ func Build() (app *App, compileError *revel.Error) {
 	// It relies on the user having "go" installed.
 	goPath, err := exec.LookPath("go")
 	if err != nil {
-		revel.ERROR.Fatalf("Go executable not found in PATH.")
+		glog.Fatalf("Go executable not found in PATH.")
 	}
 
 	pkg, err := build.Default.Import(revel.ImportPath, "", build.FindOnly)
 	if err != nil {
-		revel.ERROR.Fatalln("Failure importing", revel.ImportPath)
+		glog.Fatalln("Failure importing", revel.ImportPath)
 	}
 	binName := filepath.Join(pkg.BinDir, filepath.Base(revel.BasePath))
 	if runtime.GOOS == "windows" {
@@ -69,14 +71,14 @@ func Build() (app *App, compileError *revel.Error) {
 		buildCmd := exec.Command(goPath, "build",
 			"-tags", buildTags,
 			"-o", binName, path.Join(revel.ImportPath, "app", "tmp"))
-		revel.TRACE.Println("Exec:", buildCmd.Args)
+		glog.V(1).Infoln("Exec:", buildCmd.Args)
 		output, err := buildCmd.CombinedOutput()
 
 		// If the build succeeded, we're done.
 		if err == nil {
 			return NewApp(binName), nil
 		}
-		revel.ERROR.Println(string(output))
+		glog.Error(string(output))
 
 		// See if it was an import error that we can go get.
 		matches := importErrorPattern.FindStringSubmatch(string(output))
@@ -93,16 +95,16 @@ func Build() (app *App, compileError *revel.Error) {
 
 		// Execute "go get <pkg>"
 		getCmd := exec.Command(goPath, "get", pkgName)
-		revel.TRACE.Println("Exec:", getCmd.Args)
+		glog.V(1).Infoln("Exec:", getCmd.Args)
 		getOutput, err := getCmd.CombinedOutput()
 		if err != nil {
-			revel.ERROR.Println(string(getOutput))
+			glog.Error(string(getOutput))
 			return nil, newCompileError(output)
 		}
 
 		// Success getting the import, attempt to build again.
 	}
-	revel.ERROR.Fatalf("Not reachable")
+	glog.Fatal("Not reachable")
 	return nil, nil
 }
 
@@ -111,7 +113,7 @@ func cleanSource(dirs ...string) {
 		tmpPath := filepath.Join(revel.AppPath, dir)
 		err := os.RemoveAll(tmpPath)
 		if err != nil {
-			revel.ERROR.Println("Failed to remove dir:", err)
+			glog.Errorln("Failed to remove dir:", err)
 		}
 	}
 }
@@ -127,22 +129,22 @@ func genSource(dir, filename, templateSource string, args map[string]interface{}
 	tmpPath := filepath.Join(revel.AppPath, dir)
 	err := os.RemoveAll(tmpPath)
 	if err != nil {
-		revel.ERROR.Println("Failed to remove dir:", err)
+		glog.Errorln("Failed to remove dir:", err)
 	}
 	err = os.Mkdir(tmpPath, 0777)
 	if err != nil {
-		revel.ERROR.Fatalf("Failed to make tmp directory: %v", err)
+		glog.Fatalln("Failed to make tmp directory:", err)
 	}
 
 	// Create the file
 	file, err := os.Create(filepath.Join(tmpPath, filename))
 	defer file.Close()
 	if err != nil {
-		revel.ERROR.Fatalf("Failed to create file: %v", err)
+		glog.Fatalln("Failed to create file:", err)
 	}
 	_, err = file.WriteString(sourceCode)
 	if err != nil {
-		revel.ERROR.Fatalf("Failed to write to file: %v", err)
+		glog.Fatalln("Failed to write to file:", err)
 	}
 }
 
@@ -212,7 +214,7 @@ func newCompileError(output []byte) *revel.Error {
 	errorMatch := regexp.MustCompile(`(?m)^([^:#]+):(\d+):(\d+:)? (.*)$`).
 		FindSubmatch(output)
 	if errorMatch == nil {
-		revel.ERROR.Println("Failed to parse build errors:\n", string(output))
+		glog.Error("Failed to parse build errors:\n", string(output))
 		return &revel.Error{
 			SourceType:  "Go code",
 			Title:       "Go Compilation Error",
@@ -238,7 +240,7 @@ func newCompileError(output []byte) *revel.Error {
 	fileStr, err := revel.ReadLines(absFilename)
 	if err != nil {
 		compileError.MetaError = absFilename + ": " + err.Error()
-		revel.ERROR.Println(compileError.MetaError)
+		glog.Error(compileError.MetaError)
 		return compileError
 	}
 
@@ -252,6 +254,7 @@ package main
 import (
 	"flag"
 	"reflect"
+	"github.com/golang/glog"
 	"github.com/robfig/revel"{{range $k, $v := $.ImportPaths}}
 	{{$v}} "{{$k}}"{{end}}
 )
@@ -269,7 +272,9 @@ var (
 func main() {
 	flag.Parse()
 	revel.Init(*runMode, *importPath, *srcPath)
-	revel.INFO.Println("Running revel server")
+	revel.ConfigureLogging()
+	revel.LoadModules()
+	glog.Info("Running revel server")
 	{{range $i, $c := .Controllers}}
 	revel.RegisterController((*{{index $.ImportPaths .ImportPath}}.{{.StructName}})(nil),
 		[]*revel.MethodType{

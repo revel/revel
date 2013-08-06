@@ -39,6 +39,7 @@ func main() {
 	flag.Usage = func() { usage(1) }
 	flag.Parse()
 	args := flag.Args()
+	flag.Lookup("logtostderr").Value.Set("true")
 
 	if len(args) < 1 || args[0] == "help" {
 		if len(args) == 1 {
@@ -53,6 +54,12 @@ func main() {
 			}
 		}
 		usage(2)
+	}
+
+	if args[0] == "flags" {
+		fmt.Println("Available flags:")
+		flag.PrintDefaults()
+		return
 	}
 
 	// Commands use panic to abort execution when something goes wrong.
@@ -91,13 +98,16 @@ const header = `~
 ~
 `
 
-const usageTemplate = `usage: revel command [arguments]
+const usageTemplate = `usage: revel [flags] command [arguments]
 
 The commands are:
 {{range .}}
     {{.Name | printf "%-11s"}} {{.Short}}{{end}}
 
 Use "revel help [command]" for more information.
+
+The flags are:
+
 `
 
 var helpTemplate = `usage: revel {{.UsageLine}}
@@ -106,6 +116,8 @@ var helpTemplate = `usage: revel {{.UsageLine}}
 
 func usage(exitCode int) {
 	tmpl(os.Stderr, usageTemplate, commands)
+	flag.PrintDefaults()
+	fmt.Println()
 	os.Exit(exitCode)
 }
 

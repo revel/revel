@@ -3,12 +3,14 @@ package controllers
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/robfig/goauth2/oauth"
-	"github.com/robfig/revel"
-	"github.com/robfig/revel/samples/facebook-oauth2/app/models"
 	"net/http"
 	"net/url"
 	"strconv"
+
+	"github.com/golang/glog"
+	"github.com/robfig/goauth2/oauth"
+	"github.com/robfig/revel"
+	"github.com/robfig/revel/samples/facebook-oauth2/app/models"
 )
 
 type Application struct {
@@ -36,9 +38,9 @@ func (c Application) Index() revel.Result {
 			url.QueryEscape(u.AccessToken))
 		defer resp.Body.Close()
 		if err := json.NewDecoder(resp.Body).Decode(&me); err != nil {
-			revel.ERROR.Println(err)
+			glog.Error(err)
 		}
-		revel.INFO.Println(me)
+		glog.Info(me)
 	}
 
 	authUrl := FACEBOOK.AuthCodeURL("foo")
@@ -49,7 +51,7 @@ func (c Application) Auth(code string) revel.Result {
 	t := &oauth.Transport{Config: FACEBOOK}
 	tok, err := t.Exchange(code)
 	if err != nil {
-		revel.ERROR.Println(err)
+		glog.Error(err)
 		return c.Redirect(Application.Index)
 	}
 

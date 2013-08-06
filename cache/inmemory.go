@@ -2,10 +2,11 @@ package cache
 
 import (
 	"fmt"
-	"github.com/robfig/go-cache"
-	"github.com/robfig/revel"
 	"reflect"
 	"time"
+
+	"github.com/golang/glog"
+	"github.com/robfig/go-cache"
 )
 
 type InMemoryCache struct {
@@ -29,7 +30,7 @@ func (c InMemoryCache) Get(key string, ptrValue interface{}) error {
 	}
 
 	err := fmt.Errorf("revel/cache: attempt to get %s, but can not set value %v", key, v)
-	revel.ERROR.Println(err)
+	glog.Error(err)
 	return err
 }
 

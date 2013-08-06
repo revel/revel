@@ -1,10 +1,12 @@
 package revel
 
 import (
-	"code.google.com/p/go.net/websocket"
 	"fmt"
 	"net/http"
 	"time"
+
+	"code.google.com/p/go.net/websocket"
+	"github.com/golang/glog"
 )
 
 var (
@@ -79,7 +81,7 @@ func Run(port int) {
 		fmt.Printf("Listening on port %d...\n", port)
 	}()
 
-	ERROR.Fatalln("Failed to listen:", Server.ListenAndServe())
+	glog.Fatalln("Failed to listen:", Server.ListenAndServe())
 }
 
 func runStartupHooks() {
