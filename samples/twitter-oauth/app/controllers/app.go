@@ -2,10 +2,12 @@ package controllers
 
 import (
 	"encoding/json"
+	"io/ioutil"
+
+	"github.com/golang/glog"
 	"github.com/mrjones/oauth"
 	"github.com/robfig/revel"
 	"github.com/robfig/revel/samples/twitter-oauth/app/models"
-	"io/ioutil"
 )
 
 var TWITTER = oauth.NewConsumer(
@@ -34,7 +36,7 @@ func (c Application) Index() revel.Result {
 		map[string]string{"count": "10"},
 		user.AccessToken)
 	if err != nil {
-		revel.ERROR.Println(err)
+		glog.Error(err)
 		return c.Render()
 	}
 	defer resp.Body.Close()
@@ -45,9 +47,9 @@ func (c Application) Index() revel.Result {
 	}{}
 	err = json.NewDecoder(resp.Body).Decode(&mentions)
 	if err != nil {
-		revel.ERROR.Println(err)
+		glog.Error(err)
 	}
-	revel.INFO.Println(mentions)
+	glog.Info(mentions)
 	return c.Render(mentions)
 }
 
@@ -58,12 +60,12 @@ func (c Application) SetStatus(status string) revel.Result {
 		getUser().AccessToken,
 	)
 	if err != nil {
-		revel.ERROR.Println(err)
+		glog.Error(err)
 		return c.RenderError(err)
 	}
 	defer resp.Body.Close()
 	bodyBytes, _ := ioutil.ReadAll(resp.Body)
-	revel.INFO.Println(string(bodyBytes))
+	glog.Info(string(bodyBytes))
 	c.Response.ContentType = "application/json"
 	return c.RenderText(string(bodyBytes))
 }
@@ -78,7 +80,7 @@ func (c Application) Authenticate(oauth_verifier string) revel.Result {
 		if err == nil {
 			user.AccessToken = accessToken
 		} else {
-			revel.ERROR.Println("Error connecting to twitter:", err)
+			glog.Errorln("Error connecting to twitter:", err)
 		}
 		return c.Redirect(Application.Index)
 	}
@@ -89,7 +91,7 @@ func (c Application) Authenticate(oauth_verifier string) revel.Result {
 		user.RequestToken = requestToken
 		return c.Redirect(url)
 	} else {
-		revel.ERROR.Println("Error connecting to twitter:", err)
+		glog.Errorln("Error connecting to twitter:", err)
 	}
 	return c.Redirect(Application.Index)
 }

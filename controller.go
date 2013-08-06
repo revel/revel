@@ -11,6 +11,8 @@ import (
 	"runtime"
 	"strings"
 	"time"
+
+	"github.com/golang/glog"
 )
 
 type Controller struct {
@@ -77,7 +79,7 @@ func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
 	// Get the calling function name.
 	_, _, line, ok := runtime.Caller(1)
 	if !ok {
-		ERROR.Println("Failed to get Caller information")
+		glog.Error("Failed to get Caller information")
 	}
 
 	// Get the extra RenderArgs passed in.
@@ -87,11 +89,11 @@ func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
 				c.RenderArgs[renderArgNames[i]] = extraRenderArg
 			}
 		} else {
-			ERROR.Println(len(renderArgNames), "RenderArg names found for",
+			glog.Errorln(len(renderArgNames), "RenderArg names found for",
 				len(extraRenderArgs), "extra RenderArgs")
 		}
 	} else {
-		ERROR.Println("No RenderArg names found for Render call on line", line,
+		glog.Errorln("No RenderArg names found for Render call on line", line,
 			"(Method", c.MethodType.Name, ")")
 	}
 
@@ -184,7 +186,7 @@ func (c *Controller) RenderFile(file *os.File, delivery ContentDisposition) Resu
 		fileInfo, err = file.Stat()
 	)
 	if err != nil {
-		WARN.Println("RenderFile error:", err)
+		glog.Warningln("RenderFile error:", err)
 	}
 	if fileInfo != nil {
 		modtime = fileInfo.ModTime()
@@ -365,5 +367,5 @@ func RegisterController(c interface{}, methods []*MethodType) {
 		Methods:           methods,
 		ControllerIndexes: findControllers(elem),
 	}
-	TRACE.Printf("Registered controller: %s", elem.Name())
+	glog.V(1).Infof("Registered controller: %s", elem.Name())
 }

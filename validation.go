@@ -6,6 +6,8 @@ import (
 	"net/url"
 	"regexp"
 	"runtime"
+
+	"github.com/golang/glog"
 )
 
 // Simple struct to store the Message & Key of a validation error
@@ -148,7 +150,7 @@ func (v *Validation) apply(chk Validator, obj interface{}) *ValidationResult {
 			key = defaultKeys[line]
 		}
 	} else {
-		INFO.Println("Failed to get Caller information to look up Validation key")
+		glog.Info("Failed to get Caller information to look up Validation key")
 	}
 
 	// Add the error to the validation context.

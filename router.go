@@ -1,16 +1,17 @@
 package revel
 
 import (
-	"path/filepath"
 	"encoding/csv"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
-
+	"path/filepath"
 	"regexp"
 	"strings"
+
+	"github.com/golang/glog"
 )
 
 type Route struct {
@@ -50,7 +51,7 @@ func NewRoute(method, path, action, fixedArgs string) (r *Route) {
 	csv := csv.NewReader(argsReader)
 	fargs, err := csv.Read()
 	if err != nil && err != io.EOF {
-		ERROR.Printf("Invalid fixed parameters (%v): for string '%v'", err.Error(), fixedArgs)
+		glog.Errorf("Invalid fixed parameters (%v): for string '%v'", err.Error(), fixedArgs)
 	}
 
 	r = &Route{
@@ -63,7 +64,7 @@ func NewRoute(method, path, action, fixedArgs string) (r *Route) {
 	// URL pattern
 	// TODO: Support non-absolute paths
 	if !strings.HasPrefix(r.Path, "/") {
-		ERROR.Print("Absolute URL required.")
+		glog.Error("Absolute URL required.")
 		return
 	}
 
@@ -144,7 +145,7 @@ func (r *Route) Match(method string, reqPath string) *RouteMatch {
 	// Split the action into controller and method
 	actionSplit := strings.Split(action, ".")
 	if len(actionSplit) != 2 {
-		ERROR.Printf("Failed to split action: %s (matching route: %s)", action, r.Action)
+		glog.Errorf("Failed to split action: %s (matching route: %s)", action, r.Action)
 		return nil
 	}
 
@@ -279,7 +280,7 @@ func getModuleRoutes(moduleName string, validate bool) ([]*Route, *Error) {
 	// testrunner module being active only in dev mode.
 	module, found := ModuleByName(moduleName)
 	if !found {
-		INFO.Println("Skipping routes for inactive module", moduleName)
+		glog.Infoln("Skipping routes for inactive module", moduleName)
 		return nil, nil
 	}
 	return parseRoutesFile(filepath.Join(module.Path, "conf", "routes"), validate)
@@ -391,7 +392,7 @@ NEXT_ROUTE:
 			Host:   "TODO",
 		}
 	}
-	ERROR.Println("Failed to find reverse route:", action, argValues)
+	glog.Errorln("Failed to find reverse route:", action, argValues)
 	return nil
 }
 
@@ -443,7 +444,7 @@ func RouterFilter(c *Controller, fc []Filter) {
 			arg := c.MethodType.Args[i]
 			c.Params.Fixed.Set(arg.Name, value)
 		} else {
-			WARN.Println("Too many parameters to", route.Action, "trying to add", value)
+			glog.Warningln("Too many parameters to", route.Action, "trying to add", value)
 			break
 		}
 	}

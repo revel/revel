@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/golang/glog"
 )
 
 // A Binder translates between string parameters and Go data structures.
@@ -75,7 +77,7 @@ var (
 			}
 			intValue, err := strconv.ParseInt(val, 10, 64)
 			if err != nil {
-				WARN.Println(err)
+				glog.Warning(err)
 				return reflect.Zero(typ)
 			}
 			pValue := reflect.New(typ)
@@ -94,7 +96,7 @@ var (
 			}
 			uintValue, err := strconv.ParseUint(val, 10, 64)
 			if err != nil {
-				WARN.Println(err)
+				glog.Warning(err)
 				return reflect.Zero(typ)
 			}
 			pValue := reflect.New(typ)
@@ -113,7 +115,7 @@ var (
 			}
 			floatValue, err := strconv.ParseFloat(val, 64)
 			if err != nil {
-				WARN.Println(err)
+				glog.Warning(err)
 				return reflect.Zero(typ)
 			}
 			pValue := reflect.New(typ)
@@ -344,11 +346,11 @@ func bindStruct(params *Params, name string, typ reflect.Type) reflect.Value {
 			// Time to bind this field.  Get it and make sure we can set it.
 			fieldValue := result.FieldByName(fieldName)
 			if !fieldValue.IsValid() {
-				WARN.Println("W: bindStruct: Field not found:", fieldName)
+				glog.Warningln("W: bindStruct: Field not found:", fieldName)
 				continue
 			}
 			if !fieldValue.CanSet() {
-				WARN.Println("W: bindStruct: Field not settable:", fieldName)
+				glog.Warningln("W: bindStruct: Field not settable:", fieldName)
 				continue
 			}
 			boundVal := Bind(params, key[:len(name)+1+fieldLen], fieldValue.Type())
@@ -381,7 +383,7 @@ func getMultipartFile(params *Params, name string) multipart.File {
 		if err == nil {
 			return file
 		}
-		WARN.Println("Failed to open uploaded file", name, ":", err)
+		glog.Warningln("Failed to open uploaded file", name, ":", err)
 	}
 	return nil
 }
@@ -400,7 +402,7 @@ func bindFile(params *Params, name string, typ reflect.Type) reflect.Value {
 	// Otherwise, have to store it.
 	tmpFile, err := ioutil.TempFile("", "revel-upload")
 	if err != nil {
-		WARN.Println("Failed to create a temp file to store upload:", err)
+		glog.Warningln("Failed to create a temp file to store upload:", err)
 		return reflect.Zero(typ)
 	}
 
@@ -409,13 +411,13 @@ func bindFile(params *Params, name string, typ reflect.Type) reflect.Value {
 
 	_, err = io.Copy(tmpFile, reader)
 	if err != nil {
-		WARN.Println("Failed to copy upload to temp file:", err)
+		glog.Warningln("Failed to copy upload to temp file:", err)
 		return reflect.Zero(typ)
 	}
 
 	_, err = tmpFile.Seek(0, 0)
 	if err != nil {
-		WARN.Println("Failed to seek to beginning of temp file:", err)
+		glog.Warningln("Failed to seek to beginning of temp file:", err)
 		return reflect.Zero(typ)
 	}
 
@@ -428,7 +430,7 @@ func bindByteArray(params *Params, name string, typ reflect.Type) reflect.Value 
 		if err == nil {
 			return reflect.ValueOf(b)
 		}
-		WARN.Println("Error reading uploaded file contents:", err)
+		glog.Warningln("Error reading uploaded file contents:", err)
 	}
 	return reflect.Zero(typ)
 }
@@ -490,7 +492,7 @@ func Unbind(output map[string]string, name string, val interface{}) {
 		if binder.Unbind != nil {
 			binder.Unbind(output, name, val)
 		} else {
-			ERROR.Printf("revel/binder: can not unbind %s=%s", name, val)
+			glog.Errorf("revel/binder: can not unbind %s=%s", name, val)
 		}
 	}
 }
@@ -500,7 +502,7 @@ func binderForType(typ reflect.Type) (Binder, bool) {
 	if !ok {
 		binder, ok = KindBinders[typ.Kind()]
 		if !ok {
-			WARN.Println("revel/binder: no binder for type:", typ)
+			glog.Warningln("revel/binder: no binder for type:", typ)
 			return Binder{}, false
 		}
 	}

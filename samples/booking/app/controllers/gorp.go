@@ -1,12 +1,14 @@
 package controllers
 
 import (
-	"code.google.com/p/go.crypto/bcrypt"
 	"database/sql"
+	"log"
+
+	"code.google.com/p/go.crypto/bcrypt"
 	"github.com/coopernurse/gorp"
-	_ "github.com/mattn/go-sqlite3"
+	"github.com/golang/glog"
 	r "github.com/robfig/revel"
-	"github.com/robfig/revel/modules/db/app"
+	db "github.com/robfig/revel/modules/db/app"
 	"github.com/robfig/revel/samples/booking/app/models"
 )
 
@@ -51,7 +53,7 @@ func Init() {
 		"NameOnCard": 50,
 	})
 
-	Dbm.TraceOn("[gorp]", r.INFO)
+	Dbm.TraceOn("[gorp]", log.New(GLogger{glog.Info}, "", 0))
 	Dbm.CreateTables()
 
 	bcryptPassword, _ := bcrypt.GenerateFromPassword(
@@ -71,6 +73,17 @@ func Init() {
 			panic(err)
 		}
 	}
+}
+
+// GLogger is an adapter from log.Logger to glog
+type GLogger struct {
+	out func(args ...interface{})
+}
+
+func (g GLogger) Write(p []byte) (n int, err error) {
+	g.out(string(p))
+	glog.Flush()
+	return len(p), nil
 }
 
 type GorpController struct {

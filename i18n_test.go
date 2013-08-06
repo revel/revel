@@ -1,8 +1,6 @@
 package revel
 
 import (
-	"io/ioutil"
-	"log"
 	"net/http"
 	"testing"
 	"time"
@@ -133,7 +131,7 @@ func TestBeforeRequest(t *testing.T) {
 }
 
 func BenchmarkI18nLoadMessages(b *testing.B) {
-	excludeFromTimer(b, func() { TRACE = log.New(ioutil.Discard, "", 0) })
+	// TODO: excludeFromTimer(b, func() { TRACE = log.New(ioutil.Discard, "", 0) })
 
 	for i := 0; i < b.N; i++ {
 		loadMessages(testDataPath)
@@ -147,7 +145,7 @@ func BenchmarkI18nMessage(b *testing.B) {
 }
 
 func BenchmarkI18nMessageWithArguments(b *testing.B) {
-	excludeFromTimer(b, func() { TRACE = log.New(ioutil.Discard, "", 0) })
+	// TODO: excludeFromTimer(b, func() { TRACE = log.New(ioutil.Discard, "", 0) })
 
 	for i := 0; i < b.N; i++ {
 		Message("en", "arguments.string", "Vincent Hanna")
@@ -155,7 +153,7 @@ func BenchmarkI18nMessageWithArguments(b *testing.B) {
 }
 
 func BenchmarkI18nMessageWithFoldingAndArguments(b *testing.B) {
-	excludeFromTimer(b, func() { TRACE = log.New(ioutil.Discard, "", 0) })
+	// TODO: excludeFromTimer(b, func() { TRACE = log.New(ioutil.Discard, "", 0) })
 
 	for i := 0; i < b.N; i++ {
 		Message("en", "folded.arguments", 12345)

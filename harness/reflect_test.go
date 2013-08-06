@@ -1,15 +1,14 @@
 package harness
 
 import (
-	"github.com/robfig/revel"
 	"go/ast"
 	"go/parser"
 	"go/token"
-	"io/ioutil"
-	"log"
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/robfig/revel"
 )
 
 const validationKeysSource = `
@@ -178,7 +177,7 @@ NEXT_TEST:
 
 func BenchmarkProcessBookingSource(b *testing.B) {
 	revel.Init("", "github.com/robfig/revel/samples/booking", "")
-	revel.TRACE = log.New(ioutil.Discard, "", 0)
+	// TODO: revel.TRACE = log.New(ioutil.Discard, "", 0)
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {

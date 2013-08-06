@@ -1,10 +1,12 @@
 package controllers
 
 import (
-	"github.com/robfig/revel"
 	"os"
 	fpath "path/filepath"
 	"strings"
+
+	"github.com/golang/glog"
+	"github.com/robfig/revel"
 )
 
 type Static struct {
@@ -51,22 +53,22 @@ func (c Static) Serve(prefix, filepath string) revel.Result {
 	basePathPrefix := fpath.Join(basePath, fpath.FromSlash(prefix))
 	fname := fpath.Join(basePathPrefix, fpath.FromSlash(filepath))
 	if !strings.HasPrefix(fname, basePathPrefix) {
-		revel.WARN.Printf("Attempted to read file outside of base path: %s", fname)
+		glog.Warningf("Attempted to read file outside of base path: %s", fname)
 		return c.NotFound("")
 	}
 
 	finfo, err := os.Stat(fname)
 	if err != nil {
 		if os.IsNotExist(err) {
-			revel.WARN.Printf("File not found (%s): %s ", fname, err)
+			glog.Warningf("File not found (%s): %s ", fname, err)
 			return c.NotFound("File not found")
 		}
-		revel.ERROR.Printf("Error trying to get fileinfo for '%s': %s", fname, err)
+		glog.Errorf("Error trying to get fileinfo for '%s': %s", fname, err)
 		return c.RenderError(err)
 	}
 
 	if finfo.Mode().IsDir() {
-		revel.WARN.Printf("Attempted directory listing of %s", fname)
+		glog.Warningf("Attempted directory listing of %s", fname)
 		return c.Forbidden("Directory listing not allowed")
 	}
 

@@ -2,11 +2,12 @@ package revel
 
 import (
 	"io/ioutil"
-	"log"
 	"os"
 	"path"
 	"path/filepath"
 	"reflect"
+
+	"github.com/golang/glog"
 )
 
 type Hotel struct {
@@ -52,7 +53,7 @@ func (c Static) Serve(prefix, filepath string) Result {
 	if os.IsNotExist(err) {
 		return c.NotFound("")
 	} else if err != nil {
-		WARN.Printf("Problem opening file (%s): %s ", fname, err)
+		glog.Warningf("Problem opening file (%s): %s ", fname, err)
 		return c.NotFound("This was found but not sure why we couldn't open it.")
 	}
 	return c.RenderFile(file, "")
@@ -61,11 +62,7 @@ func (c Static) Serve(prefix, filepath string) Result {
 func startFakeBookingApp() {
 	Init("prod", "github.com/robfig/revel/samples/booking", "")
 
-	// Disable logging.
-	TRACE = log.New(ioutil.Discard, "", 0)
-	INFO = TRACE
-	WARN = TRACE
-	ERROR = TRACE
+	// TODO: Disable logging.
 
 	runStartupHooks()
 

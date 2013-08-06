@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
-	"github.com/robfig/revel"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+
+	"github.com/robfig/revel"
 )
 
 var cmdPackage = &Command{
@@ -45,6 +46,7 @@ func packageApp(args []string) {
 	}
 
 	revel.Init(mode, appImportPath, "")
+	revel.LoadModules()
 
 	// Remove the archive if it already exists.
 	destFile := filepath.Base(revel.BasePath) + ".tar.gz"

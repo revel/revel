@@ -2,6 +2,8 @@ package revel
 
 import (
 	"runtime/debug"
+
+	"github.com/golang/glog"
 )
 
 // PanicFilter wraps the action invocation in a protective defer blanket that
@@ -20,12 +22,12 @@ func PanicFilter(c *Controller, fc []Filter) {
 func handleInvocationPanic(c *Controller, err interface{}) {
 	error := NewErrorFromPanic(err)
 	if error == nil {
-		ERROR.Print(err, "\n", string(debug.Stack()))
+		glog.Error(err, "\n", string(debug.Stack()))
 		c.Response.Out.WriteHeader(500)
 		c.Response.Out.Write(debug.Stack())
 		return
 	}
 
-	ERROR.Print(err, "\n", error.Stack)
+	glog.Error(err, "\n", error.Stack)
 	c.Result = c.RenderError(error)
 }

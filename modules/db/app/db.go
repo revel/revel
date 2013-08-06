@@ -11,6 +11,8 @@ package db
 
 import (
 	"database/sql"
+
+	"github.com/golang/glog"
 	"github.com/robfig/revel"
 )
 
@@ -24,17 +26,17 @@ func Init() {
 	// Read configuration.
 	var found bool
 	if Driver, found = revel.Config.String("db.driver"); !found {
-		revel.ERROR.Fatal("No db.driver found.")
+		glog.Fatal("No db.driver found.")
 	}
 	if Spec, found = revel.Config.String("db.spec"); !found {
-		revel.ERROR.Fatal("No db.spec found.")
+		glog.Fatal("No db.spec found.")
 	}
 
 	// Open a connection.
 	var err error
 	Db, err = sql.Open(Driver, Spec)
 	if err != nil {
-		revel.ERROR.Fatal(err)
+		glog.Fatal(err)
 	}
 }
 

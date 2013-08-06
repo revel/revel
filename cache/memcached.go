@@ -2,9 +2,10 @@ package cache
 
 import (
 	"errors"
-	"github.com/robfig/gomemcache/memcache"
-	"github.com/robfig/revel"
 	"time"
+
+	"github.com/golang/glog"
+	"github.com/robfig/gomemcache/memcache"
 )
 
 // Wraps the Memcached client to meet the Cache interface.
@@ -61,7 +62,7 @@ func (c MemcachedCache) Decrement(key string, delta uint64) (newValue uint64, er
 
 func (c MemcachedCache) Flush() error {
 	err := errors.New("revel/cache: can not flush memcached.")
-	revel.ERROR.Println(err)
+	glog.Error(err)
 	return err
 }
 
@@ -108,6 +109,6 @@ func convertMemcacheError(err error) error {
 		return ErrNotStored
 	}
 
-	revel.ERROR.Println("revel/cache:", err)
+	glog.Error("revel/cache:", err)
 	return err
 }

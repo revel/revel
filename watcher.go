@@ -1,12 +1,13 @@
 package revel
 
 import (
-	"github.com/howeyc/fsnotify"
 	"os"
-
 	"path/filepath"
 	"strings"
 	"sync"
+
+	"github.com/golang/glog"
+	"github.com/howeyc/fsnotify"
 )
 
 // Listener is an interface for receivers of filesystem events.
@@ -45,7 +46,7 @@ func NewWatcher() *Watcher {
 func (w *Watcher) Listen(listener Listener, roots ...string) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		ERROR.Fatal(err)
+		glog.Fatal(err)
 	}
 
 	// Replace the unbuffered Event channel with a buffered one.
@@ -59,7 +60,7 @@ func (w *Watcher) Listen(listener Listener, roots ...string) {
 	for _, p := range roots {
 		fi, err := os.Stat(p)
 		if err != nil {
-			ERROR.Println("Failed to stat watched path", p, ":", err)
+			glog.Errorln("Failed to stat watched path", p, ":", err)
 			continue
 		}
 
@@ -67,16 +68,16 @@ func (w *Watcher) Listen(listener Listener, roots ...string) {
 		if !fi.IsDir() {
 			err = watcher.Watch(p)
 			if err != nil {
-				ERROR.Println("Failed to watch", p, ":", err)
+				glog.Errorln("Failed to watch", p, ":", err)
 			}
-			TRACE.Println("Watching:", p)
+			glog.V(1).Infoln("Watching:", p)
 			continue
 		}
 
 		// Else, walk the directory tree.
 		filepath.Walk(p, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
-				ERROR.Println("Error walking path:", err)
+				glog.Errorln("Error walking path:", err)
 				return nil
 			}
 
@@ -89,9 +90,9 @@ func (w *Watcher) Listen(listener Listener, roots ...string) {
 
 				err = watcher.Watch(path)
 				if err != nil {
-					ERROR.Println("Failed to watch", path, ":", err)
+					glog.Errorln("Failed to watch", path, ":", err)
 				}
-				TRACE.Println("Watching:", path)
+				glog.V(1).Infoln("Watching:", path)
 			}
 			return nil
 		})

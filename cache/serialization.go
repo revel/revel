@@ -3,9 +3,10 @@ package cache
 import (
 	"bytes"
 	"encoding/gob"
-	"github.com/robfig/revel"
 	"reflect"
 	"strconv"
+
+	"github.com/golang/glog"
 )
 
 // Serialize transforms the given value into bytes following these rules:
@@ -27,7 +28,7 @@ func Serialize(value interface{}) ([]byte, error) {
 	var b bytes.Buffer
 	encoder := gob.NewEncoder(&b)
 	if err := encoder.Encode(value); err != nil {
-		revel.ERROR.Printf("revel/cache: gob encoding '%s' failed: %s", value, err)
+		glog.Errorf("revel/cache: gob encoding '%s' failed: %s", value, err)
 		return nil, err
 	}
 	return b.Bytes(), nil
@@ -47,7 +48,7 @@ func Deserialize(byt []byte, ptr interface{}) (err error) {
 			var i int64
 			i, err = strconv.ParseInt(string(byt), 10, 64)
 			if err != nil {
-				revel.ERROR.Printf("revel/cache: failed to parse int '%s': %s", string(byt), err)
+				glog.Errorf("revel/cache: failed to parse int '%s': %s", string(byt), err)
 			} else {
 				p.SetInt(i)
 			}
@@ -57,7 +58,7 @@ func Deserialize(byt []byte, ptr interface{}) (err error) {
 			var i uint64
 			i, err = strconv.ParseUint(string(byt), 10, 64)
 			if err != nil {
-				revel.ERROR.Printf("revel/cache: failed to parse uint '%s': %s", string(byt), err)
+				glog.Errorf("revel/cache: failed to parse uint '%s': %s", string(byt), err)
 			} else {
 				p.SetUint(i)
 			}
@@ -68,7 +69,7 @@ func Deserialize(byt []byte, ptr interface{}) (err error) {
 	b := bytes.NewBuffer(byt)
 	decoder := gob.NewDecoder(b)
 	if err = decoder.Decode(ptr); err != nil {
-		revel.ERROR.Printf("revel/cache: gob decoding failed: %s", err)
+		glog.Errorf("revel/cache: gob decoding failed: %s", err)
 		return
 	}
 	return
