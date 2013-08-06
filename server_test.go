@@ -1,10 +1,11 @@
 package revel
 
 import (
+	"path/filepath"
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"path"
+
 	"strings"
 	"testing"
 )
@@ -63,7 +64,7 @@ func TestFakeServer(t *testing.T) {
 	resp.Body.Reset()
 
 	handle(resp, staticRequest)
-	sessvarsSize := getFileSize(t, path.Join(BasePath, "public", "js", "sessvars.js"))
+	sessvarsSize := getFileSize(t, filepath.Join(BasePath, "public", "js", "sessvars.js"))
 	if int64(resp.Body.Len()) != sessvarsSize {
 		t.Errorf("Expected sessvars.js to have %d bytes, got %d:\n%s", sessvarsSize, resp.Body.Len(), resp.Body)
 		t.FailNow()

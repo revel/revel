@@ -7,7 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"path"
+
 	"path/filepath"
 	"strings"
 )
@@ -91,26 +91,26 @@ func Init(mode, importPath, srcPath string) {
 		revelSourcePath, SourcePath = findSrcPaths(importPath)
 	} else {
 		// If the SourcePath was specified, assume both Revel and the app are within it.
-		SourcePath = path.Clean(SourcePath)
+		SourcePath = filepath.Clean(SourcePath)
 		revelSourcePath = SourcePath
 		packaged = true
 	}
 
-	RevelPath = path.Join(revelSourcePath, filepath.FromSlash(REVEL_IMPORT_PATH))
-	BasePath = path.Join(SourcePath, filepath.FromSlash(importPath))
-	AppPath = path.Join(BasePath, "app")
-	ViewsPath = path.Join(AppPath, "views")
+	RevelPath = filepath.Join(revelSourcePath, filepath.FromSlash(REVEL_IMPORT_PATH))
+	BasePath = filepath.Join(SourcePath, filepath.FromSlash(importPath))
+	AppPath = filepath.Join(BasePath, "app")
+	ViewsPath = filepath.Join(AppPath, "views")
 
 	CodePaths = []string{AppPath}
 
 	ConfPaths = []string{
-		path.Join(BasePath, "conf"),
-		path.Join(RevelPath, "conf"),
+		filepath.Join(BasePath, "conf"),
+		filepath.Join(RevelPath, "conf"),
 	}
 
 	TemplatePaths = []string{
 		ViewsPath,
-		path.Join(RevelPath, "templates"),
+		filepath.Join(RevelPath, "templates"),
 	}
 
 	// Load app.conf
@@ -249,7 +249,7 @@ func loadModules() {
 // Returns an error if the import path could not be found.
 func ResolveImportPath(importPath string) (string, error) {
 	if packaged {
-		return path.Join(SourcePath, importPath), nil
+		return filepath.Join(SourcePath, filepath.FromSlash(importPath)), nil
 	}
 
 	modPkg, err := build.Import(importPath, "", build.FindOnly)
@@ -261,19 +261,18 @@ func ResolveImportPath(importPath string) (string, error) {
 
 func addModule(name, importPath, modulePath string) {
 	Modules = append(Modules, Module{Name: name, ImportPath: importPath, Path: modulePath})
-	if codePath := path.Join(modulePath, "app"); DirExists(codePath) {
+	if codePath := filepath.Join(modulePath, "app"); DirExists(codePath) {
 		CodePaths = append(CodePaths, codePath)
-		if viewsPath := path.Join(modulePath, "app", "views"); DirExists(viewsPath) {
+		if viewsPath := filepath.Join(modulePath, "app", "views"); DirExists(viewsPath) {
 			TemplatePaths = append(TemplatePaths, viewsPath)
 		}
 	}
-
-	INFO.Print("Loaded module ", path.Base(modulePath))
+	INFO.Print("Loaded module ", filepath.Base(modulePath))
 
 	// Hack: There is presently no way for the testrunner module to add the
 	// "test" subdirectory to the CodePaths.  So this does it instead.
 	if importPath == "github.com/robfig/revel/modules/testrunner" {
-		CodePaths = append(CodePaths, path.Join(BasePath, "tests"))
+		CodePaths = append(CodePaths, filepath.Join(BasePath, "tests"))
 	}
 }
 

@@ -11,7 +11,8 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"path"
+	"path/filepath"
+
 	"strings"
 	"time"
 )
@@ -85,7 +86,7 @@ You can add it to a run mode configuration with the following line:
 	}
 
 	// Create a directory to hold the test result files.
-	resultPath := path.Join(revel.BasePath, "test-results")
+	resultPath := filepath.Join(revel.BasePath, "test-results")
 	if err = os.RemoveAll(resultPath); err != nil {
 		errorf("Failed to remove test result directory %s: %s", resultPath, err)
 	}
@@ -94,7 +95,7 @@ You can add it to a run mode configuration with the following line:
 	}
 
 	// Direct all the output into a file in the test-results directory.
-	file, err := os.OpenFile(path.Join(resultPath, "app.log"), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	file, err := os.OpenFile(filepath.Join(resultPath, "app.log"), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
 		errorf("Failed to create log file: %s", err)
 	}
@@ -144,7 +145,7 @@ You can add it to a run mode configuration with the following line:
 
 	// Load the result template, which we execute for each suite.
 	module, _ := revel.ModuleByName("testrunner")
-	TemplateLoader := revel.NewTemplateLoader([]string{path.Join(module.Path, "app", "views")})
+	TemplateLoader := revel.NewTemplateLoader([]string{filepath.Join(module.Path, "app", "views")})
 	if err := TemplateLoader.Refresh(); err != nil {
 		errorf("Failed to compile templates: %s", err)
 	}
@@ -194,7 +195,7 @@ You can add it to a run mode configuration with the following line:
 		}
 		fmt.Printf("%8s%3s%6ds\n", suiteResultStr, suiteAlert, int(time.Since(startTime).Seconds()))
 		// Create the result HTML file.
-		suiteResultFilename := path.Join(resultPath,
+		suiteResultFilename := filepath.Join(resultPath,
 			fmt.Sprintf("%s.%s.html", suite.Name, strings.ToLower(suiteResultStr)))
 		suiteResultFile, err := os.Create(suiteResultFilename)
 		if err != nil {
@@ -225,8 +226,8 @@ You can add it to a run mode configuration with the following line:
 }
 
 func writeResultFile(resultPath, name, content string) {
-	if err := ioutil.WriteFile(path.Join(resultPath, name), []byte(content), 0666); err != nil {
-		errorf("Failed to write result file %s: %s", path.Join(resultPath, name), err)
+	if err := ioutil.WriteFile(filepath.Join(resultPath, name), []byte(content), 0666); err != nil {
+		errorf("Failed to write result file %s: %s", filepath.Join(resultPath, name), err)
 	}
 }
 

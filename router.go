@@ -1,13 +1,14 @@
 package revel
 
 import (
+	"path/filepath"
 	"encoding/csv"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"path"
+
 	"regexp"
 	"strings"
 )
@@ -281,7 +282,7 @@ func getModuleRoutes(moduleName string, validate bool) ([]*Route, *Error) {
 		INFO.Println("Skipping routes for inactive module", moduleName)
 		return nil, nil
 	}
-	return parseRoutesFile(path.Join(module.Path, "conf", "routes"), validate)
+	return parseRoutesFile(filepath.Join(module.Path, "conf", "routes"), validate)
 }
 
 // Groups:
@@ -396,7 +397,7 @@ NEXT_ROUTE:
 
 func init() {
 	OnAppStart(func() {
-		MainRouter = NewRouter(path.Join(BasePath, "conf", "routes"))
+		MainRouter = NewRouter(filepath.Join(BasePath, "conf", "routes"))
 		if MainWatcher != nil && Config.BoolDefault("watch.routes", true) {
 			MainWatcher.Listen(MainRouter, MainRouter.path)
 		} else {

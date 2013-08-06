@@ -11,6 +11,7 @@
 package harness
 
 import (
+	"path/filepath"
 	"fmt"
 	"github.com/robfig/revel"
 	"io"
@@ -20,7 +21,7 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
-	"path"
+
 	"strings"
 	"sync/atomic"
 )
@@ -79,7 +80,7 @@ func NewHarness() *Harness {
 	// Get a template loader to render errors.
 	// Prefer the app's views/errors directory, and fall back to the stock error pages.
 	revel.MainTemplateLoader = revel.NewTemplateLoader(
-		[]string{path.Join(revel.RevelPath, "templates")})
+		[]string{filepath.Join(revel.RevelPath, "templates")})
 	revel.MainTemplateLoader.Refresh()
 
 	addr := revel.HttpAddr

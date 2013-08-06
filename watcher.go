@@ -3,7 +3,7 @@ package revel
 import (
 	"github.com/howeyc/fsnotify"
 	"os"
-	"path"
+
 	"path/filepath"
 	"strings"
 	"sync"
@@ -117,7 +117,7 @@ func (w *Watcher) Notify() *Error {
 			select {
 			case ev := <-watcher.Event:
 				// Ignore changes to dotfiles.
-				if !strings.HasPrefix(path.Base(ev.Name), ".") {
+				if !strings.HasPrefix(filepath.Base(ev.Name), ".") {
 					if dl, ok := listener.(DiscerningListener); ok {
 						if !dl.WatchFile(ev.Name) {
 							continue
