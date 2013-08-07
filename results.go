@@ -213,7 +213,7 @@ func (r RenderJsonResult) Apply(req *Request, resp *Response) {
 
 type RenderJsonPResult struct {
 	callback string
-	obj interface{}
+	obj      interface{}
 }
 
 func (r RenderJsonPResult) Apply(req *Request, resp *Response) {
