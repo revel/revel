@@ -119,6 +119,11 @@ func (c *Controller) RenderJson(o interface{}) Result {
 	return RenderJsonResult{o}
 }
 
+// Renders a JSONP result using encoding/json.Marshal
+func (c *Controller) RenderJsonP(callback string, o interface{}) Result {
+	return RenderJsonPResult{callback, o}
+}
+
 // Uses encoding/xml.Marshal to return XML to the client.
 func (c *Controller) RenderXml(o interface{}) Result {
 	return RenderXmlResult{o}

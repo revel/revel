@@ -211,6 +211,32 @@ func (r RenderJsonResult) Apply(req *Request, resp *Response) {
 	resp.Out.Write(b)
 }
 
+type RenderJsonPResult struct {
+	callback string
+	obj interface{}
+}
+
+func (r RenderJsonPResult) Apply(req *Request, resp *Response) {
+	var b []byte
+	var err error
+	if Config.BoolDefault("results.pretty", false) {
+		b, err = json.MarshalIndent(r.obj, "", "  ")
+	} else {
+		b, err = json.Marshal(r.obj)
+	}
+
+	if err != nil {
+		ErrorResult{Error: err}.Apply(req, resp)
+		return
+	}
+
+	var callback string
+	callback = r.callback + "(" + string(b[:]) + ");"
+
+	resp.WriteHeader(http.StatusOK, "application/javascript")
+	resp.Out.Write([]byte(callback))
+}
+
 type RenderXmlResult struct {
 	obj interface{}
 }
