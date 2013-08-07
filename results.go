@@ -190,7 +190,7 @@ func (r RenderHtmlResult) Apply(req *Request, resp *Response) {
 }
 
 type RenderJsonResult struct {
-	obj 	 interface{}
+	obj      interface{}
 	callback string
 }
 
