@@ -9,11 +9,16 @@ import (
 )
 
 var cmdPackage = &Command{
-	UsageLine: "package [import path]",
+	UsageLine: "package [import path] [run mode]",
 	Short:     "package a Revel application (e.g. for deployment)",
 	Long: `
 Package the Revel web application named by the given import path.
 This allows it to be deployed and run on a machine that lacks a Go installation.
+
+The run mode is used to select which set of app.conf configuration should
+apply and may be used to determine build options.
+
+For package, run mode defaults to "prod".
 
 For example:
 
@@ -32,7 +37,14 @@ func packageApp(args []string) {
 	}
 
 	appImportPath := args[0]
-	revel.Init("", appImportPath, "")
+
+	// Determine the run mode.
+	mode := "prod"
+	if len(args) >= 2 {
+		mode = args[1]
+	}
+
+	revel.Init(mode, appImportPath, "")
 
 	// Remove the archive if it already exists.
 	destFile := filepath.Base(revel.BasePath) + ".tar.gz"
