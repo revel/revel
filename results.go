@@ -208,20 +208,16 @@ func (r RenderJsonResult) Apply(req *Request, resp *Response) {
 		return
 	}
 
-	var contentType string
-
-	if len(r.callback) > 0 {
-		var callback string
-		callback = r.callback + "(" + string(b[:]) + ");"
-
-		contentType = "application/javascript"
-		b = []byte(callback)
-	} else {
-		contentType = "application/json"
+	if r.callback == "" {
+		resp.WriteHeader(http.StatusOK, "application/json")
+		resp.Out.Write(b)
+		return
 	}
 
-	resp.WriteHeader(http.StatusOK, contentType)
+	resp.WriteHeader(http.StatusOK, "application/javascript")
+	resp.Out.Write([]byte(r.callback + "("))
 	resp.Out.Write(b)
+	resp.Out.Write([]byte(");"))
 }
 
 type RenderXmlResult struct {
