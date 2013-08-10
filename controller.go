@@ -116,7 +116,12 @@ func (c *Controller) RenderTemplate(templatePath string) Result {
 
 // Uses encoding/json.Marshal to return JSON to the client.
 func (c *Controller) RenderJson(o interface{}) Result {
-	return RenderJsonResult{o}
+	return RenderJsonResult{o, ""}
+}
+
+// Renders a JSONP result using encoding/json.Marshal
+func (c *Controller) RenderJsonP(callback string, o interface{}) Result {
+	return RenderJsonResult{o, callback}
 }
 
 // Uses encoding/xml.Marshal to return XML to the client.

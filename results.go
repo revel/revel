@@ -190,7 +190,8 @@ func (r RenderHtmlResult) Apply(req *Request, resp *Response) {
 }
 
 type RenderJsonResult struct {
-	obj interface{}
+	obj      interface{}
+	callback string
 }
 
 func (r RenderJsonResult) Apply(req *Request, resp *Response) {
@@ -207,8 +208,16 @@ func (r RenderJsonResult) Apply(req *Request, resp *Response) {
 		return
 	}
 
-	resp.WriteHeader(http.StatusOK, "application/json")
+	if r.callback == "" {
+		resp.WriteHeader(http.StatusOK, "application/json")
+		resp.Out.Write(b)
+		return
+	}
+
+	resp.WriteHeader(http.StatusOK, "application/javascript")
+	resp.Out.Write([]byte(r.callback + "("))
 	resp.Out.Write(b)
+	resp.Out.Write([]byte(");"))
 }
 
 type RenderXmlResult struct {
