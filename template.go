@@ -89,7 +89,10 @@ var (
 			}
 			return template.HTML(html.EscapeString(str) + strings.Repeat("&nbsp;", width-len(str)))
 		},
-
+		// Repeats the given content a given amount of times
+		"repeat": func(content string, times int) template.HTML {
+			return template.HTML(strings.Repeat(content, times))
+		},
 		"errorClass": func(name string, renderArgs map[string]interface{}) template.HTML {
 			errorMap, ok := renderArgs["errors"].(map[string]*ValidationError)
 			if !ok {
