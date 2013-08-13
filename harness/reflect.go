@@ -634,13 +634,21 @@ func getStructTypeDecl(decl ast.Decl) (spec *ast.TypeSpec, found bool) {
 // e.g. "github.com/robfig/revel.Controller"
 func (s *SourceInfo) TypesThatEmbed(targetType string) (filtered []*TypeInfo) {
 	// Do a search in the "embedded type graph", starting with the target type.
-	nodeQueue := []string{targetType}
+	var (
+		nodeQueue = []string{targetType}
+		processed []string
+	)
 	for len(nodeQueue) > 0 {
 		controllerSimpleName := nodeQueue[0]
 		nodeQueue = nodeQueue[1:]
+		processed = append(processed, controllerSimpleName)
+
+		// Look through all known structs.
 		for _, spec := range s.StructSpecs {
-			if revel.ContainsString(nodeQueue, spec.String()) {
-				continue // Already added
+			// If this one has been processed or is already in nodeQueue, then skip it.
+			if revel.ContainsString(processed, spec.String()) ||
+				revel.ContainsString(nodeQueue, spec.String()) {
+				continue
 			}
 
 			// Look through the embedded types to see if the current type is among them.
