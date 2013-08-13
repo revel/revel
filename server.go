@@ -49,6 +49,11 @@ func Run(port int) {
 	if port == 0 {
 		port = HttpPort
 	}
+	// If the port equals zero, it means do not append port to the address.
+	// It can use unix socket or something else.
+	if port != 0 {
+		address = fmt.Sprintf("%s:%d", address, port)
+	}
 
 	MainTemplateLoader = NewTemplateLoader(TemplatePaths)
 
@@ -68,7 +73,7 @@ func Run(port int) {
 	}
 
 	Server = &http.Server{
-		Addr:    fmt.Sprintf("%s:%d", address, port),
+		Addr:    address,
 		Handler: http.HandlerFunc(handle),
 	}
 
