@@ -245,7 +245,7 @@ Default: "REVEL"
 Specifies an override for the left and right delimiters used in the templates.  
 The delimiters must be specified as "LEFT\_DELIMS RIGHT\_DELIMS"
 
-Default: "{{ }}"
+Default: "\{\{ \}\}"
 
 ### Formatting
 
