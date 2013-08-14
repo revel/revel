@@ -238,6 +238,15 @@ would result in the following cookie names:
 
 Default: "REVEL"
 
+### Templates
+
+#### template.delimiters 
+
+Specifies an override for the left and right delimiters used in the templates.  
+The delimiters must be specified as "LEFT\_DELIMS RIGHT\_DELIMS"
+
+Default: "{{ }}"
+
 ### Formatting
 
 #### format.date
