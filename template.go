@@ -14,6 +14,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/golang/glog"
 )
 
 var ERROR_CLASS = "hasError"
@@ -93,7 +95,7 @@ var (
 		"errorClass": func(name string, renderArgs map[string]interface{}) template.HTML {
 			errorMap, ok := renderArgs["errors"].(map[string]*ValidationError)
 			if !ok {
-				WARN.Println("Called 'errorClass' without 'errors' in the render args.")
+				glog.Warning("Called 'errorClass' without 'errors' in the render args.")
 				return template.HTML("")
 			}
 			valError, ok := errorMap[name]
@@ -140,7 +142,7 @@ var (
 					return plural
 				}
 			default:
-				ERROR.Println("pluralize: unexpected type: ", v)
+				glog.Error("pluralize: unexpected type: ", v)
 			}
 			return singular
 		},
@@ -167,8 +169,7 @@ func NewTemplateLoader(paths []string) *TemplateLoader {
 // If a template fails to parse, the error is set on the loader.
 // (It's awkward to refresh a single Go Template)
 func (loader *TemplateLoader) Refresh() *Error {
-	TRACE.Printf("Refreshing templates from %s", loader.paths)
-
+	glog.V(1).Infof("Refreshing templates from %s", loader.paths)
 	loader.compileError = nil
 	loader.templatePaths = map[string]string{}
 
@@ -190,7 +191,7 @@ func (loader *TemplateLoader) Refresh() *Error {
 		// (namely, if one of the TemplateFuncs does not have an acceptable signature).
 		funcErr := filepath.Walk(basePath, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
-				ERROR.Println("error walking templates:", err)
+				glog.Errorln("error walking templates:", err)
 				return nil
 			}
 
@@ -220,7 +221,7 @@ func (loader *TemplateLoader) Refresh() *Error {
 
 			fileBytes, err := ioutil.ReadFile(path)
 			if err != nil {
-				ERROR.Println("Failed reading file:", path)
+				glog.Errorln("Failed reading file:", path)
 				return nil
 			}
 
@@ -274,7 +275,7 @@ func (loader *TemplateLoader) Refresh() *Error {
 					Line:        line,
 					SourceLines: strings.Split(fileStr, "\n"),
 				}
-				ERROR.Printf("Template compilation error (In %s around line %d):\n%s",
+				glog.Errorf("Template compilation error (In %s around line %d):\n%s",
 					templateName, line, description)
 			}
 			return nil
@@ -310,7 +311,7 @@ func parseTemplateError(err error) (templateName string, line int, description s
 	if i != nil {
 		line, err = strconv.Atoi(description[i[0]+1 : i[1]-1])
 		if err != nil {
-			ERROR.Println("Failed to parse line number from error message:", err)
+			glog.Errorln("Failed to parse line number from error message:", err)
 		}
 		templateName = description[:i[0]]
 		if colon := strings.Index(templateName, ":"); colon != -1 {

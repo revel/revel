@@ -3,18 +3,18 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/robfig/revel"
-	"github.com/robfig/revel/harness"
-	"github.com/robfig/revel/modules/testrunner/app/controllers"
-	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
-
 	"strings"
 	"time"
+
+	"github.com/golang/glog"
+	"github.com/robfig/revel"
+	"github.com/robfig/revel/harness"
+	"github.com/robfig/revel/modules/testrunner/app/controllers"
 )
 
 var cmdTest = &Command{
@@ -60,6 +60,7 @@ func testApp(args []string) {
 
 	// Find and parse app.conf
 	revel.Init(mode, args[0], "")
+	revel.LoadModules()
 
 	// Set working directory to BasePath, to make relative paths convenient and
 	// dependable.
@@ -94,26 +95,21 @@ You can add it to a run mode configuration with the following line:
 		errorf("Failed to create test result directory %s: %s", resultPath, err)
 	}
 
-	// Direct all the output into a file in the test-results directory.
-	file, err := os.OpenFile(filepath.Join(resultPath, "app.log"), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
-	if err != nil {
-		errorf("Failed to create log file: %s", err)
-	}
-
 	app, reverr := harness.Build()
 	if reverr != nil {
 		errorf("Error building: %s", reverr)
 	}
+
+	// Direct all the output into a file in the test-results directory.
+	app.Flags = []string{"-logtostderr=false", "-log_dir=" + resultPath}
 	cmd := app.Cmd()
-	cmd.Stderr = io.MultiWriter(cmd.Stderr, file)
-	cmd.Stdout = io.MultiWriter(cmd.Stderr, file)
 
 	// Start the app...
 	if err := cmd.Start(); err != nil {
 		errorf("%s", err)
 	}
 	defer cmd.Kill()
-	revel.INFO.Printf("Testing %s (%s) in %s mode\n", revel.AppName, revel.ImportPath, mode)
+	glog.Infof("Testing %s (%s) in %s mode", revel.AppName, revel.ImportPath, mode)
 
 	// Get a list of tests.
 	// Since this is the first request to the server, retry/sleep a couple times

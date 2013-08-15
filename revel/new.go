@@ -2,12 +2,12 @@ package main
 
 import (
 	"fmt"
-	"github.com/robfig/revel"
 	"go/build"
 	"math/rand"
 	"os"
-
 	"path/filepath"
+
+	"github.com/robfig/revel"
 )
 
 var cmdNew = &Command{

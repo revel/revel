@@ -2,12 +2,14 @@ package revel
 
 import (
 	"fmt"
-	"github.com/streadway/simpleuuid"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/golang/glog"
+	"github.com/streadway/simpleuuid"
 )
 
 // A signed cookie (and thus limited to 4kb in size).
@@ -98,7 +100,7 @@ func getSessionFromCookie(cookie *http.Cookie) Session {
 
 	// Verify the signature.
 	if Sign(data) != sig {
-		INFO.Println("Session cookie signature failed")
+		glog.Info("Session cookie signature failed")
 		return session
 	}
 

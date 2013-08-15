@@ -1,8 +1,10 @@
 package revel
 
 import (
-	"code.google.com/p/go.net/websocket"
 	"reflect"
+
+	"code.google.com/p/go.net/websocket"
+	"github.com/golang/glog"
 )
 
 var (
@@ -23,7 +25,7 @@ func ActionInvoker(c *Controller, _ []Filter) {
 		if arg.Type == websocketType {
 			boundArg = reflect.ValueOf(c.Request.Websocket)
 		} else {
-			TRACE.Println("Binding:", arg.Name, "as", arg.Type)
+			glog.V(1).Infoln("Binding:", arg.Name, "as", arg.Type)
 			boundArg = Bind(c.Params, arg.Name, arg.Type)
 		}
 		methodArgs = append(methodArgs, boundArg)

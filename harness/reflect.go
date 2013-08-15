@@ -4,7 +4,6 @@ package harness
 // It catalogs the controllers, their methods, and their arguments.
 
 import (
-	"github.com/robfig/revel"
 	"go/ast"
 	"go/build"
 	"go/parser"
@@ -12,9 +11,11 @@ import (
 	"go/token"
 	"log"
 	"os"
-
 	"path/filepath"
 	"strings"
+
+	"github.com/golang/glog"
+	"github.com/robfig/revel"
 )
 
 // SourceInfo is the top-level struct containing all extracted information
@@ -91,7 +92,7 @@ func ProcessSource(roots []string) (*SourceInfo, *revel.Error) {
 	for _, root := range roots {
 		rootImportPath := importPathFromPath(root)
 		if rootImportPath == "" {
-			revel.WARN.Println("Skipping code path", root)
+			glog.Warning("Skipping code path ", root)
 			continue
 		}
 
@@ -289,7 +290,7 @@ func addImports(imports map[string]string, decl ast.Decl, srcDir string) {
 				// We expect this to happen for apps using reverse routing (since we
 				// have not yet generated the routes).  Don't log that.
 				if !strings.HasSuffix(fullPath, "/app/routes") {
-					revel.TRACE.Println("Could not find import:", fullPath)
+					glog.V(1).Info("Could not find import: ", fullPath)
 				}
 				continue
 			}
@@ -618,7 +619,7 @@ func getStructTypeDecl(decl ast.Decl) (spec *ast.TypeSpec, found bool) {
 	}
 
 	if len(genDecl.Specs) != 1 {
-		revel.TRACE.Printf("Surprising: Decl does not have 1 Spec: %v", genDecl)
+		glog.V(1).Infof("Surprising: Decl does not have 1 Spec: %v", genDecl)
 		return
 	}
 
@@ -765,10 +766,10 @@ func importPathFromPath(root string) string {
 
 	srcPath := filepath.Join(build.Default.GOROOT, "src", "pkg")
 	if strings.HasPrefix(root, srcPath) {
-		revel.WARN.Println("Code path should be in GOPATH, but is in GOROOT:", root)
+		glog.Warning("Code path should be in GOPATH, but is in GOROOT: ", root)
 		return filepath.ToSlash(root[len(srcPath)+1:])
 	}
 
-	revel.ERROR.Println("Unexpected! Code path is not in GOPATH:", root)
+	glog.Error("Unexpected! Code path is not in GOPATH: ", root)
 	return ""
 }

@@ -4,13 +4,13 @@ import (
 	"archive/tar"
 	"compress/gzip"
 	"fmt"
-	"github.com/robfig/revel"
 	"io"
 	"os"
-
 	"path/filepath"
 	"strings"
 	"text/template"
+
+	"github.com/robfig/revel"
 )
 
 // Use a wrapper to differentiate logged panics from unexpected ones.

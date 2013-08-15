@@ -1,11 +1,12 @@
 package revel
 
 import (
-	"path/filepath"
 	"errors"
-	"github.com/robfig/config"
-
+	"path/filepath"
 	"strings"
+
+	"github.com/golang/glog"
+	"github.com/robfig/config"
 )
 
 // This handles the parsing of app.conf
@@ -53,7 +54,7 @@ func (c *MergedConfig) Int(option string) (result int, found bool) {
 	}
 
 	// If it wasn't an OptionError, it must have failed to parse.
-	ERROR.Println("Failed to parse config option", option, "as int:", err)
+	glog.Errorln("Failed to parse config option", option, "as int:", err)
 	return 0, false
 }
 
@@ -74,7 +75,7 @@ func (c *MergedConfig) Bool(option string) (result, found bool) {
 	}
 
 	// If it wasn't an OptionError, it must have failed to parse.
-	ERROR.Println("Failed to parse config option", option, "as bool:", err)
+	glog.Errorln("Failed to parse config option", option, "as bool:", err)
 	return false, false
 }
 
