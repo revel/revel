@@ -82,7 +82,7 @@ func startFakeBookingApp() {
 				Args: []*MethodArg{
 					{"id", reflect.TypeOf((*int)(nil))},
 				},
-				RenderArgNames: map[int][]string{31: []string{"title", "hotel"}},
+				RenderArgNames: map[int][]string{32: []string{"title", "hotel"}},
 			},
 			&MethodType{
 				Name: "Book",
