@@ -1,0 +1,5 @@
+GET   /session                   Session.Index
+GET   /session/create            Session.Create
+POST  /session/create            Session.Register
+GET   /session/destroy           Session.Destroy
+GET   /session/public/*filepath  Static.ServeModule(auth,public)
