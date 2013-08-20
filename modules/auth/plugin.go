@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"code.google.com/p/go.crypto/bcrypt"
 	"fmt"
 	"github.com/robfig/revel"
 	"github.com/robfig/revel/cache"
@@ -17,20 +18,17 @@ const (
 )
 
 var (
-	SessionId       string
-	Structs         AuthStructs
-	UseRoles        bool
-	PasswordField   string
-	PasswordUseSalt bool
-	UsernameField   string
+	SessionId     string
+	Structs       AuthStructs
+	UseRoles      bool
+	PasswordField string
+	UsernameField string
 )
 
 func init() {
 	revel.OnAppStart(func() {
 		PasswordField = revel.Config.
 			StringDefault("auth.password.field", DEFAULT_PASSWORD_FIELD)
-		PasswordUseSalt = revel.Config.
-			BoolDefault("auth.password.usesalt", DEFAULT_PASSWORD_USE_SALT)
 		UsernameField = revel.Config.
 			StringDefault("auth.username.field", DEFAULT_USERNAME_FIELD)
 	})
@@ -62,6 +60,19 @@ func CheckSession(c *revel.Controller) bool {
 	return false
 }
 
+func RegisterSession(u string, p string) error {
+	user := reflect.ValueOf(Structs.VerifyWith(u))
+	hash := reflect.ValueOf(user).FieldByName(PasswordField).String()
+	if err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(p)); err != nil {
+		return err
+	}
+	return nil
+}
+
+func InvalidateSession() {
+	go cache.Delete(SessionId + SESSION_KEY)
+}
+
 // VerifySession checks stored session id against stored value
 func VerifySession(sid string) bool {
 	var session Session
@@ -69,10 +80,6 @@ func VerifySession(sid string) bool {
 		return false
 	}
 	return sid == session.Id
-}
-
-func InvalidateSession() {
-	go cache.Delete(SessionId + SESSION_KEY)
 }
 
 // Apply is run by the developer in the init.go file for his/her project.
@@ -126,8 +133,9 @@ func Use(s AuthStructs) {
 
 // struct for passing user-defined structs for use in authentication
 type AuthStructs struct {
-	// Session interface{} // TODO: do this. let's start with cache storage
-	User interface{}
+	// Session interface{} // TODO: let's start with cache storage only
+	User       interface{}
+	VerifyWith func(string) *interface{}
 }
 
 // defines resource that needs authentication

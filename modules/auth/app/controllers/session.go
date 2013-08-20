@@ -21,7 +21,9 @@ func (c Session) Create() revel.Result {
 }
 
 func (c Session) Register(username string, password string) revel.Result {
-	panic(auth.SessionId)
+	if err := auth.RegisterSession(username, password); err != nil {
+		panic("registered session")
+	}
 	return c.Render()
 }
 
