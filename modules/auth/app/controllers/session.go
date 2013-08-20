@@ -1,8 +1,8 @@
 package controllers
 
 import (
-	"fmt"
 	"github.com/robfig/revel"
+	"github.com/robfig/revel/modules/auth"
 	// "code.google.com/p/go.crypto/bcrypt"
 )
 
@@ -21,7 +21,7 @@ func (c Session) Create() revel.Result {
 }
 
 func (c Session) Register(username string, password string) revel.Result {
-	panic(fmt.Sprintf("user: %v, pass: %v", username, password))
+	panic(auth.SessionId)
 	return c.Render()
 }
 

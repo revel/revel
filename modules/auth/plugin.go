@@ -3,28 +3,36 @@ package auth
 import (
 	"fmt"
 	"github.com/robfig/revel"
+	"github.com/robfig/revel/cache"
 	"net/http"
 	"reflect"
+	"time"
 )
 
 const (
-	DEFAULT_PASSWORD_FIELD = "Password"
-	DEFAULT_USERNAME_FIELD = "Username"
+	DEFAULT_PASSWORD_FIELD    = "Password"
+	DEFAULT_PASSWORD_USE_SALT = false
+	DEFAULT_USERNAME_FIELD    = "Username"
+	SESSION_KEY               = "BasicAuthSessionId"
 )
 
 var (
-	Structs       AuthStructs
-	UseRoles      bool
-	PasswordField string
-	UsernameField string
+	SessionId       string
+	Structs         AuthStructs
+	UseRoles        bool
+	PasswordField   string
+	PasswordUseSalt bool
+	UsernameField   string
 )
 
 func init() {
 	revel.OnAppStart(func() {
 		PasswordField = revel.Config.
-			StringDefault("auth.passwordfield", DEFAULT_PASSWORD_FIELD)
+			StringDefault("auth.password.field", DEFAULT_PASSWORD_FIELD)
+		PasswordUseSalt = revel.Config.
+			BoolDefault("auth.password.usesalt", DEFAULT_PASSWORD_USE_SALT)
 		UsernameField = revel.Config.
-			StringDefault("auth.usernamefield", DEFAULT_USERNAME_FIELD)
+			StringDefault("auth.username.field", DEFAULT_USERNAME_FIELD)
 	})
 }
 
@@ -35,7 +43,8 @@ var SessionAuthenticationFilter = func(c *revel.Controller, fc []revel.Filter) {
 	if Structs.User == nil {
 		revel.ERROR.Fatal("User struct has not been passed.")
 	}
-	if valid := CheckSession(); !valid {
+	SessionId = c.Session.Id()
+	if valid := CheckSession(c); !valid {
 		c.Flash.Error("Session invalid. Please login.")
 		c.Response.Status = http.StatusFound
 		c.Response.Out.Header().Add("Location", "/session/create")
@@ -44,7 +53,27 @@ var SessionAuthenticationFilter = func(c *revel.Controller, fc []revel.Filter) {
 	fc[0](c, fc[1:]) // Execute the next filter stage.
 }
 
-func CheckSession
+// CheckSession is called by SessionAuthenticationFilter to check for a valid
+// session.
+func CheckSession(c *revel.Controller) bool {
+	if value, ok := c.Session[SESSION_KEY]; ok {
+		return VerifySession(value)
+	}
+	return false
+}
+
+// VerifySession checks stored session id against stored value
+func VerifySession(sid string) bool {
+	var session Session
+	if err := cache.Get(SessionId+SESSION_KEY, &session); err != nil {
+		return false
+	}
+	return sid == session.Id
+}
+
+func InvalidateSession() {
+	go cache.Delete(SessionId + SESSION_KEY)
+}
 
 // Apply is run by the developer in the init.go file for his/her project.
 // It loops over the slice for all AuthenticatedResources the developer wishes
@@ -68,7 +97,7 @@ func Apply(m []AuthenticatedResource) {
 //
 // Example:
 //     import (
-//         auth "github.com/robfig/revel/auth/app"
+//         "github.com/robfig/revel/auth"
 //         "project/models"
 //     )
 //
@@ -97,12 +126,19 @@ func Use(s AuthStructs) {
 
 // struct for passing user-defined structs for use in authentication
 type AuthStructs struct {
-	Session interface{}
-	User    interface{}
+	// Session interface{} // TODO: do this. let's start with cache storage
+	User interface{}
 }
 
 // defines resource that needs authentication
 type AuthenticatedResource struct {
 	Resource interface{}
 	Role     string // TODO: allow role-based ACL config
+}
+
+type Session struct {
+	Id        string
+	Data      string
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
