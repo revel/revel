@@ -39,7 +39,7 @@ type Template interface {
 
 var invalidSlugPattern = regexp.MustCompile(`[^a-z0-9 _-]`)
 var whiteSpacePattern = regexp.MustCompile(`\s+`)
-var includePattern = regexp.MustCompile(`{{\s*include\s+"(?P<file>\S*)"\s*}}`)
+var includePattern = regexp.MustCompile(`{{\s*include\s+"(?P<file>.*?)"\s*}}`)
 
 var (
 	// The functions available for use in the templates.
