@@ -34,9 +34,8 @@ func handleInternal(w http.ResponseWriter, r *http.Request, ws *websocket.Conn) 
 	var (
 		req  = NewRequest(r)
 		resp = NewResponse(w)
-		c    = NewController(req, resp)
+		c    = NewController(req, resp, ws)
 	)
-	req.Websocket = ws
 
 	Filters[0](c, Filters[1:])
 	if c.Result != nil {

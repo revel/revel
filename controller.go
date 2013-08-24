@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"code.google.com/p/go.net/websocket"
 	"github.com/golang/glog"
 )
 
@@ -27,6 +28,8 @@ type Controller struct {
 	Response *Response
 	Result   Result
 
+	Websocket *websocket.Conn
+
 	Flash      Flash                  // User cookie, cleared after 1 request.
 	Session    Session                // Session, stored in cookie, signed.
 	Params     *Params                // Parameters from URL and form (including multipart).
@@ -35,12 +38,13 @@ type Controller struct {
 	Validation *Validation            // Data validation helpers
 }
 
-func NewController(req *Request, resp *Response) *Controller {
+func NewController(req *Request, resp *Response, ws *websocket.Conn) *Controller {
 	return &Controller{
-		Request:  req,
-		Response: resp,
-		Params:   new(Params),
-		Args:     map[string]interface{}{},
+		Request:   req,
+		Response:  resp,
+		Websocket: ws,
+		Params:    new(Params),
+		Args:      map[string]interface{}{},
 		RenderArgs: map[string]interface{}{
 			"RunMode": RunMode,
 			"DevMode": DevMode,

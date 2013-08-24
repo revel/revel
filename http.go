@@ -8,7 +8,6 @@ import (
 	"strconv"
 	"strings"
 
-	"code.google.com/p/go.net/websocket"
 	"github.com/golang/glog"
 )
 
@@ -18,7 +17,6 @@ type Request struct {
 	Format          string // "html", "xml", "json", or "txt"
 	AcceptLanguages AcceptLanguages
 	Locale          string
-	Websocket       *websocket.Conn
 }
 
 type Response struct {
