@@ -22,7 +22,8 @@ type TemplateLoader struct {
 	// Map from template name to the path from whence it was loaded.
 	templatePaths map[string]string
 	// Map from file extension to the template engine that should handle it.
-	engines map[string]TemplateEngine
+	engines       map[string]TemplateEngine
+	defaultEngine TemplateEngine
 }
 
 func NewTemplateLoader(paths []string) *TemplateLoader {
@@ -49,6 +50,7 @@ func (loader *TemplateLoader) Refresh() *Error {
 		}
 	}
 
+	loader.defaultEngine = NewTextTemplateEngine()
 	loader.engines = map[string]TemplateEngine{
 		".html": NewHtmlTemplateEngine(),
 		".xml":  NewHtmlTemplateEngine(),
@@ -110,8 +112,7 @@ func (loader *TemplateLoader) Refresh() *Error {
 			ext := filepath.Ext(templateName)
 			engine, ok := loader.engines[ext]
 			if !ok {
-				glog.Warningln("No template engine for file:", templateName)
-				return nil
+				engine = loader.defaultEngine
 			}
 
 			// If alternate delimiters set for the project, change them for this template.
@@ -209,7 +210,7 @@ func (loader *TemplateLoader) Template(name string) (Template, error) {
 	ext := filepath.Ext(name)
 	engine, ok := loader.engines[ext]
 	if !ok {
-		return nil, fmt.Errorf("error load %s: engine not found for extension %s", name, ext)
+		engine = loader.defaultEngine
 	}
 
 	// Look up and return the template.
