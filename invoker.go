@@ -23,7 +23,7 @@ func ActionInvoker(c *Controller, _ []Filter) {
 		// If they accept a websocket connection, treat that arg specially.
 		var boundArg reflect.Value
 		if arg.Type == websocketType {
-			boundArg = reflect.ValueOf(c.Request.Websocket)
+			boundArg = reflect.ValueOf(c.Websocket)
 		} else {
 			glog.V(1).Infoln("Binding:", arg.Name, "as", arg.Type)
 			boundArg = Bind(c.Params, arg.Name, arg.Type)

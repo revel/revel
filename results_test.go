@@ -10,7 +10,7 @@ import (
 func TestBenchmarkRender(t *testing.T) {
 	startFakeBookingApp()
 	resp := httptest.NewRecorder()
-	c := NewController(NewRequest(showRequest), NewResponse(resp))
+	c := NewController(NewRequest(showRequest), NewResponse(resp), nil)
 	c.SetAction("Hotels", "Show")
 	result := Hotels{c}.Show(3)
 	result.Apply(c.Request, c.Response)
@@ -23,7 +23,7 @@ func BenchmarkRenderChunked(b *testing.B) {
 	startFakeBookingApp()
 	resp := httptest.NewRecorder()
 	resp.Body = nil
-	c := NewController(NewRequest(showRequest), NewResponse(resp))
+	c := NewController(NewRequest(showRequest), NewResponse(resp), nil)
 	c.SetAction("Hotels", "Show")
 	Config.SetOption("results.chunked", "true")
 	b.ResetTimer()
@@ -38,7 +38,7 @@ func BenchmarkRenderNotChunked(b *testing.B) {
 	startFakeBookingApp()
 	resp := httptest.NewRecorder()
 	resp.Body = nil
-	c := NewController(NewRequest(showRequest), NewResponse(resp))
+	c := NewController(NewRequest(showRequest), NewResponse(resp), nil)
 	c.SetAction("Hotels", "Show")
 	Config.SetOption("results.chunked", "false")
 	b.ResetTimer()
