@@ -92,7 +92,7 @@ var (
 
 		"errorClass": func(name string, renderArgs map[string]interface{}) template.HTML {
 			errorMap, ok := renderArgs["errors"].(map[string]*ValidationError)
-			if !ok {
+			if !ok || errorMap == nil {
 				WARN.Println("Called 'errorClass' without 'errors' in the render args.")
 				return template.HTML("")
 			}
