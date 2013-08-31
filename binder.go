@@ -218,6 +218,7 @@ func init() {
 	TypeBinders[reflect.TypeOf([]byte{})] = Binder{bindByteArray, nil}
 	TypeBinders[reflect.TypeOf((*io.Reader)(nil)).Elem()] = Binder{bindReadSeeker, nil}
 	TypeBinders[reflect.TypeOf((*io.ReadSeeker)(nil)).Elem()] = Binder{bindReadSeeker, nil}
+	TypeBinders[reflect.TypeOf((*multipart.FileHeader)(nil))] = Binder{bindFileHeader, nil}
 
 	OnAppStart(func() {
 		DateTimeFormat = Config.StringDefault("format.datetime", DEFAULT_DATETIME_FORMAT)
@@ -441,6 +442,14 @@ func bindReadSeeker(params *Params, name string, typ reflect.Type) reflect.Value
 		return reflect.ValueOf(reader.(io.ReadSeeker))
 	}
 	return reflect.Zero(typ)
+}
+
+func bindFileHeader(params *Params, name string, typ reflect.Type) reflect.Value {
+	fileHeader, ok := params.Files[name]
+	if !ok {
+		return reflect.Zero(typ)
+	}
+	return reflect.ValueOf(fileHeader[0])
 }
 
 // Bind takes the name and type of the desired parameter and constructs it
