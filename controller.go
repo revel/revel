@@ -63,6 +63,14 @@ func (c *Controller) SetCookie(cookie *http.Cookie) {
 }
 
 func (c *Controller) RenderError(err error) Result {
+	// If it's a 5xx error, also log it to error.
+	status := c.Response.Status
+	if status == 0 {
+		status = http.StatusInternalServerError
+	}
+	if status/100 == 5 {
+		glog.Errorf("%d %s: %s", status, http.StatusText(status), err)
+	}
 	return ErrorResult{c.RenderArgs, err}
 }
 
