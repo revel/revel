@@ -2,8 +2,7 @@ package controllers
 
 import (
 	"github.com/robfig/revel"
-	"github.com/robfig/revel/modules/auth"
-	// "code.google.com/p/go.crypto/bcrypt"
+	"github.com/slogsdon/acvte/modules/auth"
 )
 
 type Session struct {
@@ -13,16 +12,18 @@ type Session struct {
 func (c Session) init() {}
 
 func (c Session) Index() revel.Result {
-	return c.Redirect("/session/create")
+	return c.Redirect(Session.Create)
 }
 
-func (c Session) Create() revel.Result {
-	return c.Render()
-}
+func (c Session) Create(username string, password string) revel.Result {
+	if c.Request.Method == "POST" {
+		user := auth.GetHash(username)
 
-func (c Session) Register(username string, password string) revel.Result {
-	if err := auth.RegisterSession(username, password); err != nil {
-		panic("registered session")
+		if err := auth.RegisterSession(c.Controller, user.Password, password); err != nil {
+			return c.Redirect(Session.Create)
+		} else {
+			return c.Redirect("/admin")
+		}
 	}
 	return c.Render()
 }
