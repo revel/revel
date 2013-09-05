@@ -66,12 +66,6 @@ func VerifySession(sid string) bool {
 	return sid == session.Id
 }
 
-// defines resource that needs authentication
-type AuthenticatedResource struct {
-	Resource interface{}
-	Role     string // TODO: allow role-based ACL config
-}
-
 type Session struct {
 	Id        string
 	Data      string
