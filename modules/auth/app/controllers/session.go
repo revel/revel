@@ -2,7 +2,7 @@ package controllers
 
 import (
 	"github.com/robfig/revel"
-	"github.com/slogsdon/acvte/modules/auth"
+	"github.com/robfig/revel/modules/auth"
 )
 
 type Session struct {
