@@ -195,15 +195,17 @@ func ValidationFilter(c *Controller, fc []Filter) {
 	// the cookie.
 	if errorsValue != "" {
 		c.SetCookie(&http.Cookie{
-			Name:  CookiePrefix + "_ERRORS",
-			Value: url.QueryEscape(errorsValue),
-			Path:  "/",
+			Name:     CookiePrefix + "_ERRORS",
+			Value:    url.QueryEscape(errorsValue),
+			Path:     "/",
+			HttpOnly: CookieHttpOnly,
 		})
 	} else if hasCookie {
 		c.SetCookie(&http.Cookie{
-			Name:   CookiePrefix + "_ERRORS",
-			MaxAge: -1,
-			Path:   "/",
+			Name:     CookiePrefix + "_ERRORS",
+			MaxAge:   -1,
+			Path:     "/",
+			HttpOnly: CookieHttpOnly,
 		})
 	}
 }
