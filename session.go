@@ -72,6 +72,7 @@ func (s Session) cookie() *http.Cookie {
 		Name:    CookiePrefix + "_SESSION",
 		Value:   Sign(sessionData) + "-" + sessionData,
 		Path:    "/",
+		Secure:  HttpSsl,
 		Expires: ts.UTC(),
 	}
 }
