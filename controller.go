@@ -107,15 +107,16 @@ func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
 
 	// If not HTML, first check if the template is present.
 	template, err := MainTemplateLoader.Template(templatePath)
-	templateFound := err == nil && template != nil
 
 	// If not, and there is an arg, serialize that if it's xml or json.
-	if !templateFound && len(extraRenderArgs) > 0 {
-		switch c.Request.Format {
-		case "xml":
-			return c.RenderXml(extraRenderArgs[0])
-		case "json":
-			return c.RenderJson(extraRenderArgs[0])
+	if template == nil {
+		if len(extraRenderArgs) > 0 {
+			switch c.Request.Format {
+			case "xml":
+				return c.RenderXml(extraRenderArgs[0])
+			case "json":
+				return c.RenderJson(extraRenderArgs[0])
+			}
 		}
 		// Else, render a 404 error saying we couldn't find the template.
 		return c.NotFound(err.Error())
