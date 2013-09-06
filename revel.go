@@ -53,8 +53,11 @@ var (
 	HttpSslKey  string // e.g. "/path/to/key.pem"
 
 	// All cookies dropped by the framework begin with this prefix.
-	CookiePrefix   string
+	CookiePrefix string
+
+	// Cookie flags
 	CookieHttpOnly bool
+	CookieSecure   bool
 
 	// Delimiters to use when rendering templates
 	TemplateDelims string
@@ -152,6 +155,7 @@ func Init(mode, importPath, srcPath string) {
 	AppName = Config.StringDefault("app.name", "(not set)")
 	CookiePrefix = Config.StringDefault("cookie.prefix", "REVEL")
 	CookieHttpOnly = Config.BoolDefault("cookie.httponly", false)
+	CookieSecure = Config.BoolDefault("cookie.secure", false)
 	TemplateDelims = Config.StringDefault("template.delimiters", "")
 	if secretStr := Config.StringDefault("app.secret", ""); secretStr != "" {
 		secretKey = []byte(secretStr)
