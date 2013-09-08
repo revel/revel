@@ -39,6 +39,7 @@ type Template interface {
 
 var invalidSlugPattern = regexp.MustCompile(`[^a-z0-9 _-]`)
 var whiteSpacePattern = regexp.MustCompile(`\s+`)
+var includePattern = regexp.MustCompile(`{{\s*include\s+"(?P<file>.*?)"\s*}}`)
 
 var (
 	// The functions available for use in the templates.
@@ -163,6 +164,21 @@ func NewTemplateLoader(paths []string) *TemplateLoader {
 	return loader
 }
 
+// This scans the template, parse include tags e.g. {{include "widget-pager.html"}}
+// and replace them to corresponding raw template.
+// (It's useful in a environment has complex variable.)
+func parseIncludes(basePath, templ string) string {
+	return includePattern.ReplaceAllStringFunc(templ, func(src string) string {
+		file := includePattern.FindStringSubmatch(src)[1]
+		fileBytes, err := ioutil.ReadFile(basePath + "/" + file)
+		if err != nil {
+			ERROR.Printf("error parse includes of %s/%s: %v", basePath, file, err)
+			return ""
+		}
+		return string(fileBytes)
+	})
+}
+
 // This scans the views directory and parses all templates as Go Templates.
 // If a template fails to parse, the error is set on the loader.
 // (It's awkward to refresh a single Go Template)
@@ -224,7 +240,7 @@ func (loader *TemplateLoader) Refresh() *Error {
 				return nil
 			}
 
-			fileStr := string(fileBytes)
+			fileStr := parseIncludes(basePath, string(fileBytes))
 
 			if templateSet == nil {
 				// Create the template set.  This panics if any of the funcs do not
