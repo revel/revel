@@ -1,6 +1,7 @@
 package revel
 
 import (
+	"errors"
 	"reflect"
 	"strings"
 )
@@ -12,13 +13,19 @@ type Field struct {
 	renderArgs map[string]interface{}
 }
 
-func NewField(name string, renderArgs map[string]interface{}) *Field {
-	err, _ := renderArgs["errors"].(map[string]*ValidationError)[name]
+func NewField(name string, renderArgs map[string]interface{}) (*Field, error) {
+	if renderArgs == nil {
+		return nil, errors.New("nil renderargs")
+	}
+	errorMap, ok := renderArgs["errors"]
+	if !ok {
+		return nil, errors.New(`"errors" not found in context`)
+	}
 	return &Field{
 		Name:       name,
-		Error:      err,
+		Error:      errorMap.(map[string]*ValidationError)[name],
 		renderArgs: renderArgs,
-	}
+	}, nil
 }
 
 // Returns an identifier suitable for use as an HTML id.
