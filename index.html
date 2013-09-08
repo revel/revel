@@ -415,7 +415,7 @@ func (c *Transactional) Rollback() revel.Result {
 func init() {
 	revel.InterceptMethod((*Transactional).Begin, revel.BEFORE)
 	revel.InterceptMethod((*Transactional).Commit, revel.AFTER)
-	revel.InterceptMethod((*Transactional).Rollback, revel.FINALLY)
+	revel.InterceptMethod((*Transactional).Rollback, revel.PANIC)
 }</pre>
 
 						<p>
