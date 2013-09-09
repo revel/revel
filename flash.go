@@ -42,9 +42,11 @@ func FlashFilter(c *Controller, fc []Filter) {
 		flashValue += "\x00" + key + ":" + value + "\x00"
 	}
 	c.SetCookie(&http.Cookie{
-		Name:  CookiePrefix + "_FLASH",
-		Value: url.QueryEscape(flashValue),
-		Path:  "/",
+		Name:     CookiePrefix + "_FLASH",
+		Value:    url.QueryEscape(flashValue),
+		HttpOnly: CookieHttpOnly,
+		Secure:   CookieSecure,
+		Path:     "/",
 	})
 }
 
