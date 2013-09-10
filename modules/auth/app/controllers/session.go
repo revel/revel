@@ -25,7 +25,7 @@ func (c Session) Register(username string, password string) revel.Result {
 	if err := auth.RegisterSession(c.Controller, user.Password, password); err != nil {
 		return c.Redirect(Session.Create)
 	} else {
-		return c.Redirect("/admin")
+		return c.Redirect(auth.RedirectTo)
 	}
 }
 

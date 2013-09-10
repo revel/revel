@@ -13,8 +13,9 @@ const (
 )
 
 var (
-	GetHash   func(string) *User
-	SessionId string
+	GetHash    func(string) *User
+	RedirectTo string
+	SessionId  string
 )
 
 // CheckSession is called to check for a valid session.
@@ -74,7 +75,7 @@ type Session struct {
 }
 
 type User struct {
-	Username string `json:"username" qbs:"notnull"`
+	Username string `json:"username"`
 	Password string `json:"password"`
 	Role     string `json:"role"`
 }
