@@ -2,7 +2,7 @@ package controllers
 
 import (
 	"github.com/robfig/revel"
-	"github.com/robfig/revel/modules/auth"
+	"github.com/slogsdon/revel/modules/auth"
 )
 
 type Session struct {
@@ -30,5 +30,6 @@ func (c Session) Register(username string, password string) revel.Result {
 }
 
 func (c Session) Destroy() revel.Result {
+	auth.InvalidateSession(c)
 	return c.Render()
 }
