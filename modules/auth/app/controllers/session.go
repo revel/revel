@@ -15,17 +15,18 @@ func (c Session) Index() revel.Result {
 	return c.Redirect(Session.Create)
 }
 
-func (c Session) Create(username string, password string) revel.Result {
-	if c.Request.Method == "POST" {
-		user := auth.GetHash(username)
-
-		if err := auth.RegisterSession(c.Controller, user.Password, password); err != nil {
-			return c.Redirect(Session.Create)
-		} else {
-			return c.Redirect("/admin")
-		}
-	}
+func (c Session) Create() revel.Result {
 	return c.Render()
+}
+
+func (c Session) Register(username string, password string) revel.Result {
+	user := auth.GetHash(username)
+
+	if err := auth.RegisterSession(c.Controller, user.Password, password); err != nil {
+		return c.Redirect(Session.Create)
+	} else {
+		return c.Redirect("/admin")
+	}
 }
 
 func (c Session) Destroy() revel.Result {
