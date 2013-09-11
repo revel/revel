@@ -11,7 +11,7 @@ import (
 )
 
 var cmdNew = &Command{
-	UsageLine: "new [path]",
+	UsageLine: "new [path] [template] [plugins]",
 	Short:     "create a skeleton Revel application",
 	Long: `
 New creates a few files to get a new Revel application running quickly.
@@ -22,6 +22,40 @@ the path to be the app name.
 For example:
 
     revel new import/path/helloworld
+
+    revel new import/path/helloworld using foundation user psql stripe
+
+    revel new import/path/helloworld using new_revel_app.cfg
+
+packages:
+
+common
+	head.js
+	jquery
+
+templates:
+	foundation
+	bootstrap
+
+
+plugins:
+--------
+database {
+  psql
+  mysql
+  sqlite
+}
+
+user
+	- register
+	- recover password
+	- admin console
+
+blog
+forum
+stripe
+
+
 `,
 }
 
