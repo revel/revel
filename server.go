@@ -55,7 +55,7 @@ func Run(port int) {
 		address = fmt.Sprintf("%s:%d", address, port)
 	}
 
-	MainTemplateLoader = NewTemplateLoader(TemplatePaths)
+	MainTemplateLoader = NewTemplateLoader(TemplatePaths, ViewsPath, "")
 
 	// The "watch" config variable can turn on and off all watching.
 	// (As a convenient way to control it all together.)
