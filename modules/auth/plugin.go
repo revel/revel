@@ -11,15 +11,15 @@ const (
 )
 
 var (
-	GetHash    func(string) *User
-	RedirectTo string
-	SessionId  string
+	GetUser           func(string) *User
+	GetAllowedActions func(*User) []string
+	RedirectTo        string
 )
 
 // CheckSession is called to check for a valid session.
 func CheckSession(c *revel.Controller) revel.Result {
 	session := c.Session[SESSION_KEY]
-	result := VerifySession(c, value)
+	result := VerifySession(session, c.Session.Id())
 	
 	if !result {
 		InvalidateSession(c)
@@ -52,6 +52,13 @@ func SetSession(c *revel.Controller) {
 	c.Session[SESSION_KEY] = s
 }
 
+func SaveAllowedActions(c *revel.Controller, user *User) {
+	if s := c.Session[SESSION_KEY]; s != nil {
+		s.AllowedActions = GetAllowedActions(user)
+		c.Session[SESSION_KEY] = s
+	}
+}
+
 func InvalidateSession(c *revel.Controller) {
 	c.Session[SESSION_KEY] = nil
 }
@@ -65,13 +72,13 @@ func VerifySession(session Session, sid string) bool {
 }
 
 type Session struct {
-	Id        string
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	Id             string
+	AllowedActions []string
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
 }
 
 type User struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
-	Role     string `json:"role"`
 }

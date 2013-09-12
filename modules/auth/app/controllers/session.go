@@ -20,11 +20,12 @@ func (c Session) Create() revel.Result {
 }
 
 func (c Session) Register(username string, password string) revel.Result {
-	user := auth.GetHash(username)
+	user := auth.GetUser(username)
 
 	if err := auth.RegisterSession(c.Controller, user.Password, password); err != nil {
 		return c.Redirect(Session.Create)
 	} else {
+		auth.SaveAllowedActions(c, user)
 		return c.Redirect(auth.RedirectTo)
 	}
 }
