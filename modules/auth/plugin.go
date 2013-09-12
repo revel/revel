@@ -16,6 +16,16 @@ var (
 	RedirectTo        string
 )
 
+func Check(c *revel.Controller) revel.Result {
+	var result revel.Result
+	
+	if result = CheckSession(c); result == nil {
+		result = CheckActions(c)
+	}
+
+	return result
+}
+
 // CheckSession is called to check for a valid session.
 func CheckSession(c *revel.Controller) revel.Result {
 	session := c.Session[SESSION_KEY]
@@ -30,6 +40,25 @@ func CheckSession(c *revel.Controller) revel.Result {
 		c.Session[SESSION_KEY] = session
 	}
 	return nil
+}
+
+func CheckActions(c *revel.Controller) revel.Result {
+	s := c.Session[SESSION_KEY]
+	
+	if s == nil {
+		c.Flash.Error("Session invalid. Please login.")
+		return c.Redirect("/session/create")
+	}
+
+	for _, a := range s.AllowedActions {
+        if a == c.Action {
+            return c.Render()
+        }
+    }
+
+	c.Flash.Error("You don't have permission to access this resource.")
+	// TODO: what to render?
+    return c.Render()
 }
 
 // Registers a valid session if password matches hash
