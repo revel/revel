@@ -3,14 +3,14 @@ package models
 import (
 	"fmt"
 	"github.com/robfig/revel"
+	"github.com/slogsdon/revel/modules/auth"
 	"regexp"
 )
 
 type User struct {
 	UserId             int
 	Name               string
-	Username, Password string
-	HashedPassword     []byte
+	*auth.User
 }
 
 func (u *User) String() string {

@@ -1,6 +1,10 @@
 package app
 
-import "github.com/robfig/revel"
+import (
+	"github.com/robfig/revel"
+	"github.com/slogsdon/revel/modules/auth"
+	"github.com/slogsdon/revel/samples/booking/app/controllers"
+)
 
 func init() {
 	// Filters is the default set of global filters.
@@ -17,6 +21,8 @@ func init() {
 		revel.InterceptorFilter,       // Run interceptors around the action.
 		revel.ActionInvoker,           // Invoke the action.
 	}
+    // the Hotels controller requires authentication
+    revel.InterceptFunc(auth.Check, revel.BEFORE, &controllers.Hotels{})
 }
 
 var HeaderFilter = func(c *revel.Controller, fc []revel.Filter) {

@@ -7,7 +7,8 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	r "github.com/robfig/revel"
 	"github.com/robfig/revel/modules/db/app"
-	"github.com/robfig/revel/samples/booking/app/models"
+	"github.com/slogsdon/revel/modules/auth"
+	"github.com/slogsdon/revel/samples/booking/app/models"
 )
 
 var (
@@ -56,7 +57,12 @@ func Init() {
 
 	bcryptPassword, _ := bcrypt.GenerateFromPassword(
 		[]byte("demo"), bcrypt.DefaultCost)
-	demoUser := &models.User{0, "Demo User", "demo", "demo", bcryptPassword}
+	demoUser := &models.User{
+		UserId: 0, 
+		Name: "Demo User", 
+		Username: "demo", 
+		Password: bcryptPassword
+	}
 	if err := Dbm.Insert(demoUser); err != nil {
 		panic(err)
 	}
@@ -71,6 +77,18 @@ func Init() {
 			panic(err)
 		}
 	}
+
+	// tell auth module how to grab our user
+    auth.GetUser = func(username string) *auth.User {
+        users, err := Dbm.Select(auth.User{}, `select * from User where Username = ?`, username)
+		if err != nil {
+			panic(err)
+		}
+		if len(users) == 0 {
+			return nil
+		}
+		return users[0].(*auth.User)
+    }
 }
 
 type GorpController struct {

@@ -63,7 +63,7 @@ func (c Application) SaveUser(user models.User, verifyPassword string) revel.Res
 		return c.Redirect(routes.Application.Register())
 	}
 
-	user.HashedPassword, _ = bcrypt.GenerateFromPassword(
+	user.Password, _ = bcrypt.GenerateFromPassword(
 		[]byte(user.Password), bcrypt.DefaultCost)
 	err := c.Txn.Insert(&user)
 	if err != nil {
@@ -78,7 +78,7 @@ func (c Application) SaveUser(user models.User, verifyPassword string) revel.Res
 func (c Application) Login(username, password string) revel.Result {
 	user := c.getUser(username)
 	if user != nil {
-		err := bcrypt.CompareHashAndPassword(user.HashedPassword, []byte(password))
+		err := bcrypt.CompareHashAndPassword(user.Password, []byte(password))
 		if err == nil {
 			c.Session["user"] = username
 			c.Flash.Success("Welcome, " + username)
