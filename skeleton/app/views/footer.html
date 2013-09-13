@@ -1,5 +1,26 @@
-  {{if eq .RunMode "dev"}}
-    {{template "debug.html" .}}
-  {{end}}
-  </body>
+        </div> <!-- wrap -->
+
+        <div id="footer">
+            <div class="container">
+                <p class="text-muted credit text-center">Created by <a href="https://github.com/haibinzhang/revel" target="_blank">Haibin </a> 
+                Version 0.1 &nbsp;&middot;&nbsp; Copyright &#169; 2012 &#8211; {{.year}}</p>
+            </div>
+        </div>
+        
+        {{range .moreScripts}}
+        <script src="/public/{{.}}" type="text/javascript" charset="utf-8"></script>
+        {{end}} 
+        <!-- Google Analytics: change UA-XXXXX-X to be your site's ID. -->
+        <script>
+            var _gaq = _gaq || [];
+            _gaq.push(['_setAccount', 'UA-XXXXX-X']);
+            _gaq.push(['_trackPageview']);
+            (function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
+            g.src=('https:'==location.protocol?'//ssl':'//www')+'.google-analytics.com/ga.js';
+            s.parentNode.insertBefore(g,s)}(document,'script'));
+        </script>
+        {{if eq .RunMode "dev"}}
+            {{template "debug.html" .}}
+        {{end}}
+    </body>
 </html>
