@@ -1,17 +1,26 @@
 <!DOCTYPE html>
 
-<html>
-  <head>
+<html lang="en">
+
+<head>
     <title>{{.title}}</title>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <link rel="stylesheet" type="text/css" href="/public/css/bootstrap.css">
-    <link rel="shortcut icon" type="image/png" href="/public/images/favicon.png">
-    <script src="/public/js/jquery-1.9.1.min.js" type="text/javascript" charset="utf-8"></script>
-    {{range .moreStyles}}
-      <link rel="stylesheet" type="text/css" href="/public/{{.}}">
-    {{end}}
-    {{range .moreScripts}}
-      <script src="/public/{{.}}" type="text/javascript" charset="utf-8"></script>
-    {{end}}
-  </head>
-  <body>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    
+
+    <link rel="shortcut icon" type="image/png" href="/public/img/favicon.png">
+    <link rel="stylesheet" type="text/css" charset="utf-8" href="/public/css/app.css" />
+
+    <script src="/public/js/head.load.min.js" type="text/javascript" charset="utf-8"></script>
+    <script>
+
+    head.ready("foundation", function(){$(document).foundation();})
+    head.js({jquery: "/public/js/jquery-2.0.3.min.js"}) 
+        .js({foundation: "/public/js/foundation.min.js"})
+
+    </script>
+    <script src="/public/js/custom.modernizr.js" type="text/javascript" charset="utf-8"></script>
+
+</head>
+
+<body>

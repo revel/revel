@@ -109,9 +109,10 @@ func newApp(args []string) {
 		"Secret":  genSecret(),
 	})
 
+	gitignoreBase := filepath.Join(revelPkg.Dir, "skeleton")
 	// Dotfiles are skipped by mustCopyDir, so we have to explicitly copy the .gitignore.
 	gitignore := ".gitignore"
-	mustCopyFile(filepath.Join(appDir, gitignore), filepath.Join(skeletonBase, gitignore))
+	mustCopyFile(filepath.Join(appDir, gitignore), filepath.Join(gitignoreBase, gitignore))
 
 	fmt.Fprintln(os.Stdout, "Your application is ready:\n  ", appDir)
 	fmt.Fprintln(os.Stdout, "\nYou can run it with:\n   revel run", importPath)
