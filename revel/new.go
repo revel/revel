@@ -11,7 +11,7 @@ import (
 )
 
 var cmdNew = &Command{
-	UsageLine: "new [path]",
+	UsageLine: "new [app-path] [skeleton]",
 	Short:     "create a skeleton Revel application",
 	Long: `
 New creates a few files to get a new Revel application running quickly.
@@ -22,6 +22,14 @@ the path to be the app name.
 For example:
 
     revel new import/path/helloworld
+
+    revel new import/path/helloworld foundation
+
+available skeletons:
+
+	bootstrap  (default)
+	foundation
+
 `,
 }
 
@@ -32,9 +40,19 @@ func init() {
 var (
 	appDir       string
 	skeletonBase string
+
+	skeletonNames []string = []string{
+		"bootstrap",
+		"foundation",
+	}
 )
 
 func newApp(args []string) {
+	println("args:")
+	for i, a := range args {
+		println(i, a)
+	}
+
 	if len(args) == 0 {
 		errorf("No import path given.\nRun 'revel help new' for usage.\n")
 	}
@@ -63,21 +81,38 @@ func newApp(args []string) {
 		return
 	}
 
+	// specifying skeleton
+	var skeletonName string
+	if len(args) == 2 {
+		sname := args[1]
+		for _, s := range skeletonNames {
+			if s == sname {
+				skeletonName = sname
+			}
+		}
+		if skeletonName == "" {
+			errorf("Abort: Unknown skeleton name given.\nRun 'revel help new' for usage.\n")
+		}
+	} else {
+		skeletonName = "bootstrap"
+	}
+
 	srcRoot := filepath.Join(filepath.SplitList(gopath)[0], "src")
 	appDir := filepath.Join(srcRoot, filepath.FromSlash(importPath))
 	err = os.MkdirAll(appDir, 0777)
 	panicOnError(err, "Failed to create directory "+appDir)
 
-	skeletonBase = filepath.Join(revelPkg.Dir, "skeleton")
+	skeletonBase = filepath.Join(revelPkg.Dir, "skeleton", skeletonName)
 	mustCopyDir(appDir, skeletonBase, map[string]interface{}{
 		// app.conf
 		"AppName": filepath.Base(appDir),
 		"Secret":  genSecret(),
 	})
 
+	gitignoreBase := filepath.Join(revelPkg.Dir, "skeleton")
 	// Dotfiles are skipped by mustCopyDir, so we have to explicitly copy the .gitignore.
 	gitignore := ".gitignore"
-	mustCopyFile(filepath.Join(appDir, gitignore), filepath.Join(skeletonBase, gitignore))
+	mustCopyFile(filepath.Join(appDir, gitignore), filepath.Join(gitignoreBase, gitignore))
 
 	fmt.Fprintln(os.Stdout, "Your application is ready:\n  ", appDir)
 	fmt.Fprintln(os.Stdout, "\nYou can run it with:\n   revel run", importPath)

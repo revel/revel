@@ -1,0 +1,35 @@
+default config (put in file as example)
+
+
+default includes
+	head.js
+
+
+main
+	jquery
+	foundation (implies jquery)
+	bootstrap  (implies jquery)
+
+user
+	default
+		register
+		recover password
+		admin console
+		basic profile
+
+
+database
+  postgres
+  mysql
+  sqlite
+
+blog
+forum
+gallary
+
+other
+	stripe
+	social hooks
+
+
+templates?
