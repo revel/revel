@@ -1,6 +1,8 @@
 package mail
 
 import (
+	"bytes"
+	"github.com/robfig/revel"
 	"net/smtp"
 )
 
@@ -32,9 +34,21 @@ func (m *Mailer) SendMail(to []string, subject string, body string, html bool) e
 }
 
 // This is the convinient method to send single email rendered from a view template with dynamic data
-func (m *Mailer) SendFromTemplate(to []string, subject string, template, string, html bool, args ...interface{}) error {
-	// going to implement
-	return nil
+func (m *Mailer) SendFromTemplate(templatePath string, to []string, subject string, html bool, args map[string]interface{}) error {
+	// Get the Template.
+	template, err := revel.MainTemplateLoader.Template(templatePath)
+	if err != nil {
+		return err
+	}
+
+	var b bytes.Buffer
+
+	err = template.Render(&b, args)
+	if err != nil {
+		return err
+	}
+
+	return m.SendMail(to, subject, b.String(), html)
 }
 
 // send multiple emails in a single connection
