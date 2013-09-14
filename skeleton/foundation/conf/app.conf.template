@@ -1,0 +1,43 @@
+app.name={{ .AppName }}
+app.secret={{ .Secret }}
+http.addr=
+http.port=9000
+cookie.prefix=REVEL
+format.date=01/02/2006
+format.datetime=01/02/2006 15:04
+results.chunked=false
+
+# glog logger options
+# Log to stderr at v=0 by default
+# Note: These may be overridden by flags on the command line.
+log.v=0                   # Verbosity
+log.vmodule=              # Vary verbosity by file. See filepath.Match for meta characters
+                          #   e.g. recordio=2,file=1,gfs*=3
+log.maxsize=1.8G          # Max file size before rotation.  Default 1.8G
+log.logtostderr=true      # Log only to stderr, and not to file
+log.alsologtostderr=false # Log to both stderr and to file
+log.stderrthreshold=FATAL # One of INFO, WARNING, ERROR, FATAL
+log.log_dir=log           # Directory to write file logs.
+
+# The default language of this application.
+i18n.default_language=en
+
+module.static=github.com/robfig/revel/modules/static
+
+[dev]
+mode.dev=true
+results.pretty=true
+watch=true
+
+module.testrunner = github.com/robfig/revel/modules/testrunner
+
+[prod]
+mode.dev=false
+results.pretty=false
+watch=false
+
+# Log to files at v=0, to stderr at FATAL
+log.v=0
+log.logtostderr=false
+
+module.testrunner =
