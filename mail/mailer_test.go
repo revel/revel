@@ -59,7 +59,7 @@ func TestSendFromTemplate(t *testing.T) {
 		"http://www.arkxu.com",
 	}
 
-	err := mailer.SendFromTemplate("testTemplate.html", []string{"fangzhou@arkxu.com"}, "from template 3", true, args)
+	err := mailer.SendFromTemplate("sample_views/testTemplate", []string{"fangzhou@arkxu.com"}, "from template 4", args)
 	if err != nil {
 		fmt.Println(err)
 	}
