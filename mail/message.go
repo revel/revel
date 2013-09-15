@@ -42,7 +42,7 @@ To: %s
 Subject: %s
 MIME-Version: 1.0
 Content-Type: %s; charset="UTF-8";
-Content-Transfer-Encoding: quoted-printable
+Content-Transfer-Encoding: 8bit
 
 %s
 
@@ -63,13 +63,13 @@ Content-Type: multipart/alternative; charset="UTF-8"; boundary="%s"
 
 --%s
 Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
+Content-Transfer-Encoding: 8bit
 
 %s
 
 --%s
 Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
+Content-Transfer-Encoding: 8bit
 
 %s
 

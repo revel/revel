@@ -34,21 +34,16 @@ func (m *Mailer) SendMail(to []string, subject string, body string, html bool) e
 }
 
 // This is the convinient method to send single email rendered from a view template with dynamic data
-func (m *Mailer) SendFromTemplate(templatePath string, to []string, subject string, html bool, args map[string]interface{}) error {
-	// Get the Template.
-	template, err := revel.MainTemplateLoader.Template(templatePath)
-	if err != nil {
-		return err
-	}
+func (m *Mailer) SendFromTemplate(templatePath string, to []string, subject string, args map[string]interface{}) error {
+	message := &Message{To: to, Subject: subject}
 
-	var b bytes.Buffer
+	htmlTempateFile := templatePath + ".html"
+	txtTempateFile := templatePath + ".txt"
 
-	err = template.Render(&b, args)
-	if err != nil {
-		return err
-	}
+	message.HtmlBody = m.renderViewTemplate(htmlTempateFile, args)
+	message.PlainBody = m.renderViewTemplate(txtTempateFile, args)
 
-	return m.SendMail(to, subject, b.String(), html)
+	return m.SendMails([]*Message{message})
 }
 
 // send multiple emails in a single connection
@@ -74,6 +69,23 @@ func (m *Mailer) SendMails(messages []*Message) (err error) {
 	}
 
 	return
+}
+
+func (m *Mailer) renderViewTemplate(templateFilePath string, args map[string]interface{}) string {
+	// Get the Template.
+	template, err := revel.MainTemplateLoader.Template(templateFilePath)
+	if err != nil {
+		return ""
+	}
+
+	var b bytes.Buffer
+
+	err = template.Render(&b, args)
+	if err != nil {
+		return ""
+	}
+
+	return b.String()
 }
 
 func (m *Mailer) fillDefault(message *Message) {
