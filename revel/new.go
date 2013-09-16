@@ -11,7 +11,7 @@ import (
 )
 
 var cmdNew = &Command{
-	UsageLine: "new [app] [skeleton]",
+	UsageLine: "new [path] [skeleton]",
 	Short:     "create a skeleton Revel application",
 	Long: `
 New creates a few files to get a new Revel application running quickly.
@@ -39,11 +39,6 @@ var (
 )
 
 func newApp(args []string) {
-	println("args:")
-	for i, a := range args {
-		println(i, a)
-	}
-
 	if len(args) == 0 {
 		errorf("No import path given.\nRun 'revel help new' for usage.\n")
 	}
@@ -77,8 +72,6 @@ func newApp(args []string) {
 	err = os.MkdirAll(appDir, 0777)
 	panicOnError(err, "Failed to create directory "+appDir)
 
-	println("src: ", srcRoot)
-
 	// specifying skeleton
 	if len(args) == 2 { // user specified
 		sname := args[1]
@@ -86,7 +79,6 @@ func newApp(args []string) {
 	} else { // use the revel default (bootstrap)
 		skeletonBase = filepath.Join(revelPkg.Dir, "skeleton")
 	}
-	println("SB:", skeletonBase)
 
 	mustCopyDir(appDir, skeletonBase, map[string]interface{}{
 		// app.conf
