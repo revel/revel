@@ -11,7 +11,7 @@ import (
 )
 
 var cmdNew = &Command{
-	UsageLine: "new [path]",
+	UsageLine: "new [app] [skeleton]",
 	Short:     "create a skeleton Revel application",
 	Long: `
 New creates a few files to get a new Revel application running quickly.
@@ -19,9 +19,13 @@ New creates a few files to get a new Revel application running quickly.
 It puts all of the files in the given import path, taking the final element in
 the path to be the app name.
 
+Skeleton is an optional argument, and should be relative to $GOROOT. 
+
 For example:
 
     revel new import/path/helloworld
+
+    revel new import/path/helloworld import/path/skeleton
 `,
 }
 
@@ -35,6 +39,11 @@ var (
 )
 
 func newApp(args []string) {
+	println("args:")
+	for i, a := range args {
+		println(i, a)
+	}
+
 	if len(args) == 0 {
 		errorf("No import path given.\nRun 'revel help new' for usage.\n")
 	}
@@ -68,7 +77,17 @@ func newApp(args []string) {
 	err = os.MkdirAll(appDir, 0777)
 	panicOnError(err, "Failed to create directory "+appDir)
 
-	skeletonBase = filepath.Join(revelPkg.Dir, "skeleton")
+	println("src: ", srcRoot)
+
+	// specifying skeleton
+	if len(args) == 2 { // user specified
+		sname := args[1]
+		skeletonBase = filepath.Join(srcRoot, sname)
+	} else { // use the revel default (bootstrap)
+		skeletonBase = filepath.Join(revelPkg.Dir, "skeleton")
+	}
+	println("SB:", skeletonBase)
+
 	mustCopyDir(appDir, skeletonBase, map[string]interface{}{
 		// app.conf
 		"AppName": filepath.Base(appDir),
