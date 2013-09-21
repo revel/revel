@@ -132,7 +132,7 @@ type User struct {
 The SQL standard time formats \["2006-01-02", "2006-01-02 15:04"\] are built in.
 
 More may be added by the application, using
-[the official pattern](http://golang.org/pkg/time/#constants).  Simply add
+[the official pattern](http://golang.org/pkg/time/#pkg-constants).  Simply add
 the pattern to recognize to the `TimeFormats` variable, like this:
 
 <pre class="prettyprint lang-go">
