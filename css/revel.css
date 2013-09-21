@@ -141,3 +141,9 @@ a code {
 ul ul, ul ol, ol ol, ol ul, ul {
   margin-bottom: 1em;
 }
+
+.improve-page {
+  float: right;
+  margin: 0 5px;
+  position: relative;
+}
