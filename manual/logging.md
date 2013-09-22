@@ -9,6 +9,8 @@ Revel provides four loggers:
 * WARN - something unexpected but not harmful.
 * ERROR - someone should take a look at this.
 
+Each of these is a variable to a default [go logger](http://golang.org/pkg/log/).
+
 Loggers may be configured in [app.conf](appconf.html).  Here is an example:
 
 	app.name = sampleapp
@@ -30,6 +32,7 @@ Loggers may be configured in [app.conf](appconf.html).  Here is an example:
 	log.info.output  = off
 	log.warn.output  = log/%(app.name)s.log
 	log.error.output = log/%(app.name)s.log
+
 
 In **dev** mode:
 
