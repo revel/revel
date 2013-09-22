@@ -1,17 +1,24 @@
 <!DOCTYPE html>
+<html ng-app>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="description" content="">
+        <meta name="keywords" content="">
+        <meta name="author" content="">
 
-<html>
-  <head>
-    <title>{{.title}}</title>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <link rel="stylesheet" type="text/css" href="/public/css/bootstrap.css">
-    <link rel="shortcut icon" type="image/png" href="/public/img/favicon.png">
-    <script src="/public/js/jquery-1.9.1.min.js" type="text/javascript" charset="utf-8"></script>
-    {{range .moreStyles}}
-      <link rel="stylesheet" type="text/css" href="/public/{{.}}">
-    {{end}}
-    {{range .moreScripts}}
-      <script src="/public/{{.}}" type="text/javascript" charset="utf-8"></script>
-    {{end}}
-  </head>
-  <body>
+        <title>{{.title}}</title>
+
+        <link rel="stylesheet" type="text/css" href="/public/css/bootstrap.min.css">
+        <link rel="stylesheet" type="text/css" href="/public/css/sticky-footer-navbar.css">
+        {{range .moreStyles}}
+        <link rel="stylesheet" type="text/css" href="/public/{{.}}">
+        {{end}}
+        <link rel="shortcut icon" type="image/png" href="/public/img/favicon.png">
+
+        <script src="/public/js/modernizr/modernizr-2.6.2-respond-1.1.0.min.js" type="text/javascript" charset="utf-8"></script>
+    </head>
+    <body>
+        <!-- Wrap all page content here -->
+        <div id="wrap">

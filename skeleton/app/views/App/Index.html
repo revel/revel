@@ -1,23 +1,29 @@
 {{set . "title" "Home"}}
-{{template "header.html" .}}
+{{append . "moreStyles" "css/bootstrap-theme.min.css"}}
+{{append . "moreScripts" "js/jquery/jquery-1.10.2.min.js"}}
+{{append . "moreScripts" "js/bootstrap/bootstrap.min.js"}}
+{{template "skeleton.html" .}}
 
-<header class="hero-unit" style="background-color:#A9F16C">
-  <div class="container">
-    <div class="row">
-      <div class="hero-text">
-        <h1>It works!</h1>
-        <p></p>
-      </div>
-    </div>
-  </div>
-</header>
-
-<div class="container">
-  <div class="row">
-    <div class="span6">
-      {{template "flash.html" .}}
-    </div>
-  </div>
-</div>
-
-{{template "footer.html" .}}
+            {{define "content"}}
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-3">
+                        {{template "sidebar.html" .}}
+                    </div>
+                    <div class="col-md-9">
+                        <div class="jumbotron">
+                            <div class="page-header">
+                                <h1>Golang Revel Web Framework</h1>
+                            </div>
+                            <p class="lead">Thank your for using this template</p>
+                            <p>This template makes use of the following software</p>
+                            <ul>
+                                <li><a href="http://getbootstrap.com/" target="_blank">Bootstrap 3.0.0</a></li>
+                                <li><a href="http://jquery.com/" target="_blank">jQuery 1.10.2</a></li>
+                                <li><a href="http://modernizr.com/" target="_blank">Modernizr 2.6.2</a></li>
+                            </ul>
+                        </div>      
+                    </div>
+                </div>
+            </div>
+            {{end}}            
