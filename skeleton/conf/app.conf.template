@@ -1,15 +1,30 @@
 app.name={{ .AppName }}
 app.secret={{ .Secret }}
+# See:
+# http://robfig.github.io/revel/manual/appconf.html#http_settings
 http.addr=
 http.port=9000
 http.ssl=false
 http.sslcert=
 http.sslkey=
+
+# For any cookies set by revel these properties will set the fields of:
+# http://golang.org/pkg/net/http/#Cookie
 cookie.httponly=false
 cookie.prefix=REVEL
 cookie.secure=false
+
+# Duration for the session cookie. Format:
+# http://golang.org/pkg/time/#ParseDuration
+session.expires = 720h
+
+# Must be of this format:
+# http://golang.org/pkg/time/#Parse
 format.date=01/02/2006
 format.datetime=01/02/2006 15:04
+
+# See:
+# http://robfig.github.io/revel/manual/appconf.html#results
 results.chunked=false
 
 log.trace.prefix = "TRACE "
@@ -24,6 +39,7 @@ module.static=github.com/robfig/revel/modules/static
 
 [dev]
 mode.dev=true
+# Pretty print the JSON output with indents
 results.pretty=true
 watch=true
 
