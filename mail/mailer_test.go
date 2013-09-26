@@ -8,7 +8,7 @@ import (
 )
 
 func TestSend(t *testing.T) {
-	mailer := &Mailer{Address: "smtp.gmail.com", Port: 587, UserName: "fangzhou@arkxu.com", Password: "xxx"}
+	mailer := &Mailer{Server: "smtp.gmail.com", Port: 587, UserName: "fangzhou@arkxu.com", Password: "xx"}
 
 	message1 := &Message{From: "fangzhou@arkxu.com", To: []string{"fangzhou@arkxu.com"},
 		Subject: "这个是第11封from message1, single connection", PlainBody: "<h2>你好 from message1, should show in plain text</h2>"}
@@ -16,7 +16,7 @@ func TestSend(t *testing.T) {
 	message2 := &Message{From: "fangzhou@arkxu.com", To: []string{"fangzhou@arkxu.com"},
 		Subject: "这个是第12封from message2, single connection", HtmlBody: "<h2>您好 from message2</h2>"}
 
-	err := mailer.SendMails([]*Message{message1, message2})
+	err := mailer.Send(message1, message2)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -24,24 +24,21 @@ func TestSend(t *testing.T) {
 }
 
 func TestWithDefaultSender(t *testing.T) {
-	mailer := &Mailer{Address: "smtp.gmail.com", Port: 587, UserName: "fangzhou@arkxu.com", Password: "xxx"}
+	mailer := &Mailer{Server: "smtp.gmail.com", Port: 587, UserName: "fangzhou@arkxu.com", Password: "xx", Host: "arkxu.com"}
 
-	mailer.DefaultSender = &DefaultSender{From: "fangzhou@arkxu.com"}
+	mailer.Default = &Default{From: "fangzhou@arkxu.com", To: []string{"fangzhou@arkxu.com"}}
 
-	err := mailer.SendMail([]string{"fangzhou@arkxu.com"}, "我的第13个", "这个不是html的", false)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	err = mailer.SendMail([]string{"fangzhou@arkxu.com"}, "我的第14个", "<h1>这个是html的</h1>", true)
+	message1 := &Message{Subject: "我的第13个", PlainBody: "这个不是html的"}
+	message2 := &Message{Subject: "我的第14个", HtmlBody: "<h1>这个是html的</h1>"}
+	err := mailer.SendMessages([]*Message{message1, message2})
 	if err != nil {
 		fmt.Println(err)
 	}
 }
 
 func TestSendFromTemplate(t *testing.T) {
-	mailer := &Mailer{Address: "smtp.gmail.com", Port: 587, UserName: "fangzhou@arkxu.com", Password: "xxx"}
-	mailer.DefaultSender = &DefaultSender{From: "fangzhou@arkxu.com"}
+	mailer := &Mailer{Server: "smtp.gmail.com", Port: 587, UserName: "fangzhou@arkxu.com", Password: "xx"}
+	mailer.Default = &Default{From: "fangzhou@arkxu.com"}
 
 	// reset the revel template loader for testing purpose
 	viewPath, _ := os.Getwd()
@@ -59,7 +56,13 @@ func TestSendFromTemplate(t *testing.T) {
 		"http://www.arkxu.com",
 	}
 
-	err := mailer.SendFromTemplate("sample_views/testTemplate", []string{"fangzhou@arkxu.com"}, "from template 4", args)
+	message := &Message{To: []string{"fangzhou@arkxu.com"}, Subject: "from template 4"}
+	err := mailer.RenderTemplate(message, "testdata/testTemplate", args)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	mailer.Send(message)
 	if err != nil {
 		fmt.Println(err)
 	}
