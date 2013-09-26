@@ -12,7 +12,7 @@ type ValidationError struct {
 	Message, Key string
 }
 
-// Returns the Message.
+// Returns the Message of the ValidationError struct.
 func (e *ValidationError) String() string {
 	if e == nil {
 		return ""
@@ -26,14 +26,22 @@ type Validation struct {
 	keep   bool
 }
 
+// Tells revel to set a flash cookie on the client to make the validation
+// errors available for the next request.
+// This is helpful  when redirecting the client after the validation failed.
+// It is good practice to always redirect upon a HTTP POST request. Thus
+// one should use this method when HTTP POST validation failed and redirect
+// the user back to the form.
 func (v *Validation) Keep() {
 	v.keep = true
 }
 
+// Clears *all* ValidationErrors
 func (v *Validation) Clear() {
 	v.Errors = []*ValidationError{}
 }
 
+// Returns true if there are any (ie >0) errors. False otherwise.
 func (v *Validation) HasErrors() bool {
 	return len(v.Errors) > 0
 }
@@ -68,6 +76,7 @@ type ValidationResult struct {
 	Ok    bool
 }
 
+// Returns a pointer to the ValidationResult for the given key.
 func (r *ValidationResult) Key(key string) *ValidationResult {
 	if r.Error != nil {
 		r.Error.Key = key
@@ -75,6 +84,8 @@ func (r *ValidationResult) Key(key string) *ValidationResult {
 	return r
 }
 
+// Sets the error message for a ValidationResult. Returns itself to allow chaining.
+// Allows Sprintf() type calling with multiple parameters
 func (r *ValidationResult) Message(message string, args ...interface{}) *ValidationResult {
 	if r.Error != nil {
 		if len(args) == 0 {
@@ -167,6 +178,7 @@ func (v *Validation) Check(obj interface{}, checks ...Validator) *ValidationResu
 	return result
 }
 
+// Revel Filter function to be hooked into the filter chain.
 func ValidationFilter(c *Controller, fc []Filter) {
 	errors, err := restoreValidationErrors(c.Request.Request)
 	c.Validation = &Validation{
