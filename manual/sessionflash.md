@@ -29,6 +29,29 @@ This has a couple implications:
 * All data must be serialized to a string for storage.
 * All data may be viewed by the user (it is not encrypted), but it is safe from modification.
 
+You can set/delete a session variable like this in your controller:
+
+<pre class="prettyprint lang-go">
+c.Session["email"] = "user@example.com" // set session key
+delete(c.Session,"email") // delete session key
+</pre>
+
+See the [booking example app.go controller](https://github.com/robfig/revel/blob/master/samples/booking/app/controllers/app.go)
+for how to use the session variable.
+
+Note that Session variable are not availabe in templates by default and have to be manually
+copied. If, however, you'd like them to be always availabe you can add a filter...
+
+<pre class="prettyprint lang-go">
+// Copies all session parameter to the template
+func SessionToTemplateFilter(c *revel.Controller, fc []revel.Filter) {
+    c.RenderArgs["session"] = c.Session
+    fc[0](c, fc[1:])
+}
+</pre>
+...which you have to add to the filter chain in your `init.go`. Make sure it's invoked after
+the session filter or your `c.Session` variable will be empty.
+
 ## Flash
 
 The Flash provides single-use string storage. It useful for implementing
