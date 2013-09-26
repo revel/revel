@@ -5,17 +5,21 @@ import (
 	"net/smtp"
 )
 
-// initialize the smtp client
-func Transport(address string, port int, a smtp.Auth) (*smtp.Client, error) {
+// Transport initialize the smtp client
+func Transport(address string, port int, host string, a smtp.Auth) (*smtp.Client, error) {
 	addr := fmt.Sprintf("%s:%d", address, port)
 
 	c, err := smtp.Dial(addr)
 	if err != nil {
 		return nil, err
 	}
-	if err := c.Hello(address); err != nil {
-		return nil, err
+
+	if host != "" {
+		if err := c.Hello(host); err != nil {
+			return nil, err
+		}
 	}
+
 	if ok, _ := c.Extension("STARTTLS"); ok {
 		if err = c.StartTLS(nil); err != nil {
 			return nil, err
@@ -31,7 +35,7 @@ func Transport(address string, port int, a smtp.Auth) (*smtp.Client, error) {
 	return c, nil
 }
 
-// send message through the client
+// Send send message through the client
 func Send(c *smtp.Client, message *Message) (err error) {
 
 	data, err := message.RenderData()

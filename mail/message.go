@@ -19,6 +19,7 @@ type Message struct {
 	HtmlBody  string
 }
 
+// RenderData render the whole email body
 func (m *Message) RenderData() (data string, err error) {
 	if m.HtmlBody == "" && m.PlainBody == "" {
 		err = errors.New("HtmlBody and PlainBody can not both be blank")

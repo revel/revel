@@ -2,58 +2,42 @@ package mail
 
 import (
 	"bytes"
+	"errors"
 	"github.com/robfig/revel"
 	"net/smtp"
 )
 
 type Mailer struct {
-	Address       string
-	Port          int
-	UserName      string
-	Password      string
-	Auth          smtp.Auth      // This is optional, only used if Authentication is not plain
-	DefaultSender *DefaultSender // This is optional, only used if the From/ReplyTo does not specified in the message
+	Server   string
+	Port     int
+	UserName string
+	Password string
+	Host     string    // This is optional, only used if you want to tell smtp server your hostname
+	Auth     smtp.Auth // This is optional, only used if Authentication is not plain
+	Default  *Default  // This is optional, only used if the From/ReplyTo does not specified in the message
 }
 
-type DefaultSender struct {
+type Default struct {
 	From    string
 	ReplyTo string
+	To      []string
+	BCC     string
+	CC      string
 }
 
-// This is convinient method to send single email with either plain text or html body
-func (m *Mailer) SendMail(to []string, subject string, body string, html bool) error {
-	message := &Message{To: to, Subject: subject}
-
-	if html {
-		message.HtmlBody = body
-	} else {
-		message.PlainBody = body
-	}
-
-	return m.SendMails([]*Message{message})
+// Send is convinient way to send several messages which can be listed, or you can choose to use SendMessages
+func (m *Mailer) Send(messages ...*Message) error {
+	return m.SendMessages(messages)
 }
 
-// This is the convinient method to send single email rendered from a view template with dynamic data
-func (m *Mailer) SendFromTemplate(templatePath string, to []string, subject string, args map[string]interface{}) error {
-	message := &Message{To: to, Subject: subject}
-
-	htmlTempateFile := templatePath + ".html"
-	txtTempateFile := templatePath + ".txt"
-
-	message.HtmlBody = m.renderViewTemplate(htmlTempateFile, args)
-	message.PlainBody = m.renderViewTemplate(txtTempateFile, args)
-
-	return m.SendMails([]*Message{message})
-}
-
-// send multiple emails in a single connection
-func (m *Mailer) SendMails(messages []*Message) (err error) {
+// SendMessages send multiple email in a single connection
+func (m *Mailer) SendMessages(messages []*Message) (err error) {
 
 	if m.Auth == nil {
-		m.Auth = smtp.PlainAuth(m.UserName, m.UserName, m.Password, m.Address)
+		m.Auth = smtp.PlainAuth(m.UserName, m.UserName, m.Password, m.Server)
 	}
 
-	c, err := Transport(m.Address, m.Port, m.Auth)
+	c, err := Transport(m.Server, m.Port, m.Host, m.Auth)
 	if err != nil {
 		return
 	}
@@ -69,6 +53,20 @@ func (m *Mailer) SendMails(messages []*Message) (err error) {
 	}
 
 	return
+}
+
+// RenderTemplate renders the message body from the template and input parameters, the change is inline the message
+func (m *Mailer) RenderTemplate(message *Message, templatePath string, args map[string]interface{}) error {
+	htmlTempateFile := templatePath + ".html"
+	txtTempateFile := templatePath + ".txt"
+
+	message.HtmlBody = m.renderViewTemplate(htmlTempateFile, args)
+	message.PlainBody = m.renderViewTemplate(txtTempateFile, args)
+
+	if message.HtmlBody == "" && message.PlainBody == "" {
+		return errors.New("Both HTML body and Plain body are blank.")
+	}
+	return nil
 }
 
 func (m *Mailer) renderViewTemplate(templateFilePath string, args map[string]interface{}) string {
@@ -89,14 +87,26 @@ func (m *Mailer) renderViewTemplate(templateFilePath string, args map[string]int
 }
 
 func (m *Mailer) fillDefault(message *Message) {
-	if m.DefaultSender == nil {
+	if m.Default == nil {
 		return
 	}
 	if message.From == "" {
-		message.From = m.DefaultSender.From
+		message.From = m.Default.From
 	}
 
 	if message.ReplyTo == "" {
-		message.ReplyTo = m.DefaultSender.ReplyTo
+		message.ReplyTo = m.Default.ReplyTo
+	}
+
+	if len(message.To) == 0 {
+		message.To = m.Default.To
+	}
+
+	if message.BCC == "" {
+		message.BCC = m.Default.BCC
+	}
+
+	if message.CC == "" {
+		message.CC = m.Default.CC
 	}
 }
