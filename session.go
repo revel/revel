@@ -49,6 +49,9 @@ func (s Session) Id() string {
 
 // Return a time.Time with session expiration date
 func getSessionExpiration() time.Time {
+	if expireAfterDuration == 0 {
+		return time.Time{}
+	}
 	return time.Now().Add(expireAfterDuration)
 }
 
@@ -56,7 +59,11 @@ func getSessionExpiration() time.Time {
 func (s Session) cookie() *http.Cookie {
 	var sessionValue string
 	ts := getSessionExpiration()
-	s[TS_KEY] = getSessionExpirationCookie(ts)
+	if ts.IsZero() {
+		s[TS_KEY] = "session"
+	} else {
+		s[TS_KEY] = getSessionExpirationCookie(ts)
+	}
 	for key, value := range s {
 		if strings.ContainsAny(key, ":\x00") {
 			panic("Session keys may not have colons or null bytes")
@@ -81,8 +88,13 @@ func (s Session) cookie() *http.Cookie {
 func sessionTimeoutExpiredOrMissing(session Session) bool {
 	if exp, present := session[TS_KEY]; !present {
 		return true
-	} else if expInt, _ := strconv.Atoi(exp); int64(expInt) < time.Now().Unix() {
-		return true
+	} else {
+		if session[TS_KEY] == "session" {
+			return false
+		}
+		if expInt, _ := strconv.Atoi(exp); int64(expInt) < time.Now().Un
+			return true
+		}
 	}
 	return false
 }
