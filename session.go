@@ -143,7 +143,7 @@ func restoreSession(req *http.Request) Session {
 }
 
 func getSessionExpirationCookie(t time.Time) string {
-	if ts.IsZero() {
+	if t.IsZero() {
 		return "session"
 	}
 	return strconv.FormatInt(t.Unix(), 10)
