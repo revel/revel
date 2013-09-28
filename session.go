@@ -117,6 +117,8 @@ func getSessionFromCookie(cookie *http.Cookie) Session {
 
 func SessionFilter(c *Controller, fc []Filter) {
 	c.Session = restoreSession(c.Request.Request)
+	// Make session vars available in templates as {{.session.xyz}}
+	c.RenderArgs["session"] = c.Session
 
 	fc[0](c, fc[1:])
 
