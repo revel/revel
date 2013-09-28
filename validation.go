@@ -8,11 +8,12 @@ import (
 	"runtime"
 )
 
+// Simple struct to store the Message & Key of a validation error
 type ValidationError struct {
 	Message, Key string
 }
 
-// Returns the Message of the ValidationError struct.
+// String returns the Message field of the ValidationError struct.
 func (e *ValidationError) String() string {
 	if e == nil {
 		return ""
@@ -26,7 +27,7 @@ type Validation struct {
 	keep   bool
 }
 
-// Tells revel to set a flash cookie on the client to make the validation
+// Keep tells revel to set a flash cookie on the client to make the validation
 // errors available for the next request.
 // This is helpful  when redirecting the client after the validation failed.
 // It is good practice to always redirect upon a HTTP POST request. Thus
@@ -36,17 +37,17 @@ func (v *Validation) Keep() {
 	v.keep = true
 }
 
-// Clears *all* ValidationErrors
+// Clear *all* ValidationErrors
 func (v *Validation) Clear() {
 	v.Errors = []*ValidationError{}
 }
 
-// Returns true if there are any (ie >0) errors. False otherwise.
+// HasErrors returns true if there are any (ie > 0) errors. False otherwise.
 func (v *Validation) HasErrors() bool {
 	return len(v.Errors) > 0
 }
 
-// Return the errors mapped by key.
+// ErrorMap returns the errors mapped by key.
 // If there are multiple validation errors associated with a single key, the
 // first one "wins".  (Typically the first validation will be the more basic).
 func (v *Validation) ErrorMap() map[string]*ValidationError {
@@ -59,7 +60,7 @@ func (v *Validation) ErrorMap() map[string]*ValidationError {
 	return m
 }
 
-// Add an error to the validation context.
+// Error adds an error to the validation context.
 func (v *Validation) Error(message string, args ...interface{}) *ValidationResult {
 	result := (&ValidationResult{
 		Ok:    false,
@@ -76,7 +77,7 @@ type ValidationResult struct {
 	Ok    bool
 }
 
-// Returns a pointer to the ValidationResult for the given key.
+// Key sets the ValidationResult's Error "key" and returns itself for chaining
 func (r *ValidationResult) Key(key string) *ValidationResult {
 	if r.Error != nil {
 		r.Error.Key = key
@@ -84,8 +85,8 @@ func (r *ValidationResult) Key(key string) *ValidationResult {
 	return r
 }
 
-// Sets the error message for a ValidationResult. Returns itself to allow chaining.
-// Allows Sprintf() type calling with multiple parameters
+// Message sets the error message for a ValidationResult. Returns itself to
+// allow chaining.  Allows Sprintf() type calling with multiple parameters
 func (r *ValidationResult) Message(message string, args ...interface{}) *ValidationResult {
 	if r.Error != nil {
 		if len(args) == 0 {
@@ -97,7 +98,7 @@ func (r *ValidationResult) Message(message string, args ...interface{}) *Validat
 	return r
 }
 
-// Test that the argument is non-nil and non-empty (if string or list)
+// Required tests that the argument is non-nil and non-empty (if string or list)
 func (v *Validation) Required(obj interface{}) *ValidationResult {
 	return v.apply(Required{}, obj)
 }
