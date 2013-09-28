@@ -45,17 +45,21 @@ func (c App) ShowSettings() revel.Result {
 
 // Process a post
 func (c App) SaveSettings(setting string) revel.Result {
-	c.Validation.Required(setting)
-	if c.Validation.HasErrors() {
-		c.Flash.Error("Settings invalid!")
-		c.Validation.Keep()
-		c.FlashParams()
-		return c.Redirect(App.ShowSettings)
-	}
-
-	saveSetting(setting)
-	c.Flash.Success("Settings saved!")
-	return c.Redirect(App.ShowSettings)
+    // Make sure `setting` is provided and not empty
+    c.Validation.Required(setting)
+    if c.Validation.HasErrors() {
+        // Sets the flash parameter `error` which will be sent by a flash cookie
+        c.Flash.Error("Settings invalid!")
+        // Keep the validation error from above by setting a flash cookie
+        c.Validation.Keep()
+        // Copies all given parameters (URL, Form, Multipart) to the flash cookie
+        c.FlashParams()
+        return c.Redirect(App.ShowSettings)
+    }
+    saveSetting(setting)
+    // Sets the flash cookie to contain a success string
+    c.Flash.Success("Settings saved!")
+    return c.Redirect(App.ShowSettings)
 }
 </pre>
 
