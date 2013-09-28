@@ -86,11 +86,11 @@ func (s Session) cookie() *http.Cookie {
 func sessionTimeoutExpiredOrMissing(session Session) bool {
 	if exp, present := session[TS_KEY]; !present {
 		return true
-	} else if expInt, _ := strconv.Atoi(exp); int64(expInt) < time.Now().Unix() {
-		return true
 	} else if exp == "session" {
 		return false
-	}
+	} else if expInt, _ := strconv.Atoi(exp); int64(expInt) < time.Now().Unix() {
+		return true
+	} 
 	return false
 }
 
