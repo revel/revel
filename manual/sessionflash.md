@@ -52,7 +52,7 @@ func (c App) SaveSettings(setting string) revel.Result {
         c.Flash.Error("Settings invalid!")
         // Keep the validation error from above by setting a flash cookie
         c.Validation.Keep()
-        // Copies all given parameters (URL, Form, Mutlipart) to the flash cookie
+        // Copies all given parameters (URL, Form, Multipart) to the flash cookie
         c.FlashParams()
         return c.Redirect(App.ShowSettings)
     }
