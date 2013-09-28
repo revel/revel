@@ -27,6 +27,8 @@ func init() {
 		var err error
 		if expiresString, ok := Config.String("session.expires"); !ok {
 			expireAfterDuration = 30 * 24 * time.Hour
+		} else if expiresString == "session" {
+			expireAfterDuration = 0
 		} else if expireAfterDuration, err = time.ParseDuration(expiresString); err != nil {
 			panic(fmt.Errorf("session.expires invalid: %s", err))
 		}
@@ -84,13 +86,10 @@ func (s Session) cookie() *http.Cookie {
 func sessionTimeoutExpiredOrMissing(session Session) bool {
 	if exp, present := session[TS_KEY]; !present {
 		return true
-	} else {
-		if session[TS_KEY] == "session" {
-			return false
-		}
-		if expInt, _ := strconv.Atoi(exp); int64(expInt) < time.Now().Unix() {
-			return true
-		}
+	} else if expInt, _ := strconv.Atoi(exp); int64(expInt) < time.Now().Unix() {
+		return true
+	} else if exp == "session" {
+		return false
 	}
 	return false
 }
