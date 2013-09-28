@@ -9,7 +9,7 @@ The module should have the same layout as a Revel application. The "hosting" app
 
 1. Any templates in module/app/views will be added to the Template Loader search path
 2. Any controllers in module/app/controllers will be treated as if they were in your application
-3. The assets are made available, via a route action of the form `Static.ServeModule("modulename", "public")`
+3. The assets are made available, via a route action of the form `Static.ServeModule("modulename","public")`
 4. Routes can be included in your application with a route line of `module:modulename`
 
 ### Enabling a module
