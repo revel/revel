@@ -1,57 +1,107 @@
+################################################################################
+# Revel configuration file
+# See:
+#   http://robfig.github.io/revel/manual/appconf.html
+# for more detailed documentation.
+################################################################################
+
 app.name={{ .AppName }}
 app.secret={{ .Secret }}
-# See:
-# http://robfig.github.io/revel/manual/appconf.html#http_settings
+
+# The IP address on which to listen
 http.addr=
+
+# The port to listen on
 http.port=9000
+
+# Weather to use SSL or not
 http.ssl=false
+
+# Specifies the path to an X509 certificate file.
 http.sslcert=
+
+# Specifies the path to an X509 certificate key.
 http.sslkey=
 
-# For any cookies set by revel these properties will set the fields of:
+################################################################################
+# For any cookies set by revel (Session,Flash,Error) these properties will set
+# the fields of:
 # http://golang.org/pkg/net/http/#Cookie
-cookie.httponly=false
-cookie.prefix=REVEL
-cookie.secure=false
+#
+# The HttpOnly attribute is supported by most modern browsers. On a supported
+# browser, an HttpOnly session cookie will be used only when transmitting HTTP
+# (or HTTPS) requests, thus restricting access from other, non-HTTP APIs (such
+# as JavaScript). This restriction mitigates but does not eliminate the threat
+# of session cookie theft via cross-site scripting (XSS). This feature applies
+# only to session-management cookies, and not other browser cookies.
+cookie.httponly = false
+# Each cookie set by Revel is prefixed with this string:
+cookie.prefix = REVEL
+# A secure cookie has the secure attribute enabled and is only used via HTTPS,
+# ensuring that the cookie is always encrypted when transmitting from client to
+# server. This makes the cookie less likely to be exposed to cookie theft via
+# eavesdropping.
+cookie.secure = false
 
 # Duration for the session cookie. Format:
 # http://golang.org/pkg/time/#ParseDuration
 session.expires = 720h
 
+# The date format used by revel
 # Must be of this format:
 # http://golang.org/pkg/time/#Parse
-format.date=01/02/2006
-format.datetime=01/02/2006 15:04
+format.date = 01/02/2006
+format.datetime = 01/02/2006 15:04
 
-# See:
-# http://robfig.github.io/revel/manual/appconf.html#results
+# Determines whether the template rendering should use chunked encoding.
+# Chunked encoding can decrease the time to first byte on the client side by
+# sending data before the entire template has been fully rendered.
 results.chunked=false
 
+# Prefixes for each log message line
 log.trace.prefix = "TRACE "
 log.info.prefix  = "INFO  "
 log.warn.prefix  = "WARN  "
 log.error.prefix = "ERROR "
 
 # The default language of this application.
-i18n.default_language=en
+i18n.default_language = en
 
-module.static=github.com/robfig/revel/modules/static
+# Module to serve static content such as CSS, JavaScript and Media files
+# Allows Routes like this:
+#    Static.ServeModule("modulename","public")
+module.static = github.com/robfig/revel/modules/static
 
+################################################################################
+# Section: dev
+# This section is evaluated when running revel in dev mode. Like so:
+#     revel run myapp
 [dev]
-mode.dev=true
-# Pretty print the JSON output with indents
-results.pretty=true
-watch=true
+# This sets "DevMode" variable to true which can be used in your code as
+#     if revel.DevMode {...}
+# or in your templates with
+#     {{.DevMode}}
+mode.dev = true
+# Pretty print JSON/XML when calling RenderJson/RenderXml
+results.pretty = true
+# Automatically watches your applicaton files and recompiles on demand
+watch = true
 
 module.testrunner = github.com/robfig/revel/modules/testrunner
 
+# Where to log the various revel logs
 log.trace.output = off
 log.info.output  = stderr
 log.warn.output  = stderr
 log.error.output = stderr
 
+################################################################################
+# Section: prod
+# This section is evaluated when running revel in production mode. Like so:
+#     revel run myapp prod
+# See [dev] section for documentation of the various settings
 [prod]
-mode.dev=false
+mode.dev = false
 results.pretty=false
 watch=false
 
