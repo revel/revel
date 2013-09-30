@@ -90,7 +90,7 @@ func sessionTimeoutExpiredOrMissing(session Session) bool {
 		return false
 	} else if expInt, _ := strconv.Atoi(exp); int64(expInt) < time.Now().Unix() {
 		return true
-	} 
+	}
 	return false
 }
 
