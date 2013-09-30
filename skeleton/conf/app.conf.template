@@ -5,7 +5,16 @@
 # for more detailed documentation.
 ################################################################################
 
+# This sets "AppName" variable to in revel which can be used in your code as
+#     if revel.AppName {...}
+# or in your templates with
+#     {{.AppName}}
 app.name={{ .AppName }}
+
+# A secret string which is passed to cryptographically sign the cookie to prevent
+# (and detect) user modification.
+# Keep this string secret or users will be able to inject arbitrary cookie values
+# into your application
 app.secret={{ .Secret }}
 
 # The IP address on which to listen
@@ -43,8 +52,14 @@ cookie.prefix = REVEL
 # eavesdropping.
 cookie.secure = false
 
-# Duration for the session cookie. Format:
-# http://golang.org/pkg/time/#ParseDuration
+# Session expires determines when your session cookie expires. This value
+# can be:
+# - A time duration in the format of:
+#   http://golang.org/pkg/time/#ParseDuration
+#   After which the cookie expires and the session is invalid.
+# - The string "session" (all lowercase)
+#   This special value sets a session cookie which means it will get deleted as
+#   soon as the user closes the browser.
 session.expires = 720h
 
 # The date format used by revel
