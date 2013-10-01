@@ -17,7 +17,8 @@ var (
 // This method handles all requests.  It dispatches to handleInternal after
 // handling / adapting websocket connections.
 func handle(w http.ResponseWriter, r *http.Request) {
-	if r.Header.Get("Upgrade") == "websocket" {
+	upgrade := r.Header.Get("Upgrade")
+	if upgrade == "websocket" || upgrade == "Websocket" {
 		websocket.Handler(func(ws *websocket.Conn) {
 			r.Method = "WS"
 			handleInternal(w, r, ws)
