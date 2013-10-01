@@ -27,10 +27,16 @@ script:
   - revel package my/testapp
 
   # Build & run the sample apps
+  # Sleep between tests to avoid spurious "address already in use" failures.
   - revel test github.com/robfig/revel/samples/booking
+  - sleep 5
   - revel test github.com/robfig/revel/samples/chat
+  - sleep 5
   - revel test github.com/robfig/revel/samples/facebook-oauth2
+  - sleep 5
   - revel test github.com/robfig/revel/samples/twitter-oauth
+  - sleep 5
   - revel test github.com/robfig/revel/samples/validation
+  - sleep 5
   - revel test github.com/robfig/revel/samples/chat
 
