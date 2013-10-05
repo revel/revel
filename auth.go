@@ -25,8 +25,6 @@ func callWithController(f interface{}, ctrlInstance interface{}) (resultValue re
 		return
 	}
 
-	functionParamType := functionType.In(0)
-
 	// f signature must be func (SomeControllerOrControllerPtr) Result
 	if functionType.NumIn() != 1 {
 		WARN.Printf("ActionRestriction check function must accept but one parameter")
@@ -36,6 +34,8 @@ func callWithController(f interface{}, ctrlInstance interface{}) (resultValue re
 		WARN.Printf("ActionRestriction check function must return revel.Result")
 		return
 	}
+
+	functionParamType := functionType.In(0)
 
 	// Search for a needed controller.
 	queue := []reflect.Value{appController}
