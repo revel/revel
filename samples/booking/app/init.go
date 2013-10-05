@@ -15,6 +15,7 @@ func init() {
 		revel.I18nFilter,              // Resolve the requested language
 		HeaderFilter,                  // Add some security based headers
 		revel.InterceptorFilter,       // Run interceptors around the action.
+		revel.AuthFilter,              // Run authorization checks before the action.
 		revel.ActionInvoker,           // Invoke the action.
 	}
 }
