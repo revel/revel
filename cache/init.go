@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"fmt"
 	"github.com/robfig/revel"
 	"strings"
 	"time"
@@ -25,6 +26,28 @@ func init() {
 			}
 
 			Instance = NewMemcachedCache(hosts, defaultExpiration)
+			return
+		}
+
+		// Use redis?
+		if revel.Config.BoolDefault("cache.redis", false) {
+			var err error
+			host := revel.Config.StringDefault("cache.hosts", "")
+			pass := revel.Config.StringDefault("cache.password", "")
+			if host == "" {
+				panic("Redis enabled but no redis hosts specified!")
+			}
+
+			if pass == "" {
+				Instance, err = NewRedisCache(host, defaultExpiration)
+			} else {
+				Instance, err = NewRedisCacheAuth(host, pass, defaultExpiration)
+			}
+
+			if err != nil {
+				panic(fmt.Sprintf("Error connecting to redis! %s", err))
+			}
+
 			return
 		}
 
