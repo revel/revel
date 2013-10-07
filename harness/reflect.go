@@ -434,6 +434,7 @@ func appendAction(fset *token.FileSet, mm methodMap, decl ast.Decl, pkgImportPat
 				var ok bool
 				if importPath, ok = imports[typeExpr.PkgName]; !ok {
 					log.Println("Failed to find import for arg of type:", typeExpr.TypeName(""))
+					importPath = pkgImportPath
 				}
 			}
 			method.Args = append(method.Args, &MethodArg{
