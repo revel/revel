@@ -1,12 +1,16 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"go/build"
 	"math/rand"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"time"
 
+	"github.com/golang/glog"
 	"github.com/robfig/revel"
 )
 
@@ -19,7 +23,7 @@ New creates a few files to get a new Revel application running quickly.
 It puts all of the files in the given import path, taking the final element in
 the path to be the app name.
 
-Skeleton is an optional argument, and should be relative to $GOROOT. 
+Skeleton is an optional argument, and should be relative to $GOROOT.
 
 For example:
 
@@ -30,6 +34,7 @@ For example:
 }
 
 func init() {
+	rand.Seed(time.Now().Unix())
 	cmdNew.Run = newApp
 }
 
@@ -47,6 +52,11 @@ func newApp(args []string) {
 	if gopath == "" {
 		errorf("Abort: GOPATH environment variable is not set. " +
 			"Please refer to http://golang.org/doc/code.html to configure your Go environment.")
+	}
+
+	goExec, errGE := exec.LookPath("go")
+	if errGE != nil {
+		glog.Fatalf("Go executable not found in PATH.")
 	}
 
 	importPath := args[0]
@@ -75,7 +85,24 @@ func newApp(args []string) {
 	// specifying skeleton
 	if len(args) == 2 { // user specified
 		sname := args[1]
+		_, errS := build.Import(sname, "", build.FindOnly)
+		if errS != nil {
+			fmt.Println("go get'n: ", args[1])
+
+			// Execute "go get <pkg>"
+			getCmd := exec.Command(goExec, "get", "-d", sname)
+			glog.V(1).Infoln("Exec:", getCmd.Args)
+			getOutput, errG := getCmd.CombinedOutput()
+
+			// check getOutput for no buildible string
+			bpos := bytes.Index(getOutput, []byte("no buildable Go source files in"))
+			if errG != nil && bpos == -1 {
+				fmt.Fprintf(os.Stderr, "Abort: Could not find or 'go get' Skeleton  source code: %s\n%s\n", getOutput, sname)
+				return
+			}
+		}
 		skeletonBase = filepath.Join(srcRoot, sname)
+
 	} else { // use the revel default (bootstrap)
 		skeletonBase = filepath.Join(revelPkg.Dir, "skeleton")
 	}
