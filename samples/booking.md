@@ -70,7 +70,7 @@ action:
 
 <pre class="prettyprint lang-go">
 func init() {
-	revel.RegisterPlugin(GorpPlugin{})
+	revel.OnAppStart(Init)
 	revel.InterceptMethod((*GorpController).Begin, revel.BEFORE)
 	revel.InterceptMethod(Application.AddUser, revel.BEFORE)
 	revel.InterceptMethod(Hotels.checkUser, revel.BEFORE)
