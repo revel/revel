@@ -23,7 +23,7 @@ type sourceLine struct {
 	IsError bool
 }
 
-// Find the deepest stack from in uesr code and provide a code listing of
+// Find the deepest stack from in user code and provide a code listing of
 // that, on the line that eventually triggered the panic.  Returns nil if no
 // relevant stack frame can be found.
 func NewErrorFromPanic(err interface{}) *Error {
