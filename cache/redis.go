@@ -20,7 +20,6 @@ func ParseRedisHost(url string) (host string, port uint64, err error) {
 
 	if strings.Contains(url, ":") {
 		host, sPort, err = net.SplitHostPort(url)
-
 		if err != nil {
 			return "", 0, err
 		}
@@ -38,13 +37,11 @@ func ParseRedisHost(url string) (host string, port uint64, err error) {
 // authentication. See NewRedisCache for more information.
 func NewRedisCacheAuth(host string, pass string, defaultExpiration time.Duration) (RedisCache, error) {
 	redisCache, err := NewRedisCache(host, defaultExpiration)
-
 	if err != nil {
 		return redisCache, err
 	}
 
 	_, err = redisCache.Client.Auth(pass)
-
 	if err != nil {
 		return RedisCache{}, err
 	}
@@ -63,7 +60,6 @@ func NewRedisCache(host string, defaultExpiration time.Duration) (RedisCache, er
 	// If it does, connect through a unix socket
 	if strings.HasPrefix(host, "file://") {
 		err := client.ConnectUnix(strings.TrimPrefix(host, "file://"))
-
 		if err != nil {
 			return RedisCache{}, err
 		}
@@ -72,7 +68,6 @@ func NewRedisCache(host string, defaultExpiration time.Duration) (RedisCache, er
 	} else {
 		// Assume standard host:port connection
 		rHost, rPort, err := ParseRedisHost(host)
-
 		if err != nil {
 			return RedisCache{}, err
 		}
@@ -90,7 +85,6 @@ func NewRedisCache(host string, defaultExpiration time.Duration) (RedisCache, er
 
 func (c RedisCache) Set(key string, value interface{}, expires time.Duration) error {
 	serialized, err := Serialize(value)
-
 	if err != nil {
 		return err
 	}
@@ -106,13 +100,11 @@ func (c RedisCache) Set(key string, value interface{}, expires time.Duration) er
 
 func (c RedisCache) Add(key string, value interface{}, expires time.Duration) error {
 	serialized, err := Serialize(value)
-
 	if err != nil {
 		return err
 	}
 
 	set, err := c.Client.SetNX(key, serialized)
-
 	if err == nil {
 		if set {
 			// Set the expiration time
@@ -129,7 +121,6 @@ func (c RedisCache) Add(key string, value interface{}, expires time.Duration) er
 
 func (c RedisCache) Replace(key string, value interface{}, expires time.Duration) error {
 	exists, err := c.Client.Exists(key)
-
 	if err != nil {
 		return err
 	}
@@ -146,6 +137,7 @@ func (c RedisCache) Get(key string, ptrValue interface{}) error {
 	if err != nil {
 		return err
 	}
+
 	if !exists {
 		return ErrCacheMiss
 	}
@@ -161,7 +153,6 @@ func (c RedisCache) GetMulti(keys ...string) (Getter, error) {
 	values := make(map[string]string)
 	for _, k := range keys {
 		v, err := c.Client.Get(k)
-
 		if err != nil {
 			return nil, err
 		}
@@ -185,15 +176,13 @@ func (c RedisCache) Delete(key string) error {
 	return err
 }
 
-func (c RedisCache) Increment(key string, delta uint64) (newValue uint64, err error) {
+func (c RedisCache) increment(key string, delta int64) (newValue uint64, err error) {
 	exists, err := c.Client.Exists(key)
-
 	if !exists {
 		return 0, ErrCacheMiss
 	}
 
-	val, err := c.Client.IncrBy(key, int64(delta))
-
+	val, err := c.Client.IncrBy(key, delta)
 	if err != nil {
 		return 0, err
 	}
@@ -202,7 +191,6 @@ func (c RedisCache) Increment(key string, delta uint64) (newValue uint64, err er
 	// Use DecrBy instead of Set to keep any TTLs
 	if val < 0 {
 		val, err = c.Client.DecrBy(key, val)
-
 		if err != nil {
 			return 0, err
 		}
@@ -211,8 +199,12 @@ func (c RedisCache) Increment(key string, delta uint64) (newValue uint64, err er
 	return uint64(val), nil
 }
 
+func (c RedisCache) Increment(key string, delta uint64) (newValue uint64, err error) {
+	return c.increment(key, int64(delta))
+}
+
 func (c RedisCache) Decrement(key string, delta uint64) (newValue uint64, err error) {
-	return c.Increment(key, -delta)
+	return c.increment(key, int64(-delta))
 }
 
 func (c RedisCache) Flush() error {
