@@ -244,7 +244,9 @@ Default: "REVEL"
 
 Revel uses this property to set the expiration of the session cookie.
 Revel uses [ParseDuration](http://golang.org/pkg/time/#ParseDuration) to parse the string.
-The default value is 30 days.
+The default value is 30 days. It can also be set to "session" to allow session only
+expiry. Please note that the client behaviour is dependent on browser configuration so
+the result is not always guaranteed.
 
 ### Templates
 
