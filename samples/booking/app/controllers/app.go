@@ -28,6 +28,14 @@ func (c Application) connected() *models.User {
 	return nil
 }
 
+func AskToLogIn(c Application) revel.Result {
+	if c.connected() == nil {
+		c.Flash.Error("Please log in first")
+		return c.Render()
+	}
+	return nil
+}
+
 func (c Application) getUser(username string) *models.User {
 	users, err := c.Txn.Select(models.User{}, `select * from User where Username = ?`, username)
 	if err != nil {
@@ -40,11 +48,7 @@ func (c Application) getUser(username string) *models.User {
 }
 
 func (c Application) Index() revel.Result {
-	if c.connected() != nil {
-		return c.Redirect(routes.Hotels.Index())
-	}
-	c.Flash.Error("Please log in first")
-	return c.Render()
+	return c.Redirect(routes.Hotels.Index())
 }
 
 func (c Application) Register() revel.Result {
