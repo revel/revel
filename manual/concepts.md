@@ -3,6 +3,10 @@ title: Concepts
 layout: manual
 ---
 
+Revel is a batteries-included web framework in the spirit of Rails or Play!
+Framework.  Many of the same (proven) ideas are incorporated in the framework
+design and interface.
+
 Revel makes it easy to build web applications using the Model-View-Controller
 (MVC) pattern by relying on conventions that require a certain structure in your
 application.  In return, it is very light on configuration and enables an
@@ -23,7 +27,25 @@ Here is a quick summary:
 There are many excellent overviews of MVC structure online.  In particular, the
 one provided by [Play! Framework](http://www.playframework.org) matches our model exactly.
 
-## Server
+## Life of a Request
+
+Here is an overview of the request processing framework.
+
+![Life of a Request](../img/RevelDesign.png)
+
+Concept summary:
+
+* Revel exposes a single http.Handler, responsible for instantiating the
+  Controller (the context for the request) and passing the request along to the
+  Filter Chain.
+* Filters are links in a request processing chain. They may be composed to
+  implement horizontal concerns like request logging, cookie policies,
+  authorization, etc.  Most of the built-in functionality is implemented as
+  Filters.
+* Actions are the application-specific functions that process the input and
+  produce a Result.
+
+## HTTP Handler
 
 Revel builds on top of the Go HTTP server, which creates a go-routine
 (lightweight thread) to process each incoming request.  The implication is that
@@ -32,11 +54,23 @@ your code is free to block, but it must handle concurrent request processing.
 The Revel handler does nothing except hand the request to the Filter chain for
 processing and, upon completion, apply the result to write the response.
 
+By default, the Revel handler will be registered on `"/"` to receive all
+incoming connections.  However, applications are free to override this behavior
+-- for example, they may want to use existing http.Handlers rather than
+re-implementing them within the Revel framework.  See the [FAQ](faq.html) for
+more detail.
+
 ## Filters
 
 [Filters](filters.html) implement most request processing functionality provided
-by Revel. The filter chain is an array of functions, each one invoking the next,
-until the terminal filter stage invokes the action selected by the router.
+by Revel. They have a simple interface that allows them to be nested.
+
+The "Filter Chain" is an array of functions, each one invoking the next, until
+the terminal filter stage invokes the action.  For example, one of the first
+Filters in the chain is the `RouterFilter`, which decides which Action the
+request is meant for and saves that to the Controller.
+
+Overall, Filters and the Filter Chain are the equivalent of Rack.
 
 ## Controllers and Actions
 
