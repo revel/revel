@@ -5,10 +5,8 @@
 # for more detailed documentation.
 ################################################################################
 
-# This sets "AppName" variable to in revel which can be used in your code as
+# This sets the "AppName" variable which can be used in your code as
 #     if revel.AppName {...}
-# or in your templates with
-#     {{.AppName}}
 app.name={{ .AppName }}
 
 # A secret string which is passed to cryptographically sign the cookie to prevent
@@ -44,8 +42,10 @@ http.sslkey=
 # of session cookie theft via cross-site scripting (XSS). This feature applies
 # only to session-management cookies, and not other browser cookies.
 cookie.httponly = false
+
 # Each cookie set by Revel is prefixed with this string:
 cookie.prefix = REVEL
+
 # A secure cookie has the secure attribute enabled and is only used via HTTPS,
 # ensuring that the cookie is always encrypted when transmitting from client to
 # server. This makes the cookie less likely to be exposed to cookie theft via
@@ -97,8 +97,10 @@ module.static = github.com/robfig/revel/modules/static
 # or in your templates with
 #     {{.DevMode}}
 mode.dev = true
+
 # Pretty print JSON/XML when calling RenderJson/RenderXml
 results.pretty = true
+
 # Automatically watches your applicaton files and recompiles on demand
 watch = true
 
