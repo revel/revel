@@ -19,6 +19,7 @@ func init() {
 		revel.I18nFilter,              // Resolve the requested language
 		HeaderFilter,                  // Add some security based headers
 		revel.InterceptorFilter,       // Run interceptors around the action.
+		revel.CompressFilter,          // Compress the results.
 		revel.ActionInvoker,           // Invoke the action.
 	}
 	// the Hotels controller requires authentication
