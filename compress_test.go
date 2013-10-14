@@ -7,11 +7,12 @@ import (
 )
 
 // Test that the render response is as expected.
-func TestBenchmarkRender(t *testing.T) {
+func TestBenchmarkCompressed(t *testing.T) {
 	startFakeBookingApp()
 	resp := httptest.NewRecorder()
 	c := NewController(NewRequest(showRequest), NewResponse(resp))
 	c.SetAction("Hotels", "Show")
+	Config.SetOption("results.compressed", "true")
 	result := Hotels{c}.Show(3)
 	result.Apply(c.Request, c.Response)
 	if !strings.Contains(resp.Body.String(), "300 Main St.") {
@@ -19,13 +20,13 @@ func TestBenchmarkRender(t *testing.T) {
 	}
 }
 
-func BenchmarkRenderChunked(b *testing.B) {
+func BenchmarkRenderCompressed(b *testing.B) {
 	startFakeBookingApp()
 	resp := httptest.NewRecorder()
 	resp.Body = nil
 	c := NewController(NewRequest(showRequest), NewResponse(resp))
 	c.SetAction("Hotels", "Show")
-	Config.SetOption("results.chunked", "true")
+	Config.SetOption("results.compressed", "true")
 	b.ResetTimer()
 
 	hotels := Hotels{c}
@@ -34,13 +35,13 @@ func BenchmarkRenderChunked(b *testing.B) {
 	}
 }
 
-func BenchmarkRenderNotChunked(b *testing.B) {
+func BenchmarkRenderUnCompressed(b *testing.B) {
 	startFakeBookingApp()
 	resp := httptest.NewRecorder()
 	resp.Body = nil
 	c := NewController(NewRequest(showRequest), NewResponse(resp))
 	c.SetAction("Hotels", "Show")
-	Config.SetOption("results.chunked", "false")
+	Config.SetOption("results.compressed", "false")
 	b.ResetTimer()
 
 	hotels := Hotels{c}
@@ -48,3 +49,4 @@ func BenchmarkRenderNotChunked(b *testing.B) {
 		hotels.Show(3).Apply(c.Request, c.Response)
 	}
 }
+
