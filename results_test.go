@@ -48,3 +48,33 @@ func BenchmarkRenderNotChunked(b *testing.B) {
 		hotels.Show(3).Apply(c.Request, c.Response)
 	}
 }
+
+func BenchmarkRenderCompressed(b *testing.B) {
+	startFakeBookingApp()
+	resp := httptest.NewRecorder()
+	resp.Body = nil
+	c := NewController(NewRequest(showRequest), NewResponse(resp))
+	c.SetAction("Hotels", "Show")
+	Config.SetOption("results.compressed", "true")
+	b.ResetTimer()
+
+	hotels := Hotels{c}
+	for i := 0; i < b.N; i++ {
+		hotels.Show(3).Apply(c.Request, c.Response)
+	}
+}
+
+func BenchmarkRenderUnCompressed(b *testing.B) {
+	startFakeBookingApp()
+	resp := httptest.NewRecorder()
+	resp.Body = nil
+	c := NewController(NewRequest(showRequest), NewResponse(resp))
+	c.SetAction("Hotels", "Show")
+	Config.SetOption("results.compressed", "false")
+	b.ResetTimer()
+
+	hotels := Hotels{c}
+	for i := 0; i < b.N; i++ {
+		hotels.Show(3).Apply(c.Request, c.Response)
+	}
+}
