@@ -49,4 +49,3 @@ func BenchmarkRenderUnCompressed(b *testing.B) {
 		hotels.Show(3).Apply(c.Request, c.Response)
 	}
 }
-
