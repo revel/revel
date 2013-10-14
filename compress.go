@@ -36,7 +36,7 @@ type CompressResponseWriter struct {
 	headersWritten  bool
 }
 
-func CompressResult(c *Controller, fc []Filter) {
+func CompressFilter(c *Controller, fc []Filter) {
 	writer := CompressResponseWriter{c.Response.Out, nil, "", false}
 	writer.DetectCompressionType(c.Request, c.Response)
 	c.Response.Out = &writer
