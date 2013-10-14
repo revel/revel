@@ -14,7 +14,7 @@ var Filters = []Filter{
 	ValidationFilter,        // Restore kept validation errors and save new ones from cookie.
 	I18nFilter,              // Resolve the requested language.
 	InterceptorFilter,       // Run interceptors around the action.
-	CompressResult,          // Compress the result.
+	CompressFilter,          // Compress the result.
 	ActionInvoker,           // Invoke the action.
 }
 
