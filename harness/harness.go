@@ -11,6 +11,7 @@
 package harness
 
 import (
+	"crypto/tls"
 	"fmt"
 	"github.com/robfig/revel"
 	"io"
@@ -84,6 +85,10 @@ func NewHarness() *Harness {
 
 	addr := revel.HttpAddr
 	port := revel.Config.IntDefault("harness.port", 0)
+	scheme := "http"
+	if revel.HttpSsl {
+		scheme = "https"
+	}
 
 	// If the server is running on the wildcard address, use "localhost"
 	if addr == "" {
@@ -94,12 +99,18 @@ func NewHarness() *Harness {
 		port = getFreePort()
 	}
 
-	serverUrl, _ := url.ParseRequestURI(fmt.Sprintf("http://%s:%d", addr, port))
+	serverUrl, _ := url.ParseRequestURI(fmt.Sprintf(scheme+"://%s:%d", addr, port))
 
 	harness := &Harness{
 		port:       port,
-		serverHost: serverUrl.String()[len("http://"):],
+		serverHost: serverUrl.String()[len(scheme+"://"):],
 		proxy:      httputil.NewSingleHostReverseProxy(serverUrl),
+	}
+
+	if revel.HttpSsl {
+		harness.proxy.Transport = &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		}
 	}
 	return harness
 }
@@ -142,8 +153,16 @@ func (h *Harness) Run() {
 	watcher.Listen(h, revel.CodePaths...)
 
 	go func() {
-		revel.INFO.Printf("Listening on %s:%d", revel.HttpAddr, revel.HttpPort)
-		err := http.ListenAndServe(fmt.Sprintf("%s:%d", revel.HttpAddr, revel.HttpPort), h)
+		addr := fmt.Sprintf("%s:%d", revel.HttpAddr, revel.HttpPort)
+		revel.INFO.Printf("Listening on %s", addr)
+
+		var err error
+		if revel.HttpSsl {
+			err = http.ListenAndServeTLS(addr, revel.HttpSslCert,
+				revel.HttpSslKey, h)
+		} else {
+			err = http.ListenAndServe(addr, h)
+		}
 		if err != nil {
 			revel.ERROR.Fatalln("Failed to start reverse proxy:", err)
 		}

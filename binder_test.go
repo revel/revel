@@ -71,6 +71,12 @@ var (
 		"arrC[0].B.Extra": {"foo"},
 		"arrC[1].Id":      {"8"},
 		"arrC[1].Name":    {"bill"},
+		"m[a]":            {"foo"},
+		"m[b]":            {"bar"},
+		"m2[1]":           {"foo"},
+		"m2[2]":           {"bar"},
+		"m3[a]":           {"1"},
+		"m3[b]":           {"2"},
 		"invalidInt":      {"xyz"},
 		"invalidInt2":     {""},
 		"invalidBool":     {"xyz"},
@@ -124,6 +130,9 @@ var binderTestCases = map[string]interface{}{
 			Name: "bill",
 		},
 	},
+	"m":  map[string]string{"a": "foo", "b": "bar"},
+	"m2": map[int]string{1: "foo", 2: "bar"},
+	"m3": map[string]int{"a": 1, "b": 2},
 
 	// TODO: Tests that use TypeBinders
 
@@ -257,6 +266,9 @@ var unbinderTestCases = map[string]interface{}{
 			Name: "bill",
 		},
 	},
+	"m":  map[string]string{"a": "foo", "b": "bar"},
+	"m2": map[int]string{1: "foo", 2: "bar"},
+	"m3": map[string]int{"a": 1, "b": 2},
 }
 
 // Some of the unbinding results are not exactly what is in PARAMS, since it
@@ -281,6 +293,9 @@ var unbinderOverrideAnswers = map[string]map[string]string{
 		"arrC[1].Name":    "bill",
 		"arrC[1].B.Extra": "",
 	},
+	"m":  map[string]string{"m[a]": "foo", "m[b]": "bar"},
+	"m2": map[string]string{"m2[1]": "foo", "m2[2]": "bar"},
+	"m3": map[string]string{"m3[a]": "1", "m3[b]": "2"},
 }
 
 func TestUnbinder(t *testing.T) {
@@ -332,6 +347,19 @@ func valEq(t *testing.T, name string, actual, expected reflect.Value) {
 	case reflect.Ptr:
 		// Check equality on the element type.
 		valEq(t, name, actual.Elem(), expected.Elem())
+	case reflect.Map:
+		if !eq(t, name+" (len)", actual.Len(), expected.Len()) {
+			return
+		}
+		for _, key := range expected.MapKeys() {
+			expectedValue := expected.MapIndex(key)
+			actualValue := actual.MapIndex(key)
+			if actualValue.IsValid() {
+				valEq(t, fmt.Sprintf("%s[%s]", name, key), actualValue, expectedValue)
+			} else {
+				t.Errorf("Expected key %s not found", key)
+			}
+		}
 	default:
 		eq(t, name, actual.Interface(), expected.Interface())
 	}

@@ -46,11 +46,18 @@ var (
 	// the current process reality.  For example, if the app is configured for
 	// port 9000, HttpPort will always be 9000, even though in dev mode it is
 	// run on a random port and proxied.
-	HttpPort int    // e.g. 9000
-	HttpAddr string // e.g. "", "127.0.0.1"
+	HttpPort    int    // e.g. 9000
+	HttpAddr    string // e.g. "", "127.0.0.1"
+	HttpSsl     bool   // e.g. true if using ssl
+	HttpSslCert string // e.g. "/path/to/cert.pem"
+	HttpSslKey  string // e.g. "/path/to/key.pem"
 
 	// All cookies dropped by the framework begin with this prefix.
 	CookiePrefix string
+
+	// Cookie flags
+	CookieHttpOnly bool
+	CookieSecure   bool
 
 	// Delimiters to use when rendering templates
 	TemplateDelims string
@@ -133,8 +140,22 @@ func Init(mode, importPath, srcPath string) {
 	DevMode = Config.BoolDefault("mode.dev", false)
 	HttpPort = Config.IntDefault("http.port", 9000)
 	HttpAddr = Config.StringDefault("http.addr", "")
+	HttpSsl = Config.BoolDefault("http.ssl", false)
+	HttpSslCert = Config.StringDefault("http.sslcert", "")
+	HttpSslKey = Config.StringDefault("http.sslkey", "")
+	if HttpSsl {
+		if HttpSslCert == "" {
+			log.Fatalln("No http.sslcert provided.")
+		}
+		if HttpSslKey == "" {
+			log.Fatalln("No http.sslkey provided.")
+		}
+	}
+
 	AppName = Config.StringDefault("app.name", "(not set)")
 	CookiePrefix = Config.StringDefault("cookie.prefix", "REVEL")
+	CookieHttpOnly = Config.BoolDefault("cookie.httponly", false)
+	CookieSecure = Config.BoolDefault("cookie.secure", false)
 	TemplateDelims = Config.StringDefault("template.delimiters", "")
 	if secretStr := Config.StringDefault("app.secret", ""); secretStr != "" {
 		secretKey = []byte(secretStr)

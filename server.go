@@ -17,7 +17,8 @@ var (
 // This method handles all requests.  It dispatches to handleInternal after
 // handling / adapting websocket connections.
 func handle(w http.ResponseWriter, r *http.Request) {
-	if r.Header.Get("Upgrade") == "websocket" {
+	upgrade := r.Header.Get("Upgrade")
+	if upgrade == "websocket" || upgrade == "Websocket" {
 		websocket.Handler(func(ws *websocket.Conn) {
 			r.Method = "WS"
 			handleInternal(w, r, ws)
@@ -49,6 +50,11 @@ func Run(port int) {
 	if port == 0 {
 		port = HttpPort
 	}
+	// If the port equals zero, it means do not append port to the address.
+	// It can use unix socket or something else.
+	if port != 0 {
+		address = fmt.Sprintf("%s:%d", address, port)
+	}
 
 	MainTemplateLoader = NewTemplateLoader(TemplatePaths)
 
@@ -68,7 +74,7 @@ func Run(port int) {
 	}
 
 	Server = &http.Server{
-		Addr:    fmt.Sprintf("%s:%d", address, port),
+		Addr:    address,
 		Handler: http.HandlerFunc(handle),
 	}
 
@@ -79,7 +85,12 @@ func Run(port int) {
 		fmt.Printf("Listening on port %d...\n", port)
 	}()
 
-	ERROR.Fatalln("Failed to listen:", Server.ListenAndServe())
+	if HttpSsl {
+		ERROR.Fatalln("Failed to listen:",
+			Server.ListenAndServeTLS(HttpSslCert, HttpSslKey))
+	} else {
+		ERROR.Fatalln("Failed to listen:", Server.ListenAndServe())
+	}
 }
 
 func runStartupHooks() {

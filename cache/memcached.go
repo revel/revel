@@ -100,12 +100,14 @@ func (g ItemMapGetter) Get(key string, ptrValue interface{}) error {
 
 func convertMemcacheError(err error) error {
 	switch err {
+	case nil:
+		return nil
 	case memcache.ErrCacheMiss:
 		return ErrCacheMiss
 	case memcache.ErrNotStored:
 		return ErrNotStored
 	}
 
-	revel.ERROR.Printf("revel/cache: %s", err)
+	revel.ERROR.Println("revel/cache:", err)
 	return err
 }

@@ -8,11 +8,12 @@ import (
 	"runtime"
 )
 
+// Simple struct to store the Message & Key of a validation error
 type ValidationError struct {
 	Message, Key string
 }
 
-// Returns the Message.
+// String returns the Message field of the ValidationError struct.
 func (e *ValidationError) String() string {
 	if e == nil {
 		return ""
@@ -26,19 +27,27 @@ type Validation struct {
 	keep   bool
 }
 
+// Keep tells revel to set a flash cookie on the client to make the validation
+// errors available for the next request.
+// This is helpful  when redirecting the client after the validation failed.
+// It is good practice to always redirect upon a HTTP POST request. Thus
+// one should use this method when HTTP POST validation failed and redirect
+// the user back to the form.
 func (v *Validation) Keep() {
 	v.keep = true
 }
 
+// Clear *all* ValidationErrors
 func (v *Validation) Clear() {
 	v.Errors = []*ValidationError{}
 }
 
+// HasErrors returns true if there are any (ie > 0) errors. False otherwise.
 func (v *Validation) HasErrors() bool {
 	return len(v.Errors) > 0
 }
 
-// Return the errors mapped by key.
+// ErrorMap returns the errors mapped by key.
 // If there are multiple validation errors associated with a single key, the
 // first one "wins".  (Typically the first validation will be the more basic).
 func (v *Validation) ErrorMap() map[string]*ValidationError {
@@ -51,7 +60,7 @@ func (v *Validation) ErrorMap() map[string]*ValidationError {
 	return m
 }
 
-// Add an error to the validation context.
+// Error adds an error to the validation context.
 func (v *Validation) Error(message string, args ...interface{}) *ValidationResult {
 	result := (&ValidationResult{
 		Ok:    false,
@@ -68,6 +77,7 @@ type ValidationResult struct {
 	Ok    bool
 }
 
+// Key sets the ValidationResult's Error "key" and returns itself for chaining
 func (r *ValidationResult) Key(key string) *ValidationResult {
 	if r.Error != nil {
 		r.Error.Key = key
@@ -75,6 +85,8 @@ func (r *ValidationResult) Key(key string) *ValidationResult {
 	return r
 }
 
+// Message sets the error message for a ValidationResult. Returns itself to
+// allow chaining.  Allows Sprintf() type calling with multiple parameters
 func (r *ValidationResult) Message(message string, args ...interface{}) *ValidationResult {
 	if r.Error != nil {
 		if len(args) == 0 {
@@ -86,7 +98,7 @@ func (r *ValidationResult) Message(message string, args ...interface{}) *Validat
 	return r
 }
 
-// Test that the argument is non-nil and non-empty (if string or list)
+// Required tests that the argument is non-nil and non-empty (if string or list)
 func (v *Validation) Required(obj interface{}) *ValidationResult {
 	return v.apply(Required{}, obj)
 }
@@ -167,11 +179,14 @@ func (v *Validation) Check(obj interface{}, checks ...Validator) *ValidationResu
 	return result
 }
 
+// Revel Filter function to be hooked into the filter chain.
 func ValidationFilter(c *Controller, fc []Filter) {
+	errors, err := restoreValidationErrors(c.Request.Request)
 	c.Validation = &Validation{
-		Errors: restoreValidationErrors(c.Request.Request),
+		Errors: errors,
 		keep:   false,
 	}
+	hasCookie := (err != http.ErrNoCookie)
 
 	fc[0](c, fc[1:])
 
@@ -187,17 +202,37 @@ func ValidationFilter(c *Controller, fc []Filter) {
 			}
 		}
 	}
-	c.SetCookie(&http.Cookie{
-		Name:  CookiePrefix + "_ERRORS",
-		Value: url.QueryEscape(errorsValue),
-		Path:  "/",
-	})
+
+	// When there are errors from Validation and Keep() has been called, store the
+	// values in a cookie. If there previously was a cookie but no errors, remove
+	// the cookie.
+	if errorsValue != "" {
+		c.SetCookie(&http.Cookie{
+			Name:     CookiePrefix + "_ERRORS",
+			Value:    url.QueryEscape(errorsValue),
+			Path:     "/",
+			HttpOnly: CookieHttpOnly,
+			Secure:   CookieSecure,
+		})
+	} else if hasCookie {
+		c.SetCookie(&http.Cookie{
+			Name:     CookiePrefix + "_ERRORS",
+			MaxAge:   -1,
+			Path:     "/",
+			HttpOnly: CookieHttpOnly,
+			Secure:   CookieSecure,
+		})
+	}
 }
 
 // Restore Validation.Errors from a request.
-func restoreValidationErrors(req *http.Request) []*ValidationError {
-	errors := make([]*ValidationError, 0, 5)
-	if cookie, err := req.Cookie(CookiePrefix + "_ERRORS"); err == nil {
+func restoreValidationErrors(req *http.Request) ([]*ValidationError, error) {
+	var (
+		err    error
+		cookie *http.Cookie
+		errors = make([]*ValidationError, 0, 5)
+	)
+	if cookie, err = req.Cookie(CookiePrefix + "_ERRORS"); err == nil {
 		ParseKeyValueCookie(cookie.Value, func(key, val string) {
 			errors = append(errors, &ValidationError{
 				Key:     key,
@@ -205,7 +240,7 @@ func restoreValidationErrors(req *http.Request) []*ValidationError {
 			})
 		})
 	}
-	return errors
+	return errors, err
 }
 
 // Register default validation keys for all calls to Controller.Validation.Func().

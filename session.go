@@ -27,6 +27,8 @@ func init() {
 		var err error
 		if expiresString, ok := Config.String("session.expires"); !ok {
 			expireAfterDuration = 30 * 24 * time.Hour
+		} else if expiresString == "session" {
+			expireAfterDuration = 0
 		} else if expireAfterDuration, err = time.ParseDuration(expiresString); err != nil {
 			panic(fmt.Errorf("session.expires invalid: %s", err))
 		}
@@ -49,6 +51,9 @@ func (s Session) Id() string {
 
 // Return a time.Time with session expiration date
 func getSessionExpiration() time.Time {
+	if expireAfterDuration == 0 {
+		return time.Time{}
+	}
 	return time.Now().Add(expireAfterDuration)
 }
 
@@ -69,16 +74,20 @@ func (s Session) cookie() *http.Cookie {
 
 	sessionData := url.QueryEscape(sessionValue)
 	return &http.Cookie{
-		Name:    CookiePrefix + "_SESSION",
-		Value:   Sign(sessionData) + "-" + sessionData,
-		Path:    "/",
-		Expires: ts.UTC(),
+		Name:     CookiePrefix + "_SESSION",
+		Value:    Sign(sessionData) + "-" + sessionData,
+		Path:     "/",
+		HttpOnly: CookieHttpOnly,
+		Secure:   CookieSecure,
+		Expires:  ts.UTC(),
 	}
 }
 
 func sessionTimeoutExpiredOrMissing(session Session) bool {
 	if exp, present := session[TS_KEY]; !present {
 		return true
+	} else if exp == "session" {
+		return false
 	} else if expInt, _ := strconv.Atoi(exp); int64(expInt) < time.Now().Unix() {
 		return true
 	}
@@ -97,7 +106,7 @@ func getSessionFromCookie(cookie *http.Cookie) Session {
 	sig, data := cookie.Value[:hyphen], cookie.Value[hyphen+1:]
 
 	// Verify the signature.
-	if Sign(data) != sig {
+	if !Verify(data, sig) {
 		INFO.Println("Session cookie signature failed")
 		return session
 	}
@@ -115,6 +124,8 @@ func getSessionFromCookie(cookie *http.Cookie) Session {
 
 func SessionFilter(c *Controller, fc []Filter) {
 	c.Session = restoreSession(c.Request.Request)
+	// Make session vars available in templates as {{.session.xyz}}
+	c.RenderArgs["session"] = c.Session
 
 	fc[0](c, fc[1:])
 
@@ -133,5 +144,8 @@ func restoreSession(req *http.Request) Session {
 }
 
 func getSessionExpirationCookie(t time.Time) string {
+	if t.IsZero() {
+		return "session"
+	}
 	return strconv.FormatInt(t.Unix(), 10)
 }

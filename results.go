@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"reflect"
 	"strconv"
@@ -123,12 +124,18 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
 
 	chunked := Config.BoolDefault("results.chunked", false)
 
+	// If it's a HEAD request, throw away the bytes.
+	out := io.Writer(resp.Out)
+	if req.Method == "HEAD" {
+		out = ioutil.Discard
+	}
+
 	// In a prod mode, write the status, render, and hope for the best.
 	// (In a dev mode, always render to a temporary buffer first to avoid having
 	// error pages distorted by HTML already written)
 	if chunked && !DevMode {
 		resp.WriteHeader(http.StatusOK, "text/html")
-		r.render(req, resp, resp.Out)
+		r.render(req, resp, out)
 		return
 	}
 
@@ -142,7 +149,7 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
 		resp.Out.Header().Set("Content-Length", strconv.Itoa(b.Len()))
 	}
 	resp.WriteHeader(http.StatusOK, "text/html")
-	b.WriteTo(resp.Out)
+	b.WriteTo(out)
 }
 
 func (r *RenderTemplateResult) render(req *Request, resp *Response, wr io.Writer) {
@@ -183,7 +190,8 @@ func (r RenderHtmlResult) Apply(req *Request, resp *Response) {
 }
 
 type RenderJsonResult struct {
-	obj interface{}
+	obj      interface{}
+	callback string
 }
 
 func (r RenderJsonResult) Apply(req *Request, resp *Response) {
@@ -200,8 +208,16 @@ func (r RenderJsonResult) Apply(req *Request, resp *Response) {
 		return
 	}
 
-	resp.WriteHeader(http.StatusOK, "application/json")
+	if r.callback == "" {
+		resp.WriteHeader(http.StatusOK, "application/json")
+		resp.Out.Write(b)
+		return
+	}
+
+	resp.WriteHeader(http.StatusOK, "application/javascript")
+	resp.Out.Write([]byte(r.callback + "("))
 	resp.Out.Write(b)
+	resp.Out.Write([]byte(");"))
 }
 
 type RenderXmlResult struct {

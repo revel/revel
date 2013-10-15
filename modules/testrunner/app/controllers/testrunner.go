@@ -81,10 +81,12 @@ func (c TestRunner) Run(suite, test string) revel.Result {
 			if m := v.MethodByName("Before"); m.IsValid() {
 				m.Call(NONE)
 			}
-			v.MethodByName(test).Call(NONE)
+
 			if m := v.MethodByName("After"); m.IsValid() {
-				m.Call(NONE)
+				defer m.Call(NONE)
 			}
+
+			v.MethodByName(test).Call(NONE)
 
 			// No panic means success.
 			result.Passed = true
