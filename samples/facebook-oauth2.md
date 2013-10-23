@@ -40,11 +40,6 @@ Here's an overview of the process:
 4. The app retrieves an OAuth access token from **TokenURL** using the **code**.
 5. The app subsequently uses the access token to authenticate web service requests.
 
-**Note:** The [official goauth2 library](http://code.google.com/p/goauth2/) does
-not work with facebook
-([issue](http://code.google.com/p/goauth2/issues/detail?id=4)), so this example
-uses [a fork](https://github.com/robfig/goauth2).
-
 ## Code walk
 
 Let's take a look at the first bit of code:
