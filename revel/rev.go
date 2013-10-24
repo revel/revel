@@ -5,9 +5,11 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"math/rand"
 	"os"
 	"strings"
 	"text/template"
+	"time"
 )
 
 // Cribbed from the genius organization of the "go" command.
@@ -32,6 +34,10 @@ var commands = []*Command{
 	cmdPackage,
 	cmdClean,
 	cmdTest,
+}
+
+func init() {
+	rand.Seed(time.Now().Unix())
 }
 
 func main() {
