@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"go/build"
+	"math/rand"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -36,63 +37,39 @@ func init() {
 }
 
 var (
-	appDir       string
-	skeletonBase string
+
+	// go related paths
+	gopath  string
+	gocmd   string
+	srcRoot string
+
+	// revel related paths
+	revelPkg     *build.Package
+	appPath      string
+	importPath   string
+	skeletonPath string
 )
 
 func newApp(args []string) {
+	// check for proper args by count
 	if len(args) == 0 {
 		errorf("No import path given.\nRun 'revel help new' for usage.\n")
 	}
-
-	gopath := build.Default.GOPATH
-	if gopath == "" {
-		errorf("Abort: GOPATH environment variable is not set. " +
-			"Please refer to http://golang.org/doc/code.html to configure your Go environment.")
+	if len(args) > 2 {
+		errorf("Too many arguments provided.\nRun 'revel help new' for usage.\n")
 	}
 
-	goExec, errGE := exec.LookPath("go")
-	if errGE != nil {
-		glog.Fatalf("Go executable not found in PATH.")
-	}
-
-	importPath := args[0]
-	if filepath.IsAbs(importPath) {
-		errorf("Abort: '%s' looks like a directory.  Please provide a Go import path instead.",
-			importPath)
-	}
-
-	_, err := build.Import(importPath, "", build.FindOnly)
-	if err == nil {
-		fmt.Fprintf(os.Stderr, "Abort: Import path %s already exists.\n", importPath)
-		return
-	}
-
-	revelPkg, err := build.Import(revel.REVEL_IMPORT_PATH, "", build.FindOnly)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Abort: Could not find Revel source code: %s\n", err)
-		return
-	}
-
-	srcRoot := filepath.Join(filepath.SplitList(gopath)[0], "src")
-	appDir := filepath.Join(srcRoot, filepath.FromSlash(importPath))
-	err = os.MkdirAll(appDir, 0777)
-	panicOnError(err, "Failed to create directory "+appDir)
+	// checking and setting application
+	setApplicationPaths(args)
 
 	// checking and setting skeleton
-	skeletonBase = getSkeletonBase(args)
+	setSkeletonPath(args)
 
-	mustCopyDir(appDir, skeletonBase, map[string]interface{}{
-		// app.conf
-		"AppName": filepath.Base(appDir),
-		"Secret":  genSecret(),
-	})
+	// copy files to new app directory
+	copyNewAppFiles()
 
-	// Dotfiles are skipped by mustCopyDir, so we have to explicitly copy the .gitignore.
-	gitignore := ".gitignore"
-	mustCopyFile(filepath.Join(appDir, gitignore), filepath.Join(skeletonBase, gitignore))
-
-	fmt.Fprintln(os.Stdout, "Your application is ready:\n  ", appDir)
+	// goodbye world
+	fmt.Fprintln(os.Stdout, "Your application is ready:\n  ", appPath)
 	fmt.Fprintln(os.Stdout, "\nYou can run it with:\n   revel run", importPath)
 }
 
@@ -106,31 +83,86 @@ func genSecret() string {
 	return string(chars)
 }
 
-// getSkeletonBase determines the correct skeleton
-// base from the command line arguments.
-// If none is specified, then the revel default is used.
-// in:   command line arguments to revel
-// out:  the source directory for the skeleton
-func getSkeletonBase(args []string) string {
+// lookup and set Go related variables
+func initGoStuff() {
+	// lookup go path
+	gopath = build.Default.GOPATH
+	if gopath == "" {
+		errorf("Abort: GOPATH environment variable is not set. " +
+			"Please refer to http://golang.org/doc/code.html to configure your Go environment.")
+	}
+
+	// set go src path
+	srcRoot = filepath.Join(filepath.SplitList(gopath)[0], "src")
+
+	// check for go executable
+	var err error
+	gocmd, err = exec.LookPath("go")
+	if err != nil {
+		errorf("Go executable not found in PATH.")
+	}
+
+}
+
+func setApplicationPaths(args []string) {
+	var err error
+	importPath = args[0]
+	if filepath.IsAbs(importPath) {
+		errorf("Abort: '%s' looks like a directory.  Please provide a Go import path instead.",
+			importPath)
+	}
+
+	_, err = build.Import(importPath, "", build.FindOnly)
+	if err == nil {
+		errorf("Abort: Import path %s already exists.\n", importPath)
+	}
+
+	revelPkg, err = build.Import(revel.REVEL_IMPORT_PATH, "", build.FindOnly)
+	if err != nil {
+		errorf("Abort: Could not find Revel source code: %s\n", err)
+	}
+
+	appPath = filepath.Join(srcRoot, filepath.FromSlash(importPath))
+}
+
+func setSkeletonPath(args []string) {
 	if len(args) == 2 { // user specified
 		skeleton_name := args[1]
 		_, errS := build.Import(skeleton_name, "", build.FindOnly)
 		if errS != nil {
 			// Execute "go get <pkg>"
-			getCmd := exec.Command(goExec, "get", "-d", skeleton_name)
+			getCmd := exec.Command(gocmd, "get", "-d", skeleton_name)
 			glog.V(1).Infoln("Exec:", getCmd.Args)
 			getOutput, errG := getCmd.CombinedOutput()
 
 			// check getOutput for no buildible string
 			bpos := bytes.Index(getOutput, []byte("no buildable Go source files in"))
 			if errG != nil && bpos == -1 {
-				fmt.Fprintf(os.Stderr, "Abort: Could not find or 'go get' Skeleton  source code: %s\n%s\n", getOutput, skeleton_name)
-				return
+				errorf("Abort: Could not find or 'go get' Skeleton  source code: %s\n%s\n", getOutput, skeleton_name)
 			}
 		}
-		return filepath.Join(srcRoot, skeleton_name)
+		// use the
+		skeletonPath = filepath.Join(srcRoot, skeleton_name)
 
-	} else { // use the revel default (bootstrap)
-		return filepath.Join(revelPkg.Dir, "skeleton")
+	} else {
+		// use the revel default
+		skeletonPath = filepath.Join(revelPkg.Dir, "skeleton")
 	}
+}
+
+func copyNewAppFiles() {
+	var err error
+	err = os.MkdirAll(appPath, 0777)
+	panicOnError(err, "Failed to create directory "+appPath)
+
+	mustCopyDir(appPath, skeletonPath, map[string]interface{}{
+		// app.conf
+		"AppName": filepath.Base(appPath),
+		"Secret":  genSecret(),
+	})
+
+	// Dotfiles are skipped by mustCopyDir, so we have to explicitly copy the .gitignore.
+	gitignore := ".gitignore"
+	mustCopyFile(filepath.Join(appPath, gitignore), filepath.Join(skeletonPath, gitignore))
+
 }
