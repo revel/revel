@@ -92,7 +92,6 @@ type Router struct {
 var notFound = &RouteMatch{Action: "404"}
 
 func (router *Router) Route(req *http.Request) *RouteMatch {
-	// by xiaoao[github.com/xiaoao]
 	subdomain := getSubDomain(req.Host)
 	path := req.URL.Path
 	if subdomain != "" && subdomain != "www" {
@@ -100,7 +99,6 @@ func (router *Router) Route(req *http.Request) *RouteMatch {
 	}
 
 	leaf, expansions := router.Tree.Find(treePath(req.Method, path))
-	// end
 	if leaf == nil {
 		return nil
 	}
