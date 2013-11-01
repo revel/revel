@@ -81,7 +81,7 @@ func expiration(t *testing.T, newCache cacheFactory) {
 	// Test Set w/ DEFAULT
 	value := 10
 	cache.Set("int", value, DEFAULT)
-	time.Sleep(time.Second)
+	time.Sleep(2 * time.Second)
 	err = cache.Get("int", &value)
 	if err != ErrCacheMiss {
 		t.Errorf("Expected CacheMiss, but got: %s", err)
@@ -90,7 +90,7 @@ func expiration(t *testing.T, newCache cacheFactory) {
 	// Test Set w/ short time
 	value = 10
 	cache.Set("int", value, time.Second)
-	time.Sleep(time.Second)
+	time.Sleep(2 * time.Second)
 	err = cache.Get("int", &value)
 	if err != ErrCacheMiss {
 		t.Errorf("Expected CacheMiss, but got: %s", err)
@@ -99,7 +99,7 @@ func expiration(t *testing.T, newCache cacheFactory) {
 	// Test Set w/ longer time.
 	value = 10
 	cache.Set("int", value, time.Hour)
-	time.Sleep(time.Second)
+	time.Sleep(2 * time.Second)
 	err = cache.Get("int", &value)
 	if err != nil {
 		t.Errorf("Expected to get the value, but got: %s", err)
@@ -108,7 +108,7 @@ func expiration(t *testing.T, newCache cacheFactory) {
 	// Test Set w/ forever.
 	value = 10
 	cache.Set("int", value, FOREVER)
-	time.Sleep(time.Second)
+	time.Sleep(2 * time.Second)
 	err = cache.Get("int", &value)
 	if err != nil {
 		t.Errorf("Expected to get the value, but got: %s", err)
@@ -169,7 +169,7 @@ func testReplace(t *testing.T, newCache cacheFactory) {
 	}
 
 	// Wait for it to expire and replace with 3 (unsuccessfully).
-	time.Sleep(time.Second)
+	time.Sleep(2 * time.Second)
 	if err = cache.Replace("int", 3, time.Second); err != ErrNotStored {
 		t.Errorf("Expected ErrNotStored, got: %s", err)
 	}
@@ -193,7 +193,7 @@ func testAdd(t *testing.T, newCache cacheFactory) {
 	}
 
 	// Wait for it to expire, and add again.
-	time.Sleep(time.Second)
+	time.Sleep(2 * time.Second)
 	if err = cache.Add("int", 3, time.Second); err != nil {
 		t.Errorf("Unexpected error adding to cache: %s", err)
 	}

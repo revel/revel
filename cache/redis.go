@@ -150,15 +150,16 @@ func (c RedisCache) Get(key string, ptrValue interface{}) error {
 }
 
 func (c RedisCache) GetMulti(keys ...string) (Getter, error) {
-	values := make(map[string]string)
-	for _, k := range keys {
-		v, err := c.Client.Get(k)
-		if err != nil {
-			return nil, err
-		}
-
-		values[k] = v
+	strings, err := c.Client.MGet(keys...)
+	if err != nil {
+		return nil, err
 	}
+
+	values := make(map[string]string)
+	for i, v := range strings {
+		values[keys[i]] = v
+	}
+
 	return RedisItemMapGetter(values), nil
 }
 
