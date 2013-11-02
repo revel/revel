@@ -1,7 +1,9 @@
 package mail
 
 import (
+	"crypto/tls"
 	"fmt"
+	"net"
 	"net/smtp"
 )
 
@@ -9,7 +11,16 @@ import (
 func Transport(address string, port int, host string, a smtp.Auth) (*smtp.Client, error) {
 	addr := fmt.Sprintf("%s:%d", address, port)
 
-	c, err := smtp.Dial(addr)
+	var conn net.Conn
+	conn, err := tls.Dial("tcp", addr, nil) // some smtp servers require TLS handshake
+	if err != nil {
+		conn, err = net.Dial("tcp", addr) // fall back
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	c, err := smtp.NewClient(conn, address)
 	if err != nil {
 		return nil, err
 	}
@@ -21,7 +32,11 @@ func Transport(address string, port int, host string, a smtp.Auth) (*smtp.Client
 	}
 
 	if ok, _ := c.Extension("STARTTLS"); ok {
-		if err = c.StartTLS(nil); err != nil {
+		config := &tls.Config{
+			InsecureSkipVerify: true,
+		}
+
+		if err = c.StartTLS(config); err != nil {
 			return nil, err
 		}
 	}
@@ -51,22 +66,33 @@ func Send(c *smtp.Client, message *Message) (err error) {
 		return
 	}
 
-	for _, addr := range message.To {
-		if err = c.Rcpt(addr); err != nil {
-			return
-		}
+	if err = addRcpt(c, message.To); err != nil {
+		return
 	}
+
+	if err = addRcpt(c, message.Cc); err != nil {
+		return
+	}
+
+	if err = addRcpt(c, message.Bcc); err != nil {
+		return
+	}
+
 	w, err := c.Data()
 	if err != nil {
 		return
 	}
-	defer func() {
-		err = w.Close()
-	}()
+	defer w.Close()
 
-	_, err = w.Write([]byte(data))
-	if err != nil {
-		return
-	}
+	_, err = w.Write(data)
 	return
+}
+
+func addRcpt(c *smtp.Client, address []string) error {
+	for _, addr := range address {
+		if err := c.Rcpt(addr); err != nil {
+			return err
+		}
+	}
+	return nil
 }
