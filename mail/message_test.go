@@ -9,7 +9,7 @@ import (
 
 func TestRenderRecipient(t *testing.T) {
 	message := &Message{From: "foo@bar.com", To: []string{"bar@foo.com", "abc@test.com"}, ReplyTo: "none@arkxu.com",
-		Subject: "这个是第11封from message1, single connection", PlainBody: bytes.NewBufferString("<h2>你好 from message1, should show in plain text</h2>")}
+		Subject: "from message1, single connection", PlainBody: bytes.NewBufferString("<h2>你好 from message1, should show in plain text</h2>")}
 
 	var b bytes.Buffer
 	message.writeRecipient(&b)
@@ -27,7 +27,7 @@ func TestRenderRecipient(t *testing.T) {
 		t.Error("Recipient should contains To")
 	}
 
-	if !strings.Contains(recipient, "Subject: 这个是第11封from message1") {
+	if !strings.Contains(recipient, "Subject: from message1") {
 		t.Error("Recipient should contains Subject")
 	}
 }
@@ -42,6 +42,10 @@ func TestRenderRecipientNoReply(t *testing.T) {
 
 	if strings.Contains(recipient, "Reply-To") {
 		t.Error("Recipient should not contains Reply-To")
+	}
+
+	if strings.Contains(recipient, "这个是第11封from message1, single connection") {
+		t.Error("Subject should be encoded")
 	}
 }
 
