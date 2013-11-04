@@ -138,6 +138,11 @@ func (c *Controller) RenderText(text string, objs ...interface{}) Result {
 	return &RenderTextResult{finalText}
 }
 
+// Render html in response
+func (c *Controller) RenderHtml(html string) Result {
+	return &RenderHtmlResult{html}
+}
+
 // Render a "todo" indicating that the action isn't done yet.
 func (c *Controller) Todo() Result {
 	c.Response.Status = http.StatusNotImplemented
