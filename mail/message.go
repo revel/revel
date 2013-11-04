@@ -2,10 +2,12 @@ package mail
 
 import (
 	"bytes"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"mime/multipart"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/robfig/revel"
 )
@@ -158,7 +160,12 @@ func (m *Message) writeRecipient(b *bytes.Buffer) {
 	}
 
 	if m.Subject != "" {
-		fmt.Fprintf(b, "Subject: %s %s", m.Subject, NewLine)
+		subjectBytes := []byte(m.Subject)
+		if len(subjectBytes) == utf8.RuneCount(subjectBytes) {
+			fmt.Fprintf(b, "Subject: %s %s", m.Subject, NewLine)
+		} else {
+			fmt.Fprintf(b, "Subject: =?UTF-8?B?%s?= %s", base64.StdEncoding.EncodeToString(subjectBytes), NewLine)
+		}
 	}
 }
 
