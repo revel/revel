@@ -4,6 +4,10 @@ import (
 	"net/smtp"
 )
 
+type MailSender interface {
+	SendMessage(messages ...*Message) (err error)
+}
+
 type Mailer struct {
 	Server   string
 	Port     int
