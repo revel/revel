@@ -8,6 +8,11 @@ searches two directories for templates:
 * The application's `views` directory (and all subdirectories)
 * Revel's own `templates` directory.
 
+Given a controller named `Hello` with an action named `World`, Revel will
+look for a template file named `views/Hello/World.html`. Template file names
+are case insensitive so `views/hello/world.html` will work the same as
+`views/HeLlO/wOrLd.HtMl`.
+
 Revel provides templates for error pages (that display the friendly compilation
 errors in DEV mode), but the application may override them by creating a
 template of the equivalent name, e.g. `app/views/errors/500.html`.
