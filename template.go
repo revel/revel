@@ -185,7 +185,6 @@ func (loader *TemplateLoader) Refresh() *Error {
 	// Walk through the template loader's paths and build up a template set.
 	var templateSet *template.Template = nil
 	for _, basePath := range loader.paths {
-
 		// Walk only returns an error if the template loader is completely unusable
 		// (namely, if one of the TemplateFuncs does not have an acceptable signature).
 		funcErr := filepath.Walk(basePath, func(path string, info os.FileInfo, err error) error {
@@ -194,7 +193,7 @@ func (loader *TemplateLoader) Refresh() *Error {
 				return nil
 			}
 
-			// Walk into directories.
+			// Walk into watchable directories
 			if info.IsDir() {
 				if !loader.WatchDir(info) {
 					return filepath.SkipDir
@@ -202,12 +201,14 @@ func (loader *TemplateLoader) Refresh() *Error {
 				return nil
 			}
 
+			// Only add watchable
 			if !loader.WatchFile(info.Name()) {
 				return nil
 			}
 
 			// Convert template names to use forward slashes, even on Windows.
-			templateName := path[len(basePath)+1:]
+			// Lower case the file name for case-insensitive matching
+			templateName := strings.ToLower(path[len(basePath)+1:])
 			if os.PathSeparator == '\\' {
 				templateName = strings.Replace(templateName, `\`, `/`, -1) // `
 			}
@@ -328,6 +329,8 @@ func parseTemplateError(err error) (templateName string, line int, description s
 // An Error is returned if there was any problem with any of the templates.  (In
 // this case, if a template is returned, it may still be usable.)
 func (loader *TemplateLoader) Template(name string) (Template, error) {
+	// Lower case the file name to support case-insensitive matching
+	name = strings.ToLower(name)
 	// Look up and return the template.
 	tmpl := loader.templateSet.Lookup(name)
 
