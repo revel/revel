@@ -39,7 +39,7 @@ func (r Required) IsSatisfied(obj interface{}) bool {
 }
 
 func (r Required) DefaultMessage() string {
-	return "Required"
+	return "is required"
 }
 
 type Min struct {
@@ -55,7 +55,7 @@ func (m Min) IsSatisfied(obj interface{}) bool {
 }
 
 func (m Min) DefaultMessage() string {
-	return fmt.Sprintln("Minimum is", m.Min)
+	return fmt.Sprintln("minimum is", m.Min)
 }
 
 type Max struct {
@@ -71,7 +71,7 @@ func (m Max) IsSatisfied(obj interface{}) bool {
 }
 
 func (m Max) DefaultMessage() string {
-	return fmt.Sprintln("Maximum is", m.Max)
+	return fmt.Sprintln("maximum is", m.Max)
 }
 
 // Requires an integer to be within Min, Max inclusive.
@@ -85,7 +85,7 @@ func (r Range) IsSatisfied(obj interface{}) bool {
 }
 
 func (r Range) DefaultMessage() string {
-	return fmt.Sprintln("Range is", r.Min.Min, "to", r.Max.Max)
+	return fmt.Sprintln("range is", r.Min.Min, "to", r.Max.Max)
 }
 
 // Requires an array or string to be at least a given length.
@@ -105,7 +105,7 @@ func (m MinSize) IsSatisfied(obj interface{}) bool {
 }
 
 func (m MinSize) DefaultMessage() string {
-	return fmt.Sprintln("Minimum size is", m.Min)
+	return fmt.Sprintln("minimum size is", m.Min)
 }
 
 // Requires an array or string to be at most a given length.
@@ -125,7 +125,7 @@ func (m MaxSize) IsSatisfied(obj interface{}) bool {
 }
 
 func (m MaxSize) DefaultMessage() string {
-	return fmt.Sprintln("Maximum size is", m.Max)
+	return fmt.Sprintln("maximum size is", m.Max)
 }
 
 // Requires an array or string to be exactly a given length.
@@ -145,7 +145,7 @@ func (s Length) IsSatisfied(obj interface{}) bool {
 }
 
 func (s Length) DefaultMessage() string {
-	return fmt.Sprintln("Required length is", s.N)
+	return fmt.Sprintln("required length is", s.N)
 }
 
 // Requires a string to match a given regex.
@@ -159,7 +159,7 @@ func (m Match) IsSatisfied(obj interface{}) bool {
 }
 
 func (m Match) DefaultMessage() string {
-	return fmt.Sprintln("Must match", m.Regexp)
+	return fmt.Sprintln("must match", m.Regexp)
 }
 
 var emailPattern = regexp.MustCompile("[\\w!#$%&'*+/=?^_`{|}~-]+(?:\\.[\\w!#$%&'*+/=?^_`{|}~-]+)*@(?:[\\w](?:[\\w-]*[\\w])?\\.)+[a-zA-Z0-9](?:[\\w-]*[\\w])?")
@@ -169,5 +169,5 @@ type Email struct {
 }
 
 func (e Email) DefaultMessage() string {
-	return fmt.Sprintln("Must be a valid email address")
+	return fmt.Sprintln("must be a valid email address")
 }

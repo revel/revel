@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"regexp"
 	"runtime"
+	"strings"
 )
 
 // Simple struct to store the Message & Key of a validation error
@@ -151,9 +152,25 @@ func (v *Validation) apply(chk Validator, obj interface{}) *ValidationResult {
 		INFO.Println("Failed to get Caller information to look up Validation key")
 	}
 
+	// Format key value for display
+	var keyFormatted string
+	if key == "" {
+		keyFormatted = "Field"
+	} else {
+		var keyWords []string
+		for _, character := range key {
+			if int(character) >= int('A') && int(character) <= int('Z') {
+				keyWords = append(keyWords, " ")
+			}
+			keyWords = append(keyWords, strings.ToLower(string(character)))
+		}
+		keyWords[0] = strings.ToUpper(keyWords[0])
+		keyFormatted = strings.Join(keyWords, "")
+	}
+
 	// Add the error to the validation context.
 	err := &ValidationError{
-		Message: chk.DefaultMessage(),
+		Message: fmt.Sprintf("%s %s", keyFormatted, chk.DefaultMessage()),
 		Key:     key,
 	}
 	v.Errors = append(v.Errors, err)
