@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"runtime"
 	"strings"
+	"unicode"
 )
 
 // Simple struct to store the Message & Key of a validation error
@@ -159,7 +160,7 @@ func (v *Validation) apply(chk Validator, obj interface{}) *ValidationResult {
 	} else {
 		var keyWords []string
 		for _, character := range key {
-			if int(character) >= int('A') && int(character) <= int('Z') {
+			if unicode.IsUpper(character) {
 				keyWords = append(keyWords, " ")
 			}
 			keyWords = append(keyWords, strings.ToLower(string(character)))
