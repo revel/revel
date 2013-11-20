@@ -48,7 +48,7 @@ func NewController(req *Request, resp *Response) *Controller {
 
 func (c *Controller) FlashParams() {
 	for key, vals := range c.Params.Values {
-		c.Flash.Out[key] = vals[0]
+		c.Flash.Out[key] = strings.Join(vals, ",")
 	}
 }
 
