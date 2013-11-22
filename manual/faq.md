@@ -19,7 +19,7 @@ func installHandlers() {
 		serveMux     = http.NewServeMux()
 		revelHandler = revel.Server.Handler
 	)
-	serveMux.Handle("/,      revelHandler)
+	serveMux.Handle("/",     revelHandler)
 	serveMux.Handle("/path", myHandler)
 	revel.Server.Handler = serveMux
 }
