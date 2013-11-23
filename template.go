@@ -163,6 +163,14 @@ func NewTemplateLoader(paths []string) *TemplateLoader {
 	return loader
 }
 
+func pathHasPrefix(path, basepath string) bool {
+	if os.PathSeparator == '\\' {
+		path = strings.Replace(path, `\`, `/`, -1)
+		basepath = strings.Replace(basepath, `\`, `/`, -1)
+	}
+	return strings.HasPrefix(path, basepath)
+}
+
 // This scans the views directory and parses all templates as Go Templates.
 // If a template fails to parse, the error is set on the loader.
 // (It's awkward to refresh a single Go Template)
@@ -243,7 +251,7 @@ func (loader *TemplateLoader) Refresh() *Error {
 					}()
 					templateSet = template.New(templateName).Funcs(TemplateFuncs)
 					// If alternate delimiters set for the project, change them for this set
-					if splitDelims != nil && basePath == ViewsPath {
+					if splitDelims != nil && !pathHasPrefix(basePath, RevelPath) {
 						templateSet.Delims(splitDelims[0], splitDelims[1])
 					} else {
 						// Reset to default otherwise
@@ -257,7 +265,7 @@ func (loader *TemplateLoader) Refresh() *Error {
 				}
 
 			} else {
-				if splitDelims != nil && basePath == ViewsPath {
+				if splitDelims != nil && !pathHasPrefix(basePath, RevelPath) {
 					templateSet.Delims(splitDelims[0], splitDelims[1])
 				} else {
 					templateSet.Delims("", "")
