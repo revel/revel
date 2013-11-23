@@ -29,6 +29,8 @@ type TemplateLoader struct {
 	paths []string
 	// Map from template name to the path from whence it was loaded.
 	templatePaths map[string]string
+	delims        string
+	viewsPath     string
 }
 
 type Template interface {
@@ -156,10 +158,17 @@ var (
 	}
 )
 
-func NewTemplateLoader(paths []string) *TemplateLoader {
+func NewTemplateLoader(paths []string, viewsPath string, delims string) *TemplateLoader {
 	loader := &TemplateLoader{
-		paths: paths,
+		paths:     paths,
+		viewsPath: viewsPath,
 	}
+	if len(delims) > 0 {
+		loader.delims = delims
+	} else {
+		loader.delims = TemplateDelims
+	}
+
 	return loader
 }
 
@@ -175,8 +184,8 @@ func (loader *TemplateLoader) Refresh() *Error {
 	// Set the template delimiters for the project if present, then split into left
 	// and right delimiters around a space character
 	var splitDelims []string
-	if TemplateDelims != "" {
-		splitDelims = strings.Split(TemplateDelims, " ")
+	if loader.delims != "" {
+		splitDelims = strings.Split(loader.delims, " ")
 		if len(splitDelims) != 2 {
 			log.Fatalln("app.conf: Incorrect format for template.delimiters")
 		}
@@ -243,7 +252,7 @@ func (loader *TemplateLoader) Refresh() *Error {
 					}()
 					templateSet = template.New(templateName).Funcs(TemplateFuncs)
 					// If alternate delimiters set for the project, change them for this set
-					if splitDelims != nil && basePath == ViewsPath {
+					if splitDelims != nil && basePath == loader.viewsPath {
 						templateSet.Delims(splitDelims[0], splitDelims[1])
 					} else {
 						// Reset to default otherwise
@@ -257,7 +266,7 @@ func (loader *TemplateLoader) Refresh() *Error {
 				}
 
 			} else {
-				if splitDelims != nil && basePath == ViewsPath {
+				if splitDelims != nil && basePath == loader.viewsPath {
 					templateSet.Delims(splitDelims[0], splitDelims[1])
 				} else {
 					templateSet.Delims("", "")
