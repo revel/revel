@@ -9,6 +9,11 @@ Revel provides four loggers:
 * WARN - something unexpected but not harmful.
 * ERROR - someone should take a look at this.
 
+Example usage within a Revel app:
+
+	now := time.Now()
+	revel.TRACE.Printf("%s", now.String())
+
 Each of these is a variable to a default [go logger](http://golang.org/pkg/log/).
 
 Loggers may be configured in [app.conf](appconf.html).  Here is an example:
