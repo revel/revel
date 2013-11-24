@@ -6,7 +6,6 @@ import (
 	"net/url"
 	"regexp"
 	"runtime"
-	"strings"
 	"unicode"
 )
 
@@ -153,25 +152,9 @@ func (v *Validation) apply(chk Validator, obj interface{}) *ValidationResult {
 		INFO.Println("Failed to get Caller information to look up Validation key")
 	}
 
-	// Format key value for display
-	var keyFormatted string
-	if key == "" {
-		keyFormatted = "Field"
-	} else {
-		var keyWords []string
-		for _, character := range key {
-			if unicode.IsUpper(character) {
-				keyWords = append(keyWords, " ")
-			}
-			keyWords = append(keyWords, strings.ToLower(string(character)))
-		}
-		keyWords[0] = strings.ToUpper(keyWords[0])
-		keyFormatted = strings.Join(keyWords, "")
-	}
-
 	// Add the error to the validation context.
 	err := &ValidationError{
-		Message: fmt.Sprintf("%s %s", keyFormatted, chk.DefaultMessage()),
+		Message: fmt.Sprintf("%s %s", formatFieldName(key), chk.DefaultMessage()),
 		Key:     key,
 	}
 	v.Errors = append(v.Errors, err)
@@ -259,6 +242,24 @@ func restoreValidationErrors(req *http.Request) ([]*ValidationError, error) {
 		})
 	}
 	return errors, err
+}
+
+// Format field name for display
+func formatFieldName(field string) (formattedField string) {
+	if field == "" {
+		formattedField = "Field"
+	} else {
+		var words []rune
+		for _, character := range field {
+			if unicode.IsUpper(character) {
+				words = append(words, rune(' '))
+			}
+			words = append(words, unicode.ToLower(rune(character)))
+		}
+		words[0] = unicode.ToUpper(words[0])
+		formattedField = string(words)
+	}
+	return
 }
 
 // Register default validation keys for all calls to Controller.Validation.Func().
