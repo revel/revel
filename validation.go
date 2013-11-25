@@ -92,7 +92,7 @@ func (r *ValidationResult) Message(message string, args ...interface{}) *Validat
 		if len(args) == 0 {
 			r.Error.Message = message
 		} else {
-			r.Error.Message = fmt.Sprintf(message, args)
+			r.Error.Message = fmt.Sprintf(message, args...)
 		}
 	}
 	return r
