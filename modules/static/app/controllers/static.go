@@ -75,10 +75,10 @@ func (c Static) Serve(prefix, filepath string) revel.Result {
 	file, err := os.Open(fname)
 	if err != nil {
 		if os.IsNotExist(err) {
-			revel.WARN.Printf("File not found (%s): %s ", fname, err)
+			glog.Warningf("File not found (%s): %s ", fname, err)
 			return c.NotFound("File not found")
 		}
-		revel.ERROR.Printf("Error opening '%s': %s", fname, err)
+		glog.Errorf("Error opening '%s': %s", fname, err)
 		return c.RenderError(err)
 	}
 	return c.RenderFile(file, revel.Inline)
