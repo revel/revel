@@ -45,21 +45,23 @@ func CompressFilter(c *Controller, fc []Filter) {
 }
 
 func (c *CompressResponseWriter) prepareHeaders() {
-	mime := c.Header().Get("Content-Type")
-	shouldEncode := false
+	if c.compressionType != "" {
+		responseMime := c.Header().Get("Content-Type")
+		shouldEncode := false
 
-	for _, mimeType := range compressableMimes {
-		if strings.HasPrefix(mime, mimeType) {
-			shouldEncode = true
-			c.Header().Set("Content-Encoding", c.compressionType)
-			c.Header().Del("Content-Length")
-			break
+		for _, compressableMime := range compressableMimes {
+			if responseMime == compressableMime {
+				shouldEncode = true
+				c.Header().Set("Content-Encoding", c.compressionType)
+				c.Header().Del("Content-Length")
+				break
+			}
 		}
-	}
 
-	if !shouldEncode {
-		c.compressWriter = nil
-		c.compressionType = ""
+		if !shouldEncode {
+			c.compressWriter = nil
+			c.compressionType = ""
+		}
 	}
 }
 
