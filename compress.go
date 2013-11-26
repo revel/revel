@@ -48,6 +48,7 @@ func CompressFilter(c *Controller, fc []Filter) {
 func (c *CompressResponseWriter) prepareHeaders() {
 	if c.compressionType != "" {
 		responseMime := c.Header().Get("Content-Type")
+		responseMime = strings.TrimSpace(strings.SplitN(responseMime, ";", 2)[0])
 		shouldEncode := false
 
 		for _, compressableMime := range compressableMimes {
@@ -95,7 +96,6 @@ func (c *CompressResponseWriter) DetectCompressionType(req *Request, resp *Respo
 
 		for _, encoding := range acceptedEncodings {
 			encoding = strings.TrimSpace(encoding)
-			println(encoding)
 			encodingParts := strings.SplitN(encoding, ";", 2)
 
 			// If we are the format "gzip;q=0.8"
