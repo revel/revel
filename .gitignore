@@ -2,3 +2,4 @@ tmp/
 routes/
 test-results/
 revel/revel
+.DS_Store
