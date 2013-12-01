@@ -2,7 +2,6 @@ package mail
 
 import (
 	"bytes"
-	"fmt"
 	"strings"
 	"testing"
 )
@@ -14,7 +13,7 @@ func TestRenderRecipient(t *testing.T) {
 	var b bytes.Buffer
 	message.writeRecipient(&b)
 	recipient := b.String()
-	fmt.Println(recipient)
+
 	if !strings.Contains(recipient, "From: foo@bar.com") {
 		t.Error("Recipient should contains From")
 	}
@@ -50,9 +49,19 @@ func TestRenderRecipientNoReply(t *testing.T) {
 }
 
 func TestRenderPlainAndHtmlText(t *testing.T) {
+	plainBody := "你好 from message1, should show in plain text"
+	htmlBody := "<h2>你好 from message1, should show in html text</h2>"
 	message := &Message{From: "foo@bar.com", To: []string{"bar@foo.com", "abc@test.com"},
-		Subject: "这个是第11封from message1, single connection", PlainBody: bytes.NewBufferString("<h2>你好 from message1, should show in plain text</h2>")}
+		Subject: "这个是第11封from message1, single connection", PlainBody: bytes.NewBufferString(plainBody), HtmlBody: bytes.NewBufferString(htmlBody)}
 
 	b, _ := message.RenderData()
-	fmt.Println(string(b))
+	recipient := string(b)
+
+	if !strings.Contains(recipient, plainBody) {
+		t.Errorf("should has plain body: %s \n", plainBody)
+	}
+
+	if !strings.Contains(recipient, htmlBody) {
+		t.Errorf("should has html body: %s \n", htmlBody)
+	}
 }
