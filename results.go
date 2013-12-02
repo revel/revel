@@ -275,6 +275,10 @@ func (r *BinaryResult) Apply(req *Request, resp *Response) {
 
 	// If we have a ReadSeeker, delegate to http.ServeContent
 	if rs, ok := r.Reader.(io.ReadSeeker); ok {
+		// http.ServeContent doesn't know about response.ContentType, so we set the respective header.
+		if resp.ContentType != "" {
+			resp.Out.Header().Set("Content-Type", resp.ContentType)
+		}
 		http.ServeContent(resp.Out, req.Request, r.Name, r.ModTime, rs)
 	} else {
 		// Else, do a simple io.Copy.
