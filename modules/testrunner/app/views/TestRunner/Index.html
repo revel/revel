@@ -46,8 +46,8 @@ var running = 0;
 
 $("button[test]").click(function() {
 	var button = $(this).addClass("disabled").text("Running");
-	runTest(button);
 	running += 1;
+	runTest(button);
 });
 
 $("button[all-tests]").click(function() {
