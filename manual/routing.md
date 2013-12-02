@@ -97,7 +97,10 @@ The corresponding action would have this signature:
 ## Static Serving
 
 	GET    /public/*filepath            Static.Serve("public")
-	GET    /favicon.ico                 Static.Serve("public", "img/favicon.png")
+	GET    /favicon.ico                 Static.Serve("public","img/favicon.png")
+	
+For the 2 parameters version of Static.Serve, blank spaces are not allowed between
+**"** and **,** due to how encoding/csv works.
 
 For serving directories of static assets, Revel provides the **static** module,
 which contains a single
