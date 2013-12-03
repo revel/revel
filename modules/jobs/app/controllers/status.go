@@ -12,7 +12,8 @@ type Jobs struct {
 }
 
 func (c Jobs) Status() revel.Result {
-	if !strings.HasPrefix(c.Request.RemoteAddr, "127.0.0.1:") {
+	_, ok := c.Request.Header["X-Forwarded-For"]
+	if !ok || !strings.HasPrefix(c.Request.RemoteAddr, "127.0.0.1:") {
 		return c.Forbidden("%s is not local", c.Request.RemoteAddr)
 	}
 	entries := jobs.MainCron.Entries()
