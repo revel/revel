@@ -207,7 +207,6 @@ func (loader *TemplateLoader) Refresh() *Error {
 			}
 
 			var fileStr string
-			var fileBytes []byte
 
 			// addTemplate allows the same template to be added multiple
 			// times with different template names.
@@ -224,8 +223,8 @@ func (loader *TemplateLoader) Refresh() *Error {
 				loader.templatePaths[templateName] = path
 
 				// Load the file if we haven't already
-				if fileBytes == nil {
-					fileBytes, err = ioutil.ReadFile(path)
+				if fileStr == "" {
+					fileBytes, err := ioutil.ReadFile(path)
 					if err != nil {
 						ERROR.Println("Failed reading file:", path)
 						return nil
