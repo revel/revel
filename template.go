@@ -206,64 +206,80 @@ func (loader *TemplateLoader) Refresh() *Error {
 				return nil
 			}
 
-			// Convert template names to use forward slashes, even on Windows.
-			// Lower case the file name for case-insensitive matching
-			templateName := strings.ToLower(path[len(basePath)+1:])
-			if os.PathSeparator == '\\' {
-				templateName = strings.Replace(templateName, `\`, `/`, -1) // `
-			}
+			var fileStr string
 
-			// If we already loaded a template of this name, skip it.
-			if _, ok := loader.templatePaths[templateName]; ok {
-				return nil
-			}
-			loader.templatePaths[templateName] = path
+			// addTemplate allows the same template to be added multiple
+			// times with different template names.
+			addTemplate := func(templateName string) (err error) {
+				// Convert template names to use forward slashes, even on Windows.
+				if os.PathSeparator == '\\' {
+					templateName = strings.Replace(templateName, `\`, `/`, -1) // `
+				}
 
-			fileBytes, err := ioutil.ReadFile(path)
-			if err != nil {
-				ERROR.Println("Failed reading file:", path)
-				return nil
-			}
+				// If we already loaded a template of this name, skip it.
+				if _, ok := loader.templatePaths[templateName]; ok {
+					return nil
+				}
+				loader.templatePaths[templateName] = path
 
-			fileStr := string(fileBytes)
+				// Load the file if we haven't already
+				if fileStr == "" {
+					fileBytes, err := ioutil.ReadFile(path)
+					if err != nil {
+						ERROR.Println("Failed reading file:", path)
+						return nil
+					}
 
-			if templateSet == nil {
-				// Create the template set.  This panics if any of the funcs do not
-				// conform to expectations, so we wrap it in a func and handle those
-				// panics by serving an error page.
-				var funcError *Error
-				func() {
-					defer func() {
-						if err := recover(); err != nil {
-							funcError = &Error{
-								Title:       "Panic (Template Loader)",
-								Description: fmt.Sprintln(err),
+					fileStr = string(fileBytes)
+				}
+
+				if templateSet == nil {
+					// Create the template set.  This panics if any of the funcs do not
+					// conform to expectations, so we wrap it in a func and handle those
+					// panics by serving an error page.
+					var funcError *Error
+					func() {
+						defer func() {
+							if err := recover(); err != nil {
+								funcError = &Error{
+									Title:       "Panic (Template Loader)",
+									Description: fmt.Sprintln(err),
+								}
 							}
+						}()
+						templateSet = template.New(templateName).Funcs(TemplateFuncs)
+						// If alternate delimiters set for the project, change them for this set
+						if splitDelims != nil && basePath == ViewsPath {
+							templateSet.Delims(splitDelims[0], splitDelims[1])
+						} else {
+							// Reset to default otherwise
+							templateSet.Delims("", "")
 						}
+						_, err = templateSet.Parse(fileStr)
 					}()
-					templateSet = template.New(templateName).Funcs(TemplateFuncs)
-					// If alternate delimiters set for the project, change them for this set
+
+					if funcError != nil {
+						return funcError
+					}
+
+				} else {
 					if splitDelims != nil && basePath == ViewsPath {
 						templateSet.Delims(splitDelims[0], splitDelims[1])
 					} else {
-						// Reset to default otherwise
 						templateSet.Delims("", "")
 					}
-					_, err = templateSet.Parse(fileStr)
-				}()
-
-				if funcError != nil {
-					return funcError
+					_, err = templateSet.New(templateName).Parse(fileStr)
 				}
-
-			} else {
-				if splitDelims != nil && basePath == ViewsPath {
-					templateSet.Delims(splitDelims[0], splitDelims[1])
-				} else {
-					templateSet.Delims("", "")
-				}
-				_, err = templateSet.New(templateName).Parse(fileStr)
+				return err
 			}
+
+			templateName := path[len(basePath)+1:]
+
+			// Lower case the file name for case-insensitive matching
+			lowerCaseTemplateName := strings.ToLower(templateName)
+
+			err = addTemplate(templateName)
+			err = addTemplate(lowerCaseTemplateName)
 
 			// Store / report the first error encountered.
 			if err != nil && loader.compileError == nil {
