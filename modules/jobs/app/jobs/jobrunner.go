@@ -26,7 +26,7 @@ type Func func()
 
 func (r Func) Run() { r() }
 
-func Schedule(spec string, job cron.Job) {
+func Schedule(spec string, job cron.Job) error {
 	// Look to see if given spec is a key from the Config.
 	if strings.HasPrefix(spec, "cron.") {
 		confSpec, found := revel.Config.String(spec)
@@ -35,7 +35,12 @@ func Schedule(spec string, job cron.Job) {
 		}
 		spec = confSpec
 	}
-	MainCron.Schedule(cron.Parse(spec), New(job))
+	sched, err := cron.Parse(spec)
+	if err != nil {
+		return err
+	}
+	MainCron.Schedule(sched, New(job))
+	return nil
 }
 
 // Run the given job at a fixed interval.
