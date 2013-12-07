@@ -42,9 +42,9 @@ This command does a couple things:
 
 The Revel command line tool is how you build, run, and package Revel applications.
 
-Use `go get` to install it:
+Use `go install` to install it:
 
-	go get github.com/robfig/revel/revel
+	go install github.com/robfig/revel/revel
 
 Then, ensure the $GOPATH/bin directory is in your PATH so that you can reference the command from anywhere.
 
