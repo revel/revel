@@ -65,6 +65,16 @@ func (t *TestSuite) Get(path string) {
 	t.MakeRequestSession(req)
 }
 
+// Issue a DELETE request to the given path and store the result in Request and
+// RequestBody.
+func (t *TestSuite) Delete(path string) {
+	req, err := http.NewRequest("DELETE", t.BaseUrl()+path, nil)
+	if err != nil {
+		panic(err)
+	}
+	t.MakeRequestSession(req)
+}
+
 // Issue a POST request to the given path, sending the given Content-Type and
 // data, and store the result in Request and RequestBody.  "data" may be nil.
 func (t *TestSuite) Post(path string, contentType string, reader io.Reader) {
