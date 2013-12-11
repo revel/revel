@@ -15,7 +15,7 @@ type Mailer struct {
 	Password string
 	Host     string    // This is optional, only used if you want to tell smtp server your hostname
 	Auth     smtp.Auth // This is optional, only used if Authentication is not plain
-	Sender   *Sender   // This is optional, only used if the From/ReplyTo does not specified in the message
+	Sender   *Sender   // This is optional, only used if the From/ReplyTo is not specified in the message
 }
 
 type Sender struct {
