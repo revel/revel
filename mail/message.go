@@ -59,7 +59,7 @@ func (m *Message) RenderData() (data []byte, err error) {
 	return
 }
 
-// RenderTemplate renders the message body from the template and input parameters, the change is inline the message
+// RenderTemplate renders the message body from the template and input parameters
 func (m *Message) RenderTemplate(templatePath string, args map[string]interface{}) error {
 	m.HtmlBody = m.renderViewTemplate(templatePath+".html", args)
 	m.PlainBody = m.renderViewTemplate(templatePath+".txt", args)

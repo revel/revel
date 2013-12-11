@@ -58,10 +58,10 @@ func TestRenderPlainAndHtmlText(t *testing.T) {
 	recipient := string(b)
 
 	if !strings.Contains(recipient, plainBody) {
-		t.Errorf("should has plain body: %s \n", plainBody)
+		t.Errorf("should have plain body: %s \n", plainBody)
 	}
 
 	if !strings.Contains(recipient, htmlBody) {
-		t.Errorf("should has html body: %s \n", htmlBody)
+		t.Errorf("should have html body: %s \n", htmlBody)
 	}
 }
