@@ -166,8 +166,8 @@ should be called:
 
 <pre class="prettyprint lang-go">
 var myBinder = revel.Binder{
-	Bind: func(params *Params, name string, typ reflect.Type) reflect.Value {...},
-	Unbind: Unbind func(output map[string]string, name string, val interface{}) {...},
+	Bind: func(params *revel.Params, name string, typ reflect.Type) reflect.Value {...},
+	Unbind: func(output map[string]string, name string, val interface{}) {...},
 }
 
 func init() {
