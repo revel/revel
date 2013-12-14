@@ -15,7 +15,7 @@ All request parameters are collected into a single `Params` object.  That includ
 * Form values (Multipart or not)
 * File uploads
 
-This is the definition ([godoc](../docs/godoc/binder.html)):
+This is the definition ([godoc](../docs/godoc/params.html)):
 
 <pre class="prettyprint lang-go">
 type Params struct {
@@ -165,8 +165,9 @@ It need only implement the [binder interface](../docs/godoc/binder.html#Binder) 
 should be called:
 
 <pre class="prettyprint lang-go">
-func myBinder(params Params, name string, typ reflect.Type) reflect.Value {
-	...
+var myBinder = revel.Binder{
+	Bind: func(params *Params, name string, typ reflect.Type) reflect.Value {...},
+	Unbind: Unbind func(output map[string]string, name string, val interface{}) {...},
 }
 
 func init() {
