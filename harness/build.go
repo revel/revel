@@ -11,6 +11,7 @@ import (
 	"regexp"
 	"runtime"
 	"strconv"
+	"strings"
 	"text/template"
 )
 
@@ -66,7 +67,11 @@ func Build() (app *App, compileError *revel.Error) {
 
 	gotten := make(map[string]struct{})
 	for {
+		appVersion := getAppVersion()
+		versionLinkerFlags := fmt.Sprintf("-X %s/app.APP_VERSION \"%s\"", revel.ImportPath, appVersion)
+
 		buildCmd := exec.Command(goPath, "build",
+			"-ldflags", versionLinkerFlags,
 			"-tags", buildTags,
 			"-o", binName, path.Join(revel.ImportPath, "app", "tmp"))
 		revel.TRACE.Println("Exec:", buildCmd.Args)
@@ -104,6 +109,33 @@ func Build() (app *App, compileError *revel.Error) {
 	}
 	revel.ERROR.Fatalf("Not reachable")
 	return nil, nil
+}
+
+// Try to define a version string for the compiled app
+// The following is tried (first match returns):
+// - Read a version explicitly specified in the APP_VERSION environment
+//   variable
+// - Read the output of "git describe" if the source is in a git repository
+// If no version can be determined, an empty string is returned.
+func getAppVersion() string {
+	if version := os.Getenv("APP_VERSION"); version != "" {
+		return version
+	}
+
+	if gitPath, err := exec.LookPath("git"); err == nil {
+		gitCmd := exec.Command(gitPath, "describe", "--always", "--dirty")
+		revel.TRACE.Println("Exec:", gitCmd.Args)
+		output, err := gitCmd.Output()
+
+		if err != nil {
+			revel.WARN.Println("Cannot determine git repository version:", err)
+			return ""
+		}
+
+		return "git-" + strings.TrimSpace(string(output))
+	}
+
+	return ""
 }
 
 func cleanSource(dirs ...string) {
