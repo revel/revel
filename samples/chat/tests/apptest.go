@@ -13,7 +13,7 @@ func (t *ApplicationTest) Before() {
 func (t *ApplicationTest) TestThatIndexPageWorks() {
 	t.Get("/")
 	t.AssertOk()
-	t.AssertContentType("text/html")
+	t.AssertContentType("text/html; charset=utf-8")
 }
 
 func (t *ApplicationTest) After() {

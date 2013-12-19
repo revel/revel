@@ -5,9 +5,11 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"math/rand"
 	"os"
 	"strings"
 	"text/template"
+	"time"
 )
 
 // Cribbed from the genius organization of the "go" command.
@@ -115,4 +117,8 @@ func tmpl(w io.Writer, text string, data interface{}) {
 	if err := t.Execute(w, data); err != nil {
 		panic(err)
 	}
+}
+
+func init() {
+	rand.Seed(time.Now().UnixNano())
 }

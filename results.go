@@ -102,7 +102,7 @@ type PlaintextErrorResult struct {
 
 // This method is used when the template loader or error template is not available.
 func (r PlaintextErrorResult) Apply(req *Request, resp *Response) {
-	resp.WriteHeader(http.StatusInternalServerError, "text/plain")
+	resp.WriteHeader(http.StatusInternalServerError, "text/plain; charset=utf-8")
 	resp.Out.Write([]byte(r.Error.Error()))
 }
 
@@ -134,7 +134,7 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
 	// (In a dev mode, always render to a temporary buffer first to avoid having
 	// error pages distorted by HTML already written)
 	if chunked && !DevMode {
-		resp.WriteHeader(http.StatusOK, "text/html")
+		resp.WriteHeader(http.StatusOK, "text/html; charset=utf-8")
 		r.render(req, resp, out)
 		return
 	}
@@ -148,7 +148,7 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
 	if !chunked {
 		resp.Out.Header().Set("Content-Length", strconv.Itoa(b.Len()))
 	}
-	resp.WriteHeader(http.StatusOK, "text/html")
+	resp.WriteHeader(http.StatusOK, "text/html; charset=utf-8")
 	b.WriteTo(out)
 }
 
@@ -185,7 +185,7 @@ type RenderHtmlResult struct {
 }
 
 func (r RenderHtmlResult) Apply(req *Request, resp *Response) {
-	resp.WriteHeader(http.StatusOK, "text/html")
+	resp.WriteHeader(http.StatusOK, "text/html; charset=utf-8")
 	resp.Out.Write([]byte(r.html))
 }
 
@@ -209,12 +209,12 @@ func (r RenderJsonResult) Apply(req *Request, resp *Response) {
 	}
 
 	if r.callback == "" {
-		resp.WriteHeader(http.StatusOK, "application/json")
+		resp.WriteHeader(http.StatusOK, "application/json; charset=utf-8")
 		resp.Out.Write(b)
 		return
 	}
 
-	resp.WriteHeader(http.StatusOK, "application/javascript")
+	resp.WriteHeader(http.StatusOK, "application/javascript; charset=utf-8")
 	resp.Out.Write([]byte(r.callback + "("))
 	resp.Out.Write(b)
 	resp.Out.Write([]byte(");"))
@@ -238,7 +238,7 @@ func (r RenderXmlResult) Apply(req *Request, resp *Response) {
 		return
 	}
 
-	resp.WriteHeader(http.StatusOK, "application/xml")
+	resp.WriteHeader(http.StatusOK, "application/xml; charset=utf-8")
 	resp.Out.Write(b)
 }
 
@@ -247,7 +247,7 @@ type RenderTextResult struct {
 }
 
 func (r RenderTextResult) Apply(req *Request, resp *Response) {
-	resp.WriteHeader(http.StatusOK, "text/plain")
+	resp.WriteHeader(http.StatusOK, "text/plain; charset=utf-8")
 	resp.Out.Write([]byte(r.text))
 }
 
@@ -275,6 +275,10 @@ func (r *BinaryResult) Apply(req *Request, resp *Response) {
 
 	// If we have a ReadSeeker, delegate to http.ServeContent
 	if rs, ok := r.Reader.(io.ReadSeeker); ok {
+		// http.ServeContent doesn't know about response.ContentType, so we set the respective header.
+		if resp.ContentType != "" {
+			resp.Out.Header().Set("Content-Type", resp.ContentType)
+		}
 		http.ServeContent(resp.Out, req.Request, r.Name, r.ModTime, rs)
 	} else {
 		// Else, do a simple io.Copy.

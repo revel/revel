@@ -185,7 +185,6 @@ func (loader *TemplateLoader) Refresh() *Error {
 	// Walk through the template loader's paths and build up a template set.
 	var templateSet *template.Template = nil
 	for _, basePath := range loader.paths {
-
 		// Walk only returns an error if the template loader is completely unusable
 		// (namely, if one of the TemplateFuncs does not have an acceptable signature).
 		funcErr := filepath.Walk(basePath, func(path string, info os.FileInfo, err error) error {
@@ -194,7 +193,7 @@ func (loader *TemplateLoader) Refresh() *Error {
 				return nil
 			}
 
-			// Walk into directories.
+			// Walk into watchable directories
 			if info.IsDir() {
 				if !loader.WatchDir(info) {
 					return filepath.SkipDir
@@ -202,67 +201,85 @@ func (loader *TemplateLoader) Refresh() *Error {
 				return nil
 			}
 
+			// Only add watchable
 			if !loader.WatchFile(info.Name()) {
 				return nil
 			}
 
-			// Convert template names to use forward slashes, even on Windows.
-			templateName := path[len(basePath)+1:]
-			if os.PathSeparator == '\\' {
-				templateName = strings.Replace(templateName, `\`, `/`, -1) // `
-			}
+			var fileStr string
 
-			// If we already loaded a template of this name, skip it.
-			if _, ok := loader.templatePaths[templateName]; ok {
-				return nil
-			}
-			loader.templatePaths[templateName] = path
+			// addTemplate allows the same template to be added multiple
+			// times with different template names.
+			addTemplate := func(templateName string) (err error) {
+				// Convert template names to use forward slashes, even on Windows.
+				if os.PathSeparator == '\\' {
+					templateName = strings.Replace(templateName, `\`, `/`, -1) // `
+				}
 
-			fileBytes, err := ioutil.ReadFile(path)
-			if err != nil {
-				ERROR.Println("Failed reading file:", path)
-				return nil
-			}
+				// If we already loaded a template of this name, skip it.
+				if _, ok := loader.templatePaths[templateName]; ok {
+					return nil
+				}
+				loader.templatePaths[templateName] = path
 
-			fileStr := string(fileBytes)
+				// Load the file if we haven't already
+				if fileStr == "" {
+					fileBytes, err := ioutil.ReadFile(path)
+					if err != nil {
+						ERROR.Println("Failed reading file:", path)
+						return nil
+					}
 
-			if templateSet == nil {
-				// Create the template set.  This panics if any of the funcs do not
-				// conform to expectations, so we wrap it in a func and handle those
-				// panics by serving an error page.
-				var funcError *Error
-				func() {
-					defer func() {
-						if err := recover(); err != nil {
-							funcError = &Error{
-								Title:       "Panic (Template Loader)",
-								Description: fmt.Sprintln(err),
+					fileStr = string(fileBytes)
+				}
+
+				if templateSet == nil {
+					// Create the template set.  This panics if any of the funcs do not
+					// conform to expectations, so we wrap it in a func and handle those
+					// panics by serving an error page.
+					var funcError *Error
+					func() {
+						defer func() {
+							if err := recover(); err != nil {
+								funcError = &Error{
+									Title:       "Panic (Template Loader)",
+									Description: fmt.Sprintln(err),
+								}
 							}
+						}()
+						templateSet = template.New(templateName).Funcs(TemplateFuncs)
+						// If alternate delimiters set for the project, change them for this set
+						if splitDelims != nil && basePath == ViewsPath {
+							templateSet.Delims(splitDelims[0], splitDelims[1])
+						} else {
+							// Reset to default otherwise
+							templateSet.Delims("", "")
 						}
+						_, err = templateSet.Parse(fileStr)
 					}()
-					templateSet = template.New(templateName).Funcs(TemplateFuncs)
-					// If alternate delimiters set for the project, change them for this set
+
+					if funcError != nil {
+						return funcError
+					}
+
+				} else {
 					if splitDelims != nil && basePath == ViewsPath {
 						templateSet.Delims(splitDelims[0], splitDelims[1])
 					} else {
-						// Reset to default otherwise
 						templateSet.Delims("", "")
 					}
-					_, err = templateSet.Parse(fileStr)
-				}()
-
-				if funcError != nil {
-					return funcError
+					_, err = templateSet.New(templateName).Parse(fileStr)
 				}
-
-			} else {
-				if splitDelims != nil && basePath == ViewsPath {
-					templateSet.Delims(splitDelims[0], splitDelims[1])
-				} else {
-					templateSet.Delims("", "")
-				}
-				_, err = templateSet.New(templateName).Parse(fileStr)
+				return err
 			}
+
+			templateName := path[len(basePath)+1:]
+
+			// Lower case the file name for case-insensitive matching
+			lowerCaseTemplateName := strings.ToLower(templateName)
+
+			err = addTemplate(templateName)
+			err = addTemplate(lowerCaseTemplateName)
 
 			// Store / report the first error encountered.
 			if err != nil && loader.compileError == nil {
@@ -328,6 +345,8 @@ func parseTemplateError(err error) (templateName string, line int, description s
 // An Error is returned if there was any problem with any of the templates.  (In
 // this case, if a template is returned, it may still be usable.)
 func (loader *TemplateLoader) Template(name string) (Template, error) {
+	// Lower case the file name to support case-insensitive matching
+	name = strings.ToLower(name)
 	// Look up and return the template.
 	tmpl := loader.templateSet.Lookup(name)
 

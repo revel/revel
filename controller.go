@@ -48,7 +48,7 @@ func NewController(req *Request, resp *Response) *Controller {
 
 func (c *Controller) FlashParams() {
 	for key, vals := range c.Params.Values {
-		c.Flash.Out[key] = vals[0]
+		c.Flash.Out[key] = strings.Join(vals, ",")
 	}
 }
 
@@ -136,6 +136,11 @@ func (c *Controller) RenderText(text string, objs ...interface{}) Result {
 		finalText = fmt.Sprintf(text, objs...)
 	}
 	return &RenderTextResult{finalText}
+}
+
+// Render html in response
+func (c *Controller) RenderHtml(html string) Result {
+	return &RenderHtmlResult{html}
 }
 
 // Render a "todo" indicating that the action isn't done yet.
