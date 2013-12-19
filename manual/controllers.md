@@ -4,13 +4,15 @@ layout: manual
 ---
 
 A **Controller** is any type that embeds `*revel.Controller` (directly or indirectly).
-
+    
 Typically:
+{% raw %}
 <pre class="prettyprint lang-go">
 type AppController struct {
   *revel.Controller
 }
 </pre>
+{% endraw %}
 
 (`*revel.Controller` must be embedded as the first type in your struct)
 
@@ -18,6 +20,7 @@ The `revel.Controller` is the context for the request.  It contains the request
 and response data.  Please refer to [the godoc](../docs/godoc/controller.html)
 for the full story, but here is the definition (along with definitions of helper types):
 
+{% raw %}
 <pre class="prettyprint lang-go">
 type Controller struct {
     Name          string          // The controller name, e.g. "Application"
@@ -61,7 +64,7 @@ type Response struct {
 	Out http.ResponseWriter
 }
 </pre>
-
+{% endraw %}
 As part of handling a HTTP request, Revel instantiates an instance of your
 Controller, and it sets all of these properties on the embedded
 `revel.Controller`.  Therefore, Revel does not share Controller instances between
