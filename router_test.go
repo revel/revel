@@ -204,7 +204,7 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 func TestRouteMatches(t *testing.T) {
 	BasePath = "/BasePath"
 	router := NewRouter("")
-	router.Routes, _ = parseRoutes("", TEST_ROUTES, false)
+	router.Routes, _ = parseRoutes("", "", TEST_ROUTES, false)
 	router.updateTree()
 	for req, expected := range routeMatchTestCases {
 		t.Log("Routing:", req.Method, req.URL)
@@ -276,7 +276,7 @@ var reverseRoutingTestCases = map[*ReverseRouteArgs]*ActionDefinition{
 
 func TestReverseRouting(t *testing.T) {
 	router := NewRouter("")
-	router.Routes, _ = parseRoutes("", TEST_ROUTES, false)
+	router.Routes, _ = parseRoutes("", "", TEST_ROUTES, false)
 	for routeArgs, expected := range reverseRoutingTestCases {
 		actual := router.Reverse(routeArgs.action, routeArgs.args)
 		if !eq(t, "Found route", actual != nil, expected != nil) {
@@ -291,7 +291,7 @@ func TestReverseRouting(t *testing.T) {
 
 func BenchmarkRouter(b *testing.B) {
 	router := NewRouter("")
-	router.Routes, _ = parseRoutes("", TEST_ROUTES, false)
+	router.Routes, _ = parseRoutes("", "", TEST_ROUTES, false)
 	router.updateTree()
 	b.ResetTimer()
 	for i := 0; i < b.N/len(routeMatchTestCases); i++ {
