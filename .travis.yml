@@ -2,6 +2,7 @@ language: go
 go: 1.1
 services:
   - memcache # github.com/robfig/revel/cache
+  - redis-server
 install:
   - export PATH=$PATH:$HOME/gopath/bin
   # Annoyingly, we can not use go get revel/... because references to app/routes package fail
