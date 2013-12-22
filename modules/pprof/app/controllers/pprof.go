@@ -10,13 +10,6 @@ type Pprof struct {
 	*revel.Controller
 }
 
-const (
-	index   = 0
-	profile = 1
-	symbol  = 2
-	cmdline = 3
-)
-
 // The PprofHandler type makes it easy to call the net/http/pprof handler methods
 // since they all have the same method signature
 type PprofHandler func(http.ResponseWriter, *http.Request)
