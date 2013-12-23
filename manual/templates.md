@@ -163,6 +163,18 @@ Example:
 
 {% endraw %}
 
+### raw
+
+Prints raw, unescaped, text.
+
+Example:
+
+{% raw %}
+
+	<div class="body">{{raw .blogBody}}</div>
+
+{% endraw %}
+
 ## Including
 
 Go Templates allow you to compose templates by inclusion.  For example:
