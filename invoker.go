@@ -23,7 +23,7 @@ func ActionInvoker(c *Controller, _ []Filter) {
 		if arg.Type == websocketType {
 			boundArg = reflect.ValueOf(c.Request.Websocket)
 		} else {
-			TRACE.Println("Binding:", arg.Name, "as", arg.Type)
+			TRACE.Println("Binding:", TRACE_COLOR(arg.Name), "as", TRACE_COLOR(arg.Type))
 			boundArg = Bind(c.Params, arg.Name, arg.Type)
 		}
 		methodArgs = append(methodArgs, boundArg)

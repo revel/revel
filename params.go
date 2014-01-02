@@ -37,7 +37,7 @@ func ParseParams(params *Params, req *Request) {
 	case "application/x-www-form-urlencoded":
 		// Typical form.
 		if err := req.ParseForm(); err != nil {
-			WARN.Println("Error parsing request body:", err)
+			WARN.Println("Error parsing request body:", WARN_COLOR(err))
 		} else {
 			params.Form = req.Form
 		}
@@ -46,7 +46,7 @@ func ParseParams(params *Params, req *Request) {
 		// Multipart form.
 		// TODO: Extract the multipart form param so app can set it.
 		if err := req.ParseMultipartForm(32 << 20 /* 32 MB */); err != nil {
-			WARN.Println("Error parsing request body:", err)
+			WARN.Println("Error parsing request body:", WARN_COLOR(err))
 		} else {
 			params.Form = req.MultipartForm.Value
 			params.Files = req.MultipartForm.File
@@ -118,14 +118,14 @@ func ParamsFilter(c *Controller, fc []Filter) {
 		if c.Request.MultipartForm != nil {
 			err := c.Request.MultipartForm.RemoveAll()
 			if err != nil {
-				WARN.Println("Error removing temporary files:", err)
+				WARN.Println("Error removing temporary files:", WARN_COLOR(err))
 			}
 		}
 
 		for _, tmpFile := range c.Params.tmpFiles {
 			err := os.Remove(tmpFile.Name())
 			if err != nil {
-				WARN.Println("Could not remove upload temp file:", err)
+				WARN.Println("Could not remove upload temp file:", WARN_COLOR(err))
 			}
 		}
 	}()

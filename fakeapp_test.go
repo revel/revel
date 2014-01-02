@@ -52,7 +52,7 @@ func (c Static) Serve(prefix, filepath string) Result {
 	if os.IsNotExist(err) {
 		return c.NotFound("")
 	} else if err != nil {
-		WARN.Printf("Problem opening file (%s): %s ", fname, err)
+		WARN.Printf("Problem opening file (%s): %s ", WARN_COLOR(fname), WARN_COLOR(err))
 		return c.NotFound("This was found but not sure why we couldn't open it.")
 	}
 	return c.RenderFile(file, "")

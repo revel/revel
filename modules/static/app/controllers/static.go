@@ -52,32 +52,32 @@ func (c Static) Serve(prefix, filepath string) revel.Result {
 	basePathPrefix := fpath.Join(basePath, fpath.FromSlash(prefix))
 	fname := fpath.Join(basePathPrefix, fpath.FromSlash(filepath))
 	if !strings.HasPrefix(fname, basePathPrefix) {
-		revel.WARN.Printf("Attempted to read file outside of base path: %s", fname)
+		revel.WARN.Printf("Attempted to read file outside of base path: %s", revel.WARN_COLOR(fname))
 		return c.NotFound("")
 	}
 
 	finfo, err := os.Stat(fname)
 	if err != nil {
 		if os.IsNotExist(err) || err.(*os.PathError).Err == syscall.ENOTDIR {
-			revel.WARN.Printf("File not found (%s): %s ", fname, err)
+			revel.WARN.Printf("File not found (%s): %s ", revel.WARN_COLOR(fname), revel.WARN_COLOR(err))
 			return c.NotFound("File not found")
 		}
-		revel.ERROR.Printf("Error trying to get fileinfo for '%s': %s", fname, err)
+		revel.ERROR.Printf("Error trying to get fileinfo for '%s': %s", revel.ERROR_COLOR(fname), revel.ERROR_COLOR(err))
 		return c.RenderError(err)
 	}
 
 	if finfo.Mode().IsDir() {
-		revel.WARN.Printf("Attempted directory listing of %s", fname)
+		revel.WARN.Printf("Attempted directory listing of %s", revel.WARN_COLOR(fname))
 		return c.Forbidden("Directory listing not allowed")
 	}
 
 	file, err := os.Open(fname)
 	if err != nil {
 		if os.IsNotExist(err) {
-			revel.WARN.Printf("File not found (%s): %s ", fname, err)
+			revel.WARN.Printf("File not found (%s): %s ", revel.WARN_COLOR(fname), revel.WARN_COLOR(err))
 			return c.NotFound("File not found")
 		}
-		revel.ERROR.Printf("Error opening '%s': %s", fname, err)
+		revel.ERROR.Printf("Error opening '%s': %s", revel.ERROR_COLOR(fname), revel.ERROR_COLOR(err))
 		return c.RenderError(err)
 	}
 	return c.RenderFile(file, revel.Inline)

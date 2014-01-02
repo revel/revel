@@ -87,12 +87,12 @@ func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
 				c.RenderArgs[renderArgNames[i]] = extraRenderArg
 			}
 		} else {
-			ERROR.Println(len(renderArgNames), "RenderArg names found for",
-				len(extraRenderArgs), "extra RenderArgs")
+			ERROR.Println(ERROR_COLOR(len(renderArgNames)), "RenderArg names found for",
+				ERROR_COLOR(len(extraRenderArgs)), "extra RenderArgs")
 		}
 	} else {
-		ERROR.Println("No RenderArg names found for Render call on line", line,
-			"(Method", c.MethodType.Name, ")")
+		ERROR.Println("No RenderArg names found for Render call on line", ERROR_COLOR(line),
+			"(Method", ERROR_COLOR(c.MethodType.Name), ")")
 	}
 
 	return c.RenderTemplate(c.Name + "/" + c.MethodType.Name + "." + c.Request.Format)
@@ -184,7 +184,7 @@ func (c *Controller) RenderFile(file *os.File, delivery ContentDisposition) Resu
 		fileInfo, err = file.Stat()
 	)
 	if err != nil {
-		WARN.Println("RenderFile error:", err)
+		WARN.Println("RenderFile error:", WARN_COLOR(err))
 	}
 	if fileInfo != nil {
 		modtime = fileInfo.ModTime()
@@ -365,5 +365,5 @@ func RegisterController(c interface{}, methods []*MethodType) {
 		Methods:           methods,
 		ControllerIndexes: findControllers(elem),
 	}
-	TRACE.Printf("Registered controller: %s", elem.Name())
+	TRACE.Printf("Registered controller: %s", TRACE_COLOR(elem.Name()))
 }

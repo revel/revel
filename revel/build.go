@@ -81,7 +81,7 @@ func buildApp(args []string) {
 			}
 			modulePath, err := revel.ResolveImportPath(moduleImportPath)
 			if err != nil {
-				revel.ERROR.Fatalln("Failed to load module %s: %s", key[len("module."):], err)
+				revel.ERROR.Fatalln("Failed to load module %s: %s", revel.ERROR_COLOR(key[len("module."):]), revel.ERROR_COLOR(err))
 			}
 			modulePaths[moduleImportPath] = modulePath
 		}

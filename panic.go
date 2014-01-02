@@ -20,12 +20,12 @@ func PanicFilter(c *Controller, fc []Filter) {
 func handleInvocationPanic(c *Controller, err interface{}) {
 	error := NewErrorFromPanic(err)
 	if error == nil {
-		ERROR.Print(err, "\n", string(debug.Stack()))
+		ERROR.Print(ERROR_COLOR(err), "\n", ERROR_COLOR(string(debug.Stack())))
 		c.Response.Out.WriteHeader(500)
 		c.Response.Out.Write(debug.Stack())
 		return
 	}
 
-	ERROR.Print(err, "\n", error.Stack)
+	ERROR.Print(ERROR_COLOR(err), "\n", ERROR_COLOR(error.Stack))
 	c.Result = c.RenderError(error)
 }

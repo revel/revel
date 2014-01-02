@@ -40,22 +40,22 @@ func MessageLanguages() []string {
 // When either an unknown locale or message is detected, a specially formatted string is returned.
 func Message(locale, message string, args ...interface{}) string {
 	language, region := parseLocale(locale)
-	TRACE.Printf("Resolving message '%s' for language '%s' and region '%s'", message, language, region)
+	TRACE.Printf("Resolving message '%s' for language '%s' and region '%s'", TRACE_COLOR(message), TRACE_COLOR(language), TRACE_COLOR(region))
 
 	messageConfig, knownLanguage := messages[language]
 	if !knownLanguage {
-		TRACE.Printf("Unsupported language for locale '%s' and message '%s', trying default language", locale, message)
+		TRACE.Printf("Unsupported language for locale '%s' and message '%s', trying default language", TRACE_COLOR(locale), TRACE_COLOR(message))
 
 		if defaultLanguage, found := Config.String(defaultLanguageOption); found {
-			TRACE.Printf("Using default language '%s'", defaultLanguage)
+			TRACE.Printf("Using default language '%s'", TRACE_COLOR(defaultLanguage))
 
 			messageConfig, knownLanguage = messages[defaultLanguage]
 			if !knownLanguage {
-				WARN.Printf("Unsupported default language for locale '%s' and message '%s'", defaultLanguage, message)
+				WARN.Printf("Unsupported default language for locale '%s' and message '%s'", WARN_COLOR(defaultLanguage), WARN_COLOR(message))
 				return fmt.Sprintf(unknownValueFormat, message)
 			}
 		} else {
-			WARN.Printf("Unable to find default language option (%s); messages for unsupported locales will never be translated", defaultLanguageOption)
+			WARN.Printf("Unable to find default language option (%s); messages for unsupported locales will never be translated", WARN_COLOR(defaultLanguageOption))
 			return fmt.Sprintf(unknownValueFormat, message)
 		}
 	}
@@ -64,12 +64,12 @@ func Message(locale, message string, args ...interface{}) string {
 	// try to resolve message in DEFAULT if it did not find it in the given section.
 	value, error := messageConfig.String(region, message)
 	if error != nil {
-		WARN.Printf("Unknown message '%s' for locale '%s'", message, locale)
+		WARN.Printf("Unknown message '%s' for locale '%s'", WARN_COLOR(message), WARN_COLOR(locale))
 		return fmt.Sprintf(unknownValueFormat, message)
 	}
 
 	if len(args) > 0 {
-		TRACE.Printf("Arguments detected, formatting '%s' with %v", value, args)
+		TRACE.Printf("Arguments detected, formatting '%s' with %v", TRACE_COLOR(value), TRACE_COLOR(args))
 		value = fmt.Sprintf(value, args...)
 	}
 
@@ -90,7 +90,7 @@ func loadMessages(path string) {
 	messages = make(map[string]*config.Config)
 
 	if error := filepath.Walk(path, loadMessageFile); error != nil && !os.IsNotExist(error) {
-		ERROR.Println("Error reading messages files:", error)
+		ERROR.Println("Error reading messages files:", ERROR_COLOR(error))
 	}
 }
 
@@ -112,15 +112,15 @@ func loadMessageFile(path string, info os.FileInfo, osError error) error {
 			// If we have already parsed a message file for this locale, merge both
 			if _, exists := messages[locale]; exists {
 				messages[locale].Merge(config)
-				TRACE.Printf("Successfully merged messages for locale '%s'", locale)
+				TRACE.Printf("Successfully merged messages for locale '%s'", TRACE_COLOR(locale))
 			} else {
 				messages[locale] = config
 			}
 
-			TRACE.Println("Successfully loaded messages from file", info.Name())
+			TRACE.Println("Successfully loaded messages from file", TRACE_COLOR(info.Name()))
 		}
 	} else {
-		TRACE.Printf("Ignoring file %s because it did not have a valid extension", info.Name())
+		TRACE.Printf("Ignoring file %s because it did not have a valid extension", TRACE_COLOR(info.Name()))
 	}
 
 	return nil
@@ -144,10 +144,10 @@ func init() {
 
 func I18nFilter(c *Controller, fc []Filter) {
 	if foundCookie, cookieValue := hasLocaleCookie(c.Request); foundCookie {
-		TRACE.Printf("Found locale cookie value: %s", cookieValue)
+		TRACE.Printf("Found locale cookie value: %s", TRACE_COLOR(cookieValue))
 		setCurrentLocaleControllerArguments(c, cookieValue)
 	} else if foundHeader, headerValue := hasAcceptLanguageHeader(c.Request); foundHeader {
-		TRACE.Printf("Found Accept-Language header value: %s", headerValue)
+		TRACE.Printf("Found Accept-Language header value: %s", TRACE_COLOR(headerValue))
 		setCurrentLocaleControllerArguments(c, headerValue)
 	} else {
 		TRACE.Println("Unable to find locale in cookie or header, using empty string")
@@ -181,7 +181,7 @@ func hasLocaleCookie(request *Request) (bool, string) {
 		if cookie, error := request.Cookie(name); error == nil {
 			return true, cookie.Value
 		} else {
-			TRACE.Printf("Unable to read locale cookie with name '%s': %s", name, error.Error())
+			TRACE.Printf("Unable to read locale cookie with name '%s': %s", TRACE_COLOR(name), TRACE_COLOR(error.Error()))
 		}
 	}
 

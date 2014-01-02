@@ -4,6 +4,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/agtorre/gocolorize"
 	"io"
 	"math/rand"
 	"os"
@@ -37,7 +38,7 @@ var commands = []*Command{
 }
 
 func main() {
-	fmt.Fprintf(os.Stdout, header)
+	fmt.Fprintf(os.Stdout, gocolorize.NewColor("blue").Paint(header))
 	flag.Usage = func() { usage(1) }
 	flag.Parse()
 	args := flag.Args()

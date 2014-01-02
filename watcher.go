@@ -45,7 +45,7 @@ func NewWatcher() *Watcher {
 func (w *Watcher) Listen(listener Listener, roots ...string) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		ERROR.Fatal(err)
+		ERROR.Fatal(ERROR_COLOR(err))
 	}
 
 	// Replace the unbuffered Event channel with a buffered one.
@@ -59,7 +59,7 @@ func (w *Watcher) Listen(listener Listener, roots ...string) {
 	for _, p := range roots {
 		fi, err := os.Stat(p)
 		if err != nil {
-			ERROR.Println("Failed to stat watched path", p, ":", err)
+			ERROR.Println("Failed to stat watched path", ERROR_COLOR(p), ":", ERROR_COLOR(err))
 			continue
 		}
 
@@ -67,16 +67,16 @@ func (w *Watcher) Listen(listener Listener, roots ...string) {
 		if !fi.IsDir() {
 			err = watcher.Watch(p)
 			if err != nil {
-				ERROR.Println("Failed to watch", p, ":", err)
+				ERROR.Println("Failed to watch", ERROR_COLOR(p), ":", ERROR_COLOR(err))
 			}
-			TRACE.Println("Watching:", p)
+			TRACE.Println("Watching:", TRACE_COLOR(p))
 			continue
 		}
 
 		// Else, walk the directory tree.
 		filepath.Walk(p, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
-				ERROR.Println("Error walking path:", err)
+				ERROR.Println("Error walking path", ERROR_COLOR(path), ":", ERROR_COLOR(err))
 				return nil
 			}
 
@@ -89,9 +89,9 @@ func (w *Watcher) Listen(listener Listener, roots ...string) {
 
 				err = watcher.Watch(path)
 				if err != nil {
-					ERROR.Println("Failed to watch", path, ":", err)
+					ERROR.Println("Failed to watch", ERROR_COLOR(path), ":", ERROR_COLOR(err))
 				}
-				TRACE.Println("Watching:", path)
+				TRACE.Println("Watching:", TRACE_COLOR(path))
 			}
 			return nil
 		})

@@ -116,7 +116,7 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
 	// Handle panics when rendering templates.
 	defer func() {
 		if err := recover(); err != nil {
-			ERROR.Println(err)
+			ERROR.Println(ERROR_COLOR(err))
 			PlaintextErrorResult{fmt.Errorf("Template Execution Panic in %s:\n%s",
 				r.Template.Name(), err)}.Apply(req, resp)
 		}
@@ -176,7 +176,7 @@ func (r *RenderTemplateResult) render(req *Request, resp *Response, wr io.Writer
 		SourceLines: templateContent,
 	}
 	resp.Status = 500
-	ERROR.Printf("Template Execution Error (in %s): %s", templateName, description)
+	ERROR.Printf("Template Execution Error (in %s): %s", ERROR_COLOR(templateName), ERROR_COLOR(description))
 	ErrorResult{r.RenderArgs, compileError}.Apply(req, resp)
 }
 
@@ -311,7 +311,7 @@ type RedirectToActionResult struct {
 func (r *RedirectToActionResult) Apply(req *Request, resp *Response) {
 	url, err := getRedirectUrl(r.val)
 	if err != nil {
-		ERROR.Println("Couldn't resolve redirect:", err.Error())
+		ERROR.Println("Couldn't resolve redirect:", ERROR_COLOR(err.Error()))
 		ErrorResult{Error: err}.Apply(req, resp)
 		return
 	}

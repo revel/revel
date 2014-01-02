@@ -130,7 +130,7 @@ func ResolveAcceptLanguage(req *http.Request) AcceptLanguages {
 		if qualifiedRange := strings.Split(languageRange, ";q="); len(qualifiedRange) == 2 {
 			quality, error := strconv.ParseFloat(qualifiedRange[1], 32)
 			if error != nil {
-				WARN.Printf("Detected malformed Accept-Language header quality in '%s', assuming quality is 1", languageRange)
+				WARN.Printf("Detected malformed Accept-Language header quality in '%s', assuming quality is 1", WARN_COLOR(languageRange))
 				acceptLanguages[i] = AcceptLanguage{qualifiedRange[0], 1}
 			} else {
 				acceptLanguages[i] = AcceptLanguage{qualifiedRange[0], float32(quality)}

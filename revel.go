@@ -1,6 +1,7 @@
 package revel
 
 import (
+	"github.com/agtorre/gocolorize"
 	"github.com/robfig/config"
 	"go/build"
 	"io"
@@ -62,11 +63,17 @@ var (
 	// Delimiters to use when rendering templates
 	TemplateDelims string
 
+	//Logger colors
+	TRACE_COLOR = gocolorize.NewColor("magenta").Paint
+	INFO_COLOR  = gocolorize.NewColor("green").Paint
+	WARN_COLOR  = gocolorize.NewColor("yellow").Paint
+	ERROR_COLOR = gocolorize.NewColor("red").Paint
+
 	// Loggers
 	TRACE = log.New(ioutil.Discard, "TRACE ", log.Ldate|log.Ltime|log.Lshortfile)
 	INFO  = log.New(ioutil.Discard, "INFO  ", log.Ldate|log.Ltime|log.Lshortfile)
 	WARN  = log.New(ioutil.Discard, "WARN  ", log.Ldate|log.Ltime|log.Lshortfile)
-	ERROR = log.New(os.Stderr, "ERROR ", log.Ldate|log.Ltime|log.Lshortfile)
+	ERROR = log.New(os.Stderr, ERROR_COLOR("ERROR")+" ", log.Ldate|log.Ltime|log.Lshortfile)
 
 	Initialized bool
 
@@ -205,6 +212,18 @@ func getLogger(name string) *log.Logger {
 
 	prefix, found := Config.String("log." + name + ".prefix")
 	if found {
+		switch name {
+		case "trace":
+			prefix = TRACE_COLOR(prefix)
+		case "info":
+			prefix = INFO_COLOR(prefix)
+		case "warn":
+			prefix = WARN_COLOR(prefix)
+		case "error":
+			prefix = ERROR_COLOR(prefix)
+		default:
+			prefix = prefix
+		}
 		logger.SetPrefix(prefix)
 	}
 
@@ -231,17 +250,17 @@ func findSrcPaths(importPath string) (revelSourcePath, appSourcePath string) {
 	if ContainsString(gopaths, goroot) {
 		ERROR.Fatalf("GOPATH (%s) must not include your GOROOT (%s). "+
 			"Please refer to http://golang.org/doc/code.html to configure your Go environment.",
-			gopaths, goroot)
+			ERROR_COLOR(gopaths), ERROR_COLOR(goroot))
 	}
 
 	appPkg, err := build.Import(importPath, "", build.FindOnly)
 	if err != nil {
-		ERROR.Fatalln("Failed to import", importPath, "with error:", err)
+		ERROR.Fatalln("Failed to import", ERROR_COLOR(importPath), "with error:", ERROR_COLOR(err))
 	}
 
 	revelPkg, err := build.Import(REVEL_IMPORT_PATH, "", build.FindOnly)
 	if err != nil {
-		ERROR.Fatalln("Failed to find Revel with error:", err)
+		ERROR.Fatalln("Failed to find Revel with error:", ERROR_COLOR(err))
 	}
 
 	return revelPkg.SrcRoot, appPkg.SrcRoot
@@ -289,7 +308,7 @@ func addModule(name, importPath, modulePath string) {
 		}
 	}
 
-	INFO.Print("Loaded module ", path.Base(modulePath))
+	INFO.Print("Loaded module ", INFO_COLOR(path.Base(modulePath)))
 
 	// Hack: There is presently no way for the testrunner module to add the
 	// "test" subdirectory to the CodePaths.  So this does it instead.

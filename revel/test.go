@@ -105,7 +105,7 @@ You can add it to a run mode configuration with the following line:
 		errorf("%s", err)
 	}
 	defer cmd.Kill()
-	revel.INFO.Printf("Testing %s (%s) in %s mode\n", revel.AppName, revel.ImportPath, mode)
+	revel.INFO.Printf("Testing %s (%s) in %s mode\n", revel.INFO_COLOR(revel.AppName), revel.INFO_COLOR(revel.ImportPath), revel.INFO_COLOR(mode))
 
 	// Get a list of tests.
 	// Since this is the first request to the server, retry/sleep a couple times

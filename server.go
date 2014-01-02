@@ -87,9 +87,9 @@ func Run(port int) {
 
 	if HttpSsl {
 		ERROR.Fatalln("Failed to listen:",
-			Server.ListenAndServeTLS(HttpSslCert, HttpSslKey))
+			ERROR_COLOR(Server.ListenAndServeTLS(HttpSslCert, HttpSslKey)))
 	} else {
-		ERROR.Fatalln("Failed to listen:", Server.ListenAndServe())
+		ERROR.Fatalln("Failed to listen:", ERROR_COLOR(Server.ListenAndServe()))
 	}
 }
 

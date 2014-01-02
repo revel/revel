@@ -53,9 +53,9 @@ func NewAppCmd(binPath string, port int) AppCmd {
 func (cmd AppCmd) Start() error {
 	listeningWriter := startupListeningWriter{os.Stdout, make(chan bool)}
 	cmd.Stdout = listeningWriter
-	revel.TRACE.Println("Exec app:", cmd.Path, cmd.Args)
+	revel.TRACE.Println("Exec app:", revel.TRACE_COLOR(cmd.Path, cmd.Args))
 	if err := cmd.Cmd.Start(); err != nil {
-		revel.ERROR.Fatalln("Error running:", err)
+		revel.ERROR.Fatalln("Error running:", revel.ERROR_COLOR(err))
 	}
 
 	select {
@@ -74,19 +74,19 @@ func (cmd AppCmd) Start() error {
 
 // Run the app server inline.  Never returns.
 func (cmd AppCmd) Run() {
-	revel.TRACE.Println("Exec app:", cmd.Path, cmd.Args)
+	revel.TRACE.Println("Exec app:", revel.TRACE_COLOR(cmd.Path), revel.TRACE_COLOR(cmd.Args))
 	if err := cmd.Cmd.Run(); err != nil {
-		revel.ERROR.Fatalln("Error running:", err)
+		revel.ERROR.Fatalln("Error running:", revel.ERROR_COLOR(err))
 	}
 }
 
 // Terminate the app server if it's running.
 func (cmd AppCmd) Kill() {
 	if cmd.Cmd != nil && (cmd.ProcessState == nil || !cmd.ProcessState.Exited()) {
-		revel.TRACE.Println("Killing revel server pid", cmd.Process.Pid)
+		revel.TRACE.Println("Killing revel server pid", revel.TRACE_COLOR(cmd.Process.Pid))
 		err := cmd.Process.Kill()
 		if err != nil {
-			revel.ERROR.Fatalln("Failed to kill revel server:", err)
+			revel.ERROR.Fatalln("Failed to kill revel server:", revel.ERROR_COLOR(err))
 		}
 	}
 }

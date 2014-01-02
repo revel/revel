@@ -54,8 +54,8 @@ func runApp(args []string) {
 		}
 	}
 
-	revel.INFO.Printf("Running %s (%s) in %s mode\n", revel.AppName, revel.ImportPath, mode)
-	revel.TRACE.Println("Base path:", revel.BasePath)
+	revel.INFO.Printf("Running %s (%s) in %s mode\n", revel.INFO_COLOR(revel.AppName),revel.INFO_COLOR(revel.ImportPath),revel.INFO_COLOR(mode))
+	revel.TRACE.Println("Base path:", revel.TRACE_COLOR(revel.BasePath))
 
 	// If the app is run in "watched" mode, use the harness to run it.
 	if revel.Config.BoolDefault("watch", true) && revel.Config.BoolDefault("watch.code", true) {
