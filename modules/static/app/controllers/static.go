@@ -5,6 +5,7 @@ import (
 	"os"
 	fpath "path/filepath"
 	"strings"
+	"syscall"
 )
 
 type Static struct {
@@ -57,7 +58,7 @@ func (c Static) Serve(prefix, filepath string) revel.Result {
 
 	finfo, err := os.Stat(fname)
 	if err != nil {
-		if os.IsNotExist(err) {
+		if os.IsNotExist(err) || err.(*os.PathError).Err == syscall.ENOTDIR {
 			revel.WARN.Printf("File not found (%s): %s ", revel.WARN_COLOR(fname), revel.WARN_COLOR(err))
 			return c.NotFound("File not found")
 		}
