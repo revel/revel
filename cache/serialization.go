@@ -27,7 +27,7 @@ func Serialize(value interface{}) ([]byte, error) {
 	var b bytes.Buffer
 	encoder := gob.NewEncoder(&b)
 	if err := encoder.Encode(value); err != nil {
-		revel.ERROR.Printf("revel/cache: gob encoding '%s' failed: %s", value, err)
+		revel.ERROR.Printf("revel/cache: gob encoding '%s' failed: %s", revel.ERROR_COLOR(value), revel.ERROR_COLOR(err))
 		return nil, err
 	}
 	return b.Bytes(), nil
@@ -47,7 +47,7 @@ func Deserialize(byt []byte, ptr interface{}) (err error) {
 			var i int64
 			i, err = strconv.ParseInt(string(byt), 10, 64)
 			if err != nil {
-				revel.ERROR.Printf("revel/cache: failed to parse int '%s': %s", string(byt), err)
+				revel.ERROR.Printf("revel/cache: failed to parse int '%s': %s", revel.ERROR_COLOR(string(byt)), revel.ERROR_COLOR(err))
 			} else {
 				p.SetInt(i)
 			}
@@ -57,7 +57,7 @@ func Deserialize(byt []byte, ptr interface{}) (err error) {
 			var i uint64
 			i, err = strconv.ParseUint(string(byt), 10, 64)
 			if err != nil {
-				revel.ERROR.Printf("revel/cache: failed to parse uint '%s': %s", string(byt), err)
+				revel.ERROR.Printf("revel/cache: failed to parse uint '%s': %s", revel.ERROR_COLOR(string(byt)), revel.ERROR_COLOR(err))
 			} else {
 				p.SetUint(i)
 			}
@@ -68,7 +68,7 @@ func Deserialize(byt []byte, ptr interface{}) (err error) {
 	b := bytes.NewBuffer(byt)
 	decoder := gob.NewDecoder(b)
 	if err = decoder.Decode(ptr); err != nil {
-		revel.ERROR.Printf("revel/cache: gob decoding failed: %s", err)
+		revel.ERROR.Printf("revel/cache: gob decoding failed: %s", revel.ERROR_COLOR(err))
 		return
 	}
 	return

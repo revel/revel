@@ -34,7 +34,7 @@ func Init() {
 	var err error
 	Db, err = sql.Open(Driver, Spec)
 	if err != nil {
-		revel.ERROR.Fatal(err)
+		revel.ERROR.Fatal(revel.ERROR_COLOR(err))
 	}
 }
 

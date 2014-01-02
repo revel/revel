@@ -86,7 +86,7 @@ func LoadMimeConfig() {
 	var err error
 	mimeConfig, err = LoadConfig("mime-types.conf")
 	if err != nil {
-		ERROR.Fatalln("Failed to load mime type config:", err)
+		ERROR.Fatalln("Failed to load mime type config:", ERROR_COLOR(err))
 	}
 }
 

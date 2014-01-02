@@ -121,7 +121,7 @@ func (h *Harness) Refresh() (err *revel.Error) {
 		h.app.Kill()
 	}
 
-	revel.TRACE.Println("Rebuild")
+	revel.TRACE.Println(revel.TRACE_COLOR("Rebuild"))
 	h.app, err = Build()
 	if err != nil {
 		return
@@ -154,7 +154,7 @@ func (h *Harness) Run() {
 
 	go func() {
 		addr := fmt.Sprintf("%s:%d", revel.HttpAddr, revel.HttpPort)
-		revel.INFO.Printf("Listening on %s", addr)
+		revel.INFO.Printf("Listening on %s", revel.INFO_COLOR(addr))
 
 		var err error
 		if revel.HttpSsl {
@@ -164,7 +164,7 @@ func (h *Harness) Run() {
 			err = http.ListenAndServe(addr, h)
 		}
 		if err != nil {
-			revel.ERROR.Fatalln("Failed to start reverse proxy:", err)
+			revel.ERROR.Fatalln("Failed to start reverse proxy:", revel.ERROR_COLOR(err))
 		}
 	}()
 
@@ -182,13 +182,13 @@ func (h *Harness) Run() {
 func getFreePort() (port int) {
 	conn, err := net.Listen("tcp", ":0")
 	if err != nil {
-		revel.ERROR.Fatal(err)
+		revel.ERROR.Fatal(revel.ERROR_COLOR(err))
 	}
 
 	port = conn.Addr().(*net.TCPAddr).Port
 	err = conn.Close()
 	if err != nil {
-		revel.ERROR.Fatal(err)
+		revel.ERROR.Fatal(revel.ERROR_COLOR(err))
 	}
 	return port
 }
@@ -199,7 +199,7 @@ func proxyWebsocket(w http.ResponseWriter, r *http.Request, host string) {
 	d, err := net.Dial("tcp", host)
 	if err != nil {
 		http.Error(w, "Error contacting backend server.", 500)
-		revel.ERROR.Printf("Error dialing websocket backend %s: %v", host, err)
+		revel.ERROR.Printf("Error dialing websocket backend %s: %v", revel.ERROR_COLOR(host), revel.ERROR_COLOR(err))
 		return
 	}
 	hj, ok := w.(http.Hijacker)
@@ -209,7 +209,7 @@ func proxyWebsocket(w http.ResponseWriter, r *http.Request, host string) {
 	}
 	nc, _, err := hj.Hijack()
 	if err != nil {
-		revel.ERROR.Printf("Hijack error: %v", err)
+		revel.ERROR.Printf("Hijack error: %v", revel.ERROR_COLOR(err))
 		return
 	}
 	defer nc.Close()
@@ -217,7 +217,7 @@ func proxyWebsocket(w http.ResponseWriter, r *http.Request, host string) {
 
 	err = r.Write(d)
 	if err != nil {
-		revel.ERROR.Printf("Error copying request to target: %v", err)
+		revel.ERROR.Printf("Error copying request to target: %v", revel.ERROR_COLOR(err))
 		return
 	}
 

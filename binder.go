@@ -75,7 +75,7 @@ var (
 			}
 			intValue, err := strconv.ParseInt(val, 10, 64)
 			if err != nil {
-				WARN.Println(err)
+				WARN.Println(WARN_COLOR(err))
 				return reflect.Zero(typ)
 			}
 			pValue := reflect.New(typ)
@@ -94,7 +94,7 @@ var (
 			}
 			uintValue, err := strconv.ParseUint(val, 10, 64)
 			if err != nil {
-				WARN.Println(err)
+				WARN.Println(WARN_COLOR(err))
 				return reflect.Zero(typ)
 			}
 			pValue := reflect.New(typ)
@@ -113,7 +113,7 @@ var (
 			}
 			floatValue, err := strconv.ParseFloat(val, 64)
 			if err != nil {
-				WARN.Println(err)
+				WARN.Println(WARN_COLOR(err))
 				return reflect.Zero(typ)
 			}
 			pValue := reflect.New(typ)
@@ -344,11 +344,11 @@ func bindStruct(params *Params, name string, typ reflect.Type) reflect.Value {
 			// Time to bind this field.  Get it and make sure we can set it.
 			fieldValue := result.FieldByName(fieldName)
 			if !fieldValue.IsValid() {
-				WARN.Println("W: bindStruct: Field not found:", fieldName)
+				WARN.Println("W: bindStruct: Field not found:", WARN_COLOR(fieldName))
 				continue
 			}
 			if !fieldValue.CanSet() {
-				WARN.Println("W: bindStruct: Field not settable:", fieldName)
+				WARN.Println("W: bindStruct: Field not settable:", WARN_COLOR(fieldName))
 				continue
 			}
 			boundVal := Bind(params, key[:len(name)+1+fieldLen], fieldValue.Type())
@@ -381,7 +381,7 @@ func getMultipartFile(params *Params, name string) multipart.File {
 		if err == nil {
 			return file
 		}
-		WARN.Println("Failed to open uploaded file", name, ":", err)
+		WARN.Println("Failed to open uploaded file", WARN_COLOR(name), ":", WARN_COLOR(err))
 	}
 	return nil
 }
@@ -400,7 +400,7 @@ func bindFile(params *Params, name string, typ reflect.Type) reflect.Value {
 	// Otherwise, have to store it.
 	tmpFile, err := ioutil.TempFile("", "revel-upload")
 	if err != nil {
-		WARN.Println("Failed to create a temp file to store upload:", err)
+		WARN.Println("Failed to create a temp file to store upload:", WARN_COLOR(err))
 		return reflect.Zero(typ)
 	}
 
@@ -409,13 +409,13 @@ func bindFile(params *Params, name string, typ reflect.Type) reflect.Value {
 
 	_, err = io.Copy(tmpFile, reader)
 	if err != nil {
-		WARN.Println("Failed to copy upload to temp file:", err)
+		WARN.Println("Failed to copy upload to temp file:", WARN_COLOR(err))
 		return reflect.Zero(typ)
 	}
 
 	_, err = tmpFile.Seek(0, 0)
 	if err != nil {
-		WARN.Println("Failed to seek to beginning of temp file:", err)
+		WARN.Println("Failed to seek to beginning of temp file:", WARN_COLOR(err))
 		return reflect.Zero(typ)
 	}
 
@@ -428,7 +428,7 @@ func bindByteArray(params *Params, name string, typ reflect.Type) reflect.Value 
 		if err == nil {
 			return reflect.ValueOf(b)
 		}
-		WARN.Println("Error reading uploaded file contents:", err)
+		WARN.Println("Error reading uploaded file contents:", WARN_COLOR(err))
 	}
 	return reflect.Zero(typ)
 }
@@ -490,7 +490,7 @@ func Unbind(output map[string]string, name string, val interface{}) {
 		if binder.Unbind != nil {
 			binder.Unbind(output, name, val)
 		} else {
-			ERROR.Printf("revel/binder: can not unbind %s=%s", name, val)
+			ERROR.Printf("revel/binder: can not unbind %s=%s", ERROR_COLOR(name), ERROR_COLOR(val))
 		}
 	}
 }
@@ -500,7 +500,7 @@ func binderForType(typ reflect.Type) (Binder, bool) {
 	if !ok {
 		binder, ok = KindBinders[typ.Kind()]
 		if !ok {
-			WARN.Println("revel/binder: no binder for type:", typ)
+			WARN.Println("revel/binder: no binder for type:", WARN_COLOR(typ))
 			return Binder{}, false
 		}
 	}

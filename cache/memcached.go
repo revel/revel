@@ -61,7 +61,7 @@ func (c MemcachedCache) Decrement(key string, delta uint64) (newValue uint64, er
 
 func (c MemcachedCache) Flush() error {
 	err := errors.New("revel/cache: can not flush memcached.")
-	revel.ERROR.Println(err)
+	revel.ERROR.Println(revel.ERROR_COLOR(err))
 	return err
 }
 
@@ -108,6 +108,6 @@ func convertMemcacheError(err error) error {
 		return ErrNotStored
 	}
 
-	revel.ERROR.Println("revel/cache:", err)
+	revel.ERROR.Println("revel/cache:", revel.ERROR_COLOR(err))
 	return err
 }

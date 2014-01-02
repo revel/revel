@@ -29,7 +29,7 @@ func (c InMemoryCache) Get(key string, ptrValue interface{}) error {
 	}
 
 	err := fmt.Errorf("revel/cache: attempt to get %s, but can not set value %v", key, v)
-	revel.ERROR.Println(err)
+	revel.ERROR.Println(revel.ERROR_COLOR(err))
 	return err
 }
 

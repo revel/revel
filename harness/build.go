@@ -57,7 +57,7 @@ func Build() (app *App, compileError *revel.Error) {
 
 	pkg, err := build.Default.Import(revel.ImportPath, "", build.FindOnly)
 	if err != nil {
-		revel.ERROR.Fatalln("Failure importing", revel.ImportPath)
+		revel.ERROR.Fatalln("Failure importing", revel.ERROR_COLOR(revel.ImportPath))
 	}
 	binName := path.Join(pkg.BinDir, path.Base(revel.BasePath))
 	if runtime.GOOS == "windows" {
@@ -69,14 +69,14 @@ func Build() (app *App, compileError *revel.Error) {
 		buildCmd := exec.Command(goPath, "build",
 			"-tags", buildTags,
 			"-o", binName, path.Join(revel.ImportPath, "app", "tmp"))
-		revel.TRACE.Println("Exec:", buildCmd.Args)
+		revel.TRACE.Println("Exec:", revel.TRACE_COLOR(buildCmd.Args))
 		output, err := buildCmd.CombinedOutput()
 
 		// If the build succeeded, we're done.
 		if err == nil {
 			return NewApp(binName), nil
 		}
-		revel.ERROR.Println(string(output))
+		revel.ERROR.Println(revel.ERROR_COLOR(string(output)))
 
 		// See if it was an import error that we can go get.
 		matches := importErrorPattern.FindStringSubmatch(string(output))
@@ -93,10 +93,10 @@ func Build() (app *App, compileError *revel.Error) {
 
 		// Execute "go get <pkg>"
 		getCmd := exec.Command(goPath, "get", pkgName)
-		revel.TRACE.Println("Exec:", getCmd.Args)
+		revel.TRACE.Println("Exec:", revel.TRACE_COLOR(getCmd.Args))
 		getOutput, err := getCmd.CombinedOutput()
 		if err != nil {
-			revel.ERROR.Println(string(getOutput))
+			revel.ERROR.Println(revel.ERROR_COLOR(string(getOutput)))
 			return nil, newCompileError(output)
 		}
 
@@ -111,7 +111,7 @@ func cleanSource(dirs ...string) {
 		tmpPath := path.Join(revel.AppPath, dir)
 		err := os.RemoveAll(tmpPath)
 		if err != nil {
-			revel.ERROR.Println("Failed to remove dir:", err)
+			revel.ERROR.Println("Failed to remove dir:", revel.ERROR_COLOR(err))
 		}
 	}
 }
@@ -127,22 +127,22 @@ func genSource(dir, filename, templateSource string, args map[string]interface{}
 	tmpPath := path.Join(revel.AppPath, dir)
 	err := os.RemoveAll(tmpPath)
 	if err != nil {
-		revel.ERROR.Println("Failed to remove dir:", err)
+		revel.ERROR.Println("Failed to remove dir:", revel.ERROR_COLOR(err))
 	}
 	err = os.Mkdir(tmpPath, 0777)
 	if err != nil {
-		revel.ERROR.Fatalf("Failed to make tmp directory: %v", err)
+		revel.ERROR.Fatalf("Failed to make tmp directory: %v", revel.ERROR_COLOR(err))
 	}
 
 	// Create the file
 	file, err := os.Create(path.Join(tmpPath, filename))
 	defer file.Close()
 	if err != nil {
-		revel.ERROR.Fatalf("Failed to create file: %v", err)
+		revel.ERROR.Fatalf("Failed to create file: %v", revel.ERROR_COLOR(err))
 	}
 	_, err = file.WriteString(sourceCode)
 	if err != nil {
-		revel.ERROR.Fatalf("Failed to write to file: %v", err)
+		revel.ERROR.Fatalf("Failed to write to file: %v", revel.ERROR_COLOR(err))
 	}
 }
 
@@ -212,7 +212,7 @@ func newCompileError(output []byte) *revel.Error {
 	errorMatch := regexp.MustCompile(`(?m)^([^:#]+):(\d+):(\d+:)? (.*)$`).
 		FindSubmatch(output)
 	if errorMatch == nil {
-		revel.ERROR.Println("Failed to parse build errors:\n", string(output))
+		revel.ERROR.Println("Failed to parse build errors:\n", revel.ERROR_COLOR(string(output)))
 		return &revel.Error{
 			SourceType:  "Go code",
 			Title:       "Go Compilation Error",
@@ -238,7 +238,7 @@ func newCompileError(output []byte) *revel.Error {
 	fileStr, err := revel.ReadLines(absFilename)
 	if err != nil {
 		compileError.MetaError = absFilename + ": " + err.Error()
-		revel.ERROR.Println(compileError.MetaError)
+		revel.ERROR.Println(revel.ERROR_COLOR(compileError.MetaError))
 		return compileError
 	}
 

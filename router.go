@@ -47,7 +47,7 @@ func NewRoute(method, path, action, fixedArgs, routesPath string, line int) (r *
 	csv := csv.NewReader(argsReader)
 	fargs, err := csv.Read()
 	if err != nil && err != io.EOF {
-		ERROR.Printf("Invalid fixed parameters (%v): for string '%v'", err.Error(), fixedArgs)
+		ERROR.Printf("Invalid fixed parameters (%v): for string '%v'", ERROR_COLOR(err.Error()), ERROR_COLOR(fixedArgs))
 	}
 
 	r = &Route{
@@ -246,7 +246,7 @@ func routeError(err error, routesPath, content string, n int) *Error {
 	if content == "" {
 		contentBytes, err := ioutil.ReadFile(routesPath)
 		if err != nil {
-			ERROR.Println("Failed to read route file %s: %s", routesPath, err)
+			ERROR.Println("Failed to read route file %s: %s", ERROR_COLOR(routesPath), ERROR_COLOR(err))
 		} else {
 			content = string(contentBytes)
 		}
@@ -267,7 +267,7 @@ func getModuleRoutes(moduleName string, validate bool) ([]*Route, *Error) {
 	// testrunner module being active only in dev mode.
 	module, found := ModuleByName(moduleName)
 	if !found {
-		INFO.Println("Skipping routes for inactive module", moduleName)
+		INFO.Println("Skipping routes for inactive module", INFO_COLOR(moduleName))
 		return nil, nil
 	}
 	return parseRoutesFile(path.Join(module.Path, "conf", "routes"), validate)
@@ -314,7 +314,7 @@ func (a *ActionDefinition) String() string {
 func (router *Router) Reverse(action string, argValues map[string]string) *ActionDefinition {
 	actionSplit := strings.Split(action, ".")
 	if len(actionSplit) != 2 {
-		ERROR.Print("revel/router: reverse router got invalid action ", action)
+		ERROR.Print("revel/router: reverse router got invalid action ", ERROR_COLOR(action))
 		return nil
 	}
 	controllerName, methodName := actionSplit[0], actionSplit[1]
@@ -352,7 +352,7 @@ func (router *Router) Reverse(action string, argValues map[string]string) *Actio
 			val, ok := argValues[el[1:]]
 			if !ok {
 				val = "<nil>"
-				ERROR.Print("revel/router: reverse route missing route arg ", el[1:])
+				ERROR.Print("revel/router: reverse route missing route arg ", ERROR_COLOR(el[1:]))
 			}
 			pathElements[i] = val
 			delete(argValues, el[1:])
@@ -386,7 +386,7 @@ func (router *Router) Reverse(action string, argValues map[string]string) *Actio
 			Host:   "TODO",
 		}
 	}
-	ERROR.Println("Failed to find reverse route:", action, argValues)
+	ERROR.Println("Failed to find reverse route:", ERROR_COLOR(action), ERROR_COLOR(argValues))
 	return nil
 }
 
@@ -434,7 +434,7 @@ func RouterFilter(c *Controller, fc []Filter) {
 			arg := c.MethodType.Args[i]
 			c.Params.Fixed.Set(arg.Name, value)
 		} else {
-			WARN.Println("Too many parameters to", route.Action, "trying to add", value)
+			WARN.Println("Too many parameters to", WARN_COLOR(route.Action), "trying to add", WARN_COLOR(value))
 			break
 		}
 	}

@@ -42,9 +42,9 @@ func (j *Job) Run() {
 	defer func() {
 		if err := recover(); err != nil {
 			if revelError := revel.NewErrorFromPanic(err); revelError != nil {
-				revel.ERROR.Print(err, "\n", revelError.Stack)
+				revel.ERROR.Print(revel.ERROR_COLOR(err), "\n", revel.ERROR_COLOR(revelError.Stack))
 			} else {
-				revel.ERROR.Print(err, "\n", string(debug.Stack()))
+				revel.ERROR.Print(revel.ERROR_COLOR(err), "\n", revel.ERROR_COLOR(string(debug.Stack())))
 			}
 		}
 	}()
