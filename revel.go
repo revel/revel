@@ -64,7 +64,7 @@ var (
 	TemplateDelims string
 
 	//Logger colors
-	TRACE_COLOR = gocolorize.NewColor("gray").Paint
+	TRACE_COLOR = gocolorize.NewColor("magenta").Paint
 	INFO_COLOR  = gocolorize.NewColor("green").Paint
 	WARN_COLOR  = gocolorize.NewColor("yellow").Paint
 	ERROR_COLOR = gocolorize.NewColor("red").Paint
