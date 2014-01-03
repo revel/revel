@@ -1,6 +1,7 @@
 package revel
 
 import (
+    "runtime"
 	"github.com/agtorre/gocolorize"
 	"github.com/robfig/config"
 	"go/build"
@@ -80,6 +81,7 @@ var (
         "error": gocolorize.NewColor("red"),
     }
 
+
     error_log = revelLogs{c:colors["error"], w:os.Stderr}
 
 	// Loggers
@@ -112,6 +114,10 @@ func Init(mode, importPath, srcPath string) {
 	ImportPath = strings.TrimRight(importPath, "/")
 	SourcePath = srcPath
 	RunMode = mode
+
+    if runtime.GOOS == "windows"{
+        gocolorize.SetPlain(true)
+    }
 
 	// If the SourcePath is not specified, find it using build.Import.
 	var revelSourcePath string // may be different from the app source path
