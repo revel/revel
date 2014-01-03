@@ -11,6 +11,7 @@ import (
 	"strings"
 	"text/template"
 	"time"
+    "runtime"
 )
 
 // Cribbed from the genius organization of the "go" command.
@@ -38,6 +39,9 @@ var commands = []*Command{
 }
 
 func main() {
+	if runtime.GOOS == "windows" {
+        gocolorize.SetPlain(true)
+	}
 	fmt.Fprintf(os.Stdout, gocolorize.NewColor("blue").Paint(header))
 	flag.Usage = func() { usage(1) }
 	flag.Parse()
