@@ -32,7 +32,7 @@ This has a couple implications:
 The default lifetime of the session cookie is the browser lifetime.  This
 can be overriden to a specific amount of time by setting the session.expires
 option in app.config.  The format is that of
-[time.parseDuration](http://golang.org/pkg/time/#ParseDuration).
+[time.ParseDuration](http://golang.org/pkg/time/#ParseDuration).
 
 ## Flash
 
