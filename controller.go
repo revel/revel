@@ -92,7 +92,7 @@ func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
 		}
 	} else {
 		ERROR.Println("No RenderArg names found for Render call on line", line,
-			"(Method", c.MethodType.Name, ")")
+			"(Action", c.Action, ")")
 	}
 
 	return c.RenderTemplate(c.Name + "/" + c.MethodType.Name + "." + c.Request.Format)
