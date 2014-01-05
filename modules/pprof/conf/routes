@@ -1,0 +1,5 @@
+GET /pprof/profile 			Pprof.Profile
+GET /pprof/symbol 			Pprof.Symbol
+GET /debug/pprof/cmdline	Pprof.Cmdline
+GET /debug/pprof/*			Pprof.Index
+GET /debug/pprof/			Pprof.Index
