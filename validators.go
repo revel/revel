@@ -14,6 +14,10 @@ type Validator interface {
 
 type Required struct{}
 
+func ValidRequired() Required {
+	return Required{}
+}
+
 func (r Required) IsSatisfied(obj interface{}) bool {
 	if obj == nil {
 		return false
