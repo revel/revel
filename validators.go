@@ -46,6 +46,10 @@ type Min struct {
 	Min int
 }
 
+func ValidMin(min int) Min {
+	return Min{min}
+}
+
 func (m Min) IsSatisfied(obj interface{}) bool {
 	num, ok := obj.(int)
 	if ok {
@@ -60,6 +64,10 @@ func (m Min) DefaultMessage() string {
 
 type Max struct {
 	Max int
+}
+
+func ValidMax(max int) Max {
+	return Max{max}
 }
 
 func (m Max) IsSatisfied(obj interface{}) bool {
@@ -80,6 +88,10 @@ type Range struct {
 	Max
 }
 
+func ValidRange(min, max int) Range {
+	return Range{Min{min}, Max{max}}
+}
+
 func (r Range) IsSatisfied(obj interface{}) bool {
 	return r.Min.IsSatisfied(obj) && r.Max.IsSatisfied(obj)
 }
@@ -91,6 +103,10 @@ func (r Range) DefaultMessage() string {
 // Requires an array or string to be at least a given length.
 type MinSize struct {
 	Min int
+}
+
+func ValidMinSize(min int) MinSize {
+	return MinSize{min}
 }
 
 func (m MinSize) IsSatisfied(obj interface{}) bool {
@@ -113,6 +129,10 @@ type MaxSize struct {
 	Max int
 }
 
+func ValidMaxSize(max int) MaxSize {
+	return MaxSize{max}
+}
+
 func (m MaxSize) IsSatisfied(obj interface{}) bool {
 	if str, ok := obj.(string); ok {
 		return len(str) <= m.Max
@@ -131,6 +151,10 @@ func (m MaxSize) DefaultMessage() string {
 // Requires an array or string to be exactly a given length.
 type Length struct {
 	N int
+}
+
+func ValidLength(n int) Length {
+	return Length{n}
 }
 
 func (s Length) IsSatisfied(obj interface{}) bool {
@@ -153,6 +177,10 @@ type Match struct {
 	Regexp *regexp.Regexp
 }
 
+func ValidMatch(regex *regexp.Regexp) Match {
+	return Match{regex}
+}
+
 func (m Match) IsSatisfied(obj interface{}) bool {
 	str := obj.(string)
 	return m.Regexp.MatchString(str)
@@ -166,6 +194,10 @@ var emailPattern = regexp.MustCompile("[\\w!#$%&'*+/=?^_`{|}~-]+(?:\\.[\\w!#$%&'
 
 type Email struct {
 	Match
+}
+
+func VaildEmail() Email {
+	return Email{Match{emailPattern}}
 }
 
 func (e Email) DefaultMessage() string {
