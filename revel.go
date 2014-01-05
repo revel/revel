@@ -1,6 +1,7 @@
 package revel
 
 import (
+	"github.com/agtorre/gocolorize"
 	"github.com/robfig/config"
 	"go/build"
 	"io"
@@ -9,12 +10,22 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"runtime"
 	"strings"
 )
 
 const (
 	REVEL_IMPORT_PATH = "github.com/robfig/revel"
 )
+
+type revelLogs struct {
+	c gocolorize.Colorize
+	w io.Writer
+}
+
+func (r *revelLogs) Write(p []byte) (n int, err error) {
+	return r.w.Write([]byte(r.c.Paint(string(p))))
+}
 
 var (
 	// App details
@@ -62,11 +73,21 @@ var (
 	// Delimiters to use when rendering templates
 	TemplateDelims string
 
+	//Logger colors
+	colors = map[string]gocolorize.Colorize{
+		"trace": gocolorize.NewColor("magenta"),
+		"info":  gocolorize.NewColor("green"),
+		"warn":  gocolorize.NewColor("yellow"),
+		"error": gocolorize.NewColor("red"),
+	}
+
+	error_log = revelLogs{c: colors["error"], w: os.Stderr}
+
 	// Loggers
 	TRACE = log.New(ioutil.Discard, "TRACE ", log.Ldate|log.Ltime|log.Lshortfile)
 	INFO  = log.New(ioutil.Discard, "INFO  ", log.Ldate|log.Ltime|log.Lshortfile)
 	WARN  = log.New(ioutil.Discard, "WARN  ", log.Ldate|log.Ltime|log.Lshortfile)
-	ERROR = log.New(os.Stderr, "ERROR ", log.Ldate|log.Ltime|log.Lshortfile)
+	ERROR = log.New(&error_log, "ERROR ", log.Ldate|log.Ltime|log.Lshortfile)
 
 	Initialized bool
 
@@ -91,6 +112,10 @@ func Init(mode, importPath, srcPath string) {
 	ImportPath = strings.TrimRight(importPath, "/")
 	SourcePath = srcPath
 	RunMode = mode
+
+	if runtime.GOOS == "windows" {
+		gocolorize.SetPlain(true)
+	}
 
 	// If the SourcePath is not specified, find it using build.Import.
 	var revelSourcePath string // may be different from the app source path
@@ -179,12 +204,15 @@ func getLogger(name string) *log.Logger {
 
 	// Create a logger with the requested output. (default to stderr)
 	output := Config.StringDefault("log."+name+".output", "stderr")
+	var newlog revelLogs
 
 	switch output {
 	case "stdout":
-		logger = newLogger(os.Stdout)
+		newlog = revelLogs{c: colors[name], w: os.Stdout}
+		logger = newLogger(&newlog)
 	case "stderr":
-		logger = newLogger(os.Stderr)
+		newlog = revelLogs{c: colors[name], w: os.Stderr}
+		logger = newLogger(&newlog)
 	default:
 		if output == "off" {
 			output = os.DevNull

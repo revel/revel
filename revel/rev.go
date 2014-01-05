@@ -4,9 +4,11 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/agtorre/gocolorize"
 	"io"
 	"math/rand"
 	"os"
+	"runtime"
 	"strings"
 	"text/template"
 	"time"
@@ -37,7 +39,10 @@ var commands = []*Command{
 }
 
 func main() {
-	fmt.Fprintf(os.Stdout, header)
+	if runtime.GOOS == "windows" {
+		gocolorize.SetPlain(true)
+	}
+	fmt.Fprintf(os.Stdout, gocolorize.NewColor("blue").Paint(header))
 	flag.Usage = func() { usage(1) }
 	flag.Parse()
 	args := flag.Args()
