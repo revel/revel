@@ -199,21 +199,24 @@ func parseRoutes(routesPath, joinedPath, content string, validate bool) ([]*Rout
 			continue
 		}
 
-		joinChar := ""
-		if !strings.HasSuffix(joinedPath, "/") {
-			joinChar = ""
+		// this will avoid accidental double forward slashes in a route.
+		// this also avoids pathtree freaking out and causing a runtime panic
+		// because of the double slashes
+		if strings.HasSuffix(joinedPath, "/") && strings.HasPrefix(path, "/") {
+			joinedPath = joinedPath[0 : len(joinedPath)-1]
 		}
-		path = strings.Join([]string{joinedPath, path}, joinChar)
+		path = strings.Join([]string{joinedPath, path}, "")
 
 		// This will import the module routes under the path described in the
-		// routes file (joinedPath param). e.g. "* /jobs/ module:jobs" -> all
-		// routes' paths will have the path /jobs/ prepended to them.
+		// routes file (joinedPath param). e.g. "* /jobs module:jobs" -> all
+		// routes' paths will have the path /jobs prepended to them.
 		// See #282 for more info
 		if method == "*" && strings.HasPrefix(action, modulePrefix) {
 			moduleRoutes, err := getModuleRoutes(action[len(modulePrefix):], path, validate)
 			if err != nil {
 				return nil, routeError(err, routesPath, content, n)
 			}
+			fmt.Printf("%#v", moduleRoutes[0])
 			routes = append(routes, moduleRoutes...)
 			continue
 		}
