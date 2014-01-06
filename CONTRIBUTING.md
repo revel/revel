@@ -1,4 +1,4 @@
-## Contribute to Revel
+## Contribute To Revel
 
 This describes how developers may contribute to Revel.
 
@@ -10,38 +10,75 @@ scale web application development as efficient and maintainable as possible.
 The design should be configurable and modular so that it can grow with the
 developer. However, it should provide a wonderful un-boxing experience and
 default configuration that can woo new developers and make simple web apps
-straightforward. The framework should have an opinion about how to do all of the
+straight forward. The framework should have an opinion about how to do all of the
 common tasks in web development to reduce unnecessary cognitive load.
 
-## How to Contribute
+## How To Contribute
 
-Presently there are no versioning or compatibility guarantees in place, so the
-contribution process is not very formal.
+### Join The Community
 
-### Discuss your idea
+The first step to making Revel better is joining the community! You can find the
+community on:
 
-For the greatest chance of success, start with an email to
-[revel-framework@googlegroups.com](mailto:revel-framework@googlegroups.com) to
-discuss your contribution idea and design.
+* [Google Groups](https://groups.google.com/forum/#!forum/revel-framework) via [revel-framework@googlegroups.com](mailto:revel-framework@googlegroups.com)
+* [GitHub Issues](https://github.com/robfig/revel/issues)
+* [IRC](http://webchat.freenode.net/?channels=%23revel&uio=d4) via #revel on Freenode
 
-### How to fork (without breaking Go import paths)
+Once you've joined, there are many ways to contribute to Revel:
 
-Go uses the repository URL to import packages, so forking and go-getting the
+* Report bugs (via GitHub)
+* Answer questions of other community members (via Google Groups or IRC)
+* Give feedback on new feature discussions (via GitHub and Google Groups)
+* Propose your own ideas (via Google Groups or GitHub)
+
+### How Revel Is Developed
+
+We have begun to formalize the development process by adopting pragmatic
+practices such as:
+
+* Developing on the `develop` branch
+* Merging `develop` branch to `master` branch in 6 week iterations
+* Tagging releases with MAJOR.MINOR syntax (e.g. v0.8)
+** We may also tag MAJOR.MINOR.HOTFIX releases as needed (e.g. v0.8.1) to
+address urgent bugs. Such releases will not introduce or change functionality
+* Managing bugs, enhancements, features and release milestones via GitHub's Issue Tracker
+* Using feature branches to create pull requests
+* Discussing new features **before** hacking away at it
+
+
+### How To Correctly Fork
+
+Go uses the repository URL to import packages, so forking and `go get`ing the
 forked project **will not work**.
 
-Instead, this is the recommended way:
+Instead, follow these steps:
 
-1. Fork Revel project on Github
-2. In your clone of github.com/robfig/revel, add your fork as a remote.
-3. Push to your fork to prepare a pull request.
+1. Install Revel locally
+2. Fork Revel on Github
+3. Add your fork as a git remote
 
-Here is the command line: 
+Here is the command line:
 ```
+$ go get github.com/robfig/revel                      # Install Revel
 $ cd $GOPATH/src/github.com/robfig/revel              # Change directory to revel repo
 $ git remote add fork git@github.com:$USER/revel.git  # Add your fork as a remote
-$ git push fork master                                # After new commits, push to your fork
-$ git pull origin master                              # Optionally, merge new changes from upstream
 ```
+
+### Create a feature branch & code away!
+
+Now that you've properly installed and forked Revel, you are ready to start coding (assuming
+you have a valdiated your ideas with other community members)!
+
+In order to have your pull requests accepted, we recommend you make your changes to Revel on a
+new git branch. For example,
+```
+$ git checkout -b feature/useful-new-thing develop    # Create a new branch based on the develop branch and switch to it
+$ ...                                                 # Make your changes and commit them
+$ git pull origin develop                             # Optionally, merge new changes from upstream
+$ git push fork develop                               # After new commits, push to your fork
+```
+
+Once you have pushed your changes up to your fork, you can create a pull request for review and acceptance.
 
 ### Gofmt your code
 
@@ -64,7 +101,9 @@ Benchmarks are helpful but not required.
 
 Typically running the main set of unit tests will be sufficient:
 
-	$ go test github.com/robfig/revel
+```
+$ go test github.com/robfig/revel
+```
 
 Refer to the
 [Travis configuration](https://github.com/robfig/revel/blob/master/.travis.yml)
@@ -72,10 +111,14 @@ for the full set of tests.  They take less than a minute to run.
 
 ### Document your feature
 
-The [Revel web site](http://robfig.github.io/revel/) is hosted on Github-pages and 
+Due to the wide audience and shared nature of Revel, documentation is an essential
+addition to your new code. **Pull requests risk not being accepted** until proper
+documentation is created to detail how to make use of new functionality.
+
+The [Revel web site](http://robfig.github.io/revel/) is hosted on Github-pages and
 [built with Jekyll](https://help.github.com/articles/using-jekyll-with-pages).
 
-To develop the site locally:
+To develop the Jekyll site locally:
 
 	# Clone a second repository and check out the branch
 	$ git clone git@github.com:robfig/revel.git
@@ -100,17 +143,17 @@ Additionally, there are frequently smaller feature requests or items in the
 [issues](https://github.com/robfig/revel/issues?labels=contributor+ready&page=1&state=open).
 
 1.  Better ORM support.  Provide more samples (or modules) and better documentation for setting up common situations like SQL database, Mongo, LevelDB, etc.
-2.	Support for other templating languages (e.g. mustache, HAML).  Make TemplateLoader pluggable.  Use Pongo instead of vanilla Go templates (and update the samples)
-12.	Test Fixtures
-13.	Authenticity tokens for CSRF protection
-5. Coffeescript pre-processor.  Could potentially use [otto](https://github.com/robertkrimen/otto) as a native Go method to compiling.
-6.  SCSS/LESS pre-processor.
-4.	GAE support.  Some progress made in the 'appengine' branch -- the remaining piece is running the appengine services in development.
-3.  More Form helpers (template funcs).
-5.	A Mongo module (perhaps with a sample app)
-9.	Easy emailer support (e.g. to email exception logs to developer, or even to email users),
-9.  Deployment to OpenShift (support, documentation, etc)
-16.	Improve the logging situation.  The configuration is a little awkward and not very powerful.  Integrating something more powerful would be good. (like [seelog](https://github.com/cihub/seelog) or [log4go](https://code.google.com/p/log4go/))
-11.	ETags, cache controls
-14.	A module or plugins for adding HTTP Basic Auth
-7.	Allowing the app to hook into the source code processing step
+1.	Support for other templating languages (e.g. mustache, HAML).  Make TemplateLoader pluggable.  Use Pongo instead of vanilla Go templates (and update the samples)
+1.	Test Fixtures
+1.	Authenticity tokens for CSRF protection
+1. Coffeescript pre-processor.  Could potentially use [otto](https://github.com/robertkrimen/otto) as a native Go method to compiling.
+1.  SCSS/LESS pre-processor.
+1.	GAE support.  Some progress made in the 'appengine' branch -- the remaining piece is running the appengine services in development.
+1.  More Form helpers (template funcs).
+1.	A Mongo module (perhaps with a sample app)
+1.	Easy emailer support (e.g. to email exception logs to developer, or even to email users),
+1.  Deployment to OpenShift (support, documentation, etc)
+1.	Improve the logging situation.  The configuration is a little awkward and not very powerful.  Integrating something more powerful would be good. (like [seelog](https://github.com/cihub/seelog) or [log4go](https://code.google.com/p/log4go/))
+1.	ETags, cache controls
+1.	A module or plugins for adding HTTP Basic Auth
+1.	Allowing the app to hook into the source code processing step
