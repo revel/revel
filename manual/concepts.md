@@ -86,25 +86,27 @@ Controller, and it sets all of these properties on the embedded
 ***
 
 A **Controller** is any type that embeds `*revel.Controller` (directly or indirectly).
-
+{% raw %}
 <pre class="prettyprint lang-go">
 type AppController struct {
   *revel.Controller
 }
 </pre>
+{% endraw %}
 
 An **Action** is any method on a **Controller** that meets the following criteria:
 * is exported
 * returns a revel.Result
 
 For example:
-
+{% raw %}
 <pre class="prettyprint lang-go">
 func (c AppController) ShowLogin(username string) revel.Result {
 	..
 	return c.Render(username)
 }
 </pre>
+{% endraw %}
 
 The example invokes `revel.Controller.Render` to execute a template, passing it the
 username as a parameter.  There are many methods on **revel.Controller** that
@@ -113,12 +115,13 @@ produce **revel.Result**, but applications are also free to create their own.
 ## Results
 
 A Result is anything conforming to the interface:
+{% raw %}
 <pre class="prettyprint lang-go">
 type Result interface {
 	Apply(req *Request, resp *Response)
 }
 </pre>
-
+{% endraw %}
 Typically, nothing is written to the response until the **action** and all
 filters have returned.  At that point, Revel writes response headers and cookies
 (e.g. setting the session cookie), and then invokes `Result.Apply` to write the

@@ -35,6 +35,7 @@ and from any type.  It uses the following mechanisms:
 The Cache may be configured to be backed by one of the following implementations:
 
 * a list of [memcached](http://memcached.org/) hosts
+* a single [redis](http://redis.io) host
 * an in-memory implementation
 
 ## Configuration
@@ -45,6 +46,8 @@ Configure the cache using these keys in `app.conf`:
   [`time.ParseDuration`](http://golang.org/pkg/time/#ParseDuration) to specify
   the default expiration duration.  (default 1 hour)
 * `cache.memcached` - a boolean indicating whether or not memcached should be
+  used. (default false)
+* `cache.redis` - a boolean indicating whether or not redis should be
   used. (default false)
 * `cache.hosts` - a comma separated list of hosts to use as backends.  this is
   only used when memcached is enabled.
