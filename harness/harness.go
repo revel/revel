@@ -14,6 +14,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"github.com/robfig/revel"
+	"go/build"
 	"io"
 	"net"
 	"net/http"
@@ -22,6 +23,7 @@ import (
 	"os"
 	"os/signal"
 	"path"
+	"path/filepath"
 	"strings"
 	"sync/atomic"
 )
@@ -149,8 +151,14 @@ func (h *Harness) WatchFile(filename string) bool {
 // Run the harness, which listens for requests and proxies them to the app
 // server, which it runs and rebuilds as necessary.
 func (h *Harness) Run() {
+	var paths []string
+	if revel.Config.BoolDefault("watch.gopath", false) {
+		gopaths := filepath.SplitList(build.Default.GOPATH)
+		paths = append(paths, gopaths...)
+	}
+	paths = append(paths, revel.CodePaths...)
 	watcher = revel.NewWatcher()
-	watcher.Listen(h, revel.CodePaths...)
+	watcher.Listen(h, paths...)
 
 	go func() {
 		addr := fmt.Sprintf("%s:%d", revel.HttpAddr, revel.HttpPort)
