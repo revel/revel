@@ -64,7 +64,7 @@ $ cd $GOPATH/src/github.com/robfig/revel              # Change directory to reve
 $ git remote add fork git@github.com:$USER/revel.git  # Add your fork as a remote
 ```
 
-### Create a feature branch & code away!
+### Create A Feature Branch & Code Away!
 
 Now that you've properly installed and forked Revel, you are ready to start coding (assuming
 you have a valdiated your ideas with other community members)!
@@ -78,9 +78,7 @@ $ git pull origin develop                             # Optionally, merge new ch
 $ git push fork develop                               # After new commits, push to your fork
 ```
 
-Once you have pushed your changes up to your fork, you can create a pull request for review and acceptance.
-
-### Gofmt your code
+### Gofmt Your Code
 
 Set your editor to run "go fmt" every time you save so that whitespace / style
 comments are kept to a minimum.
@@ -88,7 +86,7 @@ comments are kept to a minimum.
 Howtos:
 * [Emacs](http://blog.golang.org/2013/01/go-fmt-your-code.html)
 
-### Write a test (and maybe a benchmark)
+### Write A Test (And Benchmark For Bonus Points)
 
 Significant new features require tests. Besides unit tests, it is also possible
 to test a feature by exercising it in one of the sample apps and verifying its
@@ -97,7 +95,7 @@ example code for developers to refer to.
 
 Benchmarks are helpful but not required.
 
-### Run the tests
+### Run The Tests
 
 Typically running the main set of unit tests will be sufficient:
 
@@ -109,7 +107,7 @@ Refer to the
 [Travis configuration](https://github.com/robfig/revel/blob/master/.travis.yml)
 for the full set of tests.  They take less than a minute to run.
 
-### Document your feature
+### Document Your Feature
 
 Due to the wide audience and shared nature of Revel, documentation is an essential
 addition to your new code. **Pull requests risk not being accepted** until proper
@@ -135,6 +133,10 @@ To develop the Jekyll site locally:
 	$ open http://localhost:8088/revel
 
 Any changes you make to the site should be reflected within a few seconds.
+
+### Submit Pull Request
+
+Once you've done all of the above & pushed your changes to your fork, you can create a pull request for review and acceptance.
 
 ## Potential Projects
 
