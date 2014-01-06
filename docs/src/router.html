@@ -14,23 +14,26 @@ layout: godoc
 	<pre>package revel
 
 type Route struct {
-    Method      string   <span class="comment">// e.g. GET</span>
-    Path        string   <span class="comment">// e.g. /app/{id}</span>
-    Action      string   <span class="comment">// e.g. Application.ShowApp</span>
-    FixedParams []string <span class="comment">// e.g. &#34;arg1&#34;,&#34;arg2&#34;,&#34;arg3&#34; (CSV formatting)</span>
+    Method         string   <span class="comment">// e.g. GET</span>
+    Path           string   <span class="comment">// e.g. /app/:id</span>
+    Action         string   <span class="comment">// e.g. &#34;Application.ShowApp&#34;, &#34;404&#34;</span>
+    ControllerName string   <span class="comment">// e.g. &#34;Application&#34;, &#34;&#34;</span>
+    MethodName     string   <span class="comment">// e.g. &#34;ShowApp&#34;, &#34;&#34;</span>
+    FixedParams    []string <span class="comment">// e.g. &#34;arg1&#34;,&#34;arg2&#34;,&#34;arg3&#34; (CSV formatting)</span>
+    TreePath       string   <span class="comment">// e.g. &#34;/GET/app/:id&#34;</span>
 
 }
 
 type RouteMatch struct {
-    Action         string <span class="comment">// e.g. Application.ShowApp</span>
+    Action         string <span class="comment">// e.g. 404</span>
     ControllerName string <span class="comment">// e.g. Application</span>
     MethodName     string <span class="comment">// e.g. ShowApp</span>
     FixedParams    []string
-    Params         map[string]string <span class="comment">// e.g. {id: 123}</span>
+    Params         map[string][]string <span class="comment">// e.g. {id: 123}</span>
 }
 
 <span class="comment">// Prepares the route to be used in matching.</span>
-func NewRoute(method, path, action, fixedArgs string) (r *Route) {
+func NewRoute(method, path, action, fixedArgs, routesPath string, line int) (r *Route) {
     <span class="comment">// Handle fixed arguments</span>
     argsReader := strings.NewReader(fixedArgs)
     csv := csv.NewReader(argsReader)
@@ -44,128 +47,84 @@ func NewRoute(method, path, action, fixedArgs string) (r *Route) {
         Path:        path,
         Action:      action,
         FixedParams: fargs,
+        TreePath:    treePath(strings.ToUpper(method), path),
+        routesPath:  routesPath,
+        line:        line,
     }
 
     <span class="comment">// URL pattern</span>
-    <span class="comment">// TODO: Support non-absolute paths</span>
     if !strings.HasPrefix(r.Path, &#34;/&#34;) {
         ERROR.Print(&#34;Absolute URL required.&#34;)
         return
     }
 
-    <span class="comment">// Handle embedded arguments</span>
-
-    <span class="comment">// Convert path arguments with unspecified regexes to standard form.</span>
-    <span class="comment">// e.g. &#34;/customer/{id}&#34; =&gt; &#34;/customer/{&lt;[^/]+&gt;id}</span>
-    normPath := nakedPathParamRegex.ReplaceAllStringFunc(r.Path, func(m string) string {
-        var argMatches []string = nakedPathParamRegex.FindStringSubmatch(m)
-        return &#34;{&lt;[^/]+&gt;&#34; + argMatches[1] + &#34;}&#34;
-    })
-
-    <span class="comment">// Go through the arguments</span>
-    r.args = make([]*arg, 0, 3)
-    for i, m := range argsPattern.FindAllStringSubmatch(normPath, -1) {
-        r.args = append(r.args, &amp;arg{
-            name:       string(m[2]),
-            index:      i,
-            constraint: regexp.MustCompile(string(m[1])),
-        })
-    }
-
-    <span class="comment">// Now assemble the entire path regex, including the embedded parameters.</span>
-    <span class="comment">// e.g. /app/{&lt;[^/]+&gt;id} =&gt; /app/(?P&lt;id&gt;[^/]+)</span>
-    pathPatternStr := argsPattern.ReplaceAllStringFunc(normPath, func(m string) string {
-        var argMatches []string = argsPattern.FindStringSubmatch(m)
-        return &#34;(?P&lt;&#34; + argMatches[2] + &#34;&gt;&#34; + argMatches[1] + &#34;)&#34;
-    })
-    r.pathPattern = regexp.MustCompile(pathPatternStr + &#34;$&#34;)
-
-    <span class="comment">// Handle action</span>
-    var actionPatternStr string = strings.Replace(r.Action, &#34;.&#34;, `\.`, -1)
-    for _, arg := range r.args {
-        var argName string = &#34;{&#34; + arg.name + &#34;}&#34;
-        if argIndex := strings.Index(actionPatternStr, argName); argIndex != -1 {
-            actionPatternStr = strings.Replace(actionPatternStr, argName,
-                &#34;(?P&lt;&#34;+arg.name+&#34;&gt;&#34;+arg.constraint.String()+&#34;)&#34;, -1)
-        }
-    }
-    r.actionPattern = regexp.MustCompile(actionPatternStr)
-    return
-}
-
-<span class="comment">// Return nil if no match.</span>
-func (r *Route) Match(method string, reqPath string) *RouteMatch {
-    <span class="comment">// Check the Method</span>
-    if r.Method != &#34;*&#34; &amp;&amp; method != r.Method &amp;&amp; !(method == &#34;HEAD&#34; &amp;&amp; r.Method == &#34;GET&#34;) {
-        return nil
-    }
-
-    <span class="comment">// Check the Path</span>
-    var matches []string = r.pathPattern.FindStringSubmatch(reqPath)
-    if len(matches) == 0 || len(matches[0]) != len(reqPath) {
-        return nil
-    }
-
-    <span class="comment">// Figure out the Param names.</span>
-    params := make(map[string]string)
-    for i, m := range matches[1:] {
-        params[r.pathPattern.SubexpNames()[i+1]] = m
-    }
-
-    <span class="comment">// If the action is variablized, replace into it with the captured args.</span>
-    action := r.Action
-    if strings.Contains(action, &#34;{&#34;) {
-        for key, value := range params {
-            action = strings.Replace(action, &#34;{&#34;+key+&#34;}&#34;, value, -1)
-        }
-    }
-
-    <span class="comment">// Special handling for explicit 404&#39;s.</span>
-    if action == &#34;404&#34; {
-        return &amp;RouteMatch{
-            Action: &#34;404&#34;,
-        }
-    }
-
-    <span class="comment">// Split the action into controller and method</span>
     actionSplit := strings.Split(action, &#34;.&#34;)
-    if len(actionSplit) != 2 {
-        ERROR.Printf(&#34;Failed to split action: %s (matching route: %s)&#34;, action, r.Action)
-        return nil
+    if len(actionSplit) == 2 {
+        r.ControllerName = actionSplit[0]
+        r.MethodName = actionSplit[1]
     }
 
-    return &amp;RouteMatch{
-        Action:         action,
-        ControllerName: actionSplit[0],
-        MethodName:     actionSplit[1],
-        Params:         params,
-        FixedParams:    r.FixedParams,
-    }
+    return
 }
 
 type Router struct {
     Routes []*Route
+    Tree   *pathtree.Node
 
 }
 
 func (router *Router) Route(req *http.Request) *RouteMatch {
-    for _, route := range router.Routes {
-        if m := route.Match(req.Method, req.URL.Path); m != nil {
-            return m
+    leaf, expansions := router.Tree.Find(treePath(req.Method, req.URL.Path))
+    if leaf == nil {
+        return nil
+    }
+    route := leaf.Value.(*Route)
+
+    <span class="comment">// Create a map of the route parameters.</span>
+    var params url.Values
+    if len(expansions) &gt; 0 {
+        params = make(url.Values)
+        for i, v := range expansions {
+            params[leaf.Wildcards[i]] = []string{v}
         }
     }
-    return nil
+
+    <span class="comment">// Special handling for explicit 404&#39;s.</span>
+    if route.Action == &#34;404&#34; {
+        return notFound
+    }
+
+    <span class="comment">// If the action is variablized, replace into it with the captured args.</span>
+    controllerName, methodName := route.ControllerName, route.MethodName
+    if controllerName[0] == &#39;:&#39; {
+        controllerName = params[controllerName[1:]][0]
+    }
+    if methodName[0] == &#39;:&#39; {
+        methodName = params[methodName[1:]][0]
+    }
+
+    return &amp;RouteMatch{
+        ControllerName: controllerName,
+        MethodName:     methodName,
+        Params:         params,
+        FixedParams:    route.FixedParams,
+    }
 }
 
 <span class="comment">// Refresh re-reads the routes file and re-calculates the routing table.</span>
 <span class="comment">// Returns an error if a specified action could not be found.</span>
 func (router *Router) Refresh() (err *Error) {
-    router.Routes, err = parseRoutesFile(router.path, true)
+    router.Routes, err = parseRoutesFile(router.path, &#34;&#34;, true)
+    if err != nil {
+        return
+    }
+    err = router.updateTree()
     return
 }
 
 func NewRouter(routesPath string) *Router {
     return &amp;Router{
+        Tree: pathtree.New(),
         path: routesPath,
     }
 }
@@ -181,54 +140,60 @@ func (a *ActionDefinition) String() string {
 }
 
 func (router *Router) Reverse(action string, argValues map[string]string) *ActionDefinition {
+    actionSplit := strings.Split(action, &#34;.&#34;)
+    if len(actionSplit) != 2 {
+        ERROR.Print(&#34;revel/router: reverse router got invalid action &#34;, action)
+        return nil
+    }
+    controllerName, methodName := actionSplit[0], actionSplit[1]
 
-NEXT_ROUTE:
-    <span class="comment">// Loop through the routes.</span>
     for _, route := range router.Routes {
-        if route.actionPattern == nil {
+        <span class="comment">// Skip routes without either a ControllerName or MethodName</span>
+        if route.ControllerName == &#34;&#34; || route.MethodName == &#34;&#34; {
             continue
         }
 
-        var matches []string = route.actionPattern.FindStringSubmatch(action)
-        if len(matches) == 0 {
+        <span class="comment">// Check that the action matches or is a wildcard.</span>
+        controllerWildcard := route.ControllerName[0] == &#39;:&#39;
+        methodWildcard := route.MethodName[0] == &#39;:&#39;
+        if (!controllerWildcard &amp;&amp; route.ControllerName != controllerName) ||
+            (!methodWildcard &amp;&amp; route.MethodName != methodName) {
             continue
         }
-
-        for i, match := range matches[1:] {
-            argValues[route.actionPattern.SubexpNames()[i+1]] = match
+        if controllerWildcard {
+            argValues[route.ControllerName[1:]] = controllerName
         }
-
-        <span class="comment">// Create a lookup for the route args.</span>
-        routeArgs := make(map[string]*arg)
-        for _, arg := range route.args {
-            routeArgs[arg.name] = arg
-        }
-
-        <span class="comment">// Enforce the constraints on the arg values.</span>
-        for argKey, argValue := range argValues {
-            arg, ok := routeArgs[argKey]
-            if ok &amp;&amp; !arg.constraint.MatchString(argValue) {
-                continue NEXT_ROUTE
-            }
+        if methodWildcard {
+            argValues[route.MethodName[1:]] = methodName
         }
 
         <span class="comment">// Build up the URL.</span>
-        var queryValues url.Values = make(url.Values)
-        <span class="comment">// Handle optional trailing slashes (e.g. &#34;/?&#34;) by removing the question mark.</span>
-        path := strings.Replace(route.Path, &#34;?&#34;, &#34;&#34;, -1)
-        for argKey, argValue := range argValues {
-            if _, ok := routeArgs[argKey]; ok {
-                <span class="comment">// If this arg goes into the path, put it in.</span>
-                path = regexp.MustCompile(`\{(&lt;[^&gt;]+&gt;)?`+regexp.QuoteMeta(argKey)+`\}`).
-                    ReplaceAllString(path, url.QueryEscape(string(argValue)))
-            } else {
-                <span class="comment">// Else, add it to the query string.</span>
-                queryValues.Set(argKey, argValue)
+        var (
+            queryValues  = make(url.Values)
+            pathElements = strings.Split(route.Path, &#34;/&#34;)
+        )
+        for i, el := range pathElements {
+            if el == &#34;&#34; || el[0] != &#39;:&#39; {
+                continue
             }
+
+            val, ok := argValues[el[1:]]
+            if !ok {
+                val = &#34;&lt;nil&gt;&#34;
+                ERROR.Print(&#34;revel/router: reverse route missing route arg &#34;, el[1:])
+            }
+            pathElements[i] = val
+            delete(argValues, el[1:])
+            continue
+        }
+
+        <span class="comment">// Add any args that were not inserted into the path into the query string.</span>
+        for k, v := range argValues {
+            queryValues.Set(k, v)
         }
 
         <span class="comment">// Calculate the final URL and Method</span>
-        url := path
+        url := strings.Join(pathElements, &#34;/&#34;)
         if len(queryValues) &gt; 0 {
             url += &#34;?&#34; + queryValues.Encode()
         }
@@ -253,7 +218,7 @@ NEXT_ROUTE:
     return nil
 }
 
-var RouterFilter = func(c *Controller, fc []Filter) {
+func RouterFilter(c *Controller, fc []Filter) {
     <span class="comment">// Figure out the Controller/Action</span>
     var route *RouteMatch = MainRouter.Route(c.Request.Request)
     if route == nil {
@@ -274,14 +239,10 @@ var RouterFilter = func(c *Controller, fc []Filter) {
     }
 
     <span class="comment">// Add the route and fixed params to the Request Params.</span>
-    for k, v := range route.Params {
-        if c.Params.Route == nil {
-            c.Params.Route = make(map[string][]string)
-        }
-        c.Params.Route[k] = []string{v}
-    }
+    c.Params.Route = route.Params
 
     <span class="comment">// Add the fixed parameters mapped by name.</span>
+    <span class="comment">// TODO: Pre-calculate this mapping.</span>
     for i, value := range route.FixedParams {
         if c.Params.Fixed == nil {
             c.Params.Fixed = make(url.Values)

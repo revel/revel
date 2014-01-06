@@ -187,8 +187,6 @@ Go Templates allow you to compose templates by inclusion.  For example:
 
 There are two things to note:
 * Paths are relative to `app/views`
-* Any included templates must be in the root directory (`app/views`).  This is a
-  (hopefully temporary) limitation.
 
 ## Tips
 

@@ -17,6 +17,10 @@ const (
     REVEL_IMPORT_PATH = &#34;github.com/robfig/revel&#34;
 )
 
+func (r *revelLogs) Write(p []byte) (n int, err error) {
+    return r.w.Write([]byte(r.c.Paint(string(p))))
+}
+
 var (
     <span class="comment">// App details</span>
     AppName    string <span class="comment">// e.g. &#34;sample&#34;</span>
@@ -47,17 +51,27 @@ var (
     <span class="comment">// the current process reality.  For example, if the app is configured for</span>
     <span class="comment">// port 9000, HttpPort will always be 9000, even though in dev mode it is</span>
     <span class="comment">// run on a random port and proxied.</span>
-    HttpPort int    <span class="comment">// e.g. 9000</span>
-    HttpAddr string <span class="comment">// e.g. &#34;&#34;, &#34;127.0.0.1&#34;</span>
+    HttpPort    int    <span class="comment">// e.g. 9000</span>
+    HttpAddr    string <span class="comment">// e.g. &#34;&#34;, &#34;127.0.0.1&#34;</span>
+    HttpSsl     bool   <span class="comment">// e.g. true if using ssl</span>
+    HttpSslCert string <span class="comment">// e.g. &#34;/path/to/cert.pem&#34;</span>
+    HttpSslKey  string <span class="comment">// e.g. &#34;/path/to/key.pem&#34;</span>
 
     <span class="comment">// All cookies dropped by the framework begin with this prefix.</span>
     CookiePrefix string
+
+    <span class="comment">// Cookie flags</span>
+    CookieHttpOnly bool
+    CookieSecure   bool
+
+    <span class="comment">// Delimiters to use when rendering templates</span>
+    TemplateDelims string
 
     <span class="comment">// Loggers</span>
     TRACE = log.New(ioutil.Discard, &#34;TRACE &#34;, log.Ldate|log.Ltime|log.Lshortfile)
     INFO  = log.New(ioutil.Discard, &#34;INFO  &#34;, log.Ldate|log.Ltime|log.Lshortfile)
     WARN  = log.New(ioutil.Discard, &#34;WARN  &#34;, log.Ldate|log.Ltime|log.Lshortfile)
-    ERROR = log.New(os.Stderr, &#34;ERROR &#34;, log.Ldate|log.Ltime|log.Lshortfile)
+    ERROR = log.New(&amp;error_log, &#34;ERROR &#34;, log.Ldate|log.Ltime|log.Lshortfile)
 
     Initialized bool
 )
@@ -75,6 +89,10 @@ func Init(mode, importPath, srcPath string) {
     SourcePath = srcPath
     RunMode = mode
 
+    if runtime.GOOS == &#34;windows&#34; {
+        gocolorize.SetPlain(true)
+    }
+
     <span class="comment">// If the SourcePath is not specified, find it using build.Import.</span>
     var revelSourcePath string <span class="comment">// may be different from the app source path</span>
     if SourcePath == &#34;&#34; {
@@ -83,6 +101,7 @@ func Init(mode, importPath, srcPath string) {
         <span class="comment">// If the SourcePath was specified, assume both Revel and the app are within it.</span>
         SourcePath = path.Clean(SourcePath)
         revelSourcePath = SourcePath
+        packaged = true
     }
 
     RevelPath = path.Join(revelSourcePath, filepath.FromSlash(REVEL_IMPORT_PATH))
@@ -122,8 +141,23 @@ func Init(mode, importPath, srcPath string) {
     DevMode = Config.BoolDefault(&#34;mode.dev&#34;, false)
     HttpPort = Config.IntDefault(&#34;http.port&#34;, 9000)
     HttpAddr = Config.StringDefault(&#34;http.addr&#34;, &#34;&#34;)
+    HttpSsl = Config.BoolDefault(&#34;http.ssl&#34;, false)
+    HttpSslCert = Config.StringDefault(&#34;http.sslcert&#34;, &#34;&#34;)
+    HttpSslKey = Config.StringDefault(&#34;http.sslkey&#34;, &#34;&#34;)
+    if HttpSsl {
+        if HttpSslCert == &#34;&#34; {
+            log.Fatalln(&#34;No http.sslcert provided.&#34;)
+        }
+        if HttpSslKey == &#34;&#34; {
+            log.Fatalln(&#34;No http.sslkey provided.&#34;)
+        }
+    }
+
     AppName = Config.StringDefault(&#34;app.name&#34;, &#34;(not set)&#34;)
     CookiePrefix = Config.StringDefault(&#34;cookie.prefix&#34;, &#34;REVEL&#34;)
+    CookieHttpOnly = Config.BoolDefault(&#34;cookie.httponly&#34;, false)
+    CookieSecure = Config.BoolDefault(&#34;cookie.secure&#34;, false)
+    TemplateDelims = Config.StringDefault(&#34;template.delimiters&#34;, &#34;&#34;)
     if secretStr := Config.StringDefault(&#34;app.secret&#34;, &#34;&#34;); secretStr != &#34;&#34; {
         secretKey = []byte(secretStr)
     }
@@ -141,6 +175,20 @@ func Init(mode, importPath, srcPath string) {
 
 type Module struct {
     Name, ImportPath, Path string
+}
+
+<span class="comment">// ResolveImportPath returns the filesystem path for the given import path.</span>
+<span class="comment">// Returns an error if the import path could not be found.</span>
+func ResolveImportPath(importPath string) (string, error) {
+    if packaged {
+        return path.Join(SourcePath, importPath), nil
+    }
+
+    modPkg, err := build.Import(importPath, &#34;&#34;, build.FindOnly)
+    if err != nil {
+        return &#34;&#34;, err
+    }
+    return modPkg.Dir, nil
 }
 
 <span class="comment">// ModuleByName returns the module of the given name, if loaded.</span>

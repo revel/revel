@@ -27,8 +27,9 @@ layout: godoc
 			<dl>
 			
 			
-				<dd><a href="#pkg-variables">Variables</a></dd>
 			
+				
+				<dd><a href="#PanicFilter">func PanicFilter(c *Controller, fc []Filter)</a></dd>
 			
 			
 			
@@ -52,23 +53,17 @@ layout: godoc
 
 		
 		
-			<h2 id="pkg-variables">Variables</h2>
+		
 			
-				<pre>var <span id="PanicFilter">PanicFilter</span> = func(c *<a href="#Controller">Controller</a>, fc []<a href="#Filter">Filter</a>) {
-    defer func() {
-        if <span id="err">err</span> := <a href="/pkg/builtin/#recover">recover</a>(); <a href="#err">err</a> != <a href="/pkg/builtin/#nil">nil</a> {
-            <a href="#handleInvocationPanic">handleInvocationPanic</a>(<a href="#c">c</a>, <a href="#err">err</a>)
-        }
-    }()
-    <a href="#fc">fc</a>[0](<a href="#c">c</a>, <a href="#fc">fc</a>[1:])
-}</pre>
-				<p>
+			
+			<h2 id="PanicFilter">func <a href="../src/panic.html?s=163:207#L1">PanicFilter</a></h2>
+			<pre>func PanicFilter(c *<a href="#Controller">Controller</a>, fc []<a href="#Filter">Filter</a>)</pre>
+			<p>
 PanicFilter wraps the action invocation in a protective defer blanket that
 converts panics into 500 error pages.
 </p>
 
 			
-		
 		
 		
 	

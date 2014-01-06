@@ -27,8 +27,9 @@ layout: godoc
 			<dl>
 			
 			
-				<dd><a href="#pkg-variables">Variables</a></dd>
 			
+				
+				<dd><a href="#ParamsFilter">func ParamsFilter(c *Controller, fc []Filter)</a></dd>
 			
 				
 				<dd><a href="#ParseParams">func ParseParams(params *Params, req *Request)</a></dd>
@@ -63,33 +64,13 @@ layout: godoc
 
 		
 		
-			<h2 id="pkg-variables">Variables</h2>
-			
-				<pre>var <span id="ParamsFilter">ParamsFilter</span> = func(c *<a href="#Controller">Controller</a>, fc []<a href="#Filter">Filter</a>) {
-    <a href="#ParseParams">ParseParams</a>(<a href="#c">c</a>.<a href="#Params">Params</a>, <a href="#c">c</a>.<a href="#Request">Request</a>)
-
-    defer func() {
-
-        if <a href="#c">c</a>.<a href="#Request">Request</a>.<a href="#MultipartForm">MultipartForm</a> != <a href="/pkg/builtin/#nil">nil</a> {
-            <span id="err">err</span> := <a href="#c">c</a>.<a href="#Request">Request</a>.<a href="#MultipartForm">MultipartForm</a>.<a href="#RemoveAll">RemoveAll</a>()
-            if <a href="#err">err</a> != <a href="/pkg/builtin/#nil">nil</a> {
-                <a href="#WARN">WARN</a>.<a href="#Println">Println</a>(&#34;Error removing temporary files:&#34;, <a href="#err">err</a>)
-            }
-        }
-
-        for <a href="#_">_</a>, <a href="#tmpFile">tmpFile</a> := range <a href="#c">c</a>.<a href="#Params">Params</a>.<a href="#tmpFiles">tmpFiles</a> {
-            <span id="err">err</span> := <a href="/pkg/os/">os</a>.<a href="/pkg/os/#Remove">Remove</a>(<a href="#tmpFile">tmpFile</a>.<a href="#Name">Name</a>())
-            if <a href="#err">err</a> != <a href="/pkg/builtin/#nil">nil</a> {
-                <a href="#WARN">WARN</a>.<a href="#Println">Println</a>(&#34;Could not remove upload temp file:&#34;, <a href="#err">err</a>)
-            }
-        }
-    }()
-
-    <a href="#fc">fc</a>[0](<a href="#c">c</a>, <a href="#fc">fc</a>[1:])
-}</pre>
-				
-			
 		
+			
+			
+			<h2 id="ParamsFilter">func <a href="../src/params.html?s=3064:3109#L102">ParamsFilter</a></h2>
+			<pre>func ParamsFilter(c *<a href="#Controller">Controller</a>, fc []<a href="#Filter">Filter</a>)</pre>
+			
+			
 		
 			
 			

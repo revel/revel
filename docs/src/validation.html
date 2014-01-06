@@ -13,11 +13,12 @@ layout: godoc
 
 	<pre>package revel
 
+<span class="comment">// Simple struct to store the Message &amp; Key of a validation error</span>
 type ValidationError struct {
     Message, Key string
 }
 
-<span class="comment">// Returns the Message.</span>
+<span class="comment">// String returns the Message field of the ValidationError struct.</span>
 func (e *ValidationError) String() string {
     if e == nil {
         return &#34;&#34;
@@ -31,19 +32,27 @@ type Validation struct {
 
 }
 
+<span class="comment">// Keep tells revel to set a flash cookie on the client to make the validation</span>
+<span class="comment">// errors available for the next request.</span>
+<span class="comment">// This is helpful  when redirecting the client after the validation failed.</span>
+<span class="comment">// It is good practice to always redirect upon a HTTP POST request. Thus</span>
+<span class="comment">// one should use this method when HTTP POST validation failed and redirect</span>
+<span class="comment">// the user back to the form.</span>
 func (v *Validation) Keep() {
     v.keep = true
 }
 
+<span class="comment">// Clear *all* ValidationErrors</span>
 func (v *Validation) Clear() {
     v.Errors = []*ValidationError{}
 }
 
+<span class="comment">// HasErrors returns true if there are any (ie &gt; 0) errors. False otherwise.</span>
 func (v *Validation) HasErrors() bool {
     return len(v.Errors) &gt; 0
 }
 
-<span class="comment">// Return the errors mapped by key.</span>
+<span class="comment">// ErrorMap returns the errors mapped by key.</span>
 <span class="comment">// If there are multiple validation errors associated with a single key, the</span>
 <span class="comment">// first one &#34;wins&#34;.  (Typically the first validation will be the more basic).</span>
 func (v *Validation) ErrorMap() map[string]*ValidationError {
@@ -56,12 +65,14 @@ func (v *Validation) ErrorMap() map[string]*ValidationError {
     return m
 }
 
-<span class="comment">// Add an error to the validation context.</span>
+<span class="comment">// Error adds an error to the validation context.</span>
 func (v *Validation) Error(message string, args ...interface{}) *ValidationResult {
-    return (&amp;ValidationResult{
+    result := (&amp;ValidationResult{
         Ok:    false,
         Error: &amp;ValidationError{},
-    }).Message(message, args)
+    }).Message(message, args...)
+    v.Errors = append(v.Errors, result.Error)
+    return result
 }
 
 <span class="comment">// A ValidationResult is returned from every validation method.</span>
@@ -71,6 +82,7 @@ type ValidationResult struct {
     Ok    bool
 }
 
+<span class="comment">// Key sets the ValidationResult&#39;s Error &#34;key&#34; and returns itself for chaining</span>
 func (r *ValidationResult) Key(key string) *ValidationResult {
     if r.Error != nil {
         r.Error.Key = key
@@ -78,18 +90,20 @@ func (r *ValidationResult) Key(key string) *ValidationResult {
     return r
 }
 
+<span class="comment">// Message sets the error message for a ValidationResult. Returns itself to</span>
+<span class="comment">// allow chaining.  Allows Sprintf() type calling with multiple parameters</span>
 func (r *ValidationResult) Message(message string, args ...interface{}) *ValidationResult {
     if r.Error != nil {
         if len(args) == 0 {
             r.Error.Message = message
         } else {
-            r.Error.Message = fmt.Sprintf(message, args)
+            r.Error.Message = fmt.Sprintf(message, args...)
         }
     }
     return r
 }
 
-<span class="comment">// Test that the argument is non-nil and non-empty (if string or list)</span>
+<span class="comment">// Required tests that the argument is non-nil and non-empty (if string or list)</span>
 func (v *Validation) Required(obj interface{}) *ValidationResult {
     return v.apply(Required{}, obj)
 }
@@ -140,11 +154,14 @@ func (v *Validation) Check(obj interface{}, checks ...Validator) *ValidationResu
     return result
 }
 
-var ValidationFilter = func(c *Controller, fc []Filter) {
+<span class="comment">// Revel Filter function to be hooked into the filter chain.</span>
+func ValidationFilter(c *Controller, fc []Filter) {
+    errors, err := restoreValidationErrors(c.Request.Request)
     c.Validation = &amp;Validation{
-        Errors: restoreValidationErrors(c.Request.Request),
+        Errors: errors,
         keep:   false,
     }
+    hasCookie := (err != http.ErrNoCookie)
 
     fc[0](c, fc[1:])
 
@@ -160,11 +177,27 @@ var ValidationFilter = func(c *Controller, fc []Filter) {
             }
         }
     }
-    c.SetCookie(&amp;http.Cookie{
-        Name:  CookiePrefix + &#34;_ERRORS&#34;,
-        Value: url.QueryEscape(errorsValue),
-        Path:  &#34;/&#34;,
-    })
+
+    <span class="comment">// When there are errors from Validation and Keep() has been called, store the</span>
+    <span class="comment">// values in a cookie. If there previously was a cookie but no errors, remove</span>
+    <span class="comment">// the cookie.</span>
+    if errorsValue != &#34;&#34; {
+        c.SetCookie(&amp;http.Cookie{
+            Name:     CookiePrefix + &#34;_ERRORS&#34;,
+            Value:    url.QueryEscape(errorsValue),
+            Path:     &#34;/&#34;,
+            HttpOnly: CookieHttpOnly,
+            Secure:   CookieSecure,
+        })
+    } else if hasCookie {
+        c.SetCookie(&amp;http.Cookie{
+            Name:     CookiePrefix + &#34;_ERRORS&#34;,
+            MaxAge:   -1,
+            Path:     &#34;/&#34;,
+            HttpOnly: CookieHttpOnly,
+            Secure:   CookieSecure,
+        })
+    }
 }
 
 <span class="comment">// Register default validation keys for all calls to Controller.Validation.Func().</span>

@@ -213,6 +213,11 @@ layout: godoc
             <a href="#output">output</a>[<a href="#name">name</a>] = <a href="#t">t</a>.<a href="#Format">Format</a>(<a href="#format">format</a>)
         },
     }
+
+    <span id="MapBinder">MapBinder</span> = <a href="#Binder">Binder</a>{
+        <a href="#Bind">Bind</a>:   <a href="#bindMap">bindMap</a>,
+        <a href="#Unbind">Unbind</a>: <a href="#unbindMap">unbindMap</a>,
+    }
 )</pre>
 				
 			
@@ -220,7 +225,7 @@ layout: godoc
 		
 			
 			
-			<h2 id="Bind">func <a href="../src/binder.html?s=12992:13062#L437">Bind</a></h2>
+			<h2 id="Bind">func <a href="../src/binder.html?s=13770:13840#L463">Bind</a></h2>
 			<pre>func Bind(params *<a href="#Params">Params</a>, name <a href="/pkg/builtin/#string">string</a>, typ <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Type">Type</a>) <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Value">Value</a></pre>
 			<p>
 Bind takes the name and type of the desired parameter and constructs it
@@ -232,28 +237,28 @@ Returns the zero value of the type upon any sort of failure.
 		
 			
 			
-			<h2 id="BindFile">func <a href="../src/binder.html?s=13321:13400#L448">BindFile</a></h2>
+			<h2 id="BindFile">func <a href="../src/binder.html?s=14099:14178#L474">BindFile</a></h2>
 			<pre>func BindFile(fileHeader *<a href="/pkg/mime/multipart/">multipart</a>.<a href="/pkg/mime/multipart/#FileHeader">FileHeader</a>, typ <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Type">Type</a>) <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Value">Value</a></pre>
 			
 			
 		
 			
 			
-			<h2 id="BindValue">func <a href="../src/binder.html?s=13186:13244#L444">BindValue</a></h2>
+			<h2 id="BindValue">func <a href="../src/binder.html?s=13964:14022#L470">BindValue</a></h2>
 			<pre>func BindValue(val <a href="/pkg/builtin/#string">string</a>, typ <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Type">Type</a>) <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Value">Value</a></pre>
 			
 			
 		
 			
 			
-			<h2 id="Unbind">func <a href="../src/binder.html?s=13498:13565#L452">Unbind</a></h2>
+			<h2 id="Unbind">func <a href="../src/binder.html?s=14276:14343#L478">Unbind</a></h2>
 			<pre>func Unbind(output map[<a href="/pkg/builtin/#string">string</a>]<a href="/pkg/builtin/#string">string</a>, name <a href="/pkg/builtin/#string">string</a>, val interface{})</pre>
 			
 			
 		
 			
 			
-			<h2 id="ValueBinder">func <a href="../src/binder.html?s=1057:1177#L33">ValueBinder</a></h2>
+			<h2 id="ValueBinder">func <a href="../src/binder.html?s=1051:1171#L33">ValueBinder</a></h2>
 			<pre>func ValueBinder(f func(value <a href="/pkg/builtin/#string">string</a>, typ <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Type">Type</a>) <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Value">Value</a>) func(*<a href="#Params">Params</a>, <a href="/pkg/builtin/#string">string</a>, <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Type">Type</a>) <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Value">Value</a></pre>
 			<p>
 An adapter for easily making one-key-value binders.
@@ -264,20 +269,20 @@ An adapter for easily making one-key-value binders.
 		
 			
 			
-			<h2 id="Binder">type <a href="../src/binder.html?s=191:1000#L6">Binder</a></h2>
+			<h2 id="Binder">type <a href="../src/binder.html?s=191:994#L6">Binder</a></h2>
 			<pre>type Binder struct {
     <span class="comment">// Bind takes the name and type of the desired parameter and constructs it</span>
     <span class="comment">// from one or more values from Params.</span>
     <span class="comment">//</span>
     <span class="comment">// Example</span>
     <span class="comment">//</span>
-    <span class="comment">//   Request:</span>
+    <span class="comment">// Request:</span>
     <span class="comment">//   url?id=123&amp;ol[0]=1&amp;ol[1]=2&amp;ul[]=str&amp;ul[]=array&amp;user.Name=rob</span>
     <span class="comment">//</span>
-    <span class="comment">//   Action:</span>
+    <span class="comment">// Action:</span>
     <span class="comment">//   Example.Action(id int, ol []int, ul []string, user User)</span>
     <span class="comment">//</span>
-    <span class="comment">//   Calls:</span>
+    <span class="comment">// Calls:</span>
     <span class="comment">//   Bind(params, &#34;id&#34;, int): 123</span>
     <span class="comment">//   Bind(params, &#34;ol&#34;, []int): {1, 2}</span>
     <span class="comment">//   Bind(params, &#34;ul&#34;, []string): {&#34;str&#34;, &#34;array&#34;}</span>

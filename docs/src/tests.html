@@ -25,7 +25,11 @@ var TestSuites []interface{} <span class="comment">// Array of structs that embe
 <span class="comment">// NewTestSuite returns an initialized TestSuite ready for use. It is invoked</span>
 <span class="comment">// by the test harness to initialize the embedded field in application tests.</span>
 func NewTestSuite() TestSuite {
-    return TestSuite{Client: &amp;http.Client{}, Session: make(Session)}
+    jar, _ := cookiejar.New(nil)
+    return TestSuite{
+        Client:  &amp;http.Client{Jar: jar},
+        Session: make(Session),
+    }
 }
 
 <span class="comment">// Return the address and port of the server, e.g. &#34;127.0.0.1:8557&#34;</span>
@@ -36,9 +40,14 @@ func (t *TestSuite) Host() string {
     return Server.Addr
 }
 
-<span class="comment">// Return the base http URL of the server, e.g. &#34;http://127.0.0.1:8557&#34;</span>
+<span class="comment">// Return the base http/https URL of the server, e.g. &#34;http://127.0.0.1:8557&#34;.</span>
+<span class="comment">// The scheme is set to https if http.ssl is set to true in the configuration file.</span>
 func (t *TestSuite) BaseUrl() string {
-    return &#34;http://&#34; + t.Host()
+    if HttpSsl {
+        return &#34;https://&#34; + t.Host()
+    } else {
+        return &#34;http://&#34; + t.Host()
+    }
 }
 
 <span class="comment">// Return the base websocket URL of the server, e.g. &#34;ws://127.0.0.1:8557&#34;</span>
@@ -50,6 +59,16 @@ func (t *TestSuite) WebSocketUrl() string {
 <span class="comment">// RequestBody.</span>
 func (t *TestSuite) Get(path string) {
     req, err := http.NewRequest(&#34;GET&#34;, t.BaseUrl()+path, nil)
+    if err != nil {
+        panic(err)
+    }
+    t.MakeRequestSession(req)
+}
+
+<span class="comment">// Issue a DELETE request to the given path and store the result in Request and</span>
+<span class="comment">// RequestBody.</span>
+func (t *TestSuite) Delete(path string) {
+    req, err := http.NewRequest(&#34;DELETE&#34;, t.BaseUrl()+path, nil)
     if err != nil {
         panic(err)
     }
@@ -78,7 +97,6 @@ func (t *TestSuite) PostForm(path string, data url.Values) {
 <span class="comment">// added to the request cookies for you.</span>
 func (t *TestSuite) MakeRequestSession(req *http.Request) {
     req.AddCookie(t.Session.cookie())
-
     t.MakeRequest(req)
 }
 
@@ -94,7 +112,14 @@ func (t *TestSuite) MakeRequest(req *http.Request) {
         panic(err)
     }
 
-    t.Session = restoreSession(req)
+    <span class="comment">// Look for a session cookie in the response and parse it.</span>
+    sessionCookieName := t.Session.cookie().Name
+    for _, cookie := range t.Client.Jar.Cookies(req.URL) {
+        if cookie.Name == sessionCookieName {
+            t.Session = getSessionFromCookie(cookie)
+            break
+        }
+    }
 }
 
 <span class="comment">// Create a websocket connection to the given path and return the connection</span>
@@ -145,7 +170,7 @@ func (t *TestSuite) Assert(exp bool) {
 
 func (t *TestSuite) Assertf(exp bool, formatStr string, args ...interface{}) {
     if !exp {
-        panic(fmt.Errorf(formatStr, args))
+        panic(fmt.Errorf(formatStr, args...))
     }
 }
 

@@ -29,6 +29,11 @@ This has a couple implications:
 * All data must be serialized to a string for storage.
 * All data may be viewed by the user (it is not encrypted), but it is safe from modification.
 
+The default lifetime of the session cookie is the browser lifetime.  This
+can be overriden to a specific amount of time by setting the session.expires
+option in app.config.  The format is that of
+[time.ParseDuration](http://golang.org/pkg/time/#ParseDuration).
+
 ## Flash
 
 The Flash provides single-use string storage. It useful for implementing

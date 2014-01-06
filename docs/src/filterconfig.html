@@ -43,6 +43,14 @@ layout: godoc
 <span class="comment">//</span>
 <span class="comment">//   =&gt; RouterFilter, FilterConfiguringFilter, OtherFilter, SessionFilter, ActionInvoker</span>
 <span class="comment">//</span>
+<span class="comment">// Filter modifications may be combined between Controller and Action.  For example:</span>
+<span class="comment">//   FilterController(App{}).</span>
+<span class="comment">//     Add(Filter1)</span>
+<span class="comment">//   FilterAction(App.Action).</span>
+<span class="comment">//     Add(Filter2)</span>
+<span class="comment">//</span>
+<span class="comment">//  .. would result in App.Action being filtered by both Filter1 and Filter2.</span>
+<span class="comment">//</span>
 <span class="comment">// Note: the last filter stage is not subject to the configurator.  In</span>
 <span class="comment">// particular, Add() adds a filter to the second-to-last place.</span>
 type FilterConfigurator struct {
@@ -89,21 +97,18 @@ func FilterAction(methodRef interface{}) FilterConfigurator {
 <span class="comment">// Add the given filter in the second-to-last position in the filter chain.</span>
 <span class="comment">// (Second-to-last so that it is before ActionInvoker)</span>
 func (conf FilterConfigurator) Add(f Filter) FilterConfigurator {
-    fc := conf.getOverrideFilters()
-    filterOverrides[conf.key] = append(fc[:len(fc)-1], f, fc[len(fc)-1])
+    conf.apply(func(fc []Filter) []Filter {
+        return conf.addFilter(f, fc)
+    })
     return conf
 }
 
 <span class="comment">// Remove a filter from the filter chain.</span>
 func (conf FilterConfigurator) Remove(target Filter) FilterConfigurator {
-    filters := conf.getOverrideFilters()
-    for i, f := range filters {
-        if FilterEq(f, target) {
-            filterOverrides[conf.key] = append(filters[:i], filters[i+1:]...)
-            return conf
-        }
-    }
-    panic(&#34;Did not find target filter to remove&#34;)
+    conf.apply(func(fc []Filter) []Filter {
+        return conf.rmFilter(target, fc)
+    })
+    return conf
 }
 
 <span class="comment">// Insert a filter into the filter chain before or after another.</span>
@@ -115,14 +120,10 @@ func (conf FilterConfigurator) Insert(insert Filter, where When, target Filter) 
     if where != BEFORE &amp;&amp; where != AFTER {
         panic(&#34;where must be BEFORE or AFTER&#34;)
     }
-    filters := conf.getOverrideFilters()
-    for i, f := range filters {
-        if FilterEq(f, target) {
-            filterOverrides[conf.key] = append(filters[:i], append([]Filter{insert}, filters[i:]...)...)
-            return conf
-        }
-    }
-    panic(&#34;Did not find target filter for insert&#34;)
+    conf.apply(func(fc []Filter) []Filter {
+        return conf.insertFilter(insert, where, target, fc)
+    })
+    return conf
 }
 
 <span class="comment">// FilterEq returns true if the two filters reference the same filter.</span>
@@ -132,17 +133,11 @@ func FilterEq(a, b Filter) bool {
 
 <span class="comment">// FilterConfiguringFilter is a filter stage that customizes the remaining</span>
 <span class="comment">// filter chain for the action being invoked.</span>
-var FilterConfiguringFilter = func(c *Controller, fc []Filter) {
-    if newChain, ok := filterOverrides[c.Name+&#34;.&#34;+c.Action]; ok {
+func FilterConfiguringFilter(c *Controller, fc []Filter) {
+    if newChain := getOverrideChain(c.Name, c.Action); newChain != nil {
         newChain[0](c, newChain[1:])
         return
     }
-
-    if newChain, ok := filterOverrides[c.Name]; ok {
-        newChain[0](c, newChain[1:])
-        return
-    }
-
     fc[0](c, fc[1:])
 }
 </pre>

@@ -27,14 +27,15 @@ layout: godoc
 			<dl>
 			
 			
-				<dd><a href="#pkg-variables">Variables</a></dd>
-			
 			
 				
 				<dd><a href="#InterceptFunc">func InterceptFunc(intc InterceptorFunc, when When, target interface{})</a></dd>
 			
 				
 				<dd><a href="#InterceptMethod">func InterceptMethod(intc InterceptorMethod, when When)</a></dd>
+			
+				
+				<dd><a href="#InterceptorFilter">func InterceptorFilter(c *Controller, fc []Filter)</a></dd>
 			
 			
 				
@@ -86,32 +87,10 @@ layout: godoc
 
 		
 		
-			<h2 id="pkg-variables">Variables</h2>
-			
-				<pre>var <span id="InterceptorFilter">InterceptorFilter</span> = func(c *<a href="#Controller">Controller</a>, fc []<a href="#Filter">Filter</a>) {
-    defer <a href="#invokeInterceptors">invokeInterceptors</a>(<a href="#FINALLY">FINALLY</a>, <a href="#c">c</a>)
-    defer func() {
-        if <span id="err">err</span> := <a href="/pkg/builtin/#recover">recover</a>(); <a href="#err">err</a> != <a href="/pkg/builtin/#nil">nil</a> {
-            <a href="#invokeInterceptors">invokeInterceptors</a>(<a href="#PANIC">PANIC</a>, <a href="#c">c</a>)
-            <a href="/pkg/builtin/#panic">panic</a>(<a href="#err">err</a>)
-        }
-    }()
-
-    <a href="#invokeInterceptors">invokeInterceptors</a>(<a href="#BEFORE">BEFORE</a>, <a href="#c">c</a>)
-    if <a href="#c">c</a>.<a href="#Result">Result</a> != <a href="/pkg/builtin/#nil">nil</a> {
-        return
-    }
-
-    <a href="#fc">fc</a>[0](<a href="#c">c</a>, <a href="#fc">fc</a>[1:])
-    <a href="#invokeInterceptors">invokeInterceptors</a>(<a href="#AFTER">AFTER</a>, <a href="#c">c</a>)
-}</pre>
-				
-			
-		
 		
 			
 			
-			<h2 id="InterceptFunc">func <a href="../src/intercept.html?s=3176:3247#L123">InterceptFunc</a></h2>
+			<h2 id="InterceptFunc">func <a href="../src/intercept.html?s=3170:3241#L123">InterceptFunc</a></h2>
 			<pre>func InterceptFunc(intc <a href="#InterceptorFunc">InterceptorFunc</a>, when <a href="#When">When</a>, target interface{})</pre>
 			<p>
 Install a general interceptor.
@@ -125,7 +104,7 @@ It must have the signature of:
 		
 			
 			
-			<h2 id="InterceptMethod">func <a href="../src/intercept.html?s=3647:3702#L136">InterceptMethod</a></h2>
+			<h2 id="InterceptMethod">func <a href="../src/intercept.html?s=3641:3696#L136">InterceptMethod</a></h2>
 			<pre>func InterceptMethod(intc <a href="#InterceptorMethod">InterceptorMethod</a>, when <a href="#When">When</a>)</pre>
 			<p>
 Install an interceptor method that applies to its own Controller.
@@ -134,6 +113,13 @@ Install an interceptor method that applies to its own Controller.
 func (c *AppController) example() revel.Result
 </pre>
 
+			
+		
+			
+			
+			<h2 id="InterceptorFilter">func <a href="../src/intercept.html?s=2178:2228#L78">InterceptorFilter</a></h2>
+			<pre>func InterceptorFilter(c *<a href="#Controller">Controller</a>, fc []<a href="#Filter">Filter</a>)</pre>
+			
 			
 		
 		

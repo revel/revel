@@ -24,6 +24,12 @@ func Sign(message string) string {
     io.WriteString(mac, message)
     return hex.EncodeToString(mac.Sum(nil))
 }
+
+<span class="comment">// Verify returns true if the given signature is correct for the given message.</span>
+<span class="comment">// e.g. it matches what we generate with Sign()</span>
+func Verify(message, sig string) bool {
+    return hmac.Equal([]byte(sig), []byte(Sign(message)))
+}
 </pre>
 
 

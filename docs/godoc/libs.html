@@ -31,6 +31,9 @@ layout: godoc
 				
 				<dd><a href="#Sign">func Sign(message string) string</a></dd>
 			
+				
+				<dd><a href="#Verify">func Verify(message, sig string) bool</a></dd>
+			
 			
 			
 			</dl>
@@ -62,6 +65,17 @@ layout: godoc
 Sign a given string with the app-configured secret key.
 If no secret key is set, returns the empty string.
 Return the signature in base64 (URLEncoding).
+</p>
+
+			
+		
+			
+			
+			<h2 id="Verify">func <a href="../src/libs.html?s=557:594#L14">Verify</a></h2>
+			<pre>func Verify(message, sig <a href="/pkg/builtin/#string">string</a>) <a href="/pkg/builtin/#bool">bool</a></pre>
+			<p>
+Verify returns true if the given signature is correct for the given message.
+e.g. it matches what we generate with Sign()
 </p>
 
 			
