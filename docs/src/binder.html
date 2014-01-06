@@ -20,13 +20,13 @@ type Binder struct {
     <span class="comment">//</span>
     <span class="comment">// Example</span>
     <span class="comment">//</span>
-    <span class="comment">//   Request:</span>
+    <span class="comment">// Request:</span>
     <span class="comment">//   url?id=123&amp;ol[0]=1&amp;ol[1]=2&amp;ul[]=str&amp;ul[]=array&amp;user.Name=rob</span>
     <span class="comment">//</span>
-    <span class="comment">//   Action:</span>
+    <span class="comment">// Action:</span>
     <span class="comment">//   Example.Action(id int, ol []int, ul []string, user User)</span>
     <span class="comment">//</span>
-    <span class="comment">//   Calls:</span>
+    <span class="comment">// Calls:</span>
     <span class="comment">//   Bind(params, &#34;id&#34;, int): 123</span>
     <span class="comment">//   Bind(params, &#34;ol&#34;, []int): {1, 2}</span>
     <span class="comment">//   Bind(params, &#34;ul&#34;, []string): {&#34;str&#34;, &#34;array&#34;}</span>
@@ -183,6 +183,11 @@ var (
             }
             output[name] = t.Format(format)
         },
+    }
+
+    MapBinder = Binder{
+        Bind:   bindMap,
+        Unbind: unbindMap,
     }
 )
 

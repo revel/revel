@@ -27,8 +27,9 @@ layout: godoc
 			<dl>
 			
 			
-				<dd><a href="#pkg-variables">Variables</a></dd>
 			
+				
+				<dd><a href="#FilterConfiguringFilter">func FilterConfiguringFilter(c *Controller, fc []Filter)</a></dd>
 			
 				
 				<dd><a href="#FilterEq">func FilterEq(a, b Filter) bool</a></dd>
@@ -75,32 +76,21 @@ layout: godoc
 
 		
 		
-			<h2 id="pkg-variables">Variables</h2>
+		
 			
-				<pre>var <span id="FilterConfiguringFilter">FilterConfiguringFilter</span> = func(c *<a href="#Controller">Controller</a>, fc []<a href="#Filter">Filter</a>) {
-    if <span id="newChain">newChain</span>, <span id="ok">ok</span> := <a href="#filterOverrides">filterOverrides</a>[<a href="#c">c</a>.<a href="#Name">Name</a>+&#34;.&#34;+<a href="#c">c</a>.<a href="#Action">Action</a>]; <a href="#ok">ok</a> {
-        <a href="#newChain">newChain</a>[0](<a href="#c">c</a>, <a href="#newChain">newChain</a>[1:])
-        return
-    }
-
-    if <span id="newChain">newChain</span>, <span id="ok">ok</span> := <a href="#filterOverrides">filterOverrides</a>[<a href="#c">c</a>.<a href="#Name">Name</a>]; <a href="#ok">ok</a> {
-        <a href="#newChain">newChain</a>[0](<a href="#c">c</a>, <a href="#newChain">newChain</a>[1:])
-        return
-    }
-
-    <a href="#fc">fc</a>[0](<a href="#c">c</a>, <a href="#fc">fc</a>[1:])
-}</pre>
-				<p>
+			
+			<h2 id="FilterConfiguringFilter">func <a href="../src/filterconfig.html?s=6346:6402#L193">FilterConfiguringFilter</a></h2>
+			<pre>func FilterConfiguringFilter(c *<a href="#Controller">Controller</a>, fc []<a href="#Filter">Filter</a>)</pre>
+			<p>
 FilterConfiguringFilter is a filter stage that customizes the remaining
 filter chain for the action being invoked.
 </p>
 
 			
 		
-		
 			
 			
-			<h2 id="FilterEq">func <a href="../src/filterconfig.html?s=4996:5027#L147">FilterEq</a></h2>
+			<h2 id="FilterEq">func <a href="../src/filterconfig.html?s=6119:6150#L187">FilterEq</a></h2>
 			<pre>func FilterEq(a, b <a href="#Filter">Filter</a>) <a href="/pkg/builtin/#bool">bool</a></pre>
 			<p>
 FilterEq returns true if the two filters reference the same filter.
@@ -111,7 +101,7 @@ FilterEq returns true if the two filters reference the same filter.
 		
 			
 			
-			<h2 id="FilterConfigurator">type <a href="../src/filterconfig.html?s=1167:1289#L30">FilterConfigurator</a></h2>
+			<h2 id="FilterConfigurator">type <a href="../src/filterconfig.html?s=1453:1575#L41">FilterConfigurator</a></h2>
 			<pre>type FilterConfigurator struct {
     <span class="comment">// contains filtered or unexported fields</span>
 }</pre>
@@ -155,6 +145,16 @@ Insert:
 =&gt; RouterFilter, FilterConfiguringFilter, OtherFilter, SessionFilter, ActionInvoker
 </pre>
 <p>
+Filter modifications may be combined between Controller and Action.  For example:
+</p>
+<pre> FilterController(App{}).
+   Add(Filter1)
+ FilterAction(App.Action).
+   Add(Filter2)
+
+.. would result in App.Action being filtered by both Filter1 and Filter2.
+</pre>
+<p>
 Note: the last filter stage is not subject to the configurator.  In
 particular, Add() adds a filter to the second-to-last place.
 </p>
@@ -168,7 +168,7 @@ particular, Add() adds a filter to the second-to-last place.
 
 			
 				
-				<h3 id="FilterAction">func <a href="../src/filterconfig.html?s=2072:2131#L56">FilterAction</a></h3>
+				<h3 id="FilterAction">func <a href="../src/filterconfig.html?s=2358:2417#L67">FilterAction</a></h3>
 				<pre>func FilterAction(methodRef interface{}) <a href="#FilterConfigurator">FilterConfigurator</a></pre>
 				<p>
 FilterAction returns a configurator for the filters applied to the given
@@ -180,7 +180,7 @@ controller method. For example:
 				
 			
 				
-				<h3 id="FilterController">func <a href="../src/filterconfig.html?s=1708:1780#L45">FilterController</a></h3>
+				<h3 id="FilterController">func <a href="../src/filterconfig.html?s=1994:2066#L56">FilterController</a></h3>
 				<pre>func FilterController(controllerInstance interface{}) <a href="#FilterConfigurator">FilterConfigurator</a></pre>
 				<p>
 FilterController returns a configurator for the filters applied to all
@@ -194,7 +194,7 @@ actions on the given controller instance.  For example:
 
 			
 				
-				<h3 id="FilterConfigurator.Add">func (FilterConfigurator) <a href="../src/filterconfig.html?s=2869:2932#L81">Add</a></h3>
+				<h3 id="FilterConfigurator.Add">func (FilterConfigurator) <a href="../src/filterconfig.html?s=3155:3218#L92">Add</a></h3>
 				<pre>func (conf <a href="#FilterConfigurator">FilterConfigurator</a>) Add(f <a href="#Filter">Filter</a>) <a href="#FilterConfigurator">FilterConfigurator</a></pre>
 				<p>
 Add the given filter in the second-to-last position in the filter chain.
@@ -205,7 +205,7 @@ Add the given filter in the second-to-last position in the filter chain.
 				
 			
 				
-				<h3 id="FilterConfigurator.Insert">func (FilterConfigurator) <a href="../src/filterconfig.html?s=3695:3793#L104">Insert</a></h3>
+				<h3 id="FilterConfigurator.Insert">func (FilterConfigurator) <a href="../src/filterconfig.html?s=4131:4229#L125">Insert</a></h3>
 				<pre>func (conf <a href="#FilterConfigurator">FilterConfigurator</a>) Insert(insert <a href="#Filter">Filter</a>, where <a href="#When">When</a>, target <a href="#Filter">Filter</a>) <a href="#FilterConfigurator">FilterConfigurator</a></pre>
 				<p>
 Insert a filter into the filter chain before or after another.
@@ -220,7 +220,7 @@ This may be called with the BEFORE or AFTER constants, for example:
 				
 			
 				
-				<h3 id="FilterConfigurator.Remove">func (FilterConfigurator) <a href="../src/filterconfig.html?s=3096:3167#L88">Remove</a></h3>
+				<h3 id="FilterConfigurator.Remove">func (FilterConfigurator) <a href="../src/filterconfig.html?s=3482:3553#L104">Remove</a></h3>
 				<pre>func (conf <a href="#FilterConfigurator">FilterConfigurator</a>) Remove(target <a href="#Filter">Filter</a>) <a href="#FilterConfigurator">FilterConfigurator</a></pre>
 				<p>
 Remove a filter from the filter chain.

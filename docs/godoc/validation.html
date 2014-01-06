@@ -30,6 +30,9 @@ layout: godoc
 				<dd><a href="#pkg-variables">Variables</a></dd>
 			
 			
+				
+				<dd><a href="#ValidationFilter">func ValidationFilter(c *Controller, fc []Filter)</a></dd>
+			
 			
 				
 				<dd><a href="#Validation">type Validation</a></dd>
@@ -132,39 +135,22 @@ This is set on initialization in the generated main.go file.
 </p>
 
 			
-				<pre>var <span id="ValidationFilter">ValidationFilter</span> = func(c *<a href="#Controller">Controller</a>, fc []<a href="#Filter">Filter</a>) {
-    <a href="#c">c</a>.<a href="#Validation">Validation</a> = &amp;<a href="#Validation">Validation</a>{
-        <a href="#Errors">Errors</a>: <a href="#restoreValidationErrors">restoreValidationErrors</a>(<a href="#c">c</a>.<a href="#Request">Request</a>.<a href="#Request">Request</a>),
-        <a href="#keep">keep</a>:   <a href="/pkg/builtin/#false">false</a>,
-    }
-
-    <a href="#fc">fc</a>[0](<a href="#c">c</a>, <a href="#fc">fc</a>[1:])
-
-    <a href="#c">c</a>.<a href="#RenderArgs">RenderArgs</a>[&#34;errors&#34;] = <a href="#c">c</a>.<a href="#Validation">Validation</a>.<a href="#ErrorMap">ErrorMap</a>()
-
-    <span class="comment">// Store the Validation errors</span>
-    var <span id="errorsValue">errorsValue</span> <a href="/pkg/builtin/#string">string</a>
-    if <a href="#c">c</a>.<a href="#Validation">Validation</a>.<a href="#keep">keep</a> {
-        for <a href="#_">_</a>, <a href="#error">error</a> := range <a href="#c">c</a>.<a href="#Validation">Validation</a>.<a href="#Errors">Errors</a> {
-            if <a href="#error">error</a>.<a href="#Message">Message</a> != &#34;&#34; {
-                <a href="#errorsValue">errorsValue</a> += &#34;\x00&#34; + <a href="#error">error</a>.<a href="#Key">Key</a> + &#34;:&#34; + <a href="#error">error</a>.<a href="#Message">Message</a> + &#34;\x00&#34;
-            }
-        }
-    }
-    <a href="#c">c</a>.<a href="#SetCookie">SetCookie</a>(&amp;<a href="/pkg/net/http/">http</a>.<a href="/pkg/net/http/#Cookie">Cookie</a>{
-        <a href="#Name">Name</a>:  <a href="#CookiePrefix">CookiePrefix</a> + &#34;_ERRORS&#34;,
-        <a href="#Value">Value</a>: <a href="/pkg/net/url/">url</a>.<a href="/pkg/net/url/#QueryEscape">QueryEscape</a>(<a href="#errorsValue">errorsValue</a>),
-        <a href="#Path">Path</a>:  &#34;/&#34;,
-    })
-}</pre>
-				
-			
-		
 		
 		
 			
 			
-			<h2 id="Validation">type <a href="../src/validation.html?s=319:385#L14">Validation</a></h2>
+			<h2 id="ValidationFilter">func <a href="../src/validation.html?s=4872:4921#L173">ValidationFilter</a></h2>
+			<pre>func ValidationFilter(c *<a href="#Controller">Controller</a>, fc []<a href="#Filter">Filter</a>)</pre>
+			<p>
+Revel Filter function to be hooked into the filter chain.
+</p>
+
+			
+		
+		
+			
+			
+			<h2 id="Validation">type <a href="../src/validation.html?s=428:494#L15">Validation</a></h2>
 			<pre>type Validation struct {
     Errors []*<a href="#ValidationError">ValidationError</a>
     <span class="comment">// contains filtered or unexported fields</span>
@@ -184,7 +170,7 @@ A Validation context manages data validation and error messages.
 
 			
 				
-				<h3 id="Validation.Check">func (*Validation) <a href="../src/validation.html?s=3654:3736#L147">Check</a></h3>
+				<h3 id="Validation.Check">func (*Validation) <a href="../src/validation.html?s=4573:4655#L161">Check</a></h3>
 				<pre>func (v *<a href="#Validation">Validation</a>) Check(obj interface{}, checks ...<a href="#Validator">Validator</a>) *<a href="#ValidationResult">ValidationResult</a></pre>
 				<p>
 Apply a group of validators to a field, in order, and return the
@@ -196,34 +182,37 @@ succeeds.
 				
 			
 				
-				<h3 id="Validation.Clear">func (*Validation) <a href="../src/validation.html?s=435:463#L23">Clear</a></h3>
+				<h3 id="Validation.Clear">func (*Validation) <a href="../src/validation.html?s=953:981#L31">Clear</a></h3>
 				<pre>func (v *<a href="#Validation">Validation</a>) Clear()</pre>
-				
-				
-				
-			
-				
-				<h3 id="Validation.Email">func (*Validation) <a href="../src/validation.html?s=2687:2743#L110">Email</a></h3>
-				<pre>func (v *<a href="#Validation">Validation</a>) Email(str <a href="/pkg/builtin/#string">string</a>) *<a href="#ValidationResult">ValidationResult</a></pre>
-				
-				
-				
-			
-				
-				<h3 id="Validation.Error">func (*Validation) <a href="../src/validation.html?s=1000:1081#L45">Error</a></h3>
-				<pre>func (v *<a href="#Validation">Validation</a>) Error(message <a href="/pkg/builtin/#string">string</a>, args ...interface{}) *<a href="#ValidationResult">ValidationResult</a></pre>
 				<p>
-Add an error to the validation context.
+Clear *all* ValidationErrors
 </p>
 
 				
 				
 			
 				
-				<h3 id="Validation.ErrorMap">func (*Validation) <a href="../src/validation.html?s=763:822#L34">ErrorMap</a></h3>
+				<h3 id="Validation.Email">func (*Validation) <a href="../src/validation.html?s=3606:3662#L124">Email</a></h3>
+				<pre>func (v *<a href="#Validation">Validation</a>) Email(str <a href="/pkg/builtin/#string">string</a>) *<a href="#ValidationResult">ValidationResult</a></pre>
+				
+				
+				
+			
+				
+				<h3 id="Validation.Error">func (*Validation) <a href="../src/validation.html?s=1612:1693#L54">Error</a></h3>
+				<pre>func (v *<a href="#Validation">Validation</a>) Error(message <a href="/pkg/builtin/#string">string</a>, args ...interface{}) *<a href="#ValidationResult">ValidationResult</a></pre>
+				<p>
+Error adds an error to the validation context.
+</p>
+
+				
+				
+			
+				
+				<h3 id="Validation.ErrorMap">func (*Validation) <a href="../src/validation.html?s=1368:1427#L43">ErrorMap</a></h3>
 				<pre>func (v *<a href="#Validation">Validation</a>) ErrorMap() map[<a href="/pkg/builtin/#string">string</a>]*<a href="#ValidationError">ValidationError</a></pre>
 				<p>
-Return the errors mapped by key.
+ErrorMap returns the errors mapped by key.
 If there are multiple validation errors associated with a single key, the
 first one &#34;wins&#34;.  (Typically the first validation will be the more basic).
 </p>
@@ -232,73 +221,84 @@ first one &#34;wins&#34;.  (Typically the first validation will be the more basi
 				
 			
 				
-				<h3 id="Validation.HasErrors">func (*Validation) <a href="../src/validation.html?s=502:539#L27">HasErrors</a></h3>
+				<h3 id="Validation.HasErrors">func (*Validation) <a href="../src/validation.html?s=1097:1134#L36">HasErrors</a></h3>
 				<pre>func (v *<a href="#Validation">Validation</a>) HasErrors() <a href="/pkg/builtin/#bool">bool</a></pre>
-				
+				<p>
+HasErrors returns true if there are any (ie &gt; 0) errors. False otherwise.
+</p>
+
 				
 				
 			
 				
-				<h3 id="Validation.Keep">func (*Validation) <a href="../src/validation.html?s=387:414#L19">Keep</a></h3>
+				<h3 id="Validation.Keep">func (*Validation) <a href="../src/validation.html?s=873:900#L26">Keep</a></h3>
 				<pre>func (v *<a href="#Validation">Validation</a>) Keep()</pre>
-				
+				<p>
+Keep tells revel to set a flash cookie on the client to make the validation
+errors available for the next request.
+This is helpful  when redirecting the client after the validation failed.
+It is good practice to always redirect upon a HTTP POST request. Thus
+one should use this method when HTTP POST validation failed and redirect
+the user back to the form.
+</p>
+
 				
 				
 			
 				
-				<h3 id="Validation.Length">func (*Validation) <a href="../src/validation.html?s=2461:2530#L102">Length</a></h3>
+				<h3 id="Validation.Length">func (*Validation) <a href="../src/validation.html?s=3380:3449#L116">Length</a></h3>
 				<pre>func (v *<a href="#Validation">Validation</a>) Length(obj interface{}, n <a href="/pkg/builtin/#int">int</a>) *<a href="#ValidationResult">ValidationResult</a></pre>
 				
 				
 				
 			
 				
-				<h3 id="Validation.Match">func (*Validation) <a href="../src/validation.html?s=2568:2646#L106">Match</a></h3>
+				<h3 id="Validation.Match">func (*Validation) <a href="../src/validation.html?s=3487:3565#L120">Match</a></h3>
 				<pre>func (v *<a href="#Validation">Validation</a>) Match(str <a href="/pkg/builtin/#string">string</a>, regex *<a href="/pkg/regexp/">regexp</a>.<a href="/pkg/regexp/#Regexp">Regexp</a>) *<a href="#ValidationResult">ValidationResult</a></pre>
 				
 				
 				
 			
 				
-				<h3 id="Validation.Max">func (*Validation) <a href="../src/validation.html?s=2029:2087#L86">Max</a></h3>
+				<h3 id="Validation.Max">func (*Validation) <a href="../src/validation.html?s=2948:3006#L100">Max</a></h3>
 				<pre>func (v *<a href="#Validation">Validation</a>) Max(n <a href="/pkg/builtin/#int">int</a>, max <a href="/pkg/builtin/#int">int</a>) *<a href="#ValidationResult">ValidationResult</a></pre>
 				
 				
 				
 			
 				
-				<h3 id="Validation.MaxSize">func (*Validation) <a href="../src/validation.html?s=2348:2420#L98">MaxSize</a></h3>
+				<h3 id="Validation.MaxSize">func (*Validation) <a href="../src/validation.html?s=3267:3339#L112">MaxSize</a></h3>
 				<pre>func (v *<a href="#Validation">Validation</a>) MaxSize(obj interface{}, max <a href="/pkg/builtin/#int">int</a>) *<a href="#ValidationResult">ValidationResult</a></pre>
 				
 				
 				
 			
 				
-				<h3 id="Validation.Min">func (*Validation) <a href="../src/validation.html?s=1936:1994#L82">Min</a></h3>
+				<h3 id="Validation.Min">func (*Validation) <a href="../src/validation.html?s=2855:2913#L96">Min</a></h3>
 				<pre>func (v *<a href="#Validation">Validation</a>) Min(n <a href="/pkg/builtin/#int">int</a>, min <a href="/pkg/builtin/#int">int</a>) *<a href="#ValidationResult">ValidationResult</a></pre>
 				
 				
 				
 			
 				
-				<h3 id="Validation.MinSize">func (*Validation) <a href="../src/validation.html?s=2235:2307#L94">MinSize</a></h3>
+				<h3 id="Validation.MinSize">func (*Validation) <a href="../src/validation.html?s=3154:3226#L108">MinSize</a></h3>
 				<pre>func (v *<a href="#Validation">Validation</a>) MinSize(obj interface{}, min <a href="/pkg/builtin/#int">int</a>) *<a href="#ValidationResult">ValidationResult</a></pre>
 				
 				
 				
 			
 				
-				<h3 id="Validation.Range">func (*Validation) <a href="../src/validation.html?s=2122:2183#L90">Range</a></h3>
+				<h3 id="Validation.Range">func (*Validation) <a href="../src/validation.html?s=3041:3102#L104">Range</a></h3>
 				<pre>func (v *<a href="#Validation">Validation</a>) Range(n, min, max <a href="/pkg/builtin/#int">int</a>) *<a href="#ValidationResult">ValidationResult</a></pre>
 				
 				
 				
 			
 				
-				<h3 id="Validation.Required">func (*Validation) <a href="../src/validation.html?s=1833:1897#L78">Required</a></h3>
+				<h3 id="Validation.Required">func (*Validation) <a href="../src/validation.html?s=2752:2816#L92">Required</a></h3>
 				<pre>func (v *<a href="#Validation">Validation</a>) Required(obj interface{}) *<a href="#ValidationResult">ValidationResult</a></pre>
 				<p>
-Test that the argument is non-nil and non-empty (if string or list)
+Required tests that the argument is non-nil and non-empty (if string or list)
 </p>
 
 				
@@ -307,11 +307,14 @@ Test that the argument is non-nil and non-empty (if string or list)
 		
 			
 			
-			<h2 id="ValidationError">type <a href="../src/validation.html?s=78:130#L1">ValidationError</a></h2>
+			<h2 id="ValidationError">type <a href="../src/validation.html?s=144:196#L2">ValidationError</a></h2>
 			<pre>type ValidationError struct {
     Message, Key <a href="/pkg/builtin/#string">string</a>
 }</pre>
-			
+			<p>
+Simple struct to store the Message &amp; Key of a validation error
+</p>
+
 
 			
 
@@ -323,10 +326,10 @@ Test that the argument is non-nil and non-empty (if string or list)
 
 			
 				
-				<h3 id="ValidationError.String">func (*ValidationError) <a href="../src/validation.html?s=156:197#L6">String</a></h3>
+				<h3 id="ValidationError.String">func (*ValidationError) <a href="../src/validation.html?s=265:306#L7">String</a></h3>
 				<pre>func (e *<a href="#ValidationError">ValidationError</a>) String() <a href="/pkg/builtin/#string">string</a></pre>
 				<p>
-Returns the Message.
+String returns the Message field of the ValidationError struct.
 </p>
 
 				
@@ -335,7 +338,7 @@ Returns the Message.
 		
 			
 			
-			<h2 id="ValidationResult">type <a href="../src/validation.html?s=1329:1397#L54">ValidationResult</a></h2>
+			<h2 id="ValidationResult">type <a href="../src/validation.html?s=2005:2073#L65">ValidationResult</a></h2>
 			<pre>type ValidationResult struct {
     Error *<a href="#ValidationError">ValidationError</a>
     Ok    <a href="/pkg/builtin/#bool">bool</a>
@@ -356,16 +359,23 @@ It provides an indication of success, and a pointer to the Error (if any).
 
 			
 				
-				<h3 id="ValidationResult.Key">func (*ValidationResult) <a href="../src/validation.html?s=1399:1459#L59">Key</a></h3>
+				<h3 id="ValidationResult.Key">func (*ValidationResult) <a href="../src/validation.html?s=2154:2214#L71">Key</a></h3>
 				<pre>func (r *<a href="#ValidationResult">ValidationResult</a>) Key(key <a href="/pkg/builtin/#string">string</a>) *<a href="#ValidationResult">ValidationResult</a></pre>
-				
+				<p>
+Key sets the ValidationResult&#39;s Error &#34;key&#34; and returns itself for chaining
+</p>
+
 				
 				
 			
 				
-				<h3 id="ValidationResult.Message">func (*ValidationResult) <a href="../src/validation.html?s=1519:1608#L66">Message</a></h3>
+				<h3 id="ValidationResult.Message">func (*ValidationResult) <a href="../src/validation.html?s=2425:2514#L80">Message</a></h3>
 				<pre>func (r *<a href="#ValidationResult">ValidationResult</a>) Message(message <a href="/pkg/builtin/#string">string</a>, args ...interface{}) *<a href="#ValidationResult">ValidationResult</a></pre>
-				
+				<p>
+Message sets the error message for a ValidationResult. Returns itself to
+allow chaining.  Allows Sprintf() type calling with multiple parameters
+</p>
+
 				
 				
 			

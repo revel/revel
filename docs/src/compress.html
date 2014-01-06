@@ -1,0 +1,128 @@
+---
+layout: godoc
+---
+
+<!--
+	Copyright 2009 The Go Authors. All rights reserved.
+	Use of this source code is governed by a BSD-style
+	license that can be found in the LICENSE file.
+-->
+<h1>Compress</h1>
+
+
+
+	<pre>package revel
+
+type WriteFlusher interface {
+    Write([]byte) (int, error)
+    Flush() error
+}
+
+type CompressResponseWriter struct {
+    http.ResponseWriter
+
+}
+
+func CompressFilter(c *Controller, fc []Filter) {
+    writer := CompressResponseWriter{c.Response.Out, nil, &#34;&#34;, false}
+    writer.DetectCompressionType(c.Request, c.Response)
+    c.Response.Out = &amp;writer
+
+    fc[0](c, fc[1:])
+}
+
+func (c *CompressResponseWriter) WriteHeader(status int) {
+    c.headersWritten = true
+    c.prepareHeaders()
+    c.ResponseWriter.WriteHeader(status)
+}
+
+func (c *CompressResponseWriter) Write(b []byte) (int, error) {
+    if !c.headersWritten {
+        c.prepareHeaders()
+        c.headersWritten = true
+    }
+
+    if c.compressionType != &#34;&#34; {
+        defer c.compressWriter.Flush()
+        return c.compressWriter.Write(b)
+    } else {
+        return c.ResponseWriter.Write(b)
+    }
+}
+
+func (c *CompressResponseWriter) DetectCompressionType(req *Request, resp *Response) {
+    if Config.BoolDefault(&#34;results.compressed&#34;, false) {
+        acceptedEncodings := strings.Split(req.Request.Header.Get(&#34;Accept-Encoding&#34;), &#34;,&#34;)
+
+        largestQ := 0.0
+        chosenEncoding := len(compressionTypes)
+
+        for _, encoding := range acceptedEncodings {
+            encoding = strings.TrimSpace(encoding)
+            encodingParts := strings.SplitN(encoding, &#34;;&#34;, 2)
+
+            <span class="comment">// If we are the format &#34;gzip;q=0.8&#34;</span>
+            if len(encodingParts) &gt; 1 {
+                <span class="comment">// Strip off the q=</span>
+                num, err := strconv.ParseFloat(strings.TrimSpace(encodingParts[1])[2:], 32)
+                if err != nil {
+                    continue
+                }
+
+                if num &gt;= largestQ &amp;&amp; num &gt; 0 {
+                    if encodingParts[0] == &#34;*&#34; {
+                        chosenEncoding = 0
+                        largestQ = num
+                        continue
+                    }
+                    for i, encoding := range compressionTypes {
+                        if encoding == encodingParts[0] {
+                            if i &lt; chosenEncoding {
+                                largestQ = num
+                                chosenEncoding = i
+                            }
+                            break
+                        }
+                    }
+                }
+            } else {
+                <span class="comment">// If we can accept anything, chose our preferred method.</span>
+                if encodingParts[0] == &#34;*&#34; {
+                    chosenEncoding = 0
+                    largestQ = 1
+                    break
+                }
+                <span class="comment">// This is for just plain &#34;gzip&#34;</span>
+                for i, encoding := range compressionTypes {
+                    if encoding == encodingParts[0] {
+                        if i &lt; chosenEncoding {
+                            largestQ = 1.0
+                            chosenEncoding = i
+                        }
+                        break
+                    }
+                }
+            }
+        }
+
+        if largestQ == 0 {
+            return
+        }
+
+        c.compressionType = compressionTypes[chosenEncoding]
+
+        switch c.compressionType {
+        case &#34;gzip&#34;:
+            c.compressWriter = gzip.NewWriter(resp.Out)
+        case &#34;deflate&#34;:
+            c.compressWriter = zlib.NewWriter(resp.Out)
+        }
+    }
+}
+</pre>
+
+
+
+
+

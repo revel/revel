@@ -79,7 +79,7 @@ var (
 
         &#34;errorClass&#34;: func(name string, renderArgs map[string]interface{}) template.HTML {
             errorMap, ok := renderArgs[&#34;errors&#34;].(map[string]*ValidationError)
-            if !ok {
+            if !ok || errorMap == nil {
                 WARN.Println(&#34;Called &#39;errorClass&#39; without &#39;errors&#39; in the render args.&#34;)
                 return template.HTML(&#34;&#34;)
             }
@@ -139,6 +139,7 @@ var (
         &#34;datetime&#34;: func(date time.Time) string {
             return date.Format(DateTimeFormat)
         },
+        &#34;slug&#34;: Slug,
     }
 )
 
@@ -158,10 +159,19 @@ func (loader *TemplateLoader) Refresh() *Error {
     loader.compileError = nil
     loader.templatePaths = map[string]string{}
 
+    <span class="comment">// Set the template delimiters for the project if present, then split into left</span>
+    <span class="comment">// and right delimiters around a space character</span>
+    var splitDelims []string
+    if TemplateDelims != &#34;&#34; {
+        splitDelims = strings.Split(TemplateDelims, &#34; &#34;)
+        if len(splitDelims) != 2 {
+            log.Fatalln(&#34;app.conf: Incorrect format for template.delimiters&#34;)
+        }
+    }
+
     <span class="comment">// Walk through the template loader&#39;s paths and build up a template set.</span>
     var templateSet *template.Template = nil
     for _, basePath := range loader.paths {
-
         <span class="comment">// Walk only returns an error if the template loader is completely unusable</span>
         <span class="comment">// (namely, if one of the TemplateFuncs does not have an acceptable signature).</span>
         funcErr := filepath.Walk(basePath, func(path string, info os.FileInfo, err error) error {
@@ -170,7 +180,7 @@ func (loader *TemplateLoader) Refresh() *Error {
                 return nil
             }
 
-            <span class="comment">// Walk into directories.</span>
+            <span class="comment">// Walk into watchable directories</span>
             if info.IsDir() {
                 if !loader.WatchDir(info) {
                     return filepath.SkipDir
@@ -178,54 +188,85 @@ func (loader *TemplateLoader) Refresh() *Error {
                 return nil
             }
 
+            <span class="comment">// Only add watchable</span>
             if !loader.WatchFile(info.Name()) {
                 return nil
             }
 
-            <span class="comment">// Convert template names to use forward slashes, even on Windows.</span>
-            templateName := path[len(basePath)+1:]
-            if os.PathSeparator == &#39;\\&#39; {
-                templateName = strings.Replace(templateName, `\`, `/`, -1) <span class="comment">// `</span>
-            }
+            var fileStr string
 
-            <span class="comment">// If we already loaded a template of this name, skip it.</span>
-            if _, ok := loader.templatePaths[templateName]; ok {
-                return nil
-            }
-            loader.templatePaths[templateName] = path
-
-            fileBytes, err := ioutil.ReadFile(path)
-            if err != nil {
-                ERROR.Println(&#34;Failed reading file:&#34;, path)
-                return nil
-            }
-
-            fileStr := string(fileBytes)
-            if templateSet == nil {
-                <span class="comment">// Create the template set.  This panics if any of the funcs do not</span>
-                <span class="comment">// conform to expectations, so we wrap it in a func and handle those</span>
-                <span class="comment">// panics by serving an error page.</span>
-                var funcError *Error
-                func() {
-                    defer func() {
-                        if err := recover(); err != nil {
-                            funcError = &amp;Error{
-                                Title:       &#34;Panic (Template Loader)&#34;,
-                                Description: fmt.Sprintln(err),
-                            }
-                        }
-                    }()
-                    templateSet = template.New(templateName).Funcs(TemplateFuncs)
-                    _, err = templateSet.Parse(fileStr)
-                }()
-
-                if funcError != nil {
-                    return funcError
+            <span class="comment">// addTemplate allows the same template to be added multiple</span>
+            <span class="comment">// times with different template names.</span>
+            addTemplate := func(templateName string) (err error) {
+                <span class="comment">// Convert template names to use forward slashes, even on Windows.</span>
+                if os.PathSeparator == &#39;\\&#39; {
+                    templateName = strings.Replace(templateName, `\`, `/`, -1) <span class="comment">// `</span>
                 }
 
-            } else {
-                _, err = templateSet.New(templateName).Parse(fileStr)
+                <span class="comment">// If we already loaded a template of this name, skip it.</span>
+                if _, ok := loader.templatePaths[templateName]; ok {
+                    return nil
+                }
+                loader.templatePaths[templateName] = path
+
+                <span class="comment">// Load the file if we haven&#39;t already</span>
+                if fileStr == &#34;&#34; {
+                    fileBytes, err := ioutil.ReadFile(path)
+                    if err != nil {
+                        ERROR.Println(&#34;Failed reading file:&#34;, path)
+                        return nil
+                    }
+
+                    fileStr = string(fileBytes)
+                }
+
+                if templateSet == nil {
+                    <span class="comment">// Create the template set.  This panics if any of the funcs do not</span>
+                    <span class="comment">// conform to expectations, so we wrap it in a func and handle those</span>
+                    <span class="comment">// panics by serving an error page.</span>
+                    var funcError *Error
+                    func() {
+                        defer func() {
+                            if err := recover(); err != nil {
+                                funcError = &amp;Error{
+                                    Title:       &#34;Panic (Template Loader)&#34;,
+                                    Description: fmt.Sprintln(err),
+                                }
+                            }
+                        }()
+                        templateSet = template.New(templateName).Funcs(TemplateFuncs)
+                        <span class="comment">// If alternate delimiters set for the project, change them for this set</span>
+                        if splitDelims != nil &amp;&amp; basePath == ViewsPath {
+                            templateSet.Delims(splitDelims[0], splitDelims[1])
+                        } else {
+                            <span class="comment">// Reset to default otherwise</span>
+                            templateSet.Delims(&#34;&#34;, &#34;&#34;)
+                        }
+                        _, err = templateSet.Parse(fileStr)
+                    }()
+
+                    if funcError != nil {
+                        return funcError
+                    }
+
+                } else {
+                    if splitDelims != nil &amp;&amp; basePath == ViewsPath {
+                        templateSet.Delims(splitDelims[0], splitDelims[1])
+                    } else {
+                        templateSet.Delims(&#34;&#34;, &#34;&#34;)
+                    }
+                    _, err = templateSet.New(templateName).Parse(fileStr)
+                }
+                return err
             }
+
+            templateName := path[len(basePath)+1:]
+
+            <span class="comment">// Lower case the file name for case-insensitive matching</span>
+            lowerCaseTemplateName := strings.ToLower(templateName)
+
+            err = addTemplate(templateName)
+            err = addTemplate(lowerCaseTemplateName)
 
             <span class="comment">// Store / report the first error encountered.</span>
             if err != nil &amp;&amp; loader.compileError == nil {
@@ -271,6 +312,8 @@ func (loader *TemplateLoader) WatchFile(basename string) bool {
 <span class="comment">// An Error is returned if there was any problem with any of the templates.  (In</span>
 <span class="comment">// this case, if a template is returned, it may still be usable.)</span>
 func (loader *TemplateLoader) Template(name string) (Template, error) {
+    <span class="comment">// Lower case the file name to support case-insensitive matching</span>
+    name = strings.ToLower(name)
     <span class="comment">// Look up and return the template.</span>
     tmpl := loader.templateSet.Lookup(name)
 
@@ -335,6 +378,15 @@ func ReverseUrl(args ...interface{}) (string, error) {
     }
 
     return MainRouter.Reverse(args[0].(string), argsByName).Url, nil
+}
+
+func Slug(text string) string {
+    separator := &#34;-&#34;
+    text = strings.ToLower(text)
+    text = invalidSlugPattern.ReplaceAllString(text, &#34;&#34;)
+    text = whiteSpacePattern.ReplaceAllString(text, separator)
+    text = strings.Trim(text, separator)
+    return text
 }
 </pre>
 

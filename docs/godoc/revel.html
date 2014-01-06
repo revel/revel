@@ -38,6 +38,9 @@ layout: godoc
 				
 				<dd><a href="#Init">func Init(mode, importPath, srcPath string)</a></dd>
 			
+				
+				<dd><a href="#ResolveImportPath">func ResolveImportPath(importPath string) (string, error)</a></dd>
+			
 			
 				
 				<dd><a href="#Module">type Module</a></dd>
@@ -108,17 +111,27 @@ layout: godoc
     <span class="comment">// the current process reality.  For example, if the app is configured for</span>
     <span class="comment">// port 9000, HttpPort will always be 9000, even though in dev mode it is</span>
     <span class="comment">// run on a random port and proxied.</span>
-    <span id="HttpPort">HttpPort</span> <a href="/pkg/builtin/#int">int</a>    <span class="comment">// e.g. 9000</span>
-    <span id="HttpAddr">HttpAddr</span> <a href="/pkg/builtin/#string">string</a> <span class="comment">// e.g. &#34;&#34;, &#34;127.0.0.1&#34;</span>
+    <span id="HttpPort">HttpPort</span>    <a href="/pkg/builtin/#int">int</a>    <span class="comment">// e.g. 9000</span>
+    <span id="HttpAddr">HttpAddr</span>    <a href="/pkg/builtin/#string">string</a> <span class="comment">// e.g. &#34;&#34;, &#34;127.0.0.1&#34;</span>
+    <span id="HttpSsl">HttpSsl</span>     <a href="/pkg/builtin/#bool">bool</a>   <span class="comment">// e.g. true if using ssl</span>
+    <span id="HttpSslCert">HttpSslCert</span> <a href="/pkg/builtin/#string">string</a> <span class="comment">// e.g. &#34;/path/to/cert.pem&#34;</span>
+    <span id="HttpSslKey">HttpSslKey</span>  <a href="/pkg/builtin/#string">string</a> <span class="comment">// e.g. &#34;/path/to/key.pem&#34;</span>
 
     <span class="comment">// All cookies dropped by the framework begin with this prefix.</span>
     <span id="CookiePrefix">CookiePrefix</span> <a href="/pkg/builtin/#string">string</a>
+
+    <span class="comment">// Cookie flags</span>
+    <span id="CookieHttpOnly">CookieHttpOnly</span> <a href="/pkg/builtin/#bool">bool</a>
+    <span id="CookieSecure">CookieSecure</span>   <a href="/pkg/builtin/#bool">bool</a>
+
+    <span class="comment">// Delimiters to use when rendering templates</span>
+    <span id="TemplateDelims">TemplateDelims</span> <a href="/pkg/builtin/#string">string</a>
 
     <span class="comment">// Loggers</span>
     <span id="TRACE">TRACE</span> = <a href="/pkg/log/">log</a>.<a href="/pkg/log/#New">New</a>(<a href="/pkg/io/ioutil/">ioutil</a>.<a href="/pkg/io/ioutil/#Discard">Discard</a>, &#34;TRACE &#34;, <a href="/pkg/log/">log</a>.<a href="/pkg/log/#Ldate">Ldate</a>|<a href="/pkg/log/">log</a>.<a href="/pkg/log/#Ltime">Ltime</a>|<a href="/pkg/log/">log</a>.<a href="/pkg/log/#Lshortfile">Lshortfile</a>)
     <span id="INFO">INFO</span>  = <a href="/pkg/log/">log</a>.<a href="/pkg/log/#New">New</a>(<a href="/pkg/io/ioutil/">ioutil</a>.<a href="/pkg/io/ioutil/#Discard">Discard</a>, &#34;INFO  &#34;, <a href="/pkg/log/">log</a>.<a href="/pkg/log/#Ldate">Ldate</a>|<a href="/pkg/log/">log</a>.<a href="/pkg/log/#Ltime">Ltime</a>|<a href="/pkg/log/">log</a>.<a href="/pkg/log/#Lshortfile">Lshortfile</a>)
     <span id="WARN">WARN</span>  = <a href="/pkg/log/">log</a>.<a href="/pkg/log/#New">New</a>(<a href="/pkg/io/ioutil/">ioutil</a>.<a href="/pkg/io/ioutil/#Discard">Discard</a>, &#34;WARN  &#34;, <a href="/pkg/log/">log</a>.<a href="/pkg/log/#Ldate">Ldate</a>|<a href="/pkg/log/">log</a>.<a href="/pkg/log/#Ltime">Ltime</a>|<a href="/pkg/log/">log</a>.<a href="/pkg/log/#Lshortfile">Lshortfile</a>)
-    <span id="ERROR">ERROR</span> = <a href="/pkg/log/">log</a>.<a href="/pkg/log/#New">New</a>(<a href="/pkg/os/">os</a>.<a href="/pkg/os/#Stderr">Stderr</a>, &#34;ERROR &#34;, <a href="/pkg/log/">log</a>.<a href="/pkg/log/#Ldate">Ldate</a>|<a href="/pkg/log/">log</a>.<a href="/pkg/log/#Ltime">Ltime</a>|<a href="/pkg/log/">log</a>.<a href="/pkg/log/#Lshortfile">Lshortfile</a>)
+    <span id="ERROR">ERROR</span> = <a href="/pkg/log/">log</a>.<a href="/pkg/log/#New">New</a>(&amp;<a href="#error_log">error_log</a>, &#34;ERROR &#34;, <a href="/pkg/log/">log</a>.<a href="/pkg/log/#Ldate">Ldate</a>|<a href="/pkg/log/">log</a>.<a href="/pkg/log/#Ltime">Ltime</a>|<a href="/pkg/log/">log</a>.<a href="/pkg/log/#Lshortfile">Lshortfile</a>)
 
     <span id="Initialized">Initialized</span> <a href="/pkg/builtin/#bool">bool</a>
 )</pre>
@@ -128,14 +141,14 @@ layout: godoc
 		
 			
 			
-			<h2 id="CheckInit">func <a href="../src/revel.html?s=7765:7781#L261">CheckInit</a></h2>
+			<h2 id="CheckInit">func <a href="../src/revel.html?s=9705:9721#L329">CheckInit</a></h2>
 			<pre>func CheckInit()</pre>
 			
 			
 		
 			
 			
-			<h2 id="Init">func <a href="../src/revel.html?s=2327:2370#L68">Init</a></h2>
+			<h2 id="Init">func <a href="../src/revel.html?s=3179:3222#L100">Init</a></h2>
 			<pre>func Init(mode, importPath, srcPath <a href="/pkg/builtin/#string">string</a>)</pre>
 			<p>
 Init initializes Revel -- it provides paths for getting around the app.
@@ -151,10 +164,21 @@ srcPath - the path to the source directory, containing Revel and the app.
 
 			
 		
+			
+			
+			<h2 id="ResolveImportPath">func <a href="../src/revel.html?s=8493:8550#L289">ResolveImportPath</a></h2>
+			<pre>func ResolveImportPath(importPath <a href="/pkg/builtin/#string">string</a>) (<a href="/pkg/builtin/#string">string</a>, <a href="/pkg/builtin/#error">error</a>)</pre>
+			<p>
+ResolveImportPath returns the filesystem path for the given import path.
+Returns an error if the import path could not be found.
+</p>
+
+			
+		
 		
 			
 			
-			<h2 id="Module">type <a href="../src/revel.html?s=6334:6387#L213">Module</a></h2>
+			<h2 id="Module">type <a href="../src/revel.html?s=7899:7952#L268">Module</a></h2>
 			<pre>type Module struct {
     Name, ImportPath, Path <a href="/pkg/builtin/#string">string</a>
 }</pre>
@@ -168,7 +192,7 @@ srcPath - the path to the source directory, containing Revel and the app.
 
 			
 				
-				<h3 id="ModuleByName">func <a href="../src/revel.html?s=7591:7644#L252">ModuleByName</a></h3>
+				<h3 id="ModuleByName">func <a href="../src/revel.html?s=9531:9584#L320">ModuleByName</a></h3>
 				<pre>func ModuleByName(name <a href="/pkg/builtin/#string">string</a>) (m <a href="#Module">Module</a>, found <a href="/pkg/builtin/#bool">bool</a>)</pre>
 				<p>
 ModuleByName returns the module of the given name, if loaded.

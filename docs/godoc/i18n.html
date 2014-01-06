@@ -29,8 +29,9 @@ layout: godoc
 				<dd><a href="#pkg-constants">Constants</a></dd>
 			
 			
-				<dd><a href="#pkg-variables">Variables</a></dd>
 			
+				
+				<dd><a href="#I18nFilter">func I18nFilter(c *Controller, fc []Filter)</a></dd>
 			
 				
 				<dd><a href="#Message">func Message(locale, message string, args ...interface{}) string</a></dd>
@@ -69,24 +70,13 @@ layout: godoc
 			
 		
 		
-			<h2 id="pkg-variables">Variables</h2>
-			
-				<pre>var <span id="I18nFilter">I18nFilter</span> = func(c *<a href="#Controller">Controller</a>, fc []<a href="#Filter">Filter</a>) {
-    if <span id="foundCookie">foundCookie</span>, <span id="cookieValue">cookieValue</span> := <a href="#hasLocaleCookie">hasLocaleCookie</a>(<a href="#c">c</a>.<a href="#Request">Request</a>); <a href="#foundCookie">foundCookie</a> {
-        <a href="#TRACE">TRACE</a>.<a href="#Printf">Printf</a>(&#34;Found locale cookie value: %s&#34;, <a href="#cookieValue">cookieValue</a>)
-        <a href="#setCurrentLocaleControllerArguments">setCurrentLocaleControllerArguments</a>(<a href="#c">c</a>, <a href="#cookieValue">cookieValue</a>)
-    } else if <span id="foundHeader">foundHeader</span>, <span id="headerValue">headerValue</span> := <a href="#hasAcceptLanguageHeader">hasAcceptLanguageHeader</a>(<a href="#c">c</a>.<a href="#Request">Request</a>); <a href="#foundHeader">foundHeader</a> {
-        <a href="#TRACE">TRACE</a>.<a href="#Printf">Printf</a>(&#34;Found Accept-Language header value: %s&#34;, <a href="#headerValue">headerValue</a>)
-        <a href="#setCurrentLocaleControllerArguments">setCurrentLocaleControllerArguments</a>(<a href="#c">c</a>, <a href="#headerValue">headerValue</a>)
-    } else {
-        <a href="#TRACE">TRACE</a>.<a href="#Println">Println</a>(&#34;Unable to find locale in cookie or header, using empty string&#34;)
-        <a href="#setCurrentLocaleControllerArguments">setCurrentLocaleControllerArguments</a>(<a href="#c">c</a>, &#34;&#34;)
-    }
-    <a href="#fc">fc</a>[0](<a href="#c">c</a>, <a href="#fc">fc</a>[1:])
-}</pre>
-				
-			
 		
+			
+			
+			<h2 id="I18nFilter">func <a href="../src/i18n.html?s=4243:4286#L135">I18nFilter</a></h2>
+			<pre>func I18nFilter(c *<a href="#Controller">Controller</a>, fc []<a href="#Filter">Filter</a>)</pre>
+			
+			
 		
 			
 			

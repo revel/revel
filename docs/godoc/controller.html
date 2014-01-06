@@ -58,13 +58,22 @@ layout: godoc
 					<dd>&nbsp; &nbsp; <a href="#Controller.Render">func (c *Controller) Render(extraRenderArgs ...interface{}) Result</a></dd>
 				
 					
+					<dd>&nbsp; &nbsp; <a href="#Controller.RenderBinary">func (c *Controller) RenderBinary(memfile io.Reader, filename string, delivery ContentDisposition, modtime time.Time) Result</a></dd>
+				
+					
 					<dd>&nbsp; &nbsp; <a href="#Controller.RenderError">func (c *Controller) RenderError(err error) Result</a></dd>
 				
 					
 					<dd>&nbsp; &nbsp; <a href="#Controller.RenderFile">func (c *Controller) RenderFile(file *os.File, delivery ContentDisposition) Result</a></dd>
 				
 					
+					<dd>&nbsp; &nbsp; <a href="#Controller.RenderHtml">func (c *Controller) RenderHtml(html string) Result</a></dd>
+				
+					
 					<dd>&nbsp; &nbsp; <a href="#Controller.RenderJson">func (c *Controller) RenderJson(o interface{}) Result</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Controller.RenderJsonP">func (c *Controller) RenderJsonP(callback string, o interface{}) Result</a></dd>
 				
 					
 					<dd>&nbsp; &nbsp; <a href="#Controller.RenderTemplate">func (c *Controller) RenderTemplate(templatePath string) Result</a></dd>
@@ -127,7 +136,7 @@ layout: godoc
 		
 			
 			
-			<h2 id="RegisterController">func <a href="../src/controller.html?s=9185:9246#L307">RegisterController</a></h2>
+			<h2 id="RegisterController">func <a href="../src/controller.html?s=10306:10367#L339">RegisterController</a></h2>
 			<pre>func RegisterController(c interface{}, methods []*<a href="#MethodType">MethodType</a>)</pre>
 			<p>
 Register a Controller and its Methods with Revel.
@@ -138,7 +147,7 @@ Register a Controller and its Methods with Revel.
 		
 			
 			
-			<h2 id="Controller">type <a href="../src/controller.html?s=120:1079#L5">Controller</a></h2>
+			<h2 id="Controller">type <a href="../src/controller.html?s=126:1085#L6">Controller</a></h2>
 			<pre>type Controller struct {
     Name          <a href="/pkg/builtin/#string">string</a>          <span class="comment">// The controller name, e.g. &#34;Application&#34;</span>
     Type          *<a href="#ControllerType">ControllerType</a> <span class="comment">// A description of the controller type.</span>
@@ -168,7 +177,7 @@ Register a Controller and its Methods with Revel.
 
 			
 				
-				<h3 id="NewController">func <a href="../src/controller.html?s=1081:1141#L25">NewController</a></h3>
+				<h3 id="NewController">func <a href="../src/controller.html?s=1087:1147#L26">NewController</a></h3>
 				<pre>func NewController(req *<a href="#Request">Request</a>, resp *<a href="#Response">Response</a>) *<a href="#Controller">Controller</a></pre>
 				
 				
@@ -176,21 +185,21 @@ Register a Controller and its Methods with Revel.
 
 			
 				
-				<h3 id="Controller.FlashParams">func (*Controller) <a href="../src/controller.html?s=1358:1392#L38">FlashParams</a></h3>
+				<h3 id="Controller.FlashParams">func (*Controller) <a href="../src/controller.html?s=1364:1398#L39">FlashParams</a></h3>
 				<pre>func (c *<a href="#Controller">Controller</a>) FlashParams()</pre>
 				
 				
 				
 			
 				
-				<h3 id="Controller.Forbidden">func (*Controller) <a href="../src/controller.html?s=4388:4458#L146">Forbidden</a></h3>
+				<h3 id="Controller.Forbidden">func (*Controller) <a href="../src/controller.html?s=4690:4760#L157">Forbidden</a></h3>
 				<pre>func (c *<a href="#Controller">Controller</a>) Forbidden(msg <a href="/pkg/builtin/#string">string</a>, objs ...interface{}) <a href="#Result">Result</a></pre>
 				
 				
 				
 			
 				
-				<h3 id="Controller.Message">func (*Controller) <a href="../src/controller.html?s=5884:5964#L198">Message</a></h3>
+				<h3 id="Controller.Message">func (*Controller) <a href="../src/controller.html?s=6780:6860#L218">Message</a></h3>
 				<pre>func (c *<a href="#Controller">Controller</a>) Message(message <a href="/pkg/builtin/#string">string</a>, args ...interface{}) (value <a href="/pkg/builtin/#string">string</a>)</pre>
 				<p>
 Perform a message lookup for the given message name using the given arguments
@@ -204,14 +213,14 @@ The current language is set by the i18n plugin.
 				
 			
 				
-				<h3 id="Controller.NotFound">func (*Controller) <a href="../src/controller.html?s=4103:4172#L134">NotFound</a></h3>
+				<h3 id="Controller.NotFound">func (*Controller) <a href="../src/controller.html?s=4405:4474#L145">NotFound</a></h3>
 				<pre>func (c *<a href="#Controller">Controller</a>) NotFound(msg <a href="/pkg/builtin/#string">string</a>, objs ...interface{}) <a href="#Result">Result</a></pre>
 				
 				
 				
 			
 				
-				<h3 id="Controller.Redirect">func (*Controller) <a href="../src/controller.html?s=5417:5491#L184">Redirect</a></h3>
+				<h3 id="Controller.Redirect">func (*Controller) <a href="../src/controller.html?s=6313:6387#L204">Redirect</a></h3>
 				<pre>func (c *<a href="#Controller">Controller</a>) Redirect(val interface{}, args ...interface{}) <a href="#Result">Result</a></pre>
 				<p>
 Redirect to an action or to a URL.
@@ -225,7 +234,7 @@ c.Redirect(&#34;/controller/%d/action&#34;, id)
 				
 			
 				
-				<h3 id="Controller.Render">func (*Controller) <a href="../src/controller.html?s=2106:2172#L65">Render</a></h3>
+				<h3 id="Controller.Render">func (*Controller) <a href="../src/controller.html?s=2128:2194#L66">Render</a></h3>
 				<pre>func (c *<a href="#Controller">Controller</a>) Render(extraRenderArgs ...interface{}) <a href="#Result">Result</a></pre>
 				<p>
 Render a template corresponding to the calling Controller method.
@@ -249,14 +258,28 @@ key-value &#34;user&#34;: (User).
 				
 			
 				
-				<h3 id="Controller.RenderError">func (*Controller) <a href="../src/controller.html?s=1569:1619#L48">RenderError</a></h3>
+				<h3 id="Controller.RenderBinary">func (*Controller) <a href="../src/controller.html?s=5827:5951#L190">RenderBinary</a></h3>
+				<pre>func (c *<a href="#Controller">Controller</a>) RenderBinary(memfile <a href="/pkg/io/">io</a>.<a href="/pkg/io/#Reader">Reader</a>, filename <a href="/pkg/builtin/#string">string</a>, delivery <a href="#ContentDisposition">ContentDisposition</a>, modtime <a href="/pkg/time/">time</a>.<a href="/pkg/time/#Time">Time</a>) <a href="#Result">Result</a></pre>
+				<p>
+RenderBinary is like RenderFile() except that it instead of a file on disk,
+it renders data from memory (which could be a file that has not been written,
+the output from some function, or bytes streamed from somewhere else, as long
+it implements io.Reader).  When called directly on something generated or
+streamed, modtime should mostly likely be time.Now().
+</p>
+
+				
+				
+			
+				
+				<h3 id="Controller.RenderError">func (*Controller) <a href="../src/controller.html?s=1591:1641#L49">RenderError</a></h3>
 				<pre>func (c *<a href="#Controller">Controller</a>) RenderError(err <a href="/pkg/builtin/#error">error</a>) <a href="#Result">Result</a></pre>
 				
 				
 				
 			
 				
-				<h3 id="Controller.RenderFile">func (*Controller) <a href="../src/controller.html?s=4800:4882#L160">RenderFile</a></h3>
+				<h3 id="Controller.RenderFile">func (*Controller) <a href="../src/controller.html?s=5102:5184#L171">RenderFile</a></h3>
 				<pre>func (c *<a href="#Controller">Controller</a>) RenderFile(file *<a href="/pkg/os/">os</a>.<a href="/pkg/os/#File">File</a>, delivery <a href="#ContentDisposition">ContentDisposition</a>) <a href="#Result">Result</a></pre>
 				<p>
 Return a file, either displayed inline or downloaded as an attachment.
@@ -267,7 +290,17 @@ The name and size are taken from the file info.
 				
 			
 				
-				<h3 id="Controller.RenderJson">func (*Controller) <a href="../src/controller.html?s=3373:3426#L107">RenderJson</a></h3>
+				<h3 id="Controller.RenderHtml">func (*Controller) <a href="../src/controller.html?s=4061:4112#L132">RenderHtml</a></h3>
+				<pre>func (c *<a href="#Controller">Controller</a>) RenderHtml(html <a href="/pkg/builtin/#string">string</a>) <a href="#Result">Result</a></pre>
+				<p>
+Render html in response
+</p>
+
+				
+				
+			
+				
+				<h3 id="Controller.RenderJson">func (*Controller) <a href="../src/controller.html?s=3386:3439#L108">RenderJson</a></h3>
 				<pre>func (c *<a href="#Controller">Controller</a>) RenderJson(o interface{}) <a href="#Result">Result</a></pre>
 				<p>
 Uses encoding/json.Marshal to return JSON to the client.
@@ -277,7 +310,17 @@ Uses encoding/json.Marshal to return JSON to the client.
 				
 			
 				
-				<h3 id="Controller.RenderTemplate">func (*Controller) <a href="../src/controller.html?s=3026:3089#L92">RenderTemplate</a></h3>
+				<h3 id="Controller.RenderJsonP">func (*Controller) <a href="../src/controller.html?s=3531:3602#L113">RenderJsonP</a></h3>
+				<pre>func (c *<a href="#Controller">Controller</a>) RenderJsonP(callback <a href="/pkg/builtin/#string">string</a>, o interface{}) <a href="#Result">Result</a></pre>
+				<p>
+Renders a JSONP result using encoding/json.Marshal
+</p>
+
+				
+				
+			
+				
+				<h3 id="Controller.RenderTemplate">func (*Controller) <a href="../src/controller.html?s=3039:3102#L93">RenderTemplate</a></h3>
 				<pre>func (c *<a href="#Controller">Controller</a>) RenderTemplate(templatePath <a href="/pkg/builtin/#string">string</a>) <a href="#Result">Result</a></pre>
 				<p>
 A less magical way to render a template.
@@ -288,7 +331,7 @@ Renders the given template, using the current RenderArgs.
 				
 			
 				
-				<h3 id="Controller.RenderText">func (*Controller) <a href="../src/controller.html?s=3650:3722#L117">RenderText</a></h3>
+				<h3 id="Controller.RenderText">func (*Controller) <a href="../src/controller.html?s=3836:3908#L123">RenderText</a></h3>
 				<pre>func (c *<a href="#Controller">Controller</a>) RenderText(text <a href="/pkg/builtin/#string">string</a>, objs ...interface{}) <a href="#Result">Result</a></pre>
 				<p>
 Render plaintext in response, printf style.
@@ -298,7 +341,7 @@ Render plaintext in response, printf style.
 				
 			
 				
-				<h3 id="Controller.RenderXml">func (*Controller) <a href="../src/controller.html?s=3518:3570#L112">RenderXml</a></h3>
+				<h3 id="Controller.RenderXml">func (*Controller) <a href="../src/controller.html?s=3704:3756#L118">RenderXml</a></h3>
 				<pre>func (c *<a href="#Controller">Controller</a>) RenderXml(o interface{}) <a href="#Result">Result</a></pre>
 				<p>
 Uses encoding/xml.Marshal to return XML to the client.
@@ -308,7 +351,7 @@ Uses encoding/xml.Marshal to return XML to the client.
 				
 			
 				
-				<h3 id="Controller.SetAction">func (*Controller) <a href="../src/controller.html?s=6165:6236#L204">SetAction</a></h3>
+				<h3 id="Controller.SetAction">func (*Controller) <a href="../src/controller.html?s=7061:7132#L224">SetAction</a></h3>
 				<pre>func (c *<a href="#Controller">Controller</a>) SetAction(controllerName, methodName <a href="/pkg/builtin/#string">string</a>) <a href="/pkg/builtin/#error">error</a></pre>
 				<p>
 SetAction sets the action that is being invoked in the current request.
@@ -319,14 +362,14 @@ It sets the following properties: Name, Action, Type, MethodType
 				
 			
 				
-				<h3 id="Controller.SetCookie">func (*Controller) <a href="../src/controller.html?s=1472:1523#L44">SetCookie</a></h3>
+				<h3 id="Controller.SetCookie">func (*Controller) <a href="../src/controller.html?s=1494:1545#L45">SetCookie</a></h3>
 				<pre>func (c *<a href="#Controller">Controller</a>) SetCookie(cookie *<a href="/pkg/net/http/">http</a>.<a href="/pkg/net/http/#Cookie">Cookie</a>)</pre>
 				
 				
 				
 			
 				
-				<h3 id="Controller.Todo">func (*Controller) <a href="../src/controller.html?s=3910:3944#L126">Todo</a></h3>
+				<h3 id="Controller.Todo">func (*Controller) <a href="../src/controller.html?s=4212:4246#L137">Todo</a></h3>
 				<pre>func (c *<a href="#Controller">Controller</a>) Todo() <a href="#Result">Result</a></pre>
 				<p>
 Render a &#34;todo&#34; indicating that the action isn&#39;t done yet.
@@ -338,10 +381,11 @@ Render a &#34;todo&#34; indicating that the action isn&#39;t done yet.
 		
 			
 			
-			<h2 id="ControllerType">type <a href="../src/controller.html?s=8540:8615#L276">ControllerType</a></h2>
+			<h2 id="ControllerType">type <a href="../src/controller.html?s=9569:9736#L307">ControllerType</a></h2>
 			<pre>type ControllerType struct {
-    Type    <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Type">Type</a>
-    Methods []*<a href="#MethodType">MethodType</a>
+    Type              <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Type">Type</a>
+    Methods           []*<a href="#MethodType">MethodType</a>
+    ControllerIndexes [][]<a href="/pkg/builtin/#int">int</a> <span class="comment">// FieldByIndex to all embedded *Controllers</span>
 }</pre>
 			
 
@@ -355,7 +399,7 @@ Render a &#34;todo&#34; indicating that the action isn&#39;t done yet.
 
 			
 				
-				<h3 id="ControllerType.Method">func (*ControllerType) <a href="../src/controller.html?s=8871:8928#L294">Method</a></h3>
+				<h3 id="ControllerType.Method">func (*ControllerType) <a href="../src/controller.html?s=9992:10049#L326">Method</a></h3>
 				<pre>func (ct *<a href="#ControllerType">ControllerType</a>) Method(name <a href="/pkg/builtin/#string">string</a>) *<a href="#MethodType">MethodType</a></pre>
 				<p>
 Searches for a given exported method (case insensitive)
@@ -367,7 +411,7 @@ Searches for a given exported method (case insensitive)
 		
 			
 			
-			<h2 id="MethodArg">type <a href="../src/controller.html?s=8753:8810#L288">MethodArg</a></h2>
+			<h2 id="MethodArg">type <a href="../src/controller.html?s=9874:9931#L320">MethodArg</a></h2>
 			<pre>type MethodArg struct {
     Name <a href="/pkg/builtin/#string">string</a>
     Type <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Type">Type</a>
@@ -386,7 +430,7 @@ Searches for a given exported method (case insensitive)
 		
 			
 			
-			<h2 id="MethodType">type <a href="../src/controller.html?s=8617:8751#L281">MethodType</a></h2>
+			<h2 id="MethodType">type <a href="../src/controller.html?s=9738:9872#L313">MethodType</a></h2>
 			<pre>type MethodType struct {
     Name           <a href="/pkg/builtin/#string">string</a>
     Args           []*<a href="#MethodArg">MethodArg</a>

@@ -23,7 +23,7 @@ type Error struct {
     MetaError                string   <span class="comment">// Error that occurred producing the error page.</span>
 }
 
-<span class="comment">// Find the deepest stack from in uesr code and provide a code listing of</span>
+<span class="comment">// Find the deepest stack from in user code and provide a code listing of</span>
 <span class="comment">// that, on the line that eventually triggered the panic.  Returns nil if no</span>
 <span class="comment">// relevant stack frame can be found.</span>
 func NewErrorFromPanic(err interface{}) *Error {

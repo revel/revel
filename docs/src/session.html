@@ -19,6 +19,7 @@ type Session map[string]string
 
 const (
     SESSION_ID_KEY = &#34;_ID&#34;
+    TS_KEY         = &#34;_TS&#34;
 )
 
 <span class="comment">// Return a UUID identifying this session.</span>
@@ -35,8 +36,10 @@ func (s Session) Id() string {
     return s[SESSION_ID_KEY]
 }
 
-var SessionFilter = func(c *Controller, fc []Filter) {
+func SessionFilter(c *Controller, fc []Filter) {
     c.Session = restoreSession(c.Request.Request)
+    <span class="comment">// Make session vars available in templates as {{.session.xyz}}</span>
+    c.RenderArgs[&#34;session&#34;] = c.Session
 
     fc[0](c, fc[1:])
 

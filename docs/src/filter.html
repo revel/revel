@@ -19,14 +19,15 @@ type Filter func(c *Controller, filterChain []Filter)
 <span class="comment">// It may be set by the application on initialization.</span>
 var Filters = []Filter{
     PanicFilter,             <span class="comment">// Recover from panics and display an error page instead.</span>
-    RouterFilter,            <span class="comment">// Use the routing table to select the right Action</span>
+    RouterFilter,            <span class="comment">// Use the routing table to select the right Action.</span>
     FilterConfiguringFilter, <span class="comment">// A hook for adding or removing per-Action filters.</span>
     ParamsFilter,            <span class="comment">// Parse parameters into Controller.Params.</span>
     SessionFilter,           <span class="comment">// Restore and write the session cookie.</span>
     FlashFilter,             <span class="comment">// Restore and write the flash cookie.</span>
     ValidationFilter,        <span class="comment">// Restore kept validation errors and save new ones from cookie.</span>
-    I18nFilter,              <span class="comment">// Resolve the requested language</span>
+    I18nFilter,              <span class="comment">// Resolve the requested language.</span>
     InterceptorFilter,       <span class="comment">// Run interceptors around the action.</span>
+    CompressFilter,          <span class="comment">// Compress the result.</span>
     ActionInvoker,           <span class="comment">// Invoke the action.</span>
 }
 

@@ -28,6 +28,11 @@ func Run(port int) {
     if port == 0 {
         port = HttpPort
     }
+    <span class="comment">// If the port equals zero, it means do not append port to the address.</span>
+    <span class="comment">// It can use unix socket or something else.</span>
+    if port != 0 {
+        address = fmt.Sprintf(&#34;%s:%d&#34;, address, port)
+    }
 
     MainTemplateLoader = NewTemplateLoader(TemplatePaths)
 
@@ -47,7 +52,7 @@ func Run(port int) {
     }
 
     Server = &amp;http.Server{
-        Addr:    fmt.Sprintf(&#34;%s:%d&#34;, address, port),
+        Addr:    address,
         Handler: http.HandlerFunc(handle),
     }
 
@@ -58,7 +63,12 @@ func Run(port int) {
         fmt.Printf(&#34;Listening on port %d...\n&#34;, port)
     }()
 
-    ERROR.Fatalln(&#34;Failed to listen:&#34;, Server.ListenAndServe())
+    if HttpSsl {
+        ERROR.Fatalln(&#34;Failed to listen:&#34;,
+            Server.ListenAndServeTLS(HttpSslCert, HttpSslKey))
+    } else {
+        ERROR.Fatalln(&#34;Failed to listen:&#34;, Server.ListenAndServe())
+    }
 }
 
 func OnAppStart(f func()) {

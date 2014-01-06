@@ -67,13 +67,17 @@ func ParseParams(params *Params, req *Request) {
 <span class="comment">// parsed, &#34;dest&#34; is set to the zero value.</span>
 func (p *Params) Bind(dest interface{}, name string) {
     value := reflect.ValueOf(dest)
-    if !value.CanSet() {
-        panic(&#34;Passed a non-settable variable to Bind: &#34; + name)
+    if value.Kind() != reflect.Ptr {
+        panic(&#34;revel/params: non-pointer passed to Bind: &#34; + name)
     }
-    value.Set(Bind(p, name, value.Type().Elem()))
+    value = value.Elem()
+    if !value.CanSet() {
+        panic(&#34;revel/params: non-settable variable passed to Bind: &#34; + name)
+    }
+    value.Set(Bind(p, name, value.Type()))
 }
 
-var ParamsFilter = func(c *Controller, fc []Filter) {
+func ParamsFilter(c *Controller, fc []Filter) {
     ParseParams(c.Params, c.Request)
 
     <span class="comment">// Clean up from the request.</span>

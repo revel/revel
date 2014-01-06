@@ -29,8 +29,9 @@ layout: godoc
 				<dd><a href="#pkg-constants">Constants</a></dd>
 			
 			
-				<dd><a href="#pkg-variables">Variables</a></dd>
 			
+				
+				<dd><a href="#SessionFilter">func SessionFilter(c *Controller, fc []Filter)</a></dd>
 			
 			
 				
@@ -65,28 +66,24 @@ layout: godoc
 			
 				<pre>const (
     <span id="SESSION_ID_KEY">SESSION_ID_KEY</span> = &#34;_ID&#34;
+    <span id="TS_KEY">TS_KEY</span>         = &#34;_TS&#34;
 )</pre>
 				
 			
 		
 		
-			<h2 id="pkg-variables">Variables</h2>
-			
-				<pre>var <span id="SessionFilter">SessionFilter</span> = func(c *<a href="#Controller">Controller</a>, fc []<a href="#Filter">Filter</a>) {
-    <a href="#c">c</a>.<a href="#Session">Session</a> = <a href="#restoreSession">restoreSession</a>(<a href="#c">c</a>.<a href="#Request">Request</a>.<a href="#Request">Request</a>)
-
-    <a href="#fc">fc</a>[0](<a href="#c">c</a>, <a href="#fc">fc</a>[1:])
-
-    <a href="#c">c</a>.<a href="#SetCookie">SetCookie</a>(<a href="#c">c</a>.<a href="#Session">Session</a>.<a href="#cookie">cookie</a>())
-}</pre>
-				
-			
 		
+			
+			
+			<h2 id="SessionFilter">func <a href="../src/session.html?s=2993:3039#L115">SessionFilter</a></h2>
+			<pre>func SessionFilter(c *<a href="#Controller">Controller</a>, fc []<a href="#Filter">Filter</a>)</pre>
+			
+			
 		
 		
 			
 			
-			<h2 id="Session">type <a href="../src/session.html?s=209:239#L3">Session</a></h2>
+			<h2 id="Session">type <a href="../src/session.html?s=227:257#L5">Session</a></h2>
 			<pre>type Session map[<a href="/pkg/builtin/#string">string</a>]<a href="/pkg/builtin/#string">string</a></pre>
 			<p>
 A signed cookie (and thus limited to 4kb in size).
@@ -104,7 +101,7 @@ Restriction: Keys may not have a colon in them.
 
 			
 				
-				<h3 id="Session.Id">func (Session) <a href="../src/session.html?s=319:347#L10">Id</a></h3>
+				<h3 id="Session.Id">func (Session) <a href="../src/session.html?s=855:883#L29">Id</a></h3>
 				<pre>func (s <a href="#Session">Session</a>) Id() <a href="/pkg/builtin/#string">string</a></pre>
 				<p>
 Return a UUID identifying this session.

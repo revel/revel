@@ -1,0 +1,152 @@
+---
+layout: godoc
+---
+
+<!--
+	Copyright 2009 The Go Authors. All rights reserved.
+	Use of this source code is governed by a BSD-style
+	license that can be found in the LICENSE file.
+-->
+<h1>Compress</h1>
+
+	
+		
+		<!-- The package's Name is printed as title by the top-level template -->
+		
+		
+
+		<div id="pkg-index" class="toggleVisible">
+		<div class="collapsed">
+			<h2 class="toggleButton" title="Click to show Index section">Index &#9657;</h2>
+		</div>
+		<div class="expanded">
+			<h2 class="toggleButton" title="Click to hide Index section">Index &#9662;</h2>
+
+		<!-- Table of contents for API; must be named manual-nav to turn off auto nav. -->
+			<div id="manual-nav">
+			<dl>
+			
+			
+			
+				
+				<dd><a href="#CompressFilter">func CompressFilter(c *Controller, fc []Filter)</a></dd>
+			
+			
+				
+				<dd><a href="#CompressResponseWriter">type CompressResponseWriter</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#CompressResponseWriter.DetectCompressionType">func (c *CompressResponseWriter) DetectCompressionType(req *Request, resp *Response)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#CompressResponseWriter.Write">func (c *CompressResponseWriter) Write(b []byte) (int, error)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#CompressResponseWriter.WriteHeader">func (c *CompressResponseWriter) WriteHeader(status int)</a></dd>
+				
+			
+				
+				<dd><a href="#WriteFlusher">type WriteFlusher</a></dd>
+				
+				
+			
+			
+			</dl>
+			</div><!-- #manual-nav -->
+
+		
+
+		
+			<h4>File</h4>
+			<p>
+			<span style="font-size:90%">
+			
+				<a href="../src/compress.html">compress.go</a>
+			
+			</span>
+			</p>
+		
+		</div><!-- .expanded -->
+		</div><!-- #pkg-index -->
+
+		
+		
+		
+			
+			
+			<h2 id="CompressFilter">func <a href="../src/compress.html?s=589:636#L30">CompressFilter</a></h2>
+			<pre>func CompressFilter(c *<a href="#Controller">Controller</a>, fc []<a href="#Filter">Filter</a>)</pre>
+			
+			
+		
+		
+			
+			
+			<h2 id="CompressResponseWriter">type <a href="../src/compress.html?s=452:587#L23">CompressResponseWriter</a></h2>
+			<pre>type CompressResponseWriter struct {
+    <a href="/pkg/net/http/">http</a>.<a href="/pkg/net/http/#ResponseWriter">ResponseWriter</a>
+    <span class="comment">// contains filtered or unexported fields</span>
+}</pre>
+			
+
+			
+
+			
+
+			
+
+			
+
+			
+				
+				<h3 id="CompressResponseWriter.DetectCompressionType">func (*CompressResponseWriter) <a href="../src/compress.html?s=1789:1873#L80">DetectCompressionType</a></h3>
+				<pre>func (c *<a href="#CompressResponseWriter">CompressResponseWriter</a>) DetectCompressionType(req *<a href="#Request">Request</a>, resp *<a href="#Response">Response</a>)</pre>
+				
+				
+				
+			
+				
+				<h3 id="CompressResponseWriter.Write">func (*CompressResponseWriter) <a href="../src/compress.html?s=1501:1562#L66">Write</a></h3>
+				<pre>func (c *<a href="#CompressResponseWriter">CompressResponseWriter</a>) Write(b []<a href="/pkg/builtin/#byte">byte</a>) (<a href="/pkg/builtin/#int">int</a>, <a href="/pkg/builtin/#error">error</a>)</pre>
+				
+				
+				
+			
+				
+				<h3 id="CompressResponseWriter.WriteHeader">func (*CompressResponseWriter) <a href="../src/compress.html?s=1356:1412#L60">WriteHeader</a></h3>
+				<pre>func (c *<a href="#CompressResponseWriter">CompressResponseWriter</a>) WriteHeader(status <a href="/pkg/builtin/#int">int</a>)</pre>
+				
+				
+				
+			
+		
+			
+			
+			<h2 id="WriteFlusher">type <a href="../src/compress.html?s=376:450#L18">WriteFlusher</a></h2>
+			<pre>type WriteFlusher interface {
+    Write([]<a href="/pkg/builtin/#byte">byte</a>) (<a href="/pkg/builtin/#int">int</a>, <a href="/pkg/builtin/#error">error</a>)
+    Flush() <a href="/pkg/builtin/#error">error</a>
+}</pre>
+			
+
+			
+
+			
+
+			
+
+			
+
+			
+		
+	
+
+	
+
+
+
+
+
+
+

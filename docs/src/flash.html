@@ -37,7 +37,7 @@ func (f Flash) Success(msg string, args ...interface{}) {
     }
 }
 
-var FlashFilter = func(c *Controller, fc []Filter) {
+func FlashFilter(c *Controller, fc []Filter) {
     c.Flash = restoreFlash(c.Request.Request)
     c.RenderArgs[&#34;flash&#34;] = c.Flash.Data
 
@@ -49,9 +49,11 @@ var FlashFilter = func(c *Controller, fc []Filter) {
         flashValue += &#34;\x00&#34; + key + &#34;:&#34; + value + &#34;\x00&#34;
     }
     c.SetCookie(&amp;http.Cookie{
-        Name:  CookiePrefix + &#34;_FLASH&#34;,
-        Value: url.QueryEscape(flashValue),
-        Path:  &#34;/&#34;,
+        Name:     CookiePrefix + &#34;_FLASH&#34;,
+        Value:    url.QueryEscape(flashValue),
+        HttpOnly: CookieHttpOnly,
+        Secure:   CookieSecure,
+        Path:     &#34;/&#34;,
     })
 }
 </pre>

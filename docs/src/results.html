@@ -101,7 +101,7 @@ type PlaintextErrorResult struct {
 
 <span class="comment">// This method is used when the template loader or error template is not available.</span>
 func (r PlaintextErrorResult) Apply(req *Request, resp *Response) {
-    resp.WriteHeader(http.StatusInternalServerError, &#34;text/plain&#34;)
+    resp.WriteHeader(http.StatusInternalServerError, &#34;text/plain; charset=utf-8&#34;)
     resp.Out.Write([]byte(r.Error.Error()))
 }
 
@@ -123,12 +123,18 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
 
     chunked := Config.BoolDefault(&#34;results.chunked&#34;, false)
 
+    <span class="comment">// If it&#39;s a HEAD request, throw away the bytes.</span>
+    out := io.Writer(resp.Out)
+    if req.Method == &#34;HEAD&#34; {
+        out = ioutil.Discard
+    }
+
     <span class="comment">// In a prod mode, write the status, render, and hope for the best.</span>
     <span class="comment">// (In a dev mode, always render to a temporary buffer first to avoid having</span>
     <span class="comment">// error pages distorted by HTML already written)</span>
     if chunked &amp;&amp; !DevMode {
-        resp.WriteHeader(http.StatusOK, &#34;text/html&#34;)
-        r.render(req, resp, resp.Out)
+        resp.WriteHeader(http.StatusOK, &#34;text/html; charset=utf-8&#34;)
+        r.render(req, resp, out)
         return
     }
 
@@ -141,8 +147,8 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
     if !chunked {
         resp.Out.Header().Set(&#34;Content-Length&#34;, strconv.Itoa(b.Len()))
     }
-    resp.WriteHeader(http.StatusOK, &#34;text/html&#34;)
-    b.WriteTo(resp.Out)
+    resp.WriteHeader(http.StatusOK, &#34;text/html; charset=utf-8&#34;)
+    b.WriteTo(out)
 }
 
 type RenderHtmlResult struct {
@@ -150,7 +156,7 @@ type RenderHtmlResult struct {
 }
 
 func (r RenderHtmlResult) Apply(req *Request, resp *Response) {
-    resp.WriteHeader(http.StatusOK, &#34;text/html&#34;)
+    resp.WriteHeader(http.StatusOK, &#34;text/html; charset=utf-8&#34;)
     resp.Out.Write([]byte(r.html))
 }
 
@@ -172,8 +178,16 @@ func (r RenderJsonResult) Apply(req *Request, resp *Response) {
         return
     }
 
-    resp.WriteHeader(http.StatusOK, &#34;application/json&#34;)
+    if r.callback == &#34;&#34; {
+        resp.WriteHeader(http.StatusOK, &#34;application/json; charset=utf-8&#34;)
+        resp.Out.Write(b)
+        return
+    }
+
+    resp.WriteHeader(http.StatusOK, &#34;application/javascript; charset=utf-8&#34;)
+    resp.Out.Write([]byte(r.callback + &#34;(&#34;))
     resp.Out.Write(b)
+    resp.Out.Write([]byte(&#34;);&#34;))
 }
 
 type RenderXmlResult struct {
@@ -194,7 +208,7 @@ func (r RenderXmlResult) Apply(req *Request, resp *Response) {
         return
     }
 
-    resp.WriteHeader(http.StatusOK, &#34;application/xml&#34;)
+    resp.WriteHeader(http.StatusOK, &#34;application/xml; charset=utf-8&#34;)
     resp.Out.Write(b)
 }
 
@@ -203,7 +217,7 @@ type RenderTextResult struct {
 }
 
 func (r RenderTextResult) Apply(req *Request, resp *Response) {
-    resp.WriteHeader(http.StatusOK, &#34;text/plain&#34;)
+    resp.WriteHeader(http.StatusOK, &#34;text/plain; charset=utf-8&#34;)
     resp.Out.Write([]byte(r.text))
 }
 
@@ -225,12 +239,16 @@ type BinaryResult struct {
 func (r *BinaryResult) Apply(req *Request, resp *Response) {
     disposition := string(r.Delivery)
     if r.Name != &#34;&#34; {
-        disposition += fmt.Sprintf(&#34;; filename=%s;&#34;, r.Name)
+        disposition += fmt.Sprintf(&#34;; filename=%s&#34;, r.Name)
     }
     resp.Out.Header().Set(&#34;Content-Disposition&#34;, disposition)
 
     <span class="comment">// If we have a ReadSeeker, delegate to http.ServeContent</span>
     if rs, ok := r.Reader.(io.ReadSeeker); ok {
+        <span class="comment">// http.ServeContent doesn&#39;t know about response.ContentType, so we set the respective header.</span>
+        if resp.ContentType != &#34;&#34; {
+            resp.Out.Header().Set(&#34;Content-Type&#34;, resp.ContentType)
+        }
         http.ServeContent(resp.Out, req.Request, r.Name, r.ModTime, rs)
     } else {
         <span class="comment">// Else, do a simple io.Copy.</span>

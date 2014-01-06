@@ -48,7 +48,7 @@ func NewController(req *Request, resp *Response) *Controller {
 
 func (c *Controller) FlashParams() {
     for key, vals := range c.Params.Values {
-        c.Flash.Out[key] = vals[0]
+        c.Flash.Out[key] = strings.Join(vals, &#34;,&#34;)
     }
 }
 
@@ -92,7 +92,7 @@ func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
         }
     } else {
         ERROR.Println(&#34;No RenderArg names found for Render call on line&#34;, line,
-            &#34;(Method&#34;, c.MethodType.Name, &#34;)&#34;)
+            &#34;(Action&#34;, c.Action, &#34;)&#34;)
     }
 
     return c.RenderTemplate(c.Name + &#34;/&#34; + c.MethodType.Name + &#34;.&#34; + c.Request.Format)
@@ -116,7 +116,12 @@ func (c *Controller) RenderTemplate(templatePath string) Result {
 
 <span class="comment">// Uses encoding/json.Marshal to return JSON to the client.</span>
 func (c *Controller) RenderJson(o interface{}) Result {
-    return RenderJsonResult{o}
+    return RenderJsonResult{o, &#34;&#34;}
+}
+
+<span class="comment">// Renders a JSONP result using encoding/json.Marshal</span>
+func (c *Controller) RenderJsonP(callback string, o interface{}) Result {
+    return RenderJsonResult{o, callback}
 }
 
 <span class="comment">// Uses encoding/xml.Marshal to return XML to the client.</span>
@@ -131,6 +136,11 @@ func (c *Controller) RenderText(text string, objs ...interface{}) Result {
         finalText = fmt.Sprintf(text, objs...)
     }
     return &amp;RenderTextResult{finalText}
+}
+
+<span class="comment">// Render html in response</span>
+func (c *Controller) RenderHtml(html string) Result {
+    return &amp;RenderHtmlResult{html}
 }
 
 <span class="comment">// Render a &#34;todo&#34; indicating that the action isn&#39;t done yet.</span>
@@ -179,11 +189,20 @@ func (c *Controller) RenderFile(file *os.File, delivery ContentDisposition) Resu
     if fileInfo != nil {
         modtime = fileInfo.ModTime()
     }
+    return c.RenderBinary(file, filepath.Base(file.Name()), delivery, modtime)
+}
+
+<span class="comment">// RenderBinary is like RenderFile() except that it instead of a file on disk,</span>
+<span class="comment">// it renders data from memory (which could be a file that has not been written,</span>
+<span class="comment">// the output from some function, or bytes streamed from somewhere else, as long</span>
+<span class="comment">// it implements io.Reader).  When called directly on something generated or</span>
+<span class="comment">// streamed, modtime should mostly likely be time.Now().</span>
+func (c *Controller) RenderBinary(memfile io.Reader, filename string, delivery ContentDisposition, modtime time.Time) Result {
     return &amp;BinaryResult{
-        Reader:   file,
-        Name:     filepath.Base(file.Name()),
+        Reader:   memfile,
+        Name:     filename,
         Delivery: delivery,
-        Length:   -1, <span class="comment">// http.ServeContent gets the length itself</span>
+        Length:   -1, <span class="comment">// http.ServeContent gets the length itself unless memfile is a stream.</span>
         ModTime:  modtime,
     }
 }
@@ -213,8 +232,6 @@ func (c *Controller) Message(message string, args ...interface{}) (value string)
 <span class="comment">// SetAction sets the action that is being invoked in the current request.</span>
 <span class="comment">// It sets the following properties: Name, Action, Type, MethodType</span>
 func (c *Controller) SetAction(controllerName, methodName string) error {
-    c.Name, c.MethodName = controllerName, methodName
-    c.Action = c.Name + &#34;.&#34; + c.MethodName
 
     <span class="comment">// Look up the controller and method types.</span>
     var ok bool
@@ -225,8 +242,11 @@ func (c *Controller) SetAction(controllerName, methodName string) error {
         return errors.New(&#34;revel/controller: failed to find action &#34; + methodName)
     }
 
+    c.Name, c.MethodName = c.Type.Type.Name(), methodName
+    c.Action = c.Name + &#34;.&#34; + c.MethodName
+
     <span class="comment">// Instantiate the controller.</span>
-    c.AppController = initNewAppController(c.Type.Type, c).Interface()
+    c.AppController = initNewAppController(c.Type, c).Interface()
 
     return nil
 }
@@ -234,8 +254,9 @@ func (c *Controller) SetAction(controllerName, methodName string) error {
 <span class="comment">// Controller registry and types.</span>
 
 type ControllerType struct {
-    Type    reflect.Type
-    Methods []*MethodType
+    Type              reflect.Type
+    Methods           []*MethodType
+    ControllerIndexes [][]int <span class="comment">// FieldByIndex to all embedded *Controllers</span>
 }
 
 type MethodType struct {
@@ -276,7 +297,11 @@ func RegisterController(c interface{}, methods []*MethodType) {
         }
     }
 
-    controllers[strings.ToLower(elem.Name())] = &amp;ControllerType{Type: elem, Methods: methods}
+    controllers[strings.ToLower(elem.Name())] = &amp;ControllerType{
+        Type:              elem,
+        Methods:           methods,
+        ControllerIndexes: findControllers(elem),
+    }
     TRACE.Printf(&#34;Registered controller: %s&#34;, elem.Name())
 }
 </pre>

@@ -27,8 +27,9 @@ layout: godoc
 			<dl>
 			
 			
-				<dd><a href="#pkg-variables">Variables</a></dd>
 			
+				
+				<dd><a href="#FlashFilter">func FlashFilter(c *Controller, fc []Filter)</a></dd>
 			
 			
 				
@@ -63,28 +64,13 @@ layout: godoc
 
 		
 		
-			<h2 id="pkg-variables">Variables</h2>
-			
-				<pre>var <span id="FlashFilter">FlashFilter</span> = func(c *<a href="#Controller">Controller</a>, fc []<a href="#Filter">Filter</a>) {
-    <a href="#c">c</a>.<a href="#Flash">Flash</a> = <a href="#restoreFlash">restoreFlash</a>(<a href="#c">c</a>.<a href="#Request">Request</a>.<a href="#Request">Request</a>)
-    <a href="#c">c</a>.<a href="#RenderArgs">RenderArgs</a>[&#34;flash&#34;] = <a href="#c">c</a>.<a href="#Flash">Flash</a>.<a href="#Data">Data</a>
-
-    <a href="#fc">fc</a>[0](<a href="#c">c</a>, <a href="#fc">fc</a>[1:])
-
-    <span class="comment">// Store the flash.</span>
-    var <span id="flashValue">flashValue</span> <a href="/pkg/builtin/#string">string</a>
-    for <a href="#key">key</a>, <a href="#value">value</a> := range <a href="#c">c</a>.<a href="#Flash">Flash</a>.<a href="#Out">Out</a> {
-        <a href="#flashValue">flashValue</a> += &#34;\x00&#34; + <a href="#key">key</a> + &#34;:&#34; + <a href="#value">value</a> + &#34;\x00&#34;
-    }
-    <a href="#c">c</a>.<a href="#SetCookie">SetCookie</a>(&amp;<a href="/pkg/net/http/">http</a>.<a href="/pkg/net/http/#Cookie">Cookie</a>{
-        <a href="#Name">Name</a>:  <a href="#CookiePrefix">CookiePrefix</a> + &#34;_FLASH&#34;,
-        <a href="#Value">Value</a>: <a href="/pkg/net/url/">url</a>.<a href="/pkg/net/url/#QueryEscape">QueryEscape</a>(<a href="#flashValue">flashValue</a>),
-        <a href="#Path">Path</a>:  &#34;/&#34;,
-    })
-}</pre>
-				
-			
 		
+			
+			
+			<h2 id="FlashFilter">func <a href="../src/flash.html?s=714:758#L23">FlashFilter</a></h2>
+			<pre>func FlashFilter(c *<a href="#Controller">Controller</a>, fc []<a href="#Filter">Filter</a>)</pre>
+			
+			
 		
 		
 			
