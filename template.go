@@ -155,7 +155,6 @@ var (
 			return date.Format(DateTimeFormat)
 		},
 		"slug": Slug,
-		"slugify": Slugify,
 	}
 )
 
