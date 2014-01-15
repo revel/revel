@@ -3,6 +3,7 @@ package controllers
 import (
 	"code.google.com/p/go.crypto/bcrypt"
 	"github.com/robfig/revel"
+	"github.com/robfig/revel/modules/auth"
 	"github.com/robfig/revel/samples/booking/app/models"
 	"github.com/robfig/revel/samples/booking/app/routes"
 )
@@ -63,7 +64,7 @@ func (c Application) SaveUser(user models.User, verifyPassword string) revel.Res
 		return c.Redirect(routes.Application.Register())
 	}
 
-	user.HashedPassword, _ = bcrypt.GenerateFromPassword(
+	user.Password, _ = bcrypt.GenerateFromPassword(
 		[]byte(user.Password), bcrypt.DefaultCost)
 	err := c.Txn.Insert(&user)
 	if err != nil {
@@ -78,7 +79,7 @@ func (c Application) SaveUser(user models.User, verifyPassword string) revel.Res
 func (c Application) Login(username, password string) revel.Result {
 	user := c.getUser(username)
 	if user != nil {
-		err := bcrypt.CompareHashAndPassword(user.HashedPassword, []byte(password))
+		err := auth.ComparePassword(user.Password, []byte(password))
 		if err == nil {
 			c.Session["user"] = username
 			c.Flash.Success("Welcome, " + username)

@@ -13,7 +13,7 @@ type BookingCounter struct{}
 
 func (c BookingCounter) Run() {
 	bookings, err := controllers.Dbm.Select(models.Booking{},
-			`select * from Booking`)
+		`select * from Booking`)
 	if err != nil {
 		panic(err)
 	}
