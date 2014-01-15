@@ -2,6 +2,7 @@ package auth
 
 import (
 	"code.google.com/p/go.crypto/bcrypt"
+	"encoding/json"
 	"github.com/robfig/revel"
 	"time"
 )
@@ -15,9 +16,10 @@ var (
 	RedirectTo string
 )
 
-// Check is called to check for a valid session.
+// Check is called to check for a valid auth session.
 func Check(c *revel.Controller) revel.Result {
-	session := c.Session[SESSION_KEY]
+	var session Auth
+	_ = json.Unmarshal([]byte(c.Session[SESSION_KEY]), &session)
 	result := Verify(session, c.Session.Id())
 
 	if !result {
@@ -26,9 +28,22 @@ func Check(c *revel.Controller) revel.Result {
 		return c.Redirect("/session/create")
 	} else {
 		session.UpdatedAt = time.Now()
-		c.Session[SESSION_KEY] = session
+		if b, err := json.Marshal(session); err == nil {
+			c.Session[SESSION_KEY] = string(b)
+		}
 	}
 	return nil
+}
+
+// ComparePassword acts as a helper function to bcrypt.CompareHashAndPassword
+// and is used to verify a plain-text password against a hashed password.
+func ComparePassword(hash, attempt []byte) error {
+	err := bcrypt.CompareHashAndPassword(hash, attempt)
+	return err
+}
+
+func Invalidate(c *revel.Controller) {
+	delete(c.Session, SESSION_KEY)
 }
 
 // Registers a valid session if password matches hash
@@ -48,11 +63,9 @@ func Set(c *revel.Controller) {
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
-	c.Session[SESSION_KEY] = s
-}
-
-func Invalidate(c *revel.Controller) {
-	c.Session[SESSION_KEY] = nil
+	if b, err := json.Marshal(s); err == nil {
+		c.Session[SESSION_KEY] = string(b)
+	}
 }
 
 // Verify checks stored session id against stored value
@@ -61,13 +74,6 @@ func Verify(session Auth, sid string) bool {
 		return false
 	}
 	return sid == session.Id
-}
-
-// ComparePassword acts as a helper function to bcrypt.CompareHashAndPassword
-// and is used to verify a plain-text password against a hashed password.
-func ComparePassword(hash, attempt string) Error {
-	err := bcrypt.CompareHashAndPassword(hash, []byte(attempt))
-	return err
 }
 
 type Auth struct {
