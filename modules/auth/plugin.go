@@ -65,7 +65,7 @@ func CheckActions(c *revel.Controller) revel.Result {
 func RegisterSession(c *revel.Controller, hash string, password string) error {
 	h := []byte(hash)
 	p := []byte(password)
-	if err := bcrypt.CompareHashAndPassword(h, p); err != nil {
+	if err := ComparePassword(h, p); err != nil {
 		return err
 	}
 	SetSession(c)
@@ -73,7 +73,7 @@ func RegisterSession(c *revel.Controller, hash string, password string) error {
 }
 
 func SetSession(c *revel.Controller) {
-	s := Session{
+	s := AuthSession{
 		Id:        c.Session.Id(),
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
@@ -93,14 +93,21 @@ func InvalidateSession(c *revel.Controller) {
 }
 
 // VerifySession checks stored session id against stored value
-func VerifySession(session Session, sid string) bool {
+func VerifySession(session AuthSession, sid string) bool {
 	if session == nil {
 		return false
 	}
 	return sid == session.Id
 }
 
-type Session struct {
+// ComparePassword acts as a helper function to bcrypt.CompareHashAndPassword
+// and is used to verify a plain-text password against a hashed password.
+func ComparePassword(hash, attempt string) Error {
+	err := bcrypt.CompareHashAndPassword(hash, []byte(attempt))
+	return err
+}
+
+type AuthSession struct {
 	Id             string
 	AllowedActions []string
 	CreatedAt      time.Time

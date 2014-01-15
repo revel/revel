@@ -2,14 +2,12 @@ package controllers
 
 import (
 	"github.com/robfig/revel"
-	"github.com/slogsdon/revel/modules/auth"
+	"github.com/robfig/revel/modules/auth"
 )
 
 type Session struct {
 	*revel.Controller
 }
-
-func (c Session) init() {}
 
 func (c Session) Index() revel.Result {
 	return c.Redirect(Session.Create)
