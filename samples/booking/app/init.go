@@ -2,8 +2,8 @@ package app
 
 import (
 	"github.com/robfig/revel"
-	"github.com/slogsdon/revel/modules/auth"
-	"github.com/slogsdon/revel/samples/booking/app/controllers"
+	"github.com/robfig/revel/modules/auth"
+	"github.com/robfig/revel/samples/booking/app/controllers"
 )
 
 func init() {
