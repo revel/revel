@@ -3,7 +3,7 @@ package models
 import (
 	"fmt"
 	"github.com/robfig/revel"
-	"github.com/slogsdon/revel/modules/auth"
+	"github.com/robfig/revel/modules/auth"
 	"regexp"
 )
 
