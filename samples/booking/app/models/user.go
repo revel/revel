@@ -8,8 +8,8 @@ import (
 )
 
 type User struct {
-	UserId             int
-	Name               string
+	UserId int
+	Name   string
 	*auth.User
 }
 

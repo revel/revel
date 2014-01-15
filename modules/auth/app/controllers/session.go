@@ -23,7 +23,6 @@ func (c Session) Register(username string, password string) revel.Result {
 	if err := auth.Register(c.Controller, user.Password, password); err != nil {
 		return c.Redirect(Session.Create)
 	} else {
-		auth.SaveAllowedActions(c, user)
 		return c.Redirect(auth.RedirectTo)
 	}
 }
