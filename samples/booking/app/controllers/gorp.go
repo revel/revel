@@ -61,7 +61,7 @@ func Init() {
 		UserId: 0, 
 		Name: "Demo User", 
 		Username: "demo", 
-		Password: bcryptPassword
+		Password: bcryptPassword,
 	}
 	if err := Dbm.Insert(demoUser); err != nil {
 		panic(err)
