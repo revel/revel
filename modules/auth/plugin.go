@@ -70,7 +70,8 @@ func Set(c *revel.Controller) {
 
 // Verify checks stored session id against stored value
 func Verify(session Auth, sid string) bool {
-	if blank := Auth{}; session == blank {
+	b := Auth{}
+	if session == b {
 		return false
 	}
 	return sid == session.Id
