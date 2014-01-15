@@ -20,7 +20,7 @@ func (c Session) Create() revel.Result {
 func (c Session) Register(username string, password string) revel.Result {
 	user := auth.GetUser(username)
 
-	if err := auth.RegisterSession(c.Controller, user.Password, password); err != nil {
+	if err := auth.Register(c.Controller, user.Password, password); err != nil {
 		return c.Redirect(Session.Create)
 	} else {
 		auth.SaveAllowedActions(c, user)
@@ -29,6 +29,6 @@ func (c Session) Register(username string, password string) revel.Result {
 }
 
 func (c Session) Destroy() revel.Result {
-	auth.InvalidateSession(c)
+	auth.Invalidate(c)
 	return c.Render()
 }

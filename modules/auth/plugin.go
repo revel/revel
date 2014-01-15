@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	SESSION_KEY = "BasicAuthSession"
+	SESSION_KEY = "BasicAuth"
 )
 
 var (
@@ -19,20 +19,20 @@ var (
 func Check(c *revel.Controller) revel.Result {
 	var result revel.Result
 	
-	if result = CheckSession(c); result == nil {
+	if result = CheckAuth(c); result == nil {
 		result = CheckActions(c)
 	}
 
 	return result
 }
 
-// CheckSession is called to check for a valid session.
-func CheckSession(c *revel.Controller) revel.Result {
+// CheckAuth is called to check for a valid session.
+func CheckAuth(c *revel.Controller) revel.Result {
 	session := c.Session[SESSION_KEY]
-	result := VerifySession(session, c.Session.Id())
+	result := Verify(session, c.Session.Id())
 	
 	if !result {
-		InvalidateSession(c)
+		Invalidate(c)
 		c.Flash.Error("Session invalid. Please login.")
 		return c.Redirect("/session/create")
 	} else {
@@ -62,18 +62,18 @@ func CheckActions(c *revel.Controller) revel.Result {
 }
 
 // Registers a valid session if password matches hash
-func RegisterSession(c *revel.Controller, hash string, password string) error {
+func Register(c *revel.Controller, hash string, password string) error {
 	h := []byte(hash)
 	p := []byte(password)
 	if err := ComparePassword(h, p); err != nil {
 		return err
 	}
-	SetSession(c)
+	Set(c)
 	return nil
 }
 
-func SetSession(c *revel.Controller) {
-	s := AuthSession{
+func Set(c *revel.Controller) {
+	s := Auth{
 		Id:        c.Session.Id(),
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
@@ -88,12 +88,12 @@ func SaveAllowedActions(c *revel.Controller, user *User) {
 	}
 }
 
-func InvalidateSession(c *revel.Controller) {
+func Invalidate(c *revel.Controller) {
 	c.Session[SESSION_KEY] = nil
 }
 
-// VerifySession checks stored session id against stored value
-func VerifySession(session AuthSession, sid string) bool {
+// Verify checks stored session id against stored value
+func Verify(session Auth, sid string) bool {
 	if session == nil {
 		return false
 	}
@@ -107,7 +107,7 @@ func ComparePassword(hash, attempt string) Error {
 	return err
 }
 
-type AuthSession struct {
+type Auth struct {
 	Id             string
 	AllowedActions []string
 	CreatedAt      time.Time
