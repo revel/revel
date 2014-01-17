@@ -6,14 +6,17 @@ import (
 	"net/url"
 )
 
-// Flash represents a cookie that gets overwritten on each request.
+// Flash represents a cookie that is overwritten on each request.
 // It allows data to be stored across one page at a time.
 // This is commonly used to implement success or error messages.
-// e.g. the Post/Redirect/Get pattern: http://en.wikipedia.org/wiki/Post/Redirect/Get
+// E.g. the Post/Redirect/Get pattern:
+// http://en.wikipedia.org/wiki/Post/Redirect/Get
 type Flash struct {
 	Data, Out map[string]string
 }
 
+// Error serializes the given msg and args to an "error" key within
+// the Flash cookie.
 func (f Flash) Error(msg string, args ...interface{}) {
 	if len(args) == 0 {
 		f.Out["error"] = msg
@@ -22,6 +25,8 @@ func (f Flash) Error(msg string, args ...interface{}) {
 	}
 }
 
+// Success serializes the given msg and args to a "success" key within
+// the Flash cookie.
 func (f Flash) Success(msg string, args ...interface{}) {
 	if len(args) == 0 {
 		f.Out["success"] = msg
@@ -30,6 +35,9 @@ func (f Flash) Success(msg string, args ...interface{}) {
 	}
 }
 
+// FlashFilter is a Revel Filter that retrieves and sets the flash cookie.
+// Within Revel, it is available as a Flash attribute on Controller instances.
+// The name of the Flash cookie is set as CookiePrefix + "_FLASH".
 func FlashFilter(c *Controller, fc []Filter) {
 	c.Flash = restoreFlash(c.Request.Request)
 	c.RenderArgs["flash"] = c.Flash.Data
@@ -50,7 +58,7 @@ func FlashFilter(c *Controller, fc []Filter) {
 	})
 }
 
-// Restore flash from a request.
+// restoreFlash deserializes a Flash cookie struct from a request.
 func restoreFlash(req *http.Request) Flash {
 	flash := Flash{
 		Data: make(map[string]string),
