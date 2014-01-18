@@ -64,7 +64,10 @@ func ResolveContentType(req *http.Request) string {
 	return strings.ToLower(strings.TrimSpace(strings.Split(contentType, ";")[0]))
 }
 
-// Resolve the accept request header.
+// ResolveFormat maps the request's Accept MIME type declaration to
+// a Request.Format attribute, specifically "html", "xml", "json", or "txt",
+// returning a default of "html" when Accept header cannot be mapped to a
+// value above.
 func ResolveFormat(req *http.Request) string {
 	accept := req.Header.Get("accept")
 
@@ -87,13 +90,13 @@ func ResolveFormat(req *http.Request) string {
 	return "html"
 }
 
-// A single language from the Accept-Language HTTP header.
+// AcceptLanguage is a single language from the Accept-Language HTTP header.
 type AcceptLanguage struct {
 	Language string
 	Quality  float32
 }
 
-// A collection of sortable AcceptLanguage instances.
+// AcceptLanguages is collection of sortable AcceptLanguage instances.
 type AcceptLanguages []AcceptLanguage
 
 func (al AcceptLanguages) Len() int           { return len(al) }
@@ -110,10 +113,12 @@ func (al AcceptLanguages) String() string {
 	return output.String()
 }
 
-// Resolve the Accept-Language header value.
+// ResolveAcceptLanguage returns a sorted list of Accept-Language
+// header values.
 //
-// The results are sorted using the quality defined in the header for each language range with the
-// most qualified language range as the first element in the slice.
+// The results are sorted using the quality defined in the header for each
+// language range with the most qualified language range as the first
+// element in the slice.
 //
 // See the HTTP header fields specification
 // (http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.4) for more details.
