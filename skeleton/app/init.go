@@ -3,7 +3,6 @@ package app
 import "github.com/robfig/revel"
 
 func init() {
-
 	// Filters is the default set of global filters.
 	revel.Filters = []revel.Filter{
 		revel.PanicFilter,             // Recover from panics and display an error page instead.
@@ -27,7 +26,7 @@ func init() {
 }
 
 // TODO turn this into revel.HeaderFilter
-// should probably also have a filter for CSFR
+// should probably also have a filter for CSRF
 // not sure if it can go in the same filter or not
 var HeaderFilter = func(c *revel.Controller, fc []revel.Filter) {
 	// Add some common security headers
