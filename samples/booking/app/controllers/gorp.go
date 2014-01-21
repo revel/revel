@@ -14,7 +14,7 @@ var (
 	Dbm *gorp.DbMap
 )
 
-func Init() {
+func InitDB() {
 	db.Init()
 	Dbm = &gorp.DbMap{Db: db.Db, Dialect: gorp.SqliteDialect{}}
 
