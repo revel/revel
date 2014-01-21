@@ -74,7 +74,7 @@ func newApp(args []string) {
 
 const alphaNumeric = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
 
-func genSecret() string {
+func generateSecret() string {
 	chars := make([]byte, 64)
 	for i := 0; i < 64; i++ {
 		chars[i] = alphaNumeric[rand.Intn(len(alphaNumeric))]
@@ -103,7 +103,7 @@ func initGoStuff() {
 
 }
 
-func setApplicationPaths(args []string) {
+func setApplicationPath(args []string) {
 	var err error
 	importPath = args[0]
 	if filepath.IsAbs(importPath) {
@@ -125,23 +125,24 @@ func setApplicationPaths(args []string) {
 }
 
 func setSkeletonPath(args []string) {
+	var err error
 	if len(args) == 2 { // user specified
-		skeleton_name := args[1]
-		_, errS := build.Import(skeleton_name, "", build.FindOnly)
-		if errS != nil {
+		skeletonName := args[1]
+		_, err = build.Import(skeletonName, "", build.FindOnly)
+		if err != nil {
 			// Execute "go get <pkg>"
-			getCmd := exec.Command(gocmd, "get", "-d", skeleton_name)
+			getCmd := exec.Command(gocmd, "get", "-d", skeletonName)
 			fmt.Println("Exec:", getCmd.Args)
-			getOutput, errG := getCmd.CombinedOutput()
+			getOutput, err := getCmd.CombinedOutput()
 
 			// check getOutput for no buildible string
 			bpos := bytes.Index(getOutput, []byte("no buildable Go source files in"))
-			if errG != nil && bpos == -1 {
-				errorf("Abort: Could not find or 'go get' Skeleton  source code: %s\n%s\n", getOutput, skeleton_name)
+			if err != nil && bpos == -1 {
+				errorf("Abort: Could not find or 'go get' Skeleton  source code: %s\n%s\n", getOutput, skeletonName)
 			}
 		}
 		// use the
-		skeletonPath = filepath.Join(srcRoot, skeleton_name)
+		skeletonPath = filepath.Join(srcRoot, skeletonName)
 
 	} else {
 		// use the revel default
@@ -157,7 +158,7 @@ func copyNewAppFiles() {
 	mustCopyDir(appPath, skeletonPath, map[string]interface{}{
 		// app.conf
 		"AppName": filepath.Base(appPath),
-		"Secret":  genSecret(),
+		"Secret":  generateSecret(),
 	})
 
 	// Dotfiles are skipped by mustCopyDir, so we have to explicitly copy the .gitignore.
