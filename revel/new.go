@@ -59,7 +59,7 @@ func newApp(args []string) {
 	}
 
 	// checking and setting application
-	setApplicationPaths(args)
+	setApplicationPath(args)
 
 	// checking and setting skeleton
 	setSkeletonPath(args)
