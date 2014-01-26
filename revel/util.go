@@ -4,13 +4,14 @@ import (
 	"archive/tar"
 	"compress/gzip"
 	"fmt"
-	"github.com/robfig/revel"
 	"io"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
 	"text/template"
+
+	"github.com/robfig/revel"
 )
 
 // Use a wrapper to differentiate logged panics from unexpected ones.
@@ -53,6 +54,11 @@ func mustRenderTemplate(destPath, srcPath string, data map[string]interface{}) {
 
 	err = f.Close()
 	panicOnError(err, "Failed to close "+f.Name())
+}
+
+func mustChmod(filename string, mode os.FileMode) {
+	err := os.Chmod(filename, mode)
+	panicOnError(err, fmt.Sprintf("Failed to chmod %d %q", mode, filename))
 }
 
 // copyDir copies a directory tree over to a new directory.  Any files ending in
