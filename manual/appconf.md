@@ -69,7 +69,7 @@ Default: no value
 
 The secret key used for cryptographic operations
 ([`revel.Sign`](../docs/godoc/util.html#Sign)).  Revel also uses it internally
-to to sign session cookies.  Setting it to empty string disables signing.
+to sign session cookies.  Setting it to empty string disables signing.
 
 It is set to a random string when initializing a new project (using `revel new`)
 
