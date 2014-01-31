@@ -30,6 +30,11 @@ apply and may be used to determine logic in the application itself.
 
 Run mode defaults to "dev".
 
+The transport mode is used to select which http transport mode should be
+used.
+
+Transport mode defaults to "http"
+
 You can run a specific suite (and function) by specifying a third parameter.
 For example, to run all of UserTest:
 
@@ -54,6 +59,11 @@ func testApp(args []string) {
 	mode := "dev"
 	if len(args) >= 2 {
 		mode = args[1]
+	}
+
+	transport := "http"
+	if len(args) >= 3 {
+		transport = args[2]
 	}
 
 	// Find and parse app.conf
@@ -113,7 +123,7 @@ You can add it to a run mode configuration with the following line:
 	var (
 		testSuites []controllers.TestSuiteDesc
 		resp       *http.Response
-		baseUrl    = fmt.Sprintf("http://127.0.0.1:%d", revel.HttpPort)
+		baseUrl    = fmt.Sprintf("%s://127.0.0.1:%d", transport, revel.HttpPort)
 	)
 	for i := 0; ; i++ {
 		if resp, err = http.Get(baseUrl + "/@tests.list"); err == nil {
