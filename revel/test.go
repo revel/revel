@@ -30,6 +30,11 @@ apply and may be used to determine logic in the application itself.
 
 Run mode defaults to "dev".
 
+The transport mode is used to select which http transport mode should be
+used.
+
+Transport mode defaults to "http"
+
 You can run a specific suite (and function) by specifying a third parameter.
 For example, to run all of UserTest:
 
