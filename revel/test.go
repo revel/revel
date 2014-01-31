@@ -56,6 +56,11 @@ func testApp(args []string) {
 		mode = args[1]
 	}
 
+	transport := "http"
+	if len(args) >= 3 {
+		transport = args[2]
+	}
+
 	// Find and parse app.conf
 	revel.Init(mode, args[0], "")
 
@@ -113,7 +118,7 @@ You can add it to a run mode configuration with the following line:
 	var (
 		testSuites []controllers.TestSuiteDesc
 		resp       *http.Response
-		baseUrl    = fmt.Sprintf("http://127.0.0.1:%d", revel.HttpPort)
+		baseUrl    = fmt.Sprintf("%s://127.0.0.1:%d", transport, revel.HttpPort)
 	)
 	for i := 0; ; i++ {
 		if resp, err = http.Get(baseUrl + "/@tests.list"); err == nil {
