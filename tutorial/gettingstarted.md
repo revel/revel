@@ -49,7 +49,7 @@ Use `go get` to install it:
 Then, ensure the $GOPATH/bin directory is in your PATH so that you can reference the command from anywhere.
 
 	export PATH="$PATH:$GOPATH/bin"
-	echo 'PATH="$PATH:$GOPATH/bin"' >> .bash_profile
+	echo 'export PATH="$PATH:$GOPATH/bin"' >> .bash_profile
 
 Lastly, let's verify that it works:
 
