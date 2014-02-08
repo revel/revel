@@ -6,6 +6,7 @@ import (
 	"github.com/robfig/pathtree"
 	"io"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/url"
 	"path"
@@ -14,6 +15,7 @@ import (
 )
 
 type Route struct {
+	Host           string   // e.g. example.com
 	Method         string   // e.g. GET
 	Path           string   // e.g. /app/:id
 	Action         string   // e.g. "Application.ShowApp", "404"
@@ -41,7 +43,7 @@ type arg struct {
 }
 
 // Prepares the route to be used in matching.
-func NewRoute(method, path, action, fixedArgs, routesPath string, line int) (r *Route) {
+func NewRoute(host, method, path, action, fixedArgs, routesPath string, line int) (r *Route) {
 	// Handle fixed arguments
 	argsReader := strings.NewReader(fixedArgs)
 	csv := csv.NewReader(argsReader)
@@ -51,11 +53,12 @@ func NewRoute(method, path, action, fixedArgs, routesPath string, line int) (r *
 	}
 
 	r = &Route{
+		Host  :      host,
 		Method:      strings.ToUpper(method),
 		Path:        path,
 		Action:      action,
 		FixedParams: fargs,
-		TreePath:    treePath(strings.ToUpper(method), path),
+		TreePath:    treePath(host, strings.ToUpper(method), path),
 		routesPath:  routesPath,
 		line:        line,
 	}
@@ -75,11 +78,14 @@ func NewRoute(method, path, action, fixedArgs, routesPath string, line int) (r *
 	return
 }
 
-func treePath(method, path string) string {
+func treePath(host, method, path string) string {
+	if host == "*" {
+		host = ":HOST"
+	}
 	if method == "*" {
 		method = ":METHOD"
 	}
-	return "/" + method + path
+	return "/" + host + "/" + method + path
 }
 
 type Router struct {
@@ -91,7 +97,19 @@ type Router struct {
 var notFound = &RouteMatch{Action: "404"}
 
 func (router *Router) Route(req *http.Request) *RouteMatch {
-	leaf, expansions := router.Tree.Find(treePath(req.Method, req.URL.Path))
+	host := req.Host
+	if len(host) == 0 {
+		host = "unknown"
+	}
+	if strings.ContainsAny(host, ":") {
+		var err error
+		host, _, err = net.SplitHostPort(host);
+		if err != nil {
+			return nil
+		}
+	}
+	
+	leaf, expansions := router.Tree.Find(treePath(host, req.Method, req.URL.Path))
 	if leaf == nil {
 		return nil
 	}
@@ -146,7 +164,7 @@ func (router *Router) updateTree() *Error {
 
 		// Allow GETs to respond to HEAD requests.
 		if err == nil && route.Method == "GET" {
-			err = router.Tree.Add(treePath("HEAD", route.Path), route)
+			err = router.Tree.Add(treePath(route.Host, "HEAD", route.Path), route)
 		}
 
 		// Error adding a route to the pathtree.
@@ -194,7 +212,7 @@ func parseRoutes(routesPath, joinedPath, content string, validate bool) ([]*Rout
 		}
 
 		// A single route
-		method, path, action, fixedArgs, found := parseRouteLine(line)
+		host, method, path, action, fixedArgs, found := parseRouteLine(line)
 		if !found {
 			continue
 		}
@@ -221,7 +239,7 @@ func parseRoutes(routesPath, joinedPath, content string, validate bool) ([]*Rout
 			continue
 		}
 
-		route := NewRoute(method, path, action, fixedArgs, routesPath, n)
+		route := NewRoute(host, method, path, action, fixedArgs, routesPath, n)
 		routes = append(routes, route)
 
 		if validate {
@@ -298,22 +316,23 @@ func getModuleRoutes(moduleName, joinedPath string, validate bool) ([]*Route, *E
 }
 
 // Groups:
-// 1: method
-// 4: path
-// 5: action
-// 6: fixedargs
+// 1: host
+// 2: method
+// 5: path
+// 6: action
+// 7: fixedargs
 var routePattern *regexp.Regexp = regexp.MustCompile(
-	"(?i)^(GET|POST|PUT|DELETE|PATCH|OPTIONS|HEAD|WS|\\*)" +
+	"(?i)^([^ \t/]*)[ \t]+(GET|POST|PUT|DELETE|PATCH|OPTIONS|HEAD|WS|\\*)" +
 		"[(]?([^)]*)(\\))?[ \t]+" +
 		"(.*/[^ \t]*)[ \t]+([^ \t(]+)" +
 		`\(?([^)]*)\)?[ \t]*$`)
 
-func parseRouteLine(line string) (method, path, action, fixedArgs string, found bool) {
+func parseRouteLine(line string) (host, method, path, action, fixedArgs string, found bool) {
 	var matches []string = routePattern.FindStringSubmatch(line)
 	if matches == nil {
 		return
 	}
-	method, path, action, fixedArgs = matches[1], matches[4], matches[5], matches[6]
+	host, method, path, action, fixedArgs = matches[1], matches[2], matches[5], matches[6], matches[7]
 	found = true
 	return
 }
