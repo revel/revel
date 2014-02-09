@@ -322,7 +322,7 @@ func getModuleRoutes(moduleName, joinedPath string, validate bool) ([]*Route, *E
 // 6: action
 // 7: fixedargs
 var routePattern *regexp.Regexp = regexp.MustCompile(
-	"(?i)^([^ \t/]*)[ \t]+(GET|POST|PUT|DELETE|PATCH|OPTIONS|HEAD|WS|\\*)" +
+	"(?i)^([^ \t/]+[ \t]+)?(GET|POST|PUT|DELETE|PATCH|OPTIONS|HEAD|WS|\\*)" +
 		"[(]?([^)]*)(\\))?[ \t]+" +
 		"(.*/[^ \t]*)[ \t]+([^ \t(]+)" +
 		`\(?([^)]*)\)?[ \t]*$`)
@@ -333,6 +333,11 @@ func parseRouteLine(line string) (host, method, path, action, fixedArgs string, 
 		return
 	}
 	host, method, path, action, fixedArgs = matches[1], matches[2], matches[5], matches[6], matches[7]
+	host = strings.TrimRight(host, " \t")
+	if len(host) == 0 {
+		host = "*"
+	}
+	
 	found = true
 	return
 }
