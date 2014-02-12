@@ -50,8 +50,8 @@ func (s Session) Id() string {
 }
 
 // Return a time.Time with session expiration date
-func getSessionExpiration() time.Time {
-	if expireAfterDuration == 0 {
+func (s Session) getSessionExpiration() time.Time {
+	if expireAfterDuration == 0 || s[TS_KEY] == "session" {
 		return time.Time{}
 	}
 	return time.Now().Add(expireAfterDuration)
@@ -60,7 +60,7 @@ func getSessionExpiration() time.Time {
 // Returns an http.Cookie containing the signed session.
 func (s Session) cookie() *http.Cookie {
 	var sessionValue string
-	ts := getSessionExpiration()
+	ts := s.getSessionExpiration()
 	s[TS_KEY] = getSessionExpirationCookie(ts)
 	for key, value := range s {
 		if strings.ContainsAny(key, ":\x00") {
@@ -148,4 +148,12 @@ func getSessionExpirationCookie(t time.Time) string {
 		return "session"
 	}
 	return strconv.FormatInt(t.Unix(), 10)
+}
+
+func (s Session) SetSessionNoExpiration() {
+	s[TS_KEY] = "session"
+}
+
+func (s Session) SetSessionDefaultExpiration() {
+	delete(TS_KEY)
 }
