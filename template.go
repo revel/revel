@@ -3,7 +3,8 @@ package revel
 import (
 	"fmt"
 	"html"
-	"html/template"
+  "html/template"
+  "github.com/realistschuckle/gohaml"
 	"io"
 	"io/ioutil"
 	"log"
@@ -22,7 +23,7 @@ var ERROR_CLASS = "hasError"
 // Everything below the application's views directory is treated as a template.
 type TemplateLoader struct {
 	// This is the set of all templates under views
-	templateSet *template.Template
+	templateSet *Template
 	// If an error was encountered parsing the templates, it is stored here.
 	compileError *Error
 	// Paths to search for templates, in priority order.
@@ -172,18 +173,8 @@ func (loader *TemplateLoader) Refresh() *Error {
 	loader.compileError = nil
 	loader.templatePaths = map[string]string{}
 
-	// Set the template delimiters for the project if present, then split into left
-	// and right delimiters around a space character
-	var splitDelims []string
-	if TemplateDelims != "" {
-		splitDelims = strings.Split(TemplateDelims, " ")
-		if len(splitDelims) != 2 {
-			log.Fatalln("app.conf: Incorrect format for template.delimiters")
-		}
-	}
-
 	// Walk through the template loader's paths and build up a template set.
-	var templateSet *template.Template = nil
+	var templateSet *Template = nil
 	for _, basePath := range loader.paths {
 		// Walk only returns an error if the template loader is completely unusable
 		// (namely, if one of the TemplateFuncs does not have an acceptable signature).
@@ -247,38 +238,56 @@ func (loader *TemplateLoader) Refresh() *Error {
 								}
 							}
 						}()
-						templateSet = template.New(templateName).Funcs(TemplateFuncs)
-						// If alternate delimiters set for the project, change them for this set
-						if splitDelims != nil && basePath == ViewsPath {
-							templateSet.Delims(splitDelims[0], splitDelims[1])
-						} else {
-							// Reset to default otherwise
-							templateSet.Delims("", "")
-						}
-						_, err = templateSet.Parse(fileStr)
-					}()
 
-					if funcError != nil {
+            templateSet = templateSet.initialDefine(templateName)
+            _, err = templateSet.Parse(fileStr)
+//<<<<<<<<<<<
+              // Set the template delimiters for the project if present, then split into left
+              // and right delimiters around a space character
+              var splitDelims []string
+              if TemplateDelims != "" {
+                splitDelims = strings.Split(TemplateDelims, " ")
+                if len(splitDelims) != 2 {
+                  log.Fatalln("app.conf: Incorrect format for template.delimiters")
+                }
+              }
+
+              templateSet = template.New(templateName).Funcs(TemplateFuncs)
+              // If alternate delimiters set for the project, change them for this set
+              if splitDelims != nil && basePath == ViewsPath {
+                templateSet.Delims(splitDelims[0], splitDelims[1])
+              } else {
+                // Reset to default otherwise
+                templateSet.Delims("", "")
+              }
+              _, err = templateSet.Parse(fileStr)
+//>>>>>>>>>>>>>
+          }()
+
+          if funcError != nil {
 						return funcError
 					}
 
 				} else {
-					if splitDelims != nil && basePath == ViewsPath {
-						templateSet.Delims(splitDelims[0], splitDelims[1])
-					} else {
-						templateSet.Delims("", "")
-					}
-					_, err = templateSet.New(templateName).Parse(fileStr)
-				}
-				return err
-			}
+            _, err = templateSet.Define(templateName).Parse(fileStr)
+//<<<<<<<<<<<
+            if splitDelims != nil && basePath == ViewsPath {
+              templateSet.Delims(splitDelims[0], splitDelims[1])
+            } else {
+              templateSet.Delims("", "")
+            }
+            _, err = templateSet.New(templateName).Parse(fileStr)
+//>>>>>>>>>>>>>
+        }
+        return err
+      }
 
-			templateName := path[len(basePath)+1:]
+      templateName := path[len(basePath)+1:]
 
-			// Lower case the file name for case-insensitive matching
-			lowerCaseTemplateName := strings.ToLower(templateName)
+      // Lower case the file name for case-insensitive matching
+      lowerCaseTemplateName := strings.ToLower(templateName)
 
-			err = addTemplate(templateName)
+      err = addTemplate(templateName)
 			err = addTemplate(lowerCaseTemplateName)
 
 			// Store / report the first error encountered.
@@ -362,7 +371,18 @@ func (loader *TemplateLoader) Template(name string) (Template, error) {
 		return nil, fmt.Errorf("Template %s not found.", name)
 	}
 
-	return GoTemplate{tmpl, loader}, err
+  switch Config.String("template.engine") {
+  case "haml":
+    return HAMLTemplate{tmpl, loader}, err
+  default:
+    return GoTemplate{tmpl, loader}, err
+  }
+}
+
+// Adapter for HAML Templates.
+type HAMLTemplate struct {
+	//*template.Template
+	loader *TemplateLoader
 }
 
 // Adapter for Go Templates.
