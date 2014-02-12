@@ -23,7 +23,7 @@ var ERROR_CLASS = "hasError"
 // Everything below the application's views directory is treated as a template.
 type TemplateLoader struct {
 	// This is the set of all templates under views
-	templateSet *Template
+	templateSet *templateSet
 	// If an error was encountered parsing the templates, it is stored here.
 	compileError *Error
 	// Paths to search for templates, in priority order.
@@ -32,6 +32,7 @@ type TemplateLoader struct {
 	templatePaths map[string]string
 }
 
+type templateSet map[string]interface
 type Template interface {
 	Name() string
 	Content() []string
@@ -174,7 +175,7 @@ func (loader *TemplateLoader) Refresh() *Error {
 	loader.templatePaths = map[string]string{}
 
 	// Walk through the template loader's paths and build up a template set.
-	var templateSet *Template = nil
+	var templateSet *templateSet = nil
 	for _, basePath := range loader.paths {
 		// Walk only returns an error if the template loader is completely unusable
 		// (namely, if one of the TemplateFuncs does not have an acceptable signature).
@@ -239,29 +240,7 @@ func (loader *TemplateLoader) Refresh() *Error {
 							}
 						}()
 
-            templateSet = templateSet.initialDefine(templateName)
-            _, err = templateSet.Parse(fileStr)
-//<<<<<<<<<<<
-              // Set the template delimiters for the project if present, then split into left
-              // and right delimiters around a space character
-              var splitDelims []string
-              if TemplateDelims != "" {
-                splitDelims = strings.Split(TemplateDelims, " ")
-                if len(splitDelims) != 2 {
-                  log.Fatalln("app.conf: Incorrect format for template.delimiters")
-                }
-              }
-
-              templateSet = template.New(templateName).Funcs(TemplateFuncs)
-              // If alternate delimiters set for the project, change them for this set
-              if splitDelims != nil && basePath == ViewsPath {
-                templateSet.Delims(splitDelims[0], splitDelims[1])
-              } else {
-                // Reset to default otherwise
-                templateSet.Delims("", "")
-              }
-              _, err = templateSet.Parse(fileStr)
-//>>>>>>>>>>>>>
+            templateSet, err = templateSet.initialAddAndParse(templateName, &fileStr)
           }()
 
           if funcError != nil {
@@ -269,15 +248,7 @@ func (loader *TemplateLoader) Refresh() *Error {
 					}
 
 				} else {
-            _, err = templateSet.Define(templateName).Parse(fileStr)
-//<<<<<<<<<<<
-            if splitDelims != nil && basePath == ViewsPath {
-              templateSet.Delims(splitDelims[0], splitDelims[1])
-            } else {
-              templateSet.Delims("", "")
-            }
-            _, err = templateSet.New(templateName).Parse(fileStr)
-//>>>>>>>>>>>>>
+            _, err = templateSet.addAndParse(templateName, &fileStr)
         }
         return err
       }
@@ -346,6 +317,40 @@ func parseTemplateError(err error) (templateName string, line int, description s
 		description = description[i[1]+1:]
 	}
 	return templateName, line, description
+}
+
+func (templateSet *templateSet) addAndParse(templateName string, templateSource *string) *templateSet, error {
+  // If alternate delimiters set for the project, change them for this set
+  if splitDelims != nil && basePath == ViewsPath {
+    templateSet.Delims(splitDelims[0], splitDelims[1])
+  } else {
+    // Reset to default otherwise
+    templateSet.Delims("", "")
+  }
+
+  return templateSet.New(templateName).Parse(*templateSource)
+}
+
+func (templateSet *templateSet) initialAddAndParse(templateName string, templateSource *string) *templateSet, error {
+  // Set the template delimiters for the project if present, then split into left
+  // and right delimiters around a space character
+  var splitDelims []string
+  if TemplateDelims != "" {
+    splitDelims = strings.Split(TemplateDelims, " ")
+    if len(splitDelims) != 2 {
+      log.Fatalln("app.conf: Incorrect format for template.delimiters")
+    }
+  }
+
+  templateSet = template.New(templateName).Funcs(TemplateFuncs)
+  // If alternate delimiters set for the project, change them for this set
+  if splitDelims != nil && basePath == ViewsPath {
+    templateSet.Delims(splitDelims[0], splitDelims[1])
+  } else {
+    templateSet.Delims("", "")
+  }
+  templateSet = templateSet.New(templateName)
+  return templateSet.Parse(*templateSource)
 }
 
 // Return the Template with the given name.  The name is the template's path
