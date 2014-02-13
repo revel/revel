@@ -22,10 +22,8 @@ var ERROR_CLASS = "hasError"
 // This object handles loading and parsing of templates.
 // Everything below the application's views directory is treated as a template.
 type TemplateLoader struct {
-  // Default "GoTemplate", can be changed in app.conf via template.engine
-  templateEngineName string
 	// This is the set of all templates under views
-	templateSet *templateSet
+	templateSet *abstractTemplateSet
 	// If an error was encountered parsing the templates, it is stored here.
 	compileError *Error
 	// Paths to search for templates, in priority order.
@@ -34,10 +32,16 @@ type TemplateLoader struct {
 	templatePaths map[string]string
 }
 
+type abstractTemplateSet struct {
+  // Default "GoTemplate", can be changed in app.conf via template.engine
+  engineName string
+  realTemplateSet *interface{}
+}
+
 type templateSet interface {
-  setupTemplateEngine(templateEngineName string, loader *TemplateLoader) error
-  initialAddAndParse(templateName string, templateSource *string) (*templateSet, error)
-  addAndParse(templateName string, templateSource *string) (*templateSet, error)
+  setupTemplateEngine(templateEngineName string) error
+  initialAddAndParse(templateName string, templateSource *string) (*abstractTemplateSet, error)
+  addAndParse(templateName string, templateSource *string) (*abstractTemplateSet, error)
   lookup(templateName string) *Template
 }
 
@@ -186,7 +190,7 @@ func (loader *TemplateLoader) Refresh() *Error {
 	loader.templatePaths = map[string]string{}
 
 	// Walk through the template loader's paths and build up a template set.
-	var templateSet *templateSet = nil
+	var templateSet *abstractTemplateSet = nil
 	for _, basePath := range loader.paths {
 		// Walk only returns an error if the template loader is completely unusable
 		// (namely, if one of the TemplateFuncs does not have an acceptable signature).
@@ -251,9 +255,9 @@ func (loader *TemplateLoader) Refresh() *Error {
 							}
 						}()
 
-            err = templateSet.setupTemplateEngine(Config.String("template.engine"), loader)
+            err = templateSet.setupTemplateEngine(Config.String("template.engine"))
             if err == nil {
-              templateSet, err = templateSet.initialAddAndParse(templateName, &fileStr)
+              templateSet.realTemplateSet, err = templateSet.realTemplateSet.initialAddAndParse(templateName, &fileStr)
             }
           }()
 
@@ -262,7 +266,7 @@ func (loader *TemplateLoader) Refresh() *Error {
 					}
 
 				} else {
-            _, err = templateSet.addAndParse(templateName, &fileStr)
+            _, err = templateSet.realTemplateSet.addAndParse(templateName, &fileStr)
         }
         return err
       }
@@ -333,30 +337,30 @@ func parseTemplateError(err error) (templateName string, line int, description s
 	return templateName, line, description
 }
 
-func (templateSet *templateSet) setTemplateEngineName(templateEngineName string, loader *TemplateLoader) (err error) {
+func (abstractTemplateSet *abstractTemplateSet) setTemplateEngineName(templateEngineName string) (err error) {
   if templateEngineName == "" {
     templateEngineName = "GoTemplate"
   }
   for possibleName := range [...]string{"HAML", "GoTemplate"} {
     if possibleName == templateEngineName {
-      loader.templateEngineName = templateEngineName
+      abstractTemplateSet.engineName = templateEngineName
     }
   }
-  if loader.templateEngineName == "" {
+  if abstractTemplateSet.engineName == "" {
     err = fmt.Error("Unknown template engine name")
   }
   return
 }
 
-func (templateSet *templateSet) setupTemplateEngine(templateEngineName string, loader *TemplateLoader) (err error) {
-  err = setTemplateEngineName(templateEngineName, loader)
-  switch loader.templateEngineName {
+func (abstractTemplateSet *abstractTemplateSet) setupTemplateEngine(templateEngineName string) (err error) {
+  err = setTemplateEngineName(templateEngineName)
+  switch abstractTemplateSet.engineName {
   case "HAML":
     var haml HAMLTemplateSet
-    templateSet = &haml
+    abstractTemplateSet.realTemplateSet = haml
   case "GoTemplate":
     var goTemplate goTemplateSet
-    templateSet = &goTemplate
+    abstractTemplateSet.realTemplateSet = goTemplate
   }
   return
 }
