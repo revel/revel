@@ -434,10 +434,6 @@ func (templatesAndEngine *templateAndEnvironment) setupTemplateEngine() (err err
 func (loader *TemplateLoader) Template(name string) (Template, error) {
 	// Lower case the file name to support case-insensitive matching
 	name = strings.ToLower(name)
-  if loader.templatesAndEngine == nil {
-    loader.templatesAndEngine = new(templateAndEnvironment)
-    loader.templatesAndEngine.setupTemplateEngine()
-  }
 	// Look up and return the template.
   tmpl := loader.templatesAndEngine.methods["lookup"].(
     func(templateSet *abstractTemplateSet, templateName string, loader *TemplateLoader) *Template)(
