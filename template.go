@@ -185,6 +185,8 @@ func (loader *TemplateLoader) Refresh() *Error {
 
 	loader.compileError = nil
 	loader.templatePaths = map[string]string{}
+  
+  var splitDelims []string
 
 	// Walk through the template loader's paths and build up a template set.
 	var templatesAndEngine *templateAndEnvironment = nil
@@ -254,8 +256,8 @@ func (loader *TemplateLoader) Refresh() *Error {
 
             templatesAndEngine = new(templateAndEnvironment)
             if err = templatesAndEngine.setupTemplateEngine(); err == nil {
-              err = templatesAndEngine.methods["initialAddAndParse"].(
-                func(templateSet **abstractTemplateSet, templateName string, templateSource *string, basePath string) error)(
+              splitDelims, err = templatesAndEngine.methods["initialAddAndParse"].(
+                func(templateSet **abstractTemplateSet, templateName string, templateSource *string, basePath string) (splitDelims []string, err error) )(
                   &templatesAndEngine.templateSet, templateName, &fileStr, basePath)
             }
           }()
@@ -266,8 +268,8 @@ func (loader *TemplateLoader) Refresh() *Error {
 
         } else {
           err = templatesAndEngine.methods["addAndParse"].(
-            func(templateSet *abstractTemplateSet, templateName string, templateSource *string, basePath string) error)(
-              templatesAndEngine.templateSet, templateName, &fileStr, basePath)
+            func(templateSet *abstractTemplateSet, templateName string, templateSource *string, basePath string, splitDelims []string) error)(
+              templatesAndEngine.templateSet, templateName, &fileStr, basePath, splitDelims)
         }
         return err
       }
@@ -359,11 +361,11 @@ func (templatesAndEngine *templateAndEnvironment) setupTemplateEngine() (err err
   switch templatesAndEngine.engineName {
   case "HAML":
     templatesAndEngine.methods = map[string]interface{}{
-      "initialAddAndParse": func(templateSet **abstractTemplateSet, templateName string, templateSource *string, basePath string) error {
+      "initialAddAndParse": func(templateSet **abstractTemplateSet, templateName string, templateSource *string, basePath string) (splitDelims []string, err error) {
         //HAMLTemplateSet := HAMLTemplate(*templateSet)
-        return nil
+        return
       },
-      "addAndParse": func(templateSet *abstractTemplateSet, templateName string, templateSource *string, basePath string) error {
+      "addAndParse": func(templateSet *abstractTemplateSet, templateName string, templateSource *string, basePath string, splitDelims []string) error {
         //HAMLTemplateSet := HAMLTemplate(*templateSet)
         return nil
       },
@@ -375,10 +377,9 @@ func (templatesAndEngine *templateAndEnvironment) setupTemplateEngine() (err err
     }
   case "GoTemplate":
     templatesAndEngine.methods = map[string]interface{}{
-      "initialAddAndParse": func(templateSet **abstractTemplateSet, templateName string, templateSource *string, basePath string) error {
+      "initialAddAndParse": func(templateSet **abstractTemplateSet, templateName string, templateSource *string, basePath string) (splitDelims []string, err error) {
         // Set the template delimiters for the project if present, then split into left
         // and right delimiters around a space character
-        var splitDelims []string
         if TemplateDelims != "" {
           splitDelims = strings.Split(TemplateDelims, " ")
           if len(splitDelims) != 2 {
@@ -396,20 +397,19 @@ func (templatesAndEngine *templateAndEnvironment) setupTemplateEngine() (err err
         goTemplateSet.Parse(*templateSource)
         var abstractTemplateSet abstractTemplateSet = *goTemplateSet
         *templateSet = &abstractTemplateSet
-        return nil
+        return
       },
-      "addAndParse": func(templateSet *abstractTemplateSet, templateName string, templateSource *string, basePath string) error {
-        /*
+      "addAndParse": func(templateSet *abstractTemplateSet, templateName string, templateSource *string, basePath string, splitDelims []string) error {
+        goTemplateSet := (*templateSet).(template.Template)
+
         // If alternate delimiters set for the project, change them for this set
         if splitDelims != nil && basePath == ViewsPath {
-          templateSet.Delims(splitDelims[0], splitDelims[1])
+          goTemplateSet.Delims(splitDelims[0], splitDelims[1])
         } else {
           // Reset to default otherwise
-          templateSet.Delims("", "")
+          goTemplateSet.Delims("", "")
         }
-        */
 
-        goTemplateSet := (*templateSet).(template.Template)
         goTemplateSet.New(templateName).Parse(*templateSource)
         var abstractTemplateSet abstractTemplateSet = goTemplateSet
         templateSet = &abstractTemplateSet
