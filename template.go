@@ -22,8 +22,8 @@ var ERROR_CLASS = "hasError"
 // This object handles loading and parsing of templates.
 // Everything below the application's views directory is treated as a template.
 type TemplateLoader struct {
-	// This is the set of all templates under views
-	templateSet *abstractTemplateSet
+  // Template data and implementation
+  templatesAndEngine *templateAndEnvironment
 	// If an error was encountered parsing the templates, it is stored here.
 	compileError *Error
 	// Paths to search for templates, in priority order.
@@ -32,20 +32,18 @@ type TemplateLoader struct {
 	templatePaths map[string]string
 }
 
-type abstractTemplateSet struct {
+type templateAndEnvironment struct {
   // Default "GoTemplate", can be changed in app.conf via template.engine
   engineName string
-  realTemplateSet *interface{}
+	// This is the set of all templates under views
+  templateSet *abstractTemplateSet
+  // Chosen engine implementation of template API
+  methods map[string]interface{}
 }
-
-type templateSet interface {
-  setupTemplateEngine(templateEngineName string) error
-  initialAddAndParse(templateName string, templateSource *string, basePath string) error
-  addAndParse(templateName string, templateSource *string, basePath string) error
-  //lookup
-}
+type abstractTemplateSet interface{}
 
 type HAMLTemplateSet map[string]*gohaml.Engine
+type GoTemplateSet template.Template
 
 type Template interface {
 	Name() string
@@ -189,7 +187,7 @@ func (loader *TemplateLoader) Refresh() *Error {
 	loader.templatePaths = map[string]string{}
 
 	// Walk through the template loader's paths and build up a template set.
-	var templateSet *abstractTemplateSet = nil
+	var templatesAndEngine *templateAndEnvironment = nil
 	for _, basePath := range loader.paths {
 		// Walk only returns an error if the template loader is completely unusable
 		// (namely, if one of the TemplateFuncs does not have an acceptable signature).
@@ -239,7 +237,7 @@ func (loader *TemplateLoader) Refresh() *Error {
 					fileStr = string(fileBytes)
 				}
 
-				if templateSet == nil {
+				if templatesAndEngine == nil {
 					// Create the template set.  This panics if any of the funcs do not
 					// conform to expectations, so we wrap it in a func and handle those
 					// panics by serving an error page.
@@ -254,14 +252,11 @@ func (loader *TemplateLoader) Refresh() *Error {
 							}
 						}()
 
-            engineNameInConfig, _ := Config.String("template.engine")
-            if err = templateSet.setupTemplateEngine(engineNameInConfig); err == nil {
-              switch realTemplateSet := (*templateSet.realTemplateSet).(type) {
-              case template.Template:
-                err = realTemplateSet.initialAddAndParse(templateName, &fileStr, basePath)
-              case HAMLTemplateSet:
-                err = realTemplateSet.initialAddAndParse(templateName, &fileStr, basePath)
-              }
+            templatesAndEngine = new(templateAndEnvironment)
+            if err = templatesAndEngine.setupTemplateEngine(); err == nil {
+              err = templatesAndEngine.methods["initialAddAndParse"].(
+                func(templateSet **abstractTemplateSet, templateName string, templateSource *string, basePath string) error)(
+                  &templatesAndEngine.templateSet, templateName, &fileStr, basePath)
             }
           }()
 
@@ -270,12 +265,9 @@ func (loader *TemplateLoader) Refresh() *Error {
 					}
 
         } else {
-          switch realTemplateSet := (*templateSet.realTemplateSet).(type) {
-          case template.Template:
-            err = realTemplateSet.addAndParse(templateName, &fileStr, basePath)
-          case HAMLTemplateSet:
-            err = realTemplateSet.addAndParse(templateName, &fileStr, basePath)
-          }
+          err = templatesAndEngine.methods["addAndParse"].(
+            func(templateSet *abstractTemplateSet, templateName string, templateSource *string, basePath string) error)(
+              templatesAndEngine.templateSet, templateName, &fileStr, basePath)
         }
         return err
       }
@@ -312,7 +304,7 @@ func (loader *TemplateLoader) Refresh() *Error {
 	}
 
 	// Note: compileError may or may not be set.
-	loader.templateSet = templateSet
+  loader.templatesAndEngine = templatesAndEngine
 	return loader.compileError
 }
 
@@ -346,91 +338,92 @@ func parseTemplateError(err error) (templateName string, line int, description s
 	return templateName, line, description
 }
 
-func (abstractTemplateSet *abstractTemplateSet) setTemplateEngineName(templateEngineName string) (err error) {
+func (templatesAndEngine *templateAndEnvironment) setTemplateEngineName(templateEngineName string) (err error) {
   if templateEngineName == "" {
     templateEngineName = "GoTemplate"
   }
   for _, possibleName := range [...]string{"HAML", "GoTemplate"} {
     if possibleName == templateEngineName {
-      abstractTemplateSet.engineName = templateEngineName
+      templatesAndEngine.engineName = templateEngineName
     }
   }
-  if abstractTemplateSet.engineName == "" {
+  if templatesAndEngine.engineName == "" {
     err = fmt.Errorf("Unknown template engine name")
   }
   return
 }
 
-func (abstractTemplateSet *abstractTemplateSet) setupTemplateEngine(templateEngineName string) (err error) {
-  err = abstractTemplateSet.setTemplateEngineName(templateEngineName)
-  switch abstractTemplateSet.engineName {
+func (templatesAndEngine *templateAndEnvironment) setupTemplateEngine() (err error) {
+  templateEngineName, _ := Config.String("template.engine")
+  err = templatesAndEngine.setTemplateEngineName(templateEngineName)
+  switch templatesAndEngine.engineName {
   case "HAML":
-    var HAMLTemplateSet HAMLTemplateSet
-    *abstractTemplateSet.realTemplateSet = HAMLTemplateSet
+    templatesAndEngine.methods = map[string]interface{}{
+      "initialAddAndParse": func(templateSet **abstractTemplateSet, templateName string, templateSource *string, basePath string) error {
+        //HAMLTemplateSet := HAMLTemplate(*templateSet)
+        return nil
+      },
+      "addAndParse": func(templateSet *abstractTemplateSet, templateName string, templateSource *string, basePath string) error {
+        //HAMLTemplateSet := HAMLTemplate(*templateSet)
+        return nil
+      },
+      "lookup": func(templateSet *abstractTemplateSet, templateName string, loader *TemplateLoader) *Template {
+        //return HAMLTemplate{tmpl, loader}, err
+        //HAMLTemplateSet := HAMLTemplate(*templateSet)
+        return nil
+      },
+    }
   case "GoTemplate":
-    var goTemplateSet template.Template
-    *abstractTemplateSet.realTemplateSet = goTemplateSet
-  }
-  return
-}
+    templatesAndEngine.methods = map[string]interface{}{
+      "initialAddAndParse": func(templateSet **abstractTemplateSet, templateName string, templateSource *string, basePath string) error {
+        // Set the template delimiters for the project if present, then split into left
+        // and right delimiters around a space character
+        var splitDelims []string
+        if TemplateDelims != "" {
+          splitDelims = strings.Split(TemplateDelims, " ")
+          if len(splitDelims) != 2 {
+            log.Fatalln("app.conf: Incorrect format for template.delimiters")
+          }
+        }
 
-func (templateSet *HAMLTemplateSet) initialAddAndParse(templateName string, templateSource *string, basePath string) error {
-  //templateSet = templateSet.New(templateName)
-  //templateSet.Parse(*templateSource)
-  return nil
-}
+        goTemplateSet := template.New(templateName).Funcs(TemplateFuncs)
+        // If alternate delimiters set for the project, change them for this set
+        if splitDelims != nil && basePath == ViewsPath {
+          goTemplateSet.Delims(splitDelims[0], splitDelims[1])
+        } else {
+          goTemplateSet.Delims("", "")
+        }
+        goTemplateSet.Parse(*templateSource)
+        var abstractTemplateSet abstractTemplateSet = *goTemplateSet
+        *templateSet = &abstractTemplateSet
+        return nil
+      },
+      "addAndParse": func(templateSet *abstractTemplateSet, templateName string, templateSource *string, basePath string) error {
+        /*
+        // If alternate delimiters set for the project, change them for this set
+        if splitDelims != nil && basePath == ViewsPath {
+          templateSet.Delims(splitDelims[0], splitDelims[1])
+        } else {
+          // Reset to default otherwise
+          templateSet.Delims("", "")
+        }
+        */
 
-func (templateSet *HAMLTemplateSet) addAndParse(templateName string, templateSource *string, basePath string) error {
-  //templateSet = templateSet.New(templateName)
-  //templateSet.Parse(*templateSource)
-  return nil
-}
-
-func (templateSet *HAMLTemplateSet) lookup(templateName string) *template.Template {
-  return template.New(templateName).Lookup(templateName)
-}
-
-func (templateSet *template.Template) initialAddAndParse(templateName string, templateSource *string, basePath string) error {
-  // Set the template delimiters for the project if present, then split into left
-  // and right delimiters around a space character
-  var splitDelims []string
-  if TemplateDelims != "" {
-    splitDelims = strings.Split(TemplateDelims, " ")
-    if len(splitDelims) != 2 {
-      log.Fatalln("app.conf: Incorrect format for template.delimiters")
+        goTemplateSet := (*templateSet).(template.Template)
+        goTemplateSet.New(templateName).Parse(*templateSource)
+        var abstractTemplateSet abstractTemplateSet = goTemplateSet
+        templateSet = &abstractTemplateSet
+        return nil
+      },
+      "lookup": func(templateSet *abstractTemplateSet, templateName string, loader *TemplateLoader) *Template {
+        goTemplateSet := (*templateSet).(template.Template)
+        gotmpl := GoTemplate{&goTemplateSet, loader}
+        var tmpl Template = gotmpl
+        return &tmpl
+      },
     }
   }
-
-  templateSet := template.New(templateName).Funcs(TemplateFuncs)
-  // If alternate delimiters set for the project, change them for this set
-  if splitDelims != nil && basePath == ViewsPath {
-    templateSet.Delims(splitDelims[0], splitDelims[1])
-  } else {
-    templateSet.Delims("", "")
-  }
-  templateSet.Parse(*templateSource)
-  return nil
-}
-
-func (templateSet *template.Template) addAndParse(templateName string, templateSource *string, basePath string) error {
-  /*
-  // If alternate delimiters set for the project, change them for this set
-  if splitDelims != nil && basePath == ViewsPath {
-    templateSet.Delims(splitDelims[0], splitDelims[1])
-  } else {
-    // Reset to default otherwise
-    templateSet.Delims("", "")
-  }
-  */
-
-  templ := template.Template(*templateSet)
-  templP := &templ
-  templP.New(templateName).Parse(*templateSource)
-  return nil
-}
-
-func (templateSet *template.Template) lookup(templateName string) *template.Template {
-  return templateSet.Lookup(templateName)
+  return
 }
 
 // Return the Template with the given name.  The name is the template's path
@@ -441,13 +434,14 @@ func (templateSet *template.Template) lookup(templateName string) *template.Temp
 func (loader *TemplateLoader) Template(name string) (Template, error) {
 	// Lower case the file name to support case-insensitive matching
 	name = strings.ToLower(name)
-	// Look up and return the template.
-  switch realTemplateSet := (*loader.templateSet.realTemplateSet).(type) {
-  case template.Template:
-    tmpl := realTemplateSet.lookup(name)
-  case HAMLTemplateSet:
-    tmpl := realTemplateSet.lookup(name)
+  if loader.templatesAndEngine == nil {
+    loader.templatesAndEngine = new(templateAndEnvironment)
+    loader.templatesAndEngine.setupTemplateEngine()
   }
+	// Look up and return the template.
+  tmpl := loader.templatesAndEngine.methods["lookup"].(
+    func(templateSet *abstractTemplateSet, templateName string, loader *TemplateLoader) *Template)(
+      loader.templatesAndEngine.templateSet, name, loader)
 
   // This is necessary.
 	// If a nil loader.compileError is returned directly, a caller testing against
@@ -461,18 +455,34 @@ func (loader *TemplateLoader) Template(name string) (Template, error) {
 		return nil, fmt.Errorf("Template %s not found.", name)
 	}
 
-  switch loader.templateEngineName {
-  case "HAML":
-    return HAMLTemplate{tmpl, loader}, err
-  case "GoTemplate":
-    return GoTemplate{tmpl, loader}, err
-  }
+  return *tmpl, err
 }
 
 // Adapter for HAML Templates.
 type HAMLTemplate struct {
-	//*template.Template
+	//*gohaml.Template
+  template interface{}
 	loader *TemplateLoader
+}
+
+func (haml HAMLTemplate) Name() string {
+  return "my haml name"
+}
+
+// return a 'revel.Template' from Go's template.
+func (haml HAMLTemplate) Render(wr io.Writer, arg interface{}) error {
+  /*var scope = make(map[string]interface{})
+  scope["lang"] = "HAML"
+  engine, _ := gohaml.NewEngine(content)
+  content := "I love <\n=lang<\n!"
+  output := engine.Render(scope)
+  */
+  return nil
+}
+
+func (haml HAMLTemplate) Content() []string {
+	content, _ := ReadLines(haml.loader.templatePaths[haml.Name()])
+	return content
 }
 
 // Adapter for Go Templates.
