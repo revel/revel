@@ -7,41 +7,42 @@ import (
 
 var TemplateAPIOfHAML = map[string]interface{}{
   "initialAddAndParse": func(templateSet **abstractTemplateSet, templateName string, templateSource *string, basePath string) (splitDelims []string, err error) {
-    /*var scope = make(map[string]interface{})
-    scope["lang"] = "HAML"
-    content := "I love <\n=lang<\n!"
-    output := engine.Render(scope)
-    */
-    engine, _ := gohaml.NewEngine(*templateSource)
-    var hamlTemplateSet abstractTemplateSet = map[string]*gohaml.Engine{templateName: engine}
-    *templateSet = &hamlTemplateSet
+    if engine, err := gohaml.NewEngine(*templateSource); err == nil {
+      hamlTemplateSet := make(HAMLTemplateSet)
+      hamlTemplateSet[templateName] = HAMLTemplate{templateName, engine, nil}
+      var abstractTemplateSet abstractTemplateSet = hamlTemplateSet
+      *templateSet = &abstractTemplateSet
+    }
     return
   },
-  "addAndParse": func(templateSet *abstractTemplateSet, templateName string, templateSource *string, basePath string, splitDelims []string) error {
-    //HAMLTemplateSet := HAMLTemplate(*templateSet)
-    return nil
+  "addAndParse": func(templateSet *abstractTemplateSet, templateName string, templateSource *string, basePath string, splitDelims []string) (err error) {
+    if engine, err := gohaml.NewEngine(*templateSource); err == nil {
+      (*templateSet).(HAMLTemplateSet)[templateName] = HAMLTemplate{templateName, engine, nil}
+    }
+    return
   },
   "lookup": func(templateSet *abstractTemplateSet, templateName string, loader *TemplateLoader) *Template {
-    //return HAMLTemplate{tmpl, loader}, err
-    //HAMLTemplateSet := HAMLTemplate(*templateSet)
-    return nil
+    var tmpl Template = (*templateSet).(HAMLTemplateSet)[templateName]
+    return &tmpl
   },
 }
 
 // Adapter for HAML Templates.
 type HAMLTemplate struct {
-	//*gohaml.Template
-  template interface{}
+  name string
+  template *gohaml.Engine
 	loader *TemplateLoader
 }
+type HAMLTemplateSet map[string]HAMLTemplate
 
 func (haml HAMLTemplate) Name() string {
-  return "my haml name"
+  return haml.name
 }
 
-// return a 'revel.Template' from Go's template.
-func (haml HAMLTemplate) Render(wr io.Writer, arg interface{}) error {
-  return nil
+// return a 'revel.Template' from HAML's template.
+func (haml HAMLTemplate) Render(wr io.Writer, arg interface{}) (err error) {
+  _, err = io.WriteString(wr, haml.template.Render(arg.(map[string]interface{})))
+  return
 }
 
 func (haml HAMLTemplate) Content() []string {
