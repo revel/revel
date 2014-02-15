@@ -26,8 +26,9 @@ type TemplateLoader struct {
 	templatePaths map[string]string
 }
 
+var defaultTemplateEngineName string = "GoTemplate"
 type templateAndEnvironment struct {
-  // Default "GoTemplate", can be changed in app.conf via template.engine
+  // Default is set in defaultTemplateEngineName, can be changed in app.conf via template.engine
   engineName string
 	// This is the set of all templates under views
   templateSet *abstractTemplateSet
@@ -116,7 +117,7 @@ func (loader *TemplateLoader) Refresh() *Error {
 
 				if templatesAndEngine == nil {
 					// Create the template set.  This panics if any of the funcs do not
-					// conform to expectations, so we wrap it in a func and handle those
+					// conform to expectations or template engine is unknown, so we wrap it in a func and handle those
 					// panics by serving an error page.
 					var funcError *Error
 					func() {
@@ -129,12 +130,12 @@ func (loader *TemplateLoader) Refresh() *Error {
 							}
 						}()
 
+            // Setup, add first template and parse it
             templatesAndEngine = new(templateAndEnvironment)
-            if err = templatesAndEngine.setupTemplateEngine(); err == nil {
-              splitDelims, err = templatesAndEngine.methods["initialAddAndParse"].(
-                func(templateSet **abstractTemplateSet, templateName string, templateSource *string, basePath string) (splitDelims []string, err error) )(
-                  &templatesAndEngine.templateSet, templateName, &fileStr, basePath)
-            }
+            templatesAndEngine.setupTemplateEngine()
+            splitDelims, err = templatesAndEngine.methods["initialAddAndParse"].(
+              func(templateSet **abstractTemplateSet, templateName string, templateSource *string, basePath string) (splitDelims []string, err error) )(
+                &templatesAndEngine.templateSet, templateName, &fileStr, basePath)
           }()
 
           if funcError != nil {
@@ -142,6 +143,7 @@ func (loader *TemplateLoader) Refresh() *Error {
 					}
 
         } else {
+          // Add the next template and parse it
           err = templatesAndEngine.methods["addAndParse"].(
             func(templateSet *abstractTemplateSet, templateName string, templateSource *string, basePath string, splitDelims []string) error)(
               templatesAndEngine.templateSet, templateName, &fileStr, basePath, splitDelims)
@@ -215,25 +217,32 @@ func parseTemplateError(err error) (templateName string, line int, description s
 	return templateName, line, description
 }
 
+// Sets the template name from Config
+// Sets the template API methods for parsing and storing templates before rendering
+func (templatesAndEngine *templateAndEnvironment) setupTemplateEngine() {
+  templateEngineName, _ := Config.String("template.engine")
+  templatesAndEngine.setTemplateEngineName(templateEngineName)
+  templatesAndEngine.setTemplateEngineMethods()
+}
+
+// Stores the template name or defaultTemplateEngineName
 func (templatesAndEngine *templateAndEnvironment) setTemplateEngineName(templateEngineName string) {
   if templateEngineName == "" {
-    templateEngineName = "GoTemplate"
+    templateEngineName = defaultTemplateEngineName
   }
   templatesAndEngine.engineName = templateEngineName
 }
 
-func (templatesAndEngine *templateAndEnvironment) setupTemplateEngine() (err error) {
-  templateEngineName, _ := Config.String("template.engine")
-  templatesAndEngine.setTemplateEngineName(templateEngineName)
+// Sets the template API methods for parsing and storing templates before rendering
+func (templatesAndEngine *templateAndEnvironment) setTemplateEngineMethods() {
   switch templatesAndEngine.engineName {
   case "HAML":
     templatesAndEngine.methods = TemplateAPIOfHAML
   case "GoTemplate":
     templatesAndEngine.methods = TemplateAPIOfGoTemplate
   default:
-    err = fmt.Errorf("Unknown template engine name.")
+    panic("Unknown template engine name.")
   }
-  return
 }
 
 // Return the Template with the given name.  The name is the template's path
