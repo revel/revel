@@ -4,26 +4,26 @@
 <h1>Register:</h1>
 
 <form action="{{url "Application.SaveUser"}}" method="POST">
-  {{with $field := field "user.Username" .}}
+  {{with $field := field "user.Username" "" .}}
     <p class="{{$field.ErrorClass}}">
       <strong>Username:</strong>
       <input type="text" name="{{$field.Name}}" size="16" value="{{$field.Flash}}"> *
       <span class="error">{{$field.Error}}</span>
     </p>
   {{end}}
-  {{with $field := field "user.Name" .}}
+  {{with $field := field "user.Name" "" .}}
     <p class="{{$field.ErrorClass}}">
       <strong>Real name:</strong> <input type="text" name="{{$field.Name}}" size="16" value="{{$field.Flash}}"> *
       <span class="error">{{$field.Error}}</span>
     </p>
   {{end}}
-  {{with $field := field "user.Password" .}}
+  {{with $field := field "user.Password" "" .}}
     <p class="{{$field.ErrorClass}}">
       <strong>Password:</strong> <input type="password" name="{{$field.Name}}" size="16" value="{{$field.Flash}}"> *
       <span class="error">{{$field.Error}}</span>
     </p>
   {{end}}
-  {{with $field := field "verifyPassword" .}}
+  {{with $field := field "verifyPassword" "" .}}
     <p class="{{$field.ErrorClass}}">
       <strong>Verify password:</strong> <input type="password" name="{{$field.Name}}" size="16" value="{{$field.Flash}}"> *
       <span class="error">{{$field.Error}}</span>
