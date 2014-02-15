@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-// Field represents a data fieid that may be collected in a web form.
+// Field represents a data field that may be collected in a web form.
 type Field struct {
 	Name       string
 	Error      *ValidationError
@@ -26,18 +26,18 @@ func NewField(name string, errorClass string, renderArgs map[string]interface{})
 	}
 }
 
-// Returns an identifier suitable for use as an HTML id.
+// Id returns an identifier suitable for use as an HTML id.
 func (f *Field) Id() string {
 	return strings.Replace(f.Name, ".", "_", -1)
 }
 
-// Returned the flashed value of this field.
+// Flash returns the flashed value of this Field.
 func (f *Field) Flash() string {
 	v, _ := f.renderArgs["flash"].(map[string]string)[f.Name]
 	return v
 }
 
-// Returned the flashed value of this field as a list.
+// FlashArray returns the flashed value of this Field as a list split on comma.
 func (f *Field) FlashArray() []string {
 	v := f.Flash()
 	if v == "" {
@@ -46,7 +46,7 @@ func (f *Field) FlashArray() []string {
 	return strings.Split(v, ",")
 }
 
-// Return the current value of this field.
+// Value returns the current value of this Field.
 func (f *Field) Value() interface{} {
 	pieces := strings.Split(f.Name, ".")
 	answer, ok := f.renderArgs[pieces[0]]
@@ -68,7 +68,7 @@ func (f *Field) Value() interface{} {
 	return val.Interface()
 }
 
-// Return ERROR_CLASS if this field has a validation error, else empty string.
+// ErrorClass returns ERROR_CLASS if this field has a validation error, else empty string.
 func (f *Field) ErrorClass() string {
 	if f.Error != nil {
 		return f.errorClass

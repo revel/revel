@@ -46,6 +46,8 @@ func NewController(req *Request, resp *Response) *Controller {
 	}
 }
 
+// FlashParams serializes the contents of Controller.Params to the Flash
+// cookie.
 func (c *Controller) FlashParams() {
 	for key, vals := range c.Params.Values {
 		c.Flash.Out[key] = strings.Join(vals, ",")
@@ -143,7 +145,8 @@ func (c *Controller) RenderHtml(html string) Result {
 	return &RenderHtmlResult{html}
 }
 
-// Render a "todo" indicating that the action isn't done yet.
+// Todo returns an HTTP 501 Not Implemented "todo" indicating that the
+// action isn't done yet.
 func (c *Controller) Todo() Result {
 	c.Response.Status = http.StatusNotImplemented
 	return c.RenderError(&Error{
@@ -152,6 +155,8 @@ func (c *Controller) Todo() Result {
 	})
 }
 
+// NotFound returns an HTTP 404 Not Found response whose body is the
+// formatted string of msg and objs.
 func (c *Controller) NotFound(msg string, objs ...interface{}) Result {
 	finalText := msg
 	if len(objs) > 0 {
@@ -164,6 +169,8 @@ func (c *Controller) NotFound(msg string, objs ...interface{}) Result {
 	})
 }
 
+// Forbidden returns an HTTP 403 Forbidden response whose body is the
+// formatted string of msg and objs.
 func (c *Controller) Forbidden(msg string, objs ...interface{}) Result {
 	finalText := msg
 	if len(objs) > 0 {
@@ -176,8 +183,8 @@ func (c *Controller) Forbidden(msg string, objs ...interface{}) Result {
 	})
 }
 
-// Return a file, either displayed inline or downloaded as an attachment.
-// The name and size are taken from the file info.
+// RenderFile returns a file, either displayed inline or downloaded
+// as an attachment. The name and size are taken from the file info.
 func (c *Controller) RenderFile(file *os.File, delivery ContentDisposition) Result {
 	var (
 		modtime       = time.Now()
@@ -332,7 +339,7 @@ type MethodArg struct {
 	Type reflect.Type
 }
 
-// Searches for a given exported method (case insensitive)
+// Method searches for a given exported method (case insensitive)
 func (ct *ControllerType) Method(name string) *MethodType {
 	lowerName := strings.ToLower(name)
 	for _, method := range ct.Methods {

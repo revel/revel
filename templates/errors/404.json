@@ -1,4 +1,4 @@
 {
-    title: "{{js .Error.Title}}",
-    description: "{{js .Error.Description}}"
+    "title": "{{js .Error.Title}}",
+    "description": "{{js .Error.Description}}"
 }
