@@ -28,11 +28,32 @@ type TemplateLoader struct {
 
 var defaultTemplateEngineName string = "GoTemplate"
 type templateAndEnvironment struct {
-  // Default is set in defaultTemplateEngineName, can be changed in app.conf via template.engine
+  // Default is set in defaultTemplateEngineName, can be changed in
+  // app.conf via template.engine
   engineName string
 	// This is the set of all templates under views
   templateSet *abstractTemplateSet
   // Chosen engine implementation of template API
+  // #initialAddAndParse: initial prepare, add the first template
+  // and parse it, returns splitDelims []string to
+  // be used in #addAndParse
+  //   arg: templateSet **abstractTemplateSet
+  //   arg: templateName string
+  //   arg: templateSource *string
+  //   arg: basePath string - where templates are located
+  // #addAndParse
+  //   arg: templateSet **abstractTemplateSet
+  //   arg: templateName string
+  //   arg: templateSource *string
+  //   arg: basePath string - where templates are located
+  //   arg: splitDelims []string - some kind of delimiters,
+  //        depend fully on the template engine, set in
+  //        #initialAddAndParse
+  // #lookup: returns *Template corresponding to the given templateName
+  //   arg: templateSet *abstractTemplateSet
+  //   arg: templateName string
+  //   arg: loader *TemplateLoader - to be referenced in
+  //        the adapter struct
   methods map[string]interface{}
 }
 type abstractTemplateSet interface{}
@@ -130,7 +151,7 @@ func (loader *TemplateLoader) Refresh() *Error {
 							}
 						}()
 
-            // Setup, add first template and parse it
+            // Setup, add the first template and parse it
             templatesAndEngine = new(templateAndEnvironment)
             templatesAndEngine.setupTemplateEngine()
             splitDelims, err = templatesAndEngine.methods["initialAddAndParse"].(
