@@ -97,6 +97,15 @@ The provided `flash.html` template will show any errors or flash messages:
 	{{end}}
 {% endraw %}
 
+When we submit that form with a name that fails validation, we want the form to retain the bad name, so that the user can edit it before re-submitting.  Amend the form you had added to your **app/views/App/Index.html** template:
+
+	<form action="/App/Hello" method="GET">
+		{{with $field := field "myName" .}}
+			<input type="text" name="{{$field.Name}}" value="{{$field.Flash}}"/><br/>
+		{{end}}
+		<input type="submit" value="Say hello!" />
+	</form>
+	
 Now when we submit a single letter as our name:
 
 ![Example error](../img/HelloNameNotLongEnough.png)
