@@ -174,5 +174,5 @@ func (s Session) SetSessionNoExpiration() {
 
 // reset the session expiration to default
 func (s Session) SetSessionDefaultExpiration() {
-	delete(TS_KEY)
+	delete(s, TS_KEY)
 }
