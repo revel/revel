@@ -2,12 +2,13 @@ package main
 
 import (
 	"fmt"
-	"github.com/robfig/revel"
-	"github.com/robfig/revel/harness"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
+
+	"github.com/robfig/revel"
+	"github.com/robfig/revel/harness"
 )
 
 var cmdBuild = &Command{
@@ -60,8 +61,10 @@ func buildApp(args []string) {
 
 	// Revel and the app are in a directory structure mirroring import path
 	srcPath := path.Join(destPath, "src")
+	destBinaryPath := path.Join(destPath, filepath.Base(app.BinaryPath))
 	tmpRevelPath := path.Join(srcPath, filepath.FromSlash(revel.REVEL_IMPORT_PATH))
-	mustCopyFile(path.Join(destPath, filepath.Base(app.BinaryPath)), app.BinaryPath)
+	mustCopyFile(destBinaryPath, app.BinaryPath)
+	mustChmod(destBinaryPath, 0755)
 	mustCopyDir(path.Join(tmpRevelPath, "conf"), path.Join(revel.RevelPath, "conf"), nil)
 	mustCopyDir(path.Join(tmpRevelPath, "templates"), path.Join(revel.RevelPath, "templates"), nil)
 	mustCopyDir(path.Join(srcPath, filepath.FromSlash(appImportPath)), revel.BasePath, nil)
@@ -90,15 +93,17 @@ func buildApp(args []string) {
 		mustCopyDir(path.Join(srcPath, importPath), fsPath, nil)
 	}
 
-	tmplData := map[string]interface{}{
+	tmplData, runShPath := map[string]interface{}{
 		"BinName":    filepath.Base(app.BinaryPath),
 		"ImportPath": appImportPath,
-	}
+	}, path.Join(destPath, "run.sh")
 
 	mustRenderTemplate(
-		path.Join(destPath, "run.sh"),
+		runShPath,
 		path.Join(revel.RevelPath, "revel", "package_run.sh.template"),
 		tmplData)
+
+	mustChmod(runShPath, 0755)
 
 	mustRenderTemplate(
 		path.Join(destPath, "run.bat"),
