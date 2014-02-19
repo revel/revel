@@ -94,10 +94,10 @@ func (p *Params) calcValues() url.Values {
 
 	// Copy everything into the same map.
 	values := make(url.Values, numParams)
-	for k, v := range p.Query {
+	for k, v := range p.Fixed {
 		values[k] = append(values[k], v...)
 	}
-	for k, v := range p.Fixed {
+	for k, v := range p.Query {
 		values[k] = append(values[k], v...)
 	}
 	for k, v := range p.Route {
