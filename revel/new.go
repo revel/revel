@@ -131,7 +131,6 @@ func setApplicationPath(args []string) {
 	} else {
 		basePath += "/"
 	}
-	basePath = filepath.FromSlash(basePath)
 }
 
 func setSkeletonPath(args []string) {
