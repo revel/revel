@@ -45,6 +45,8 @@ var (
 	// revel related paths
 	revelPkg     *build.Package
 	appPath      string
+	appName      string
+	basePath     string
 	importPath   string
 	skeletonPath string
 )
@@ -122,6 +124,8 @@ func setApplicationPath(args []string) {
 	}
 
 	appPath = filepath.Join(srcRoot, filepath.FromSlash(importPath))
+	appName = filepath.Base(appPath)
+	basePath = filepath.Dir(appPath)
 }
 
 func setSkeletonPath(args []string) {
@@ -157,8 +161,9 @@ func copyNewAppFiles() {
 
 	mustCopyDir(appPath, skeletonPath, map[string]interface{}{
 		// app.conf
-		"AppName": filepath.Base(appPath),
-		"Secret":  generateSecret(),
+		"AppName":  appName,
+		"BasePath": basePath,
+		"Secret":   generateSecret(),
 	})
 
 	// Dotfiles are skipped by mustCopyDir, so we have to explicitly copy the .gitignore.
