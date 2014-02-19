@@ -3,7 +3,10 @@ package revel
 import (
 	"code.google.com/p/go.net/websocket"
 	"fmt"
+	"net"
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -50,10 +53,19 @@ func Run(port int) {
 	if port == 0 {
 		port = HttpPort
 	}
-	// If the port equals zero, it means do not append port to the address.
-	// It can use unix socket or something else.
-	if port != 0 {
-		address = fmt.Sprintf("%s:%d", address, port)
+
+	var network = "tcp"
+	var localAddress string
+
+	// If the port is zero, treat the address as a fully qualified local address.
+	// This address must be prefixed with the network type followed by a colon,
+	// e.g. unix:/tmp/app.socket or tcp6:::1 (equivalent to tcp6:0:0:0:0:0:0:0:1)
+	if port == 0 {
+		parts := strings.SplitN(address, ":", 2)
+		network = parts[0]
+		localAddress = parts[1]
+	} else {
+		localAddress = address + ":" + strconv.Itoa(port)
 	}
 
 	MainTemplateLoader = NewTemplateLoader(TemplatePaths)
@@ -74,7 +86,7 @@ func Run(port int) {
 	}
 
 	Server = &http.Server{
-		Addr:    address,
+		Addr:    localAddress,
 		Handler: http.HandlerFunc(handle),
 	}
 
@@ -82,14 +94,23 @@ func Run(port int) {
 
 	go func() {
 		time.Sleep(100 * time.Millisecond)
-		fmt.Printf("Listening on port %d...\n", port)
+		fmt.Printf("Listening on %s...\n", address)
 	}()
 
 	if HttpSsl {
+		if network != "tcp" {
+			// This limitation is just to reduce complexity, since it is standard
+			// to terminate SSL upstream when using unix domain sockets.
+			ERROR.Fatalln("SSL is only supported for TCP sockets. Specify a port to listen on.")
+		}
 		ERROR.Fatalln("Failed to listen:",
 			Server.ListenAndServeTLS(HttpSslCert, HttpSslKey))
 	} else {
-		ERROR.Fatalln("Failed to listen:", Server.ListenAndServe())
+		listener, err := net.Listen(network, localAddress)
+		if err != nil {
+			ERROR.Fatalln("Failed to listen:", err)
+		}
+		ERROR.Fatalln("Failed to serve:", Server.Serve(listener))
 	}
 }
 
