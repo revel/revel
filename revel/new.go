@@ -126,6 +126,12 @@ func setApplicationPath(args []string) {
 	appPath = filepath.Join(srcRoot, filepath.FromSlash(importPath))
 	appName = filepath.Base(appPath)
 	basePath = filepath.Dir(appPath)
+	if basePath == "." {
+		basePath = ""
+	} else {
+		basePath += "/"
+	}
+	basePath = filepath.FromSlash(basePath)
 }
 
 func setSkeletonPath(args []string) {
