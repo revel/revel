@@ -9,8 +9,8 @@ import (
 func TestSessionRestore(t *testing.T) {
 	expireAfterDuration = 0
 	originSession := make(Session)
-	originSession["user"] = "Tom"
-	originSession["info"] = "hi"
+	originSession["foo"] = "foo"
+	originSession["bar"] = "bar"
 	cookie := originSession.cookie()
 	if !cookie.Expires.IsZero() {
 		t.Error("incorrect cookie expire", cookie.Expires)
