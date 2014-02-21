@@ -65,7 +65,7 @@ Every request is sent down this chain, top to bottom.
 Although all requests are sent down the `revel.Filters` chain, Revel also
 provides a
 [`FilterConfigurator`](../docs/godoc/filterconfig.html#FilterConfigurator),
-which allows the developer to add, insert, or remove filter stages baesd on the
+which allows the developer to add, insert, or remove filter stages based on the
 Action or Controller.
 
 This functionality is implemented by the `FilterConfiguringFilter`, itself a
