@@ -10,19 +10,14 @@ type Field struct {
 	Name       string
 	Error      *ValidationError
 	renderArgs map[string]interface{}
-	errorClass string
 }
 
-func NewField(name string, errorClass string, renderArgs map[string]interface{}) *Field {
+func NewField(name string, renderArgs map[string]interface{}) *Field {
 	err, _ := renderArgs["errors"].(map[string]*ValidationError)[name]
-	if errorClass == "" {
-		errorClass = ERROR_CLASS
-	}
 	return &Field{
 		Name:       name,
 		Error:      err,
 		renderArgs: renderArgs,
-		errorClass: errorClass,
 	}
 }
 
@@ -71,7 +66,11 @@ func (f *Field) Value() interface{} {
 // ErrorClass returns ERROR_CLASS if this field has a validation error, else empty string.
 func (f *Field) ErrorClass() string {
 	if f.Error != nil {
-		return f.errorClass
+		if errorClass, ok := f.renderArgs["ERROR_CLASS"]; ok {
+			return errorClass.(string)
+		} else {
+			return ERROR_CLASS
+		}
 	}
 	return ""
 }

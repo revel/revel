@@ -26,14 +26,14 @@
   <p>
     <strong>Nightly rate:</strong> {{.hotel.Price}}
   </p>
-  {{with $field := field "booking.CheckInDate" "" .}}
+  {{with $field := field "booking.CheckInDate" .}}
     <p class="{{$field.ErrorClass}}">
       <strong>Check In Date:</strong>
       <input type="text" size="10" name="{{$field.Name}}" class="datepicker" value="{{$field.Flash}}">
       * <span class="error">{{$field.Error}}</span>
     </p>
   {{end}}
-  {{with $field := field "booking.CheckOutDate" "" .}}
+  {{with $field := field "booking.CheckOutDate" .}}
     <p class="{{$field.ErrorClass}}">
       <strong>Check Out Date:</strong>
       <input type="text" size="10" name="{{$field.Name}}" class="datepicker" value="{{$field.Flash}}">
@@ -42,7 +42,7 @@
   {{end}}
   <p>
     <strong>Room preference:</strong>
-    {{with $field := field "booking.Beds" "" .}}
+    {{with $field := field "booking.Beds" .}}
     <select name="{{$field.Name}}">
       {{option $field "1" "One king-size bed"}}
       {{option $field "2" "Two double beds"}}
@@ -52,19 +52,19 @@
   </p>
   <p>
     <strong>Smoking preference:</strong>
-    {{with $field := field "booking.Smoking" "" .}}
+    {{with $field := field "booking.Smoking" .}}
       {{radio $field "true"}} Smoking
       {{radio $field "false"}} Non smoking
     {{end}}
   </p>
-  {{with $field := field "booking.CardNumber" "" .}}
+  {{with $field := field "booking.CardNumber" .}}
     <p class="{{$field.ErrorClass}}">
       <strong>Credit Card #:</strong>
       <input type="text" name="{{$field.Name}}" size="16" value="{{$field.Flash}}">
       * <span class="error">{{$field.Error}}</span>
     </p>
   {{end}}
-  {{with $field := field "booking.NameOnCard" "" .}}
+  {{with $field := field "booking.NameOnCard" .}}
     <p class="{{$field.ErrorClass}}">
       <strong>Credit Card Name:</strong>
       <input type="text" name="{{$field.Name}}" size="16" value="{{$field.Flash}}">
@@ -73,7 +73,7 @@
   {{end}}
   <p>
     <strong>Credit Card Expiry:</strong>
-    {{with $field := field "booking.CardExpMonth" "" .}}
+    {{with $field := field "booking.CardExpMonth" .}}
     <select name="{{$field.Name}}">
       {{option $field "1" "Jan"}}
       {{option $field "2" "Feb"}}
@@ -89,7 +89,7 @@
       {{option $field "12" "Dec"}}
     </select>
     {{end}}
-    {{with $field := field "booking.CardExpYear" "" .}}
+    {{with $field := field "booking.CardExpYear" .}}
     <select name="{{$field.Name}}">
       {{option $field "2008" "2008"}}
       {{option $field "2009" "2009"}}
