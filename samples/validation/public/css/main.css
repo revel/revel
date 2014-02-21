@@ -44,3 +44,7 @@ input[type=text], input[type=password] {
 .hasError {
 	background: pink;
 }
+
+.has-error {
+	background: #ffb6c1;
+}
