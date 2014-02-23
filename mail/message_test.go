@@ -60,6 +60,7 @@ func TestRenderPlainAndHtmlText(t *testing.T) {
 		PlainBody: bytes.NewBufferString(plainBody),
 		HtmlBody:  bytes.NewBufferString(htmlBody),
 		Date:      testDate,
+		MessageId: "message-id@bar.com",
 	}
 
 	b, _ := message.RenderData()
@@ -75,5 +76,9 @@ func TestRenderPlainAndHtmlText(t *testing.T) {
 
 	if !strings.Contains(recipient, "Date: Sun, 23 Feb 2014 00:00:00 GMT") {
 		t.Error("Message should have the Date header set")
+	}
+
+	if !strings.Contains(recipient, "Message-Id: <message-id@bar.com>") {
+		t.Error("Message should have the Message-Id header set")
 	}
 }

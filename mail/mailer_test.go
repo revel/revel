@@ -94,6 +94,7 @@ From: foo@bar.com
 To: bar@foo.com 
 Cc: cc1@test.com, cc2@test.com 
 Subject: from message1, single connection 
+Message-Id: <message-id1@bar.com>
 Date: Sun, 23 Feb 2014 00:00:00 GMT
 MIME-Version: 1.0
 Content-Type: text/plain; charset="UTF-8";
@@ -111,6 +112,7 @@ DATA
 From: abc@test.com 
 To: def@test.com, nonoo@test.com 
 Subject: =?UTF-8?B?6L+Z5Liq5piv56ysMuWwgWZyb20gbWVzc2FnZTIsIHNpbmdsZSBjb25uZWN0aW9u?= 
+Message-Id: <message-id2@test.com>
 Date: Sun, 23 Feb 2014 00:00:00 GMT
 MIME-Version: 1.0
 Content-Type: text/html; charset="UTF-8";
@@ -124,10 +126,12 @@ QUIT
 	mailer := &Mailer{Server: "smtp.gmail.com", Port: 587, UserName: "foo@bar.com", Password: "xxx"}
 
 	message1 := &Message{From: "foo@bar.com", To: []string{"bar@foo.com"}, Cc: []string{"cc1@test.com", "cc2@test.com"},
-		Subject: "from message1, single connection", PlainBody: bytes.NewBufferString("<h2>你好 from message1, should show in plain text</h2>"), Date: testDate}
+		Subject: "from message1, single connection", PlainBody: bytes.NewBufferString("<h2>你好 from message1, should show in plain text</h2>"),
+		Date: testDate, MessageId: "message-id1@bar.com"}
 
 	message2 := &Message{From: "abc@test.com", To: []string{"def@test.com", "nonoo@test.com"}, Bcc: []string{"bcc1@test.com", "bcc2@test.com"},
-		Subject: "这个是第2封from message2, single connection", HtmlBody: bytes.NewBufferString("<h2>您好 from message2</h2>"), Date: testDate}
+		Subject: "这个是第2封from message2, single connection", HtmlBody: bytes.NewBufferString("<h2>您好 from message2</h2>"),
+		Date: testDate, MessageId: "message-id2@test.com"}
 
 	actualcmds, err := mailer.SendTestMessage(server, message1, message2)
 	if err != nil {
@@ -172,6 +176,7 @@ From: sender@test.com
 Reply-To: reply@test.com 
 To: to1@test.com 
 Subject: =?UTF-8?B?5oiR55qE56ysM+S4qg==?= 
+Message-Id: <message-id1@test.com>
 Date: Sun, 23 Feb 2014 00:00:00 GMT
 MIME-Version: 1.0
 Content-Type: text/plain; charset="UTF-8";
@@ -187,6 +192,7 @@ From: sender@test.com
 Reply-To: reply@test.com 
 To: to2@test.com 
 Subject: =?UTF-8?B?5oiR55qE56ysNOS4qg==?= 
+Message-Id: <message-id2@test.com>
 Date: Sun, 23 Feb 2014 00:00:00 GMT
 MIME-Version: 1.0
 Content-Type: text/html; charset="UTF-8";
@@ -202,6 +208,7 @@ From: sender@test.com
 Reply-To: reply@test.com 
 To: to3@test.com 
 Subject: =?UTF-8?B?5oiR55qE56ysNeS4qg==?= 
+Message-Id: <message-id3@test.com>
 Date: Sun, 23 Feb 2014 00:00:00 GMT
 MIME-Version: 1.0
 `
@@ -212,10 +219,16 @@ MIME-Version: 1.0
 
 	message1 := NewTextMessage([]string{"to1@test.com"}, "我的第3个", "这个不是html的")
 	message1.Date = testDate
+	message1.MessageId = "message-id1@test.com"
+
 	message2 := NewHtmlMessage([]string{"to2@test.com"}, "我的第4个", "<h1>这个是html的</h1>")
 	message2.Date = testDate
+	message2.MessageId = "message-id2@test.com"
+
 	message3 := NewTextAndHtmlMessage([]string{"to3@test.com"}, "我的第5个", "这个不是html的", "<h1>这个是html的, 同时也有plain text 版本</h1>")
 	message3.Date = testDate
+	message3.MessageId = "message-id3@test.com"
+
 	actualcmds, err := mailer.SendTestMessage(server, []*Message{message1, message2, message3}...)
 	if err != nil {
 		fmt.Println(err)
