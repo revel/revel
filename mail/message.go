@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"mime/multipart"
 	"strings"
+	"time"
 	"unicode/utf8"
 
 	"github.com/robfig/revel"
@@ -23,6 +24,9 @@ type Message struct {
 	Subject   string
 	PlainBody *bytes.Buffer
 	HtmlBody  *bytes.Buffer
+
+	Date      time.Time
+	MessageId string
 }
 
 // NewTextMessage create a plain text message
@@ -91,6 +95,14 @@ func (m *Message) renderSingleContentType(contentType string, bodyText *bytes.Bu
 	var b bytes.Buffer
 	m.writeRecipient(&b)
 
+	if err := m.writeMessageId(&b); err != nil {
+		return nil, err
+	}
+
+	if err := m.writeDate(&b); err != nil {
+		return nil, err
+	}
+
 	if err := m.writeMIME(&b); err != nil {
 		return nil, err
 	}
@@ -110,6 +122,14 @@ func (m *Message) renderPlainAndHtmlText() ([]byte, error) {
 	writer := multipart.NewWriter(bytes.NewBufferString(""))
 	var b bytes.Buffer
 	m.writeRecipient(&b)
+
+	if err := m.writeMessageId(&b); err != nil {
+		return nil, err
+	}
+
+	if err := m.writeDate(&b); err != nil {
+		return nil, err
+	}
 
 	if err := m.writeMIME(&b); err != nil {
 		return nil, err
@@ -167,6 +187,24 @@ func (m *Message) writeRecipient(b *bytes.Buffer) {
 			fmt.Fprintf(b, "Subject: =?UTF-8?B?%s?= %s", base64.StdEncoding.EncodeToString(subjectBytes), NewLine)
 		}
 	}
+}
+
+func (m *Message) writeDate(b *bytes.Buffer) error {
+	if m.Date.IsZero() {
+		m.Date = time.Now()
+	}
+
+	_, err := b.WriteString("Date: " + m.Date.UTC().Format("Mon, 02 Jan 2006 15:04:05 GMT") + "\n")
+	return err
+}
+
+func (m *Message) writeMessageId(b *bytes.Buffer) error {
+	if m.MessageId == "" {
+		return nil
+	}
+
+	_, err := b.WriteString("Message-Id: <" + m.MessageId + ">\n")
+	return err
 }
 
 func (m *Message) writeMIME(b *bytes.Buffer) error {
