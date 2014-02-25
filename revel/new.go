@@ -128,7 +128,7 @@ func setApplicationPath(args []string) {
 
 	appPath = filepath.Join(srcRoot, filepath.FromSlash(importPath))
 	appName = filepath.Base(appPath)
-	basePath = filepath.ToSlash(filepath.Dir(appPath))
+	basePath = filepath.ToSlash(filepath.Dir(importPath))
 
 	if basePath == "." {
 		// we need to remove the a single '.' when
@@ -139,7 +139,6 @@ func setApplicationPath(args []string) {
 		// is a subdirectory such as $GOROOT/src/path/to/revelapp
 		basePath += "/"
 	}
-	println(basePath)
 }
 
 func setSkeletonPath(args []string) {
