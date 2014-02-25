@@ -16,7 +16,7 @@ type Session map[string]string
 
 const (
 	SESSION_ID_KEY = "_ID"
-	TS_KEY         = "_TS"
+	TIMESTAMP_KEY  = "_TS"
 )
 
 // expireAfterDuration is the time to live, in seconds, of a session cookie.
@@ -54,10 +54,11 @@ func (s Session) Id() string {
 	return s[SESSION_ID_KEY]
 }
 
-// getSessionExpiration return a time.Time with the session's expiration date.
+// getExpiration return a time.Time with the session's expiration date.
 // If previous session has set to "session", remain it
-func (s Session) getSessionExpiration() time.Time {
-	if expireAfterDuration == 0 || s[TS_KEY] == "session" {
+func (s Session) getExpiration() time.Time {
+	if expireAfterDuration == 0 || s[TIMESTAMP_KEY] == "session" {
+		// Expire after closing browser
 		return time.Time{}
 	}
 	return time.Now().Add(expireAfterDuration)
@@ -66,8 +67,8 @@ func (s Session) getSessionExpiration() time.Time {
 // cookie returns an http.Cookie containing the signed session.
 func (s Session) cookie() *http.Cookie {
 	var sessionValue string
-	ts := s.getSessionExpiration()
-	s[TS_KEY] = getSessionExpirationCookie(ts)
+	ts := s.getExpiration()
+	s[TIMESTAMP_KEY] = getExpirationCookie(ts)
 	for key, value := range s {
 		if strings.ContainsAny(key, ":\x00") {
 			panic("Session keys may not have colons or null bytes")
@@ -93,7 +94,7 @@ func (s Session) cookie() *http.Cookie {
 // cookie is either not present or present but beyond its time to live; i.e.,
 // whether there is not a valid session.
 func sessionTimeoutExpiredOrMissing(session Session) bool {
-	if exp, present := session[TS_KEY]; !present {
+	if exp, present := session[TIMESTAMP_KEY]; !present {
 		return true
 	} else if exp == "session" {
 		return false
@@ -167,12 +168,12 @@ func getSessionExpirationCookie(t time.Time) string {
 	return strconv.FormatInt(t.Unix(), 10)
 }
 
-// set session expiration to "session"
-func (s Session) SetSessionNoExpiration() {
-	s[TS_KEY] = "session"
+// SetNoExpiration sets session to expire when browser session ends
+func (s Session) SetNoExpiration() {
+	s[TIMESTAMP_KEY] = "session"
 }
 
-// reset the session expiration to default
-func (s Session) SetSessionDefaultExpiration() {
-	delete(s, TS_KEY)
+// SetDefaultExpiration sets session to expire after default duration
+func (s Session) SetDefaultExpiration() {
+	delete(s, TIMESTAMP_KEY)
 }
