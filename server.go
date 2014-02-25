@@ -94,7 +94,7 @@ func Run(port int) {
 
 	go func() {
 		time.Sleep(100 * time.Millisecond)
-		fmt.Printf("Listening on %s...\n", address)
+		fmt.Printf("Listening on %s...\n", localAddress)
 	}()
 
 	if HttpSsl {
