@@ -82,9 +82,9 @@ func (c Application) Login(username, password string, remember bool) revel.Resul
 		if err == nil {
 			c.Session["user"] = username
 			if remember {
-				c.Session.SetSessionDefaultExpiration()
+				c.Session.SetDefaultExpiration()
 			} else {
-				c.Session.SetSessionNoExpiration()
+				c.Session.SetNoExpiration()
 			}
 			c.Flash.Success("Welcome, " + username)
 			return c.Redirect(routes.Hotels.Index())
