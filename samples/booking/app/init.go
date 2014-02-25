@@ -15,9 +15,17 @@ func init() {
 		revel.I18nFilter,              // Resolve the requested language
 		HeaderFilter,                  // Add some security based headers
 		revel.InterceptorFilter,       // Run interceptors around the action.
-		revel.CompressFilter,          // Compress the results.
+		revel.CompressFilter,          // Compress the result.
 		revel.ActionInvoker,           // Invoke the action.
 	}
+
+	revel.OnAppStart(InitDB)
+	revel.InterceptMethod((*GorpController).Begin, revel.BEFORE)
+	revel.InterceptMethod(Application.AddUser, revel.BEFORE)
+	revel.InterceptMethod(Hotels.checkUser, revel.BEFORE)
+	revel.InterceptMethod((*GorpController).Commit, revel.AFTER)
+	revel.InterceptMethod((*GorpController).Rollback, revel.FINALLY)
+
 }
 
 var HeaderFilter = func(c *revel.Controller, fc []revel.Filter) {
