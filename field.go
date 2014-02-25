@@ -66,7 +66,11 @@ func (f *Field) Value() interface{} {
 // ErrorClass returns ERROR_CLASS if this field has a validation error, else empty string.
 func (f *Field) ErrorClass() string {
 	if f.Error != nil {
-		return ERROR_CLASS
+		if errorClass, ok := f.renderArgs["ERROR_CLASS"]; ok {
+			return errorClass.(string)
+		} else {
+			return ERROR_CLASS
+		}
 	}
 	return ""
 }
