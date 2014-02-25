@@ -104,7 +104,11 @@ var (
 		},
 
 		"msg": func(renderArgs map[string]interface{}, message string, args ...interface{}) template.HTML {
-			return template.HTML(Message(renderArgs[CurrentLocaleRenderArg].(string), message, args...))
+			str, ok := renderArgs[CurrentLocaleRenderArg].(string)
+			if !ok {
+				return ""
+			}
+			return template.HTML(Message(str, message, args...))
 		},
 
 		// Replaces newlines with <br>

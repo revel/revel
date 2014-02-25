@@ -119,7 +119,7 @@ func (w *Watcher) Notify() *Error {
 				// Ignore changes to dotfiles.
 				if !strings.HasPrefix(path.Base(ev.Name), ".") {
 					if dl, ok := listener.(DiscerningListener); ok {
-						if !dl.WatchFile(ev.Name) {
+						if !dl.WatchFile(ev.Name) || ev.IsAttrib() {
 							continue
 						}
 					}

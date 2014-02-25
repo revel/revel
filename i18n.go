@@ -40,7 +40,6 @@ func MessageLanguages() []string {
 // When either an unknown locale or message is detected, a specially formatted string is returned.
 func Message(locale, message string, args ...interface{}) string {
 	language, region := parseLocale(locale)
-	TRACE.Printf("Resolving message '%s' for language '%s' and region '%s'", message, language, region)
 
 	messageConfig, knownLanguage := messages[language]
 	if !knownLanguage {
