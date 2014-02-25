@@ -216,7 +216,6 @@ func parseRoutes(routesPath, joinedPath, content string, validate bool) ([]*Rout
 			if err != nil {
 				return nil, routeError(err, routesPath, content, n)
 			}
-			fmt.Printf("%#v", moduleRoutes[0])
 			routes = append(routes, moduleRoutes...)
 			continue
 		}
