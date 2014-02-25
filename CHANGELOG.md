@@ -5,9 +5,15 @@ Legend:
 * [FTR] New feature
 * [ENH] Enhancement to current functionality
 * [BUG] Fixed bug
+* [HOT] Hotfix
 
 
-## Revel v0.9 (Feb 24, 2014)
+## Revel v0.9.1 (Feb 24, 2014)
+
+* [HOT] - Booking sample error
+
+
+## Revel v0.9.0 (Feb 24, 2014)
 
 * [BUG] #504 - File access via URL security issue
 * [BUG] #489 - Email validator bug
