@@ -126,9 +126,11 @@ func setApplicationPath(args []string) {
 		errorf("Abort: Could not find Revel source code: %s\n", err)
 	}
 
+	// appPath is an absolute directory for copying files
 	appPath = filepath.Join(srcRoot, filepath.FromSlash(importPath))
+	// basePath is a relative directory for use in skeleton templates
+	basePath = filepath.ToSlash(filepath.Dir(importPath))
 	appName = filepath.Base(appPath)
-	basePath = filepath.ToSlash(filepath.Dir(appPath))
 
 	if basePath == "." {
 		// we need to remove the a single '.' when
@@ -139,7 +141,6 @@ func setApplicationPath(args []string) {
 		// is a subdirectory such as $GOROOT/src/path/to/revelapp
 		basePath += "/"
 	}
-	println(basePath)
 }
 
 func setSkeletonPath(args []string) {
