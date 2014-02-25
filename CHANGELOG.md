@@ -8,6 +8,11 @@ Legend:
 * [HOT] Hotfix
 
 
+## Revel v0.9.2 (Feb 25, 2014)
+
+* [HOT] - `revel new` bug (#522)
+
+
 ## Revel v0.9.1 (Feb 24, 2014)
 
 * [HOT] - Booking sample error
