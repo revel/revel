@@ -60,7 +60,7 @@ func newApp(args []string) {
 		errorf("Too many arguments provided.\nRun 'revel help new' for usage.\n")
 	}
 
-	//
+	// checking and setting go paths
 	initGoPaths()
 
 	// checking and setting application
