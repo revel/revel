@@ -60,6 +60,9 @@ func newApp(args []string) {
 		errorf("Too many arguments provided.\nRun 'revel help new' for usage.\n")
 	}
 
+	//
+	initGoPaths()
+
 	// checking and setting application
 	setApplicationPath(args)
 
@@ -85,7 +88,7 @@ func generateSecret() string {
 }
 
 // lookup and set Go related variables
-func initGoStuff() {
+func initGoPaths() {
 	// lookup go path
 	gopath = build.Default.GOPATH
 	if gopath == "" {
