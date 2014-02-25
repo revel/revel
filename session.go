@@ -68,7 +68,7 @@ func (s Session) getExpiration() time.Time {
 func (s Session) cookie() *http.Cookie {
 	var sessionValue string
 	ts := s.getExpiration()
-	s[TIMESTAMP_KEY] = getExpirationCookie(ts)
+	s[TIMESTAMP_KEY] = getSessionExpirationCookie(ts)
 	for key, value := range s {
 		if strings.ContainsAny(key, ":\x00") {
 			panic("Session keys may not have colons or null bytes")
