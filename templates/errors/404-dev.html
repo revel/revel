@@ -57,7 +57,7 @@
 	<h2>These routes have been tried, in this order :</h2>
 	<ol>
 		{{range .Router.Routes}}
-			<li>{{pad .Method 10}}{{pad .Path 50}}{{.Action}}</li>
+			<li>{{pad .Host 25}}{{pad .Method 10}}{{pad .Path 50}}{{.Action}}</li>
 		{{end}}
 	</ol>
 </div>

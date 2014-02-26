@@ -10,35 +10,40 @@ import (
 // Data-driven tests that check that a given routes-file line translates into
 // the expected Route object.
 var routeTestCases = map[string]*Route{
-	"get / Application.Index": &Route{
+	"* get / Application.Index": &Route{
+		Host:        "*",
 		Method:      "GET",
 		Path:        "/",
 		Action:      "Application.Index",
 		FixedParams: []string{},
 	},
 
-	"post /app/:id Application.SaveApp": &Route{
+	"* post /app/:id Application.SaveApp": &Route{
+		Host:        "*",
 		Method:      "POST",
 		Path:        "/app/:id",
 		Action:      "Application.SaveApp",
 		FixedParams: []string{},
 	},
 
-	"get /app/ Application.List": &Route{
+	"* get /app/ Application.List": &Route{
+		Host:        "*",
 		Method:      "GET",
 		Path:        "/app/",
 		Action:      "Application.List",
 		FixedParams: []string{},
 	},
 
-	`get /apps/:appId/ Application.Show`: &Route{
+	`* get /apps/:appId/ Application.Show`: &Route{
+		Host:        "*",
 		Method:      "GET",
 		Path:        `/apps/:appId/`,
 		Action:      "Application.Show",
 		FixedParams: []string{},
 	},
 
-	`GET /public/:filepath   Static.Serve("public")`: &Route{
+	`* GET /public/:filepath   Static.Serve("public")`: &Route{
+		Host:   "*",
 		Method: "GET",
 		Path:   "/public/:filepath",
 		Action: "Static.Serve",
@@ -47,7 +52,8 @@ var routeTestCases = map[string]*Route{
 		},
 	},
 
-	`GET /javascript/:filepath Static.Serve("public/js")`: &Route{
+	`* GET /javascript/:filepath Static.Serve("public/js")`: &Route{
+		Host:   "*",
 		Method: "GET",
 		Path:   "/javascript/:filepath",
 		Action: "Static.Serve",
@@ -56,14 +62,16 @@ var routeTestCases = map[string]*Route{
 		},
 	},
 
-	"* /apps/:id/:action Application.:action": &Route{
+	"* * /apps/:id/:action Application.:action": &Route{
+		Host:        "*",
 		Method:      "*",
 		Path:        "/apps/:id/:action",
 		Action:      "Application.:action",
 		FixedParams: []string{},
 	},
 
-	"* /:controller/:action :controller.:action": &Route{
+	"* * /:controller/:action :controller.:action": &Route{
+		Host:        "*",
 		Method:      "*",
 		Path:        "/:controller/:action",
 		Action:      ":controller.:action",
@@ -74,12 +82,13 @@ var routeTestCases = map[string]*Route{
 // Run the test cases above.
 func TestComputeRoute(t *testing.T) {
 	for routeLine, expected := range routeTestCases {
-		method, path, action, fixedArgs, found := parseRouteLine(routeLine)
+		host, method, path, action, fixedArgs, found := parseRouteLine(routeLine)
 		if !found {
 			t.Error("Failed to parse route line:", routeLine)
 			continue
 		}
-		actual := NewRoute(method, path, action, fixedArgs, "", 0)
+		actual := NewRoute(host, method, path, action, fixedArgs, "", 0)
+		eq(t, "Host", actual.Host, expected.Host)
 		eq(t, "Method", actual.Method, expected.Method)
 		eq(t, "Path", actual.Path, expected.Path)
 		eq(t, "Action", actual.Action, expected.Action)
@@ -93,89 +102,126 @@ func TestComputeRoute(t *testing.T) {
 
 const TEST_ROUTES = `
 # This is a comment
-GET   /                          Application.Index
-GET   /app/:id/                  Application.Show
-POST  /app/:id                   Application.Save
-PATCH /app/:id/                  Application.Update
-GET   /javascript/:filepath      Static.Serve("public/js")
-GET   /public/*filepath          Static.Serve("public")
-*     /:controller/:action       :controller.:action
+example1.com GET   /                          Application.DomainTest
+* GET   /                          Application.Index
+* GET   /app/:id/                  Application.Show
+* POST  /app/:id                   Application.Save
+* PATCH /app/:id/                  Application.Update
+* GET   /javascript/:filepath      Static.Serve("public/js")
+* GET   /public/*filepath          Static.Serve("public")
+* *     /:controller/:action       :controller.:action
 
-GET   /favicon.ico               404
+* GET   /favicon.ico               404
 `
 
 var routeMatchTestCases = map[*http.Request]*RouteMatch{
 	&http.Request{
+		Host:   "example.com",
 		Method: "GET",
 		URL:    &url.URL{Path: "/"},
 	}: &RouteMatch{
 		ControllerName: "Application",
 		MethodName:     "Index",
 		FixedParams:    []string{},
+		Params:         map[string][]string{"HOST": {"example.com"}},
+	},
+	&http.Request{
+		Host:   "example1.com",
+		Method: "GET",
+		URL:    &url.URL{Path: "/"},
+	}: &RouteMatch{
+		ControllerName: "Application",
+		MethodName:     "DomainTest",
+		FixedParams:    []string{},
 		Params:         map[string][]string{},
 	},
 
 	&http.Request{
+		Host:   "example2.com",
 		Method: "GET",
 		URL:    &url.URL{Path: "/app/123"},
 	}: &RouteMatch{
 		ControllerName: "Application",
 		MethodName:     "Show",
 		FixedParams:    []string{},
-		Params:         map[string][]string{"id": {"123"}},
+		Params:         map[string][]string{
+			"HOST": {"example2.com"},
+			"id":   {"123"},
+		},
 	},
 
 	&http.Request{
+		Host:   "example3.com",
 		Method: "PATCH",
 		URL:    &url.URL{Path: "/app/123"},
 	}: &RouteMatch{
 		ControllerName: "Application",
 		MethodName:     "Update",
 		FixedParams:    []string{},
-		Params:         map[string][]string{"id": {"123"}},
+		Params:         map[string][]string{
+			"HOST": {"example3.com"},
+			"id":   {"123"},
+		},
 	},
 
 	&http.Request{
+		Host:   "example4.com",
 		Method: "POST",
 		URL:    &url.URL{Path: "/app/123"},
 	}: &RouteMatch{
 		ControllerName: "Application",
 		MethodName:     "Save",
 		FixedParams:    []string{},
-		Params:         map[string][]string{"id": {"123"}},
+		Params:         map[string][]string{
+			"HOST": {"example4.com"},
+			"id":   {"123"},
+		},
 	},
 
 	&http.Request{
+		Host:   "example5.com",
 		Method: "GET",
 		URL:    &url.URL{Path: "/app/123/"},
 	}: &RouteMatch{
 		ControllerName: "Application",
 		MethodName:     "Show",
 		FixedParams:    []string{},
-		Params:         map[string][]string{"id": {"123"}},
+		Params:         map[string][]string{
+			"HOST": {"example5.com"},
+			"id":   {"123"},
+		},
 	},
 
 	&http.Request{
+		Host:   "example6.com",
 		Method: "GET",
 		URL:    &url.URL{Path: "/public/css/style.css"},
 	}: &RouteMatch{
 		ControllerName: "Static",
 		MethodName:     "Serve",
 		FixedParams:    []string{"public"},
-		Params:         map[string][]string{"filepath": {"css/style.css"}},
+		Params:         map[string][]string{
+			"HOST":     {"example6.com"},
+			"filepath": {"css/style.css"},
+		},
 	},
 
 	&http.Request{
+		Host:   "example7.com",
 		Method: "GET",
 		URL:    &url.URL{Path: "/javascript/sessvars.js"},
 	}: &RouteMatch{
 		ControllerName: "Static",
 		MethodName:     "Serve",
 		FixedParams:    []string{"public/js"},
-		Params:         map[string][]string{"filepath": {"sessvars.js"}},
+		Params:         map[string][]string{
+			"HOST":     {"example7.com"},
+			"filepath": {"sessvars.js"},
+		},
 	},
 
 	&http.Request{
+		Host:   "example8.com",
 		Method: "GET",
 		URL:    &url.URL{Path: "/Implicit/Route"},
 	}: &RouteMatch{
@@ -183,6 +229,7 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 		MethodName:     "Route",
 		FixedParams:    []string{},
 		Params: map[string][]string{
+			"HOST":       {"example8.com"},
 			"METHOD":     {"GET"},
 			"controller": {"Implicit"},
 			"action":     {"Route"},
@@ -190,6 +237,7 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 	},
 
 	&http.Request{
+		Host:   "example9.com",
 		Method: "GET",
 		URL:    &url.URL{Path: "/favicon.ico"},
 	}: &RouteMatch{
@@ -207,7 +255,7 @@ func TestRouteMatches(t *testing.T) {
 	router.Routes, _ = parseRoutes("", "", TEST_ROUTES, false)
 	router.updateTree()
 	for req, expected := range routeMatchTestCases {
-		t.Log("Routing:", req.Method, req.URL)
+		t.Log("Routing:", req.Host, req.Method, req.URL)
 		actual := router.Route(req)
 		if !eq(t, "Found route", actual != nil, expected != nil) {
 			continue
@@ -327,7 +375,7 @@ func BenchmarkLargeRouter(b *testing.B) {
 
 	for _, p := range routePaths {
 		router.Routes = append(router.Routes,
-			NewRoute("GET", p, "Controller.Action", "", "", 0))
+			NewRoute("*", "GET", p, "Controller.Action", "", "", 0))
 	}
 	router.updateTree()
 
