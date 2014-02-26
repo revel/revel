@@ -4,11 +4,11 @@ A high productivity, full-stack web framework for the [Go language](http://www.g
 
 Current Version: 0.9.2 (Feb 25, 2014)
 
-[![Build Status](https://secure.travis-ci.org/robfig/revel.png?branch=master)](http://travis-ci.org/robfig/revel)
+[![Build Status](https://secure.travis-ci.org/revel/revel.png?branch=master)](http://travis-ci.org/revel/revel)
 
 ## Learn More
 
-[Manual, Samples, Godocs, etc](http://robfig.github.com/revel)
+[Manual, Samples, Godocs, etc](http://revel.github.com)
 
 ## Join The Community
 

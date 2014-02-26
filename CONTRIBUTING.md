@@ -113,13 +113,13 @@ Due to the wide audience and shared nature of Revel, documentation is an essenti
 addition to your new code. **Pull requests risk not being accepted** until proper
 documentation is created to detail how to make use of new functionality.
 
-The [Revel web site](http://robfig.github.io/revel/) is hosted on Github-pages and
+The [Revel web site](http://revel.github.io/) is hosted on Github-pages and
 [built with Jekyll](https://help.github.com/articles/using-jekyll-with-pages).
 
 To develop the Jekyll site locally:
 
 	# Clone a second repository and check out the branch
-	$ git clone git@github.com:robfig/revel.git
+	$ git clone git@github.com:revel/revel.git
 	$ cd revel
 	$ git checkout gh-pages
 
