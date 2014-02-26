@@ -123,6 +123,16 @@ func getAppVersion() string {
 	}
 
 	if gitPath, err := exec.LookPath("git"); err == nil {
+		pwd, err := os.Getwd()
+		if err != nil {
+			return ""
+		}
+		err = os.Chdir(revel.BasePath)
+		if err != nil {
+			return ""
+		}
+		defer os.Chdir(pwd)
+
 		gitCmd := exec.Command(gitPath, "describe", "--always", "--dirty")
 		revel.TRACE.Println("Exec:", gitCmd.Args)
 		output, err := gitCmd.Output()
@@ -131,7 +141,6 @@ func getAppVersion() string {
 			revel.WARN.Println("Cannot determine git repository version:", err)
 			return ""
 		}
-
 		return "git-" + strings.TrimSpace(string(output))
 	}
 
