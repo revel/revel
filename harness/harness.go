@@ -13,7 +13,7 @@ package harness
 import (
 	"crypto/tls"
 	"fmt"
-	"github.com/robfig/revel"
+	"github.com/revel/revel"
 	"go/build"
 	"io"
 	"net"

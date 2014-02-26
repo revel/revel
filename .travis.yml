@@ -1,14 +1,14 @@
 language: go
 go: 1.2
 services:
-  - memcache # github.com/robfig/revel/cache
+  - memcache # github.com/revel/revel/cache
   - redis-server
 install:
   - export PATH=$PATH:$HOME/gopath/bin
   # Annoyingly, we can not use go get revel/... because references to app/routes package fail
-  - go get -v github.com/robfig/revel/revel
-  - go get -v github.com/robfig/revel/cache
-  - go get -v github.com/robfig/revel/harness
+  - go get -v github.com/revel/revel/revel
+  - go get -v github.com/revel/revel/cache
+  - go get -v github.com/revel/revel/harness
   - go get -v github.com/coopernurse/gorp
   - go get -v code.google.com/p/go.crypto/bcrypt
   - go get -v github.com/mattn/go-sqlite3
@@ -16,9 +16,9 @@ install:
   - go get -v github.com/robfig/goauth2/oauth
   - go get -v github.com/mrjones/oauth
 script:
-  - go test github.com/robfig/revel
-  - go test github.com/robfig/revel/cache
-  - go test github.com/robfig/revel/harness
+  - go test github.com/revel/revel
+  - go test github.com/revel/revel/cache
+  - go test github.com/revel/revel/harness
 
   # Ensure the new-app flow works (plus the other commands).
   - revel new     my/testapp
@@ -29,15 +29,15 @@ script:
 
   # Build & run the sample apps
   # Sleep between tests to avoid spurious "address already in use" failures.
-  - revel test github.com/robfig/revel/samples/booking
+  - revel test github.com/revel/revel/samples/booking
   - sleep 30
-  - revel test github.com/robfig/revel/samples/chat
+  - revel test github.com/revel/revel/samples/chat
   - sleep 30
-  - revel test github.com/robfig/revel/samples/facebook-oauth2
+  - revel test github.com/revel/revel/samples/facebook-oauth2
   - sleep 30
-  - revel test github.com/robfig/revel/samples/twitter-oauth
+  - revel test github.com/revel/revel/samples/twitter-oauth
   - sleep 30
-  - revel test github.com/robfig/revel/samples/validation
+  - revel test github.com/revel/revel/samples/validation
   - sleep 30
-  - revel test github.com/robfig/revel/samples/chat
+  - revel test github.com/revel/revel/samples/chat
 

@@ -4,7 +4,7 @@ Revel pprof module
 #### How to use:
 
 1. Open your app.conf file and add the following line:  
-`module.pprof=github.com/robfig/revel/modules/pprof`  
+`module.pprof=github.com/revel/revel/modules/pprof`  
 This will enable the pprof module.
 
 2. Next, open your routes file and add:  

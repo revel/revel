@@ -1,7 +1,7 @@
 package models
 
 import (
-	"github.com/robfig/revel"
+	"github.com/revel/revel"
 )
 
 type Hotel struct {

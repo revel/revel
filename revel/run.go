@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/robfig/revel"
-	"github.com/robfig/revel/harness"
+	"github.com/revel/revel"
+	"github.com/revel/revel/harness"
 	"strconv"
 )
 
@@ -14,7 +14,7 @@ Run the Revel web application named by the given import path.
 
 For example, to run the chat room sample application:
 
-    revel run github.com/robfig/revel/samples/chat dev
+    revel run github.com/revel/revel/samples/chat dev
 
 The run mode is used to select which set of app.conf configuration should
 apply and may be used to determine logic in the application itself.
@@ -23,7 +23,7 @@ Run mode defaults to "dev".
 
 You can set a port as an optional third parameter.  For example:
 
-    revel run github.com/robfig/revel/samples/chat prod 8080`,
+    revel run github.com/revel/revel/samples/chat prod 8080`,
 }
 
 func init() {

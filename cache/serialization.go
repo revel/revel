@@ -3,7 +3,7 @@ package cache
 import (
 	"bytes"
 	"encoding/gob"
-	"github.com/robfig/revel"
+	"github.com/revel/revel"
 	"reflect"
 	"strconv"
 )

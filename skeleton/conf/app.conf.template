@@ -20,14 +20,14 @@ log.error.prefix = "ERROR "
 # The default language of this application.
 i18n.default_language=en
 
-module.static=github.com/robfig/revel/modules/static
+module.static=github.com/revel/revel/modules/static
 
 [dev]
 mode.dev=true
 results.pretty=true
 watch=true
 
-module.testrunner = github.com/robfig/revel/modules/testrunner
+module.testrunner = github.com/revel/revel/modules/testrunner
 
 log.trace.output = off
 log.info.output  = stderr

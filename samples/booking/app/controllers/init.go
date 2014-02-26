@@ -1,6 +1,6 @@
 package controllers
 
-import "github.com/robfig/revel"
+import "github.com/revel/revel"
 
 func init() {
 	revel.OnAppStart(InitDB)

@@ -13,7 +13,7 @@ Current Version: 0.9.2 (Feb 25, 2014)
 ## Join The Community
 
 * [Google Groups](https://groups.google.com/forum/#!forum/revel-framework) via [revel-framework@googlegroups.com](mailto:revel-framework@googlegroups.com)
-* [GitHub Issues](https://github.com/robfig/revel/issues)
+* [GitHub Issues](https://github.com/revel/revel/issues)
 * [IRC](http://webchat.freenode.net/?channels=%23revel&uio=d4) via #revel on Freenode
 
 ## Announcements

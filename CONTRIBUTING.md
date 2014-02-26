@@ -21,7 +21,7 @@ The first step to making Revel better is joining the community! You can find the
 community on:
 
 * [Google Groups](https://groups.google.com/forum/#!forum/revel-framework) via [revel-framework@googlegroups.com](mailto:revel-framework@googlegroups.com)
-* [GitHub Issues](https://github.com/robfig/revel/issues)
+* [GitHub Issues](https://github.com/revel/revel/issues)
 * [IRC](http://webchat.freenode.net/?channels=%23revel&uio=d4) via #revel on Freenode
 
 Once you've joined, there are many ways to contribute to Revel:
@@ -59,8 +59,8 @@ Instead, follow these steps:
 
 Here is the command line:
 ```
-$ go get github.com/robfig/revel                      # Install Revel
-$ cd $GOPATH/src/github.com/robfig/revel              # Change directory to revel repo
+$ go get github.com/revel/revel                      # Install Revel
+$ cd $GOPATH/src/github.com/revel/revel              # Change directory to revel repo
 $ git remote add fork git@github.com:$USER/revel.git  # Add your fork as a remote
 ```
 
@@ -100,11 +100,11 @@ Benchmarks are helpful but not required.
 Typically running the main set of unit tests will be sufficient:
 
 ```
-$ go test github.com/robfig/revel
+$ go test github.com/revel/revel
 ```
 
 Refer to the
-[Travis configuration](https://github.com/robfig/revel/blob/master/.travis.yml)
+[Travis configuration](https://github.com/revel/revel/blob/master/.travis.yml)
 for the full set of tests.  They take less than a minute to run.
 
 ### Document Your Feature
@@ -142,7 +142,7 @@ Once you've done all of the above & pushed your changes to your fork, you can cr
 
 These are outstanding feature requests, roughly ordered by priority.
 Additionally, there are frequently smaller feature requests or items in the
-[issues](https://github.com/robfig/revel/issues?labels=contributor+ready&page=1&state=open).
+[issues](https://github.com/revel/revel/issues?labels=contributor+ready&page=1&state=open).
 
 1.  Better ORM support.  Provide more samples (or modules) and better documentation for setting up common situations like SQL database, Mongo, LevelDB, etc.
 1.	Support for other templating languages (e.g. mustache, HAML).  Make TemplateLoader pluggable.  Use Pongo instead of vanilla Go templates (and update the samples)

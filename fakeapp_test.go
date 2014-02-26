@@ -59,7 +59,7 @@ func (c Static) Serve(prefix, filepath string) Result {
 }
 
 func startFakeBookingApp() {
-	Init("prod", "github.com/robfig/revel/samples/booking", "")
+	Init("prod", "github.com/revel/revel/samples/booking", "")
 
 	// Disable logging.
 	TRACE = log.New(ioutil.Discard, "", 0)

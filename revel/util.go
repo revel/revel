@@ -11,7 +11,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/robfig/revel"
+	"github.com/revel/revel"
 )
 
 // Use a wrapper to differentiate logged panics from unexpected ones.

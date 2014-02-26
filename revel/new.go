@@ -9,7 +9,7 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"github.com/robfig/revel"
+	"github.com/revel/revel"
 )
 
 var cmdNew = &Command{

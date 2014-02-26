@@ -3,7 +3,7 @@ package models
 import (
 	"fmt"
 	"github.com/coopernurse/gorp"
-	"github.com/robfig/revel"
+	"github.com/revel/revel"
 	"regexp"
 	"time"
 )
