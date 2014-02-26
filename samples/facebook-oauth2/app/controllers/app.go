@@ -1,9 +1,9 @@
 package controllers
 
 import (
+	"code.google.com/p/goauth2/oauth"
 	"encoding/json"
 	"fmt"
-	"code.google.com/p/goauth2/oauth"
 	"github.com/revel/revel"
 	"github.com/revel/revel/samples/facebook-oauth2/app/models"
 	"net/http"

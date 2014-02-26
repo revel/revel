@@ -2,8 +2,8 @@ package cache
 
 import (
 	"errors"
-	"github.com/robfig/gomemcache/memcache"
 	"github.com/revel/revel"
+	"github.com/robfig/gomemcache/memcache"
 	"time"
 )
 
