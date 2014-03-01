@@ -104,7 +104,7 @@ func Run(port int) {
 			ERROR.Fatalln("SSL is only supported for TCP sockets. Specify a port to listen on.")
 		}
 		ERROR.Fatalln("Failed to listen:",
-			Server.ListenAndServeTLS(HttpSslCert, HttpSslKey))
+			ListenAndServeTLSSNI(Server, HttpSslCert, HttpSslKey))
 	} else {
 		listener, err := net.Listen(network, localAddress)
 		if err != nil {

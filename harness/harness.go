@@ -166,8 +166,12 @@ func (h *Harness) Run() {
 
 		var err error
 		if revel.HttpSsl {
-			err = http.ListenAndServeTLS(addr, revel.HttpSslCert,
-				revel.HttpSslKey, h)
+			server := &http.Server{
+				Addr:    addr,
+				Handler: h,
+			}
+			err = revel.ListenAndServeTLSSNI(server, revel.HttpSslCert,
+				revel.HttpSslKey)
 		} else {
 			err = http.ListenAndServe(addr, h)
 		}
