@@ -200,7 +200,7 @@ type Email struct {
 	Match
 }
 
-func VaildEmail() Email {
+func ValidEmail() Email {
 	return Email{Match{emailPattern}}
 }
 
