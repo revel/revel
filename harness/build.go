@@ -125,11 +125,12 @@ func getAppVersion() string {
 	// Check for the git binary
 	if gitPath, err := exec.LookPath("git"); err == nil {
 		// Check for the .git directory
-		info, err := os.Stat(path.Join(revel.BasePath, ".git"))
+		gitDir := path.Join(revel.BasePath, ".git")
+		info, err := os.Stat(gitDir)
 		if (err != nil && os.IsNotExist(err)) || !info.IsDir() {
 			return ""
 		}
-		gitCmd := exec.Command(gitPath, "describe", "--always", "--dirty")
+		gitCmd := exec.Command(gitPath, "--git-dir=" + gitDir, "describe", "--always", "--dirty")
 		revel.TRACE.Println("Exec:", gitCmd.Args)
 		output, err := gitCmd.Output()
 
