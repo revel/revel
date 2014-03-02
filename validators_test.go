@@ -2,6 +2,7 @@ package revel
 
 import (
 	"fmt"
+	"reflect"
 	"regexp"
 	"strings"
 	"testing"
@@ -9,129 +10,95 @@ import (
 )
 
 const (
-	errorsMessage   = "validation should not be satisfied with %s\n"
-	noErrorsMessage = "validation should be satisfied with %s\n"
+	errorsMessage   = "validation for %s should not be satisfied with %s\n"
+	noErrorsMessage = "validation for %s should be satisfied with %s\n"
 )
 
+type Expect struct {
+	input          interface{}
+	expectedResult bool
+	errorMessage   string
+}
+
+func performTests(validator Validator, tests []Expect, t *testing.T) {
+	for _, test := range tests {
+		if validator.IsSatisfied(test.input) != test.expectedResult {
+			if test.expectedResult == false {
+				t.Errorf(errorsMessage, reflect.TypeOf(validator), test.errorMessage)
+			} else {
+				t.Errorf(noErrorsMessage, reflect.TypeOf(validator), test.errorMessage)
+			}
+		}
+	}
+}
+
 func TestRequired(t *testing.T) {
+
+	tests := []Expect{
+		Expect{nil, false, "nil data"},
+		Expect{"Testing", true, "non-empty string"},
+		Expect{"", false, "empty string"},
+		Expect{true, true, "true boolean"},
+		Expect{false, false, "false boolean"},
+		Expect{1, true, "positive integer"},
+		Expect{-1, true, "negative integer"},
+		Expect{0, false, "0 integer"},
+		Expect{time.Now(), true, "current time"},
+		Expect{time.Time{}, false, "a zero time"},
+		Expect{func() {}, true, "other non-nil data types"},
+	}
+
+	// testing both the struct and the helper method
 	for _, required := range []Required{Required{}, ValidRequired()} {
-		// nil
-		if required.IsSatisfied(nil) {
-			t.Errorf(errorsMessage, "nil data")
-		}
-
-		// string
-		if !required.IsSatisfied("Testing") {
-			t.Errorf(noErrorsMessage, "non-empty string")
-		}
-		if required.IsSatisfied("") {
-			t.Errorf(errorsMessage, "empty string")
-		}
-
-		// bool
-		if !required.IsSatisfied(true) {
-			t.Errorf(noErrorsMessage, "true boolean")
-		}
-		if required.IsSatisfied(false) {
-			t.Errorf(errorsMessage, "false boolean")
-		}
-
-		// int
-		if !required.IsSatisfied(1) {
-			t.Errorf(noErrorsMessage, "positive integer")
-		}
-		if !required.IsSatisfied(-1) {
-			t.Errorf(noErrorsMessage, "negative integer")
-		}
-		if required.IsSatisfied(0) {
-			t.Errorf(errorsMessage, "0 integer")
-		}
-
-		// time
-		if !required.IsSatisfied(time.Now()) {
-			t.Errorf(noErrorsMessage, "current time")
-		}
-		if required.IsSatisfied(time.Time{}) {
-			t.Errorf(errorsMessage, "a zero time")
-		}
-
-		// slice
-		if !required.IsSatisfied([]string{"Test"}) {
-			t.Errorf(noErrorsMessage, "len > 0")
-		}
-		if required.IsSatisfied([]string{}) {
-			t.Errorf(errorsMessage, "a slice len < 1")
-		}
-
-		// some other random data type
-		if !required.IsSatisfied(func() {}) {
-			t.Errorf(noErrorsMessage, "other non-nil data types")
-		}
+		performTests(required, tests, t)
 	}
 }
 
 func TestMin(t *testing.T) {
+	tests := []Expect{
+		Expect{11, true, "val > min"},
+		Expect{10, true, "val == min"},
+		Expect{9, false, "val < min"},
+		Expect{true, false, "TypeOf(val) != int"},
+	}
 	for _, min := range []Min{Min{10}, ValidMin(10)} {
-		if !min.IsSatisfied(11) {
-			t.Errorf(noErrorsMessage, "val > min")
-		}
-
-		if !min.IsSatisfied(10) {
-			t.Errorf(noErrorsMessage, "val == min")
-		}
-
-		if min.IsSatisfied(9) {
-			t.Errorf(noErrorsMessage, "val < min")
-		}
-
-		if min.IsSatisfied(true) {
-			t.Errorf(errorsMessage, "TypeOf(val) != int")
-		}
+		performTests(min, tests, t)
 	}
 }
 
 func TestMax(t *testing.T) {
+	tests := []Expect{
+		Expect{9, true, "val < max"},
+		Expect{10, true, "val == max"},
+		Expect{11, false, "val > max"},
+		Expect{true, false, "TypeOf(val) != int"},
+	}
 	for _, max := range []Max{Max{10}, ValidMax(10)} {
-		if !max.IsSatisfied(9) {
-			t.Errorf(noErrorsMessage, "val < max")
-		}
-
-		if !max.IsSatisfied(10) {
-			t.Errorf(noErrorsMessage, "val == max")
-		}
-
-		if max.IsSatisfied(11) {
-			t.Errorf(errorsMessage, "val > max")
-		}
-
-		if max.IsSatisfied(true) {
-			t.Errorf(errorsMessage, "TypeOf(val) != int")
-		}
+		performTests(max, tests, t)
 	}
 }
 
 func TestRange(t *testing.T) {
+	tests := []Expect{
+		Expect{50, true, "min <= val <= max"},
+		Expect{10, true, "val == min"},
+		Expect{100, true, "val == max"},
+		Expect{9, false, "val < min"},
+		Expect{101, false, "val > max"},
+	}
+
 	goodValidators := []Range{
 		Range{Min{10}, Max{100}},
 		ValidRange(10, 100),
 	}
 	for _, rangeValidator := range goodValidators {
-		if !rangeValidator.IsSatisfied(50) {
-			t.Errorf(noErrorsMessage, "min <= val <= max")
-		}
-		if !rangeValidator.IsSatisfied(10) {
-			t.Errorf(noErrorsMessage, "val == min")
-		}
-		if !rangeValidator.IsSatisfied(100) {
-			t.Errorf(noErrorsMessage, "val == max")
-		}
+		performTests(rangeValidator, tests, t)
+	}
 
-		if rangeValidator.IsSatisfied(9) {
-			t.Errorf(errorsMessage, "val < min")
-		}
-		if rangeValidator.IsSatisfied(101) {
-			t.Errorf(errorsMessage, "val > max")
-		}
+	tests = []Expect{
+		Expect{10, true, "min == val == max"},
+		Expect{9, false, "val < min && val < max && min == max"},
+		Expect{11, false, "val > min && val > max && min == max"},
 	}
 
 	goodValidators = []Range{
@@ -139,19 +106,17 @@ func TestRange(t *testing.T) {
 		ValidRange(10, 10),
 	}
 	for _, rangeValidator := range goodValidators {
-		if !rangeValidator.IsSatisfied(10) {
-			t.Errorf(noErrorsMessage, "min == val == max")
-		}
-
-		if rangeValidator.IsSatisfied(9) {
-			t.Errorf(noErrorsMessage, "val < min && val < max && min == max")
-		}
-
-		if rangeValidator.IsSatisfied(11) {
-			t.Errorf(noErrorsMessage, "val > min && val > max && min == max")
-		}
+		performTests(rangeValidator, tests, t)
 	}
 
+	tests = make([]Expect, 7)
+	for i, num := range []int{50, 100, 10, 9, 101, 0, -1} {
+		tests[i] = Expect{
+			num,
+			false,
+			"min > val < max",
+		}
+	}
 	// these are min/max with values swapped, so the min is the high
 	// and max is the low. rangeValidator.IsSatisfied() should ALWAYS
 	// result in false since val can never be greater than min and less
@@ -161,99 +126,66 @@ func TestRange(t *testing.T) {
 		ValidRange(100, 10),
 	}
 	for _, rangeValidator := range badValidators {
-		for _, i := range []int{50, 100, 10, 9, 101, 0, -1} {
-			if rangeValidator.IsSatisfied(i) {
-				t.Errorf(noErrorsMessage, "min > val < max")
-			}
-		}
+		performTests(rangeValidator, tests, t)
 	}
 }
 
 func TestMinSize(t *testing.T) {
+	greaterThanMessage := "len(val) >= min"
+	tests := []Expect{
+		Expect{"1", true, greaterThanMessage},
+		Expect{"12", true, greaterThanMessage},
+		Expect{[]int{1}, true, greaterThanMessage},
+		Expect{[]int{1, 2}, true, greaterThanMessage},
+		Expect{"", false, "len(val) <= min"},
+		Expect{[]int{}, false, "len(val) <= min"},
+		Expect{nil, false, "TypeOf(val) != string && TypeOf(val) != slice"},
+	}
+
 	for _, minSize := range []MinSize{MinSize{1}, ValidMinSize(1)} {
-		// string
-		if !minSize.IsSatisfied("1") || !minSize.IsSatisfied("12") {
-			t.Errorf(noErrorsMessage, "len(val) >= min")
-		}
-
-		// slice
-		if !minSize.IsSatisfied([]int{1}) || !minSize.IsSatisfied([]int{1, 2}) {
-			t.Errorf(noErrorsMessage, "len(val) >= min")
-		}
-
-		// string/slice
-		if minSize.IsSatisfied("") || minSize.IsSatisfied([]int{}) {
-			t.Errorf(errorsMessage, "len(val) <= min")
-		}
-
-		// non-string/slice type
-		if minSize.IsSatisfied(nil) {
-			t.Errorf(errorsMessage, "TypeOf(val) != string && TypeOf(val) != slice")
-		}
+		performTests(minSize, tests, t)
 	}
 }
 
 func TestMaxSize(t *testing.T) {
+	lessThanMessage := "len(val) <= max"
+	tests := []Expect{
+		Expect{"", true, lessThanMessage},
+		Expect{"12", true, lessThanMessage},
+		Expect{[]int{}, true, lessThanMessage},
+		Expect{[]int{1, 2}, true, lessThanMessage},
+		Expect{"123", false, "len(val) >= max"},
+		Expect{[]int{1, 2, 3}, "len(val) >= max"},
+	}
 	for _, maxSize := range []MaxSize{MaxSize{2}, ValidMaxSize(2)} {
-		// string
-		if !maxSize.IsSatisfied("") || !maxSize.IsSatisfied("12") {
-			t.Errorf(noErrorsMessage, "len(val) <= max")
-		}
-
-		// slice
-		if !maxSize.IsSatisfied([]int{}) || !maxSize.IsSatisfied([]int{1, 2}) {
-			t.Errorf(noErrorsMessage, "len(val) <= max")
-		}
-
-		// string/slice with len > max
-		if maxSize.IsSatisfied("123") || maxSize.IsSatisfied([]int{1, 2, 3}) {
-			t.Errorf(errorsMessage, "len(val) >= max")
-		}
-
-		// non-string/slice type
-		if maxSize.IsSatisfied(nil) {
-			t.Errorf(errorsMessage, "TypeOf(val) != string && TypeOf(val) != slice")
-		}
+		performTests(maxSize, tests, t)
 	}
 }
 
 func TestLength(t *testing.T) {
+	tests := []Expect{
+		Expect{"12", true, "len(val) == length"},
+		Expect{[]int{1, 2}, true, "len(val) == length"},
+		Expect{"123", false, "len(val) > length"},
+		Expect{[]int{1, 2, 3}, false, "len(val) > length"},
+		Expect{"1", false, "len(val) < length"},
+		Expect{[]int{1}, false, "len(val) < length"},
+		Expect{nil, false, "TypeOf(val) != string && TypeOf(val) != slice"},
+	}
 	for _, length := range []Length{Length{2}, ValidLength(2)} {
-		// string/slice
-		if !length.IsSatisfied("12") || !length.IsSatisfied([]int{1, 2}) {
-			t.Errorf(noErrorsMessage, "len(val) == length")
-		}
-
-		// string/slice with len > length
-		if length.IsSatisfied("123") || length.IsSatisfied([]int{1, 2, 3}) {
-			t.Errorf(errorsMessage, "len(val) > length")
-		}
-
-		// string/slice with len < length
-		if length.IsSatisfied("1") || length.IsSatisfied([]int{1}) {
-			t.Errorf(errorsMessage, "len(val) < length")
-		}
-
-		// non-string/slice type
-		if length.IsSatisfied(nil) {
-			t.Errorf(errorsMessage, "TypeOf(val) != string && TypeOf(val) != slice")
-		}
+		performTests(length, tests, t)
 	}
 }
 
 func TestMatch(t *testing.T) {
+	tests := []Expect{
+		Expect{"bca123", true, `"[abc]{3}\d*" matches "bca123"`},
+		Expect{"bc123", false, `"[abc]{3}\d*" does not match "bc123"`},
+		Expect{"", false, `"[abc]{3}\d*" does not match ""`},
+	}
 	regex := regexp.MustCompile(`[abc]{3}\d*`)
 	for _, match := range []Match{Match{regex}, ValidMatch(regex)} {
-		if !match.IsSatisfied("bca123") {
-			t.Errorf(noErrorsMessage, `"[abc]{3}\d*" matches "bca123"`)
-		}
-
-		if match.IsSatisfied("bc123") {
-			t.Errorf(errorsMessage, `"[abc]{3}\d*" does not match "ca123"`)
-		}
-		if match.IsSatisfied("") {
-			t.Errorf(errorsMessage, `"[abc]{3}\d*" does not match "c"`)
-		}
+		performTests(match, tests, t)
 	}
 }
 
