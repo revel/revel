@@ -155,7 +155,7 @@ func TestMaxSize(t *testing.T) {
 		Expect{[]int{}, true, lessThanMessage},
 		Expect{[]int{1, 2}, true, lessThanMessage},
 		Expect{"123", false, "len(val) >= max"},
-		Expect{[]int{1, 2, 3}, "len(val) >= max"},
+		Expect{[]int{1, 2, 3}, false, "len(val) >= max"},
 	}
 	for _, maxSize := range []MaxSize{MaxSize{2}, ValidMaxSize(2)} {
 		performTests(maxSize, tests, t)
