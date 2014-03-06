@@ -269,7 +269,7 @@ type BinaryResult struct {
 func (r *BinaryResult) Apply(req *Request, resp *Response) {
 	disposition := string(r.Delivery)
 	if r.Name != "" {
-		disposition += fmt.Sprintf("; filename=%s", r.Name)
+		disposition += fmt.Sprintf(`; filename="%s"`, r.Name)
 	}
 	resp.Out.Header().Set("Content-Disposition", disposition)
 
