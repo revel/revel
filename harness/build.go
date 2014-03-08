@@ -141,10 +141,37 @@ func getAppVersion() string {
 
 func cleanSource(dirs ...string) {
 	for _, dir := range dirs {
-		tmpPath := path.Join(revel.AppPath, dir)
-		err := os.RemoveAll(tmpPath)
+		cleanDir(dir)
+	}
+}
+
+func cleanDir(dir string) {
+	revel.INFO.Println("Cleaning dir " + dir)
+	tmpPath := path.Join(revel.AppPath, dir)
+	f, err := os.Open(tmpPath)
+	if err != nil {
+		revel.ERROR.Println("Failed to clean dir:", err)
+	} else {
+		defer f.Close()
+		infos, err := f.Readdir(0)
 		if err != nil {
-			revel.ERROR.Println("Failed to remove dir:", err)
+			revel.ERROR.Println("Failed to clean dir:", err)
+		} else {
+			for _, info := range infos {
+				path := path.Join(tmpPath, info.Name())
+				if info.IsDir() {
+					err := os.RemoveAll(path)
+					if err != nil {
+						revel.ERROR.Println("Failed to remove dir:", err)
+					}
+
+				} else {
+					err := os.Remove(path)
+					if err != nil {
+						revel.ERROR.Println("Failed to remove file:", err)
+					}
+				}
+			}
 		}
 	}
 }
@@ -157,14 +184,11 @@ func genSource(dir, filename, templateSource string, args map[string]interface{}
 		args)
 
 	// Create a fresh dir.
+	cleanSource(dir)
 	tmpPath := path.Join(revel.AppPath, dir)
-	err := os.RemoveAll(tmpPath)
-	if err != nil {
-		revel.ERROR.Println("Failed to remove dir:", err)
-	}
-	err = os.Mkdir(tmpPath, 0777)
-	if err != nil {
-		revel.ERROR.Fatalf("Failed to make tmp directory: %v", err)
+	err := os.Mkdir(tmpPath, 0777)
+	if err != nil && !os.IsExist(err) {
+		revel.ERROR.Fatalf("Failed to make '%v' directory: %v", dir, err)
 	}
 
 	// Create the file
