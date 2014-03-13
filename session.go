@@ -1,8 +1,10 @@
 package revel
 
 import (
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
-	"github.com/streadway/simpleuuid"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -42,15 +44,21 @@ func init() {
 // Id retrieves from the cookie or creates a time-based UUID identifying this
 // session.
 func (s Session) Id() string {
-	if uuidStr, ok := s[SESSION_ID_KEY]; ok {
-		return uuidStr
+	if sessionIdStr, ok := s[SESSION_ID_KEY]; ok {
+		return sessionIdStr
 	}
 
-	uuid, err := simpleuuid.NewTime(time.Now())
+	random_bytes := make([]byte, 16)
+	_, err := rand.Read(random_bytes)
+
 	if err != nil {
-		panic(err) // I don't think this can actually happen.
+		panic(err)
 	}
-	s[SESSION_ID_KEY] = uuid.String()
+
+	sessionId := sha256.New()
+	sessionId.Write(random_bytes)
+
+	s[SESSION_ID_KEY] = hex.EncodeToString(sessionId.Sum(nil))
 	return s[SESSION_ID_KEY]
 }
 
