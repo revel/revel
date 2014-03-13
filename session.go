@@ -2,7 +2,6 @@ package revel
 
 import (
 	"crypto/rand"
-	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"net/http"
@@ -48,17 +47,12 @@ func (s Session) Id() string {
 		return sessionIdStr
 	}
 
-	random_bytes := make([]byte, 16)
-	_, err := rand.Read(random_bytes)
-
-	if err != nil {
+	buffer := make([]byte, 32)
+	if _, err := rand.Read(buffer); err != nil {
 		panic(err)
 	}
 
-	sessionId := sha256.New()
-	sessionId.Write(random_bytes)
-
-	s[SESSION_ID_KEY] = hex.EncodeToString(sessionId.Sum(nil))
+	s[SESSION_ID_KEY] = hex.EncodeToString(buffer)
 	return s[SESSION_ID_KEY]
 }
 
