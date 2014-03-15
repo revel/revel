@@ -204,7 +204,8 @@ func (loader *TemplateLoader) Refresh() *Error {
 			fullSrcDir = basePath
 		}
 
-		funcErr := filepath.Walk(fullSrcDir, func(path string, info os.FileInfo, err error) error {
+		var templateWalker func(path string, info os.FileInfo, err error) error
+		templateWalker = func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				ERROR.Println("error walking templates:", err)
 				return nil
@@ -213,6 +214,7 @@ func (loader *TemplateLoader) Refresh() *Error {
 			// is it a symlinked template?
 			link, err := os.Lstat(path)
 			if err == nil && link.Mode()&os.ModeSymlink == os.ModeSymlink {
+				TRACE.Println("symlink template:", path)
 				// lookup the actual target & check for goodness
 				targetPath, err := filepath.EvalSymlinks(path)
 				if err != nil {
@@ -228,6 +230,12 @@ func (loader *TemplateLoader) Refresh() *Error {
 				// set the template path to the target of the symlink
 				path = targetPath
 				info = targetInfo
+
+				// need to save state and restore for recursive call to Walk on symlink
+				tmp := fullSrcDir
+				fullSrcDir = filepath.Dir(targetPath)
+				filepath.Walk(targetPath, templateWalker)
+				fullSrcDir = tmp
 			}
 
 			// Walk into watchable directories
@@ -334,7 +342,9 @@ func (loader *TemplateLoader) Refresh() *Error {
 					templateName, line, description)
 			}
 			return nil
-		})
+		}
+
+		funcErr := filepath.Walk(fullSrcDir, templateWalker)
 
 		// If there was an error with the Funcs, set it and return immediately.
 		if funcErr != nil {
