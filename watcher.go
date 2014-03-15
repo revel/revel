@@ -57,6 +57,16 @@ func (w *Watcher) Listen(listener Listener, roots ...string) {
 
 	// Walk through all files / directories under the root, adding each to watcher.
 	for _, p := range roots {
+		// is the directory / file a symlink?
+		f, err := os.Lstat(p)
+		if err == nil && f.Mode()&os.ModeSymlink == os.ModeSymlink {
+			realPath, err := filepath.EvalSymlinks(p)
+			if err != nil {
+				panic(err)
+			}
+			p = realPath
+		}
+
 		fi, err := os.Stat(p)
 		if err != nil {
 			ERROR.Println("Failed to stat watched path", p, ":", err)
@@ -78,6 +88,26 @@ func (w *Watcher) Listen(listener Listener, roots ...string) {
 			if err != nil {
 				ERROR.Println("Error walking path:", err)
 				return nil
+			}
+
+			// is it a symlinked template?
+			link, err := os.Lstat(path)
+			if err == nil && link.Mode()&os.ModeSymlink == os.ModeSymlink {
+				// lookup the actual target & check for goodness
+				targetPath, err := filepath.EvalSymlinks(path)
+				if err != nil {
+					ERROR.Println("Failed to read symlink", err)
+					return err
+				}
+				targetInfo, err := os.Stat(targetPath)
+				if err != nil {
+					ERROR.Println("Failed to stat symlink target", err)
+					return err
+				}
+
+				// set the template path to the target of the symlink
+				path = targetPath
+				info = targetInfo
 			}
 
 			if info.IsDir() {

@@ -191,10 +191,43 @@ func (loader *TemplateLoader) Refresh() *Error {
 	for _, basePath := range loader.paths {
 		// Walk only returns an error if the template loader is completely unusable
 		// (namely, if one of the TemplateFuncs does not have an acceptable signature).
-		funcErr := filepath.Walk(basePath, func(path string, info os.FileInfo, err error) error {
+
+		// Handling symlinked directories
+		var fullSrcDir string
+		f, err := os.Lstat(basePath)
+		if err == nil && f.Mode()&os.ModeSymlink == os.ModeSymlink {
+			fullSrcDir, err = filepath.EvalSymlinks(basePath)
+			if err != nil {
+				panic(err)
+			}
+		} else {
+			fullSrcDir = basePath
+		}
+
+		funcErr := filepath.Walk(fullSrcDir, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				ERROR.Println("error walking templates:", err)
 				return nil
+			}
+
+			// is it a symlinked template?
+			link, err := os.Lstat(path)
+			if err == nil && link.Mode()&os.ModeSymlink == os.ModeSymlink {
+				// lookup the actual target & check for goodness
+				targetPath, err := filepath.EvalSymlinks(path)
+				if err != nil {
+					ERROR.Println("Failed to read symlink", err)
+					return err
+				}
+				targetInfo, err := os.Stat(targetPath)
+				if err != nil {
+					ERROR.Println("Failed to stat symlink target", err)
+					return err
+				}
+
+				// set the template path to the target of the symlink
+				path = targetPath
+				info = targetInfo
 			}
 
 			// Walk into watchable directories
@@ -215,6 +248,7 @@ func (loader *TemplateLoader) Refresh() *Error {
 			// addTemplate allows the same template to be added multiple
 			// times with different template names.
 			addTemplate := func(templateName string) (err error) {
+				TRACE.Println("adding template: ", templateName)
 				// Convert template names to use forward slashes, even on Windows.
 				if os.PathSeparator == '\\' {
 					templateName = strings.Replace(templateName, `\`, `/`, -1) // `
@@ -224,6 +258,7 @@ func (loader *TemplateLoader) Refresh() *Error {
 				if _, ok := loader.templatePaths[templateName]; ok {
 					return nil
 				}
+
 				loader.templatePaths[templateName] = path
 
 				// Load the file if we haven't already
@@ -277,7 +312,7 @@ func (loader *TemplateLoader) Refresh() *Error {
 				return err
 			}
 
-			templateName := path[len(basePath)+1:]
+			templateName := path[len(fullSrcDir)+1:]
 
 			// Lower case the file name for case-insensitive matching
 			lowerCaseTemplateName := strings.ToLower(templateName)
