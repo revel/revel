@@ -428,7 +428,7 @@ func RouterFilter(c *Controller, fc []Filter) {
 	// Figure out the Controller/Action
 	var route *RouteMatch = MainRouter.Route(c.Request.Request)
 	if route == nil {
-		c.Result = c.NotFound("No matching route found")
+		c.Result = c.NotFound("No matching route found: " + c.Request.RequestURI)
 		return
 	}
 
