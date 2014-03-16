@@ -2,7 +2,6 @@ package revel
 
 import (
 	"code.google.com/p/go.net/websocket"
-	"fmt"
 	"net"
 	"net/http"
 	"strconv"
@@ -96,7 +95,7 @@ func Run(port int) {
 
 	go func() {
 		time.Sleep(100 * time.Millisecond)
-		fmt.Printf("Listening on %s...\n", localAddress)
+		INFO.Printf("Listening on %s...\n", localAddress)
 	}()
 
 	if HttpSsl {
