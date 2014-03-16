@@ -1,7 +1,6 @@
 package jobs
 
 import (
-	"fmt"
 	"github.com/revel/revel"
 	"github.com/robfig/cron"
 )
@@ -27,6 +26,6 @@ func init() {
 		}
 		selfConcurrent = revel.Config.BoolDefault("jobs.selfconcurrent", false)
 		MainCron.Start()
-		fmt.Println("Go to /@jobs to see job status.")
+		revel.INFO.Print("Go to /@jobs to see job status.")
 	})
 }
