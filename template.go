@@ -58,6 +58,16 @@ var (
 			return template.HTML("")
 		},
 		"field": NewField,
+		"firstof": func(args ...interface{}) interface{} {
+			for i, val := range args {
+				if val == nil || val.(string) == "" {
+					continue
+				}
+				return val
+			}
+			// if we get here, all of the args were 'null'
+			return template.HTML("")
+		},
 		"option": func(f *Field, val, label string) template.HTML {
 			selected := ""
 			if f.Flash() == val {
