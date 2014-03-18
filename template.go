@@ -58,6 +58,22 @@ var (
 			return template.HTML("")
 		},
 		"field": NewField,
+		"firstof": func(args ...interface{}) interface{} {
+			for _, val := range args {
+				switch val.(type) {
+				case nil:
+					continue
+				case string:
+					if val == "" {
+						continue
+					}
+					return val
+				default:
+					return val
+				}
+			}
+			return nil
+		},
 		"option": func(f *Field, val, label string) template.HTML {
 			selected := ""
 			if f.Flash() == val {
