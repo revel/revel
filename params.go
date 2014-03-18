@@ -111,7 +111,6 @@ func (p *Params) calcValues() url.Values {
 
 func ParamsFilter(c *Controller, fc []Filter) {
 	ParseParams(c.Params, c.Request)
-	c.RenderArgs["params"] = c.Params
 
 	// Clean up from the request.
 	defer func() {
