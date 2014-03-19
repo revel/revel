@@ -63,7 +63,7 @@ var (
 				if val == nil {
 					continue
 				}
-				if reflect.ValueOf(val).Kind() == reflect.String && val.(string) == "" {
+				if val, ok := val.(string); ok && val == "" {
 					continue
 				}
 				return val
