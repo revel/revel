@@ -60,7 +60,10 @@ var (
 		"field": NewField,
 		"firstof": func(args ...interface{}) interface{} {
 			for _, val := range args {
-				if val == nil || val.(string) == "" {
+				if val == nil {
+					continue
+				}
+				if reflect.ValueOf(val).Kind() == reflect.String && val.(string) == "" {
 					continue
 				}
 				return val
