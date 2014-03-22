@@ -18,6 +18,7 @@ var compressableMimes = [...]string{
 	"text/html",
 	"text/xml",
 	"text/css",
+	"application/json",
 	"application/xml",
 	"application/xhtml+xml",
 	"application/rss+xml",
