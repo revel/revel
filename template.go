@@ -45,17 +45,17 @@ var (
 	TemplateFuncs = map[string]interface{}{
 		"url": ReverseUrl,
 		"eq":  Equal,
-		"set": func(renderArgs map[string]interface{}, key string, value interface{}) template.HTML {
+		"set": func(renderArgs map[string]interface{}, key string, value interface{}) template.JS {
 			renderArgs[key] = value
-			return template.HTML("")
+			return template.JS("")
 		},
-		"append": func(renderArgs map[string]interface{}, key string, value interface{}) template.HTML {
+		"append": func(renderArgs map[string]interface{}, key string, value interface{}) template.JS {
 			if renderArgs[key] == nil {
 				renderArgs[key] = []interface{}{value}
 			} else {
 				renderArgs[key] = append(renderArgs[key].([]interface{}), value)
 			}
-			return template.HTML("")
+			return template.JS("")
 		},
 		"field": NewField,
 		"option": func(f *Field, val, label string) template.HTML {
