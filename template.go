@@ -59,14 +59,27 @@ var (
 		},
 		"field": NewField,
 		"firstof": func(args ...interface{}) interface{} {
-			for _, val := range args {
-				if val == nil {
+			for i, val := range args {
+				// if val == nil {
+				// 	continue
+				// }
+				// if val, ok := val.(string); ok && val == "" {
+				// 	continue
+				// }
+				// return val
+				switch val.(type) {
+				case nil:
 					continue
+				case string:
+					if val.(string) == "" {
+						continue
+					}
+					println("returning ", i)
+					return val
+				default:
+					println("returning ", i)
+					return val
 				}
-				if val, ok := val.(string); ok && val == "" {
-					continue
-				}
-				return val
 			}
 			// if we get here, all of the args were 'null'
 			return template.HTML("")
