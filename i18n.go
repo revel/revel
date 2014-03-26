@@ -13,7 +13,7 @@ const (
 	CurrentLocaleRenderArg = "currentLocale" // The key for the current locale render arg value
 
 	messageFilesDirectory = "messages"
-	messageFilePattern    = `^\w+.[a-zA-Z]{2}$`
+	messageFilePattern    = `^\w+\.[a-zA-Z]{2}$`
 	unknownValueFormat    = "??? %s ???"
 	defaultLanguageOption = "i18n.default_language"
 	localeCookieConfigKey = "i18n.cookie"
