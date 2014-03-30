@@ -78,6 +78,7 @@ func (m *Message) renderViewTemplate(templateFilePath string, args map[string]in
 	// Get the Template.
 	template, err := revel.MainTemplateLoader.Template(templateFilePath)
 	if err != nil {
+		revel.ERROR.Print(err)
 		return nil
 	}
 
@@ -85,6 +86,7 @@ func (m *Message) renderViewTemplate(templateFilePath string, args map[string]in
 
 	err = template.Render(&b, args)
 	if err != nil {
+		revel.ERROR.Print(err)
 		return nil
 	}
 
