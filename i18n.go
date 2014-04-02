@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"errors"
 )
 
 const (
@@ -106,7 +107,11 @@ func loadMessageFile(path string, info os.FileInfo, osError error) error {
 		if config, error := parseMessagesFile(path); error != nil {
 			return error
 		} else {
-			locale := parseLocaleFromFileName(info.Name())
+			locale, error := parseLocaleFromFileName(info.Name())
+			if error != nil {
+				WARN.Printf("Missing locale extension from file: \"%s\"", info.Name())
+				return nil
+			}
 
 			// If we have already parsed a message file for this locale, merge both
 			if _, exists := messages[locale]; exists {
@@ -130,9 +135,14 @@ func parseMessagesFile(path string) (messageConfig *config.Config, error error) 
 	return
 }
 
-func parseLocaleFromFileName(file string) string {
+func parseLocaleFromFileName(file string) (string, error) {
+	extensionWithDot := filepath.Ext(file)
+	if len(extensionWithDot) == 0 {
+		message := fmt.Sprintf("Missing locale extension from file:", file)
+		return "", errors.New(message)
+	}
 	extension := filepath.Ext(file)[1:]
-	return strings.ToLower(extension)
+	return strings.ToLower(extension), nil
 }
 
 func init() {
