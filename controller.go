@@ -164,6 +164,18 @@ func (c *Controller) NotFound(msg string, objs ...interface{}) Result {
 	})
 }
 
+func (c *Controller) InternalServerError(msg string, objs ...interface{}) Result {
+	finalText := msg
+	if len(objs) > 0 {
+		finalText = fmt.Sprintf(msg, objs...)
+	}
+	c.Response.Status = http.StatusInternalServerError
+	return c.RenderError(&Error{
+		Title:       "Internal Server Error",
+		Description: finalText,
+	})
+}
+
 func (c *Controller) Forbidden(msg string, objs ...interface{}) Result {
 	finalText := msg
 	if len(objs) > 0 {
