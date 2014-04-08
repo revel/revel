@@ -205,11 +205,7 @@ func parseRoutes(routesPath, joinedPath, content string, validate bool) ([]*Rout
 		if strings.HasSuffix(joinedPath, "/") && strings.HasPrefix(path, "/") {
 			joinedPath = joinedPath[0 : len(joinedPath)-1]
 		}
-		if AppRoot == "" {
-			path = strings.Join([]string{joinedPath, path}, "")
-		} else {
-			path = strings.Join([]string{AppRoot, joinedPath, path}, "")
-		}
+		path = strings.Join([]string{AppRoot, joinedPath, path}, "")
 
 		// This will import the module routes under the path described in the
 		// routes file (joinedPath param). e.g. "* /jobs module:jobs" -> all

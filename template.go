@@ -397,10 +397,10 @@ func ReverseUrl(args ...interface{}) (template.URL, error) {
 	}
 
 	action := args[0].(string)
-	actionSplit := strings.Split(action, ".")
-	if len(actionSplit) == 1 && actionSplit[0] == "Root" {
+	if action == "Root" {
 		return template.URL(AppRoot), nil
 	}
+	actionSplit := strings.Split(action, ".")
 	if len(actionSplit) != 2 {
 		return "", fmt.Errorf("reversing '%s', expected 'Controller.Action'", action)
 	}
