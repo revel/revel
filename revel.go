@@ -30,6 +30,7 @@ func (r *revelLogs) Write(p []byte) (n int, err error) {
 var (
 	// App details
 	AppName    string // e.g. "sample"
+	AppRoot    string // e.g. "/app1"
 	BasePath   string // e.g. "/Users/robfig/gocode/src/corp/sample"
 	AppPath    string // e.g. "/Users/robfig/gocode/src/corp/sample/app"
 	ViewsPath  string // e.g. "/Users/robfig/gocode/src/corp/sample/app/views"
@@ -178,6 +179,7 @@ func Init(mode, importPath, srcPath string) {
 	}
 
 	AppName = Config.StringDefault("app.name", "(not set)")
+	AppRoot = Config.StringDefault("app.root", "")
 	CookiePrefix = Config.StringDefault("cookie.prefix", "REVEL")
 	CookieHttpOnly = Config.BoolDefault("cookie.httponly", false)
 	CookieSecure = Config.BoolDefault("cookie.secure", false)

@@ -391,12 +391,15 @@ func (gotmpl GoTemplate) Content() []string {
 
 // Return a url capable of invoking a given controller method:
 // "Application.ShowApp 123" => "/app/123"
-func ReverseUrl(args ...interface{}) (string, error) {
+func ReverseUrl(args ...interface{}) (template.URL, error) {
 	if len(args) == 0 {
 		return "", fmt.Errorf("no arguments provided to reverse route")
 	}
 
 	action := args[0].(string)
+	if action == "Root" {
+		return template.URL(AppRoot), nil
+	}
 	actionSplit := strings.Split(action, ".")
 	if len(actionSplit) != 2 {
 		return "", fmt.Errorf("reversing '%s', expected 'Controller.Action'", action)
@@ -414,7 +417,7 @@ func ReverseUrl(args ...interface{}) (string, error) {
 		Unbind(argsByName, c.MethodType.Args[i].Name, argValue)
 	}
 
-	return MainRouter.Reverse(args[0].(string), argsByName).Url, nil
+	return template.URL(MainRouter.Reverse(args[0].(string), argsByName).Url), nil
 }
 
 func Slug(text string) string {
