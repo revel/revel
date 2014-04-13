@@ -58,7 +58,7 @@ var (
 			return template.HTML("")
 		},
 		"field": NewField,
-		"option": func(f *revel.Field, val interface{}, label string) template.HTML {
+		"option": func(f *Field, val interface{}, label string) template.HTML {
 			selected := ""
 			if f.Flash() == val {
 				selected = " selected"
