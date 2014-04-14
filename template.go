@@ -58,13 +58,16 @@ var (
 			return template.JS("")
 		},
 		"field": NewField,
-		"option": func(f *Field, val, label string) template.HTML {
+		"option": func(f *Field, val interface{}, label string) template.HTML {
 			selected := ""
 			if f.Flash() == val {
 				selected = " selected"
+			} else if f.Flash() == "" && f.Value() == val {
+				selected = " selected"
 			}
+
 			return template.HTML(fmt.Sprintf(`<option value="%s"%s>%s</option>`,
-				html.EscapeString(val), selected, html.EscapeString(label)))
+				html.EscapeString(fmt.Sprintf("%v", val)), selected, html.EscapeString(label)))
 		},
 		"radio": func(f *Field, val string) template.HTML {
 			checked := ""
