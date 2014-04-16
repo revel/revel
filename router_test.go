@@ -374,6 +374,18 @@ func BenchmarkRouterFilter(b *testing.B) {
 	}
 }
 
+func TestOverrideMethodFilter(t *testing.T) {
+	paramRequest, _ := http.NewRequest("POST", "/hotels/3?_method=PUT", nil)
+	c := Controller{
+		Request: NewRequest(paramRequest),
+		Params:  &Params{},
+	}
+
+	if HttpMethodOverride(&c, NilChain); c.Request.Request.Method != "PUT" {
+		t.Errorf("Expected to override current method '%s' in route, found '%s' instead", "", c.Request.Request.Method)
+	}
+}
+
 // Helpers
 
 func eq(t *testing.T, name string, a, b interface{}) bool {

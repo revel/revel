@@ -464,3 +464,24 @@ func RouterFilter(c *Controller, fc []Filter) {
 
 	fc[0](c, fc[1:])
 }
+
+// Override allowed http methods via form or browser param
+func HttpMethodOverride(c *Controller, fc []Filter) {
+	// An array of HTTP verbs allowed to override.
+	verbs := []string{"DELETE", "PATCH", "PUT"}
+
+	param := c.Request.Request.FormValue("_method")
+
+	if param != "" {
+		method := strings.ToUpper(param)
+		// Check if param is allowed
+		for _, verb := range verbs {
+			if verb == method {
+				c.Request.Request.Method = method
+				continue
+			}
+		}
+	}
+
+	fc[0](c, fc[1:]) // Execute the next filter stage.
+}
