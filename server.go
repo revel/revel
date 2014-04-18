@@ -161,3 +161,5 @@ var startupHooks []func()
 func OnAppStart(f func()) {
 	startupHooks = append(startupHooks, f)
 }
+
+var shutdownHooks []func()
