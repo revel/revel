@@ -228,6 +228,10 @@ func runShutdownHooks() {
 	INFO.Println("Done")
 }
 
+func OnAppShutdown(f func()) {
+	shutdownHooks = append(shutdownHooks, f)
+}
+
 func StopServer() {
 	INFO.Println("Server shutdown in progress")
 	stopSig <- 1
