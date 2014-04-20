@@ -18,7 +18,7 @@ var (
 	MainTemplateLoader *TemplateLoader
 	MainWatcher        *Watcher
 	Server             *http.Server
-	wg                 *sync.WaitGroup
+	wg                 sync.WaitGroup
 	stopSig            = make(chan int)
 )
 
@@ -164,6 +164,7 @@ func Run(port int) {
 		}
 
 	} else {
+		INFO.Println("Starting service")
 		if err := http.Serve(listener, http.HandlerFunc(handle)); err != nil {
 			ERROR.Println(err)
 		}

@@ -286,7 +286,6 @@ import (
 	"flag"
 	"os"
 	"os/signal"
-	"syscall"
 	"reflect"
 	"github.com/revel/revel"{{range $k, $v := $.ImportPaths}}
 	{{$v}} "{{$k}}"{{end}}
@@ -334,14 +333,13 @@ func main() {
 
 	signalChannel := make(chan os.Signal, 1)
 	signal.Notify(signalChannel,
-		os.Interrupt,
-		syscall.SIGTERM)
+		os.Interrupt, os.Kill)
 
 	go func() {
 		sig := <- signalChannel
-		revel.INFO("Server interrupt")
+		revel.INFO.Println("Server interrupt")
 		switch sig {
-		case os.Interrupt, syscall.SIGTERM:
+		case os.Interrupt, os.Kill:
 			revel.StopServer()
 			break
 		}
