@@ -157,6 +157,7 @@ var (
 			return date.Format(DateTimeFormat)
 		},
 		"slug": Slug,
+		"even": func(a int) bool { return (a % 2) == 0 },
 	}
 )
 
