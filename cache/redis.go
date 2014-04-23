@@ -48,11 +48,14 @@ func NewRedisCache(host string, password string, defaultExpiration time.Duration
 }
 
 func (c RedisCache) Set(key string, value interface{}, expires time.Duration) error {
-	return c.invoke(c.pool.Get().Do, key, value, expires)
+	conn := c.pool.Get()
+	defer conn.Close()
+	return c.invoke(conn.Do, key, value, expires)
 }
 
 func (c RedisCache) Add(key string, value interface{}, expires time.Duration) error {
 	conn := c.pool.Get()
+	defer conn.Close()
 	if exists(conn, key) {
 		return ErrNotStored
 	}
@@ -61,6 +64,7 @@ func (c RedisCache) Add(key string, value interface{}, expires time.Duration) er
 
 func (c RedisCache) Replace(key string, value interface{}, expires time.Duration) error {
 	conn := c.pool.Get()
+	defer conn.Close()
 	if !exists(conn, key) {
 		return ErrNotStored
 	}
