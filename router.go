@@ -467,20 +467,36 @@ func RouterFilter(c *Controller, fc []Filter) {
 
 // Override allowed http methods via form or browser param
 func HttpMethodOverride(c *Controller, fc []Filter) {
-	// An array of HTTP verbs allowed to override.
-	verbs := []string{"DELETE", "PATCH", "PUT"}
+	// An array of HTTP verbs allowed.
+	verbs := []string{"POST", "PUT", "PATCH", "DELETE"}
 
-	param := c.Request.Request.FormValue("_method")
+	c.Request.Request.ParseForm()
+	params := c.Request.Request.Form
 
-	if param != "" {
-		method := strings.ToUpper(param)
+	// Check if param _method is on the request
+	if param, ok := params["_method"]; ok {
+		// Validate if _method is empty
+		if len(param) < 0 {
+			c.Result = c.NotFound("No matching route found: " + c.Request.RequestURI)
+			return
+		}
+
+		override := false
+		method := strings.ToUpper(param[0])
 		// Check if param is allowed
 		for _, verb := range verbs {
 			if verb == method {
-				c.Request.Request.Method = method
-				continue
+				override = true
+				break
 			}
 		}
+
+		if !override {
+			c.Result = c.NotFound("No matching route found: " + c.Request.RequestURI)
+			return
+		}
+
+		c.Request.Request.Method = method
 	}
 
 	fc[0](c, fc[1:]) // Execute the next filter stage.
