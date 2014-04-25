@@ -470,27 +470,32 @@ func HttpMethodOverride(c *Controller, fc []Filter) {
 	// An array of HTTP verbs allowed.
 	verbs := []string{"POST", "PUT", "PATCH", "DELETE"}
 
-	c.Request.Request.ParseForm()
-	params := c.Request.Request.Form
+	method := strings.ToUpper(c.Request.Request.Method)
 
-	// Check if param _method is on the request
-	if param, ok := params["_method"]; ok {
-		override := false
-		method := strings.ToUpper(param[0])
-		// Check if param is allowed
-		for _, verb := range verbs {
-			if verb == method {
-				override = true
-				break
+	if method == "POST" {
+
+		param := strings.ToUpper(c.Request.Request.PostFormValue("_method"))
+
+		if len(param) > 0 {
+			override := false
+			// Check if param is allowed
+			for _, verb := range verbs {
+				if verb == param {
+					override = true
+					break
+				}
 			}
-		}
 
-		if !override {
-			c.Result = c.NotFound("No matching route found: " + c.Request.RequestURI)
-			return
-		}
+			if !override {
+				c.Response.Status = 405
+				return c.RenderError(&Error{
+					Title:       "Method not allowed",
+					Description: "",
+				})
+			}
 
-		c.Request.Request.Method = method
+			c.Request.Request.Method = param
+		}
 	}
 
 	fc[0](c, fc[1:]) // Execute the next filter stage.
