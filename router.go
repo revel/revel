@@ -475,12 +475,6 @@ func HttpMethodOverride(c *Controller, fc []Filter) {
 
 	// Check if param _method is on the request
 	if param, ok := params["_method"]; ok {
-		// Validate if _method is empty
-		if len(param) < 0 {
-			c.Result = c.NotFound("No matching route found: " + c.Request.RequestURI)
-			return
-		}
-
 		override := false
 		method := strings.ToUpper(param[0])
 		// Check if param is allowed
