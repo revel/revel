@@ -59,7 +59,7 @@ var (
 		},
 		"field": NewField,
 		"firstof": func(args ...interface{}) interface{} {
-			for i, val := range args {
+			for _, val := range args {
 				switch val.(type) {
 				case nil:
 					continue
