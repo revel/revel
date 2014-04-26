@@ -76,9 +76,7 @@ var (
 		},
 		"option": func(f *Field, val interface{}, label string) template.HTML {
 			selected := ""
-			if f.Flash() == val {
-				selected = " selected"
-			} else if f.Flash() == "" && f.Value() == val {
+			if f.Flash() == val || (f.Flash() == "" && f.Value() == val) {
 				selected = " selected"
 			}
 
