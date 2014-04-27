@@ -486,15 +486,17 @@ func HttpMethodOverride(c *Controller, fc []Filter) {
 				}
 			}
 
-			if !override {
+			if override {
+				c.Request.Request.Method = param
+			} else {
 				c.Response.Status = 405
-				return c.RenderError(&Error{
+				c.Result = c.RenderError(&Error{
 					Title:       "Method not allowed",
 					Description: "",
 				})
+				return
 			}
 
-			c.Request.Request.Method = param
 		}
 	}
 

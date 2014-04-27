@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 	"testing"
 )
 
@@ -375,10 +376,10 @@ func BenchmarkRouterFilter(b *testing.B) {
 }
 
 func TestOverrideMethodFilter(t *testing.T) {
-	paramRequest, _ := http.NewRequest("POST", "/hotels/3?_method=PUT", nil)
+	req, _ := http.NewRequest("POST", "/hotels/3", strings.NewReader("_method=put"))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; param=value")
 	c := Controller{
-		Request: NewRequest(paramRequest),
-		Params:  &Params{},
+		Request: NewRequest(req),
 	}
 
 	if HttpMethodOverride(&c, NilChain); c.Request.Request.Method != "PUT" {
