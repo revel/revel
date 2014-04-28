@@ -20,7 +20,6 @@ func NewRedisCache(host string, password string, defaultExpiration time.Duration
 		IdleTimeout: time.Duration(revel.Config.IntDefault("cache.redis.idletimeout", 240)) * time.Second,
 		Dial: func() (redis.Conn, error) {
 			protocol := revel.Config.StringDefault("cache.redis.protocol", "tcp")
-			// the redis protocol should probably be made sett-able
 			c, err := redis.Dial(protocol, host)
 			if err != nil {
 				return nil, err
