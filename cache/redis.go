@@ -2,6 +2,7 @@ package cache
 
 import (
 	"github.com/garyburd/redigo/redis"
+	"github.com/revel/revel"
 	"time"
 )
 
@@ -14,11 +15,13 @@ type RedisCache struct {
 // until redigo supports sharding/clustering, only one host will be in hostList
 func NewRedisCache(host string, password string, defaultExpiration time.Duration) RedisCache {
 	var pool = &redis.Pool{
-		MaxIdle:     5,
-		IdleTimeout: 240 * time.Second,
+		MaxIdle:     revel.Config.IntDefault("cache.redis.maxidle", 5),
+		MaxActive:   revel.Config.IntDefault("cache.redis.maxactive", 0),
+		IdleTimeout: time.Duration(revel.Config.IntDefault("cache.redis.idletimeout", 240)) * time.Second,
 		Dial: func() (redis.Conn, error) {
+			protocol := revel.Config.StringDefault("cache.redis.protocol", "tcp")
 			// the redis protocol should probably be made sett-able
-			c, err := redis.Dial("tcp", host)
+			c, err := redis.Dial(protocol, host)
 			if err != nil {
 				return nil, err
 			}
