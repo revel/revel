@@ -170,36 +170,8 @@ func (w *Watcher) Notify() *Error {
 	w.notifyMutex.Lock()
 	defer w.notifyMutex.Unlock()
 
-	for i, watcher := range w.watchers {
-		listener := w.listeners[i]
-
-		// Pull all pending events / errors from the watcher.
-		refresh := false
-		for {
-			select {
-			case ev := <-watcher.Events:
-				// Ignore changes to dotfiles.
-				if strings.HasPrefix(path.Base(ev.Name), ".") {
-					continue
-				}
-
-				if dl, ok := listener.(DiscerningListener); ok {
-					if !dl.WatchFile(ev.Name) || ev.Op == fsnotify.Chmod {
-						continue
-					}
-				}
-
-				refresh = true
-				continue
-			case <-watcher.Errors:
-				continue
-			default:
-				// No events left to pull
-			}
-			break
-		}
-
-		if w.forceRefresh || refresh || w.lastError == i {
+	for i, listener := range w.listeners {
+		if w.forceRefresh || w.lastError == i {
 			err := listener.Refresh()
 			if err != nil {
 				w.lastError = i
