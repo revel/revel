@@ -131,8 +131,36 @@ func (w *Watcher) Listen(listener Listener, roots ...string) {
 		filepath.Walk(p, watcherWalker)
 	}
 
+	// Create goroutine to notify file changes in real time
+	go w.NotifyWhenUpdated(listener, watcher)
+
 	w.watchers = append(w.watchers, watcher)
 	w.listeners = append(w.listeners, listener)
+}
+
+// Wait until receiving a file change event.
+// When a watcher receives an event, the watcher notifies it.
+func (w *Watcher) NotifyWhenUpdated(listener Listener, watcher *fsnotify.Watcher) {
+	for {
+		// Do not catch default for performance.
+		select {
+		case ev := <-watcher.Event:
+			// Ignore changes to dotfiles.
+			if !strings.HasPrefix(path.Base(ev.Name), ".") {
+				if dl, ok := listener.(DiscerningListener); ok {
+					if !dl.WatchFile(ev.Name) || ev.IsAttrib() {
+						continue
+					}
+				}
+
+				// Use w.Notify() instead of listener.Refresh() to serialize w.Notify() calling
+				w.forceRefresh = true
+				go w.Notify()
+			}
+		case <-watcher.Error:
+			continue
+		}
+	}
 }
 
 // Notify causes the watcher to forward any change events to listeners.
