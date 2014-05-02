@@ -16,6 +16,10 @@ type MergedConfig struct {
 	section string // Check this section first, then fall back to DEFAULT
 }
 
+func NewMergedConfig() *MergedConfig {
+	return &MergedConfig{config.NewDefault(), ""}
+}
+
 func LoadConfig(confName string) (*MergedConfig, error) {
 	var err error
 	for _, confPath := range ConfPaths {

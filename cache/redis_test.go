@@ -2,7 +2,6 @@ package cache
 
 import (
 	"github.com/revel/revel"
-	"github.com/robfig/config"
 	"net"
 	"testing"
 	"time"
@@ -12,7 +11,7 @@ import (
 const redisTestServer = "localhost:6379"
 
 var newRedisCache = func(t *testing.T, defaultExpiration time.Duration) Cache {
-	revel.Config = &revel.MergedConfig{config.NewDefault(), ""}
+	revel.Config = revel.NewMergedConfig()
 
 	c, err := net.Dial("tcp", redisTestServer)
 	if err == nil {
