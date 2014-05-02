@@ -16,7 +16,7 @@ type MergedConfig struct {
 	section string // Check this section first, then fall back to DEFAULT
 }
 
-func NewMergedConfig() *MergedConfig {
+func NewEmptyConfig() *MergedConfig {
 	return &MergedConfig{config.NewDefault(), ""}
 }
 
