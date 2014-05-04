@@ -3,6 +3,7 @@ package revel
 import (
 	"compress/gzip"
 	"compress/zlib"
+	"io"
 	"net/http"
 	"strconv"
 	"strings"
@@ -27,7 +28,8 @@ var compressableMimes = [...]string{
 }
 
 type WriteFlusher interface {
-	Write([]byte) (int, error)
+	io.Writer
+	io.Closer
 	Flush() error
 }
 
@@ -81,6 +83,7 @@ func (c *CompressResponseWriter) Write(b []byte) (int, error) {
 	}
 
 	if c.compressionType != "" {
+		defer c.compressWriter.Close()
 		defer c.compressWriter.Flush()
 		return c.compressWriter.Write(b)
 	} else {
