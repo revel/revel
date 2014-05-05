@@ -180,7 +180,8 @@ var (
 
 func NewTemplateLoader(paths []string) *TemplateLoader {
 	loader := &TemplateLoader{
-		paths: paths,
+		templateSet: template.New("").Funcs(TemplateFuncs),
+		paths:       paths,
 	}
 	return loader
 }
@@ -205,7 +206,6 @@ func (loader *TemplateLoader) Refresh() *Error {
 	}
 
 	// Walk through the template loader's paths and build up a template set.
-	var templateSet *template.Template = nil
 	for _, basePath := range loader.paths {
 		// Walk only returns an error if the template loader is completely unusable
 		// (namely, if one of the TemplateFuncs does not have an acceptable signature).
@@ -220,6 +220,7 @@ func (loader *TemplateLoader) Refresh() *Error {
 				if !loader.WatchDir(info) {
 					return filepath.SkipDir
 				}
+
 				return nil
 			}
 
@@ -232,17 +233,17 @@ func (loader *TemplateLoader) Refresh() *Error {
 
 			// addTemplate allows the same template to be added multiple
 			// times with different template names.
-			addTemplate := func(templateName string) (err error) {
+			addTemplate := func(name string) (err error) {
 				// Convert template names to use forward slashes, even on Windows.
 				if os.PathSeparator == '\\' {
-					templateName = strings.Replace(templateName, `\`, `/`, -1) // `
+					name = strings.Replace(name, `\`, `/`, -1)
 				}
 
 				// If we already loaded a template of this name, skip it.
-				if _, ok := loader.templatePaths[templateName]; ok {
+				if _, ok := loader.templatePaths[name]; ok {
 					return nil
 				}
-				loader.templatePaths[templateName] = path
+				loader.templatePaths[name] = path
 
 				// Load the file if we haven't already
 				if fileStr == "" {
@@ -255,43 +256,45 @@ func (loader *TemplateLoader) Refresh() *Error {
 					fileStr = string(fileBytes)
 				}
 
-				if templateSet == nil {
-					// Create the template set.  This panics if any of the funcs do not
-					// conform to expectations, so we wrap it in a func and handle those
-					// panics by serving an error page.
-					var funcError *Error
-					func() {
-						defer func() {
-							if err := recover(); err != nil {
-								funcError = &Error{
-									Title:       "Panic (Template Loader)",
-									Description: fmt.Sprintln(err),
-								}
+				// Create the template set.  This panics if any of the funcs do not
+				// conform to expectations, so we wrap it in a func and handle those
+				// panics by serving an error page.
+				var (
+					// templateSet = amber.New(name)
+					// templateSet.Parse(s string) (*template.Template, error)
+					templateSet = template.New(name).Funcs(TemplateFuncs)
+
+					funcError *Error
+				)
+
+				func() {
+					defer func() {
+						if err := recover(); err != nil {
+							funcError = &Error{
+								Title:       "Panic (Template Loader)",
+								Description: fmt.Sprintln(err),
 							}
-						}()
-						templateSet = template.New(templateName).Funcs(TemplateFuncs)
-						// If alternate delimiters set for the project, change them for this set
-						if splitDelims != nil && basePath == ViewsPath {
-							templateSet.Delims(splitDelims[0], splitDelims[1])
-						} else {
-							// Reset to default otherwise
-							templateSet.Delims("", "")
 						}
-						_, err = templateSet.Parse(fileStr)
 					}()
 
-					if funcError != nil {
-						return funcError
-					}
-
-				} else {
+					// If alternate delimiters set for the project, change them for this set
 					if splitDelims != nil && basePath == ViewsPath {
 						templateSet.Delims(splitDelims[0], splitDelims[1])
 					} else {
+						// Reset to default otherwise
 						templateSet.Delims("", "")
 					}
-					_, err = templateSet.New(templateName).Parse(fileStr)
+
+					_, err = templateSet.Parse(fileStr)
+					if err == nil {
+						loader.templateSet.AddParseTree(name, templateSet.Tree)
+					}
+				}()
+
+				if funcError != nil {
+					return funcError
 				}
+
 				return err
 			}
 
@@ -327,7 +330,6 @@ func (loader *TemplateLoader) Refresh() *Error {
 	}
 
 	// Note: compileError may or may not be set.
-	loader.templateSet = templateSet
 	return loader.compileError
 }
 
