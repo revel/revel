@@ -154,11 +154,11 @@ func Init(mode, importPath, srcPath string) {
 
 	// Load run mode app.conf
 	// It will overwrite default app.conf options if exists
-	configMode = "dev"
+	configMode := "dev"
 	if mode != "" {
 		configMode = mode
 
-		if modeConfig, err := LoadConfig("app." + configMode + ".conf"); err != nil {
+		if modeConfig, err := LoadConfig("app." + configMode + ".conf"); err == nil {
 			Config.Merge(modeConfig)
 		}
 	}
