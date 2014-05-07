@@ -90,10 +90,10 @@ RCPT TO:<bar@foo.com>
 RCPT TO:<cc1@test.com>
 RCPT TO:<cc2@test.com>
 DATA
-From: foo@bar.com 
-To: bar@foo.com 
-Cc: cc1@test.com, cc2@test.com 
-Subject: from message1, single connection 
+From: foo@bar.com
+To: bar@foo.com
+Cc: cc1@test.com, cc2@test.com
+Subject: from message1, single connection
 Message-Id: <message-id1@bar.com>
 Date: Sun, 23 Feb 2014 00:00:00 GMT
 MIME-Version: 1.0
@@ -109,9 +109,9 @@ RCPT TO:<nonoo@test.com>
 RCPT TO:<bcc1@test.com>
 RCPT TO:<bcc2@test.com>
 DATA
-From: abc@test.com 
-To: def@test.com, nonoo@test.com 
-Subject: =?UTF-8?B?6L+Z5Liq5piv56ysMuWwgWZyb20gbWVzc2FnZTIsIHNpbmdsZSBjb25uZWN0aW9u?= 
+From: abc@test.com
+To: def@test.com, nonoo@test.com
+Subject: =?UTF-8?B?6L+Z5Liq5piv56ysMuWwgWZyb20gbWVzc2FnZTIsIHNpbmdsZSBjb25uZWN0aW9u?=
 Message-Id: <message-id2@test.com>
 Date: Sun, 23 Feb 2014 00:00:00 GMT
 MIME-Version: 1.0
@@ -172,10 +172,10 @@ RSET
 MAIL FROM:<sender@test.com>
 RCPT TO:<to1@test.com>
 DATA
-From: sender@test.com 
-Reply-To: reply@test.com 
-To: to1@test.com 
-Subject: =?UTF-8?B?5oiR55qE56ysM+S4qg==?= 
+From: sender@test.com
+Reply-To: reply@test.com
+To: to1@test.com
+Subject: =?UTF-8?B?5oiR55qE56ysM+S4qg==?=
 Message-Id: <message-id1@test.com>
 Date: Sun, 23 Feb 2014 00:00:00 GMT
 MIME-Version: 1.0
@@ -188,10 +188,10 @@ RSET
 MAIL FROM:<sender@test.com>
 RCPT TO:<to2@test.com>
 DATA
-From: sender@test.com 
-Reply-To: reply@test.com 
-To: to2@test.com 
-Subject: =?UTF-8?B?5oiR55qE56ysNOS4qg==?= 
+From: sender@test.com
+Reply-To: reply@test.com
+To: to2@test.com
+Subject: =?UTF-8?B?5oiR55qE56ysNOS4qg==?=
 Message-Id: <message-id2@test.com>
 Date: Sun, 23 Feb 2014 00:00:00 GMT
 MIME-Version: 1.0
@@ -204,10 +204,10 @@ RSET
 MAIL FROM:<sender@test.com>
 RCPT TO:<to3@test.com>
 DATA
-From: sender@test.com 
-Reply-To: reply@test.com 
-To: to3@test.com 
-Subject: =?UTF-8?B?5oiR55qE56ysNeS4qg==?= 
+From: sender@test.com
+Reply-To: reply@test.com
+To: to3@test.com
+Subject: =?UTF-8?B?5oiR55qE56ysNeS4qg==?=
 Message-Id: <message-id3@test.com>
 Date: Sun, 23 Feb 2014 00:00:00 GMT
 MIME-Version: 1.0
@@ -269,7 +269,7 @@ http://www.arkxu.com
 
 	// reset the revel template loader for testing purpose
 	viewPath, _ := os.Getwd()
-	revel.MainTemplateLoader = revel.NewTemplateLoader([]string{viewPath})
+	revel.MainTemplateLoader = revel.NewTemplateLoader("default", []string{viewPath})
 	revel.MainTemplateLoader.Refresh()
 
 	// arguments used for template rendering
