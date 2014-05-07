@@ -3,7 +3,7 @@ package controllers
 import (
 	"bytes"
 	"fmt"
-	"github.com/revel/revel"
+	"github.com/mcspring/revel"
 	"html"
 	"html/template"
 	"reflect"

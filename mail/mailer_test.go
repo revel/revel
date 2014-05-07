@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/revel/revel"
+	"github.com/mcspring/revel"
 )
 
 type faker struct {

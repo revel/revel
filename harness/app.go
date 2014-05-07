@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/revel/revel"
+	"github.com/mcspring/revel"
 	"io"
 	"os"
 	"os/exec"
