@@ -193,7 +193,7 @@ type Template interface {
 var _TEMPLATE_ENGINERS = map[string]TemplateEnginer{}
 
 func RegisterTemplateEnginer(name string, enginer TemplateEnginer) {
-	// void overwriting
+	// avoid enginer overwriting
 	if _, ok := _TEMPLATE_ENGINERS[name]; ok {
 		return
 	}
