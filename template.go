@@ -22,7 +22,7 @@ var (
 	whiteSpacePattern  = regexp.MustCompile(`\s+`)
 
 	// The default functions available for use in the templates.
-	TemplateFuncs = template.FuncMap{
+	TemplateHelpers = template.FuncMap{
 		// Return a url capable of invoking a given controller method:
 		// "Application.ShowApp 123" => "/app/123"
 		"url": func(args ...interface{}) (string, error) {
@@ -206,12 +206,12 @@ type TemplateLoader struct {
 
 func NewTemplateLoader(paths []string) *TemplateLoader {
 	enginer := NewGoTemplateEngine()
-	enginer.SetHelpers(TemplateFuncs)
+	enginer.SetHelpers(TemplateHelpers)
 
 	return &TemplateLoader{
 		engine:      enginer,
 		paths:       paths,
-		templateSet: template.New("").Funcs(TemplateFuncs),
+		templateSet: template.New("").Funcs(TemplateHelpers),
 	}
 }
 
@@ -237,7 +237,7 @@ func (loader *TemplateLoader) Refresh() *Error {
 	// Walk through the template loader's paths and build up a template set.
 	for _, basePath := range loader.paths {
 		// Walk only returns an error if the template loader is completely unusable
-		// (namely, if one of the TemplateFuncs does not have an acceptable signature).
+		// (namely, if one of the TemplateHelpers does not have an acceptable signature).
 		walkErr := filepath.Walk(basePath, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				ERROR.Println("[filepath.Walk] ", path, " : ", err)
