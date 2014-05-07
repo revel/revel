@@ -70,7 +70,7 @@ func Run(port int) {
 		localAddress = address + ":" + strconv.Itoa(port)
 	}
 
-	MainTemplateLoader = NewTemplateLoader(TemplatePaths)
+	MainTemplateLoader = NewTemplateLoader("default", TemplatePaths)
 
 	// The "watch" config variable can turn on and off all watching.
 	// (As a convenient way to control it all together.)
