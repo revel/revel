@@ -15,6 +15,10 @@ import (
 	"time"
 )
 
+func init() {
+	RegisterTemplateEnginer("default", NewGoTemplateEngine())
+}
+
 var (
 	ERROR_CLASS = "hasError"
 
@@ -204,6 +208,17 @@ type Template interface {
 	Render(wr io.Writer, arg interface{}) error
 }
 
+var _TEMPLATE_ENGINERS = map[string]TemplateEnginer{}
+
+func RegisterTemplateEnginer(name string, enginer TemplateEnginer) {
+	// void overwriting
+	if _, ok := _TEMPLATE_ENGINERS[name]; ok {
+		return
+	}
+
+	_TEMPLATE_ENGINERS[name] = enginer
+}
+
 // This object handles loading and parsing of templates.
 // Everything below the application's views directory is treated as a template.
 type TemplateLoader struct {
@@ -222,9 +237,18 @@ type TemplateLoader struct {
 	templatePaths map[string]string
 }
 
-func NewTemplateLoader(paths []string) *TemplateLoader {
-	enginer := NewGoTemplateEngine()
+func NewTemplateLoader(name string, paths []string) *TemplateLoader {
+	if name == "" {
+		name = "default"
+	}
+
+	enginer, ok := _TEMPLATE_ENGINERS[name]
+	if !ok {
+		panic(fmt.Sprintf("None template enginer found with name %s", name))
+	}
 	enginer.SetHelpers(TemplateHelpers)
+
+	TRACE.Printf("New template loader with engine %s", name)
 
 	return &TemplateLoader{
 		engine:      enginer,
