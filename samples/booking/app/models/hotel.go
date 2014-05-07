@@ -1,7 +1,7 @@
 package models
 
 import (
-	"github.com/revel/revel"
+	"github.com/mcspring/revel"
 )
 
 type Hotel struct {

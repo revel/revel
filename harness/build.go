@@ -2,7 +2,7 @@ package harness
 
 import (
 	"fmt"
-	"github.com/revel/revel"
+	"github.com/mcspring/revel"
 	"go/build"
 	"os"
 	"os/exec"
@@ -285,7 +285,7 @@ package main
 import (
 	"flag"
 	"reflect"
-	"github.com/revel/revel"{{range $k, $v := $.ImportPaths}}
+	"github.com/mcspring/revel"{{range $k, $v := $.ImportPaths}}
 	{{$v}} "{{$k}}"{{end}}
 )
 
@@ -335,7 +335,7 @@ func main() {
 const ROUTES = `// GENERATED CODE - DO NOT EDIT
 package routes
 
-import "github.com/revel/revel"
+import "github.com/mcspring/revel"
 
 {{range $i, $c := .Controllers}}
 type t{{.StructName}} struct {}

@@ -1,7 +1,7 @@
 package controllers
 
 import (
-	"github.com/revel/revel"
+	"github.com/mcspring/revel"
 )
 
 type Sample1 struct {
