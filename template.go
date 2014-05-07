@@ -242,6 +242,26 @@ func NewTemplateLoader(name string, paths []string) *TemplateLoader {
 	}
 }
 
+// Config template engine with all template.* options
+// (It trims leading template. prefix when passing to engine.SetOptions())
+func (loader *TemplateLoader) SetConfig(mergedConfig *MergedConfig) {
+	templateOptions := mergedConfig.Options("template.")
+	if len(templateOptions) <= 0 {
+		return
+	}
+
+	engineConfig := config.NewDefault()
+	engineConfig.AddSection(config.DEFAULT_SECTION)
+
+	for _, option := range templateOptions {
+		optionValue, _ := mergedConfig.String(option)
+
+		engineConfig.AddOption(config.DEFAULT_SECTION, strings.TrimLeft(option, "template."), optionValue)
+	}
+
+	loader.engine.SetOptions(engineConfig)
+}
+
 // This scans the views directory and parses all templates using engine as Go Templates.
 // If a template fails to parse, the error is set on the loader.
 // (It's awkward to refresh a single Go Template)
