@@ -126,10 +126,10 @@ func exists(conn redis.Conn, key string) bool {
 func (c RedisCache) Delete(key string) error {
 	conn := c.pool.Get()
 	defer conn.Close()
-	if !exists(conn, key) {
+	existed, err := redis.Bool(conn.Do("DEL", key))
+	if !existed {
 		return ErrCacheMiss
 	}
-	_, err := conn.Do("DEL", key)
 	return err
 }
 
