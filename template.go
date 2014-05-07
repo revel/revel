@@ -251,16 +251,6 @@ func (loader *TemplateLoader) Refresh() *Error {
 	loader.engineError = nil
 	loader.templatePaths = map[string]string{}
 
-	// // Set the template delimiters for the project if present, then split into left
-	// // and right delimiters around a space character
-	// var splitDelims []string
-	// if TemplateDelims != "" {
-	// 	splitDelims = strings.Split(TemplateDelims, " ")
-	// 	if len(splitDelims) != 2 {
-	// 		log.Fatalln("app.conf: Incorrect format for template.delimiters")
-	// 	}
-	// }
-
 	// Walk through the template loader's paths and build up a template set.
 	for _, basePath := range loader.paths {
 		// Walk only returns an error if the template loader is completely unusable
@@ -329,15 +319,6 @@ func (loader *TemplateLoader) Refresh() *Error {
 							}
 						}
 					}()
-
-					// TODO: shall we need config engine?
-					// // If alternate delimiters set for the project, change them for this set
-					// if splitDelims != nil && basePath == ViewsPath {
-					// 	templateSet.Delims(splitDelims[0], splitDelims[1])
-					// } else {
-					// 	// Reset to default otherwise
-					// 	templateSet.Delims("", "")
-					// }
 
 					templateSet, err = loader.engine.Parse(templateString)
 					if err == nil {
@@ -468,6 +449,18 @@ func (engine *GoTemplateEngine) Parse(s string) (*template.Template, error) {
 
 func (engine *GoTemplateEngine) SetOptions(options *config.Config) {
 	engine.options = options
+
+	// Set the template delimiters global if present,
+	// then split into left and right delimiters around a space character.
+	var splitDelims []string
+	if delims, err := engine.options.RawStringDefault("delimiters"); err == nil {
+		splitDelims = strings.Split(delims, " ")
+		if len(splitDelims) == 2 {
+			engine.driver.Delims(splitDelims[0], splitDelims[1])
+		} else {
+			engine.driver.Delims("", "")
+		}
+	}
 }
 
 func (engine *GoTemplateEngine) SetHelpers(helpers template.FuncMap) {
