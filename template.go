@@ -13,6 +13,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/robfig/config"
 )
 
 func init() {
@@ -197,7 +199,8 @@ var (
 
 type TemplateEnginer interface {
 	Parse(s string) (*template.Template, error)
-	SetHelpers(funcs template.FuncMap)
+	SetOptions(options *config.Config)
+	SetHelpers(helpers template.FuncMap)
 	WatchDir(dir os.FileInfo) bool
 	WatchFile(file string) bool
 }
@@ -462,6 +465,7 @@ func (gotmpl GoTemplate) Content() []string {
 //////////////////////
 type GoTemplateEngine struct {
 	driver  *template.Template
+	options *config.Config
 	helpers template.FuncMap
 	counter uint32
 }
@@ -478,6 +482,10 @@ func (engine *GoTemplateEngine) Parse(s string) (*template.Template, error) {
 	engine.counter += 1
 
 	return engine.driver.New(fmt.Sprintf("[#%d] GO TEMPLATE ENGINE", engine.counter)).Parse(s)
+}
+
+func (engine *GoTemplateEngine) SetOptions(options *config.Config) {
+	engine.options = options
 }
 
 func (engine *GoTemplateEngine) SetHelpers(helpers template.FuncMap) {
