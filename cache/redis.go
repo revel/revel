@@ -127,8 +127,8 @@ func (c RedisCache) Delete(key string) error {
 	conn := c.pool.Get()
 	defer conn.Close()
 	existed, err := redis.Bool(conn.Do("DEL", key))
-	if !existed {
-		return ErrCacheMiss
+	if err == nil && !existed {
+		err = ErrCacheMiss
 	}
 	return err
 }
