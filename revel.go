@@ -145,12 +145,24 @@ func Init(mode, importPath, srcPath string) {
 		path.Join(RevelPath, "templates"),
 	}
 
-	// Load app.conf
+	// Load default app.conf
 	var err error
 	Config, err = LoadConfig("app.conf")
 	if err != nil || Config == nil {
 		log.Fatalln("Failed to load app.conf:", err)
 	}
+
+	// Load run mode app.conf
+	// It will overwrite default app.conf options if exists
+	configMode := "dev"
+	if mode != "" {
+		configMode = mode
+
+		if modeConfig, err := LoadConfig("app." + configMode + ".conf"); err == nil {
+			Config.Merge(modeConfig)
+		}
+	}
+
 	// Ensure that the selected runmode appears in app.conf.
 	// If empty string is passed as the mode, treat it as "DEFAULT"
 	if mode == "" {
