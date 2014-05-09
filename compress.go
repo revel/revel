@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"io"
 )
 
 var compressionTypes = [...]string{
@@ -29,6 +30,7 @@ var compressableMimes = [...]string{
 type WriteFlusher interface {
 	Write([]byte) (int, error)
 	Flush() error
+	Close() error
 }
 
 type CompressResponseWriter struct {
@@ -81,11 +83,21 @@ func (c *CompressResponseWriter) Write(b []byte) (int, error) {
 	}
 
 	if c.compressionType != "" {
-		defer c.compressWriter.Flush()
 		return c.compressWriter.Write(b)
 	} else {
 		return c.ResponseWriter.Write(b)
 	}
+}
+
+func (c *CompressResponseWriter) Close() error {
+	if c.compressionType != "" {
+		return c.compressWriter.Close()
+	}
+	if w, ok := c.ResponseWriter.(io.Closer); ok {
+		w.Close()
+	}
+
+	return nil
 }
 
 func (c *CompressResponseWriter) DetectCompressionType(req *Request, resp *Response) {
