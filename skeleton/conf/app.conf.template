@@ -114,6 +114,10 @@ results.pretty = true
 watch = true
 
 
+# Start to recompile every time your application file changes.
+rebuild.eager = false
+
+
 # Module to run code tests in the browser
 # See:
 #   http://revel.github.io/manual/testing.html

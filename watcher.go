@@ -131,8 +131,10 @@ func (w *Watcher) Listen(listener Listener, roots ...string) {
 		filepath.Walk(p, watcherWalker)
 	}
 
-	// Create goroutine to notify file changes in real time
-	go w.NotifyWhenUpdated(listener, watcher)
+	if w.eagerRebuildMode() {
+		// Create goroutine to notify file changes in real time
+		go w.NotifyWhenUpdated(listener, watcher)
+	}
 
 	w.watchers = append(w.watchers, watcher)
 	w.listeners = append(w.listeners, listener)
@@ -170,8 +172,37 @@ func (w *Watcher) Notify() *Error {
 	w.notifyMutex.Lock()
 	defer w.notifyMutex.Unlock()
 
-	for i, listener := range w.listeners {
-		if w.forceRefresh || w.lastError == i {
+	for i, watcher := range w.watchers {
+		listener := w.listeners[i]
+
+		// Pull all pending events / errors from the watcher.
+		// When rebuild.eager is true, NotifyWhenUpdated goroutine receives the events.
+		refresh := false
+		if !w.eagerRebuildMode() {
+			for {
+				select {
+				case ev := <-watcher.Event:
+					// Ignore changes to dotfiles.
+					if !strings.HasPrefix(path.Base(ev.Name), ".") {
+						if dl, ok := listener.(DiscerningListener); ok {
+							if !dl.WatchFile(ev.Name) || ev.IsAttrib() {
+								continue
+							}
+						}
+
+						refresh = true
+					}
+					continue
+				case <-watcher.Error:
+					continue
+				default:
+					// No events left to pull
+				}
+				break
+			}
+		}
+
+		if w.forceRefresh || refresh || w.lastError == i {
 			err := listener.Refresh()
 			if err != nil {
 				w.lastError = i
@@ -183,6 +214,15 @@ func (w *Watcher) Notify() *Error {
 	w.forceRefresh = false
 	w.lastError = -1
 	return nil
+}
+
+// If the rebuild.eager config is set true, watcher rebuilds an application
+// every time a source file is changed.
+// This feature is available only in dev mode.
+func (w *Watcher) eagerRebuildMode() bool {
+	return Config.BoolDefault("mode.dev", true) &&
+		Config.BoolDefault("watch", true) &&
+		Config.BoolDefault("rebuild.eager", false)
 }
 
 var WatchFilter = func(c *Controller, fc []Filter) {
