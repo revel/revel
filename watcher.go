@@ -131,7 +131,7 @@ func (w *Watcher) Listen(listener Listener, roots ...string) {
 		filepath.Walk(p, watcherWalker)
 	}
 
-	if w.eagerRebuildMode() {
+	if w.eagerRebuildEnabled() {
 		// Create goroutine to notify file changes in real time
 		go w.NotifyWhenUpdated(listener, watcher)
 	}
@@ -178,7 +178,7 @@ func (w *Watcher) Notify() *Error {
 		// Pull all pending events / errors from the watcher.
 		// When rebuild.eager is true, NotifyWhenUpdated goroutine receives the events.
 		refresh := false
-		if !w.eagerRebuildMode() {
+		if !w.eagerRebuildEnabled() {
 			for {
 				select {
 				case ev := <-watcher.Event:
@@ -219,7 +219,7 @@ func (w *Watcher) Notify() *Error {
 // If the rebuild.eager config is set true, watcher rebuilds an application
 // every time a source file is changed.
 // This feature is available only in dev mode.
-func (w *Watcher) eagerRebuildMode() bool {
+func (w *Watcher) eagerRebuildEnabled() bool {
 	return Config.BoolDefault("mode.dev", true) &&
 		Config.BoolDefault("watch", true) &&
 		Config.BoolDefault("rebuild.eager", false)
