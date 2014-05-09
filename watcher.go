@@ -147,17 +147,11 @@ func (w *Watcher) NotifyWhenUpdated(listener Listener, watcher *fsnotify.Watcher
 		// Do not catch default for performance.
 		select {
 		case ev := <-watcher.Event:
-			// Ignore changes to dotfiles.
-			if !strings.HasPrefix(path.Base(ev.Name), ".") {
-				if dl, ok := listener.(DiscerningListener); ok {
-					if !dl.WatchFile(ev.Name) || ev.IsAttrib() {
-						continue
-					}
-				}
-
-				// Use w.Notify() instead of listener.Refresh() to serialize w.Notify() calling
-				w.forceRefresh = true
-				go w.Notify()
+			if w.rebuildRequired(ev, listener) {
+				// Seriarize listener.Refresh() calls.
+				w.notifyMutex.Lock()
+				listener.Refresh()
+				w.notifyMutex.Unlock()
 			}
 		case <-watcher.Error:
 			continue
@@ -176,30 +170,20 @@ func (w *Watcher) Notify() *Error {
 		listener := w.listeners[i]
 
 		// Pull all pending events / errors from the watcher.
-		// When rebuild.eager is true, NotifyWhenUpdated goroutine receives the events.
 		refresh := false
-		if !w.eagerRebuildEnabled() {
-			for {
-				select {
-				case ev := <-watcher.Event:
-					// Ignore changes to dotfiles.
-					if !strings.HasPrefix(path.Base(ev.Name), ".") {
-						if dl, ok := listener.(DiscerningListener); ok {
-							if !dl.WatchFile(ev.Name) || ev.IsAttrib() {
-								continue
-							}
-						}
-
-						refresh = true
-					}
-					continue
-				case <-watcher.Error:
-					continue
-				default:
-					// No events left to pull
+		for {
+			select {
+			case ev := <-watcher.Event:
+				if w.rebuildRequired(ev, listener) {
+					refresh = true
 				}
-				break
+				continue
+			case <-watcher.Error:
+				continue
+			default:
+				// No events left to pull
 			}
+			break
 		}
 
 		if w.forceRefresh || refresh || w.lastError == i {
@@ -223,6 +207,20 @@ func (w *Watcher) eagerRebuildEnabled() bool {
 	return Config.BoolDefault("mode.dev", true) &&
 		Config.BoolDefault("watch", true) &&
 		Config.BoolDefault("rebuild.eager", false)
+}
+
+func (w *Watcher) rebuildRequired(ev *fsnotify.FileEvent, listener Listener) bool {
+	// Ignore changes to dotfiles.
+	if strings.HasPrefix(path.Base(ev.Name), ".") {
+		return false
+	}
+
+	if dl, ok := listener.(DiscerningListener); ok {
+		if !dl.WatchFile(ev.Name) || ev.IsAttrib() {
+			return false
+		}
+	}
+	return true
 }
 
 var WatchFilter = func(c *Controller, fc []Filter) {
