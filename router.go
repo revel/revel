@@ -492,7 +492,7 @@ func HttpMethodOverride(c *Controller, fc []Filter) {
 				c.Response.Status = 405
 				c.Result = c.RenderError(&Error{
 					Title:       "Method not allowed",
-					Description: "",
+					Description: "No matching route found: " + c.Request.RequestURI + " Method Not Allowed (Allow: " + strings.Join(verbs, ", ") + ")",
 				})
 				return
 			}
