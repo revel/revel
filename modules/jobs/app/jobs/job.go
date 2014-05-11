@@ -1,7 +1,7 @@
 package jobs
 
 import (
-	"github.com/revel/revel"
+	"github.com/golib/revel"
 	"github.com/robfig/cron"
 	"reflect"
 	"runtime/debug"

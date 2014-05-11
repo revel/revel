@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	REVEL_IMPORT_PATH = "github.com/revel/revel"
+	REVEL_IMPORT_PATH = "github.com/golib/revel"
 )
 
 type revelLogs struct {
@@ -145,12 +145,24 @@ func Init(mode, importPath, srcPath string) {
 		path.Join(RevelPath, "templates"),
 	}
 
-	// Load app.conf
+	// Load default app.conf
 	var err error
 	Config, err = LoadConfig("app.conf")
 	if err != nil || Config == nil {
 		log.Fatalln("Failed to load app.conf:", err)
 	}
+
+	// Load run mode app.conf
+	// It will overwrite default app.conf options if exists
+	configMode := "dev"
+	if mode != "" {
+		configMode = mode
+
+		if modeConfig, err := LoadConfig("app." + configMode + ".conf"); err == nil {
+			Config.Merge(modeConfig)
+		}
+	}
+
 	// Ensure that the selected runmode appears in app.conf.
 	// If empty string is passed as the mode, treat it as "DEFAULT"
 	if mode == "" {
@@ -321,7 +333,7 @@ func addModule(name, importPath, modulePath string) {
 
 	// Hack: There is presently no way for the testrunner module to add the
 	// "test" subdirectory to the CodePaths.  So this does it instead.
-	if importPath == "github.com/revel/revel/modules/testrunner" {
+	if importPath == "github.com/golib/revel/modules/testrunner" {
 		CodePaths = append(CodePaths, path.Join(BasePath, "tests"))
 	}
 }

@@ -11,7 +11,7 @@ package db
 
 import (
 	"database/sql"
-	"github.com/revel/revel"
+	"github.com/golib/revel"
 )
 
 var (

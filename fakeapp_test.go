@@ -59,7 +59,7 @@ func (c Static) Serve(prefix, filepath string) Result {
 }
 
 func startFakeBookingApp() {
-	Init("prod", "github.com/revel/revel/samples/booking", "")
+	Init("prod", "github.com/golib/revel/samples/booking", "")
 
 	// Disable logging.
 	TRACE = log.New(ioutil.Discard, "", 0)
@@ -73,7 +73,7 @@ func startFakeBookingApp() {
 	routesFile, _ := ioutil.ReadFile(filepath.Join(BasePath, "conf", "routes"))
 	MainRouter.Routes, _ = parseRoutes("", "", string(routesFile), false)
 	MainRouter.updateTree()
-	MainTemplateLoader = NewTemplateLoader([]string{ViewsPath, path.Join(RevelPath, "templates")})
+	MainTemplateLoader = NewTemplateLoader("default", []string{ViewsPath, path.Join(RevelPath, "templates")})
 	MainTemplateLoader.Refresh()
 
 	RegisterController((*Hotels)(nil),
