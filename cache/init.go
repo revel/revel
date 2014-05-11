@@ -1,7 +1,7 @@
 package cache
 
 import (
-	"github.com/mcspring/revel"
+	"github.com/golib/revel"
 	"strings"
 	"time"
 )

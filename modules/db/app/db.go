@@ -11,7 +11,7 @@ package db
 
 import (
 	"database/sql"
-	"github.com/mcspring/revel"
+	"github.com/golib/revel"
 )
 
 var (

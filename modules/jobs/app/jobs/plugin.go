@@ -2,7 +2,7 @@ package jobs
 
 import (
 	"fmt"
-	"github.com/mcspring/revel"
+	"github.com/golib/revel"
 	"github.com/robfig/cron"
 )
 

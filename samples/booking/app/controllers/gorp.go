@@ -5,9 +5,9 @@ import (
 	"database/sql"
 	"github.com/coopernurse/gorp"
 	_ "github.com/mattn/go-sqlite3"
-	r "github.com/mcspring/revel"
-	"github.com/mcspring/revel/modules/db/app"
-	"github.com/mcspring/revel/samples/booking/app/models"
+	r "github.com/golib/revel"
+	"github.com/golib/revel/modules/db/app"
+	"github.com/golib/revel/samples/booking/app/models"
 )
 
 var (

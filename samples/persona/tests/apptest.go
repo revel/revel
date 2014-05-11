@@ -1,6 +1,6 @@
 package tests
 
-import "github.com/mcspring/revel"
+import "github.com/golib/revel"
 
 type AppTest struct {
 	revel.TestSuite

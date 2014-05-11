@@ -3,8 +3,8 @@ package controllers
 import (
 	"encoding/json"
 	"github.com/mrjones/oauth"
-	"github.com/mcspring/revel"
-	"github.com/mcspring/revel/samples/twitter-oauth/app/models"
+	"github.com/golib/revel"
+	"github.com/golib/revel/samples/twitter-oauth/app/models"
 	"io/ioutil"
 )
 

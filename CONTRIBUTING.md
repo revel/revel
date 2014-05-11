@@ -21,7 +21,7 @@ The first step to making Revel better is joining the community! You can find the
 community on:
 
 * [Google Groups](https://groups.google.com/forum/#!forum/revel-framework) via [revel-framework@googlegroups.com](mailto:revel-framework@googlegroups.com)
-* [GitHub Issues](https://github.com/mcspring/revel/issues)
+* [GitHub Issues](https://github.com/golib/revel/issues)
 * [IRC](http://webchat.freenode.net/?channels=%23revel&uio=d4) via #revel on Freenode
 
 Once you've joined, there are many ways to contribute to Revel:
@@ -59,8 +59,8 @@ Instead, follow these steps:
 
 Here is the command line:
 ```
-$ go get github.com/mcspring/revel                      # Install Revel
-$ cd $GOPATH/src/github.com/mcspring/revel              # Change directory to revel repo
+$ go get github.com/golib/revel                      # Install Revel
+$ cd $GOPATH/src/github.com/golib/revel              # Change directory to revel repo
 $ git remote add fork git@github.com:$USER/revel.git  # Add your fork as a remote
 ```
 
@@ -100,11 +100,11 @@ Benchmarks are helpful but not required.
 Typically running the main set of unit tests will be sufficient:
 
 ```
-$ go test github.com/mcspring/revel
+$ go test github.com/golib/revel
 ```
 
 Refer to the
-[Travis configuration](https://github.com/mcspring/revel/blob/master/.travis.yml)
+[Travis configuration](https://github.com/golib/revel/blob/master/.travis.yml)
 for the full set of tests.  They take less than a minute to run.
 
 ### Document Your Feature
@@ -119,7 +119,7 @@ The [Revel web site](http://revel.github.io/) is hosted on Github-pages and
 To develop the Jekyll site locally:
 
 	# Clone a second repository and check out the branch
-	$ git clone git@github.com:mcspring/revel.git
+	$ git clone git@github.com:golib/revel.git
 	$ cd revel
 	$ git checkout gh-pages
 
@@ -142,7 +142,7 @@ Once you've done all of the above & pushed your changes to your fork, you can cr
 
 These are outstanding feature requests, roughly ordered by priority.
 Additionally, there are frequently smaller feature requests or items in the
-[issues](https://github.com/mcspring/revel/issues?labels=contributor+ready&page=1&state=open).
+[issues](https://github.com/golib/revel/issues?labels=contributor+ready&page=1&state=open).
 
 1.  Better ORM support.  Provide more samples (or modules) and better documentation for setting up common situations like SQL database, Mongo, LevelDB, etc.
 1.	Support for other templating languages (e.g. mustache, HAML).  Make TemplateLoader pluggable.  Use Pongo instead of vanilla Go templates (and update the samples)

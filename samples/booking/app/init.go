@@ -1,6 +1,6 @@
 package app
 
-import "github.com/mcspring/revel"
+import "github.com/golib/revel"
 
 func init() {
 	// Filters is the default set of global filters.

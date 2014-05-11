@@ -2,7 +2,7 @@ package app
 
 import (
 	"fmt"
-	"github.com/mcspring/revel"
+	"github.com/golib/revel"
 )
 
 func init() {

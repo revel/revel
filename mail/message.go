@@ -10,7 +10,7 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/mcspring/revel"
+	"github.com/golib/revel"
 )
 
 var NewLine string = "\r\n"
