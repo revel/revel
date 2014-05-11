@@ -13,8 +13,6 @@ import (
 	"time"
 )
 
-// const saltChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
-
 var allowedMethods = map[string]bool{
 	"GET":     true,
 	"HEAD":    true,
@@ -36,15 +34,19 @@ func NewSecret() (simpleuuid.UUID, error) {
 	return secret, err
 }
 
+func RefreshSecret(c *revel.Controller) {
+	csrfSecret, err := NewSecret()
+	if err != nil {
+		panic(err)
+	}
+	c.Session["csrfSecret"] = csrfSecret.String()
+}
+
 func CsrfFilter(c *revel.Controller, fc []revel.Filter) {
 	csrfSecret, foundSecret := c.Session["csrfSecret"]
 
 	if !foundSecret {
-		csrfSecret, err := NewSecret()
-		if err != nil {
-			panic(err)
-		}
-		c.Session["csrfSecret"] = csrfSecret.String()
+		RefreshSecret(c)
 	}
 
 	// TODO: Add a hook for csrf exempt?
