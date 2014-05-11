@@ -3,7 +3,7 @@ package cache
 import (
 	"bytes"
 	"encoding/gob"
-	"github.com/mcspring/revel"
+	"github.com/golib/revel"
 	"reflect"
 	"strconv"
 )

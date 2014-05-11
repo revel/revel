@@ -3,9 +3,9 @@ package controllers
 import (
 	"code.google.com/p/go.crypto/bcrypt"
 	"fmt"
-	"github.com/mcspring/revel"
-	"github.com/mcspring/revel/samples/booking/app/models"
-	"github.com/mcspring/revel/samples/booking/app/routes"
+	"github.com/golib/revel"
+	"github.com/golib/revel/samples/booking/app/models"
+	"github.com/golib/revel/samples/booking/app/routes"
 	"strings"
 )
 

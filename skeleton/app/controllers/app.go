@@ -1,6 +1,6 @@
 package controllers
 
-import "github.com/mcspring/revel"
+import "github.com/golib/revel"
 
 type App struct {
 	*revel.Controller

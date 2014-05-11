@@ -2,7 +2,7 @@ package cache
 
 import (
 	"errors"
-	"github.com/mcspring/revel"
+	"github.com/golib/revel"
 	"github.com/robfig/gomemcache/memcache"
 	"time"
 )

@@ -1,7 +1,7 @@
 package harness
 
 import (
-	"github.com/mcspring/revel"
+	"github.com/golib/revel"
 	"go/ast"
 	"go/parser"
 	"go/token"
@@ -139,13 +139,13 @@ func TestTypeExpr(t *testing.T) {
 }
 
 func TestProcessBookingSource(t *testing.T) {
-	revel.Init("prod", "github.com/mcspring/revel/samples/booking", "")
+	revel.Init("prod", "github.com/golib/revel/samples/booking", "")
 	sourceInfo, err := ProcessSource([]string{revel.AppPath})
 	if err != nil {
 		t.Fatal("Failed to process booking source with error:", err)
 	}
 
-	CONTROLLER_PKG := "github.com/mcspring/revel/samples/booking/app/controllers"
+	CONTROLLER_PKG := "github.com/golib/revel/samples/booking/app/controllers"
 	expectedControllerSpecs := []*TypeInfo{
 		{"GorpController", CONTROLLER_PKG, "controllers", nil, nil},
 		{"Application", CONTROLLER_PKG, "controllers", nil, nil},
@@ -177,7 +177,7 @@ NEXT_TEST:
 }
 
 func BenchmarkProcessBookingSource(b *testing.B) {
-	revel.Init("", "github.com/mcspring/revel/samples/booking", "")
+	revel.Init("", "github.com/golib/revel/samples/booking", "")
 	revel.TRACE = log.New(ioutil.Discard, "", 0)
 	b.ResetTimer()
 

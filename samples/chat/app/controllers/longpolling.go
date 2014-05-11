@@ -1,8 +1,8 @@
 package controllers
 
 import (
-	"github.com/mcspring/revel"
-	"github.com/mcspring/revel/samples/chat/app/chatroom"
+	"github.com/golib/revel"
+	"github.com/golib/revel/samples/chat/app/chatroom"
 )
 
 type LongPolling struct {

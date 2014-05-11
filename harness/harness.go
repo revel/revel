@@ -13,7 +13,7 @@ package harness
 import (
 	"crypto/tls"
 	"fmt"
-	"github.com/mcspring/revel"
+	"github.com/golib/revel"
 	"go/build"
 	"io"
 	"net"

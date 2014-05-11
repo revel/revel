@@ -1,8 +1,8 @@
 package controllers
 
 import (
-	"github.com/mcspring/revel"
-	"github.com/mcspring/revel/samples/validation/app/models"
+	"github.com/golib/revel"
+	"github.com/golib/revel/samples/validation/app/models"
 )
 
 type Sample3 struct {

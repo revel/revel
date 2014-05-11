@@ -4,7 +4,7 @@ A high productivity, full-stack web framework for the [Go language](http://www.g
 
 Current Version: 0.9.1 (Mar 1, 2014)
 
-[![Build Status](https://secure.travis-ci.org/mcspring/revel.png?branch=master)](http://travis-ci.org/mcspring/revel)
+[![Build Status](https://secure.travis-ci.org/golib/revel.png?branch=master)](http://travis-ci.org/golib/revel)
 
 ## Learn More
 
@@ -13,14 +13,14 @@ Current Version: 0.9.1 (Mar 1, 2014)
 ## Join The Community
 
 * [Google Groups](https://groups.google.com/forum/#!forum/revel-framework) via [revel-framework@googlegroups.com](mailto:revel-framework@googlegroups.com)
-* [GitHub Issues](https://github.com/mcspring/revel/issues)
+* [GitHub Issues](https://github.com/golib/revel/issues)
 * [IRC](http://webchat.freenode.net/?channels=%23revel&uio=d4) via #revel on Freenode
 
 ## Announcements
 
 ### New GitHub Repo
 
-We have moved to the @revel organization. See the [v0.9.0 release notes](https://github.com/mcspring/revel/releases/tag/v0.9.0)
+We have moved to the @revel organization. See the [v0.9.0 release notes](https://github.com/golib/revel/releases/tag/v0.9.0)
 for how to update your app.
 
 ### v1.0 Goal

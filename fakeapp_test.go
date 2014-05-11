@@ -59,7 +59,7 @@ func (c Static) Serve(prefix, filepath string) Result {
 }
 
 func startFakeBookingApp() {
-	Init("prod", "github.com/mcspring/revel/samples/booking", "")
+	Init("prod", "github.com/golib/revel/samples/booking", "")
 
 	// Disable logging.
 	TRACE = log.New(ioutil.Discard, "", 0)

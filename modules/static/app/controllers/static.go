@@ -1,7 +1,7 @@
 package controllers
 
 import (
-	"github.com/mcspring/revel"
+	"github.com/golib/revel"
 	"os"
 	fpath "path/filepath"
 	"strings"

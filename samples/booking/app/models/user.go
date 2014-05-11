@@ -2,7 +2,7 @@ package models
 
 import (
 	"fmt"
-	"github.com/mcspring/revel"
+	"github.com/golib/revel"
 	"regexp"
 )
 
