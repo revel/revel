@@ -6,7 +6,7 @@ services:
 install:
   - export PATH=$PATH:$HOME/gopath/bin
   # Annoyingly, we can not use go get revel/... because references to app/routes package fail
-  - go get -v github.com/revel/cmd/revel
+  - go get -v github.com/golib/revelc/revel
   - go get -v github.com/golib/revel/cache
   - go get -v github.com/golib/revel/harness
   - go get -v github.com/coopernurse/gorp
