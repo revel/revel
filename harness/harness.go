@@ -13,7 +13,7 @@ package harness
 import (
 	"crypto/tls"
 	"fmt"
-	"github.com/revel/revel"
+	"github.com/golib/revel"
 	"go/build"
 	"io"
 	"net"
@@ -81,8 +81,7 @@ func (hp *Harness) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func NewHarness() *Harness {
 	// Get a template loader to render errors.
 	// Prefer the app's views/errors directory, and fall back to the stock error pages.
-	revel.MainTemplateLoader = revel.NewTemplateLoader(
-		[]string{path.Join(revel.RevelPath, "templates")})
+	revel.MainTemplateLoader = revel.NewTemplateLoader("default", []string{path.Join(revel.RevelPath, "templates")})
 	revel.MainTemplateLoader.Refresh()
 
 	addr := revel.HttpAddr

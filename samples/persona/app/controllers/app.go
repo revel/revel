@@ -8,7 +8,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/revel/revel"
+	"github.com/golib/revel"
 )
 
 const host = "" // set this to your host

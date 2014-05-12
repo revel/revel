@@ -2,10 +2,10 @@ package jobs
 
 import (
 	"fmt"
-	"github.com/revel/revel"
-	"github.com/revel/revel/modules/jobs/app/jobs"
-	"github.com/revel/revel/samples/booking/app/controllers"
-	"github.com/revel/revel/samples/booking/app/models"
+	"github.com/golib/revel"
+	"github.com/golib/revel/modules/jobs/app/jobs"
+	"github.com/golib/revel/samples/booking/app/controllers"
+	"github.com/golib/revel/samples/booking/app/models"
 )
 
 // Periodically count the bookings in the database.

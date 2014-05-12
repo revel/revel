@@ -1,7 +1,7 @@
 package controllers
 
 import (
-	"github.com/revel/revel"
+	"github.com/golib/revel"
 	"net/http"
 	"net/http/pprof"
 )

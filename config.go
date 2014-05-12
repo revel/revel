@@ -34,6 +34,10 @@ func (c *MergedConfig) Raw() *config.Config {
 	return c.config
 }
 
+func (c *MergedConfig) Merge(a *MergedConfig) {
+	c.config.Merge(a.config)
+}
+
 func (c *MergedConfig) SetSection(section string) {
 	c.section = section
 }
