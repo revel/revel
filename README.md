@@ -1,5 +1,7 @@
 # Revel
 
+> This is 3d-party repo forked from [Revel](https://github.com/revel/revel). The goal of this is to easy revel usage. We'll try our best to submit the patch to official repo.
+
 A high productivity, full-stack web framework for the [Go language](http://www.golang.org).
 
 Current Version: 0.9.1 (Mar 1, 2014)
@@ -8,7 +10,7 @@ Current Version: 0.9.1 (Mar 1, 2014)
 
 ## Learn More
 
-[Manual, Samples, Godocs, etc](http://revel.github.com)
+[Manual, Samples, Godocs, etc](http://revel.github.io)
 
 ## Join The Community
 
