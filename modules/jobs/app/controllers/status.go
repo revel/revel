@@ -20,7 +20,7 @@ func (c Jobs) Status() revel.Result {
 }
 
 func init() {
-	revel.TemplateFuncs["castjob"] = func(job cron.Job) *jobs.Job {
+	revel.TemplateHelpers["castjob"] = func(job cron.Job) *jobs.Job {
 		return job.(*jobs.Job)
 	}
 }
