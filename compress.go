@@ -3,10 +3,10 @@ package revel
 import (
 	"compress/gzip"
 	"compress/zlib"
+	"io"
 	"net/http"
 	"strconv"
 	"strings"
-	"io"
 )
 
 var compressionTypes = [...]string{
@@ -38,14 +38,29 @@ type CompressResponseWriter struct {
 	compressWriter  WriteFlusher
 	compressionType string
 	headersWritten  bool
+	closeNotify     chan bool
+	parentNotify    <-chan bool
+	closed          bool
 }
 
 func CompressFilter(c *Controller, fc []Filter) {
-	writer := CompressResponseWriter{c.Response.Out, nil, "", false}
-	writer.DetectCompressionType(c.Request, c.Response)
-	c.Response.Out = &writer
-
+	if Config.BoolDefault("results.compressed", false) {
+		writer := CompressResponseWriter{c.Response.Out, nil, "", false, make(chan bool, 1), nil, false}
+		writer.DetectCompressionType(c.Request, c.Response)
+		w, ok := c.Response.Out.(http.CloseNotifier)
+		if ok {
+			writer.parentNotify = w.CloseNotify()
+		}
+		c.Response.Out = &writer
+	}
 	fc[0](c, fc[1:])
+}
+
+func (c CompressResponseWriter) CloseNotify() <-chan bool {
+	if c.parentNotify != nil {
+		return c.parentNotify
+	}
+	return c.closeNotify
 }
 
 func (c *CompressResponseWriter) prepareHeaders() {
@@ -76,7 +91,36 @@ func (c *CompressResponseWriter) WriteHeader(status int) {
 	c.ResponseWriter.WriteHeader(status)
 }
 
+func (c *CompressResponseWriter) Close() error {
+	if c.compressionType != "" {
+		c.compressWriter.Close()
+	}
+	if w, ok := c.ResponseWriter.(io.Closer); ok {
+		w.Close()
+	}
+	// Non-blocking write to the closenotifier, if we for some reason should
+	// get called multiple times
+	select {
+	case c.closeNotify <- true:
+	default:
+	}
+	c.closed = true
+	return nil
+}
+
 func (c *CompressResponseWriter) Write(b []byte) (int, error) {
+	// Abort if parent has been closed
+	if c.parentNotify != nil {
+		select {
+		case <-c.parentNotify:
+			return 0, io.ErrClosedPipe
+		default:
+		}
+	}
+	// Abort if we ourselves have been closed
+	if c.closed {
+		return 0, io.ErrClosedPipe
+	}
 	if !c.headersWritten {
 		c.prepareHeaders()
 		c.headersWritten = true
@@ -87,17 +131,6 @@ func (c *CompressResponseWriter) Write(b []byte) (int, error) {
 	} else {
 		return c.ResponseWriter.Write(b)
 	}
-}
-
-func (c *CompressResponseWriter) Close() error {
-	if c.compressionType != "" {
-		return c.compressWriter.Close()
-	}
-	if w, ok := c.ResponseWriter.(io.Closer); ok {
-		w.Close()
-	}
-
-	return nil
 }
 
 func (c *CompressResponseWriter) DetectCompressionType(req *Request, resp *Response) {
