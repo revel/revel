@@ -241,7 +241,7 @@ func TestEmail(t *testing.T) {
 
 		// should always be satisfied
 		if !email.IsSatisfied("t0.est+email123@1abc0-def.com") {
-			t.Errorf(noErrorsMessage, "guarunteed valid email", fmt.Sprintf("email = %s", "t0.est+email123@1abc0-def.com"))
+			t.Errorf(noErrorsMessage, "guaranteed valid email", fmt.Sprintf("email = %s", "t0.est+email123@1abc0-def.com"))
 		}
 
 		// should never be satisfied (this is redundant given the loops above)
