@@ -193,6 +193,7 @@ func TestEmail(t *testing.T) {
 	// unicode char included
 	validStartingCharacters := strings.Split("!#$%^&*_+1234567890abcdefghijklmnopqrstuvwxyzñ", "")
 	invalidCharacters := strings.Split(" ()", "")
+
 	definiteInvalidDomains := []string{
 		"",                  // any empty string (x@)
 		".com",              // only the TLD (x@.com)
@@ -212,20 +213,20 @@ func TestEmail(t *testing.T) {
 		for _, startingChar := range validStartingCharacters {
 			currentEmail = fmt.Sprintf("%sñbc+123@do-main.com", startingChar)
 			if email.IsSatisfied(currentEmail) {
-				t.Errorf(noErrorsMessage, fmt.Sprintf("email = %s", currentEmail))
+				t.Errorf(noErrorsMessage, "starting characters", fmt.Sprintf("email = %s", currentEmail))
 			}
 
 			// validation should fail because of multiple @ symbols
 			currentEmail = fmt.Sprintf("%s@ñbc+123@do-main.com", startingChar)
 			if email.IsSatisfied(currentEmail) {
-				t.Errorf(errorsMessage, fmt.Sprintf("email = %s", currentEmail))
+				t.Errorf(errorsMessage, "starting characters with multiple @ symbols", fmt.Sprintf("email = %s", currentEmail))
 			}
 
 			// should fail simply because of the invalid char
 			for _, invalidChar := range invalidCharacters {
 				currentEmail = fmt.Sprintf("%sñbc%s+123@do-main.com", startingChar, invalidChar)
 				if email.IsSatisfied(currentEmail) {
-					t.Errorf(errorsMessage, fmt.Sprintf("email = %s", currentEmail))
+					t.Errorf(errorsMessage, "invalid starting characters", fmt.Sprintf("email = %s", currentEmail))
 				}
 			}
 		}
@@ -234,21 +235,21 @@ func TestEmail(t *testing.T) {
 		for _, invalidDomain := range definiteInvalidDomains {
 			currentEmail = fmt.Sprintf("a@%s", invalidDomain)
 			if email.IsSatisfied(currentEmail) {
-				t.Errorf(errorsMessage, fmt.Sprintf("email = %s", currentEmail))
+				t.Errorf(errorsMessage, "invalid domain", fmt.Sprintf("email = %s", currentEmail))
 			}
 		}
 
 		// should always be satisfied
 		if !email.IsSatisfied("t0.est+email123@1abc0-def.com") {
-			t.Errorf(noErrorsMessage, fmt.Sprintf("email = %s", "t0.est+email123@1abc0-def.com"))
+			t.Errorf(noErrorsMessage, "guarunteed valid email", fmt.Sprintf("email = %s", "t0.est+email123@1abc0-def.com"))
 		}
 
 		// should never be satisfied (this is redundant given the loops above)
 		if email.IsSatisfied("a@xcom") {
-			t.Errorf(noErrorsMessage, fmt.Sprintf("email = %s", "a@xcom"))
+			t.Errorf(noErrorsMessage, "guaranteed invalid email", fmt.Sprintf("email = %s", "a@xcom"))
 		}
 		if email.IsSatisfied("a@@x.com") {
-			t.Errorf(noErrorsMessage, fmt.Sprintf("email = %s", "a@@x.com"))
+			t.Errorf(noErrorsMessage, "guaranteed invaild email", fmt.Sprintf("email = %s", "a@@x.com"))
 		}
 	}
 }
