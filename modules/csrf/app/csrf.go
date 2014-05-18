@@ -1,16 +1,17 @@
 package csrf
 
 import (
+	"crypto/rand"
 	"crypto/sha1"
 	"crypto/subtle"
 	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 	"github.com/revel/revel"
-	"github.com/streadway/simpleuuid"
 	"html/template"
 	"io"
+	"math"
 	"net/url"
-	"time"
 )
 
 var allowedMethods = map[string]bool{
@@ -29,17 +30,25 @@ func NewToken(c *revel.Controller) string {
 	return token
 }
 
-func NewSecret() (simpleuuid.UUID, error) {
-	secret, err := simpleuuid.NewTime(time.Now())
-	return secret, err
+func NewSecret() (string, error) {
+	return RandomString(64)
+}
+
+func RandomString(length int) (string, error) {
+	buffer := make([]byte, int(math.Ceil(float64(length)/2)))
+	if _, err := rand.Read(buffer); err != nil {
+		return "", err
+	}
+	str := hex.EncodeToString(buffer)
+	return str[:length], nil
 }
 
 func RefreshSecret(c *revel.Controller) {
-	csrfSecret, err := NewSecret()
+	csrfSecret, err := RandomString(64)
 	if err != nil {
 		panic(err)
 	}
-	c.Session["csrfSecret"] = csrfSecret.String()
+	c.Session["csrfSecret"] = csrfSecret
 }
 
 func CsrfFilter(c *revel.Controller, fc []revel.Filter) {
@@ -113,16 +122,12 @@ func checkToken(requestCsrfToken, secret string) bool {
 	return subtle.ConstantTimeCompare([]byte(requestCsrfToken), []byte(csrfToken)) == 1
 }
 
-func generateSalt(length int) string {
-	salt, err := simpleuuid.NewTime(time.Now())
+func saltedToken(secret string) string {
+	salt, err := RandomString(10)
 	if err != nil {
 		panic(err)
 	}
-	return salt.String()[0:10]
-}
-
-func saltedToken(secret string) string {
-	return createToken(generateSalt(10), secret)
+	return createToken(salt, secret)
 }
 
 func reject(c *revel.Controller) {

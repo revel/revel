@@ -61,7 +61,7 @@ func TestNoReferrer(t *testing.T) {
 	c.Session = make(revel.Session)
 	secret, _ := NewSecret()
 
-	c.Session["csrfSecret"] = secret.String()
+	c.Session["csrfSecret"] = secret
 	token := NewToken(c)
 
 	// make a new request with the token
@@ -95,7 +95,7 @@ func TestRefererHttps(t *testing.T) {
 	c.Session = make(revel.Session)
 	secret, _ := NewSecret()
 
-	c.Session["csrfSecret"] = secret.String()
+	c.Session["csrfSecret"] = secret
 	token := NewToken(c)
 
 	// make a new request with the token
@@ -130,7 +130,7 @@ func TestHeaderWithToken(t *testing.T) {
 	c.Session = make(revel.Session)
 	secret, _ := NewSecret()
 
-	c.Session["csrfSecret"] = secret.String()
+	c.Session["csrfSecret"] = secret
 	token := NewToken(c)
 
 	// make a new request with the token
@@ -163,7 +163,7 @@ func TestFormPostWithToken(t *testing.T) {
 	c.Session = make(revel.Session)
 	secret, _ := NewSecret()
 
-	c.Session["csrfSecret"] = secret.String()
+	c.Session["csrfSecret"] = secret
 	token := NewToken(c)
 
 	// make a new request with the token
