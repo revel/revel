@@ -287,6 +287,7 @@ func (loader *TemplateLoader) Refresh() *Error {
 	TRACE.Printf("Refreshing templates from %s", loader.paths)
 
 	loader.engineError = nil
+  loader.templateSet = template.New("").Funcs(TemplateHelpers)
 	loader.templatePaths = map[string]string{}
 
 	// Walk through the template loader's paths and build up a template set.
