@@ -70,12 +70,14 @@ func (c *CompressResponseWriter) prepareHeaders() {
 		responseMime = strings.TrimSpace(strings.SplitN(responseMime, ";", 2)[0])
 		shouldEncode := false
 
-		for _, compressableMime := range compressableMimes {
-			if responseMime == compressableMime {
-				shouldEncode = true
-				c.Header().Set("Content-Encoding", c.compressionType)
-				c.Header().Del("Content-Length")
-				break
+		if c.Header().Get("Content-Encoding") == "" {
+			for _, compressableMime := range compressableMimes {
+				if responseMime == compressableMime {
+					shouldEncode = true
+					c.Header().Set("Content-Encoding", c.compressionType)
+					c.Header().Del("Content-Length")
+					break
+				}
 			}
 		}
 
