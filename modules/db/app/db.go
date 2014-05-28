@@ -15,12 +15,16 @@ import (
 )
 
 var (
-	Db     *sql.DB
-	Driver string
-	Spec   string
+	Db           *sql.DB
+	Driver       string
+	Spec         string
+	MaxIdleConns int
+	MaxOpenConns int
 )
 
 func Init() {
+	revel.INFO.Println("Initializing the database connection.")
+
 	// Read configuration.
 	var found bool
 	if Driver, found = revel.Config.String("db.driver"); !found {
@@ -29,6 +33,12 @@ func Init() {
 	if Spec, found = revel.Config.String("db.spec"); !found {
 		revel.ERROR.Fatal("No db.spec found.")
 	}
+	if MaxIdleConns, found = revel.Config.Int("db.max_idle_conns"); !found {
+		MaxIdleConns = 0 //no idle connections
+	}
+	if MaxOpenConns, found = revel.Config.Int("db.max_open_conns"); !found {
+		MaxOpenConns = 0 //unlimited
+	}
 
 	// Open a connection.
 	var err error
@@ -36,6 +46,21 @@ func Init() {
 	if err != nil {
 		revel.ERROR.Fatal(err)
 	}
+
+	// Set Db limits.
+	Db.SetMaxIdleConns(MaxIdleConns)
+	Db.SetMaxOpenConns(MaxOpenConns)
+
+	revel.INFO.Println("Succesfully initialized the database.")
+	revel.INFO.Println("Quickly testing the database connection.")
+
+	// Test connection.
+	err = Db.Ping()
+	if err != nil {
+		revel.ERROR.Fatal(err)
+	}
+
+	revel.INFO.Println("Database connection looks good to go.")
 }
 
 type Transactional struct {
@@ -61,20 +86,16 @@ func (c *Transactional) Rollback() revel.Result {
 				panic(err)
 			}
 		}
-		c.Txn = nil
 	}
 	return nil
 }
 
 // Commit the transaction.
 func (c *Transactional) Commit() revel.Result {
-	if c.Txn != nil {
-		if err := c.Txn.Commit(); err != nil {
-			if err != sql.ErrTxDone {
-				panic(err)
-			}
+	if err := c.Txn.Commit(); err != nil {
+		if err != sql.ErrTxDone {
+			panic(err)
 		}
-		c.Txn = nil
 	}
 	return nil
 }
@@ -82,5 +103,5 @@ func (c *Transactional) Commit() revel.Result {
 func init() {
 	revel.InterceptMethod((*Transactional).Begin, revel.BEFORE)
 	revel.InterceptMethod((*Transactional).Commit, revel.AFTER)
-	revel.InterceptMethod((*Transactional).Rollback, revel.FINALLY)
+	revel.InterceptMethod((*Transactional).Rollback, revel.PANIC)
 }
