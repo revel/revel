@@ -23,7 +23,7 @@ var (
 )
 
 func Init() {
-	revel.INFO.Println("Initializing the database connection.")
+	revel.TRACE.Println("Initializing the database connection.")
 
 	// Read configuration.
 	var found bool
@@ -33,12 +33,9 @@ func Init() {
 	if Spec, found = revel.Config.String("db.spec"); !found {
 		revel.ERROR.Fatal("No db.spec found.")
 	}
-	if MaxIdleConns, found = revel.Config.Int("db.max_idle_conns"); !found {
-		MaxIdleConns = 0 //no idle connections
-	}
-	if MaxOpenConns, found = revel.Config.Int("db.max_open_conns"); !found {
-		MaxOpenConns = 0 //unlimited
-	}
+
+	MaxIdleConns = revel.Config.IntDefault("db.max_idle_conns", 0) // Default to no idle connections.
+	MaxOpenConns = revel.Config.IntDefault("db.max_open_conns", 0) // Default to unlimited open connections.
 
 	// Open a connection.
 	var err error
@@ -51,16 +48,13 @@ func Init() {
 	Db.SetMaxIdleConns(MaxIdleConns)
 	Db.SetMaxOpenConns(MaxOpenConns)
 
-	revel.INFO.Println("Succesfully initialized the database.")
-	revel.INFO.Println("Quickly testing the database connection.")
+	revel.TRACE.Println("Testing the database connection.")
 
 	// Test connection.
 	err = Db.Ping()
 	if err != nil {
 		revel.ERROR.Fatal(err)
 	}
-
-	revel.INFO.Println("Database connection looks good to go.")
 }
 
 type Transactional struct {
@@ -86,16 +80,20 @@ func (c *Transactional) Rollback() revel.Result {
 				panic(err)
 			}
 		}
+		c.Txn = nil
 	}
 	return nil
 }
 
 // Commit the transaction.
 func (c *Transactional) Commit() revel.Result {
-	if err := c.Txn.Commit(); err != nil {
-		if err != sql.ErrTxDone {
-			panic(err)
+	if c.Txn != nil {
+		if err := c.Txn.Commit(); err != nil {
+			if err != sql.ErrTxDone {
+				panic(err)
+			}
 		}
+		c.Txn = nil
 	}
 	return nil
 }
@@ -103,5 +101,5 @@ func (c *Transactional) Commit() revel.Result {
 func init() {
 	revel.InterceptMethod((*Transactional).Begin, revel.BEFORE)
 	revel.InterceptMethod((*Transactional).Commit, revel.AFTER)
-	revel.InterceptMethod((*Transactional).Rollback, revel.PANIC)
+	revel.InterceptMethod((*Transactional).Rollback, revel.FINALLY)
 }
