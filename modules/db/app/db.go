@@ -15,12 +15,16 @@ import (
 )
 
 var (
-	Db     *sql.DB
-	Driver string
-	Spec   string
+	Db           *sql.DB
+	Driver       string
+	Spec         string
+	MaxIdleConns int
+	MaxOpenConns int
 )
 
 func Init() {
+	revel.TRACE.Println("Initializing the database connection.")
+
 	// Read configuration.
 	var found bool
 	if Driver, found = revel.Config.String("db.driver"); !found {
@@ -30,9 +34,24 @@ func Init() {
 		revel.ERROR.Fatal("No db.spec found.")
 	}
 
+	MaxIdleConns = revel.Config.IntDefault("db.max_idle_conns", 0) // Default to no idle connections.
+	MaxOpenConns = revel.Config.IntDefault("db.max_open_conns", 0) // Default to unlimited open connections.
+
 	// Open a connection.
 	var err error
 	Db, err = sql.Open(Driver, Spec)
+	if err != nil {
+		revel.ERROR.Fatal(err)
+	}
+
+	// Set Db limits.
+	Db.SetMaxIdleConns(MaxIdleConns)
+	Db.SetMaxOpenConns(MaxOpenConns)
+
+	revel.TRACE.Println("Testing the database connection.")
+
+	// Test connection.
+	err = Db.Ping()
 	if err != nil {
 		revel.ERROR.Fatal(err)
 	}
