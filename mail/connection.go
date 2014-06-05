@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"net/smtp"
+	"strings"
 )
 
 // Transport initialize the smtp client
@@ -62,7 +63,7 @@ func Send(c *smtp.Client, message *Message) (err error) {
 		return
 	}
 
-	if err = c.Mail(message.From); err != nil {
+	if err = c.Mail(sanitizeFrom(message.From)); err != nil {
 		return
 	}
 
@@ -96,3 +97,27 @@ func addRcpt(c *smtp.Client, address []string) error {
 	}
 	return nil
 }
+
+// convert 'Sender <sender@abc.com>' into 'sender@abc.com'. fix issue #448
+func sanitizeFrom(s string) string {
+	i := strings.Index(s, "<")
+	if i > -1 {
+		sAlias := s[i:]
+		sAlias = strings.Replace(sAlias, "<", "", -1)
+		sAlias = strings.Replace(sAlias, ">", "", -1)
+		return strings.Trim(sAlias, " ")
+	}
+
+	//if using html entities...	
+	i = strings.Index(s, "&lt;")
+	if i > -1 {
+		sAlias := s[i:]
+		sAlias = strings.Replace(sAlias, "&lt;", "", -1)
+		sAlias = strings.Replace(sAlias, "&gt;", "", -1)
+		return strings.Trim(sAlias, " ")
+	}
+
+	//none of them...
+	return s
+}
+
