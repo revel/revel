@@ -82,6 +82,9 @@ func (c RedisCache) Get(key string, ptrValue interface{}) error {
 	conn := c.pool.Get()
 	defer conn.Close()
 	raw, err := conn.Do("GET", key)
+	if err != nil {
+		return err
+	}
 	if raw == nil {
 		return ErrCacheMiss
 	}
@@ -96,6 +99,9 @@ func (c RedisCache) GetMulti(keys ...string) (Getter, error) {
 	conn := c.pool.Get()
 	defer conn.Close()
 	items, err := redis.Values(conn.Do("MGET", keys))
+	if err != nil {
+		return nil, err
+	}
 	// now put them in a map of string:[]bytes
 	m := make(map[string][]byte)
 	for i, key := range keys {
@@ -110,10 +116,6 @@ func (c RedisCache) GetMulti(keys ...string) (Getter, error) {
 		} else {
 			m[key] = nil
 		}
-	}
-	if err != nil {
-
-		return nil, err
 	}
 	return RedisItemMapGetter(m), nil
 }
