@@ -63,7 +63,7 @@ func Send(c *smtp.Client, message *Message) (err error) {
 		return
 	}
 
-	if err = c.Mail(sanitizeFrom(message.From)); err != nil {
+	if err = c.Mail(extractAddress(message.From)); err != nil {
 		return
 	}
 
@@ -91,33 +91,33 @@ func Send(c *smtp.Client, message *Message) (err error) {
 
 func addRcpt(c *smtp.Client, address []string) error {
 	for _, addr := range address {
-		if err := c.Rcpt(addr); err != nil {
+		if err := c.Rcpt(extractAddress(addr)); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-// convert 'Sender <sender@abc.com>' into 'sender@abc.com'. fix issue #448
-func sanitizeFrom(s string) string {
-	i := strings.Index(s, "<")
+// Extract the 'sender@abc.com' part from 'Sender <sender@abc.com>'
+func extractAddress(from string) string {
+	i := strings.Index(from, "<")
 	if i > -1 {
-		sAlias := s[i:]
-		sAlias = strings.Replace(sAlias, "<", "", -1)
-		sAlias = strings.Replace(sAlias, ">", "", -1)
-		return strings.Trim(sAlias, " ")
+		addr := from[i:]
+		addr = strings.Replace(addr, "<", "", -1)
+		addr = strings.Replace(addr, ">", "", -1)
+		return strings.Trim(addr, " ")
 	}
 
 	//if using html entities...	
-	i = strings.Index(s, "&lt;")
+	i = strings.Index(from, "&lt;")
 	if i > -1 {
-		sAlias := s[i:]
-		sAlias = strings.Replace(sAlias, "&lt;", "", -1)
-		sAlias = strings.Replace(sAlias, "&gt;", "", -1)
-		return strings.Trim(sAlias, " ")
+		addr := from[i:]
+		addr = strings.Replace(addr, "&lt;", "", -1)
+		addr = strings.Replace(addr, "&gt;", "", -1)
+		return strings.Trim(addr, " ")
 	}
 
 	//none of them...
-	return s
+	return from
 }
 
