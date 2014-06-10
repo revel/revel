@@ -108,16 +108,5 @@ func extractAddress(from string) string {
 		return strings.Trim(addr, " ")
 	}
 
-	//if using html entities...	
-	i = strings.Index(from, "&lt;")
-	if i > -1 {
-		addr := from[i:]
-		addr = strings.Replace(addr, "&lt;", "", -1)
-		addr = strings.Replace(addr, "&gt;", "", -1)
-		return strings.Trim(addr, " ")
-	}
-
-	//none of them...
 	return from
 }
-
