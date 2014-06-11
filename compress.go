@@ -3,10 +3,10 @@ package revel
 import (
 	"compress/gzip"
 	"compress/zlib"
+	"io"
 	"net/http"
 	"strconv"
 	"strings"
-	"io"
 )
 
 var compressionTypes = [...]string{
@@ -28,9 +28,9 @@ var compressableMimes = [...]string{
 }
 
 type WriteFlusher interface {
-	Write([]byte) (int, error)
+	io.Writer
+	io.Closer
 	Flush() error
-	Close() error
 }
 
 type CompressResponseWriter struct {

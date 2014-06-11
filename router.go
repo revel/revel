@@ -3,7 +3,6 @@ package revel
 import (
 	"encoding/csv"
 	"fmt"
-	"github.com/robfig/pathtree"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -11,6 +10,8 @@ import (
 	"path"
 	"regexp"
 	"strings"
+
+	"github.com/robfig/pathtree"
 )
 
 type Route struct {
@@ -269,7 +270,7 @@ func routeError(err error, routesPath, content string, n int) *Error {
 	if content == "" {
 		contentBytes, err := ioutil.ReadFile(routesPath)
 		if err != nil {
-			ERROR.Println("Failed to read route file %s: %s", routesPath, err)
+			ERROR.Printf("Failed to read route file %s: %s\n", routesPath, err)
 		} else {
 			content = string(contentBytes)
 		}

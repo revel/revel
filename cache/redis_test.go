@@ -1,24 +1,18 @@
 package cache
 
 import (
+	"github.com/revel/revel"
 	"net"
 	"testing"
 	"time"
-	"github.com/revel/revel"
 )
 
 // These tests require redis server running on localhost:6379 (the default)
 const redisTestServer = "localhost:6379"
-const testConfigPath string = "testdata"
-const testConfigName string = "test_app.conf"
 
 var newRedisCache = func(t *testing.T, defaultExpiration time.Duration) Cache {
-	revel.ConfPaths = append(revel.ConfPaths, testConfigPath)
-	var err error
-	revel.Config, err = revel.LoadConfig(testConfigName)
-	if err != nil {
-		t.Fatalf("couldn't load config %s/%s : %s", revel.ConfPaths, testConfigName, err.Error())
-	}
+	revel.Config = revel.NewEmptyConfig()
+
 	c, err := net.Dial("tcp", redisTestServer)
 	if err == nil {
 		c.Write([]byte("flush_all\r\n"))
