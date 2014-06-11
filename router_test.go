@@ -201,6 +201,22 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 	},
 }
 
+func init() {
+	rTest := &http.Request{
+		Method: "POST",
+		URL:    &url.URL{Path: "/app/123"},
+		Header:     make(http.Header),
+	}
+
+	rTest.Header.Add("X-HTTP-Method-Override", "PATCH")
+	routeMatchTestCases[rTest] = &RouteMatch{
+		ControllerName: "Application",
+		MethodName:     "Update",
+		FixedParams:    []string{},
+		Params:         map[string][]string{"id": {"123"}},
+	}
+}
+
 func TestRouteMatches(t *testing.T) {
 	BasePath = "/BasePath"
 	router := NewRouter("")
