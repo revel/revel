@@ -15,6 +15,7 @@ import (
 
 type Route struct {
 	Method         string   // e.g. GET
+	Subdomain      string   // e.g. subdomain:blog
 	Path           string   // e.g. /app/:id
 	Action         string   // e.g. "Application.ShowApp", "404"
 	ControllerName string   // e.g. "Application", ""
@@ -91,7 +92,13 @@ type Router struct {
 var notFound = &RouteMatch{Action: "404"}
 
 func (router *Router) Route(req *http.Request) *RouteMatch {
-	leaf, expansions := router.Tree.Find(treePath(req.Method, req.URL.Path))
+	subdomain := getSubDomain(req.Host)
+	path := req.URL.Path
+	if subdomain != "" && subdomain != "www" {
+		path = "subdomain:" + subdomain + "/" + path
+	}
+
+	leaf, expansions := router.Tree.Find(treePath(req.Method, path))
 	if leaf == nil {
 		return nil
 	}
@@ -126,6 +133,21 @@ func (router *Router) Route(req *http.Request) *RouteMatch {
 		Params:         params,
 		FixedParams:    route.FixedParams,
 	}
+}
+
+// get subdomain from host  by xiaoao[github.com/xiaoao]
+// e.g. www.abc.com  => www
+// e.g. blog.it.abc.com => blog.it
+func getSubDomain(host string) string {
+	subdomain := ""
+	host_parts := strings.Split(host, ".")
+	l := len(host_parts)
+	l = l - 2
+	if l > 0 {
+		subs := host_parts[0:l]
+		subdomain = strings.Join(subs, ".")
+	}
+	return subdomain
 }
 
 // Refresh re-reads the routes file and re-calculates the routing table.
