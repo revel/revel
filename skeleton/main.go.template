@@ -1,6 +1,29 @@
-package app
+// Main package is the entry point for this Revel app
+package main
 
-import "github.com/revel/revel"
+import (
+	"flag"
+
+	"github.com/revel/revel"
+	"{{ .ImportPath }}/app/boot"
+)
+
+var (
+	runMode    *string = flag.String("runMode", "", "Run mode.")
+	port       *int    = flag.Int("port", 0, "By default, read from app.conf")
+	importPath *string = flag.String("importPath", "", "Go Import Path for the app.")
+	srcPath    *string = flag.String("srcPath", "", "Path to the source root.")
+)
+
+func main() {
+	flag.Parse()
+	revel.Init(*runMode, *importPath, *srcPath)
+	revel.INFO.Println("Running revel server")
+	
+	boot.StrapActions()
+
+	revel.Run(*port)
+}
 
 func init() {
 	// Filters is the default set of global filters.
