@@ -24,7 +24,7 @@ var importErrorPattern = regexp.MustCompile("cannot find package \"([^\"]+)\"")
 // Returns the path to the built binary, and an error if there was a problem building it.
 func Build() (app *App, compileError *revel.Error) {
 	// First, clear the generated files (to avoid them messing with ProcessSource).
-	cleanSource("gen", "routes")
+	cleanSource("boot", "routes")
 
 	sourceInfo, compileError := ProcessSource(revel.CodePaths)
 	if compileError != nil {
