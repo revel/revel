@@ -2,6 +2,7 @@ package cache
 
 import (
 	"github.com/garyburd/redigo/redis"
+	"github.com/revel/revel"
 	"time"
 )
 
@@ -14,11 +15,12 @@ type RedisCache struct {
 // until redigo supports sharding/clustering, only one host will be in hostList
 func NewRedisCache(host string, password string, defaultExpiration time.Duration) RedisCache {
 	var pool = &redis.Pool{
-		MaxIdle:     5,
-		IdleTimeout: 240 * time.Second,
+		MaxIdle:     revel.Config.IntDefault("cache.redis.maxidle", 5),
+		MaxActive:   revel.Config.IntDefault("cache.redis.maxactive", 0),
+		IdleTimeout: time.Duration(revel.Config.IntDefault("cache.redis.idletimeout", 240)) * time.Second,
 		Dial: func() (redis.Conn, error) {
-			// the redis protocol should probably be made sett-able
-			c, err := redis.Dial("tcp", host)
+			protocol := revel.Config.StringDefault("cache.redis.protocol", "tcp")
+			c, err := redis.Dial(protocol, host)
 			if err != nil {
 				return nil, err
 			}
@@ -48,11 +50,14 @@ func NewRedisCache(host string, password string, defaultExpiration time.Duration
 }
 
 func (c RedisCache) Set(key string, value interface{}, expires time.Duration) error {
-	return c.invoke(c.pool.Get().Do, key, value, expires)
+	conn := c.pool.Get()
+	defer conn.Close()
+	return c.invoke(conn.Do, key, value, expires)
 }
 
 func (c RedisCache) Add(key string, value interface{}, expires time.Duration) error {
 	conn := c.pool.Get()
+	defer conn.Close()
 	if exists(conn, key) {
 		return ErrNotStored
 	}
@@ -61,6 +66,7 @@ func (c RedisCache) Add(key string, value interface{}, expires time.Duration) er
 
 func (c RedisCache) Replace(key string, value interface{}, expires time.Duration) error {
 	conn := c.pool.Get()
+	defer conn.Close()
 	if !exists(conn, key) {
 		return ErrNotStored
 	}
@@ -120,10 +126,10 @@ func exists(conn redis.Conn, key string) bool {
 func (c RedisCache) Delete(key string) error {
 	conn := c.pool.Get()
 	defer conn.Close()
-	if !exists(conn, key) {
-		return ErrCacheMiss
+	existed, err := redis.Bool(conn.Do("DEL", key))
+	if err == nil && !existed {
+		err = ErrCacheMiss
 	}
-	_, err := conn.Do("DEL", key)
 	return err
 }
 

@@ -58,13 +58,30 @@ var (
 			return template.JS("")
 		},
 		"field": NewField,
-		"option": func(f *Field, val, label string) template.HTML {
+		"firstof": func(args ...interface{}) interface{} {
+			for _, val := range args {
+				switch val.(type) {
+				case nil:
+					continue
+				case string:
+					if val == "" {
+						continue
+					}
+					return val
+				default:
+					return val
+				}
+			}
+			return nil
+		},
+		"option": func(f *Field, val interface{}, label string) template.HTML {
 			selected := ""
-			if f.Flash() == val {
+			if f.Flash() == val || (f.Flash() == "" && f.Value() == val) {
 				selected = " selected"
 			}
+
 			return template.HTML(fmt.Sprintf(`<option value="%s"%s>%s</option>`,
-				html.EscapeString(val), selected, html.EscapeString(label)))
+				html.EscapeString(fmt.Sprintf("%v", val)), selected, html.EscapeString(label)))
 		},
 		"radio": func(f *Field, val string) template.HTML {
 			checked := ""
@@ -157,6 +174,7 @@ var (
 			return date.Format(DateTimeFormat)
 		},
 		"slug": Slug,
+		"even": func(a int) bool { return (a % 2) == 0 },
 	}
 )
 

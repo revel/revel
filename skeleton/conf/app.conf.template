@@ -7,7 +7,7 @@
 
 # This sets the `AppName` variable which can be used in your code as
 #   `if revel.AppName {...}`
-app.name   = {{ .AppName }}
+app.name = {{ .AppName }}
 
 # A secret string which is passed to cryptographically sign the cookie to prevent
 # (and detect) user modification.
@@ -17,19 +17,19 @@ app.secret = {{ .Secret }}
 
 
 # The IP address on which to listen.
-http.addr    =
+http.addr =
 
 # The port on which to listen.
-http.port    = 9000
+http.port = 9000
 
 # Whether to use SSL or not.
-http.ssl     = false
+http.ssl = false
 
-# Path to an X509 certificate file.
-http.sslcert =
+# Path to an X509 certificate file, if using SSL.
+#http.sslcert =
 
-# Path to an X509 certificate key.
-http.sslkey  =
+# Path to an X509 certificate key, if using SSL.
+#http.sslkey =
 
 
 # For any cookies set by Revel (Session,Flash,Error) these properties will set
@@ -45,13 +45,13 @@ http.sslkey  =
 cookie.httponly = false
 
 # Each cookie set by Revel is prefixed with this string.
-cookie.prefix   = REVEL
+cookie.prefix = REVEL
 
 # A secure cookie has the secure attribute enabled and is only used via HTTPS,
 # ensuring that the cookie is always encrypted when transmitting from client to
 # server. This makes the cookie less likely to be exposed to cookie theft via
 # eavesdropping.
-cookie.secure   = false
+cookie.secure = false
 
 
 # Define when your session cookie expires. Possible values:

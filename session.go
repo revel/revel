@@ -140,13 +140,17 @@ func getSessionFromCookie(cookie *http.Cookie) Session {
 // The name of the Session cookie is set as CookiePrefix + "_SESSION".
 func SessionFilter(c *Controller, fc []Filter) {
 	c.Session = restoreSession(c.Request.Request)
+	sessionWasEmpty := len(c.Session) == 0
+
 	// Make session vars available in templates as {{.session.xyz}}
 	c.RenderArgs["session"] = c.Session
 
 	fc[0](c, fc[1:])
 
-	// Store the session (and sign it).
-	c.SetCookie(c.Session.cookie())
+	// Store the signed session if it could have changed.
+	if len(c.Session) > 0 || !sessionWasEmpty {
+		c.SetCookie(c.Session.cookie())
+	}
 }
 
 // restoreSession returns either the current session, retrieved from the

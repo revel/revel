@@ -4,7 +4,6 @@ package harness
 // It catalogs the controllers, their methods, and their arguments.
 
 import (
-	"github.com/revel/revel"
 	"go/ast"
 	"go/build"
 	"go/parser"
@@ -14,6 +13,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/revel/revel"
 )
 
 // SourceInfo is the top-level struct containing all extracted information
@@ -720,8 +721,7 @@ func NewTypeExpr(pkgName string, expr ast.Expr) TypeExpr {
 		e := NewTypeExpr(pkgName, t.Elt)
 		return TypeExpr{"[]" + e.Expr, e.PkgName, e.pkgIndex + 2, e.Valid}
 	default:
-		log.Println("Failed to generate name for field.")
-		ast.Print(nil, expr)
+		log.Println("Failed to generate name for field. Make sure the field name is valid.")
 	}
 	return TypeExpr{Valid: false}
 }

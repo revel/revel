@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"mime/multipart"
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
@@ -90,6 +91,26 @@ func (t *TestSuite) Post(path string, contentType string, reader io.Reader) {
 // values, and store the result in Request and RequestBody.
 func (t *TestSuite) PostForm(path string, data url.Values) {
 	t.Post(path, "application/x-www-form-urlencoded", strings.NewReader(data.Encode()))
+}
+
+// Issue a multipart request for the method & fields given and read the response.
+// If successful, the caller may examine the Response and ResponseBody properties.
+func (t *TestSuite) MakeMultipartRequest(method string, path string, fields map[string]string) {
+	var b bytes.Buffer
+	w := multipart.NewWriter(&b)
+
+	for key, value := range fields {
+		w.WriteField(key, value)
+	}
+	w.Close() //adds the terminating boundary
+
+	req, err := http.NewRequest(method, t.BaseUrl()+path, &b)
+	if err != nil {
+		panic(err)
+	}
+	req.Header.Set("Content-Type", w.FormDataContentType())
+
+	t.MakeRequest(req)
 }
 
 // Issue any request and read the response. If successful, the caller may
