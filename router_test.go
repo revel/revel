@@ -69,6 +69,16 @@ var routeTestCases = map[string]*Route{
 		Action:      ":controller.:action",
 		FixedParams: []string{},
 	},
+
+	`GET / Application.Index("Test", "Test2")`: &Route{
+		Method:      "GET",
+		Path:        "/",
+		Action:      "Application.Index",
+		FixedParams: []string{
+			"Test",
+			"Test2",
+		},
+	},
 }
 
 // Run the test cases above.
@@ -94,6 +104,7 @@ func TestComputeRoute(t *testing.T) {
 const TEST_ROUTES = `
 # This is a comment
 GET   /                          Application.Index
+GET   /test/                     Application.Index("Test", "Test2")
 GET   /app/:id/                  Application.Show
 POST  /app/:id                   Application.Save
 PATCH /app/:id/                  Application.Update
@@ -113,6 +124,16 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 		MethodName:     "Index",
 		FixedParams:    []string{},
 		Params:         map[string][]string{},
+	},
+
+	&http.Request{
+		Method: "GET",
+		URL:    &url.URL{Path: "/test/"},
+	}: &RouteMatch{
+		ControllerName: "Application",
+		MethodName:     "Index",
+		FixedParams:    []string{"Test", "Test2"},
+		Params: map[string][]string{},
 	},
 
 	&http.Request{

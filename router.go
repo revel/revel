@@ -46,6 +46,7 @@ func NewRoute(method, path, action, fixedArgs, routesPath string, line int) (r *
 	// Handle fixed arguments
 	argsReader := strings.NewReader(fixedArgs)
 	csv := csv.NewReader(argsReader)
+	csv.TrimLeadingSpace = true
 	fargs, err := csv.Read()
 	if err != nil && err != io.EOF {
 		ERROR.Printf("Invalid fixed parameters (%v): for string '%v'", err.Error(), fixedArgs)
