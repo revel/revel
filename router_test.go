@@ -199,22 +199,28 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 		FixedParams:    []string{},
 		Params:         map[string][]string{},
 	},
-}
 
-func init() {
-	methodOverrideTestRequest := &http.Request{
+	&http.Request{
 		Method: "POST",
 		URL:    &url.URL{Path: "/app/123"},
-		Header: make(http.Header),
-	}
-
-	methodOverrideTestRequest.Header.Add("X-HTTP-Method-Override", "PATCH")
-	routeMatchTestCases[methodOverrideTestRequest] = &RouteMatch{
+		Header: http.Header{"X-Http-Method-Override": []string{"PATCH"}},
+	}: &RouteMatch{
 		ControllerName: "Application",
 		MethodName:     "Update",
 		FixedParams:    []string{},
 		Params:         map[string][]string{"id": {"123"}},
-	}
+	},
+
+	&http.Request{
+		Method: "GET",
+		URL:    &url.URL{Path: "/app/123"},
+		Header: http.Header{"X-Http-Method-Override": []string{"PATCH"}},
+	}: &RouteMatch{
+		ControllerName: "Application",
+		MethodName:     "Show",
+		FixedParams:    []string{},
+		Params:         map[string][]string{"id": {"123"}},
+	},
 }
 
 func TestRouteMatches(t *testing.T) {

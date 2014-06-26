@@ -93,7 +93,7 @@ var notFound = &RouteMatch{Action: "404"}
 
 func (router *Router) Route(req *http.Request) *RouteMatch {
 	// Override method if set in header
-	if method := req.Header.Get("X-HTTP-Method-Override"); method != "" {
+	if method := req.Header.Get("X-HTTP-Method-Override"); method != "" && req.Method == "POST" {
 		req.Method = method
 	}
 
