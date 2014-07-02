@@ -1,4 +1,4 @@
-## Contribute To Revel
+## Contributing to Revel
 
 This describes how developers may contribute to Revel.
 
@@ -13,9 +13,9 @@ default configuration that can woo new developers and make simple web apps
 straight forward. The framework should have an opinion about how to do all of the
 common tasks in web development to reduce unnecessary cognitive load.
 
-## How To Contribute
+## How to Contribute
 
-### Join The Community
+### Join the Community
 
 The first step to making Revel better is joining the community! You can find the
 community on:
@@ -31,7 +31,7 @@ Once you've joined, there are many ways to contribute to Revel:
 * Give feedback on new feature discussions (via GitHub and Google Groups)
 * Propose your own ideas (via Google Groups or GitHub)
 
-### How Revel Is Developed
+### How Revel is Developed
 
 We have begun to formalize the development process by adopting pragmatic
 practices such as:
@@ -46,25 +46,25 @@ address urgent bugs. Such releases will not introduce or change functionality
 * Discussing new features **before** hacking away at it
 
 
-### How To Correctly Fork
+### How to Correctly Fork
 
 Go uses the repository URL to import packages, so forking and `go get`ing the
 forked project **will not work**.
 
 Instead, follow these steps:
 
-1. Install Revel locally
-2. Fork Revel on Github
+1. Install Revel normally
+2. Fork Revel on GitHub
 3. Add your fork as a git remote
 
-Here is the command line:
+Here's the commands to do so:
 ```
-$ go get github.com/revel/revel                      # Install Revel
-$ cd $GOPATH/src/github.com/revel/revel              # Change directory to revel repo
-$ git remote add fork git@github.com:$USER/revel.git  # Add your fork as a remote
+$ go get github.com/revel/revel                        # Install Revel
+$ cd $GOPATH/src/github.com/revel/revel                # Change directory to revel repo
+$ git remote add fork git@github.com:$USER/revel.git  # Add your fork as a remote, where $USER is your GitHub username
 ```
 
-### Create A Feature Branch & Code Away!
+### Create a Feature Branch & Code Away!
 
 Now that you've properly installed and forked Revel, you are ready to start coding (assuming
 you have a valdiated your ideas with other community members)!
@@ -72,21 +72,21 @@ you have a valdiated your ideas with other community members)!
 In order to have your pull requests accepted, we recommend you make your changes to Revel on a
 new git branch. For example,
 ```
-$ git checkout -b feature/useful-new-thing develop    # Create a new branch based on the develop branch and switch to it
+$ git checkout -b feature/useful-new-thing develop    # Create a new branch based on develop and switch to it
 $ ...                                                 # Make your changes and commit them
-$ git pull origin develop                             # Optionally, merge new changes from upstream
 $ git push fork develop                               # After new commits, push to your fork
 ```
 
-### Gofmt Your Code
+### Format Your Code
 
-Set your editor to run "go fmt" every time you save so that whitespace / style
-comments are kept to a minimum.
+Remember to run `go fmt` before committing your changes.
+Many Go developers opt to have their editor run `go fmt` automatically when
+saving Go files.
 
-Howtos:
-* [Emacs](http://blog.golang.org/2013/01/go-fmt-your-code.html)
+Additionally, follow the [core Go style conventions](https://code.google.com/p/go-wiki/wiki/CodeReviewComments)
+to have your pull requests accepted.
 
-### Write A Test (And Benchmark For Bonus Points)
+### Write Tests (and Benchmarks for Bonus Points)
 
 Significant new features require tests. Besides unit tests, it is also possible
 to test a feature by exercising it in one of the sample apps and verifying its
@@ -95,7 +95,7 @@ example code for developers to refer to.
 
 Benchmarks are helpful but not required.
 
-### Run The Tests
+### Run the Tests
 
 Typically running the main set of unit tests will be sufficient:
 
@@ -118,10 +118,9 @@ The [Revel web site](http://revel.github.io/) is hosted on GitHub Pages and
 
 To develop the Jekyll site locally:
 
-    # Clone a second repository and check out the branch
-    $ git clone git@github.com:revel/revel.git
-    $ cd revel
-    $ git checkout gh-pages
+    # Clone the documentation repository
+    $ git clone git@github.com:revel/revel.github.io
+    $ cd revel.github.io
 
     # Install / run Jekyll to generate the site, and serve the result
     $ gem install jekyll
