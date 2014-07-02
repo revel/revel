@@ -122,8 +122,8 @@ To develop the Jekyll site locally:
     $ git clone git@github.com:revel/revel.github.io
     $ cd revel.github.io
 
-    # Install / run Jekyll to generate the site, and serve the result
-    $ gem install jekyll
+    # Install and run Jekyll to generate and serve the site
+    $ gem install jekyll kramdown
     $ jekyll serve --watch
 
     # Now load in your browser
