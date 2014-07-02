@@ -72,9 +72,9 @@ var routeTestCases = map[string]*Route{
 	},
 
 	`GET / Application.Index("Test", "Test2")`: &Route{
-		Method:      "GET",
-		Path:        "/",
-		Action:      "Application.Index",
+		Method: "GET",
+		Path:   "/",
+		Action: "Application.Index",
 		FixedParams: []string{
 			"Test",
 			"Test2",
@@ -134,7 +134,7 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 		ControllerName: "Application",
 		MethodName:     "Index",
 		FixedParams:    []string{"Test", "Test2"},
-		Params: map[string][]string{},
+		Params:         map[string][]string{},
 	},
 
 	&http.Request{
