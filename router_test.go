@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 	"testing"
 )
 
@@ -392,6 +393,18 @@ func BenchmarkRouterFilter(b *testing.B) {
 		for _, c := range controllers {
 			RouterFilter(c, NilChain)
 		}
+	}
+}
+
+func TestOverrideMethodFilter(t *testing.T) {
+	req, _ := http.NewRequest("POST", "/hotels/3", strings.NewReader("_method=put"))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; param=value")
+	c := Controller{
+		Request: NewRequest(req),
+	}
+
+	if HttpMethodOverride(&c, NilChain); c.Request.Request.Method != "PUT" {
+		t.Errorf("Expected to override current method '%s' in route, found '%s' instead", "", c.Request.Request.Method)
 	}
 }
 
