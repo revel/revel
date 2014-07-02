@@ -475,7 +475,6 @@ func HttpMethodOverride(c *Controller, fc []Filter) {
 	method := strings.ToUpper(c.Request.Request.Method)
 
 	if method == "POST" {
-
 		param := strings.ToUpper(c.Request.Request.PostFormValue("_method"))
 
 		if len(param) > 0 {
@@ -494,7 +493,7 @@ func HttpMethodOverride(c *Controller, fc []Filter) {
 				c.Response.Status = 405
 				c.Result = c.RenderError(&Error{
 					Title:       "Method not allowed",
-					Description: "No matching route found: " + c.Request.RequestURI + " Method Not Allowed (Allow: " + strings.Join(verbs, ", ") + ")",
+					Description: "Method " + param + " is not allowed (valid: " + strings.Join(verbs, ", ") + ")",
 				})
 				return
 			}
