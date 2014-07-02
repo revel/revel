@@ -113,24 +113,22 @@ Due to the wide audience and shared nature of Revel, documentation is an essenti
 addition to your new code. **Pull requests risk not being accepted** until proper
 documentation is created to detail how to make use of new functionality.
 
-The [Revel web site](http://revel.github.io/) is hosted on Github-pages and
+The [Revel web site](http://revel.github.io/) is hosted on GitHub Pages and
 [built with Jekyll](https://help.github.com/articles/using-jekyll-with-pages).
 
 To develop the Jekyll site locally:
 
-	# Clone a second repository and check out the branch
-	$ git clone git@github.com:revel/revel.git
-	$ cd revel
-	$ git checkout gh-pages
+    # Clone a second repository and check out the branch
+    $ git clone git@github.com:revel/revel.git
+    $ cd revel
+    $ git checkout gh-pages
 
-	# Install / run Jekyll 1.0.3 to generate the site, and serve the result
-	$ gem install jekyll -v 1.0.3
-	$ jekyll build --watch --safe -d test/revel &
-	$ cd test
-	$ python -m SimpleHTTPServer 8088
+    # Install / run Jekyll to generate the site, and serve the result
+    $ gem install jekyll
+    $ jekyll serve --watch
 
-	# Now load in your browser
-	$ open http://localhost:8088/revel
+    # Now load in your browser
+    $ open http://localhost:4000/
 
 Any changes you make to the site should be reflected within a few seconds.
 
