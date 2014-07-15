@@ -49,3 +49,7 @@ func TestRedisCache_Replace(t *testing.T) {
 func TestRedisCache_Add(t *testing.T) {
 	testAdd(t, newRedisCache)
 }
+
+func TestRedisCache_GetMulti(t *testing.T) {
+	testGetMulti(t, newRedisCache)
+}
