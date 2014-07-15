@@ -3,6 +3,7 @@ package revel
 import (
 	"code.google.com/p/go.net/websocket"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"strconv"
@@ -44,6 +45,10 @@ func handleInternal(w http.ResponseWriter, r *http.Request, ws *websocket.Conn) 
 		c.Result.Apply(req, resp)
 	} else if c.Response.Status != 0 {
 		c.Response.Out.WriteHeader(c.Response.Status)
+	}
+	// Close the Writer if we can
+	if w, ok := resp.Out.(io.Closer); ok {
+		w.Close()
 	}
 }
 
