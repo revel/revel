@@ -34,3 +34,7 @@ func TestInMemoryCache_Replace(t *testing.T) {
 func TestInMemoryCache_Add(t *testing.T) {
 	testAdd(t, newInMemoryCache)
 }
+
+func TestInMemoryCache_GetMulti(t *testing.T) {
+	testGetMulti(t, newInMemoryCache)
+}
