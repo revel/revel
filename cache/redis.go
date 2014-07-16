@@ -100,9 +100,10 @@ func (c RedisCache) Get(key string, ptrValue interface{}) error {
 	return Deserialize(item, ptrValue)
 }
 
-func generalizeStringSlice(strs []string) (ret []interface{}) {
-	for _, str := range strs {
-		ret = append(ret, str)
+func generalizeStringSlice(strs []string) []interface{} {
+	ret := make([]interface{}, len(strs))
+	for i, str := range strs {
+		ret[i] = str
 	}
 	return ret
 }
