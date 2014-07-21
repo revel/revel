@@ -287,6 +287,9 @@ func (r *BinaryResult) Apply(req *Request, resp *Response) {
 		// http.ServeContent doesn't know about response.ContentType, so we set the respective header.
 		if resp.ContentType != "" {
 			resp.Out.Header().Set("Content-Type", resp.ContentType)
+		} else {
+			contentType := ContentTypeByFilename(r.Name)
+			resp.Out.Header().Set("Content-Type", contentType)
 		}
 		http.ServeContent(resp.Out, req.Request, r.Name, r.ModTime, rs)
 	} else {
