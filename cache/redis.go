@@ -100,28 +100,33 @@ func (c RedisCache) Get(key string, ptrValue interface{}) error {
 	return Deserialize(item, ptrValue)
 }
 
+func generalizeStringSlice(strs []string) []interface{} {
+	ret := make([]interface{}, len(strs))
+	for i, str := range strs {
+		ret[i] = str
+	}
+	return ret
+}
+
 func (c RedisCache) GetMulti(keys ...string) (Getter, error) {
 	conn := c.pool.Get()
 	defer conn.Close()
-	items, err := redis.Values(conn.Do("MGET", keys))
+
+	items, err := redis.Values(conn.Do("MGET", generalizeStringSlice(keys)...))
 	if err != nil {
 		return nil, err
 	} else if items == nil {
 		return nil, ErrCacheMiss
 	}
-	// now put them in a map of string:[]bytes
+
 	m := make(map[string][]byte)
 	for i, key := range keys {
-		if items[i] != nil {
+		m[key] = nil
+		if i < len(items) && items[i] != nil {
 			s, ok := items[i].([]byte)
-			if !ok {
-				// the assertion failed.
-				m[key] = nil
-			} else {
+			if ok {
 				m[key] = s
 			}
-		} else {
-			m[key] = nil
 		}
 	}
 	return RedisItemMapGetter(m), nil
