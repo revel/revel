@@ -31,6 +31,7 @@ type WriteFlusher interface {
 	io.Writer
 	io.Closer
 	Flush() error
+	Close() error
 }
 
 type CompressResponseWriter struct {
