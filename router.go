@@ -93,6 +93,11 @@ type Router struct {
 var notFound = &RouteMatch{Action: "404"}
 
 func (router *Router) Route(req *http.Request) *RouteMatch {
+	// Override method if set in header
+	if method := req.Header.Get("X-HTTP-Method-Override"); method != "" && req.Method == "POST" {
+		req.Method = method
+	}
+
 	leaf, expansions := router.Tree.Find(treePath(req.Method, req.URL.Path))
 	if leaf == nil {
 		return nil
