@@ -38,6 +38,4 @@ script:
   - revel test github.com/revel/revel/samples/twitter-oauth
   - sleep 30
   - revel test github.com/revel/revel/samples/validation
-  - sleep 30
-  - revel test github.com/revel/revel/samples/chat
 
