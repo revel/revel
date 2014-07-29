@@ -44,7 +44,6 @@ var (
 	// The functions available for use in the templates.
 	TemplateFuncs = map[string]interface{}{
 		"url": ReverseUrl,
-		"eq":  Equal,
 		"set": func(renderArgs map[string]interface{}, key string, value interface{}) template.JS {
 			renderArgs[key] = value
 			return template.JS("")
