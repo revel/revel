@@ -18,15 +18,6 @@ const (
 	REVEL_IMPORT_PATH = "github.com/revel/revel"
 )
 
-type revelLogs struct {
-	c gocolorize.Colorize
-	w io.Writer
-}
-
-func (r *revelLogs) Write(p []byte) (n int, err error) {
-	return r.w.Write([]byte(r.c.Paint(string(p))))
-}
-
 var (
 	// App details
 	AppName    string // e.g. "sample"
@@ -197,6 +188,8 @@ func Init(mode, importPath, srcPath string) {
 	Initialized = true
 }
 
+
+
 // Create a logger using log.* directives in app.conf plus the current settings
 // on the default logger.
 func getLogger(name string) *log.Logger {
@@ -243,6 +236,19 @@ func newLogger(wr io.Writer) *log.Logger {
 	return log.New(wr, "", INFO.Flags())
 }
 
+
+
+type revelLogs struct {
+	c gocolorize.Colorize
+	w io.Writer
+}
+
+func (r *revelLogs) Write(p []byte) (n int, err error) {
+	return r.w.Write([]byte(r.c.Paint(string(p))))
+}
+
+
+
 // findSrcPaths uses the "go/build" package to find the source root for Revel
 // and the app.
 func findSrcPaths(importPath string) (revelSourcePath, appSourcePath string) {
@@ -275,6 +281,21 @@ func findSrcPaths(importPath string) (revelSourcePath, appSourcePath string) {
 	return revelPkg.SrcRoot, appPkg.SrcRoot
 }
 
+// ResolveImportPath returns the filesystem path for the given import path.
+// Returns an error if the import path could not be found.
+func ResolveImportPath(importPath string) (string, error) {
+	if packaged {
+		return path.Join(SourcePath, importPath), nil
+	}
+
+	modPkg, err := build.Import(importPath, "", build.FindOnly)
+	if err != nil {
+		return "", err
+	}
+	return modPkg.Dir, nil
+}
+
+
 type Module struct {
 	Name, ImportPath, Path string
 }
@@ -292,20 +313,6 @@ func loadModules() {
 		}
 		addModule(key[len("module."):], moduleImportPath, modulePath)
 	}
-}
-
-// ResolveImportPath returns the filesystem path for the given import path.
-// Returns an error if the import path could not be found.
-func ResolveImportPath(importPath string) (string, error) {
-	if packaged {
-		return path.Join(SourcePath, importPath), nil
-	}
-
-	modPkg, err := build.Import(importPath, "", build.FindOnly)
-	if err != nil {
-		return "", err
-	}
-	return modPkg.Dir, nil
 }
 
 func addModule(name, importPath, modulePath string) {
