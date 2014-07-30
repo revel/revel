@@ -5,7 +5,7 @@ import (
 	"flag"
 
 	"github.com/revel/revel"
-	"{{ .ImportPath }}/app/boot"
+	"{{ .ImportPath }}/app/rev"
 )
 
 var (
@@ -18,9 +18,8 @@ var (
 func main() {
 	flag.Parse()
 	revel.Init(*runMode, *importPath, *srcPath)
-	revel.INFO.Println("Running revel server")
 	
-	boot.StrapActions()
+	rev.Setup()
 
 	revel.Run(*port)
 }

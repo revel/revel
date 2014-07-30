@@ -24,7 +24,7 @@ var importErrorPattern = regexp.MustCompile("cannot find package \"([^\"]+)\"")
 // Returns the path to the built binary, and an error if there was a problem building it.
 func Build() (app *App, compileError *revel.Error) {
 	// First, clear the generated files (to avoid them messing with ProcessSource).
-	cleanSource("boot", "routes")
+	cleanSource("rev", "routes")
 
 	sourceInfo, compileError := ProcessSource(revel.CodePaths)
 	if compileError != nil {
@@ -43,7 +43,7 @@ func Build() (app *App, compileError *revel.Error) {
 		"ImportPaths":    calcImportAliases(sourceInfo),
 		"TestSuites":     sourceInfo.TestSuites(),
 	}
-	genSource("boot", "actions.go", ACTIONS, templateArgs)
+	genSource("rev", "controllers.go", CONTROLLERS, templateArgs)
 	genSource("routes", "routes.go", ROUTES, templateArgs);
 
 
@@ -287,8 +287,8 @@ func newCompileError(output []byte) *revel.Error {
 	return compileError
 }
 
-const ACTIONS = `// GENERATED CODE - DO NOT EDIT
-package boot
+const CONTROLLERS = `// GENERATED CODE - DO NOT EDIT
+package rev
 
 import (
 	"reflect"
@@ -298,8 +298,8 @@ import (
 	{{$v}} "{{$k}}"{{end}}
 )
 
-// StrapActions registers all active app controllers and their action methods
-func StrapActions() {
+// Setup registers all active app controllers/actions as well as test suites and validation keys
+func Setup() {
 	{{range $i, $c := .Controllers}}
 	revel.RegisterController((*{{index $.ImportPaths .ImportPath}}.{{.StructName}})(nil),
 		[]*revel.MethodType{
