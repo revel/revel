@@ -70,7 +70,7 @@ func (hp *Harness) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Reverse proxy the request.
 	// (Need special code for websockets, courtesy of bradfitz)
-	if r.Header.Get("Upgrade") == "websocket" {
+	if strings.EqualFold(r.Header.Get("Upgrade"), "websocket") {
 		proxyWebsocket(w, r, hp.serverHost)
 	} else {
 		hp.proxy.ServeHTTP(w, r)
