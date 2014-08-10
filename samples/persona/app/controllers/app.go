@@ -11,8 +11,6 @@ import (
 	"github.com/revel/revel"
 )
 
-const host = "" // set this to your host
-
 type App struct {
 	*revel.Controller
 }
@@ -49,7 +47,12 @@ func (c App) Login(assertion string) revel.Result {
 		}
 	}
 
-	values := url.Values{"assertion": {assertion}, "audience": {host}}
+	values := url.Values{
+		"assertion": {assertion},
+		"audience": {
+			revel.Config.StringDefault("http.host", "localhost"),
+		},
+	}
 	resp, err := http.PostForm("https://verifier.login.persona.org/verify", values)
 	if err != nil {
 		return &LoginResult{
