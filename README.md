@@ -18,16 +18,18 @@ Current Version: 0.10.0 (Aug 10, 2014)
 
 ## Announcements
 
-### Limited Resources
+### Apology and Thanks
 
-The Revel team has lagged behind on our ideal release cycle of every 6 weeks. I know Revel is a open
+The Revel team has lagged behind on our ideal release cycle of every 6 weeks. I know Revel is an open
 source project developed by volunteers, but I wanted to apologize for the delay. I also want to publicly
-acknowledge my gratitude for @pushrax's hard work in assisting me in this release as well as other active
-community members in helping us fix bugs and further enhance Revel's features. Thank you!
+acknowledge my gratitude for @pushrax's hard work in assisting me in this release as well as @verdverm,
+@landr0id and other active community members in helping us fix bugs and further enhance Revel's features.
+
+Thank you!
 
 View the [v0.10.0 release notes](https://github.com/revel/revel/releases/tag/v0.10.0) for all of the relevant changes.
 
-- Brenden
+- @brendensoares
 
 ### v1.0 Goal
 
