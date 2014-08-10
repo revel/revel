@@ -25,6 +25,8 @@ source project developed by volunteers, but I wanted to apologize for the delay.
 acknowledge my gratitude for @pushrax's hard work in assisting me in this release as well as other active
 community members in helping us fix bugs and further enhance Revel's features. Thank you!
 
+View the [v0.10.0 release notes](https://github.com/revel/revel/releases/tag/v0.10.0) for all of the relevant changes.
+
 - Brenden
 
 ### v1.0 Goal
