@@ -2,7 +2,7 @@
 
 A high productivity, full-stack web framework for the [Go language](http://www.golang.org).
 
-Current Version: 0.9.1 (Mar 1, 2014)
+Current Version: 0.10.0 (Aug 10, 2014)
 
 [![Build Status](https://secure.travis-ci.org/revel/revel.png?branch=master)](http://travis-ci.org/revel/revel)
 
@@ -18,12 +18,19 @@ Current Version: 0.9.1 (Mar 1, 2014)
 
 ## Announcements
 
-### New GitHub Repo
+### Limited Resources
 
-We have moved to the @revel organization. See the [v0.9.0 release notes](https://github.com/revel/revel/releases/tag/v0.9.0)
-for how to update your app.
+The Revel team has lagged behind on our ideal release cycle of every 6 weeks. I know Revel is a open
+source project developed by volunteers, but I wanted to apologize for the delay. I also want to publicly
+acknowledge my gratitude for @pushrax's hard work in assisting me in this release as well as other active
+community members in helping us fix bugs and further enhance Revel's features. Thank you!
+
+- Brenden
 
 ### v1.0 Goal
+
+This still remains our goal. We are actively working on improving the learning curve for Revel as
+well as enhancing the work flow for Revel-based apps.
 
 You'll notice that our next planned milestone release is v0.10 and you may wonder if Revel is
 production-ready. The short answer is yes. However, the team feels that there are still some
