@@ -27,11 +27,7 @@ func (t AppTest) TestThatLoginPageWorks() {
 	t.AssertStatus(400)
 
 	// Ensure that incorrect audience parameter will lead to an error.
-	user, err := t.EmailWithAssertion("https://example.com")
-	if err != nil {
-		revel.WARN.Printf("3rd party testing server error: %v", err)
-		return
-	}
+	user := t.EmailWithAssertion("https://example.com")
 	t.PostForm("/login", url.Values{
 		"assertion": []string{user.Assertion},
 	})
@@ -39,11 +35,7 @@ func (t AppTest) TestThatLoginPageWorks() {
 	t.AssertStatus(400)
 
 	// Check whether authentication works.
-	user, err = t.EmailWithAssertion("http://" + revel.Config.StringDefault("http.host", "localhost"))
-	if err != nil {
-		revel.WARN.Printf("3rd party testing server error: %v", err)
-		return
-	}
+	user = t.EmailWithAssertion("http://" + revel.Config.StringDefault("http.host", "localhost"))
 	t.PostForm("/login", url.Values{
 		"assertion": []string{user.Assertion},
 	})
@@ -57,11 +49,7 @@ func (t AppTest) TestThatLoginPageWorks() {
 
 func (t AppTest) TestThatLogoutPageWorks() {
 	// Authenticating a user.
-	user, err := t.EmailWithAssertion("http://" + revel.Config.StringDefault("http.host", "localhost"))
-	if err != nil {
-		revel.WARN.Printf("3rd party testing server error: %v", err)
-		return
-	}
+	user := t.EmailWithAssertion("http://" + revel.Config.StringDefault("http.host", "localhost"))
 	t.PostForm("/login", url.Values{
 		"assertion": []string{user.Assertion},
 	})
@@ -82,13 +70,11 @@ func (t AppTest) TestThatLogoutPageWorks() {
 
 // EmailWithAssertion uses personatestuser.org service for getting testing parameters.
 // Audience is expected to begin with protocol, for example: "http://".
-func (t AppTest) EmailWithAssertion(audience string) (*PersonaTestUser, error) {
+func (t AppTest) EmailWithAssertion(audience string) *PersonaTestUser {
 	// Trying to get data from testing server.
 	uri := "/email_with_assertion/" + url.QueryEscape(audience)
-	req, err := http.NewRequest("GET", "http://personatestuser.org"+uri, nil)
-	if err != nil {
-		return nil, err
-	}
+	req, err := http.NewRequest("GET", "http://2personatestuser.org"+uri, nil)
+	t.Assert(err == nil)
 	req.URL.Opaque = uri // Use unescaped version of URI for request.
 	t.MakeRequest(req)
 
@@ -99,5 +85,7 @@ func (t AppTest) EmailWithAssertion(audience string) (*PersonaTestUser, error) {
 	// Parsing the response from server.
 	var user PersonaTestUser
 	err = json.Unmarshal(t.ResponseBody, &user)
-	return &user, err
+	t.Assert(err == nil)
+
+	return &user
 }
