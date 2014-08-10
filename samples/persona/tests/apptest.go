@@ -73,7 +73,7 @@ func (t AppTest) TestThatLogoutPageWorks() {
 func (t AppTest) EmailWithAssertion(audience string) *PersonaTestUser {
 	// Trying to get data from testing server.
 	uri := "/email_with_assertion/" + url.QueryEscape(audience)
-	req, err := http.NewRequest("GET", "http://2personatestuser.org"+uri, nil)
+	req, err := http.NewRequest("GET", "http://personatestuser.org"+uri, nil)
 	t.Assert(err == nil)
 	req.URL.Opaque = uri // Use unescaped version of URI for request.
 	t.MakeRequest(req)
