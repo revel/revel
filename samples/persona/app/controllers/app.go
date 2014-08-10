@@ -78,6 +78,13 @@ func (c App) Login(assertion string) revel.Result {
 		}
 	}
 
+	if p.Status != "okay" {
+		return &LoginResult{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Authentication failed.",
+		}
+	}
+
 	c.Session["email"] = p.Email
 	fmt.Println("Login successful: ", p.Email)
 
