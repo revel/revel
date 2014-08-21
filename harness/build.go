@@ -70,7 +70,7 @@ func Build() (app *App, compileError *revel.Error) {
 		appVersion := getAppVersion()
 		versionLinkerFlags := fmt.Sprintf("-X %s/app.APP_VERSION \"%s\"", revel.ImportPath, appVersion)
 
-		buildCmd := exec.Command(goPath, "build",
+		buildCmd := exec.Command(goPath, "build", "-i",
 			"-ldflags", versionLinkerFlags,
 			"-tags", buildTags,
 			"-o", binName, path.Join(revel.ImportPath, "app", "tmp"))
