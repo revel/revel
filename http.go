@@ -73,8 +73,7 @@ func ResolveFormat(req *http.Request) string {
 	accept := req.Header.Get("accept")
 
 	switch {
-	case strings.HasPrefix(accept, "*/*"), // */
-		strings.Contains(accept, "application/xhtml"),
+	case strings.Contains(accept, "application/xhtml"),
 		strings.Contains(accept, "text/html"):
 		return "html"
 	case strings.Contains(accept, "application/json"),
