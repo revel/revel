@@ -77,14 +77,14 @@ func ResolveFormat(req *http.Request) string {
 		strings.Contains(accept, "application/xhtml"),
 		strings.Contains(accept, "text/html"):
 		return "html"
+	case strings.Contains(accept, "application/json"),
+		strings.Contains(accept, "text/javascript"):
+		return "json"
 	case strings.Contains(accept, "application/xml"),
 		strings.Contains(accept, "text/xml"):
 		return "xml"
 	case strings.Contains(accept, "text/plain"):
 		return "txt"
-	case strings.Contains(accept, "application/json"),
-		strings.Contains(accept, "text/javascript"):
-		return "json"
 	}
 
 	return "html"
