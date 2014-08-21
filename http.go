@@ -70,9 +70,12 @@ func ResolveContentType(req *http.Request) string {
 // returning a default of "html" when Accept header cannot be mapped to a
 // value above.
 func ResolveFormat(req *http.Request) string {
+	ext := path.Ext(req.URL.Path)
 	accept := req.Header.Get("accept")
 
 	switch {
+	case ext == ".html", ext == ".json", ext == ".xml", ext == ".txt":
+		return ext[1:]
 	case strings.Contains(accept, "application/xhtml"),
 		strings.Contains(accept, "text/html"):
 		return "html"
@@ -84,11 +87,6 @@ func ResolveFormat(req *http.Request) string {
 		return "xml"
 	case strings.Contains(accept, "text/plain"):
 		return "txt"
-	}
-
-	ext := path.Ext(req.URL.Path)
-	if ext == ".json" || ext == ".xml" || ext == ".txt" {
-		return ext[1:]
 	}
 
 	return "html"
