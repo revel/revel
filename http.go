@@ -5,6 +5,7 @@ import (
 	"code.google.com/p/go.net/websocket"
 	"fmt"
 	"net/http"
+	"path"
 	"sort"
 	"strconv"
 	"strings"
@@ -72,8 +73,7 @@ func ResolveFormat(req *http.Request) string {
 	accept := req.Header.Get("accept")
 
 	switch {
-	case accept == "",
-		strings.HasPrefix(accept, "*/*"), // */
+	case strings.HasPrefix(accept, "*/*"), // */
 		strings.Contains(accept, "application/xhtml"),
 		strings.Contains(accept, "text/html"):
 		return "html"
@@ -85,6 +85,11 @@ func ResolveFormat(req *http.Request) string {
 		return "xml"
 	case strings.Contains(accept, "text/plain"):
 		return "txt"
+	}
+
+	ext := path.Ext(req.URL.Path)
+	if ext == ".json" || ext == ".xml" || ext == ".txt" {
+		return ext[1:]
 	}
 
 	return "html"
