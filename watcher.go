@@ -1,7 +1,7 @@
 package revel
 
 import (
-	"github.com/howeyc/fsnotify"
+	"gopkg.in/fsnotify.v1"
 	"os"
 	"path"
 	"path/filepath"
@@ -52,8 +52,8 @@ func (w *Watcher) Listen(listener Listener, roots ...string) {
 	// Otherwise multiple change events only come out one at a time, across
 	// multiple page views.  (There appears no way to "pump" the events out of
 	// the watcher)
-	watcher.Event = make(chan *fsnotify.FileEvent, 100)
-	watcher.Error = make(chan error, 10)
+	watcher.Events = make(chan fsnotify.Event, 100)
+	watcher.Errors = make(chan error, 10)
 
 	// Walk through all files / directories under the root, adding each to watcher.
 	for _, p := range roots {
@@ -75,7 +75,7 @@ func (w *Watcher) Listen(listener Listener, roots ...string) {
 
 		// If it is a file, watch that specific file.
 		if !fi.IsDir() {
-			err = watcher.Watch(p)
+			err = watcher.Add(p)
 			if err != nil {
 				ERROR.Println("Failed to watch", p, ":", err)
 			}
@@ -119,7 +119,7 @@ func (w *Watcher) Listen(listener Listener, roots ...string) {
 					}
 				}
 
-				err = watcher.Watch(path)
+				err = watcher.Add(path)
 				if err != nil {
 					ERROR.Println("Failed to watch", path, ":", err)
 				}
@@ -149,19 +149,21 @@ func (w *Watcher) Notify() *Error {
 		refresh := false
 		for {
 			select {
-			case ev := <-watcher.Event:
+			case ev := <-watcher.Events:
 				// Ignore changes to dotfiles.
-				if !strings.HasPrefix(path.Base(ev.Name), ".") {
-					if dl, ok := listener.(DiscerningListener); ok {
-						if !dl.WatchFile(ev.Name) || ev.IsAttrib() {
-							continue
-						}
-					}
-
-					refresh = true
+				if strings.HasPrefix(path.Base(ev.Name), ".") {
+					continue
 				}
+
+				if dl, ok := listener.(DiscerningListener); ok {
+					if !dl.WatchFile(ev.Name) || ev.Op == fsnotify.Chmod {
+						continue
+					}
+				}
+
+				refresh = true
 				continue
-			case <-watcher.Error:
+			case <-watcher.Errors:
 				continue
 			default:
 				// No events left to pull
