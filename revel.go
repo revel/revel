@@ -187,6 +187,11 @@ func Init(mode, importPath, srcPath string) {
 	}
 
 	// Configure logging.
+	logColorize := Config.BoolDefault("log.colorize", true)
+	if !logColorize {
+		gocolorize.SetPlain(true)
+	}
+
 	TRACE = getLogger("trace")
 	INFO = getLogger("info")
 	WARN = getLogger("warn")
