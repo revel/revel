@@ -187,10 +187,10 @@ func Init(mode, importPath, srcPath string) {
 	}
 
 	// Configure logging.
-	TRACE = getLogger("trace")
-	INFO = getLogger("info")
-	WARN = getLogger("warn")
-	ERROR = getLogger("error")
+	TRACE = GetLogger("trace")
+	INFO = GetLogger("info")
+	WARN = GetLogger("warn")
+	ERROR = GetLogger("error")
 
 	loadModules()
 
@@ -199,7 +199,7 @@ func Init(mode, importPath, srcPath string) {
 
 // Create a logger using log.* directives in app.conf plus the current settings
 // on the default logger.
-func getLogger(name string) *log.Logger {
+func GetDefaultLogger(name string) *log.Logger {
 	var logger *log.Logger
 
 	// Create a logger with the requested output. (default to stderr)
@@ -213,11 +213,9 @@ func getLogger(name string) *log.Logger {
 	case "stderr":
 		newlog = revelLogs{c: colors[name], w: os.Stderr}
 		logger = newLogger(&newlog)
+	case "off":
+		logger = newLogger(ioutil.Discard)
 	default:
-		if output == "off" {
-			output = os.DevNull
-		}
-
 		file, err := os.OpenFile(output, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 		if err != nil {
 			log.Fatalln("Failed to open log file", output, ":", err)
@@ -238,6 +236,9 @@ func getLogger(name string) *log.Logger {
 
 	return logger
 }
+
+// GetLogger is the overridable function used to create Revel's standard loggers.
+var GetLogger = GetDefaultLogger
 
 func newLogger(wr io.Writer) *log.Logger {
 	return log.New(wr, "", INFO.Flags())
