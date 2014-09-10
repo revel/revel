@@ -187,7 +187,7 @@ func Init(mode, importPath, srcPath string) {
 	}
 
 	// Configure logging
-	if Config.BoolDefault("log.colorize", true) {
+	if !Config.BoolDefault("log.colorize", true) {
 		gocolorize.SetPlain(true)
 	}
 
