@@ -186,7 +186,11 @@ func Init(mode, importPath, srcPath string) {
 		secretKey = []byte(secretStr)
 	}
 
-	// Configure logging.
+	// Configure logging
+	if !Config.BoolDefault("log.colorize", true) {
+		gocolorize.SetPlain(true)
+	}
+
 	TRACE = getLogger("trace")
 	INFO = getLogger("info")
 	WARN = getLogger("warn")
