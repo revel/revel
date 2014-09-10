@@ -186,9 +186,8 @@ func Init(mode, importPath, srcPath string) {
 		secretKey = []byte(secretStr)
 	}
 
-	// Configure logging.
-	logColorize := Config.BoolDefault("log.colorize", true)
-	if !logColorize {
+	// Configure logging
+	if Config.BoolDefault("log.colorize", true) {
 		gocolorize.SetPlain(true)
 	}
 
