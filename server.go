@@ -2,12 +2,15 @@ package revel
 
 import (
 	"code.google.com/p/go.net/websocket"
+	"crypto/tls"
 	"fmt"
 	"io"
 	"net"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -16,6 +19,8 @@ var (
 	MainTemplateLoader *TemplateLoader
 	MainWatcher        *Watcher
 	Server             *http.Server
+	wg                 sync.WaitGroup
+	stopSig            = make(chan int)
 )
 
 // This method handles all requests.  It dispatches to handleInternal after
@@ -38,6 +43,8 @@ func handleInternal(w http.ResponseWriter, r *http.Request, ws *websocket.Conn) 
 		resp = NewResponse(w)
 		c    = NewController(req, resp)
 	)
+
+	wg.Add(1)
 	req.Websocket = ws
 
 	Filters[0](c, Filters[1:])
@@ -50,6 +57,7 @@ func handleInternal(w http.ResponseWriter, r *http.Request, ws *websocket.Conn) 
 	if w, ok := resp.Out.(io.Closer); ok {
 		w.Close()
 	}
+	wg.Done()
 }
 
 // Run the server.
@@ -92,17 +100,12 @@ func Run(port int) {
 		MainTemplateLoader.Refresh()
 	}
 
-	Server = &http.Server{
-		Addr:    localAddress,
-		Handler: http.HandlerFunc(handle),
-	}
-
 	runStartupHooks()
 
-	go func() {
-		time.Sleep(100 * time.Millisecond)
-		fmt.Printf("Listening on %s...\n", localAddress)
-	}()
+	var err error
+	var listener net.Listener
+	var tlsListener net.Listener
+	var tlsConfig *tls.Config
 
 	if HttpSsl {
 		if network != "tcp" {
@@ -110,14 +113,68 @@ func Run(port int) {
 			// to terminate SSL upstream when using unix domain sockets.
 			ERROR.Fatalln("SSL is only supported for TCP sockets. Specify a port to listen on.")
 		}
-		ERROR.Fatalln("Failed to listen:",
-			Server.ListenAndServeTLS(HttpSslCert, HttpSslKey))
+
+		// basically, a rewite of ListenAndServeTLS
+		if localAddress == "" {
+			localAddress = ":https"
+		}
+
+		tlsConfig = &tls.Config{}
+		// TODO:
+		// if srv.TLSConfig != nil {
+		// 	*tlsConfig = srv.TLSConfig
+		// }
+
+		// Not sure
+		if tlsConfig.NextProtos == nil {
+			tlsConfig.NextProtos = []string{"http/1.1"}
+		}
+
+		tlsConfig.Certificates = make([]tls.Certificate, 1)
+		tlsConfig.Certificates[0], err = tls.LoadX509KeyPair(HttpSslCert, HttpSslKey)
+		if err != nil {
+			ERROR.Println(err)
+		}
+
+		listener, err = net.Listen("tcp", localAddress)
+		if err != nil {
+			ERROR.Println("Failed to listent:", err)
+		}
+
 	} else {
-		listener, err := net.Listen(network, localAddress)
+		listener, err = net.Listen(network, localAddress)
 		if err != nil {
 			ERROR.Fatalln("Failed to listen:", err)
 		}
-		ERROR.Fatalln("Failed to serve:", Server.Serve(listener))
+	}
+
+	go func() {
+		time.Sleep(100 * time.Millisecond)
+		fmt.Printf("Listening on %s...\n", localAddress)
+		select {
+		case <-stopSig:
+			if HttpSsl {
+				tlsListener.Close()
+			}
+			listener.Close()
+			INFO.Println("...")
+			runShutdownHooks()
+			wg.Wait()
+			os.Exit(1)
+		}
+	}()
+
+	if HttpSsl {
+		tlsListener = tls.NewListener(listener, tlsConfig)
+		if err := http.Serve(tlsListener, http.HandlerFunc(handle)); err != nil {
+			ERROR.Println(err)
+		}
+
+	} else {
+		INFO.Println("Starting service")
+		if err := http.Serve(listener, http.HandlerFunc(handle)); err != nil {
+			ERROR.Println(err)
+		}
 	}
 }
 
@@ -167,4 +224,23 @@ var startupHooks []func()
 //
 func OnAppStart(f func()) {
 	startupHooks = append(startupHooks, f)
+}
+
+var shutdownHooks []func()
+
+func runShutdownHooks() {
+	for _, hook := range shutdownHooks {
+		INFO.Println("...")
+		hook()
+	}
+	INFO.Println("Done")
+}
+
+func OnAppShutdown(f func()) {
+	shutdownHooks = append(shutdownHooks, f)
+}
+
+func StopServer() {
+	INFO.Println("Server shutdown in progress")
+	stopSig <- 1
 }

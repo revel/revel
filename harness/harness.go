@@ -120,7 +120,8 @@ func NewHarness() *Harness {
 // Rebuild the Revel application and run it on the given port.
 func (h *Harness) Refresh() (err *revel.Error) {
 	if h.app != nil {
-		h.app.Kill()
+		//h.app.Kill()
+		h.app.cmd.Terminate()
 	}
 
 	revel.TRACE.Println("Rebuild")
@@ -181,7 +182,8 @@ func (h *Harness) Run() {
 	signal.Notify(ch, os.Interrupt, os.Kill)
 	<-ch
 	if h.app != nil {
-		h.app.Kill()
+		//h.app.Kill()
+		h.app.cmd.Terminate()
 	}
 	os.Exit(1)
 }
