@@ -20,6 +20,7 @@ type App struct {
 }
 
 func NewApp(binPath string) *App {
+	revel.TRACE.Println("BinaryPath: ", binPath)
 	return &App{BinaryPath: binPath}
 }
 

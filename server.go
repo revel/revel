@@ -18,7 +18,8 @@ var (
 	Server             *http.Server
 )
 
-// This method handles all requests.  It dispatches to handleInternal after
+
+// This method handles all requests. It dispatches to handleInternal after
 // handling / adapting websocket connections.
 func handle(w http.ResponseWriter, r *http.Request) {
 	upgrade := r.Header.Get("Upgrade")
@@ -54,7 +55,7 @@ func handleInternal(w http.ResponseWriter, r *http.Request, ws *websocket.Conn) 
 
 // Run the server.
 // This is called from the generated main file.
-// If port is non-zero, use that.  Else, read the port from app.conf.
+// If port is non-zero, use that. Else, read the port from app.conf.
 func Run(port int) {
 	address := HttpAddr
 	if port == 0 {
@@ -78,7 +79,6 @@ func Run(port int) {
 	MainTemplateLoader = NewTemplateLoader(TemplatePaths)
 
 	// The "watch" config variable can turn on and off all watching.
-	// (As a convenient way to control it all together.)
 	if Config.BoolDefault("watch", true) {
 		MainWatcher = NewWatcher()
 		Filters = append([]Filter{WatchFilter}, Filters...)
@@ -110,8 +110,7 @@ func Run(port int) {
 			// to terminate SSL upstream when using unix domain sockets.
 			ERROR.Fatalln("SSL is only supported for TCP sockets. Specify a port to listen on.")
 		}
-		ERROR.Fatalln("Failed to listen:",
-			Server.ListenAndServeTLS(HttpSslCert, HttpSslKey))
+		ERROR.Fatalln("Failed to listen:", Server.ListenAndServeTLS(HttpSslCert, HttpSslKey))
 	} else {
 		listener, err := net.Listen(network, localAddress)
 		if err != nil {
@@ -121,13 +120,15 @@ func Run(port int) {
 	}
 }
 
+
+
+var startupHooks []func()
+
 func runStartupHooks() {
 	for _, hook := range startupHooks {
 		hook()
 	}
 }
-
-var startupHooks []func()
 
 // Register a function to be run at app startup.
 //

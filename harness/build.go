@@ -24,7 +24,7 @@ var importErrorPattern = regexp.MustCompile("cannot find package \"([^\"]+)\"")
 // Returns the path to the built binary, and an error if there was a problem building it.
 func Build() (app *App, compileError *revel.Error) {
 	// First, clear the generated files (to avoid them messing with ProcessSource).
-	cleanSource("tmp", "routes")
+	cleanSource("rev", "routes")
 
 	sourceInfo, compileError := ProcessSource(revel.CodePaths)
 	if compileError != nil {
@@ -36,15 +36,16 @@ func Build() (app *App, compileError *revel.Error) {
 		sourceInfo.InitImportPaths = append(sourceInfo.InitImportPaths, dbImportPath)
 	}
 
-	// Generate two source files.
+	// Generate controller setup and reverse routing.
 	templateArgs := map[string]interface{}{
 		"Controllers":    sourceInfo.ControllerSpecs(),
 		"ValidationKeys": sourceInfo.ValidationKeys,
 		"ImportPaths":    calcImportAliases(sourceInfo),
 		"TestSuites":     sourceInfo.TestSuites(),
 	}
-	genSource("tmp", "main.go", MAIN, templateArgs)
-	genSource("routes", "routes.go", ROUTES, templateArgs)
+	genSource("rev", "controllers.go", CONTROLLERS, templateArgs)
+	genSource("routes", "routes.go", ROUTES, templateArgs);
+
 
 	// Read build config.
 	buildTags := revel.Config.StringDefault("build.tags", "")
@@ -73,7 +74,8 @@ func Build() (app *App, compileError *revel.Error) {
 		buildCmd := exec.Command(goPath, "build",
 			"-ldflags", versionLinkerFlags,
 			"-tags", buildTags,
-			"-o", binName, path.Join(revel.ImportPath, "app", "tmp"))
+			"-o", binName, path.Join(revel.ImportPath))
+		revel.TRACE.Println("revel.ImportPath:", revel.ImportPath)
 		revel.TRACE.Println("Exec:", buildCmd.Args)
 		output, err := buildCmd.CombinedOutput()
 
@@ -285,30 +287,19 @@ func newCompileError(output []byte) *revel.Error {
 	return compileError
 }
 
-const MAIN = `// GENERATED CODE - DO NOT EDIT
-package main
+const CONTROLLERS = `// GENERATED CODE - DO NOT EDIT
+package rev
 
 import (
-	"flag"
 	"reflect"
-	"github.com/revel/revel"{{range $k, $v := $.ImportPaths}}
+
+	"github.com/revel/revel"
+	{{range $k, $v := $.ImportPaths}}
 	{{$v}} "{{$k}}"{{end}}
 )
 
-var (
-	runMode    *string = flag.String("runMode", "", "Run mode.")
-	port       *int    = flag.Int("port", 0, "By default, read from app.conf")
-	importPath *string = flag.String("importPath", "", "Go Import Path for the app.")
-	srcPath    *string = flag.String("srcPath", "", "Path to the source root.")
-
-	// So compiler won't complain if the generated code doesn't reference reflect package...
-	_ = reflect.Invalid
-)
-
-func main() {
-	flag.Parse()
-	revel.Init(*runMode, *importPath, *srcPath)
-	revel.INFO.Println("Running revel server")
+// Setup registers all active app controllers/actions as well as test suites and validation keys
+func Setup() {
 	{{range $i, $c := .Controllers}}
 	revel.RegisterController((*{{index $.ImportPaths .ImportPath}}.{{.StructName}})(nil),
 		[]*revel.MethodType{
@@ -334,18 +325,21 @@ func main() {
 	revel.TestSuites = []interface{}{ {{range .TestSuites}}
 		(*{{index $.ImportPaths .ImportPath}}.{{.StructName}})(nil),{{end}}
 	}
-
-	revel.Run(*port)
 }
 `
+
 const ROUTES = `// GENERATED CODE - DO NOT EDIT
 package routes
 
 import "github.com/revel/revel"
 
+// Convenience variable for defined routes
 {{range $i, $c := .Controllers}}
-type t{{.StructName}} struct {}
-var {{.StructName}} t{{.StructName}}
+	var {{.StructName}} t{{.StructName}}
+{{end}}
+
+{{range $i, $c := .Controllers}}
+type t{{.StructName}} struct{}
 
 {{range .MethodSpecs}}
 func (_ t{{$c.StructName}}) {{.Name}}({{range .Args}}

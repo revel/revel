@@ -140,6 +140,7 @@ func (h *Harness) Refresh() (err *revel.Error) {
 	return
 }
 
+// TODO: rename to `ShouldWatchDir`
 func (h *Harness) WatchDir(info os.FileInfo) bool {
 	return !revel.ContainsString(doNotWatch, info.Name())
 }
