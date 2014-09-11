@@ -3,7 +3,6 @@ package revel
 import (
 	"fmt"
 	"runtime/debug"
-	"strconv"
 	"strings"
 )
 
@@ -15,7 +14,6 @@ type Error struct {
 	SourceLines              []string // The entire source file, split into lines.
 	Stack                    string   // The raw stack trace string from debug.Stack().
 	MetaError                string   // Error that occurred producing the error page.
-	Link                     string   // A configurable link to wrap the error source in
 }
 
 // An object to hold the per-source-line details.
@@ -116,11 +114,4 @@ func findRelevantStackFrame(stack string) (int, string) {
 		}
 	}
 	return -1, ""
-}
-
-func (e *Error) SetLink(fLink string) {
-	fLink = strings.Replace(fLink, "{{Path}}", e.Path, -1)
-	fLink = strings.Replace(fLink, "{{Line}}", strconv.Itoa(e.Line), -1)
-
-	e.Link = "<a href=" + fLink + ">" + e.Path + ":" + strconv.Itoa(e.Line) + "</a>"
 }
