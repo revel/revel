@@ -2,6 +2,7 @@ package harness
 
 import (
 	"fmt"
+	"github.com/revel/revel"
 	"go/build"
 	"os"
 	"os/exec"
@@ -12,8 +13,6 @@ import (
 	"strconv"
 	"strings"
 	"text/template"
-
-	"github.com/revel/revel"
 )
 
 var importErrorPattern = regexp.MustCompile("cannot find package \"([^\"]+)\"")
@@ -252,20 +251,12 @@ func newCompileError(output []byte) *revel.Error {
 	errorMatch := regexp.MustCompile(`(?m)^([^:#]+):(\d+):(\d+:)? (.*)$`).
 		FindSubmatch(output)
 	if errorMatch == nil {
-		errorMatch = regexp.MustCompile(`(?m)^(.*?)\:(\d+)\:\s(.*?)$`).FindSubmatch(output)
-
-		if errorMatch == nil {
-			revel.ERROR.Println("Failed to parse build errors:\n", string(output))
-			return &revel.Error{
-				SourceType:  "Go code",
-				Title:       "Go Compilation Error",
-				Description: "See console for build error.",
-			}
+		revel.ERROR.Println("Failed to parse build errors:\n", string(output))
+		return &revel.Error{
+			SourceType:  "Go code",
+			Title:       "Go Compilation Error",
+			Description: "See console for build error.",
 		}
-
-		errorMatch = append(errorMatch, errorMatch[3])
-
-		revel.ERROR.Println("Build errors:\n", string(output))
 	}
 
 	// Read the source for the offending file.
@@ -282,12 +273,6 @@ func newCompileError(output []byte) *revel.Error {
 			Line:        line,
 		}
 	)
-
-	fLink := revel.Config.StringDefault("error.link", "")
-
-	if fLink != "" {
-		compileError.SetLink(fLink)
-	}
 
 	fileStr, err := revel.ReadLines(absFilename)
 	if err != nil {
