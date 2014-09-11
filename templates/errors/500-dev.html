@@ -88,7 +88,13 @@
 				{{if .SourceType}}
 					The {{.SourceType}}
 					{{if .Path }}
-						<strong><a href="subl://open?url=file://{{.Path}}&amp;line={{.Line}}">{{.Path}}:{{.Line}}</a></strong>
+						<strong>
+						{{if .Link}}
+							{{raw .Link}}
+						{{else}}
+							{{.Path}}:{{.Line}}
+						{{end}}
+						</strong>
 					{{end}}
 					does not compile: <strong>{{.Description}}</strong>
 				{{else}}
