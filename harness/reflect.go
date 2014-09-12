@@ -130,6 +130,13 @@ func ProcessSource(roots []string) (*SourceInfo, *revel.Error) {
 						Column:      pos.Column,
 						SourceLines: revel.MustReadLines(pos.Filename),
 					}
+
+					errorLink := revel.Config.StringDefault("error.link", "")
+
+					if errorLink != "" {
+						compileError.SetLink(errorLink)
+					}
+
 					return compileError
 				}
 				ast.Print(nil, err)

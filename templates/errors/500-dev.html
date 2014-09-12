@@ -86,7 +86,17 @@
 			</h1>
 			<p>
 				{{if .SourceType}}
-					The {{.SourceType}} <strong>{{.Path}}</strong> does not compile: <strong>{{.Description}}</strong>
+					The {{.SourceType}}
+					{{if .Path }}
+						<strong>
+						{{if .Link}}
+							{{raw .Link}}
+						{{else}}
+							{{.Path}}:{{.Line}}
+						{{end}}
+						</strong>
+					{{end}}
+					does not compile: <strong>{{.Description}}</strong>
 				{{else}}
 					{{.Description}}
 				{{end}}
