@@ -283,10 +283,10 @@ func newCompileError(output []byte) *revel.Error {
 		}
 	)
 
-	fLink := revel.Config.StringDefault("error.link", "")
+	errorLink := revel.Config.StringDefault("error.link", "")
 
-	if fLink != "" {
-		compileError.SetLink(fLink)
+	if errorLink != "" {
+		compileError.SetLink(errorLink)
 	}
 
 	fileStr, err := revel.ReadLines(absFilename)
