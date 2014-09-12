@@ -118,9 +118,9 @@ func findRelevantStackFrame(stack string) (int, string) {
 	return -1, ""
 }
 
-func (e *Error) SetLink(fLink string) {
-	fLink = strings.Replace(fLink, "{{Path}}", e.Path, -1)
-	fLink = strings.Replace(fLink, "{{Line}}", strconv.Itoa(e.Line), -1)
+func (e *Error) SetLink(errorLink string) {
+	errorLink = strings.Replace(errorLink, "{{Path}}", e.Path, -1)
+	errorLink = strings.Replace(errorLink, "{{Line}}", strconv.Itoa(e.Line), -1)
 
-	e.Link = "<a href=" + fLink + ">" + e.Path + ":" + strconv.Itoa(e.Line) + "</a>"
+	e.Link = "<a href=" + errorLink + ">" + e.Path + ":" + strconv.Itoa(e.Line) + "</a>"
 }
