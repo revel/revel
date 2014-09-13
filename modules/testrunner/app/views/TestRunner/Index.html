@@ -41,44 +41,62 @@
 			{{end}}
 		</div>
 
-<script>
-var running = 0;
+	<script>
+	var buttons = [];
+	var running;
 
-$("button[test]").click(function() {
-	var button = $(this).addClass("disabled").text("Running");
-	running += 1;
-	runTest(button);
-});
+	$("button[test]").click(function() {
+		var button = $(this).addClass("disabled").text("Running");
+		addToQueue(button)
+	});
 
-$("button[all-tests]").click(function() {
-	var button = $(this).addClass("disabled").text("Running");
-	$("button[test]").click();
-});
+	$("button[all-tests]").click(function() {
+		var button = $(this).addClass("disabled").text("Running");
+		$("button[test]").click();
+	});
 
-function runTest(button) {
-	var suite = button.parents("table").attr("suite");
-	var test = button.attr("test");
-	var row = button.parents("tr");
-	var resultCell = row.children(".result");
-	$.ajax({
-		dataType: "json",
-		url: "{{url `Root`}}/@tests/"+suite+"/"+test,
-		async: false,
-		success: function(result) {
-			row.attr("class", result.Passed ? "passed" : "failed");
-			if (result.Passed) {
-				resultCell.html("");
-			} else {
-				resultCell.html(result.ErrorHtml);
+	function addToQueue(button) {
+		buttons.push(button);
+		if (!running) {
+			running = true;
+			nextTest();
+		}
+	}
+
+	function nextTest() {
+		if (buttons.length == 0) {
+			running = false;
+		} else {
+			var next = buttons.shift();
+			runTest(next)
+		}
+	}
+
+	function runTest(button) {
+		var suite = button.parents("table").attr("suite");
+		var test = button.attr("test");
+		var row = button.parents("tr");
+		var resultCell = row.children(".result");
+		$.ajax({
+			dataType: "json",
+			url: "{{url `Root`}}/@tests/"+suite+"/"+test,
+			success: function(result) {
+				console.log(test)
+				row.attr("class", result.Passed ? "passed" : "failed");
+				if (result.Passed) {
+					resultCell.html("");
+				} else {
+					resultCell.html(result.ErrorHtml);
+				}
+				button.removeClass("disabled").text("Run");
+				if (buttons.length == 0) {
+					$("button[all-tests]").removeClass("disabled").text("Run All Tests");
+				}
+				nextTest();
 			}
-			button.removeClass("disabled").text("Run");
-			running -= 1;
-			if (running == 0) {
-				$("button[all-tests]").removeClass("disabled").text("Run All Tests");
-			}
-		}});
-}
-</script>
+		});
+	}
+	</script>
 
 	</body>
 </html>
