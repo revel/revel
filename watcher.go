@@ -131,8 +131,32 @@ func (w *Watcher) Listen(listener Listener, roots ...string) {
 		filepath.Walk(p, watcherWalker)
 	}
 
+	if w.eagerRebuildEnabled() {
+		// Create goroutine to notify file changes in real time
+		go w.NotifyWhenUpdated(listener, watcher)
+	}
+
 	w.watchers = append(w.watchers, watcher)
 	w.listeners = append(w.listeners, listener)
+}
+
+// Wait until receiving a file change event.
+// When a watcher receives an event, the watcher notifies it.
+func (w *Watcher) NotifyWhenUpdated(listener Listener, watcher *fsnotify.Watcher) {
+	for {
+		// Do not catch default for performance.
+		select {
+		case ev := <-watcher.Events:
+			if w.rebuildRequired(ev, listener) {
+				// Seriarize listener.Refresh() calls.
+				w.notifyMutex.Lock()
+				listener.Refresh()
+				w.notifyMutex.Unlock()
+			}
+		case <-watcher.Errors:
+			continue
+		}
+	}
 }
 
 // Notify causes the watcher to forward any change events to listeners.
@@ -150,18 +174,9 @@ func (w *Watcher) Notify() *Error {
 		for {
 			select {
 			case ev := <-watcher.Events:
-				// Ignore changes to dotfiles.
-				if strings.HasPrefix(path.Base(ev.Name), ".") {
-					continue
+				if w.rebuildRequired(ev, listener) {
+					refresh = true
 				}
-
-				if dl, ok := listener.(DiscerningListener); ok {
-					if !dl.WatchFile(ev.Name) || ev.Op == fsnotify.Chmod {
-						continue
-					}
-				}
-
-				refresh = true
 				continue
 			case <-watcher.Errors:
 				continue
@@ -183,6 +198,29 @@ func (w *Watcher) Notify() *Error {
 	w.forceRefresh = false
 	w.lastError = -1
 	return nil
+}
+
+// If the rebuild.eager config is set true, watcher rebuilds an application
+// every time a source file is changed.
+// This feature is available only in dev mode.
+func (w *Watcher) eagerRebuildEnabled() bool {
+	return Config.BoolDefault("mode.dev", true) &&
+		Config.BoolDefault("watch", true) &&
+		Config.StringDefault("watcher.mode", "normal") == "eager"
+}
+
+func (w *Watcher) rebuildRequired(ev fsnotify.Event, listener Listener) bool {
+	// Ignore changes to dotfiles.
+	if strings.HasPrefix(path.Base(ev.Name), ".") {
+		return false
+	}
+
+	if dl, ok := listener.(DiscerningListener); ok {
+		if !dl.WatchFile(ev.Name) || ev.Op == fsnotify.Chmod {
+			return false
+		}
+	}
+	return true
 }
 
 var WatchFilter = func(c *Controller, fc []Filter) {
