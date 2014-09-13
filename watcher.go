@@ -140,15 +140,13 @@ func (w *Watcher) Listen(listener Listener, roots ...string) {
 	w.listeners = append(w.listeners, listener)
 }
 
-// Wait until receiving a file change event.
-// When a watcher receives an event, the watcher notifies it.
+// NotifyWhenUpdated notifies the watcher when a file event is received.
 func (w *Watcher) NotifyWhenUpdated(listener Listener, watcher *fsnotify.Watcher) {
 	for {
-		// Do not catch default for performance.
 		select {
 		case ev := <-watcher.Events:
 			if w.rebuildRequired(ev, listener) {
-				// Seriarize listener.Refresh() calls.
+				// Serialize listener.Refresh() calls.
 				w.notifyMutex.Lock()
 				listener.Refresh()
 				w.notifyMutex.Unlock()
@@ -200,8 +198,8 @@ func (w *Watcher) Notify() *Error {
 	return nil
 }
 
-// If the rebuild.eager config is set true, watcher rebuilds an application
-// every time a source file is changed.
+// If watcher.mode is set to eager, the application is rebuilt immediately
+// when a source file is changed.
 // This feature is available only in dev mode.
 func (w *Watcher) eagerRebuildEnabled() bool {
 	return Config.BoolDefault("mode.dev", true) &&
