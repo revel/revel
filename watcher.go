@@ -146,14 +146,14 @@ func (w *Watcher) NotifyWhenUpdated(listener Listener, watcher *fsnotify.Watcher
 	for {
 		// Do not catch default for performance.
 		select {
-		case ev := <-watcher.Event:
+		case ev := <-watcher.Events:
 			if w.rebuildRequired(ev, listener) {
 				// Seriarize listener.Refresh() calls.
 				w.notifyMutex.Lock()
 				listener.Refresh()
 				w.notifyMutex.Unlock()
 			}
-		case <-watcher.Error:
+		case <-watcher.Errors:
 			continue
 		}
 	}
@@ -173,12 +173,12 @@ func (w *Watcher) Notify() *Error {
 		refresh := false
 		for {
 			select {
-			case ev := <-watcher.Event:
+			case ev := <-watcher.Events:
 				if w.rebuildRequired(ev, listener) {
 					refresh = true
 				}
 				continue
-			case <-watcher.Error:
+			case <-watcher.Errors:
 				continue
 			default:
 				// No events left to pull
@@ -209,14 +209,14 @@ func (w *Watcher) eagerRebuildEnabled() bool {
 		Config.BoolDefault("rebuild.eager", false)
 }
 
-func (w *Watcher) rebuildRequired(ev *fsnotify.FileEvent, listener Listener) bool {
+func (w *Watcher) rebuildRequired(ev fsnotify.Event, listener Listener) bool {
 	// Ignore changes to dotfiles.
 	if strings.HasPrefix(path.Base(ev.Name), ".") {
 		return false
 	}
 
 	if dl, ok := listener.(DiscerningListener); ok {
-		if !dl.WatchFile(ev.Name) || ev.IsAttrib() {
+		if !dl.WatchFile(ev.Name) || ev.Op == fsnotify.Chmod {
 			return false
 		}
 	}
