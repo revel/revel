@@ -206,7 +206,7 @@ func (w *Watcher) Notify() *Error {
 func (w *Watcher) eagerRebuildEnabled() bool {
 	return Config.BoolDefault("mode.dev", true) &&
 		Config.BoolDefault("watch", true) &&
-		Config.BoolDefault("rebuild.eager", false)
+		Config.StringDefault("watcher.mode", "normal") == "eager"
 }
 
 func (w *Watcher) rebuildRequired(ev fsnotify.Event, listener Listener) bool {
