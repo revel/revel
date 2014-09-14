@@ -52,7 +52,7 @@
 
 	$("button[test]").click(function() {
 		var button = $(this).addClass("disabled").text("Running");
-		addToQueue(button)
+		addToQueue(button);
 	});
 
 	$("button[all-tests]").click(function() {
@@ -73,7 +73,7 @@
 			running = false;
 		} else {
 			var next = buttons.shift();
-			runTest(next)
+			runTest(next);
 		}
 	}
 
