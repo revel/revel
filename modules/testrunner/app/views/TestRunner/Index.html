@@ -92,7 +92,7 @@
 				} else {
 					resultCell.html(result.ErrorHtml);
 
-					$("pre code").each(function(i, block) {
+					$("#result_" + suite + "_" + test + " pre code").each(function(i, block) {
 						hljs.highlightBlock(block);
 					});
 				}
