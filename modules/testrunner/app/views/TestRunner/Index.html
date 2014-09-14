@@ -14,16 +14,18 @@
 		.failed td { background-color: #FFB6C1 !important; }
 		.tests td.name, .tests td.result { padding-top: 13px; }
 		pre { font-size:10px; white-space: pre; }
+		.name { width: 25%; }
+		.w100 { width: 100%; }
 		</style>
 	</head>
 	<body>
 		<header>
 			<div class="container">
-				<table><tr><td>
+				<table class="w100"><tr><td>
 					<h1>Test Runner</h1>
 					<p class="lead">Run all of your application's tests from here.</p>
-				</td><td style="padding-left:150px;">
-					<button class="btn btn-large" all-tests="">Run All Tests</button>
+				</td><td style="padding-left:150px;" class="text-right">
+					<button class="btn btn-lg btn-success" all-tests="">Run All Tests</button>
 				</td></tr></table>
 			</div>
 		</header>
@@ -37,7 +39,7 @@
 							<td class="name">{{.Name}}</td>
 							<td class="result">
 							</td>
-							<td><button test="{{.Name}}" class="btn">Run</button></td>
+							<td class="text-right"><button test="{{.Name}}" class="btn btn-success">Run</button></td>
 						</tr>
 					{{end}}
 				</table>
