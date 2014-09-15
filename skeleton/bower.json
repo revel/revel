@@ -1,0 +1,29 @@
+{
+  "name": "skeleton",
+  "version": "0.10.0",
+  "homepage": "https://github.com/duythinht/revel",
+  "authors": [
+    "Thinh Tran <duythinht@gmail.com>"
+  ],
+  "description": "Add bower support to skeleton app",
+  "moduleType": [
+    "amd",
+    "es6",
+    "globals",
+    "node",
+    "yui"
+  ],
+  "license": "MIT",
+  "private": false,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "public/vendor",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "jquery": "~2.1.1",
+    "bootstrap": "~3.2.0"
+  }
+
