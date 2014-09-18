@@ -205,10 +205,10 @@ func processPackage(fset *token.FileSet, pkgImportPath, pkgPath string, pkg *ast
 
 			if scanControllers {
 				// Match and add both structs and methods
-				structSpecs = appendStruct(structSpecs, pkgImportPath, pkg, decl, imports)
+				structSpecs = appendStruct(structSpecs, pkgImportPath, pkg, decl, imports, fset)
 				appendAction(fset, methodSpecs, decl, pkgImportPath, pkg.Name, imports)
 			} else if scanTests {
-				structSpecs = appendStruct(structSpecs, pkgImportPath, pkg, decl, imports)
+				structSpecs = appendStruct(structSpecs, pkgImportPath, pkg, decl, imports, fset)
 			}
 
 			// If this is a func...
@@ -302,9 +302,9 @@ func addImports(imports map[string]string, decl ast.Decl, srcDir string) {
 
 // If this Decl is a struct type definition, it is summarized and added to specs.
 // Else, specs is returned unchanged.
-func appendStruct(specs []*TypeInfo, pkgImportPath string, pkg *ast.Package, decl ast.Decl, imports map[string]string) []*TypeInfo {
+func appendStruct(specs []*TypeInfo, pkgImportPath string, pkg *ast.Package, decl ast.Decl, imports map[string]string, fset *token.FileSet) []*TypeInfo {
 	// Filter out non-Struct type declarations.
-	spec, found := getStructTypeDecl(decl)
+	spec, found := getStructTypeDecl(decl, fset)
 	if !found {
 		return specs
 	}
@@ -350,7 +350,6 @@ func appendStruct(specs []*TypeInfo, pkgImportPath string, pkg *ast.Package, dec
 					return pkgIdent.Name, selectorExpr.Sel.Name
 				}
 			}
-
 			return "", ""
 		}()
 
@@ -607,7 +606,7 @@ func (s *embeddedTypeName) String() string {
 
 // getStructTypeDecl checks if the given decl is a type declaration for a
 // struct.  If so, the TypeSpec is returned.
-func getStructTypeDecl(decl ast.Decl) (spec *ast.TypeSpec, found bool) {
+func getStructTypeDecl(decl ast.Decl, fset *token.FileSet) (spec *ast.TypeSpec, found bool) {
 	genDecl, ok := decl.(*ast.GenDecl)
 	if !ok {
 		return
@@ -617,15 +616,13 @@ func getStructTypeDecl(decl ast.Decl) (spec *ast.TypeSpec, found bool) {
 		return
 	}
 
-	if len(genDecl.Specs) != 1 {
-		revel.TRACE.Printf("Surprising: Decl does not have 1 Spec: %v", genDecl)
+	if len(genDecl.Specs) == 0 {
+		revel.WARN.Printf("Surprising: %s:%d Decl contains no specifications", fset.Position(decl.Pos()).Filename, fset.Position(decl.Pos()).Line)
 		return
 	}
 
 	spec = genDecl.Specs[0].(*ast.TypeSpec)
-	if _, ok := spec.Type.(*ast.StructType); ok {
-		found = true
-	}
+	_, found = spec.Type.(*ast.StructType)
 
 	return
 }
