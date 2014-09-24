@@ -214,7 +214,7 @@ func (w *Watcher) rebuildRequired(ev fsnotify.Event, listener Listener) bool {
 	}
 
 	if dl, ok := listener.(DiscerningListener); ok {
-		if !dl.WatchFile(ev.Name) || ev.Op == fsnotify.Chmod {
+		if !dl.WatchFile(ev.Name) || ev.Op&fsnotify.Chmod == fsnotify.Chmod {
 			return false
 		}
 	}
