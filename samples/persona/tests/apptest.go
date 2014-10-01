@@ -3,9 +3,12 @@ package tests
 import (
 	"encoding/json"
 	"net/url"
+	"time"
 
 	"github.com/revel/revel"
 )
+
+var personaTestUsers map[string]PersonaTestUser
 
 type AppTest struct {
 	revel.TestSuite
@@ -16,19 +19,20 @@ type PersonaTestUser struct {
 	Audience  string `json:"audience"`
 	Email     string `json:"email"`
 	Pass      string `json:"pass"`
+	Received  time.Time
 }
 
 func (t *AppTest) TestThatLoginPageWorks() {
 	// Make sure empty assertion will cause an error.
 	t.PostForm("/login", url.Values{
-		"assertion": []string{""},
+		"assertion": {""},
 	})
 	t.AssertStatus(400)
 
 	// Ensure that incorrect audience parameter will lead to an error.
 	user := t.EmailWithAssertion("https://example.com")
 	t.PostForm("/login", url.Values{
-		"assertion": []string{user.Assertion},
+		"assertion": {user.Assertion},
 	})
 	t.AssertEqual(user.Audience, "https://example.com")
 	t.AssertStatus(400)
@@ -36,7 +40,7 @@ func (t *AppTest) TestThatLoginPageWorks() {
 	// Check whether authentication works.
 	user = t.EmailWithAssertion("http://" + revel.Config.StringDefault("http.host", "localhost"))
 	t.PostForm("/login", url.Values{
-		"assertion": []string{user.Assertion},
+		"assertion": {user.Assertion},
 	})
 	t.AssertOk()
 	t.AssertContains("Login successful")
@@ -50,7 +54,7 @@ func (t *AppTest) TestThatLogoutPageWorks() {
 	// Authenticating a user.
 	user := t.EmailWithAssertion("http://" + revel.Config.StringDefault("http.host", "localhost"))
 	t.PostForm("/login", url.Values{
-		"assertion": []string{user.Assertion},
+		"assertion": {user.Assertion},
 	})
 	t.AssertOk()
 	t.AssertContains("Login successful")
@@ -68,8 +72,18 @@ func (t *AppTest) TestThatLogoutPageWorks() {
 }
 
 // EmailWithAssertion uses personatestuser.org service for getting testing parameters.
-// The testing service expects audience to begin with protocol, for example: "http://".
-func (t *AppTest) EmailWithAssertion(audience string) *PersonaTestUser {
+// The test persona service expects audience to begin with protocol, for example: "http://".
+func (t *AppTest) EmailWithAssertion(audience string) PersonaTestUser {
+	// The process of getting new test users takes a lot of time. To reduce the number
+	// of http requests using the same user data till they are up-to-date.
+	if user, ok := personaTestUsers[audience]; ok {
+		// Make sure user data are still valid.
+		// Data expire after 2 minutes. We are updating them after 1 just in case.
+		if !time.Now().After(user.Received.Add(time.Minute)) {
+			return user
+		}
+	}
+
 	// Trying to get data from testing server.
 	u := "http://personatestuser.org"
 	urn := "/email_with_assertion/" + url.QueryEscape(audience)
@@ -87,5 +101,16 @@ func (t *AppTest) EmailWithAssertion(audience string) *PersonaTestUser {
 	err := json.Unmarshal(t.ResponseBody, &user)
 	t.Assert(err == nil)
 
-	return &user
+	// Register the time when new user data are received. We are not using "Expire"
+	// parameter from persona test server because then we'll have to synchronise our clock.
+	user.Received = time.Now()
+
+	// Cache the user data.
+	personaTestUsers[audience] = user
+
+	return user
+}
+
+func init() {
+	personaTestUsers = map[string]PersonaTestUser{}
 }
