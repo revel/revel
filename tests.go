@@ -65,12 +65,12 @@ func (t *TestSuite) WebSocketUrl() string {
 // Issue a GET request to the given path and store the result in Request and
 // RequestBody.
 func (t *TestSuite) Get(path string) {
-	t.GetCustom(path).Send()
+	t.GetCustom(t.BaseUrl() + path).Send()
 }
 
-// Return a GET request to the given path in a form of its wrapper.
-func (t *TestSuite) GetCustom(path string) *TestRequest {
-	req, err := http.NewRequest("GET", t.BaseUrl()+path, nil)
+// Return a GET request to the given uri in a form of its wrapper.
+func (t *TestSuite) GetCustom(uri string) *TestRequest {
+	req, err := http.NewRequest("GET", uri, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -83,12 +83,12 @@ func (t *TestSuite) GetCustom(path string) *TestRequest {
 // Issue a DELETE request to the given path and store the result in Request and
 // RequestBody.
 func (t *TestSuite) Delete(path string) {
-	t.DeleteCustom(path).Send()
+	t.DeleteCustom(t.BaseUrl() + path).Send()
 }
 
-// Return a DELETE request to the given path in a form of its wrapper.
-func (t *TestSuite) DeleteCustom(path string) *TestRequest {
-	req, err := http.NewRequest("DELETE", t.BaseUrl()+path, nil)
+// Return a DELETE request to the given uri in a form of its wrapper.
+func (t *TestSuite) DeleteCustom(uri string) *TestRequest {
+	req, err := http.NewRequest("DELETE", uri, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -101,13 +101,13 @@ func (t *TestSuite) DeleteCustom(path string) *TestRequest {
 // Issue a POST request to the given path, sending the given Content-Type and
 // data, and store the result in Request and RequestBody.  "data" may be nil.
 func (t *TestSuite) Post(path string, contentType string, reader io.Reader) {
-	t.PostCustom(path, contentType, reader).Send()
+	t.PostCustom(t.BaseUrl()+path, contentType, reader).Send()
 }
 
-// Return a POST request to the given path with specified Content-Type and data
+// Return a POST request to the given uri with specified Content-Type and data
 // in a form of wrapper. "data" may be nil.
-func (t *TestSuite) PostCustom(path string, contentType string, reader io.Reader) *TestRequest {
-	req, err := http.NewRequest("POST", t.BaseUrl()+path, reader)
+func (t *TestSuite) PostCustom(uri string, contentType string, reader io.Reader) *TestRequest {
+	req, err := http.NewRequest("POST", uri, reader)
 	if err != nil {
 		panic(err)
 	}
@@ -121,13 +121,13 @@ func (t *TestSuite) PostCustom(path string, contentType string, reader io.Reader
 // Issue a POST request to the given path as a form post of the given key and
 // values, and store the result in Request and RequestBody.
 func (t *TestSuite) PostForm(path string, data url.Values) {
-	t.PostFormCustom(path, data).Send()
+	t.PostFormCustom(t.BaseUrl()+path, data).Send()
 }
 
-// Return a POST request to the given path as a form post of the given key and values.
-// The request is a wrapper of type TestRequest.
-func (t *TestSuite) PostFormCustom(path string, data url.Values) *TestRequest {
-	return t.PostCustom(path, "application/x-www-form-urlencoded", strings.NewReader(data.Encode()))
+// Return a POST request to the given uri as a form post of the given key and values.
+// The request is in a form of TestRequest wrapper.
+func (t *TestSuite) PostFormCustom(uri string, data url.Values) *TestRequest {
+	return t.PostCustom(uri, "application/x-www-form-urlencoded", strings.NewReader(data.Encode()))
 }
 
 // Issue a multipart request for the method & fields given and read the response.
