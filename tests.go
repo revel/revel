@@ -2,7 +2,6 @@ package revel
 
 import (
 	"bytes"
-	"code.google.com/p/go.net/websocket"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -12,6 +11,8 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
+
+	"code.google.com/p/go.net/websocket"
 )
 
 type TestSuite struct {
@@ -19,6 +20,11 @@ type TestSuite struct {
 	Response     *http.Response
 	ResponseBody []byte
 	Session      Session
+}
+
+type TestRequest struct {
+	*http.Request
+	testSuite *TestSuite
 }
 
 var TestSuites []interface{} // Array of structs that embed TestSuite
@@ -59,38 +65,69 @@ func (t *TestSuite) WebSocketUrl() string {
 // Issue a GET request to the given path and store the result in Request and
 // RequestBody.
 func (t *TestSuite) Get(path string) {
+	t.GetCustom(path).Send()
+}
+
+// Return a GET request to the given path in a form of its wrapper.
+func (t *TestSuite) GetCustom(path string) *TestRequest {
 	req, err := http.NewRequest("GET", t.BaseUrl()+path, nil)
 	if err != nil {
 		panic(err)
 	}
-	t.MakeRequestSession(req)
+	return &TestRequest{
+		Request:   req,
+		testSuite: t,
+	}
 }
 
 // Issue a DELETE request to the given path and store the result in Request and
 // RequestBody.
 func (t *TestSuite) Delete(path string) {
+	t.DeleteCustom(path).Send()
+}
+
+// Return a DELETE request to the given path in a form of its wrapper.
+func (t *TestSuite) DeleteCustom(path string) *TestRequest {
 	req, err := http.NewRequest("DELETE", t.BaseUrl()+path, nil)
 	if err != nil {
 		panic(err)
 	}
-	t.MakeRequestSession(req)
+	return &TestRequest{
+		Request:   req,
+		testSuite: t,
+	}
 }
 
 // Issue a POST request to the given path, sending the given Content-Type and
 // data, and store the result in Request and RequestBody.  "data" may be nil.
 func (t *TestSuite) Post(path string, contentType string, reader io.Reader) {
+	t.PostCustom(path, contentType, reader).Send()
+}
+
+// Return a POST request to the given path with specified Content-Type and data
+// in a form of wrapper. "data" may be nil.
+func (t *TestSuite) PostCustom(path string, contentType string, reader io.Reader) *TestRequest {
 	req, err := http.NewRequest("POST", t.BaseUrl()+path, reader)
 	if err != nil {
 		panic(err)
 	}
 	req.Header.Set("Content-Type", contentType)
-	t.MakeRequestSession(req)
+	return &TestRequest{
+		Request:   req,
+		testSuite: t,
+	}
 }
 
 // Issue a POST request to the given path as a form post of the given key and
 // values, and store the result in Request and RequestBody.
 func (t *TestSuite) PostForm(path string, data url.Values) {
-	t.Post(path, "application/x-www-form-urlencoded", strings.NewReader(data.Encode()))
+	t.PostFormCustom(path, data).Send()
+}
+
+// Return a POST request to the given path as a form post of the given key and values.
+// The request is a wrapper of type TestRequest.
+func (t *TestSuite) PostFormCustom(path string, data url.Values) *TestRequest {
+	return t.PostCustom(path, "application/x-www-form-urlencoded", strings.NewReader(data.Encode()))
 }
 
 // Issue a multipart request for the method & fields given and read the response.
@@ -110,34 +147,33 @@ func (t *TestSuite) MakeMultipartRequest(method string, path string, fields map[
 	}
 	req.Header.Set("Content-Type", w.FormDataContentType())
 
-	t.MakeRequest(req)
 }
 
 // Issue any request and read the response. If successful, the caller may
 // examine the Response and ResponseBody properties. Session data will be
 // added to the request cookies for you.
-func (t *TestSuite) MakeRequestSession(req *http.Request) {
-	req.AddCookie(t.Session.cookie())
-	t.MakeRequest(req)
+func (r *TestRequest) Send() {
+	r.AddCookie(r.testSuite.Session.cookie())
+	r.MakeRequest()
 }
 
 // Issue any request and read the response. If successful, the caller may
 // examine the Response and ResponseBody properties. You will need to
 // manage session / cookie data manually
-func (t *TestSuite) MakeRequest(req *http.Request) {
+func (r *TestRequest) MakeRequest() {
 	var err error
-	if t.Response, err = t.Client.Do(req); err != nil {
+	if r.testSuite.Response, err = r.testSuite.Client.Do(r.Request); err != nil {
 		panic(err)
 	}
-	if t.ResponseBody, err = ioutil.ReadAll(t.Response.Body); err != nil {
+	if r.testSuite.ResponseBody, err = ioutil.ReadAll(r.testSuite.Response.Body); err != nil {
 		panic(err)
 	}
 
 	// Look for a session cookie in the response and parse it.
-	sessionCookieName := t.Session.cookie().Name
-	for _, cookie := range t.Client.Jar.Cookies(req.URL) {
+	sessionCookieName := r.testSuite.Session.cookie().Name
+	for _, cookie := range r.testSuite.Client.Jar.Cookies(r.Request.URL) {
 		if cookie.Name == sessionCookieName {
-			t.Session = getSessionFromCookie(cookie)
+			r.testSuite.Session = getSessionFromCookie(cookie)
 			break
 		}
 	}
