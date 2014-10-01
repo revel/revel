@@ -2,7 +2,6 @@ package tests
 
 import (
 	"encoding/json"
-	"net/http"
 	"net/url"
 
 	"github.com/revel/revel"
@@ -19,7 +18,7 @@ type PersonaTestUser struct {
 	Pass      string `json:"pass"`
 }
 
-func (t AppTest) TestThatLoginPageWorks() {
+func (t *AppTest) TestThatLoginPageWorks() {
 	// Make sure empty assertion will cause an error.
 	t.PostForm("/login", url.Values{
 		"assertion": []string{""},
@@ -47,7 +46,7 @@ func (t AppTest) TestThatLoginPageWorks() {
 	t.AssertContains(user.Email)
 }
 
-func (t AppTest) TestThatLogoutPageWorks() {
+func (t *AppTest) TestThatLogoutPageWorks() {
 	// Authenticating a user.
 	user := t.EmailWithAssertion("http://" + revel.Config.StringDefault("http.host", "localhost"))
 	t.PostForm("/login", url.Values{
@@ -69,14 +68,15 @@ func (t AppTest) TestThatLogoutPageWorks() {
 }
 
 // EmailWithAssertion uses personatestuser.org service for getting testing parameters.
-// Audience is expected to begin with protocol, for example: "http://".
-func (t AppTest) EmailWithAssertion(audience string) *PersonaTestUser {
+// The testing service expects audience to begin with protocol, for example: "http://".
+func (t *AppTest) EmailWithAssertion(audience string) *PersonaTestUser {
 	// Trying to get data from testing server.
-	uri := "/email_with_assertion/" + url.QueryEscape(audience)
-	req, err := http.NewRequest("GET", "http://personatestuser.org"+uri, nil)
-	t.Assert(err == nil)
-	req.URL.Opaque = uri // Use unescaped version of URI for request.
-	t.MakeRequest(req)
+	u := "http://personatestuser.org"
+	urn := "/email_with_assertion/" + url.QueryEscape(audience)
+
+	req := t.GetCustom(u + urn)
+	req.URL.Opaque = urn // Use unescaped version of URN for the request.
+	req.Send()
 
 	// Check whether response status is OK.
 	revel.TRACE.Printf("PERSONA TESTING: Response of testing server is %q", t.ResponseBody)
@@ -84,7 +84,7 @@ func (t AppTest) EmailWithAssertion(audience string) *PersonaTestUser {
 
 	// Parsing the response from server.
 	var user PersonaTestUser
-	err = json.Unmarshal(t.ResponseBody, &user)
+	err := json.Unmarshal(t.ResponseBody, &user)
 	t.Assert(err == nil)
 
 	return &user
