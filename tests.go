@@ -221,6 +221,12 @@ func (t *TestSuite) AssertEqual(expected, actual interface{}) {
 	}
 }
 
+func (t *TestSuite) AssertNotEqual(expected, actual interface{}) {
+	if Equal(expected, actual) {
+		panic(fmt.Errorf("(expected) %v == %v (actual)", expected, actual))
+	}
+}
+
 func (t *TestSuite) Assert(exp bool) {
 	t.Assertf(exp, "Assertion failed")
 }
@@ -235,6 +241,13 @@ func (t *TestSuite) Assertf(exp bool, formatStr string, args ...interface{}) {
 func (t *TestSuite) AssertContains(s string) {
 	if !bytes.Contains(t.ResponseBody, []byte(s)) {
 		panic(fmt.Errorf("Assertion failed. Expected response to contain %s", s))
+	}
+}
+
+// Assert that the response does not contain the given string.
+func (t *TestSuite) AssertNotContains(s string) {
+	if bytes.Contains(t.ResponseBody, []byte(s)) {
+		panic(fmt.Errorf("Assertion failed. Expected response not to contain %s", s))
 	}
 }
 
