@@ -29,7 +29,6 @@ func (t *MultipleTest) TestThatMultipleFilesUploadWorks() {
 			"github.com/revel/revel/samples/upload/public/img/glyphicons-halflings.png",
 		},
 	})
-	revel.WARN.Println(string(t.ResponseBody))
 	t.AssertOk()
 	t.AssertContains("Successfully uploaded")
 	t.AssertContains("favicon.png")
