@@ -37,13 +37,13 @@ func (c *Single) HandleUpload(avatar []byte) revel.Result {
 
 	// Check format of the file.
 	conf, format, err := image.DecodeConfig(bytes.NewReader(avatar))
-	c.Validation.Required(err == nil).
+	c.Validation.Required(err == nil).Key("avatar").
 		Message("Incorrect file format")
-	c.Validation.Required(format == "jpeg" || format == "png").
+	c.Validation.Required(format == "jpeg" || format == "png").Key("avatar").
 		Message("JPEG or PNG file format is expected")
 
 	// Check resolution.
-	c.Validation.Required(conf.Height >= 150 && conf.Width >= 150).
+	c.Validation.Required(conf.Height >= 150 && conf.Width >= 150).Key("avatar").
 		Message("Minimum allowed resolution is 150x150px")
 
 	// Handle errors.
