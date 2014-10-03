@@ -343,7 +343,9 @@ func (loader *TemplateLoader) Refresh() *Error {
 			lowerCaseTemplateName := strings.ToLower(templateName)
 
 			err = addTemplate(templateName)
-			err = addTemplate(lowerCaseTemplateName)
+			if err == nil {
+				err = addTemplate(lowerCaseTemplateName)
+			}
 
 			// Store / report the first error encountered.
 			if err != nil && loader.compileError == nil {
