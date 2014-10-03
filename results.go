@@ -40,10 +40,14 @@ func (r ErrorResult) Apply(req *Request, resp *Response) {
 		contentType = "text/plain"
 	}
 
+	// Get Language
+	// We ignore if cast is unsuccessful, since it will give us an empty string anyway.
+	lang, _ := r.RenderArgs[CurrentLocaleRenderArg].(string)
+
 	// Get the error template.
 	var err error
 	templatePath := fmt.Sprintf("errors/%d.%s", status, format)
-	tmpl, err := MainTemplateLoader.Template(templatePath)
+	tmpl, err := MainTemplateLoader.TemplateLang(templatePath, lang)
 
 	// This func shows a plaintext error message, in case the template rendering
 	// doesn't work.
@@ -173,7 +177,11 @@ func (r *RenderTemplateResult) render(req *Request, resp *Response, wr io.Writer
 		templateName = r.Template.Name()
 		templateContent = r.Template.Content()
 	} else {
-		if tmpl, err := MainTemplateLoader.Template(templateName); err == nil {
+		// Get Language
+		// We ignore if cast is unsuccessful, since it will give us an empty string anyway.
+		lang, _ := r.RenderArgs[CurrentLocaleRenderArg].(string)
+
+		if tmpl, err := MainTemplateLoader.TemplateLang(templateName, lang); err == nil {
 			templateContent = tmpl.Content()
 		}
 	}

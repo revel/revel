@@ -1,6 +1,7 @@
 package revel
 
 import (
+	"bytes"
 	"fmt"
 	"html"
 	"html/template"
@@ -125,6 +126,25 @@ var (
 				return ""
 			}
 			return template.HTML(Message(str, message, args...))
+		},
+
+		// Load an internationalized template
+		//
+		// Example use is {{ i18ntemplate . template.html }}
+		//
+		// This will load a template with the current locale extended, for example template.html.en
+		// If the template cannot be found, it will default to the template without language extension
+		// in this case template.html
+		"i18ntemplate": func(renderArgs map[string]interface{}, templateName string) (template.HTML, error) {
+			var buf bytes.Buffer
+			var err error
+			lang, _ := renderArgs[CurrentLocaleRenderArg].(string)
+			// Get template
+			tmpl, err := MainTemplateLoader.TemplateLang(templateName, lang)
+			if err == nil {
+				err = tmpl.Render(&buf, renderArgs)
+			}
+			return template.HTML(buf.String()), err
 		},
 
 		// Replaces newlines with <br>
@@ -411,6 +431,36 @@ func parseTemplateError(err error) (templateName string, line int, description s
 // An Error is returned if there was any problem with any of the templates.  (In
 // this case, if a template is returned, it may still be usable.)
 func (loader *TemplateLoader) Template(name string) (Template, error) {
+	return loader.TemplateLang(name, "")
+}
+
+// Return the Template with the given name.  The name is the template's path
+// relative to a template loader root.
+//
+// The loader will attempt to load a template with the language specified language as an extension
+// to the specified name. For instance "template.html" with "en" as language will attempt to load
+// "template.html.en" first, and fall back to "template.html" if the file cannot be found.
+//
+// An Error is returned if there was any problem with any of the templates.  (In
+// this case, if a template is returned, it may still be usable.)
+func (loader *TemplateLoader) TemplateLang(name string, lang string) (Template, error) {
+	// Attempt to load a localized template first.
+	if lang != "" {
+		l := strings.ToLower(name + "." + lang)
+		// Look up and return the template.
+		tmpl := loader.templateSet.Lookup(l)
+		// This is necessary.
+		// If a nil loader.compileError is returned directly, a caller testing against
+		// nil will get the wrong result.  Something to do with casting *Error to error.
+		var err error
+		if loader.compileError != nil {
+			err = loader.compileError
+			return GoTemplate{tmpl, loader}, err
+		}
+		if tmpl != nil && err == nil {
+			return GoTemplate{tmpl, loader}, err
+		}
+	}
 	// Lower case the file name to support case-insensitive matching
 	name = strings.ToLower(name)
 	// Look up and return the template.

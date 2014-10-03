@@ -103,9 +103,12 @@ func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
 // A less magical way to render a template.
 // Renders the given template, using the current RenderArgs.
 func (c *Controller) RenderTemplate(templatePath string) Result {
+	// Get Language
+	// We ignore if cast is unsuccessful, since it will give us an empty string anyway.
+	lang, _ := c.RenderArgs[CurrentLocaleRenderArg].(string)
 
 	// Get the Template.
-	template, err := MainTemplateLoader.Template(templatePath)
+	template, err := MainTemplateLoader.TemplateLang(templatePath, lang)
 	if err != nil {
 		return c.RenderError(err)
 	}
