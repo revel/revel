@@ -339,11 +339,7 @@ func (loader *TemplateLoader) Refresh() *Error {
 
 			templateName := path[len(fullSrcDir)+1:]
 
-			// Lower case the file name for case-insensitive matching
-			lowerCaseTemplateName := strings.ToLower(templateName)
-
 			err = addTemplate(templateName)
-			err = addTemplate(lowerCaseTemplateName)
 
 			// Store / report the first error encountered.
 			if err != nil && loader.compileError == nil {
@@ -411,8 +407,6 @@ func parseTemplateError(err error) (templateName string, line int, description s
 // An Error is returned if there was any problem with any of the templates.  (In
 // this case, if a template is returned, it may still be usable.)
 func (loader *TemplateLoader) Template(name string) (Template, error) {
-	// Lower case the file name to support case-insensitive matching
-	name = strings.ToLower(name)
 	// Look up and return the template.
 	tmpl := loader.templateSet.Lookup(name)
 
