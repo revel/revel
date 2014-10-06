@@ -114,6 +114,11 @@ results.pretty = true
 watch = true
 
 
+# If you set watcher.mode = "eager", the server starts to recompile
+# your application every time your application's files change.
+watcher.mode = "normal"
+
+
 # Module to run code tests in the browser
 # See:
 #   http://revel.github.io/manual/testing.html

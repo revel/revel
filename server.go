@@ -3,6 +3,8 @@ package revel
 import (
 	"code.google.com/p/go.net/websocket"
 	"fmt"
+	"github.com/rcrowley/goagain"
+	"io"
 	"net"
 	"net/http"
 	"strconv"
@@ -44,6 +46,10 @@ func handleInternal(w http.ResponseWriter, r *http.Request, ws *websocket.Conn) 
 		c.Result.Apply(req, resp)
 	} else if c.Response.Status != 0 {
 		c.Response.Out.WriteHeader(c.Response.Status)
+	}
+	// Close the Writer if we can
+	if w, ok := resp.Out.(io.Closer); ok {
+		w.Close()
 	}
 }
 
@@ -105,14 +111,46 @@ func Run(port int) {
 			// to terminate SSL upstream when using unix domain sockets.
 			ERROR.Fatalln("SSL is only supported for TCP sockets. Specify a port to listen on.")
 		}
-		ERROR.Fatalln("Failed to listen:",
-			Server.ListenAndServeTLS(HttpSslCert, HttpSslKey))
+		ERROR.Fatalln("Failed to listen:", Server.ListenAndServeTLS(HttpSslCert, HttpSslKey))
+	} else if Config.BoolDefault("graceful", false) {
+		serveGraceful(network, localAddress)
 	} else {
-		listener, err := net.Listen(network, localAddress)
-		if err != nil {
-			ERROR.Fatalln("Failed to listen:", err)
+		ERROR.Fatalln("Failed to serve:", Server.Serve(listen(network, localAddress)))
+	}
+}
+
+func listen(network, localAddress string) net.Listener {
+	listener, err := net.Listen(network, localAddress)
+	if err != nil {
+		ERROR.Fatalln("Failed to listen:", err)
+	}
+	return listener
+}
+
+func serveGraceful(network, localAddress string) {
+	listener, err := goagain.Listener()
+
+	if err != nil {
+		// New process, create the listener.
+		listener = listen(network, localAddress)
+		go Server.Serve(listener)
+	} else {
+		// Forked child, recover the listener.
+		INFO.Println("Resuming listening on", listener.Addr())
+		go Server.Serve(listener)
+
+		// Child is ready to accept connections, kill parent process.
+		if err := goagain.Kill(); err != nil {
+			ERROR.Println("Failed to kill parent:", err)
 		}
-		ERROR.Fatalln("Failed to serve:", Server.Serve(listener))
+	}
+
+	if _, err := goagain.Wait(listener); err != nil {
+		ERROR.Fatalln("Failed to serve:", err)
+	}
+
+	if err := listener.Close(); err != nil {
+		ERROR.Fatalln("Failed to close listener:", err)
 	}
 }
 

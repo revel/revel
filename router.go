@@ -3,7 +3,6 @@ package revel
 import (
 	"encoding/csv"
 	"fmt"
-	"github.com/robfig/pathtree"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -11,6 +10,8 @@ import (
 	"path"
 	"regexp"
 	"strings"
+
+	"github.com/robfig/pathtree"
 )
 
 type Route struct {
@@ -45,6 +46,7 @@ func NewRoute(method, path, action, fixedArgs, routesPath string, line int) (r *
 	// Handle fixed arguments
 	argsReader := strings.NewReader(fixedArgs)
 	csv := csv.NewReader(argsReader)
+	csv.TrimLeadingSpace = true
 	fargs, err := csv.Read()
 	if err != nil && err != io.EOF {
 		ERROR.Printf("Invalid fixed parameters (%v): for string '%v'", err.Error(), fixedArgs)
@@ -91,6 +93,11 @@ type Router struct {
 var notFound = &RouteMatch{Action: "404"}
 
 func (router *Router) Route(req *http.Request) *RouteMatch {
+	// Override method if set in header
+	if method := req.Header.Get("X-HTTP-Method-Override"); method != "" && req.Method == "POST" {
+		req.Method = method
+	}
+
 	leaf, expansions := router.Tree.Find(treePath(req.Method, req.URL.Path))
 	if leaf == nil {
 		return nil
@@ -205,7 +212,7 @@ func parseRoutes(routesPath, joinedPath, content string, validate bool) ([]*Rout
 		if strings.HasSuffix(joinedPath, "/") && strings.HasPrefix(path, "/") {
 			joinedPath = joinedPath[0 : len(joinedPath)-1]
 		}
-		path = strings.Join([]string{joinedPath, path}, "")
+		path = strings.Join([]string{AppRoot, joinedPath, path}, "")
 
 		// This will import the module routes under the path described in the
 		// routes file (joinedPath param). e.g. "* /jobs module:jobs" -> all
@@ -269,7 +276,7 @@ func routeError(err error, routesPath, content string, n int) *Error {
 	if content == "" {
 		contentBytes, err := ioutil.ReadFile(routesPath)
 		if err != nil {
-			ERROR.Println("Failed to read route file %s: %s", routesPath, err)
+			ERROR.Printf("Failed to read route file %s: %s\n", routesPath, err)
 		} else {
 			content = string(contentBytes)
 		}
@@ -463,4 +470,41 @@ func RouterFilter(c *Controller, fc []Filter) {
 	}
 
 	fc[0](c, fc[1:])
+}
+
+// Override allowed http methods via form or browser param
+func HttpMethodOverride(c *Controller, fc []Filter) {
+	// An array of HTTP verbs allowed.
+	verbs := []string{"POST", "PUT", "PATCH", "DELETE"}
+
+	method := strings.ToUpper(c.Request.Request.Method)
+
+	if method == "POST" {
+		param := strings.ToUpper(c.Request.Request.PostFormValue("_method"))
+
+		if len(param) > 0 {
+			override := false
+			// Check if param is allowed
+			for _, verb := range verbs {
+				if verb == param {
+					override = true
+					break
+				}
+			}
+
+			if override {
+				c.Request.Request.Method = param
+			} else {
+				c.Response.Status = 405
+				c.Result = c.RenderError(&Error{
+					Title:       "Method not allowed",
+					Description: "Method " + param + " is not allowed (valid: " + strings.Join(verbs, ", ") + ")",
+				})
+				return
+			}
+
+		}
+	}
+
+	fc[0](c, fc[1:]) // Execute the next filter stage.
 }

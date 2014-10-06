@@ -44,7 +44,6 @@ var (
 	// The functions available for use in the templates.
 	TemplateFuncs = map[string]interface{}{
 		"url": ReverseUrl,
-		"eq":  Equal,
 		"set": func(renderArgs map[string]interface{}, key string, value interface{}) template.JS {
 			renderArgs[key] = value
 			return template.JS("")
@@ -209,10 +208,51 @@ func (loader *TemplateLoader) Refresh() *Error {
 	for _, basePath := range loader.paths {
 		// Walk only returns an error if the template loader is completely unusable
 		// (namely, if one of the TemplateFuncs does not have an acceptable signature).
-		funcErr := filepath.Walk(basePath, func(path string, info os.FileInfo, err error) error {
+
+		// Handling symlinked directories
+		var fullSrcDir string
+		f, err := os.Lstat(basePath)
+		if err == nil && f.Mode()&os.ModeSymlink == os.ModeSymlink {
+			fullSrcDir, err = filepath.EvalSymlinks(basePath)
+			if err != nil {
+				panic(err)
+			}
+		} else {
+			fullSrcDir = basePath
+		}
+
+		var templateWalker func(path string, info os.FileInfo, err error) error
+		templateWalker = func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				ERROR.Println("error walking templates:", err)
 				return nil
+			}
+
+			// is it a symlinked template?
+			link, err := os.Lstat(path)
+			if err == nil && link.Mode()&os.ModeSymlink == os.ModeSymlink {
+				TRACE.Println("symlink template:", path)
+				// lookup the actual target & check for goodness
+				targetPath, err := filepath.EvalSymlinks(path)
+				if err != nil {
+					ERROR.Println("Failed to read symlink", err)
+					return err
+				}
+				targetInfo, err := os.Stat(targetPath)
+				if err != nil {
+					ERROR.Println("Failed to stat symlink target", err)
+					return err
+				}
+
+				// set the template path to the target of the symlink
+				path = targetPath
+				info = targetInfo
+
+				// need to save state and restore for recursive call to Walk on symlink
+				tmp := fullSrcDir
+				fullSrcDir = filepath.Dir(targetPath)
+				filepath.Walk(targetPath, templateWalker)
+				fullSrcDir = tmp
 			}
 
 			// Walk into watchable directories
@@ -233,6 +273,7 @@ func (loader *TemplateLoader) Refresh() *Error {
 			// addTemplate allows the same template to be added multiple
 			// times with different template names.
 			addTemplate := func(templateName string) (err error) {
+				TRACE.Println("adding template: ", templateName)
 				// Convert template names to use forward slashes, even on Windows.
 				if os.PathSeparator == '\\' {
 					templateName = strings.Replace(templateName, `\`, `/`, -1) // `
@@ -242,6 +283,7 @@ func (loader *TemplateLoader) Refresh() *Error {
 				if _, ok := loader.templatePaths[templateName]; ok {
 					return nil
 				}
+
 				loader.templatePaths[templateName] = path
 
 				// Load the file if we haven't already
@@ -295,7 +337,7 @@ func (loader *TemplateLoader) Refresh() *Error {
 				return err
 			}
 
-			templateName := path[len(basePath)+1:]
+			templateName := path[len(fullSrcDir)+1:]
 
 			// Lower case the file name for case-insensitive matching
 			lowerCaseTemplateName := strings.ToLower(templateName)
@@ -317,7 +359,9 @@ func (loader *TemplateLoader) Refresh() *Error {
 					templateName, line, description)
 			}
 			return nil
-		})
+		}
+
+		funcErr := filepath.Walk(fullSrcDir, templateWalker)
 
 		// If there was an error with the Funcs, set it and return immediately.
 		if funcErr != nil {
@@ -409,12 +453,15 @@ func (gotmpl GoTemplate) Content() []string {
 
 // Return a url capable of invoking a given controller method:
 // "Application.ShowApp 123" => "/app/123"
-func ReverseUrl(args ...interface{}) (string, error) {
+func ReverseUrl(args ...interface{}) (template.URL, error) {
 	if len(args) == 0 {
 		return "", fmt.Errorf("no arguments provided to reverse route")
 	}
 
 	action := args[0].(string)
+	if action == "Root" {
+		return template.URL(AppRoot), nil
+	}
 	actionSplit := strings.Split(action, ".")
 	if len(actionSplit) != 2 {
 		return "", fmt.Errorf("reversing '%s', expected 'Controller.Action'", action)
@@ -432,7 +479,7 @@ func ReverseUrl(args ...interface{}) (string, error) {
 		Unbind(argsByName, c.MethodType.Args[i].Name, argValue)
 	}
 
-	return MainRouter.Reverse(args[0].(string), argsByName).Url, nil
+	return template.URL(MainRouter.Reverse(args[0].(string), argsByName).Url), nil
 }
 
 func Slug(text string) string {
