@@ -7,13 +7,15 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
-	"github.com/revel/revel"
 	"html/template"
 	"io"
 	"math"
 	"net/url"
 )
 
+import "github.com/revel/revel"
+
+// allowMethods are HTTP methods that do NOT require a token
 var allowedMethods = map[string]bool{
 	"GET":     true,
 	"HEAD":    true,
@@ -21,125 +23,106 @@ var allowedMethods = map[string]bool{
 	"TRACE":   true,
 }
 
-func NewToken(c *revel.Controller) string {
-	token := c.Request.Header.Get("Csrf-Token")
-	if token == "" {
-		token = saltedToken(c.Session["csrfSecret"])
-		c.Request.Header.Set("Csrf-Token", token)
-	}
-	return token
-}
-
-func NewSecret() (string, error) {
-	return RandomString(64)
-}
-
 func RandomString(length int) (string, error) {
 	buffer := make([]byte, int(math.Ceil(float64(length)/2)))
-	if _, err := rand.Read(buffer); err != nil {
-		return "", err
+	if _, err := io.ReadFull(rand.Reader, buffer); err != nil {
+		return "", nil
 	}
 	str := hex.EncodeToString(buffer)
 	return str[:length], nil
 }
 
-func RefreshSecret(c *revel.Controller) {
-	csrfSecret, err := RandomString(64)
+func RefreshToken(c *revel.Controller) {
+	token, err := RandomString(64)
 	if err != nil {
 		panic(err)
 	}
-	c.Session["csrfSecret"] = csrfSecret
+	c.Session["csrf_token"] = token
 }
 
 func CsrfFilter(c *revel.Controller, fc []revel.Filter) {
-	csrfSecret, foundSecret := c.Session["csrfSecret"]
+	token, foundToken := c.Session["csrf_token"]
 
-	if !foundSecret {
-		RefreshSecret(c)
+	if !foundToken {
+		RefreshToken(c)
 	}
 
-	// TODO: Add a hook for csrf exempt?
-	// Whatever the flag, it needs to be visible during the request cycle...
+	// TODO: Add hook for csrf exempt
+
+	referer, refErr := url.Parse(c.Request.Header.Get("Referer"))
 
 	// If the Request method isn't in the white listed methods
 	if !allowedMethods[c.Request.Method] {
 		// Token wasn't present at all
-		if !foundSecret {
-			reject(c)
-			return
-		}
-		// Referrer header isn't present
-		referer := c.Request.Referer()
-		if referer == "" {
-			reject(c)
-			return
-		}
-		// Referer is invalid, or the requested
-		// page is HTTPS but the Referer is NOT HTTPS
-		refUrl, err := url.Parse(referer)
-		if err != nil || c.Request.URL.Scheme == "https" && refUrl.Scheme != "https" {
-			reject(c)
+		if !foundToken {
+			c.Result = c.Forbidden("REVEL CSRF: Session token missing.")
 			return
 		}
 
-		var requestCsrfToken string
-		// First check post data
+		// Referrer header is invalid
+		if refErr != nil {
+			c.Result = c.Forbidden("REVEL CSRF: HTTP Referer malformed.")
+			return
+		}
+
+		// Same origin
+		if !sameOrigin(c.Request.URL, referrer) {
+			c.Result = c.Forbidden("REVEL CSRF: Same origin mismatch.")
+			return
+		}
+
+		var requestToken string
+		// First check for token in post data
 		if c.Request.Method == "POST" {
-			requestCsrfToken = c.Request.FormValue("csrftoken")
+			requestToken = c.Request.FormValue("csrftoken")
 		}
 
-		// Then check custom headers, as with AJAX
-		if requestCsrfToken == "" {
-			requestCsrfToken = c.Request.Header.Get("X-CSRFToken")
+		// Then check for token in custom headers, as with AJAX
+		if requestToken == "" {
+			requestToken = c.Request.Header.Get("X-CSRFToken")
 		}
 
-		if requestCsrfToken == "" || !checkToken(requestCsrfToken, csrfSecret) {
-			reject(c)
+		if requestToken == "" || !compareToken(requestToken, csrfSecret) {
+			c.Result = c.Forbidden("REVEL CSRF: Invalid token.")
 			return
 		}
 	}
 
 	fc[0](c, fc[1:])
 
-	c.RenderArgs["_csrftoken"] = func() string {
-		return NewToken(c)
+	// Only add token to RenderArgs if the request is: not AJAX, not missing referrer header, and is same origin.
+	if c.Request.Header.Get("X-CSRFToken") == "" && refErr == nil && sameOrigin(c.Request.URL, referrer) {
+		c.RenderArgs["_csrftoken"] = token
 	}
 }
 
-func createToken(salt, secret string) string {
-	hash := sha1.New()
-	io.WriteString(hash, salt+secret)
-	return salt + base64.StdEncoding.EncodeToString(hash.Sum(nil))
-}
-
-func checkToken(requestCsrfToken, secret string) bool {
-	csrfToken := createToken(requestCsrfToken[0:10], secret)
+func compareToken(requestToken, token string) bool {
 	// ConstantTimeCompare will panic if the []byte aren't the same length
-	if len(requestCsrfToken) != len(csrfToken) {
+	if len(requestToken) != len(token) {
 		return false
 	}
-
-	return subtle.ConstantTimeCompare([]byte(requestCsrfToken), []byte(csrfToken)) == 1
+	return subtle.ConstantTimeCompare([]byte(requestToken), []byte(token)) == 1
 }
 
-func saltedToken(secret string) string {
-	salt, err := RandomString(10)
-	if err != nil {
-		panic(err)
-	}
-	return createToken(salt, secret)
-}
-
-func reject(c *revel.Controller) {
-	c.Response.Out.WriteHeader(403)
+// Validates same origin policy
+func sameOrigin(u1, u2 *url.URL) (bool, error) {
+	return u1.Scheme == u2.Scheme && u1.Host == u2.Host
 }
 
 func init() {
 	revel.TemplateFuncs["csrftoken"] = func(renderArgs map[string]interface{}) template.HTML {
 		tokenFunc, ok := renderArgs["_csrftoken"]
 		if !ok {
-			panic("_csrftoken missing from RenderArgs.")
+			panic("REVEL CSRF: _csrftoken missing from RenderArgs.")
 		}
 		return template.HTML(fmt.Sprintf(`<input type="hidden" name="csrftoken" value="%s">`, tokenFunc.(func() string)()))
+	}
+
+	revel.TemplateFuncs["csrftokenraw"] = func(renderArgs map[string]interface{}) template.HTML {
+		tokenFunc, ok := renderArgs["_csrftoken"]
+		if !ok {
+			panic("REVEL CSRF: _csrftoken missing from RenderArgs.")
+		}
+		return template.HTML(tokenFunc.(func() string)())
 	}
 }

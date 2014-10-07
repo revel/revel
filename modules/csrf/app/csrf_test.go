@@ -2,13 +2,14 @@ package csrf
 
 import (
 	"bytes"
-	"github.com/revel/revel"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"strconv"
 	"testing"
 )
+
+import "github.com/revel/revel"
 
 type fooController struct {
 	*revel.Controller
