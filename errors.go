@@ -51,7 +51,7 @@ func NewErrorFromPanic(err interface{}) *Error {
 		description = fmt.Sprint(err)
 	}
 	return &Error{
-		Title:       "Panic",
+		Title:       "Runtime Panic",
 		Path:        filename[len(basePath):],
 		Line:        line,
 		Description: description,
