@@ -249,7 +249,7 @@ func (c *Controller) SetAction(controllerName, methodName string) error {
 		return errors.New("revel/controller: failed to find action " + methodName)
 	}
 
-	c.Name, c.MethodName = c.Type.Type.Name(), methodName
+	c.Name, c.MethodName = c.Type.Type.Name(), c.MethodType.Name
 	c.Action = c.Name + "." + c.MethodName
 
 	// Instantiate the controller.
