@@ -29,8 +29,8 @@ func (t *MultipleTest) TestThatMultipleFilesUploadWorks() {
 	// Make sure upload of 2 files works.
 	t.PostFile(routes.Multiple.HandleUpload(), url.Values{}, url.Values{
 		"file[]": {
-			"github.com/revel/revel/samples/upload/public/img/favicon.png",
-			"github.com/revel/revel/samples/upload/public/img/glyphicons-halflings.png",
+			path.Join(revel.BasePath, "public/img/favicon.png"),
+			path.Join(revel.BasePath, "public/img/glyphicons-halflings.png"),
 		},
 	})
 	t.AssertOk()
