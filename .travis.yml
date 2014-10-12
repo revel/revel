@@ -40,3 +40,5 @@ script:
   - revel test github.com/revel/revel/samples/validation
   - sleep 30
   - revel test github.com/revel/revel/samples/persona
+  - sleep 30
+  - revel test github.com/revel/revel/samples/upload
