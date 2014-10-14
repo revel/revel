@@ -2,18 +2,15 @@ package csrf
 
 import (
 	"crypto/rand"
-	"crypto/sha1"
 	"crypto/subtle"
-	"encoding/base64"
 	"encoding/hex"
-	"fmt"
 	"html/template"
 	"io"
 	"math"
 	"net/url"
-)
 
-import "github.com/revel/revel"
+	"github.com/revel/revel"
+)
 
 // allowMethods are HTTP methods that do NOT require a token
 var allowedMethods = map[string]bool{
@@ -47,26 +44,25 @@ func CsrfFilter(c *revel.Controller, fc []revel.Filter) {
 		RefreshToken(c)
 	}
 
-	// TODO: Add hook for csrf exempt
-
 	referer, refErr := url.Parse(c.Request.Header.Get("Referer"))
+	isSameOrigin := sameOrigin(c.Request.URL, referer)
 
 	// If the Request method isn't in the white listed methods
-	if !allowedMethods[c.Request.Method] {
+	if !allowedMethods[c.Request.Method] && !IsExempt(c) {
 		// Token wasn't present at all
 		if !foundToken {
 			c.Result = c.Forbidden("REVEL CSRF: Session token missing.")
 			return
 		}
 
-		// Referrer header is invalid
+		// Referer header is invalid
 		if refErr != nil {
 			c.Result = c.Forbidden("REVEL CSRF: HTTP Referer malformed.")
 			return
 		}
 
 		// Same origin
-		if !sameOrigin(c.Request.URL, referrer) {
+		if !isSameOrigin {
 			c.Result = c.Forbidden("REVEL CSRF: Same origin mismatch.")
 			return
 		}
@@ -82,7 +78,7 @@ func CsrfFilter(c *revel.Controller, fc []revel.Filter) {
 			requestToken = c.Request.Header.Get("X-CSRFToken")
 		}
 
-		if requestToken == "" || !compareToken(requestToken, csrfSecret) {
+		if requestToken == "" || !compareToken(requestToken, token) {
 			c.Result = c.Forbidden("REVEL CSRF: Invalid token.")
 			return
 		}
@@ -90,8 +86,8 @@ func CsrfFilter(c *revel.Controller, fc []revel.Filter) {
 
 	fc[0](c, fc[1:])
 
-	// Only add token to RenderArgs if the request is: not AJAX, not missing referrer header, and is same origin.
-	if c.Request.Header.Get("X-CSRFToken") == "" && refErr == nil && sameOrigin(c.Request.URL, referrer) {
+	// Only add token to RenderArgs if the request is: not AJAX, not missing referer header, and is same origin.
+	if c.Request.Header.Get("X-CSRFToken") == "" && isSameOrigin {
 		c.RenderArgs["_csrftoken"] = token
 	}
 }
@@ -105,24 +101,16 @@ func compareToken(requestToken, token string) bool {
 }
 
 // Validates same origin policy
-func sameOrigin(u1, u2 *url.URL) (bool, error) {
+func sameOrigin(u1, u2 *url.URL) bool {
 	return u1.Scheme == u2.Scheme && u1.Host == u2.Host
 }
 
 func init() {
 	revel.TemplateFuncs["csrftoken"] = func(renderArgs map[string]interface{}) template.HTML {
-		tokenFunc, ok := renderArgs["_csrftoken"]
-		if !ok {
+		if tokenFunc, ok := renderArgs["_csrftoken"]; !ok {
 			panic("REVEL CSRF: _csrftoken missing from RenderArgs.")
+		} else {
+			return template.HTML(tokenFunc.(func() string)())
 		}
-		return template.HTML(fmt.Sprintf(`<input type="hidden" name="csrftoken" value="%s">`, tokenFunc.(func() string)()))
-	}
-
-	revel.TemplateFuncs["csrftokenraw"] = func(renderArgs map[string]interface{}) template.HTML {
-		tokenFunc, ok := renderArgs["_csrftoken"]
-		if !ok {
-			panic("REVEL CSRF: _csrftoken missing from RenderArgs.")
-		}
-		return template.HTML(tokenFunc.(func() string)())
 	}
 }

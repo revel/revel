@@ -7,30 +7,27 @@ import (
 	"net/url"
 	"strconv"
 	"testing"
+
+	"github.com/revel/revel"
 )
 
-import "github.com/revel/revel"
-
-type fooController struct {
-	*revel.Controller
+var testFilters = []revel.Filter{
+	CsrfFilter,
+	func(c *revel.Controller, fc []revel.Filter) {
+		c.RenderHtml("{{ csrftoken . }}")
+	},
 }
 
-func TestSecretInSession(t *testing.T) {
+func TestTokenInSession(t *testing.T) {
 	resp := httptest.NewRecorder()
 	getRequest, _ := http.NewRequest("GET", "http://www.example.com/", nil)
 	c := revel.NewController(revel.NewRequest(getRequest), revel.NewResponse(resp))
 	c.Session = make(revel.Session)
-	filters := []revel.Filter{
-		CsrfFilter,
-		func(c *revel.Controller, fc []revel.Filter) {
-			c.RenderHtml("{{ csrftoken . }}")
-		},
-	}
 
-	filters[0](c, filters)
+	testFilters[0](c, testFilters)
 
-	if _, ok := c.Session["csrfSecret"]; !ok {
-		t.Fatal("secret should be present in session")
+	if _, ok := c.Session["csrf_token"]; !ok {
+		t.Fatal("token should be present in session")
 	}
 }
 
@@ -40,16 +37,9 @@ func TestPostWithoutToken(t *testing.T) {
 	c := revel.NewController(revel.NewRequest(postRequest), revel.NewResponse(resp))
 	c.Session = make(revel.Session)
 
-	filters := []revel.Filter{
-		CsrfFilter,
-		func(c *revel.Controller, fc []revel.Filter) {
-			c.RenderHtml("{{ csrftoken . }}")
-		},
-	}
+	testFilters[0](c, testFilters)
 
-	filters[0](c, filters)
-
-	if resp.Code != 403 {
+	if c.Response.Status != 403 {
 		t.Fatal("post without token should be forbidden")
 	}
 }
@@ -57,13 +47,12 @@ func TestPostWithoutToken(t *testing.T) {
 func TestNoReferrer(t *testing.T) {
 	resp := httptest.NewRecorder()
 	postRequest, _ := http.NewRequest("POST", "http://www.example.com/", nil)
+
 	c := revel.NewController(revel.NewRequest(postRequest), revel.NewResponse(resp))
-
 	c.Session = make(revel.Session)
-	secret, _ := NewSecret()
 
-	c.Session["csrfSecret"] = secret
-	token := NewToken(c)
+	RefreshToken(c)
+	token := c.Session["csrf_token"]
 
 	// make a new request with the token
 	data := url.Values{}
@@ -75,15 +64,9 @@ func TestNoReferrer(t *testing.T) {
 	// and replace the old request
 	c.Request = revel.NewRequest(formPostRequest)
 
-	filters := []revel.Filter{
-		CsrfFilter,
-		func(c *revel.Controller, fc []revel.Filter) {
-			c.RenderHtml("{{ csrftoken . }}")
-		},
-	}
-	filters[0](c, filters)
+	testFilters[0](c, testFilters)
 
-	if resp.Code != 403 {
+	if c.Response.Status != 403 {
 		t.Fatal("post without referer should be forbidden")
 	}
 }
@@ -94,10 +77,9 @@ func TestRefererHttps(t *testing.T) {
 	c := revel.NewController(revel.NewRequest(postRequest), revel.NewResponse(resp))
 
 	c.Session = make(revel.Session)
-	secret, _ := NewSecret()
 
-	c.Session["csrfSecret"] = secret
-	token := NewToken(c)
+	RefreshToken(c)
+	token := c.Session["csrf_token"]
 
 	// make a new request with the token
 	data := url.Values{}
@@ -110,15 +92,9 @@ func TestRefererHttps(t *testing.T) {
 	// and replace the old request
 	c.Request = revel.NewRequest(formPostRequest)
 
-	filters := []revel.Filter{
-		CsrfFilter,
-		func(c *revel.Controller, fc []revel.Filter) {
-			c.RenderHtml("{{ csrftoken . }}")
-		},
-	}
-	filters[0](c, filters)
+	testFilters[0](c, testFilters)
 
-	if resp.Code != 403 {
+	if c.Response.Status != 403 {
 		t.Fatal("posts to https should have an https referer")
 	}
 }
@@ -129,10 +105,9 @@ func TestHeaderWithToken(t *testing.T) {
 	c := revel.NewController(revel.NewRequest(postRequest), revel.NewResponse(resp))
 
 	c.Session = make(revel.Session)
-	secret, _ := NewSecret()
 
-	c.Session["csrfSecret"] = secret
-	token := NewToken(c)
+	RefreshToken(c)
+	token := c.Session["csrf_token"]
 
 	// make a new request with the token
 	formPostRequest, _ := http.NewRequest("POST", "http://www.example.com/", nil)
@@ -142,16 +117,9 @@ func TestHeaderWithToken(t *testing.T) {
 	// and replace the old request
 	c.Request = revel.NewRequest(formPostRequest)
 
-	filters := []revel.Filter{
-		CsrfFilter,
-		func(c *revel.Controller, fc []revel.Filter) {
-			c.RenderHtml("{{ csrftoken . }}")
-		},
-	}
+	testFilters[0](c, testFilters)
 
-	filters[0](c, filters)
-
-	if resp.Code == 403 {
+	if c.Response.Status == 403 {
 		t.Fatal("post with http header token should be allowed")
 	}
 }
@@ -162,10 +130,9 @@ func TestFormPostWithToken(t *testing.T) {
 	c := revel.NewController(revel.NewRequest(postRequest), revel.NewResponse(resp))
 
 	c.Session = make(revel.Session)
-	secret, _ := NewSecret()
 
-	c.Session["csrfSecret"] = secret
-	token := NewToken(c)
+	RefreshToken(c)
+	token := c.Session["csrf_token"]
 
 	// make a new request with the token
 	data := url.Values{}
@@ -178,16 +145,25 @@ func TestFormPostWithToken(t *testing.T) {
 	// and replace the old request
 	c.Request = revel.NewRequest(formPostRequest)
 
-	filters := []revel.Filter{
-		CsrfFilter,
-		func(c *revel.Controller, fc []revel.Filter) {
-			c.RenderHtml("{{ csrftoken . }}")
-		},
-	}
+	testFilters[0](c, testFilters)
 
-	filters[0](c, filters)
-
-	if resp.Code == 403 {
+	if c.Response.Status == 403 {
 		t.Fatal("form post with token should be allowed")
+	}
+}
+
+func TestNoTokenInArgsWhenCORs(t *testing.T) {
+	resp := httptest.NewRecorder()
+
+	getRequest, _ := http.NewRequest("GET", "http://www.example1.com/", nil)
+	getRequest.Header.Add("Referer", "http://www.example2.com/")
+
+	c := revel.NewController(revel.NewRequest(getRequest), revel.NewResponse(resp))
+	c.Session = make(revel.Session)
+
+	testFilters[0](c, testFilters)
+
+	if _, ok := c.RenderArgs["_csrftoken"]; ok {
+		t.Fatal("RenderArgs should not contain token when not same origin")
 	}
 }
