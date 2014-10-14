@@ -15,7 +15,7 @@ var (
 func MarkExempt(route string) {
 	if strings.HasPrefix(route, "/") {
 		// e.g. "/controller/action"
-		exemptPath[route] = true
+		exemptPath[strings.ToLower(route)] = true
 	} else if routeParts := strings.Split(route, "."); len(routeParts) == 2 {
 		// e.g. "ControllerName.ActionName"
 		exemptAction[route] = true
@@ -26,7 +26,7 @@ func MarkExempt(route string) {
 }
 
 func IsExempt(c *revel.Controller) bool {
-	if _, ok := exemptPath[c.Request.Request.URL.Path]; ok {
+	if _, ok := exemptPath[strings.ToLower(c.Request.Request.URL.Path)]; ok {
 		return true
 	} else if _, ok := exemptAction[c.Action]; ok {
 		return true
