@@ -62,7 +62,13 @@ func Build() (app *App, compileError *revel.Error) {
 		revel.ERROR.Fatalln("Failure importing", revel.ImportPath)
 	}
 	binName := path.Join(pkg.BinDir, path.Base(revel.BasePath))
-	if runtime.GOOS == "windows" {
+
+	// Change binary path for Windows build
+	goos := runtime.GOOS
+	if goosEnv := os.Getenv("GOOS"); goosEnv != "" {
+		goos = goosEnv
+	}
+	if goos == "windows" {
 		binName += ".exe"
 	}
 
