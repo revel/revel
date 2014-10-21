@@ -23,7 +23,7 @@ var importErrorPattern = regexp.MustCompile("cannot find package \"([^\"]+)\"")
 // 2. Run the appropriate "go build" command.
 // Requires that revel.Init has been called previously.
 // Returns the path to the built binary, and an error if there was a problem building it.
-func Build() (app *App, compileError *revel.Error) {
+func Build(buildFlags ...string) (app *App, compileError *revel.Error) {
 	// First, clear the generated files (to avoid them messing with ProcessSource).
 	cleanSource("tmp", "routes")
 
@@ -76,11 +76,19 @@ func Build() (app *App, compileError *revel.Error) {
 	for {
 		appVersion := getAppVersion()
 		versionLinkerFlags := fmt.Sprintf("-X %s/app.APP_VERSION \"%s\"", revel.ImportPath, appVersion)
-
-		buildCmd := exec.Command(goPath, "build",
+		flags := []string{
+			"build",
 			"-ldflags", versionLinkerFlags,
 			"-tags", buildTags,
-			"-o", binName, path.Join(revel.ImportPath, "app", "tmp"))
+			"-o", binName}
+
+		// Add in build flags
+		flags = append(flags, buildFlags...)
+
+		// The main path
+		flags = append(flags, path.Join(revel.ImportPath, "app", "tmp"))
+
+		buildCmd := exec.Command(goPath, flags...)
 		revel.TRACE.Println("Exec:", buildCmd.Args)
 		output, err := buildCmd.CombinedOutput()
 
