@@ -179,6 +179,7 @@ func Init(mode, importPath, srcPath string) {
 
 	AppName = Config.StringDefault("app.name", "(not set)")
 	CookiePrefix = Config.StringDefault("cookie.prefix", "REVEL")
+	CookieDomain = Config.StringDefault("cookie.domain", "")
 	CookieHttpOnly = Config.BoolDefault("cookie.httponly", false)
 	CookieSecure = Config.BoolDefault("cookie.secure", false)
 	TemplateDelims = Config.StringDefault("template.delimiters", "")
