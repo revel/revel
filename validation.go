@@ -211,6 +211,7 @@ func ValidationFilter(c *Controller, fc []Filter) {
 			Name:     CookiePrefix + "_ERRORS",
 			Value:    url.QueryEscape(errorsValue),
 			Path:     "/",
+			Domain:   CookieDomain,
 			HttpOnly: CookieHttpOnly,
 			Secure:   CookieSecure,
 		})
@@ -219,6 +220,7 @@ func ValidationFilter(c *Controller, fc []Filter) {
 			Name:     CookiePrefix + "_ERRORS",
 			MaxAge:   -1,
 			Path:     "/",
+			Domain:   CookieDomain,
 			HttpOnly: CookieHttpOnly,
 			Secure:   CookieSecure,
 		})
