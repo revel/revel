@@ -65,6 +65,8 @@ var (
 
 	// All cookies dropped by the framework begin with this prefix.
 	CookiePrefix string
+	// Cookie domain
+	CookieDomain string
 
 	// Cookie flags
 	CookieHttpOnly bool
