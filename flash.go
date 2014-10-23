@@ -52,7 +52,6 @@ func FlashFilter(c *Controller, fc []Filter) {
 	c.SetCookie(&http.Cookie{
 		Name:     CookiePrefix + "_FLASH",
 		Value:    url.QueryEscape(flashValue),
-		Domain:   CookieDomain,
 		HttpOnly: CookieHttpOnly,
 		Secure:   CookieSecure,
 		Path:     "/",
