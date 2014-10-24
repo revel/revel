@@ -37,6 +37,11 @@ func RefreshToken(c *revel.Controller) {
 	c.Session["csrf_token"] = token
 }
 
+// CsrfFilter enables CSRF request token creation and verification.
+//
+// Usage:
+//  1) Add `csrf.CsrfFilter` to the app's filters (it must come after the revel.SessionFilter).
+//  2) Add CSRF fields to a form with the template tag `{{ csrftoken . }}`. The filter adds a function closure to the `RenderArgs` that can pull out the secret and make the token as-needed, caching the value in the request. Ajax support provided through the `X-CSRFToken` header.
 func CsrfFilter(c *revel.Controller, fc []revel.Filter) {
 	token, foundToken := c.Session["csrf_token"]
 
