@@ -270,8 +270,7 @@ func (loader *TemplateLoader) Refresh() *Error {
 
 			var fileStr string
 
-			// addTemplate allows the same template to be added multiple
-			// times with different template names.
+			// addTemplate loads a template file into the Go template loader so it can be rendered later
 			addTemplate := func(templateName string) (err error) {
 				TRACE.Println("adding template: ", templateName)
 				// Convert template names to use forward slashes, even on Windows.
@@ -339,11 +338,7 @@ func (loader *TemplateLoader) Refresh() *Error {
 
 			templateName := path[len(fullSrcDir)+1:]
 
-			// Lower case the file name for case-insensitive matching
-			lowerCaseTemplateName := strings.ToLower(templateName)
-
 			err = addTemplate(templateName)
-			err = addTemplate(lowerCaseTemplateName)
 
 			// Store / report the first error encountered.
 			if err != nil && loader.compileError == nil {
@@ -411,8 +406,13 @@ func parseTemplateError(err error) (templateName string, line int, description s
 // An Error is returned if there was any problem with any of the templates.  (In
 // this case, if a template is returned, it may still be usable.)
 func (loader *TemplateLoader) Template(name string) (Template, error) {
-	// Lower case the file name to support case-insensitive matching
+	// Case-insensitive matching of template file name
 	name = strings.ToLower(name)
+	for k := range loader.templatePaths {
+		if name == strings.ToLower(k) {
+			name = k
+		}
+	}
 	// Look up and return the template.
 	tmpl := loader.templateSet.Lookup(name)
 
@@ -453,12 +453,15 @@ func (gotmpl GoTemplate) Content() []string {
 
 // Return a url capable of invoking a given controller method:
 // "Application.ShowApp 123" => "/app/123"
-func ReverseUrl(args ...interface{}) (string, error) {
+func ReverseUrl(args ...interface{}) (template.URL, error) {
 	if len(args) == 0 {
 		return "", fmt.Errorf("no arguments provided to reverse route")
 	}
 
 	action := args[0].(string)
+	if action == "Root" {
+		return template.URL(AppRoot), nil
+	}
 	actionSplit := strings.Split(action, ".")
 	if len(actionSplit) != 2 {
 		return "", fmt.Errorf("reversing '%s', expected 'Controller.Action'", action)
@@ -476,7 +479,7 @@ func ReverseUrl(args ...interface{}) (string, error) {
 		Unbind(argsByName, c.MethodType.Args[i].Name, argValue)
 	}
 
-	return MainRouter.Reverse(args[0].(string), argsByName).Url, nil
+	return template.URL(MainRouter.Reverse(args[0].(string), argsByName).Url), nil
 }
 
 func Slug(text string) string {

@@ -49,7 +49,7 @@ func NewErrorFromPanic(err interface{}) *Error {
 		description = fmt.Sprint(err)
 	}
 	return &Error{
-		Title:       "Panic",
+		Title:       "Runtime Panic",
 		Path:        filename[len(basePath):],
 		Line:        line,
 		Description: description,
@@ -114,4 +114,11 @@ func findRelevantStackFrame(stack string) (int, string) {
 		}
 	}
 	return -1, ""
+}
+
+func (e *Error) SetLink(errorLink string) {
+	errorLink = strings.Replace(errorLink, "{{Path}}", e.Path, -1)
+	errorLink = strings.Replace(errorLink, "{{Line}}", strconv.Itoa(e.Line), -1)
+
+	e.Link = "<a href=" + errorLink + ">" + e.Path + ":" + strconv.Itoa(e.Line) + "</a>"
 }

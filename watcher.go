@@ -1,7 +1,7 @@
 package revel
 
 import (
-	"github.com/howeyc/fsnotify"
+	"gopkg.in/fsnotify.v1"
 	"os"
 	"path"
 	"path/filepath"
@@ -52,8 +52,8 @@ func (w *Watcher) Listen(listener Listener, roots ...string) {
 	// Otherwise multiple change events only come out one at a time, across
 	// multiple page views.  (There appears no way to "pump" the events out of
 	// the watcher)
-	watcher.Event = make(chan *fsnotify.FileEvent, 100)
-	watcher.Error = make(chan error, 10)
+	watcher.Events = make(chan fsnotify.Event, 100)
+	watcher.Errors = make(chan error, 10)
 
 	// Walk through all files / directories under the root, adding each to watcher.
 	for _, p := range roots {
@@ -75,7 +75,7 @@ func (w *Watcher) Listen(listener Listener, roots ...string) {
 
 		// If it is a file, watch that specific file.
 		if !fi.IsDir() {
-			err = watcher.Watch(p)
+			err = watcher.Add(p)
 			if err != nil {
 				ERROR.Println("Failed to watch", p, ":", err)
 			}
@@ -119,7 +119,7 @@ func (w *Watcher) Listen(listener Listener, roots ...string) {
 					}
 				}
 
-				err = watcher.Watch(path)
+				err = watcher.Add(path)
 				if err != nil {
 					ERROR.Println("Failed to watch", path, ":", err)
 				}
@@ -131,8 +131,30 @@ func (w *Watcher) Listen(listener Listener, roots ...string) {
 		filepath.Walk(p, watcherWalker)
 	}
 
+	if w.eagerRebuildEnabled() {
+		// Create goroutine to notify file changes in real time
+		go w.NotifyWhenUpdated(listener, watcher)
+	}
+
 	w.watchers = append(w.watchers, watcher)
 	w.listeners = append(w.listeners, listener)
+}
+
+// NotifyWhenUpdated notifies the watcher when a file event is received.
+func (w *Watcher) NotifyWhenUpdated(listener Listener, watcher *fsnotify.Watcher) {
+	for {
+		select {
+		case ev := <-watcher.Events:
+			if w.rebuildRequired(ev, listener) {
+				// Serialize listener.Refresh() calls.
+				w.notifyMutex.Lock()
+				listener.Refresh()
+				w.notifyMutex.Unlock()
+			}
+		case <-watcher.Errors:
+			continue
+		}
+	}
 }
 
 // Notify causes the watcher to forward any change events to listeners.
@@ -149,19 +171,12 @@ func (w *Watcher) Notify() *Error {
 		refresh := false
 		for {
 			select {
-			case ev := <-watcher.Event:
-				// Ignore changes to dotfiles.
-				if !strings.HasPrefix(path.Base(ev.Name), ".") {
-					if dl, ok := listener.(DiscerningListener); ok {
-						if !dl.WatchFile(ev.Name) || ev.IsAttrib() {
-							continue
-						}
-					}
-
+			case ev := <-watcher.Events:
+				if w.rebuildRequired(ev, listener) {
 					refresh = true
 				}
 				continue
-			case <-watcher.Error:
+			case <-watcher.Errors:
 				continue
 			default:
 				// No events left to pull
@@ -181,6 +196,29 @@ func (w *Watcher) Notify() *Error {
 	w.forceRefresh = false
 	w.lastError = -1
 	return nil
+}
+
+// If watcher.mode is set to eager, the application is rebuilt immediately
+// when a source file is changed.
+// This feature is available only in dev mode.
+func (w *Watcher) eagerRebuildEnabled() bool {
+	return Config.BoolDefault("mode.dev", true) &&
+		Config.BoolDefault("watch", true) &&
+		Config.StringDefault("watcher.mode", "normal") == "eager"
+}
+
+func (w *Watcher) rebuildRequired(ev fsnotify.Event, listener Listener) bool {
+	// Ignore changes to dotfiles.
+	if strings.HasPrefix(path.Base(ev.Name), ".") {
+		return false
+	}
+
+	if dl, ok := listener.(DiscerningListener); ok {
+		if !dl.WatchFile(ev.Name) || ev.Op&fsnotify.Chmod == fsnotify.Chmod {
+			return false
+		}
+	}
+	return true
 }
 
 var WatchFilter = func(c *Controller, fc []Filter) {

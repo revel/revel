@@ -2,7 +2,7 @@
 
 A high productivity, full-stack web framework for the [Go language](http://www.golang.org).
 
-Current Version: 0.10.0 (Aug 10, 2014)
+Current Version: 0.11.0 (Oct 26, 2014)
 
 [![Build Status](https://secure.travis-ci.org/revel/revel.png?branch=master)](http://travis-ci.org/revel/revel)
 
@@ -14,34 +14,25 @@ Current Version: 0.10.0 (Aug 10, 2014)
 
 * [Google Groups](https://groups.google.com/forum/#!forum/revel-framework) via [revel-framework@googlegroups.com](mailto:revel-framework@googlegroups.com)
 * [GitHub Issues](https://github.com/revel/revel/issues)
+* [StackOverflow Questions](http://stackoverflow.com/questions/tagged/revel)
 * [IRC](http://webchat.freenode.net/?channels=%23revel&uio=d4) via #revel on Freenode
 
 ## Announcements
 
-### Apology and Thanks
+View the [v0.11.0 release notes](https://github.com/revel/revel/releases/tag/v0.11.0)
+for all of the relevant changes.
 
-The Revel team has lagged behind on our ideal release cycle of every 6 weeks. I know Revel is an open
-source project developed by volunteers, but I wanted to apologize for the delay. I also want to publicly
-acknowledge my gratitude for @pushrax's hard work in assisting me in this release as well as @verdverm,
-@landr0id and other active community members in helping us fix bugs and further enhance Revel's features.
+We are now encouraging the community to both ask and answer common Revel workflow questions
+on [StackOverflow](http://stackoverflow.com/questions/tagged/revel). Our hope is that this
+will help grow our community a well as relieve the core development team's cognitive load
+and therefore allow them the time they need to reach the goals on
+[Revel's Roadmap](https://github.com/revel/revel/wiki/Roadmap).
 
-Thank you!
+The new Roadmap wiki page will allow us to more quickly complete Revel's v1.0 feature set
+goal. Please join us on our mailing list to discuss the Roadmap and any thoughts you may have.
 
-View the [v0.10.0 release notes](https://github.com/revel/revel/releases/tag/v0.10.0) for all of the relevant changes.
+One final note, we have added a [Collection of Articles](https://github.com/revel/revel/wiki/Articles)
+that discuss Revel and developer's opinion on our chosen approach. The goal here is to stay in touch
+with pracitcality and remaing open to feedback.
 
-- @brendensoares
-
-### v1.0 Goal
-
-This still remains our goal. We are actively working on improving the learning curve for Revel as
-well as enhancing the work flow for Revel-based apps.
-
-You'll notice that our next planned milestone release is v0.10 and you may wonder if Revel is
-production-ready. The short answer is yes. However, the team feels that there are still some
-features needed before we can make a whole-hearted endorsement of Revel as a true "batteries-included" web framework.
-
-For those of you new to Go or Revel, we'd like to invite you to join us on our march to v1.0
-and help make Revel a stable, secure and enjoyable web framework.
-
-We'd like to take this opportunity to thank the entire community for their feedback and
-regular contributions. Your support has been very encouraging and highly appreciated.
+As always, thanks for your continued support!

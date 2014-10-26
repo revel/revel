@@ -13,6 +13,10 @@ default configuration that can woo new developers and make simple web apps
 straight forward. The framework should have an opinion about how to do all of the
 common tasks in web development to reduce unnecessary cognitive load.
 
+Perhaps most important of all, Revel should be a joy to use. We want to reduce
+the time spent on tedious boilerplate functionality and increase the time
+available for creating polished solutions for your application's target users.
+
 ## How to Contribute
 
 ### Join the Community
@@ -22,6 +26,7 @@ community on:
 
 * [Google Groups](https://groups.google.com/forum/#!forum/revel-framework) via [revel-framework@googlegroups.com](mailto:revel-framework@googlegroups.com)
 * [GitHub Issues](https://github.com/revel/revel/issues)
+* [StackOverflow Questions](http://stackoverflow.com/questions/tagged/revel)
 * [IRC](http://webchat.freenode.net/?channels=%23revel&uio=d4) via #revel on Freenode
 
 Once you've joined, there are many ways to contribute to Revel:
@@ -67,7 +72,7 @@ $ git remote add fork git@github.com:$USER/revel.git  # Add your fork as a remot
 ### Create a Feature Branch & Code Away!
 
 Now that you've properly installed and forked Revel, you are ready to start coding (assuming
-you have a valdiated your ideas with other community members)!
+you have a validated your ideas with other community members)!
 
 In order to have your pull requests accepted, we recommend you make your changes to Revel on a
 new git branch. For example,
@@ -141,17 +146,16 @@ These are outstanding feature requests, roughly ordered by priority.
 Additionally, there are frequently smaller feature requests or items in the
 [issues](https://github.com/revel/revel/issues?labels=contributor+ready&page=1&state=open).
 
-1.  Better ORM support.  Provide more samples (or modules) and better documentation for setting up common situations like SQL database, Mongo, LevelDB, etc.
+1.	Better ORM support.  Provide more samples (or modules) and better documentation for setting up common situations like SQL database, Mongo, LevelDB, etc.
 1.	Support for other templating languages (e.g. mustache, HAML).  Make TemplateLoader pluggable.  Use Pongo instead of vanilla Go templates (and update the samples)
 1.	Test Fixtures
 1.	Authenticity tokens for CSRF protection
-1. Coffeescript pre-processor.  Could potentially use [otto](https://github.com/robertkrimen/otto) as a native Go method to compiling.
-1.  SCSS/LESS pre-processor.
+1.	Coffeescript pre-processor.  Could potentially use [otto](https://github.com/robertkrimen/otto) as a native Go method to compiling.
+1.	SCSS/LESS pre-processor.
 1.	GAE support.  Some progress made in the 'appengine' branch -- the remaining piece is running the appengine services in development.
-1.  More Form helpers (template funcs).
+1.	More Form helpers (template funcs).
 1.	A Mongo module (perhaps with a sample app)
-1.	Easy emailer support (e.g. to email exception logs to developer, or even to email users),
-1.  Deployment to OpenShift (support, documentation, etc)
+1.	Deployment to OpenShift (support, documentation, etc)
 1.	Improve the logging situation.  The configuration is a little awkward and not very powerful.  Integrating something more powerful would be good. (like [seelog](https://github.com/cihub/seelog) or [log4go](https://code.google.com/p/log4go/))
 1.	ETags, cache controls
 1.	A module or plugins for adding HTTP Basic Auth

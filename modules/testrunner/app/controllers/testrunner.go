@@ -2,12 +2,14 @@ package controllers
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
-	"github.com/revel/revel"
 	"html"
 	"html/template"
 	"reflect"
 	"strings"
+
+	"github.com/revel/revel"
 )
 
 type TestRunner struct {
@@ -64,9 +66,16 @@ func (c TestRunner) Run(suite, test string) revel.Result {
 					if error == nil {
 						result.ErrorHtml = template.HTML(html.EscapeString(fmt.Sprint(err)))
 					} else {
+						testSuite := v.Elem().FieldByName("TestSuite").Interface().(revel.TestSuite)
+						res := formatResponse(testSuite)
+
 						var buffer bytes.Buffer
 						tmpl, _ := revel.MainTemplateLoader.Template("TestRunner/FailureDetail.html")
-						tmpl.Render(&buffer, error)
+						tmpl.Render(&buffer, map[string]interface{}{
+							"error":    error,
+							"response": res,
+							"postfix":  suite + "_" + test,
+						})
 						result.ErrorSummary = errorSummary(error)
 						result.ErrorHtml = template.HTML(buffer.String())
 					}
@@ -149,4 +158,27 @@ func errorSummary(error *revel.Error) string {
 		}
 	}
 	return message
+}
+
+// formatResponse gets *revel.TestSuite as input parameter and
+// transform response related info into a readable format.
+func formatResponse(t revel.TestSuite) map[string]string {
+	if t.Response == nil {
+		return map[string]string{}
+	}
+
+	resp, err := json.MarshalIndent(t.Response, "", "  ")
+	if err != nil {
+		// It is unlikely to ever happen.
+		revel.ERROR.Println(err)
+	}
+
+	// Remove extra new line symbols so they do not take too much space on a result page.
+	body := strings.Replace(string(t.ResponseBody), "\n\n\n", "\n", -1)
+	body = strings.Replace(body, "\r\n\r\n\r\n", "\r\n", -1)
+
+	return map[string]string{
+		"Headers": string(resp),
+		"Body":    body,
+	}
 }
