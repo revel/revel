@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"net/smtp"
+	"strings"
 )
 
 // Transport initialize the smtp client
@@ -62,7 +63,7 @@ func Send(c *smtp.Client, message *Message) (err error) {
 		return
 	}
 
-	if err = c.Mail(message.From); err != nil {
+	if err = c.Mail(extractAddress(message.From)); err != nil {
 		return
 	}
 
@@ -90,9 +91,22 @@ func Send(c *smtp.Client, message *Message) (err error) {
 
 func addRcpt(c *smtp.Client, address []string) error {
 	for _, addr := range address {
-		if err := c.Rcpt(addr); err != nil {
+		if err := c.Rcpt(extractAddress(addr)); err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+// Extract the 'sender@abc.com' part from 'Sender <sender@abc.com>'
+func extractAddress(from string) string {
+	i := strings.Index(from, "<")
+	if i > -1 {
+		addr := from[i:]
+		addr = strings.Replace(addr, "<", "", -1)
+		addr = strings.Replace(addr, ">", "", -1)
+		return strings.Trim(addr, " ")
+	}
+
+	return from
 }
