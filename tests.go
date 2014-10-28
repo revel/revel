@@ -122,6 +122,28 @@ func (t *TestSuite) PostCustom(uri string, contentType string, reader io.Reader)
 	}
 }
 
+//Issue a PUT request to the given path, sending the given Content-Type and
+// data, and store the result in Request and RequestBody.  "data" may be nil.
+func (t *TestSuite) Put(path string, contentType string, reader io.Reader) {
+	req, err := http.NewRequest("PUT", t.BaseUrl()+path, reader)
+	if err != nil {
+		panic(err)
+	}
+	req.Header.Set("Content-Type", contentType)
+	t.MakeRequestSession(req)
+}
+
+// Issue a PATCH request to the given path, sending the given Content-Type and
+// data, and store the result in Request and RequestBody.  "data" may be nil.
+func (t *TestSuite) Patch(path string, contentType string, reader io.Reader) {
+	req, err := http.NewRequest("PATCH", t.BaseUrl()+path, reader)
+	if err != nil {
+		panic(err)
+	}
+	req.Header.Set("Content-Type", contentType)
+	t.MakeRequestSession(req)
+}
+
 // Issue a POST request to the given path as a form post of the given key and
 // values, and store the result in Response and ResponseBody.
 func (t *TestSuite) PostForm(path string, data url.Values) {
