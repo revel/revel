@@ -102,6 +102,46 @@ func (t *TestSuite) DeleteCustom(uri string) *TestRequest {
 	}
 }
 
+// Issue a PUT request to the given path, sending the given Content-Type and
+// data, and store the result in Response and ResponseBody.  "data" may be nil.
+func (t *TestSuite) Put(path string, contentType string, reader io.Reader) {
+	t.PutCustom(t.BaseUrl()+path, contentType, reader).Send()
+}
+
+// Return a PUT request to the given uri with specified Content-Type and data
+// in a form of wrapper. "data" may be nil.
+func (t *TestSuite) PutCustom(uri string, contentType string, reader io.Reader) *TestRequest {
+	req, err := http.NewRequest("PUT", uri, reader)
+	if err != nil {
+		panic(err)
+	}
+	req.Header.Set("Content-Type", contentType)
+	return &TestRequest{
+		Request:   req,
+		testSuite: t,
+	}
+}
+
+// Issue a PATCH request to the given path, sending the given Content-Type and
+// data, and store the result in Response and ResponseBody.  "data" may be nil.
+func (t *TestSuite) Patch(path string, contentType string, reader io.Reader) {
+	t.PatchCustom(t.BaseUrl()+path, contentType, reader).Send()
+}
+
+// Return a PATCH request to the given uri with specified Content-Type and data
+// in a form of wrapper. "data" may be nil.
+func (t *TestSuite) PatchCustom(uri string, contentType string, reader io.Reader) *TestRequest {
+	req, err := http.NewRequest("PATCH", uri, reader)
+	if err != nil {
+		panic(err)
+	}
+	req.Header.Set("Content-Type", contentType)
+	return &TestRequest{
+		Request:   req,
+		testSuite: t,
+	}
+}
+
 // Issue a POST request to the given path, sending the given Content-Type and
 // data, and store the result in Response and ResponseBody.  "data" may be nil.
 func (t *TestSuite) Post(path string, contentType string, reader io.Reader) {
