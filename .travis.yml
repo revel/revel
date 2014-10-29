@@ -8,7 +8,7 @@ install:
   # Annoyingly, we can not use go get revel/... because references to app/routes package fail
   - go get -v github.com/revel/cmd/revel
   - go get -v github.com/revel/revel/cache
-  - go get -v github.com/revel/revel/harness
+  - go get -v github.com/revel/cmd/harness
   - go get -v github.com/coopernurse/gorp
   - go get -v code.google.com/p/go.crypto/bcrypt
   - go get -v github.com/mattn/go-sqlite3
@@ -18,7 +18,7 @@ install:
 script:
   - go test github.com/revel/revel
   - go test github.com/revel/revel/cache
-  - go test github.com/revel/revel/harness
+  - go test github.com/revel/cmd/harness
 
   # Ensure the new-app flow works (plus the other commands).
   - revel new     my/testapp
