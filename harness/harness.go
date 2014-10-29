@@ -120,7 +120,8 @@ func NewHarness() *Harness {
 // Rebuild the Revel application and run it on the given port.
 func (h *Harness) Refresh() (err *revel.Error) {
 	if h.app != nil {
-		h.app.Kill()
+		//h.app.Kill()
+		h.app.cmd.Terminate()
 	}
 
 	revel.TRACE.Println("Rebuild")
@@ -176,12 +177,14 @@ func (h *Harness) Run() {
 		}
 	}()
 
-	// Kill the app on signal.
+	// Kill the app on signal
+	// TODO: can we make this work if the app is being run directly instead of via the `revel run` command aka the harness?
 	ch := make(chan os.Signal)
 	signal.Notify(ch, os.Interrupt, os.Kill)
 	<-ch
 	if h.app != nil {
-		h.app.Kill()
+		//h.app.Kill()
+		h.app.cmd.Terminate()
 	}
 	os.Exit(1)
 }

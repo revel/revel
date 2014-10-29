@@ -91,6 +91,23 @@ func (cmd AppCmd) Kill() {
 	}
 }
 
+// Gracefully terminate the app server if it's running
+func (cmd *AppCmd) Terminate() {
+	if cmd.Cmd != nil && (cmd.ProcessState == nil || !cmd.ProcessState.Exited()) {
+		revel.TRACE.Println("Terminating revel server pid", cmd.Process.Pid)
+		cmd.Process.Signal(os.Interrupt)
+		select {
+		case <-cmd.waitChan():
+			return
+		case <-time.After(10 * time.Second):
+			revel.TRACE.Println("Timeout; Force kill revel server pid", cmd.Process.Pid)
+			cmd.Process.Kill()
+			return
+		}
+		panic("Impossible")
+	}
+}
+
 // Return a channel that is notified when Wait() returns.
 func (cmd AppCmd) waitChan() <-chan struct{} {
 	ch := make(chan struct{}, 1)
