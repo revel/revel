@@ -327,7 +327,7 @@ func addModule(name, importPath, modulePath string) {
 
 	// Hack: There is presently no way for the testrunner module to add the
 	// "test" subdirectory to the CodePaths.  So this does it instead.
-	if importPath == Config.StringDefault("module.testrunner", "github.com/revel/revel/modules/testrunner") {
+	if importPath == Config.StringDefault("module.testrunner", "github.com/revel/modules/testrunner") {
 		CodePaths = append(CodePaths, path.Join(BasePath, "tests"))
 	}
 }
