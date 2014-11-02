@@ -6,7 +6,7 @@ services:
 install:
   - export PATH=$PATH:$HOME/gopath/bin
   - export REVEL_BRANCH="develop"
-  - '[[ "$TRAVIS_BRANCH" == "master" ]] && export REVEL_BRANCH="master"'
+  - 'if [[ "$TRAVIS_BRANCH" == "master" ]]; then export REVEL_BRANCH="master"; fi'
   - 'echo "Travis branch: $TRAVIS_BRANCH, Revel dependency branch: $REVEL_BRANCH"'
   - go get -v github.com/revel/revel/...
   - git clone -b $REVEL_BRANCH git://github.com/revel/modules ../modules/
