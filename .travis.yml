@@ -11,8 +11,9 @@ install:
   - git clone git://github.com/revel/samples ../samples/
   - go get -v github.com/revel/cmd/revel
 script:
-  - go test github.com/revel/revel/...
-  - go test github.com/revel/cmd/...
+  - go test github.com/revel/revel
+  - go test github.com/revel/revel/cache
+  - go test github.com/revel/cmd/harness
 
   # Ensure the new-app flow works (plus the other commands).
   - revel new     my/testapp
