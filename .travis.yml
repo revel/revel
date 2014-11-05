@@ -5,16 +5,14 @@ services:
   - redis-server
 install:
   - export PATH=$PATH:$HOME/gopath/bin
-  # Annoyingly, we can not use go get revel/... because references to app/routes package fail
+  - export REVEL_BRANCH="develop"
+  - 'if [[ "$TRAVIS_BRANCH" == "master" ]]; then export REVEL_BRANCH="master"; fi'
+  - 'echo "Travis branch: $TRAVIS_BRANCH, Revel dependency branch: $REVEL_BRANCH"'
+  - go get -v github.com/revel/revel/...
+  - git clone -b $REVEL_BRANCH git://github.com/revel/modules ../modules/
+  - git clone -b $REVEL_BRANCH git://github.com/revel/cmd ../cmd/
+  - git clone git://github.com/revel/samples ../samples/
   - go get -v github.com/revel/cmd/revel
-  - go get -v github.com/revel/revel/cache
-  - go get -v github.com/revel/cmd/harness
-  - go get -v github.com/coopernurse/gorp
-  - go get -v code.google.com/p/go.crypto/bcrypt
-  - go get -v github.com/mattn/go-sqlite3
-  - go get -v github.com/robfig/cron
-  - go get -v code.google.com/p/goauth2/oauth
-  - go get -v github.com/mrjones/oauth
 script:
   - go test github.com/revel/revel
   - go test github.com/revel/revel/cache
