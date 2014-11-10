@@ -1,7 +1,6 @@
 package revel
 
 import (
-	"code.google.com/p/go.net/websocket"
 	"fmt"
 	"io"
 	"net"
@@ -9,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"golang.org/x/net/websocket"
 )
 
 var (
