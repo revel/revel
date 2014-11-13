@@ -16,7 +16,7 @@ import (
 	"regexp"
 	"strings"
 
-	"code.google.com/p/go.net/websocket"
+	"golang.org/x/net/websocket"
 )
 
 type TestSuite struct {
