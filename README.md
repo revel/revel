@@ -4,6 +4,8 @@ A high productivity, full-stack web framework for the [Go language](http://www.g
 
 Current Version: 0.11.1 (Oct 27, 2014)
 
+**As of Revel 0.11.0, Go 1.3+ is required.**
+
 [![Build Status](https://secure.travis-ci.org/revel/revel.svg?branch=master)](http://travis-ci.org/revel/revel)
 
 ## Learn More
