@@ -53,6 +53,7 @@ cookie.prefix = REVEL
 # eavesdropping.
 cookie.secure = false
 
+#cookie.domain = 
 
 # Define when your session cookie expires. Possible values:
 # "720h"
