@@ -1,4 +1,4 @@
-package revel
+package testing
 
 import (
 	"bytes"
@@ -16,6 +16,8 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/revel/revel"
+
 	"golang.org/x/net/websocket"
 )
 
@@ -23,7 +25,7 @@ type TestSuite struct {
 	Client       *http.Client
 	Response     *http.Response
 	ResponseBody []byte
-	Session      Session
+	Session      revel.Session
 }
 
 type TestRequest struct {
@@ -39,22 +41,22 @@ func NewTestSuite() TestSuite {
 	jar, _ := cookiejar.New(nil)
 	return TestSuite{
 		Client:  &http.Client{Jar: jar},
-		Session: make(Session),
+		Session: make(revel.Session),
 	}
 }
 
 // Return the address and port of the server, e.g. "127.0.0.1:8557"
 func (t *TestSuite) Host() string {
-	if Server.Addr[0] == ':' {
-		return "127.0.0.1" + Server.Addr
+	if revel.Server.Addr[0] == ':' {
+		return "127.0.0.1" + revel.Server.Addr
 	}
-	return Server.Addr
+	return revel.Server.Addr
 }
 
 // Return the base http/https URL of the server, e.g. "http://127.0.0.1:8557".
 // The scheme is set to https if http.ssl is set to true in the configuration file.
 func (t *TestSuite) BaseUrl() string {
-	if HttpSsl {
+	if revel.HttpSsl {
 		return "https://" + t.Host()
 	} else {
 		return "http://" + t.Host()
@@ -208,7 +210,7 @@ func (t *TestSuite) PostFileCustom(uri string, params url.Values, filePaths url.
 // examine the Response and ResponseBody properties. Session data will be
 // added to the request cookies for you.
 func (r *TestRequest) Send() {
-	r.AddCookie(r.testSuite.Session.cookie())
+	r.AddCookie(r.testSuite.Session.Cookie())
 	r.MakeRequest()
 }
 
@@ -225,10 +227,10 @@ func (r *TestRequest) MakeRequest() {
 	}
 
 	// Look for a session cookie in the response and parse it.
-	sessionCookieName := r.testSuite.Session.cookie().Name
+	sessionCookieName := r.testSuite.Session.Cookie().Name
 	for _, cookie := range r.testSuite.Client.Jar.Cookies(r.Request.URL) {
 		if cookie.Name == sessionCookieName {
-			r.testSuite.Session = getSessionFromCookie(cookie)
+			r.testSuite.Session = revel.GetSessionFromCookie(cookie)
 			break
 		}
 	}
@@ -271,13 +273,13 @@ func (t *TestSuite) AssertHeader(name, value string) {
 }
 
 func (t *TestSuite) AssertEqual(expected, actual interface{}) {
-	if !Equal(expected, actual) {
+	if !revel.Equal(expected, actual) {
 		panic(fmt.Errorf("(expected) %v != %v (actual)", expected, actual))
 	}
 }
 
 func (t *TestSuite) AssertNotEqual(expected, actual interface{}) {
-	if Equal(expected, actual) {
+	if revel.Equal(expected, actual) {
 		panic(fmt.Errorf("(expected) %v == %v (actual)", expected, actual))
 	}
 }
