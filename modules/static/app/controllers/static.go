@@ -43,8 +43,13 @@ type Static struct {
 //   Calls:
 //     Static.Serve("public/img", "favicon.png")
 func (c Static) Serve(prefix, filepath string) revel.Result {
-	var basePath string
+	// Fix for #503.
+	prefix = c.Params.Fixed.Get("prefix")
+	if prefix == "" {
+		return c.NotFound("")
+	}
 
+	var basePath string
 	if !fpath.IsAbs(prefix) {
 		basePath = revel.BasePath
 	}
@@ -87,6 +92,12 @@ func (c Static) Serve(prefix, filepath string) revel.Result {
 // as Static.Serve with the additional module name pre-pended to the list of
 // arguments.
 func (c Static) ServeModule(moduleName, prefix, filepath string) revel.Result {
+	// Fix for #503.
+	prefix = c.Params.Fixed.Get("prefix")
+	if prefix == "" {
+		return c.NotFound("")
+	}
+
 	var basePath string
 	for _, module := range revel.Modules {
 		if module.Name == moduleName {
