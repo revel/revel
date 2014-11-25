@@ -45,6 +45,24 @@ func NewTestSuite() TestSuite {
 	}
 }
 
+// NewTestRequest returns an initialized *TestRequest. It is used for extending
+// testsuite package making it possibe to define own methods. Example:
+//	type MyTestSuite struct {
+//		testing.TestSuite
+//	}
+//
+//	func (t *MyTestSuite) PutFormCustom(...) {
+//		req := http.NewRequest(...)
+//		...
+//		return t.NewTestRequest(req)
+//	}
+func (t *TestSuite) NewTestRequest(req *http.Request) *TestRequest {
+	return &TestRequest{
+		Request:   req,
+		testSuite: t,
+	}
+}
+
 // Return the address and port of the server, e.g. "127.0.0.1:8557"
 func (t *TestSuite) Host() string {
 	if revel.Server.Addr[0] == ':' {
@@ -80,10 +98,7 @@ func (t *TestSuite) GetCustom(uri string) *TestRequest {
 	if err != nil {
 		panic(err)
 	}
-	return &TestRequest{
-		Request:   req,
-		testSuite: t,
-	}
+	return t.NewTestRequest(req)
 }
 
 // Issue a DELETE request to the given path and store the result in Response and
@@ -98,10 +113,7 @@ func (t *TestSuite) DeleteCustom(uri string) *TestRequest {
 	if err != nil {
 		panic(err)
 	}
-	return &TestRequest{
-		Request:   req,
-		testSuite: t,
-	}
+	return t.NewTestRequest(req)
 }
 
 // Issue a PUT request to the given path, sending the given Content-Type and
@@ -118,10 +130,7 @@ func (t *TestSuite) PutCustom(uri string, contentType string, reader io.Reader) 
 		panic(err)
 	}
 	req.Header.Set("Content-Type", contentType)
-	return &TestRequest{
-		Request:   req,
-		testSuite: t,
-	}
+	return t.NewTestRequest(req)
 }
 
 // Issue a PATCH request to the given path, sending the given Content-Type and
@@ -138,10 +147,7 @@ func (t *TestSuite) PatchCustom(uri string, contentType string, reader io.Reader
 		panic(err)
 	}
 	req.Header.Set("Content-Type", contentType)
-	return &TestRequest{
-		Request:   req,
-		testSuite: t,
-	}
+	return t.NewTestRequest(req)
 }
 
 // Issue a POST request to the given path, sending the given Content-Type and
@@ -158,10 +164,7 @@ func (t *TestSuite) PostCustom(uri string, contentType string, reader io.Reader)
 		panic(err)
 	}
 	req.Header.Set("Content-Type", contentType)
-	return &TestRequest{
-		Request:   req,
-		testSuite: t,
-	}
+	return t.NewTestRequest(req)
 }
 
 // Issue a POST request to the given path as a form post of the given key and
