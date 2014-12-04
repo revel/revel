@@ -48,6 +48,27 @@ func (c TestRunner) Index() revel.Result {
 	return c.Render(testSuites)
 }
 
+func (c TestRunner) Suite(suite string) revel.Result {
+	var testSuites []TestSuiteDesc
+	for _, testSuite := range revel.TestSuites {
+		desc := DescribeSuite(testSuite)
+
+		if desc.Name == suite {
+			testSuites = append(testSuites, desc)
+		}
+	}
+
+	if len(testSuites) == 0 {
+		return c.RenderText("Suite '" + suite + "' not found...")
+	}
+
+	c.RenderArgs = map[string]interface{}{
+		"testSuites": testSuites,
+	}
+
+	return c.RenderTemplate("TestRunner/Index.html")
+}
+
 // Run runs a single test, given by the argument.
 func (c TestRunner) Run(suite, test string) revel.Result {
 	result := TestResult{Name: test}

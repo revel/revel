@@ -1,4 +1,5 @@
 GET /@tests                       TestRunner.Index
+GET /@tests/:suite                TestRunner.Suite
 GET /@tests.list                  TestRunner.List
 GET /@tests/public/*filepath      Static.ServeModule(testrunner,public)
 GET /@tests/:suite/:test          TestRunner.Run
