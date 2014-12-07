@@ -49,6 +49,9 @@ func (c Static) Serve(prefix, filepath string) revel.Result {
 		return c.NotFound("")
 	}
 
+	return serve(c, prefix, filepath)
+}
+func serve(c Static, prefix, filepath string) revel.Result {
 	var basePath string
 	if !fpath.IsAbs(prefix) {
 		basePath = revel.BasePath
@@ -107,5 +110,5 @@ func (c Static) ServeModule(moduleName, prefix, filepath string) revel.Result {
 
 	absPath := fpath.Join(basePath, fpath.FromSlash(prefix))
 
-	return c.Serve(absPath, filepath)
+	return serve(c, absPath, filepath)
 }
