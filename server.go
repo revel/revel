@@ -94,8 +94,10 @@ func Run(port int) {
 	}
 
 	Server = &http.Server{
-		Addr:    localAddress,
-		Handler: http.HandlerFunc(handle),
+		Addr:         localAddress,
+		Handler:      http.HandlerFunc(handle),
+		ReadTimeout:  time.Minute,
+		WriteTimeout: time.Minute,
 	}
 
 	runStartupHooks()
