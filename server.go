@@ -76,23 +76,6 @@ func Run(port int) {
 		localAddress = address + ":" + strconv.Itoa(port)
 	}
 
-	MainTemplateLoader = NewTemplateLoader(TemplatePaths)
-
-	// The "watch" config variable can turn on and off all watching.
-	// (As a convenient way to control it all together.)
-	if Config.BoolDefault("watch", true) {
-		MainWatcher = NewWatcher()
-		Filters = append([]Filter{WatchFilter}, Filters...)
-	}
-
-	// If desired (or by default), create a watcher for templates and routes.
-	// The watcher calls Refresh() on things on the first request.
-	if MainWatcher != nil && Config.BoolDefault("watch.templates", true) {
-		MainWatcher.Listen(MainTemplateLoader, MainTemplateLoader.paths...)
-	} else {
-		MainTemplateLoader.Refresh()
-	}
-
 	Server = &http.Server{
 		Addr:         localAddress,
 		Handler:      http.HandlerFunc(handle),
@@ -101,6 +84,24 @@ func Run(port int) {
 	}
 
 	runStartupHooks()
+
+
+	// Load templates
+	MainTemplateLoader = NewTemplateLoader(TemplatePaths)
+	MainTemplateLoader.Refresh()
+
+	// If desired (or by default), create a watcher for templates and routes.
+	// The watcher calls Refresh() on things on the first request.
+	if MainWatcher != nil && Config.BoolDefault("watch.templates", true) {
+		MainWatcher.Listen(MainTemplateLoader, MainTemplateLoader.paths...)
+	}
+
+	// The "watch" config variable can turn on and off all watching.
+	// (As a convenient way to control it all together.)
+	if Config.BoolDefault("watch", true) {
+		MainWatcher = NewWatcher()
+		Filters = append([]Filter{WatchFilter}, Filters...)
+	}
 
 	go func() {
 		time.Sleep(100 * time.Millisecond)
