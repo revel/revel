@@ -90,17 +90,17 @@ func Run(port int) {
 	MainTemplateLoader = NewTemplateLoader(TemplatePaths)
 	MainTemplateLoader.Refresh()
 
-	// If desired (or by default), create a watcher for templates and routes.
-	// The watcher calls Refresh() on things on the first request.
-	if MainWatcher != nil && Config.BoolDefault("watch.templates", true) {
-		MainWatcher.Listen(MainTemplateLoader, MainTemplateLoader.paths...)
-	}
-
 	// The "watch" config variable can turn on and off all watching.
 	// (As a convenient way to control it all together.)
 	if Config.BoolDefault("watch", true) {
 		MainWatcher = NewWatcher()
 		Filters = append([]Filter{WatchFilter}, Filters...)
+	}
+
+	// If desired (or by default), create a watcher for templates and routes.
+	// The watcher calls Refresh() on things on the first request.
+	if MainWatcher != nil && Config.BoolDefault("watch.templates", true) {
+		MainWatcher.Listen(MainTemplateLoader, MainTemplateLoader.paths...)
 	}
 
 	go func() {
