@@ -132,6 +132,24 @@ func TestBeforeRequest(t *testing.T) {
 	}
 }
 
+func TestI18nMessageUnknownValueFormat(t *testing.T) {
+	loadMessages(testDataPath)
+	loadTestI18nConfigWithUnknowFormatOption(t)
+
+	// Assert that we can get a message and we get the expected return value
+	if message := Message("en", "greeting"); message != "Hello" {
+		t.Errorf("Message 'greeting' for locale 'en' (%s) does not have the expected value", message)
+	}
+
+	// Assert that we get the expected return value with original format
+	if message := Message("unknown locale", "message"); message != "*** message ***" {
+		t.Error("Locale 'unknown locale' is not supposed to exist")
+	}
+	if message := Message("nl", "unknown message"); message != "*** unknown message ***" {
+		t.Error("Message 'unknown message' is not supposed to exist")
+	}
+}
+
 func BenchmarkI18nLoadMessages(b *testing.B) {
 	excludeFromTimer(b, func() { TRACE = log.New(ioutil.Discard, "", 0) })
 
@@ -182,6 +200,11 @@ func loadTestI18nConfig(t *testing.T) {
 func loadTestI18nConfigWithoutLanguageCookieOption(t *testing.T) {
 	loadTestI18nConfig(t)
 	Config.config.RemoveOption("DEFAULT", "i18n.cookie")
+}
+
+func loadTestI18nConfigWithUnknowFormatOption(t *testing.T) {
+	loadTestI18nConfig(t)
+	Config.config.AddOption("DEFAULT", "i18n.unknown_format", "*** %s ***")
 }
 
 func buildRequestWithCookie(name, value string) *Request {
