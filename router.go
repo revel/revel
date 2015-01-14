@@ -425,8 +425,9 @@ func init() {
 		MainRouter = NewRouter(path.Join(BasePath, "conf", "routes"))
 		if MainWatcher != nil && Config.BoolDefault("watch.routes", true) {
 			MainWatcher.Listen(MainRouter, MainRouter.path)
-		} else {
-			MainRouter.Refresh()
+		} else if err := MainRouter.Refresh(); err != nil {
+			// Not in dev mode and Route loading failed, we should crash.
+			ERROR.Panicln(err.Error())
 		}
 	})
 }
