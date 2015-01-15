@@ -433,7 +433,8 @@ func appendAction(fset *token.FileSet, mm methodMap, decl ast.Decl, pkgImportPat
 			var importPath string
 			typeExpr := NewTypeExpr(pkgName, field.Type)
 			if !typeExpr.Valid {
-				return // We didn't understand one of the args.  Ignore this action. (Already logged)
+				log.Printf("Don't understand argument '%s' of action %s. Ignoring.\n", name, getFuncName(funcDecl))
+				return
 			}
 			if typeExpr.PkgName != "" {
 				var ok bool
@@ -724,8 +725,6 @@ func NewTypeExpr(pkgName string, expr ast.Expr) TypeExpr {
 	case *ast.Ellipsis:
 		e := NewTypeExpr(pkgName, t.Elt)
 		return TypeExpr{"[]" + e.Expr, e.PkgName, e.pkgIndex + 2, e.Valid}
-	default:
-		log.Println("Failed to generate name for field. Make sure the field name is valid.")
 	}
 	return TypeExpr{Valid: false}
 }
