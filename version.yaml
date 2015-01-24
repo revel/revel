@@ -1,2 +1,3 @@
-revel: 0.12.0-develop
-date: 2015-01-19
+version: 0.12.0dev
+buildDate: 2015-01-23
+requiredGo: >= go1.3
