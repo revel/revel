@@ -25,6 +25,8 @@ func handle(w http.ResponseWriter, r *http.Request) {
 	upgrade := r.Header.Get("Upgrade")
 	if upgrade == "websocket" || upgrade == "Websocket" {
 		websocket.Handler(func(ws *websocket.Conn) {
+			//Override default Read/Write timeout with sane value for a web socket request
+			ws.SetDeadline(time.Now().Add(time.Hour * 24))
 			r.Method = "WS"
 			handleInternal(w, r, ws)
 		}).ServeHTTP(w, r)
