@@ -30,6 +30,10 @@ func (c Pprof) Cmdline() revel.Result {
 	return PprofHandler(pprof.Cmdline)
 }
 
+func (c Pprof) Trace() revel.Result {
+	return PprofHandler(pprof.Trace)
+}
+
 func (c Pprof) Index() revel.Result {
 	return PprofHandler(pprof.Index)
 }
