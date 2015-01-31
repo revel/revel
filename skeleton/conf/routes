@@ -12,5 +12,8 @@ GET     /favicon.ico                            404
 # Map static resources from the /app/public folder to the /public path
 GET     /public/*filepath                       Static.Serve("public")
 
+# Map to index action of controllers by default when no action is specified
+GET     /:controller/                           :controller.index
+
 # Catch all
 *       /:controller/:action                    :controller.:action
