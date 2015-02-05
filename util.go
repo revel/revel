@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/url"
 	"os"
+	"path/filepath"
 	"reflect"
 	"regexp"
 	"strings"
@@ -169,4 +170,30 @@ func Equal(a, b interface{}) bool {
 		}
 	}
 	return false
+}
+
+// Walk is a filepath.Walk helper which follows symlinks and always returns the
+// path of the file or directory that is referenced in the link.
+func Walk(root string, walkFn filepath.WalkFunc) error {
+	var symWalkFn = func(path string, info os.FileInfo, err error) error {
+		var isLink bool
+		// get the target if it is a symlink
+		if err == nil && info.Mode()&os.ModeSymlink == os.ModeSymlink {
+			isLink = true
+			path, err = filepath.EvalSymlinks(path)
+			if err != nil { // abort if we can't evaluate the symlink (e.g. a dangling symlink)
+				return err
+			}
+			info, err = os.Lstat(path)
+		}
+		if err := walkFn(path, info, err); err != nil {
+			return err // abort on walkFn error too (same behavior as filepath.Walk)
+		}
+		// recurse into symlinked directories
+		if err == nil && info.IsDir() && isLink {
+			return Walk(path, walkFn)
+		}
+		return nil
+	}
+	return filepath.Walk(root, symWalkFn)
 }
