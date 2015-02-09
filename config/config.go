@@ -1,4 +1,4 @@
-package revel
+package config
 
 import (
 	"errors"
@@ -56,7 +56,6 @@ func (c *MergedConfig) Int(option string) (result int, found bool) {
 	}
 
 	// If it wasn't an OptionError, it must have failed to parse.
-	ERROR.Println("Failed to parse config option", option, "as int:", err)
 	return 0, false
 }
 
@@ -77,7 +76,6 @@ func (c *MergedConfig) Bool(option string) (result, found bool) {
 	}
 
 	// If it wasn't an OptionError, it must have failed to parse.
-	ERROR.Println("Failed to parse config option", option, "as bool:", err)
 	return false, false
 }
 
