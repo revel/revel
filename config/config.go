@@ -17,11 +17,11 @@ type Context struct {
 	section string // Check this section first, then fall back to DEFAULT
 }
 
-func NewEmptyConfig() *Context {
+func NewContext() *Context {
 	return &Context{config.NewDefault(), ""}
 }
 
-func LoadConfig(confName string) (*Context, error) {
+func LoadContext(confName string) (*Context, error) {
 	var err error
 	for _, confPath := range ConfPaths {
 		conf, err := config.ReadDefault(path.Join(confPath, confName))
