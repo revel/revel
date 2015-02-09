@@ -1,8 +1,6 @@
 package revel
 
 import (
-	"github.com/agtorre/gocolorize"
-	"github.com/robfig/config"
 	"go/build"
 	"io"
 	"io/ioutil"
@@ -12,6 +10,11 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+
+	revConfig "github.com/revel/revel/config"
+
+	"github.com/agtorre/gocolorize"
+	"github.com/robfig/config"
 )
 
 const (
@@ -37,7 +40,7 @@ var (
 	ImportPath string // e.g. "corp/sample"
 	SourcePath string // e.g. "/Users/robfig/gocode/src"
 
-	Config  *MergedConfig
+	Config  *revConfig.Context
 	RunMode string // Application-defined (by default, "dev" or "prod")
 	DevMode bool   // if true, RunMode is a development mode.
 
@@ -148,7 +151,7 @@ func Init(mode, importPath, srcPath string) {
 
 	// Load app.conf
 	var err error
-	Config, err = LoadConfig("app.conf")
+	Config, err = revConfig.LoadContext("app.conf", ConfPaths)
 	if err != nil || Config == nil {
 		log.Fatalln("Failed to load app.conf:", err)
 	}
