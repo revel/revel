@@ -21,9 +21,9 @@ func NewContext() *Context {
 	return &Context{config.NewDefault(), ""}
 }
 
-func LoadContext(confName string) (*Context, error) {
+func LoadContext(confName string, confPaths []string) (*Context, error) {
 	var err error
-	for _, confPath := range ConfPaths {
+	for _, confPath := range confPaths {
 		conf, err := config.ReadDefault(path.Join(confPath, confName))
 		if err == nil {
 			return &Context{conf, ""}, nil
