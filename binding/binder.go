@@ -30,6 +30,9 @@ type Binder struct {
 	// Unbind serializes a given value to one or more URL parameters of the given
 	// name.
 	Unbind func(output map[string]string, name string, val interface{})
+
+	// Purge allows for a binder driver to free any temporary resources used during data binding
+	Purge func() error
 }
 
 

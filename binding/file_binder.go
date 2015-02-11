@@ -2,16 +2,18 @@ package binding
 
 import (
 	"mime/multipart"
+	"os"
 	"reflect"
 )
 
 var (
-	fileBinder = Binder{bindFile, nil}
+	fileBinder = Binder{bindFile, nil, purgeFiles}
+	tmpFiles *[]os.File
 )
 
 
-func bindFile(params *Params, name string, typ reflect.Type) reflect.Value {
-	reader := getMultipartFile(params, name)
+func bindFile(files *map[string][]*multipart.FileHeader, name string, typ reflect.Type) reflect.Value {
+	reader := getMultipartFile(files, name)
 	if reader == nil {
 		return reflect.Zero(typ)
 	}
@@ -29,7 +31,7 @@ func bindFile(params *Params, name string, typ reflect.Type) reflect.Value {
 	}
 
 	// Register it to be deleted after the request is done.
-	params.tmpFiles = append(params.tmpFiles, tmpFile)
+	tmpFiles = append(tmpFiles, tmpFile)
 
 	_, err = io.Copy(tmpFile, reader)
 	if err != nil {
@@ -48,8 +50,8 @@ func bindFile(params *Params, name string, typ reflect.Type) reflect.Value {
 
 
 // Helper that returns an upload of the given name, or nil.
-func getMultipartFile(params *Params, name string) multipart.File {
-	for _, fileHeader := range params.Files[name] {
+func getMultipartFile(files *map[string][]*multipart.FileHeader, name string) multipart.File {
+	for _, fileHeader := range files[name] {
 		file, err := fileHeader.Open()
 		if err == nil {
 			return file
@@ -59,6 +61,15 @@ func getMultipartFile(params *Params, name string) multipart.File {
 	return nil
 }
 
+
+func purgeFiles() (err error) {
+	for _, tmpFile := range c.Params.tmpFiles {
+		err := os.Remove(tmpFile.Name())
+		if err != nil {
+			return
+		}
+	}
+}
 
 func init() {
 	TypeBinders[reflect.TypeOf(&os.File{})] = fileBinder

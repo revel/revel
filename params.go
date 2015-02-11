@@ -122,7 +122,7 @@ func ParamsFilter(c *Controller, fc []Filter) {
 
 	// Clean up from the request.
 	defer func() {
-		// Delete temp files.
+		// Delete temporary request files, if any
 		if c.Request.MultipartForm != nil {
 			err := c.Request.MultipartForm.RemoveAll()
 			if err != nil {
@@ -130,11 +130,9 @@ func ParamsFilter(c *Controller, fc []Filter) {
 			}
 		}
 
-		for _, tmpFile := range c.Params.tmpFiles {
-			err := os.Remove(tmpFile.Name())
-			if err != nil {
-				WARN.Println("Could not remove upload temp file:", err)
-			}
+		// Clean up any temporary resources in binding
+		if err := binding.Purge(); err != nil {
+			WARN.Println("Error removing binding resources:", err)
 		}
 	}()
 

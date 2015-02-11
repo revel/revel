@@ -38,6 +38,16 @@ func Unbind(output map[string]string, name string, val interface{}) {
 	}
 }
 
+// Purge frees up any temporary resources used by binder drivers during data binding
+func Purge() (err error) {
+	for _, binder := range TypeBinders {
+		binder.Purge()
+	}
+	for _, binder := range KindBinders {
+		binder.Purge()
+	}
+}
+
 
 func binderForType(typ reflect.Type) (Binder, bool) {
 	binder, ok := TypeBinders[typ]
