@@ -1,4 +1,4 @@
-package revel
+package binding
 
 import (
 	"fmt"
