@@ -22,6 +22,7 @@ var (
 // This method handles all requests.  It dispatches to handleInternal after
 // handling / adapting websocket connections.
 func handle(w http.ResponseWriter, r *http.Request) {
+	r.Body = http.MaxBytesReader(w, r.Body, int64(Config.IntDefault("http.maxRequestSize", 10000000)))
 	upgrade := r.Header.Get("Upgrade")
 	if upgrade == "websocket" || upgrade == "Websocket" {
 		websocket.Handler(func(ws *websocket.Conn) {
@@ -86,7 +87,6 @@ func Run(port int) {
 	}
 
 	runStartupHooks()
-
 
 	// Load templates
 	MainTemplateLoader = NewTemplateLoader(TemplatePaths)
