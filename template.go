@@ -473,6 +473,11 @@ func ReverseUrl(args ...interface{}) (template.URL, error) {
 		return "", fmt.Errorf("reversing %s: %s", action, err)
 	}
 
+	if len(c.MethodType.Args) < len(args)-1 {
+		return "", fmt.Errorf("reversing %s: route defines %d args, but received %d",
+			action, len(c.MethodType.Args), len(args)-1)
+	}
+
 	// Unbind the arguments.
 	argsByName := make(map[string]string)
 	for i, argValue := range args[1:] {
