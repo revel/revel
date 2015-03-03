@@ -1,7 +1,6 @@
 package revel
 
 import (
-	_ "fmt"
 	"github.com/huacnlee/train"
 	"strings"
 )
