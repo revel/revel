@@ -1,9 +1,13 @@
 language: go
 go: 1.3
+rvm:
+  - 2.2.0
 services:
   - memcache # github.com/revel/revel/cache
   - redis-server
 install:
+  - gem install sass
+  - gem in coffee-script
   - export PATH=$PATH:$HOME/gopath/bin
   # Annoyingly, we can not use go get revel/... because references to app/routes package fail
   - go get -v github.com/revel/cmd/revel
