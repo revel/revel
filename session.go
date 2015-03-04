@@ -66,8 +66,8 @@ func (s Session) getExpiration() time.Time {
 	return time.Now().Add(expireAfterDuration)
 }
 
-// cookie returns an http.Cookie containing the signed session.
-func (s Session) cookie() *http.Cookie {
+// Cookie returns an http.Cookie containing the signed session.
+func (s Session) Cookie() *http.Cookie {
 	var sessionValue string
 	ts := s.getExpiration()
 	s[TIMESTAMP_KEY] = getSessionExpirationCookie(ts)
@@ -85,6 +85,7 @@ func (s Session) cookie() *http.Cookie {
 	return &http.Cookie{
 		Name:     CookiePrefix + "_SESSION",
 		Value:    Sign(sessionData) + "-" + sessionData,
+		Domain:   CookieDomain,
 		Path:     "/",
 		HttpOnly: CookieHttpOnly,
 		Secure:   CookieSecure,
@@ -106,9 +107,9 @@ func sessionTimeoutExpiredOrMissing(session Session) bool {
 	return false
 }
 
-// getSessionFromCookie returns a Session struct pulled from the signed
+// GetSessionFromCookie returns a Session struct pulled from the signed
 // session cookie.
-func getSessionFromCookie(cookie *http.Cookie) Session {
+func GetSessionFromCookie(cookie *http.Cookie) Session {
 	session := make(Session)
 
 	// Separate the data from the signature.
@@ -149,7 +150,7 @@ func SessionFilter(c *Controller, fc []Filter) {
 
 	// Store the signed session if it could have changed.
 	if len(c.Session) > 0 || !sessionWasEmpty {
-		c.SetCookie(c.Session.cookie())
+		c.SetCookie(c.Session.Cookie())
 	}
 }
 
@@ -160,7 +161,7 @@ func restoreSession(req *http.Request) Session {
 	if err != nil {
 		return make(Session)
 	} else {
-		return getSessionFromCookie(cookie)
+		return GetSessionFromCookie(cookie)
 	}
 }
 

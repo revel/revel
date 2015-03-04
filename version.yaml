@@ -1,0 +1,3 @@
+version: 0.12.0dev
+buildDate: 2015-01-23
+minimumGo: >= go1.3
