@@ -133,16 +133,17 @@ func TestRange(t *testing.T) {
 func TestMinSize(t *testing.T) {
 	greaterThanMessage := "len(val) >= min"
 	tests := []Expect{
-		Expect{"1", true, greaterThanMessage},
 		Expect{"12", true, greaterThanMessage},
-		Expect{[]int{1}, true, greaterThanMessage},
+		Expect{"123", true, greaterThanMessage},
 		Expect{[]int{1, 2}, true, greaterThanMessage},
+		Expect{[]int{1, 2, 3}, true, greaterThanMessage},
 		Expect{"", false, "len(val) <= min"},
+		Expect{"手", false, "len(val) <= min"},
 		Expect{[]int{}, false, "len(val) <= min"},
 		Expect{nil, false, "TypeOf(val) != string && TypeOf(val) != slice"},
 	}
 
-	for _, minSize := range []MinSize{MinSize{1}, ValidMinSize(1)} {
+	for _, minSize := range []MinSize{MinSize{2}, ValidMinSize(2)} {
 		performTests(minSize, tests, t)
 	}
 }
@@ -152,12 +153,14 @@ func TestMaxSize(t *testing.T) {
 	tests := []Expect{
 		Expect{"", true, lessThanMessage},
 		Expect{"12", true, lessThanMessage},
+		Expect{"ルビー", true, lessThanMessage},
 		Expect{[]int{}, true, lessThanMessage},
 		Expect{[]int{1, 2}, true, lessThanMessage},
-		Expect{"123", false, "len(val) >= max"},
-		Expect{[]int{1, 2, 3}, false, "len(val) >= max"},
+		Expect{[]int{1, 2, 3}, true, lessThanMessage},
+		Expect{"1234", false, "len(val) >= max"},
+		Expect{[]int{1, 2, 3, 4}, false, "len(val) >= max"},
 	}
-	for _, maxSize := range []MaxSize{MaxSize{2}, ValidMaxSize(2)} {
+	for _, maxSize := range []MaxSize{MaxSize{3}, ValidMaxSize(3)} {
 		performTests(maxSize, tests, t)
 	}
 }
@@ -165,6 +168,7 @@ func TestMaxSize(t *testing.T) {
 func TestLength(t *testing.T) {
 	tests := []Expect{
 		Expect{"12", true, "len(val) == length"},
+		Expect{"火箭", true, "len(val) == length"},
 		Expect{[]int{1, 2}, true, "len(val) == length"},
 		Expect{"123", false, "len(val) > length"},
 		Expect{[]int{1, 2, 3}, false, "len(val) > length"},

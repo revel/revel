@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"regexp"
 	"time"
+	"unicode/utf8"
 )
 
 type Validator interface {
@@ -24,7 +25,7 @@ func (r Required) IsSatisfied(obj interface{}) bool {
 	}
 
 	if str, ok := obj.(string); ok {
-		return len(str) > 0
+		return utf8.RuneCountInString(str) > 0
 	}
 	if b, ok := obj.(bool); ok {
 		return b
@@ -115,7 +116,7 @@ func ValidMinSize(min int) MinSize {
 
 func (m MinSize) IsSatisfied(obj interface{}) bool {
 	if str, ok := obj.(string); ok {
-		return len(str) >= m.Min
+		return utf8.RuneCountInString(str) >= m.Min
 	}
 	v := reflect.ValueOf(obj)
 	if v.Kind() == reflect.Slice {
@@ -139,7 +140,7 @@ func ValidMaxSize(max int) MaxSize {
 
 func (m MaxSize) IsSatisfied(obj interface{}) bool {
 	if str, ok := obj.(string); ok {
-		return len(str) <= m.Max
+		return utf8.RuneCountInString(str) <= m.Max
 	}
 	v := reflect.ValueOf(obj)
 	if v.Kind() == reflect.Slice {
@@ -163,7 +164,7 @@ func ValidLength(n int) Length {
 
 func (s Length) IsSatisfied(obj interface{}) bool {
 	if str, ok := obj.(string); ok {
-		return len(str) == s.N
+		return utf8.RuneCountInString(str) == s.N
 	}
 	v := reflect.ValueOf(obj)
 	if v.Kind() == reflect.Slice {
