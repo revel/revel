@@ -164,6 +164,32 @@ func (t *TestSuite) PostFileCustom(uri string, params url.Values, filePaths url.
 	return t.PostCustom(uri, writer.FormDataContentType(), body)
 }
 
+// Issue a PUT request to the given path as a form put of the given key and
+// values, and store the result in Response and ResponseBody.
+func (t *TestSuite) PutForm(path string, data url.Values) {
+    t.PutFormCustom(t.BaseUrl()+path, data).Send()
+}
+
+// Return a PUT request to the given uri as a form put of the given key and values.
+// The request is in a form of TestRequest wrapper.
+func (t *TestSuite) PutFormCustom(uri string, data url.Values) *TestRequest {
+    return t.PutCustom(uri, "application/x-www-form-urlencoded", strings.NewReader(data.Encode()))
+}
+
+// Return a PUT request to the given uri with specified Content-Type and data
+// in a form of wrapper. "data" may be nil.
+func (t *TestSuite) PutCustom(uri string, contentType string, reader io.Reader) *TestRequest {
+    req, err := http.NewRequest("PUT", uri, reader)
+    if err != nil {
+        panic(err)
+    }
+    req.Header.Set("Content-Type", contentType)
+    return &TestRequest{
+        Request:   req,
+        testSuite: t,
+    }
+}
+
 // Issue any request and read the response. If successful, the caller may
 // examine the Response and ResponseBody properties. Session data will be
 // added to the request cookies for you.
