@@ -244,7 +244,7 @@ func (c *Controller) RenderBinary(memfile io.Reader, filename string, delivery C
 //   c.Redirect("/controller/action")
 //   c.Redirect("/controller/%d/action", id)
 func (c *Controller) Redirect(val interface{}, args ...interface{}) Result {
-	c.setStatusIfNil(http.StatusMovedPermanently)
+	c.setStatusIfNil(http.StatusFound)
 
 	if url, ok := val.(string); ok {
 		if len(args) == 0 {
