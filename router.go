@@ -423,9 +423,10 @@ func (router *Router) Reverse(action string, argValues map[string]string) *Actio
 func init() {
 	OnAppStart(func() {
 		MainRouter = NewRouter(path.Join(BasePath, "conf", "routes"))
+		err := MainRouter.Refresh()
 		if MainWatcher != nil && Config.BoolDefault("watch.routes", true) {
 			MainWatcher.Listen(MainRouter, MainRouter.path)
-		} else if err := MainRouter.Refresh(); err != nil {
+		} else if err != nil {
 			// Not in dev mode and Route loading failed, we should crash.
 			ERROR.Panicln(err.Error())
 		}
