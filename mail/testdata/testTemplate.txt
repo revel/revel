@@ -1,4 +1,0 @@
-Hello {{.world}}
-
-Welcome {{.user.Name}}, please click the link:
-{{.user.Link}}

@@ -1,7 +1,6 @@
 package revel
 
 import (
-	"code.google.com/p/go.net/websocket"
 	"fmt"
 	"io"
 	"net"
@@ -9,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"golang.org/x/net/websocket"
 )
 
 var (
@@ -21,9 +22,15 @@ var (
 // This method handles all requests.  It dispatches to handleInternal after
 // handling / adapting websocket connections.
 func handle(w http.ResponseWriter, r *http.Request) {
+	if maxRequestSize := int64(Config.IntDefault("http.maxrequestsize", 0)); maxRequestSize > 0 {
+		r.Body = http.MaxBytesReader(w, r.Body, maxRequestSize)
+	}
+
 	upgrade := r.Header.Get("Upgrade")
 	if upgrade == "websocket" || upgrade == "Websocket" {
 		websocket.Handler(func(ws *websocket.Conn) {
+			//Override default Read/Write timeout with sane value for a web socket request
+			ws.SetDeadline(time.Now().Add(time.Hour * 24))
 			r.Method = "WS"
 			handleInternal(w, r, ws)
 		}).ServeHTTP(w, r)
@@ -75,7 +82,18 @@ func Run(port int) {
 		localAddress = address + ":" + strconv.Itoa(port)
 	}
 
+	Server = &http.Server{
+		Addr:         localAddress,
+		Handler:      http.HandlerFunc(handle),
+		ReadTimeout:  time.Minute,
+		WriteTimeout: time.Minute,
+	}
+
+	runStartupHooks()
+
+	// Load templates
 	MainTemplateLoader = NewTemplateLoader(TemplatePaths)
+	MainTemplateLoader.Refresh()
 
 	// The "watch" config variable can turn on and off all watching.
 	// (As a convenient way to control it all together.)
@@ -88,16 +106,7 @@ func Run(port int) {
 	// The watcher calls Refresh() on things on the first request.
 	if MainWatcher != nil && Config.BoolDefault("watch.templates", true) {
 		MainWatcher.Listen(MainTemplateLoader, MainTemplateLoader.paths...)
-	} else {
-		MainTemplateLoader.Refresh()
 	}
-
-	Server = &http.Server{
-		Addr:    localAddress,
-		Handler: http.HandlerFunc(handle),
-	}
-
-	runStartupHooks()
 
 	go func() {
 		time.Sleep(100 * time.Millisecond)

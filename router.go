@@ -375,7 +375,7 @@ func (router *Router) Reverse(action string, argValues map[string]string) *Actio
 			pathElements = strings.Split(route.Path, "/")
 		)
 		for i, el := range pathElements {
-			if el == "" || el[0] != ':' {
+			if el == "" || (el[0] != ':' && el[0] != '*') {
 				continue
 			}
 
@@ -423,10 +423,12 @@ func (router *Router) Reverse(action string, argValues map[string]string) *Actio
 func init() {
 	OnAppStart(func() {
 		MainRouter = NewRouter(path.Join(BasePath, "conf", "routes"))
+		err := MainRouter.Refresh()
 		if MainWatcher != nil && Config.BoolDefault("watch.routes", true) {
 			MainWatcher.Listen(MainRouter, MainRouter.path)
-		} else {
-			MainRouter.Refresh()
+		} else if err != nil {
+			// Not in dev mode and Route loading failed, we should crash.
+			ERROR.Panicln(err.Error())
 		}
 	})
 }
