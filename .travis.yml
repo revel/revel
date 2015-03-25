@@ -5,7 +5,7 @@ services:
   - redis-server
 install:
   - export PATH=$PATH:$HOME/gopath/bin
-  - export REVEL_BRANCH="develop"
+  - export REVEL_BRANCH="master"
   - 'if [[ "$TRAVIS_BRANCH" == "master" ]]; then export REVEL_BRANCH="master"; fi'
   - 'echo "Travis branch: $TRAVIS_BRANCH, Revel dependency branch: $REVEL_BRANCH"'
   - go get -v github.com/revel/revel/...
