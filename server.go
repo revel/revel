@@ -63,7 +63,7 @@ func handleInternal(w http.ResponseWriter, r *http.Request, ws *websocket.Conn) 
 	}
 
 	duration := fmt.Sprintf("%.2fms", float64(time.Since(t1).Nanoseconds()/1e4)/100.0)
-	SYSINFO.Println("Complated", c.Response.Status, "in", duration, "\n")
+	SYSINFO.Println("Completed", c.Response.Status, "in", duration, "\n")
 }
 
 // Run the server.
