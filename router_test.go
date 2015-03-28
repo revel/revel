@@ -32,10 +32,17 @@ var routeTestCases = map[string]*Route{
 		FixedParams: []string{},
 	},
 
-	`get /apps/:appId/ Application.Show`: &Route{
+	`get /app/:appId/ Application.Show`: &Route{
 		Method:      "GET",
-		Path:        `/apps/:appId/`,
+		Path:        `/app/:appId/`,
 		Action:      "Application.Show",
+		FixedParams: []string{},
+	},
+
+	`get /app-wild/*appId/ Application.WildShow`: &Route{
+		Method:      "GET",
+		Path:        `/app-wild/*appId/`,
+		Action:      "Application.WildShow",
 		FixedParams: []string{},
 	},
 
@@ -107,6 +114,7 @@ const TEST_ROUTES = `
 GET   /                          Application.Index
 GET   /test/                     Application.Index("Test", "Test2")
 GET   /app/:id/                  Application.Show
+GET   /app-wild/*id/             Application.WildShow
 POST  /app/:id                   Application.Save
 PATCH /app/:id/                  Application.Update
 GET   /javascript/:filepath      Static.Serve("public/js")
@@ -315,6 +323,16 @@ var reverseRoutingTestCases = map[*ReverseRouteArgs]*ActionDefinition{
 		Method: "POST",
 		Star:   false,
 		Action: "Application.Save",
+	},
+
+	&ReverseRouteArgs{
+		action: "Application.WildShow",
+		args:   map[string]string{"id": "123"},
+	}: &ActionDefinition{
+		Url:    "/app-wild/123/",
+		Method: "GET",
+		Star:   false,
+		Action: "Application.WildShow",
 	},
 }
 

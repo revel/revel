@@ -12,6 +12,7 @@ import (
 // E.g. the Post/Redirect/Get pattern:
 // http://en.wikipedia.org/wiki/Post/Redirect/Get
 type Flash struct {
+	// `Data` is the input which is read in `restoreFlash`, `Out` is the output which is set in a FLASH cookie at the end of the `FlashFilter()`
 	Data, Out map[string]string
 }
 

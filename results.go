@@ -11,9 +11,10 @@ import (
 	"net/http"
 	"reflect"
 	"strconv"
+	"strings"
 	"time"
 
-	"code.google.com/p/go.net/websocket"
+	"golang.org/x/net/websocket"
 )
 
 type Result interface {
@@ -154,6 +155,49 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
 	// would carry a 200 status code)
 	var b bytes.Buffer
 	r.render(req, resp, &b)
+
+	// Trimming the HTML will do the following:
+	// * Remove all leading & trailing whitespace on every line
+	// * Remove all empty lines
+	// * Attempt to keep formatting inside <pre></pre> tags
+	//
+	// This is safe unless white-space: pre; is used in css for formatting.
+	// Since there is no way to detect that, you will have to keep trimming off in these cases.
+	if Config.BoolDefault("results.trim.html", false) {
+		var b2 bytes.Buffer
+		// Allocate length of original buffer, so we can write everything without allocating again
+		b2.Grow(b.Len())
+		insidePre := false
+		for {
+			text, err := b.ReadString('\n')
+			// Convert to lower case for finding <pre> tags.
+			tl := strings.ToLower(text)
+			if strings.Contains(tl, "<pre>") {
+				insidePre = true
+			}
+			// Trim if not inside a <pre> statement
+			if !insidePre {
+				// Cut trailing/leading whitespace
+				text = strings.Trim(text, " \t\r\n")
+				if len(text) > 0 {
+					b2.WriteString(text)
+					b2.WriteString("\n")
+				}
+			} else {
+				b2.WriteString(text)
+			}
+			if strings.Contains(tl, "</pre>") {
+				insidePre = false
+			}
+			// We are finished
+			if err != nil {
+				break
+			}
+		}
+		// Replace the buffer
+		b = b2
+	}
+
 	if !chunked {
 		resp.Out.Header().Set("Content-Length", strconv.Itoa(b.Len()))
 	}

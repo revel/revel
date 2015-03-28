@@ -67,7 +67,8 @@ var (
 
 	// All cookies dropped by the framework begin with this prefix.
 	CookiePrefix string
-
+	// Cookie domain
+	CookieDomain string
 	// Cookie flags
 	CookieHttpOnly bool
 	CookieSecure   bool
@@ -182,6 +183,7 @@ func Init(mode, importPath, srcPath string) {
 	AppName = Config.StringDefault("app.name", "(not set)")
 	AppRoot = Config.StringDefault("app.root", "")
 	CookiePrefix = Config.StringDefault("cookie.prefix", "REVEL")
+	CookieDomain = Config.StringDefault("cookie.domain", "")
 	CookieHttpOnly = Config.BoolDefault("cookie.httponly", false)
 	CookieSecure = Config.BoolDefault("cookie.secure", false)
 	TemplateDelims = Config.StringDefault("template.delimiters", "")
@@ -205,6 +207,7 @@ func Init(mode, importPath, srcPath string) {
 	loadModules()
 
 	Initialized = true
+	INFO.Printf("Initialized Revel v%s (%s) for %s", VERSION, BUILD_DATE, MINIMUM_GO)
 }
 
 // Create a logger using log.* directives in app.conf plus the current settings
@@ -331,7 +334,7 @@ func addModule(name, importPath, modulePath string) {
 
 	// Hack: There is presently no way for the testrunner module to add the
 	// "test" subdirectory to the CodePaths.  So this does it instead.
-	if importPath == Config.StringDefault("module.testrunner", "github.com/revel/revel/modules/testrunner") {
+	if importPath == Config.StringDefault("module.testrunner", "github.com/revel/modules/testrunner") {
 		CodePaths = append(CodePaths, path.Join(BasePath, "tests"))
 	}
 }

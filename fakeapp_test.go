@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 	"path"
-	"path/filepath"
 	"reflect"
 )
 
@@ -59,7 +58,7 @@ func (c Static) Serve(prefix, filepath string) Result {
 }
 
 func startFakeBookingApp() {
-	Init("prod", "github.com/revel/revel/samples/booking", "")
+	Init("prod", "github.com/revel/revel/testdata", "")
 
 	// Disable logging.
 	TRACE = log.New(ioutil.Discard, "", 0)
@@ -67,12 +66,6 @@ func startFakeBookingApp() {
 	WARN = TRACE
 	ERROR = TRACE
 
-	runStartupHooks()
-
-	MainRouter = NewRouter("")
-	routesFile, _ := ioutil.ReadFile(filepath.Join(BasePath, "conf", "routes"))
-	MainRouter.Routes, _ = parseRoutes("", "", string(routesFile), false)
-	MainRouter.updateTree()
 	MainTemplateLoader = NewTemplateLoader([]string{ViewsPath, path.Join(RevelPath, "templates")})
 	MainTemplateLoader.Refresh()
 
@@ -86,7 +79,7 @@ func startFakeBookingApp() {
 				Args: []*MethodArg{
 					{"id", reflect.TypeOf((*int)(nil))},
 				},
-				RenderArgNames: map[int][]string{31: []string{"title", "hotel"}},
+				RenderArgNames: map[int][]string{30: []string{"title", "hotel"}},
 			},
 			&MethodType{
 				Name: "Book",
@@ -107,4 +100,6 @@ func startFakeBookingApp() {
 				RenderArgNames: map[int][]string{},
 			},
 		})
+
+	runStartupHooks()
 }

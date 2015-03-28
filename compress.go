@@ -44,16 +44,20 @@ type CompressResponseWriter struct {
 }
 
 func CompressFilter(c *Controller, fc []Filter) {
-	if Config.BoolDefault("results.compressed", false) {
-		writer := CompressResponseWriter{c.Response.Out, nil, "", false, make(chan bool, 1), nil, false}
-		writer.DetectCompressionType(c.Request, c.Response)
-		w, ok := c.Response.Out.(http.CloseNotifier)
-		if ok {
-			writer.parentNotify = w.CloseNotify()
-		}
-		c.Response.Out = &writer
-	}
 	fc[0](c, fc[1:])
+	if Config.BoolDefault("results.compressed", false) {
+		if c.Response.Status != http.StatusNoContent && c.Response.Status != http.StatusNotModified {
+			writer := CompressResponseWriter{c.Response.Out, nil, "", false, make(chan bool, 1), nil, false}
+			writer.DetectCompressionType(c.Request, c.Response)
+			w, ok := c.Response.Out.(http.CloseNotifier)
+			if ok {
+				writer.parentNotify = w.CloseNotify()
+			}
+			c.Response.Out = &writer
+		} else {
+			TRACE.Printf("Compression disabled for response status (%d)", c.Response.Status)
+		}
+	}
 }
 
 func (c CompressResponseWriter) CloseNotify() <-chan bool {
