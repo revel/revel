@@ -79,10 +79,10 @@ results.chunked = false
 
 
 # Prefixes for each log message line
-log.trace.prefix = "TRACE "
-log.info.prefix  = "INFO  "
-log.warn.prefix  = "WARN  "
-log.error.prefix = "ERROR "
+log.trace.prefix = "  TRACE "
+log.info.prefix  = "  "
+log.warn.prefix  = "  WARN "
+log.error.prefix = "  ERROR "
 
 
 # The default language of this application.

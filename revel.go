@@ -77,19 +77,21 @@ var (
 
 	//Logger colors
 	colors = map[string]gocolorize.Colorize{
-		"trace": gocolorize.NewColor("magenta"),
-		"info":  gocolorize.NewColor("green"),
-		"warn":  gocolorize.NewColor("yellow"),
-		"error": gocolorize.NewColor("red"),
+		"trace":   gocolorize.NewColor("magenta"),
+		"info":    gocolorize.NewColor("white"),
+		"sysinfo": gocolorize.NewColor("white"),
+		"warn":    gocolorize.NewColor("yellow"),
+		"error":   gocolorize.NewColor("red"),
 	}
 
 	error_log = revelLogs{c: colors["error"], w: os.Stderr}
 
 	// Loggers
-	TRACE = log.New(ioutil.Discard, "TRACE ", log.Ldate|log.Ltime|log.Lshortfile)
-	INFO  = log.New(ioutil.Discard, "INFO  ", log.Ldate|log.Ltime|log.Lshortfile)
-	WARN  = log.New(ioutil.Discard, "WARN  ", log.Ldate|log.Ltime|log.Lshortfile)
-	ERROR = log.New(&error_log, "ERROR ", log.Ldate|log.Ltime|log.Lshortfile)
+	TRACE   = log.New(ioutil.Discard, "  TRACE ", log.Ldate|log.Ltime|log.Lshortfile)
+	INFO    = log.New(ioutil.Discard, "  ", 0)
+	SYSINFO = log.New(ioutil.Discard, "", 0) // for Revel inner log
+	WARN    = log.New(ioutil.Discard, "  WARN ", log.Ldate|log.Ltime|log.Lshortfile)
+	ERROR   = log.New(&error_log, "  ERROR ", log.Ldate|log.Ltime|log.Lshortfile)
 
 	Initialized bool
 
@@ -197,13 +199,14 @@ func Init(mode, importPath, srcPath string) {
 
 	TRACE = getLogger("trace")
 	INFO = getLogger("info")
+	SYSINFO = getLogger("sysinfo")
 	WARN = getLogger("warn")
 	ERROR = getLogger("error")
 
 	loadModules()
 
 	Initialized = true
-	INFO.Printf("Initialized Revel v%s (%s) for %s", VERSION, BUILD_DATE, MINIMUM_GO)
+	SYSINFO.Printf("Initialized Revel v%s (%s) for %s", VERSION, BUILD_DATE, MINIMUM_GO)
 }
 
 // Create a logger using log.* directives in app.conf plus the current settings
@@ -326,7 +329,7 @@ func addModule(name, importPath, modulePath string) {
 		}
 	}
 
-	INFO.Print("Loaded module ", path.Base(modulePath))
+	SYSINFO.Print("Loaded module ", path.Base(modulePath))
 
 	// Hack: There is presently no way for the testrunner module to add the
 	// "test" subdirectory to the CodePaths.  So this does it instead.
