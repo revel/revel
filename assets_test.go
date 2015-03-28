@@ -15,7 +15,6 @@ var testAssetsFilters = []Filter{
 }
 
 func TestAssetsFilter(t *testing.T) {
-	asssetInited = false
 	startFakeBookingApp()
 	resp := httptest.NewRecorder()
 	getRequest, _ := http.NewRequest("GET", "/assets/stylesheets/app.css", nil)
@@ -26,7 +25,7 @@ func TestAssetsFilter(t *testing.T) {
 	body := strings.Replace(resp.Body.String(), "\n", "", -1)
 
 	if !strings.Contains(body, rightResponseBody) {
-		t.Fatal("Assets response body: ", body)
+		t.Fatal("Assets response expect", rightResponseBody, " but: ", body)
 	}
 
 	if resp.Code != 200 {

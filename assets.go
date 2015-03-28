@@ -6,10 +6,14 @@ import (
 )
 
 // Server /assets with [train]
-// https://github.com/shaoshing/train
+// https://github.com/huacnlee/train
 
 var AssetsFilter = func(c *Controller, fc []Filter) {
-	checkInitAssetsPipeline()
+	if !AssetsCompile {
+		fc[0](c, fc[1:])
+		return
+	}
+
 	path := c.Request.URL.Path
 	if strings.HasPrefix(path, "/assets") {
 		train.ServeRequest(c.Response.Out, c.Request.Request)
@@ -18,23 +22,35 @@ var AssetsFilter = func(c *Controller, fc []Filter) {
 	}
 }
 
-var asssetInited bool
+var (
+	initedAssets = false
+)
 
-func checkInitAssetsPipeline() {
-	if asssetInited {
+func initAssetsPipeline() {
+	if initedAssets {
 		return
 	}
 
 	train.Config.AssetsPath = AppPath + "/assets"
-	train.Config.SASS.DebugInfo = false
-	train.Config.Verbose = DevMode
 	train.Config.BundleAssets = true
-	train.ConfigureHttpHandler(nil)
 
-	asssetInited = true
+	if Config.BoolDefault("assets.debug", false) == false {
+		train.Config.SASS.DebugInfo = false
+		train.Config.Verbose = DevMode
+	}
+
+	if AssetsCompile {
+		train.ConfigureHttpHandler(nil)
+	}
+
+	initedAssets = true
 }
 
 func init() {
 	TemplateFuncs["javascript_include_tag"] = train.JavascriptTag
 	TemplateFuncs["stylesheet_link_tag"] = train.StylesheetTag
+
+	OnAppStart(func() {
+		initAssetsPipeline()
+	})
 }
