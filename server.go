@@ -22,7 +22,6 @@ var (
 // This method handles all requests.  It dispatches to handleInternal after
 // handling / adapting websocket connections.
 func handle(w http.ResponseWriter, r *http.Request) {
-
 	if maxRequestSize := int64(Config.IntDefault("http.maxrequestsize", 0)); maxRequestSize > 0 {
 		r.Body = http.MaxBytesReader(w, r.Body, maxRequestSize)
 	}
@@ -42,7 +41,8 @@ func handle(w http.ResponseWriter, r *http.Request) {
 
 func handleInternal(w http.ResponseWriter, r *http.Request, ws *websocket.Conn) {
 	t1 := time.Now()
-	INFO.Println("\nStarted", r.Method, r.URL.String(), "at", time.Now().Format(time.RFC3339), "from", r.RemoteAddr)
+	SYSINFO.SetPrefix("")
+	SYSINFO.Println("\nStarted", r.Method, r.URL.String(), "at", time.Now().Format(time.RFC3339), "from", r.RemoteAddr)
 
 	var (
 		req  = NewRequest(r)
@@ -63,7 +63,7 @@ func handleInternal(w http.ResponseWriter, r *http.Request, ws *websocket.Conn) 
 	}
 
 	duration := fmt.Sprintf("%.2fms", float64(time.Since(t1).Nanoseconds()/1e4)/100.0)
-	INFO.Println("\nComplated", c.Response.Status, "in", duration, "\n")
+	SYSINFO.Println("Complated", c.Response.Status, "in", duration, "\n")
 }
 
 // Run the server.

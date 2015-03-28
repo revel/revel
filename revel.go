@@ -78,7 +78,7 @@ var (
 	//Logger colors
 	colors = map[string]gocolorize.Colorize{
 		"trace": gocolorize.NewColor("magenta"),
-		"info":  gocolorize.NewColor("green"),
+		"info":  gocolorize.NewColor("white"),
 		"warn":  gocolorize.NewColor("yellow"),
 		"error": gocolorize.NewColor("red"),
 	}
@@ -86,10 +86,11 @@ var (
 	error_log = revelLogs{c: colors["error"], w: os.Stderr}
 
 	// Loggers
-	TRACE = log.New(ioutil.Discard, "TRACE ", log.Ldate|log.Ltime|log.Lshortfile)
-	INFO  = log.New(ioutil.Discard, "INFO  ", log.Ldate|log.Ltime|log.Lshortfile)
-	WARN  = log.New(ioutil.Discard, "WARN  ", log.Ldate|log.Ltime|log.Lshortfile)
-	ERROR = log.New(&error_log, "ERROR ", log.Ldate|log.Ltime|log.Lshortfile)
+	TRACE   = log.New(ioutil.Discard, "  TRACE ", log.Ldate|log.Ltime|log.Lshortfile)
+	INFO    = log.New(ioutil.Discard, "  ", log.Ldate|log.Ltime|log.Lshortfile)
+	SYSINFO = log.New(ioutil.Discard, "", 0) // for Revel inner log
+	WARN    = log.New(ioutil.Discard, "  WARN ", log.Ldate|log.Ltime|log.Lshortfile)
+	ERROR   = log.New(&error_log, "  ERROR ", log.Ldate|log.Ltime|log.Lshortfile)
 
 	Initialized bool
 
@@ -197,6 +198,7 @@ func Init(mode, importPath, srcPath string) {
 
 	TRACE = getLogger("trace")
 	INFO = getLogger("info")
+	SYSINFO = getLogger("info")
 	WARN = getLogger("warn")
 	ERROR = getLogger("error")
 
