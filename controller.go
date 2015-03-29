@@ -70,6 +70,32 @@ func (c *Controller) setStatusIfNil(status int) {
 	}
 }
 
+// Useful method to give a Result and break off action call stack.
+//
+// For example:
+//
+//   func (c Posts) requireUser {
+//     if c.Session["user_id"] == 0 {
+//       c.Finish(c.Redirect("/login"))
+//     }
+//   }
+//
+//   func (c Posts) Edit() revel.Result {
+//     c.requireUser()
+//     // Follow code will not run, if requireUser called c.Finish
+//     posts := DB.FindPosts()
+//     c.RenderArgs["posts"] = posts
+//     return c.Render()
+//   }
+//
+// - No login: [GET /posts/1/edit] -> [Require user] -> [Redirect] -> [End]
+// - Logined:  [GET /posts/1/edit] -> [Require user] -> [FindPosts] -> [Render] -> [End]
+//
+func (c *Controller) Finish(r Result) {
+	r.Apply(c.Request, c.Response)
+	panic(nil)
+}
+
 // Render a template corresponding to the calling Controller method.
 // Arguments will be added to c.RenderArgs prior to rendering the template.
 // They are keyed on their local identifier.
