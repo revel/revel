@@ -77,19 +77,19 @@ var (
 
 	//Logger colors
 	colors = map[string]gocolorize.Colorize{
-		"trace":   gocolorize.NewColor("magenta"),
-		"info":    gocolorize.NewColor("white"),
-		"warn":    gocolorize.NewColor("yellow"),
-		"error":   gocolorize.NewColor("red"),
+		"trace": gocolorize.NewColor("magenta"),
+		"info":  gocolorize.NewColor("white"),
+		"warn":  gocolorize.NewColor("yellow"),
+		"error": gocolorize.NewColor("red"),
 	}
 
 	error_log = revelLogs{c: colors["error"], w: os.Stderr}
 
 	// Loggers
-	TRACE   = log.New(ioutil.Discard, "TRACE ", log.Ldate|log.Ltime|log.Lshortfile)
-	INFO    = log.New(ioutil.Discard, "", 0)
-	WARN    = log.New(ioutil.Discard, "WARN ", log.Ldate|log.Ltime|log.Lshortfile)
-	ERROR   = log.New(&error_log, "ERROR ", log.Ldate|log.Ltime|log.Lshortfile)
+	TRACE = log.New(ioutil.Discard, "TRACE ", log.Ldate|log.Ltime|log.Lshortfile)
+	INFO  = log.New(ioutil.Discard, "", 0)
+	WARN  = log.New(ioutil.Discard, "WARN ", log.Ldate|log.Ltime|log.Lshortfile)
+	ERROR = log.New(&error_log, "ERROR ", log.Ldate|log.Ltime|log.Lshortfile)
 
 	Initialized bool
 
