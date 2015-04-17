@@ -41,8 +41,7 @@ func handle(w http.ResponseWriter, r *http.Request) {
 
 func handleInternal(w http.ResponseWriter, r *http.Request, ws *websocket.Conn) {
 	t1 := time.Now()
-	SYSINFO.SetPrefix("")
-	SYSINFO.Println("\nStarted", r.Method, r.URL.String(), "at", time.Now().Format(time.RFC3339), "from", r.RemoteAddr)
+	INFO.Println("\nStarted", r.Method, r.URL.String(), "at", time.Now().Format(time.RFC3339), "from", r.RemoteAddr)
 
 	var (
 		req  = NewRequest(r)
@@ -63,7 +62,7 @@ func handleInternal(w http.ResponseWriter, r *http.Request, ws *websocket.Conn) 
 	}
 
 	duration := fmt.Sprintf("%.2fms", float64(time.Since(t1).Nanoseconds()/1e4)/100.0)
-	SYSINFO.Println("Completed", c.Response.Status, "in", duration, "\n")
+	INFO.Println("Completed", c.Response.Status, "in", duration, "\n")
 }
 
 // Run the server.
