@@ -79,7 +79,6 @@ var (
 	colors = map[string]gocolorize.Colorize{
 		"trace":   gocolorize.NewColor("magenta"),
 		"info":    gocolorize.NewColor("white"),
-		"sysinfo": gocolorize.NewColor("white"),
 		"warn":    gocolorize.NewColor("yellow"),
 		"error":   gocolorize.NewColor("red"),
 	}
