@@ -1,7 +1,6 @@
 package config
 
 import (
-	"errors"
 	"path"
 	"strings"
 
@@ -18,19 +17,17 @@ type Context struct {
 }
 
 func NewContext() *Context {
-	return &Context{config.NewDefault(), ""}
+	return &Context{config: config.NewDefault()}
 }
 
 func LoadContext(confName string, confPaths []string) (*Context, error) {
 	var err error
+	var conf *config.Config
 	for _, confPath := range confPaths {
-		conf, err := config.ReadDefault(path.Join(confPath, confName))
+		conf, err = config.ReadDefault(path.Join(confPath, confName))
 		if err == nil {
-			return &Context{conf, ""}, nil
+			return &Context{config: conf}, nil
 		}
-	}
-	if err == nil {
-		err = errors.New("not found")
 	}
 	return nil, err
 }
