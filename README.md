@@ -7,6 +7,7 @@ Current Version: 0.12.0 (Mar 25, 2015)
 **As of Revel 0.11.0, Go 1.3+ is required.**
 
 [![Build Status](https://secure.travis-ci.org/revel/revel.svg?branch=master)](http://travis-ci.org/revel/revel)
+[![Comment-on-Github.Party](https://img.shields.io/badge/Comment%20on-Github.Party-yellow.svg)](https://github.party/item?id=58)
 
 ## Learn More
 
