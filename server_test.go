@@ -95,6 +95,23 @@ func getFileSize(t *testing.T, name string) int64 {
 	return fi.Size()
 }
 
+func TestOnAppStart(t *testing.T) {
+	str := ""
+	OnAppStart(func() {
+		str += " World"
+	}, 2)
+
+	OnAppStart(func() {
+		str += "Hello"
+	}, 1)
+
+	startFakeBookingApp()
+	if str != "Hello World" {
+		t.Errorf("Failed to order OnAppStart:\n%s", str)
+		t.FailNow()
+	}
+}
+
 var (
 	showRequest, _      = http.NewRequest("GET", "/hotels/3", nil)
 	staticRequest, _    = http.NewRequest("GET", "/public/js/sessvars.js", nil)
