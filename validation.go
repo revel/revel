@@ -212,7 +212,7 @@ func ValidationFilter(c *Controller, fc []Filter) {
 			Value:    url.QueryEscape(errorsValue),
 			Domain:   CookieDomain,
 			Path:     "/",
-			HttpOnly: CookieHttpOnly,
+			HttpOnly: true,
 			Secure:   CookieSecure,
 		})
 	} else if hasCookie {
@@ -221,7 +221,7 @@ func ValidationFilter(c *Controller, fc []Filter) {
 			MaxAge:   -1,
 			Domain:   CookieDomain,
 			Path:     "/",
-			HttpOnly: CookieHttpOnly,
+			HttpOnly: true,
 			Secure:   CookieSecure,
 		})
 	}
