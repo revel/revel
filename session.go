@@ -87,7 +87,7 @@ func (s Session) Cookie() *http.Cookie {
 		Value:    Sign(sessionData) + "-" + sessionData,
 		Domain:   CookieDomain,
 		Path:     "/",
-		HttpOnly: CookieHttpOnly,
+		HttpOnly: true,
 		Secure:   CookieSecure,
 		Expires:  ts.UTC(),
 	}

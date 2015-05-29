@@ -72,8 +72,7 @@ var (
 	// Cookie domain
 	CookieDomain string
 	// Cookie flags
-	CookieHttpOnly bool
-	CookieSecure   bool
+	CookieSecure bool
 
 	// Delimiters to use when rendering templates
 	TemplateDelims string
@@ -190,8 +189,7 @@ func Init(mode, importPath, srcPath string) {
 	AppRoot = Config.StringDefault("app.root", "")
 	CookiePrefix = Config.StringDefault("cookie.prefix", "REVEL")
 	CookieDomain = Config.StringDefault("cookie.domain", "")
-	CookieHttpOnly = Config.BoolDefault("cookie.httponly", false)
-	CookieSecure = Config.BoolDefault("cookie.secure", false)
+	CookieSecure = Config.BoolDefault("cookie.secure", !DevMode)
 	TemplateDelims = Config.StringDefault("template.delimiters", "")
 	if secretStr := Config.StringDefault("app.secret", ""); secretStr != "" {
 		secretKey = []byte(secretStr)
