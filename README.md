@@ -2,9 +2,7 @@
 
 A high productivity, full-stack web framework for the [Go language](http://www.golang.org).
 
-Current Version: 0.11.3 (Jan 3, 2015)
-
-**As of Revel 0.11.0, Go 1.3+ is required.**
+Current Version: 0.12.0 (Mar 25, 2015)
 
 **As of Revel 0.11.0, Go 1.3+ is required.**
 
@@ -13,6 +11,8 @@ Current Version: 0.11.3 (Jan 3, 2015)
 ## Learn More
 
 [Manual, Samples, Godocs, etc](http://revel.github.com)
+[Revel's Roadmap](https://github.com/revel/revel/wiki/Roadmap)
+[Articles Featuring Revel](https://github.com/revel/revel/wiki/Articles)
 
 ## Join The Community
 
@@ -23,20 +23,7 @@ Current Version: 0.11.3 (Jan 3, 2015)
 
 ## Announcements
 
-View the [v0.11.0 release notes](https://github.com/revel/revel/releases/tag/v0.11.0)
+View the [v0.12.0 release notes](https://github.com/revel/revel/releases/tag/v0.12.0)
 for all of the relevant changes.
 
-We are now encouraging the community to both ask and answer common Revel workflow questions
-on [StackOverflow](http://stackoverflow.com/questions/tagged/revel). Our hope is that this
-will help grow our community a well as relieve the core development team's cognitive load
-and therefore allow them the time they need to reach the goals on
-[Revel's Roadmap](https://github.com/revel/revel/wiki/Roadmap).
-
-The new Roadmap wiki page will allow us to more quickly complete Revel's v1.0 feature set
-goal. Please join us on our mailing list to discuss the Roadmap and any thoughts you may have.
-
-One final note, we have added a [Collection of Articles](https://github.com/revel/revel/wiki/Articles)
-that discuss Revel and developer's opinion on our chosen approach. The goal here is to stay in touch
-with pracitcality and remaing open to feedback.
-
-As always, thanks for your continued support!
+We are working on increasing the speed and quality of our releases. Your feedback has never been so valuable, please share your thoughts with us and help shape Revel!

@@ -112,8 +112,8 @@ func Run(port int) {
 	Server = &http.Server{
 		Addr:         localAddress,
 		Handler:      http.HandlerFunc(handle),
-		ReadTimeout:  time.Minute,
-		WriteTimeout: time.Minute,
+		ReadTimeout:  time.Duration(Config.IntDefault("timeout.read", 0)) * time.Second,
+		WriteTimeout: time.Duration(Config.IntDefault("timeout.write", 0)) * time.Second,
 	}
 
 	InitServer()
