@@ -119,6 +119,14 @@ func (c *MergedConfig) Options(prefix string) []string {
 	return options
 }
 
+// New other section config.
+func (c *MergedConfig) NewSectionalizeConfig(section string) MergedConfig {
+	return MergedConfig{
+		config:  c.config,
+		section: section,
+	}
+}
+
 // Helpers
 
 func stripQuotes(s string) string {
