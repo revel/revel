@@ -8,14 +8,29 @@ Current Version: 0.12.0 (Mar 25, 2015)
 
 [![Build Status](https://secure.travis-ci.org/revel/revel.svg?branch=master)](http://travis-ci.org/revel/revel)
 
+## Quick Start
+
+Install revel framework and command line tool:
+
+	go get github.com/revel/revel
+	go get github.com/revel/cmd/revel
+
+Create a new app and run it:
+
+	revel new github.com/myaccount/my-app
+	revel run github.com/myaccount/my-app
+
+Open http://localhost:9000 in your browser and you should see "It works!"
+
 ## Learn More
 
 [Manual, Samples, Godocs, etc](http://revel.github.com)
 [Revel's Roadmap](https://github.com/revel/revel/wiki/Roadmap)
 [Articles Featuring Revel](https://github.com/revel/revel/wiki/Articles)
 
-## Join The Community
+## Contributing
 
+* [Contributing Code Guidelines](https://github.com/revel/revel/blob/master/CONTRIBUTING.md)
 * [Google Groups](https://groups.google.com/forum/#!forum/revel-framework) via [revel-framework@googlegroups.com](mailto:revel-framework@googlegroups.com)
 * [GitHub Issues](https://github.com/revel/revel/issues)
 * [StackOverflow Questions](http://stackoverflow.com/questions/tagged/revel)
