@@ -139,10 +139,14 @@ func Init(mode, importPath, srcPath string) {
 
 	CodePaths = []string{AppPath}
 
-	ConfPaths = []string{
+	if ConfPaths == nil {
+		ConfPaths = []string{}
+	}
+	ConfPaths = append(
+		ConfPaths,
 		path.Join(BasePath, "conf"),
 		path.Join(RevelPath, "conf"),
-	}
+	)
 
 	TemplatePaths = []string{
 		ViewsPath,
