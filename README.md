@@ -10,10 +10,9 @@ Current Version: 0.12.0 (Mar 25, 2015)
 
 ## Quick Start
 
-Install revel framework and command line tool:
+Install revel framework:
 
-	go get github.com/revel/revel
-	go get github.com/revel/cmd/revel
+	go get -u github.com/revel/cmd/revel
 
 Create a new app and run it:
 
