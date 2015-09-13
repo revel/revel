@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"log/syslog"
 	"os"
 	"path"
 	"path/filepath"
@@ -221,6 +222,13 @@ func getLogger(name string) *log.Logger {
 		logger = newLogger(&newlog)
 	case "stderr":
 		newlog = revelLogs{c: colors[name], w: os.Stderr}
+		logger = newLogger(&newlog)
+	case "syslog":
+		sysLog, err := syslog.New(syslog.LOG_NOTICE|syslog.LOG_LOCAL0, AppName)
+		if err != nil {
+			log.Fatalln("Failed to create syslog ", err)
+		}
+		newlog = revelLogs{c: colors[name], w: sysLog}
 		logger = newLogger(&newlog)
 	default:
 		if output == "off" {
