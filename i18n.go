@@ -12,11 +12,12 @@ import (
 const (
 	CurrentLocaleRenderArg = "currentLocale" // The key for the current locale render arg value
 
-	messageFilesDirectory = "messages"
-	messageFilePattern    = `^\w+\.[a-zA-Z]{2}$`
-	unknownValueFormat    = "??? %s ???"
-	defaultLanguageOption = "i18n.default_language"
-	localeCookieConfigKey = "i18n.cookie"
+	messageFilesDirectory  = "messages"
+	messageFilePattern     = `^\w+\.[a-zA-Z]{2}$`
+	defaultUnknownFormat   = "??? %s ???"
+	unknownFormatConfigKey = "i18n.unknown_format"
+	defaultLanguageOption  = "i18n.default_language"
+	localeCookieConfigKey  = "i18n.cookie"
 )
 
 var (
@@ -40,6 +41,7 @@ func MessageLanguages() []string {
 // When either an unknown locale or message is detected, a specially formatted string is returned.
 func Message(locale, message string, args ...interface{}) string {
 	language, region := parseLocale(locale)
+	unknownValueFormat := getUnknownValueFormat()
 
 	messageConfig, knownLanguage := messages[language]
 	if !knownLanguage {
@@ -82,6 +84,11 @@ func parseLocale(locale string) (language, region string) {
 	}
 
 	return locale, ""
+}
+
+// Retrieve message format or default format when i18n message is missing.
+func getUnknownValueFormat() string {
+	return Config.StringDefault(unknownFormatConfigKey, defaultUnknownFormat)
 }
 
 // Recursively read and cache all available messages from all message files on the given path.
