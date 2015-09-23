@@ -126,7 +126,7 @@ var (
 			if !ok {
 				return ""
 			}
-			return template.HTML(Message(str, message, args...))
+			return template.HTML(MessageFunc(str, message, args...))
 		},
 
 		// Replaces newlines with <br>

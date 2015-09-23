@@ -25,6 +25,14 @@ var (
 	messages map[string]*config.Config
 )
 
+// Setting MessageFunc allows you to override the translation interface.
+//
+// Set this to your own function that translates to the current locale.
+// This allows you to set up your own loading and logging of translated texts.
+//
+// See Message(...) in i18n.go for example of function.
+var MessageFunc func(locale, message string, args ...interface{}) (value string) = Message
+
 // Return all currently loaded message languages.
 func MessageLanguages() []string {
 	languages := make([]string, len(messages))
