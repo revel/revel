@@ -35,7 +35,6 @@ var (
 	AppPath    string // e.g. "/Users/robfig/gocode/src/corp/sample/app"
 	ViewsPath  string // e.g. "/Users/robfig/gocode/src/corp/sample/app/views"
 	ImportPath string // e.g. "corp/sample"
-	SourcePath string // e.g. "/Users/robfig/gocode/src"
 
 	Config  *MergedConfig
 	RunMode string // Application-defined (by default, "dev" or "prod")
@@ -112,7 +111,7 @@ func init() {
 func Init(mode, importPath, srcPath string) {
 	// Ignore trailing slashes.
 	ImportPath = strings.TrimRight(importPath, "/")
-	SourcePath = srcPath
+	sourcePath := srcPath
 	RunMode = mode
 
 	if runtime.GOOS == "windows" {
@@ -121,17 +120,37 @@ func Init(mode, importPath, srcPath string) {
 
 	// If the SourcePath is not specified, find it using build.Import.
 	var revelSourcePath string // may be different from the app source path
-	if SourcePath == "" {
-		revelSourcePath, SourcePath = findSrcPaths(importPath)
+	if sourcePath == "" {
+		revelSourcePath, sourcePath = findSrcPaths(ImportPath)
 	} else {
 		// If the SourcePath was specified, assume both Revel and the app are within it.
-		SourcePath = path.Clean(SourcePath)
-		revelSourcePath = SourcePath
+		sourcePath = path.Clean(sourcePath)
+		revelSourcePath = sourcePath
 		packaged = true
 	}
 
+	basePath := path.Join(sourcePath, filepath.FromSlash(importPath))
+
+	InitDirectly(mode, revelSourcePath, basePath)
+}
+
+// InitDirectly initializes Revel directly with the src path to Revel and
+// an application's BasePath.
+//
+// This is assumed to be a packaged Revel deployment.
+//
+// Params:
+//   mode - the run mode, which determines which app.conf settings are used.
+//   revelSourcePath - the path to the src directory that contains Revel
+//   basePath - the path to the app
+func InitDirectly(mode, revelSourcePath, basePath string) {
+	packaged = true
+	initialize(mode, revelSourcePath, basePath)
+}
+
+func initialize(mode, revelSourcePath, basePath string) {
 	RevelPath = path.Join(revelSourcePath, filepath.FromSlash(REVEL_IMPORT_PATH))
-	BasePath = path.Join(SourcePath, filepath.FromSlash(importPath))
+	BasePath = basePath
 	AppPath = path.Join(BasePath, "app")
 	ViewsPath = path.Join(AppPath, "views")
 
@@ -200,7 +219,7 @@ func Init(mode, importPath, srcPath string) {
 	WARN = getLogger("warn")
 	ERROR = getLogger("error")
 
-	loadModules()
+	loadModules(revelSourcePath)
 
 	Initialized = true
 	INFO.Printf("Initialized Revel v%s (%s) for %s", VERSION, BUILD_DATE, MINIMUM_GO)
@@ -288,14 +307,14 @@ type Module struct {
 	Name, ImportPath, Path string
 }
 
-func loadModules() {
+func loadModules(sourcePath string) {
 	for _, key := range Config.Options("module.") {
 		moduleImportPath := Config.StringDefault(key, "")
 		if moduleImportPath == "" {
 			continue
 		}
 
-		modulePath, err := ResolveImportPath(moduleImportPath)
+		modulePath, err := ResolveImportPath(sourcePath, moduleImportPath)
 		if err != nil {
 			log.Fatalln("Failed to load module.  Import of", moduleImportPath, "failed:", err)
 		}
@@ -305,9 +324,9 @@ func loadModules() {
 
 // ResolveImportPath returns the filesystem path for the given import path.
 // Returns an error if the import path could not be found.
-func ResolveImportPath(importPath string) (string, error) {
+func ResolveImportPath(sourcePath, importPath string) (string, error) {
 	if packaged {
-		return path.Join(SourcePath, importPath), nil
+		return path.Join(sourcePath, importPath), nil
 	}
 
 	modPkg, err := build.Import(importPath, "", build.FindOnly)
