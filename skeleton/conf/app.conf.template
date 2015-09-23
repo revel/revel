@@ -125,6 +125,11 @@ watch = true
 watcher.mode = "normal"
 
 
+# Use revel to compile Assets Pileline in real time.
+assets.compile = true
+assets.debug = true
+
+
 # Module to run code tests in the browser
 # See:
 #   http://revel.github.io/manual/testing.html
@@ -154,6 +159,8 @@ results.pretty = false
 
 watch = false
 
+# "revel package" command will compile asset files to public/assets, so you don't need this.
+assets.compile = false
 
 module.testrunner =
 

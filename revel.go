@@ -37,9 +37,10 @@ var (
 	ImportPath string // e.g. "corp/sample"
 	SourcePath string // e.g. "/Users/robfig/gocode/src"
 
-	Config  *MergedConfig
-	RunMode string // Application-defined (by default, "dev" or "prod")
-	DevMode bool   // if true, RunMode is a development mode.
+	Config        *MergedConfig
+	RunMode       string // Application-defined (by default, "dev" or "prod")
+	DevMode       bool   // if true, RunMode is a development mode.
+	AssetsCompile bool   // by default: true
 
 	// Revel installation details
 	RevelPath string // e.g. "/Users/robfig/gocode/src/revel"
@@ -194,6 +195,9 @@ func Init(mode, importPath, srcPath string) {
 	if !Config.BoolDefault("log.colorize", true) {
 		gocolorize.SetPlain(true)
 	}
+
+	// Assets Pipeline
+	AssetsCompile = Config.BoolDefault("assets.compile", true)
 
 	TRACE = getLogger("trace")
 	INFO = getLogger("info")

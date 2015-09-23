@@ -1,9 +1,13 @@
 language: go
 go: 1.3
+node_js:
+  - "0.10"
 services:
   - memcache # github.com/revel/revel/cache
   - redis-server
 install:
+  - npm install -g node-sass@2.0.1
+  - npm install -g coffee-script@1.6.2
   - export PATH=$PATH:$HOME/gopath/bin
   - export REVEL_BRANCH="develop"
   - 'if [[ "$TRAVIS_BRANCH" == "master" ]]; then export REVEL_BRANCH="master"; fi'

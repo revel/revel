@@ -5,6 +5,7 @@ import "github.com/revel/revel"
 func init() {
 	// Filters is the default set of global filters.
 	revel.Filters = []revel.Filter{
+		revel.AssetsFilter,            // Assets Piepieline server files in /assets
 		revel.PanicFilter,             // Recover from panics and display an error page instead.
 		revel.RouterFilter,            // Use the routing table to select the right Action
 		revel.FilterConfiguringFilter, // A hook for adding or removing per-Action filters.

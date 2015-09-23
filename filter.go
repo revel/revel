@@ -5,6 +5,7 @@ type Filter func(c *Controller, filterChain []Filter)
 // Filters is the default set of global filters.
 // It may be set by the application on initialization.
 var Filters = []Filter{
+	AssetsFilter,            // Assets Piepieline server files in /assets
 	PanicFilter,             // Recover from panics and display an error page instead.
 	RouterFilter,            // Use the routing table to select the right Action.
 	FilterConfiguringFilter, // A hook for adding or removing per-Action filters.
