@@ -206,7 +206,7 @@ func loadTestI18nConfigWithoutLanguageCookieOption(t *testing.T) {
 
 func loadTestI18nConfigWithUnknowFormatOption(t *testing.T) {
 	loadTestI18nConfig(t)
-	Config.config.AddOption("DEFAULT", "i18n.unknown_format", "*** %s ***")
+	Config.Raw().AddOption("DEFAULT", "i18n.unknown_format", "*** %s ***")
 }
 
 func buildRequestWithCookie(name, value string) *Request {
