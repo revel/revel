@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"testing"
 	"time"
+
+	"github.com/revel/revel/config"
 )
 
 const (
@@ -189,9 +191,9 @@ func excludeFromTimer(b *testing.B, f func()) {
 
 func loadTestI18nConfig(t *testing.T) {
 	ConfPaths = append(ConfPaths, testConfigPath)
-	testConfig, error := LoadConfig(testConfigName)
-	if error != nil {
-		t.Fatalf("Unable to load test config '%s': %s", testConfigName, error.Error())
+	testConfig, err := config.LoadContext(testConfigName, ConfPaths)
+	if err != nil {
+		t.Fatalf("Unable to load test config '%s': %s", testConfigName, err.Error())
 	}
 	Config = testConfig
 	CookiePrefix = Config.StringDefault("cookie.prefix", "REVEL")
@@ -199,7 +201,7 @@ func loadTestI18nConfig(t *testing.T) {
 
 func loadTestI18nConfigWithoutLanguageCookieOption(t *testing.T) {
 	loadTestI18nConfig(t)
-	Config.config.RemoveOption("DEFAULT", "i18n.cookie")
+	Config.Raw().RemoveOption("DEFAULT", "i18n.cookie")
 }
 
 func loadTestI18nConfigWithUnknowFormatOption(t *testing.T) {
