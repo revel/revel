@@ -36,14 +36,6 @@ http.ssl = false
 # the fields of:
 # http://golang.org/pkg/net/http/#Cookie
 #
-# The HttpOnly attribute is supported by most modern browsers. On a supported
-# browser, an HttpOnly session cookie will be used only when transmitting HTTP
-# (or HTTPS) requests, thus restricting access from other, non-HTTP APIs (such
-# as JavaScript). This restriction mitigates, but does not eliminate the threat
-# of session cookie theft via cross-site scripting (XSS). This feature applies
-# only to session-management cookies, and not other browser cookies.
-cookie.httponly = false
-
 # Each cookie set by Revel is prefixed with this string.
 cookie.prefix = REVEL
 
@@ -51,7 +43,10 @@ cookie.prefix = REVEL
 # ensuring that the cookie is always encrypted when transmitting from client to
 # server. This makes the cookie less likely to be exposed to cookie theft via
 # eavesdropping.
-cookie.secure = false
+#
+# In dev mode, this will default to false, otherwise it will
+# default to true.
+# cookie.secure = false
 
 # Limit cookie access to a given domain
 #cookie.domain =
