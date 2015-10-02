@@ -119,6 +119,9 @@ watch = true
 # your application every time your application's files change.
 watcher.mode = "normal"
 
+# Watch the entire $GOPATH for code changes. Default is false.
+#watch.gopath = true
+
 
 # Module to run code tests in the browser
 # See:
