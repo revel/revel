@@ -1,8 +1,6 @@
 package revel
 
 import (
-	"github.com/agtorre/gocolorize"
-	"github.com/robfig/config"
 	"go/build"
 	"io"
 	"io/ioutil"
@@ -12,6 +10,11 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+
+	revConfig "github.com/revel/revel/config"
+
+	"github.com/agtorre/gocolorize"
+	"github.com/robfig/config"
 )
 
 const (
@@ -37,7 +40,7 @@ var (
 	ImportPath string // e.g. "corp/sample"
 	SourcePath string // e.g. "/Users/robfig/gocode/src"
 
-	Config  *MergedConfig
+	Config  *revConfig.Context
 	RunMode string // Application-defined (by default, "dev" or "prod")
 	DevMode bool   // if true, RunMode is a development mode.
 
@@ -69,8 +72,7 @@ var (
 	// Cookie domain
 	CookieDomain string
 	// Cookie flags
-	CookieHttpOnly bool
-	CookieSecure   bool
+	CookieSecure bool
 
 	// Delimiters to use when rendering templates
 	TemplateDelims string
@@ -137,10 +139,14 @@ func Init(mode, importPath, srcPath string) {
 
 	CodePaths = []string{AppPath}
 
-	ConfPaths = []string{
+	if ConfPaths == nil {
+		ConfPaths = []string{}
+	}
+	ConfPaths = append(
+		ConfPaths,
 		path.Join(BasePath, "conf"),
 		path.Join(RevelPath, "conf"),
-	}
+	)
 
 	TemplatePaths = []string{
 		ViewsPath,
@@ -149,7 +155,7 @@ func Init(mode, importPath, srcPath string) {
 
 	// Load app.conf
 	var err error
-	Config, err = LoadConfig("app.conf")
+	Config, err = revConfig.LoadContext("app.conf", ConfPaths)
 	if err != nil || Config == nil {
 		log.Fatalln("Failed to load app.conf:", err)
 	}
@@ -183,8 +189,7 @@ func Init(mode, importPath, srcPath string) {
 	AppRoot = Config.StringDefault("app.root", "")
 	CookiePrefix = Config.StringDefault("cookie.prefix", "REVEL")
 	CookieDomain = Config.StringDefault("cookie.domain", "")
-	CookieHttpOnly = Config.BoolDefault("cookie.httponly", false)
-	CookieSecure = Config.BoolDefault("cookie.secure", false)
+	CookieSecure = Config.BoolDefault("cookie.secure", !DevMode)
 	TemplateDelims = Config.StringDefault("template.delimiters", "")
 	if secretStr := Config.StringDefault("app.secret", ""); secretStr != "" {
 		secretKey = []byte(secretStr)

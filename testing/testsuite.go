@@ -133,6 +133,18 @@ func (t *TestSuite) PutCustom(uri string, contentType string, reader io.Reader) 
 	return t.NewTestRequest(req)
 }
 
+// Issue a PUT request to the given path as a form put of the given key and
+// values, and store the result in Response and ResponseBody.
+func (t *TestSuite) PutForm(path string, data url.Values) {
+    t.PutFormCustom(t.BaseUrl()+path, data).Send()
+}
+
+// Return a PUT request to the given uri as a form put of the given key and values.
+// The request is in a form of TestRequest wrapper.
+func (t *TestSuite) PutFormCustom(uri string, data url.Values) *TestRequest {
+    return t.PutCustom(uri, "application/x-www-form-urlencoded", strings.NewReader(data.Encode()))
+}
+
 // Issue a PATCH request to the given path, sending the given Content-Type and
 // data, and store the result in Response and ResponseBody.  "data" may be nil.
 func (t *TestSuite) Patch(path string, contentType string, reader io.Reader) {

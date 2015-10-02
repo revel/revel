@@ -9,6 +9,8 @@ import (
 	"reflect"
 	"regexp"
 	"strings"
+
+	"github.com/revel/revel/config"
 )
 
 // Add some more methods to the default Template.
@@ -79,12 +81,12 @@ func ParseKeyValueCookie(val string, cb func(key, val string)) {
 
 const DefaultFileContentType = "application/octet-stream"
 
-var mimeConfig *MergedConfig
+var mimeConfig *config.Context
 
 // Load mime-types.conf on init.
 func LoadMimeConfig() {
 	var err error
-	mimeConfig, err = LoadConfig("mime-types.conf")
+	mimeConfig, err = config.LoadContext("mime-types.conf", ConfPaths)
 	if err != nil {
 		ERROR.Fatalln("Failed to load mime type config:", err)
 	}

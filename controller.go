@@ -260,7 +260,7 @@ func (c *Controller) Redirect(val interface{}, args ...interface{}) Result {
 //
 // The current language is set by the i18n plugin.
 func (c *Controller) Message(message string, args ...interface{}) (value string) {
-	return Message(c.Request.Locale, message, args...)
+	return MessageFunc(c.Request.Locale, message, args...)
 }
 
 // SetAction sets the action that is being invoked in the current request.
