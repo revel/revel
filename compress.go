@@ -1,12 +1,13 @@
 package revel
 
 import (
-	"compress/gzip"
-	"compress/zlib"
 	"io"
 	"net/http"
 	"strconv"
 	"strings"
+
+	"github.com/klauspost/compress/gzip"
+	"github.com/klauspost/compress/zlib"
 )
 
 var compressionTypes = [...]string{
