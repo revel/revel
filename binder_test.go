@@ -77,6 +77,10 @@ var (
 		"m2[2]":           {"bar"},
 		"m3[a]":           {"1"},
 		"m3[b]":           {"2"},
+		"m4[a].Id":        {"1"},
+		"m4[a].Name":      {"foo"},
+		"m4[b].Id":        {"2"},
+		"m4[b].Name":      {"bar"},
 		"invalidInt":      {"xyz"},
 		"invalidInt2":     {""},
 		"invalidBool":     {"xyz"},
@@ -133,6 +137,7 @@ var binderTestCases = map[string]interface{}{
 	"m":  map[string]string{"a": "foo", "b": "bar"},
 	"m2": map[int]string{1: "foo", 2: "bar"},
 	"m3": map[string]int{"a": 1, "b": 2},
+	"m4": map[string]A{"a": A{Id: 1, Name: "foo"}, "b": A{Id: 2, Name: "bar"}},
 
 	// TODO: Tests that use TypeBinders
 

@@ -448,13 +448,17 @@ func bindMap(params *Params, name string, typ reflect.Type) reflect.Value {
 		keyType   = typ.Key()
 		valueType = typ.Elem()
 	)
-	for paramName, values := range params.Values {
-		if !strings.HasPrefix(paramName, name+"[") || paramName[len(paramName)-1] != ']' {
+	for paramName, _ := range params.Values {
+		suffix := paramName[len(name)+1:]
+		fieldName := nextKey(suffix)
+		if fieldName != "" {
+			fieldName = fieldName[:len(fieldName)-1]
+		}
+		if !strings.HasPrefix(paramName, name+"["+fieldName+"]") {
 			continue
 		}
 
-		key := paramName[len(name)+1 : len(paramName)-1]
-		result.SetMapIndex(BindValue(key, keyType), BindValue(values[0], valueType))
+		result.SetMapIndex(BindValue(fieldName, keyType), Bind(params, name+"["+fieldName+"]", valueType))
 	}
 	return result
 }
