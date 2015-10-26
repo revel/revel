@@ -18,7 +18,8 @@ import (
 )
 
 const (
-	REVEL_IMPORT_PATH = "github.com/revel/revel"
+	REVEL_TEMPLATE_ENGINE = "template.engine"
+	REVEL_IMPORT_PATH     = "github.com/revel/revel"
 )
 
 type revelLogs struct {
@@ -73,9 +74,6 @@ var (
 	CookieDomain string
 	// Cookie flags
 	CookieSecure bool
-
-	// Delimiters to use when rendering templates
-	TemplateDelims string
 
 	//Logger colors
 	colors = map[string]gocolorize.Colorize{
@@ -150,7 +148,6 @@ func Init(mode, importPath, srcPath string) {
 
 	TemplatePaths = []string{
 		ViewsPath,
-		path.Join(RevelPath, "templates"),
 	}
 
 	// Load app.conf
@@ -190,7 +187,6 @@ func Init(mode, importPath, srcPath string) {
 	CookiePrefix = Config.StringDefault("cookie.prefix", "REVEL")
 	CookieDomain = Config.StringDefault("cookie.domain", "")
 	CookieSecure = Config.BoolDefault("cookie.secure", !DevMode)
-	TemplateDelims = Config.StringDefault("template.delimiters", "")
 	if secretStr := Config.StringDefault("app.secret", ""); secretStr != "" {
 		secretKey = []byte(secretStr)
 	}
@@ -204,6 +200,10 @@ func Init(mode, importPath, srcPath string) {
 	INFO = getLogger("info")
 	WARN = getLogger("warn")
 	ERROR = getLogger("error")
+
+	if GO_TEMPLATE == Config.StringDefault(REVEL_TEMPLATE_ENGINE, GO_TEMPLATE) {
+		TemplatePaths = append(TemplatePaths, path.Join(RevelPath, "templates"))
+	}
 
 	loadModules()
 

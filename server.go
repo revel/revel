@@ -110,7 +110,7 @@ func Run(port int) {
 
 	go func() {
 		time.Sleep(100 * time.Millisecond)
-		fmt.Printf("Listening on %s...\n", localAddress)
+		fmt.Printf("Listening on %s...\n", Server.Addr)
 	}()
 
 	if HttpSsl {
@@ -122,7 +122,7 @@ func Run(port int) {
 		ERROR.Fatalln("Failed to listen:",
 			Server.ListenAndServeTLS(HttpSslCert, HttpSslKey))
 	} else {
-		listener, err := net.Listen(network, localAddress)
+		listener, err := net.Listen(network, Server.Addr)
 		if err != nil {
 			ERROR.Fatalln("Failed to listen:", err)
 		}

@@ -1,36 +1,53 @@
 package revel
 
 import (
+	"errors"
 	"fmt"
-	"html"
 	"html/template"
 	"io"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
-	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
-	"time"
 )
+
+const GO_TEMPLATE = "go"
 
 var ERROR_CLASS = "hasError"
 
 // This object handles loading and parsing of templates.
 // Everything below the application's views directory is treated as a template.
 type TemplateLoader struct {
-	// This is the set of all templates under views
-	templateSet *template.Template
+	// Template data and implementation
+	templatesAndEngine TemplateEngine
 	// If an error was encountered parsing the templates, it is stored here.
 	compileError *Error
 	// Paths to search for templates, in priority order.
 	paths []string
 	// Map from template name to the path from whence it was loaded.
-	templatePaths map[string]string
-	// templateNames is a map from lower case template name to the real template name.
-	templateNames map[string]string
+	TemplatePaths map[string]string
+}
+
+var TemplateEngines = map[string]func(loader *TemplateLoader) (TemplateEngine, error){}
+
+type TemplateEngine interface {
+	// #ParseAndAdd: prase template string and add template to the set.
+	//   arg: templateName string
+	//   arg: templateSource *string
+	//   arg: basePath string - where templates are located
+	ParseAndAdd(templateName string, templateSource string, basePath string) *Error
+
+	// #Lookup: returns Template corresponding to the given templateName
+	//   arg: templateSet *abstractTemplateSet
+	//   arg: templateName string
+	Lookup(templateName string) Template
+}
+
+type TemplateWatcher interface {
+	WatchDir(info os.FileInfo) bool
+	WatchFile(basename string) bool
 }
 
 type Template interface {
@@ -42,148 +59,31 @@ type Template interface {
 var invalidSlugPattern = regexp.MustCompile(`[^a-z0-9 _-]`)
 var whiteSpacePattern = regexp.MustCompile(`\s+`)
 
-var (
-	// The functions available for use in the templates.
-	TemplateFuncs = map[string]interface{}{
-		"url": ReverseUrl,
-		"set": func(renderArgs map[string]interface{}, key string, value interface{}) template.JS {
-			renderArgs[key] = value
-			return template.JS("")
-		},
-		"append": func(renderArgs map[string]interface{}, key string, value interface{}) template.JS {
-			if renderArgs[key] == nil {
-				renderArgs[key] = []interface{}{value}
-			} else {
-				renderArgs[key] = append(renderArgs[key].([]interface{}), value)
-			}
-			return template.JS("")
-		},
-		"field": NewField,
-		"firstof": func(args ...interface{}) interface{} {
-			for _, val := range args {
-				switch val.(type) {
-				case nil:
-					continue
-				case string:
-					if val == "" {
-						continue
-					}
-					return val
-				default:
-					return val
-				}
-			}
-			return nil
-		},
-		"option": func(f *Field, val interface{}, label string) template.HTML {
-			selected := ""
-			if f.Flash() == val || (f.Flash() == "" && f.Value() == val) {
-				selected = " selected"
-			}
-
-			return template.HTML(fmt.Sprintf(`<option value="%s"%s>%s</option>`,
-				html.EscapeString(fmt.Sprintf("%v", val)), selected, html.EscapeString(label)))
-		},
-		"radio": func(f *Field, val string) template.HTML {
-			checked := ""
-			if f.Flash() == val {
-				checked = " checked"
-			}
-			return template.HTML(fmt.Sprintf(`<input type="radio" name="%s" value="%s"%s>`,
-				html.EscapeString(f.Name), html.EscapeString(val), checked))
-		},
-		"checkbox": func(f *Field, val string) template.HTML {
-			checked := ""
-			if f.Flash() == val {
-				checked = " checked"
-			}
-			return template.HTML(fmt.Sprintf(`<input type="checkbox" name="%s" value="%s"%s>`,
-				html.EscapeString(f.Name), html.EscapeString(val), checked))
-		},
-		// Pads the given string with &nbsp;'s up to the given width.
-		"pad": func(str string, width int) template.HTML {
-			if len(str) >= width {
-				return template.HTML(html.EscapeString(str))
-			}
-			return template.HTML(html.EscapeString(str) + strings.Repeat("&nbsp;", width-len(str)))
-		},
-
-		"errorClass": func(name string, renderArgs map[string]interface{}) template.HTML {
-			errorMap, ok := renderArgs["errors"].(map[string]*ValidationError)
-			if !ok || errorMap == nil {
-				WARN.Println("Called 'errorClass' without 'errors' in the render args.")
-				return template.HTML("")
-			}
-			valError, ok := errorMap[name]
-			if !ok || valError == nil {
-				return template.HTML("")
-			}
-			return template.HTML(ERROR_CLASS)
-		},
-
-		"msg": func(renderArgs map[string]interface{}, message string, args ...interface{}) template.HTML {
-			str, ok := renderArgs[CurrentLocaleRenderArg].(string)
-			if !ok {
-				return ""
-			}
-			return template.HTML(MessageFunc(str, message, args...))
-		},
-
-		// Replaces newlines with <br>
-		"nl2br": func(text string) template.HTML {
-			return template.HTML(strings.Replace(template.HTMLEscapeString(text), "\n", "<br>", -1))
-		},
-
-		// Skips sanitation on the parameter.  Do not use with dynamic data.
-		"raw": func(text string) template.HTML {
-			return template.HTML(text)
-		},
-
-		// Pluralize, a helper for pluralizing words to correspond to data of dynamic length.
-		// items - a slice of items, or an integer indicating how many items there are.
-		// pluralOverrides - optional arguments specifying the output in the
-		//     singular and plural cases.  by default "" and "s"
-		"pluralize": func(items interface{}, pluralOverrides ...string) string {
-			singular, plural := "", "s"
-			if len(pluralOverrides) >= 1 {
-				singular = pluralOverrides[0]
-				if len(pluralOverrides) == 2 {
-					plural = pluralOverrides[1]
-				}
-			}
-
-			switch v := reflect.ValueOf(items); v.Kind() {
-			case reflect.Int:
-				if items.(int) != 1 {
-					return plural
-				}
-			case reflect.Slice:
-				if v.Len() != 1 {
-					return plural
-				}
-			default:
-				ERROR.Println("pluralize: unexpected type: ", v)
-			}
-			return singular
-		},
-
-		// Format a date according to the application's default date(time) format.
-		"date": func(date time.Time) string {
-			return date.Format(DateFormat)
-		},
-		"datetime": func(date time.Time) string {
-			return date.Format(DateTimeFormat)
-		},
-		"slug": Slug,
-		"even": func(a int) bool { return (a % 2) == 0 },
-	}
-)
-
 func NewTemplateLoader(paths []string) *TemplateLoader {
 	loader := &TemplateLoader{
 		paths: paths,
 	}
 	return loader
+}
+
+// Sets the template name from Config
+// Sets the template API methods for parsing and storing templates before rendering
+func (loader *TemplateLoader) createTemplateEngine() (TemplateEngine, error) {
+	templateEngineName, _ := Config.String(REVEL_TEMPLATE_ENGINE)
+	if "" == templateEngineName {
+		templateEngineName = GO_TEMPLATE
+	}
+	factory := TemplateEngines[templateEngineName]
+	if nil == factory {
+		return nil, errors.New("Unknown template engine name - " + templateEngineName + ".")
+	}
+	templateEngine, err := factory(loader)
+	if nil != err {
+		return nil, errors.New("Failed to init template engine (" + templateEngineName + "), " + err.Error())
+	}
+
+	INFO.Println("init templates:", templateEngineName)
+	return templateEngine, nil
 }
 
 // This scans the views directory and parses all templates as Go Templates.
@@ -193,21 +93,23 @@ func (loader *TemplateLoader) Refresh() *Error {
 	TRACE.Printf("Refreshing templates from %s", loader.paths)
 
 	loader.compileError = nil
-	loader.templatePaths = map[string]string{}
-	loader.templateNames = map[string]string{}
-
-	// Set the template delimiters for the project if present, then split into left
-	// and right delimiters around a space character
-	var splitDelims []string
-	if TemplateDelims != "" {
-		splitDelims = strings.Split(TemplateDelims, " ")
-		if len(splitDelims) != 2 {
-			log.Fatalln("app.conf: Incorrect format for template.delimiters")
-		}
-	}
+	loader.TemplatePaths = map[string]string{}
 
 	// Walk through the template loader's paths and build up a template set.
-	var templateSet *template.Template = nil
+	var templatesAndEngine, err = loader.createTemplateEngine()
+	if nil != err {
+		loader.compileError = &Error{
+			Title:       "Panic (Template Loader)",
+			Description: err.Error(),
+		}
+		return loader.compileError
+	}
+
+	var watcher, _ = templatesAndEngine.(TemplateWatcher)
+	if nil == watcher {
+		watcher = loader
+	}
+
 	for _, basePath := range loader.paths {
 		// Walk only returns an error if the template loader is completely unusable
 		// (namely, if one of the TemplateFuncs does not have an acceptable signature).
@@ -224,7 +126,7 @@ func (loader *TemplateLoader) Refresh() *Error {
 			fullSrcDir = basePath
 		}
 
-		var templateWalker func(path string, info os.FileInfo, err error) error
+		var templateWalker filepath.WalkFunc
 		templateWalker = func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				ERROR.Println("error walking templates:", err)
@@ -260,103 +162,78 @@ func (loader *TemplateLoader) Refresh() *Error {
 
 			// Walk into watchable directories
 			if info.IsDir() {
-				if !loader.WatchDir(info) {
+				if !watcher.WatchDir(info) {
 					return filepath.SkipDir
 				}
 				return nil
 			}
 
 			// Only add watchable
-			if !loader.WatchFile(info.Name()) {
+			if !watcher.WatchFile(info.Name()) {
 				return nil
 			}
 
 			var fileStr string
 
 			// addTemplate loads a template file into the Go template loader so it can be rendered later
-			addTemplate := func(templateName string) (err error) {
-				TRACE.Println("adding template: ", templateName)
+			addTemplate := func(templateName string) error {
+				TRACE.Println("adding template: ", fullSrcDir, templateName)
 				// Convert template names to use forward slashes, even on Windows.
 				if os.PathSeparator == '\\' {
 					templateName = strings.Replace(templateName, `\`, `/`, -1) // `
 				}
 
 				// If we already loaded a template of this name, skip it.
-				lowerTemplateName := strings.ToLower(templateName)
-				if _, ok := loader.templateNames[lowerTemplateName]; ok {
+				if old := templatesAndEngine.Lookup(templateName); nil != old {
+					WARN.Println("template is already exists: ", templateName, "\r\n\told file:",
+						loader.TemplatePaths[templateName], "\r\n\tnew file:", path)
 					return nil
 				}
 
-				loader.templatePaths[templateName] = path
-				loader.templateNames[lowerTemplateName] = templateName
+				loader.TemplatePaths[templateName] = path
 
-				// Load the file if we haven't already
-				if fileStr == "" {
-					fileBytes, err := ioutil.ReadFile(path)
-					if err != nil {
-						ERROR.Println("Failed reading file:", path)
-						return nil
-					}
-
-					fileStr = string(fileBytes)
+				// Load the file
+				fileBytes, err := ioutil.ReadFile(path)
+				if err != nil {
+					ERROR.Println("Failed reading file:", path)
+					return nil
 				}
+				fileStr = string(fileBytes)
 
-				if templateSet == nil {
-					// Create the template set.  This panics if any of the funcs do not
-					// conform to expectations, so we wrap it in a func and handle those
-					// panics by serving an error page.
-					var funcError *Error
-					func() {
-						defer func() {
-							if err := recover(); err != nil {
-								funcError = &Error{
-									Title:       "Panic (Template Loader)",
-									Description: fmt.Sprintln(err),
-								}
-							}
-						}()
-						templateSet = template.New(templateName).Funcs(TemplateFuncs)
-						// If alternate delimiters set for the project, change them for this set
-						if splitDelims != nil && basePath == ViewsPath {
-							templateSet.Delims(splitDelims[0], splitDelims[1])
-						} else {
-							// Reset to default otherwise
-							templateSet.Delims("", "")
-						}
-						_, err = templateSet.Parse(fileStr)
-					}()
-
-					if funcError != nil {
-						return funcError
-					}
-
-				} else {
-					if splitDelims != nil && basePath == ViewsPath {
-						templateSet.Delims(splitDelims[0], splitDelims[1])
-					} else {
-						templateSet.Delims("", "")
-					}
-					_, err = templateSet.New(templateName).Parse(fileStr)
+				// Add the next template and parse it
+				if err := templatesAndEngine.ParseAndAdd(templateName, fileStr, basePath); nil != err {
+					return err
 				}
-				return err
+				return nil
 			}
 
-			templateName := path[len(fullSrcDir)+1:]
-
+			templateName := filepath.ToSlash(path[len(fullSrcDir)+1:])
 			err = addTemplate(templateName)
 
 			// Store / report the first error encountered.
 			if err != nil && loader.compileError == nil {
-				_, line, description := parseTemplateError(err)
-				loader.compileError = &Error{
-					Title:       "Template Compilation Error",
-					Path:        templateName,
-					Description: description,
-					Line:        line,
-					SourceLines: strings.Split(fileStr, "\n"),
+				loader.compileError, _ = err.(*Error)
+				if nil == loader.compileError {
+					_, line, description := parseTemplateError(err)
+					loader.compileError = &Error{
+						Title:       "Template Compilation Error",
+						Path:        templateName,
+						Description: description,
+						Line:        line,
+						SourceLines: strings.Split(fileStr, "\n"),
+					}
 				}
-				ERROR.Printf("Template compilation error (In %s around line %d):\n%s",
-					templateName, line, description)
+				ERROR.Printf("Template compilation error (In %s around line %d):\n\t%s",
+					templateName, loader.compileError.Line, err.Error())
+			} else if nil != err && strings.HasPrefix(templateName, "errors/") {
+				compileError, _ := err.(*Error)
+				if nil != compileError {
+					ERROR.Printf("Template compilation error (In %s around line %d):\n\t%s",
+						templateName, compileError.Line, err.Error())
+				} else {
+					ERROR.Printf("Template compilation error (In %s around line %d):\n\t%s",
+						templateName, -1, err.Error())
+				}
 			}
 			return nil
 		}
@@ -371,7 +248,7 @@ func (loader *TemplateLoader) Refresh() *Error {
 	}
 
 	// Note: compileError may or may not be set.
-	loader.templateSet = templateSet
+	loader.templatesAndEngine = templatesAndEngine
 	return loader.compileError
 }
 
@@ -388,6 +265,10 @@ func (loader *TemplateLoader) WatchFile(basename string) bool {
 // Parse the line, and description from an error message like:
 // html/template:Application/Register.html:36: no such template "footer.html"
 func parseTemplateError(err error) (templateName string, line int, description string) {
+	if e, ok := err.(*Error); ok {
+		return "", e.Line, e.Description
+	}
+
 	description = err.Error()
 	i := regexp.MustCompile(`:\d+:`).FindStringIndex(description)
 	if i != nil {
@@ -411,11 +292,12 @@ func parseTemplateError(err error) (templateName string, line int, description s
 // An Error is returned if there was any problem with any of the templates.  (In
 // this case, if a template is returned, it may still be usable.)
 func (loader *TemplateLoader) Template(name string) (Template, error) {
-	// Case-insensitive matching of template file name
-	templateName := loader.templateNames[strings.ToLower(name)]
+	if loader.compileError != nil {
+		return nil, loader.compileError
+	}
 
 	// Look up and return the template.
-	tmpl := loader.templateSet.Lookup(templateName)
+	tmpl := loader.templatesAndEngine.Lookup(name)
 
 	// This is necessary.
 	// If a nil loader.compileError is returned directly, a caller testing against
@@ -429,23 +311,7 @@ func (loader *TemplateLoader) Template(name string) (Template, error) {
 		return nil, fmt.Errorf("Template %s not found.", name)
 	}
 
-	return GoTemplate{tmpl, loader}, err
-}
-
-// Adapter for Go Templates.
-type GoTemplate struct {
-	*template.Template
-	loader *TemplateLoader
-}
-
-// return a 'revel.Template' from Go's template.
-func (gotmpl GoTemplate) Render(wr io.Writer, arg interface{}) error {
-	return gotmpl.Execute(wr, arg)
-}
-
-func (gotmpl GoTemplate) Content() []string {
-	content, _ := ReadLines(gotmpl.loader.templatePaths[gotmpl.Name()])
-	return content
+	return tmpl, err
 }
 
 /////////////////////
