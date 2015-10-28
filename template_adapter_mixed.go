@@ -9,6 +9,17 @@ import (
 	robfigConfig "github.com/robfig/config"
 )
 
+var RevelModules = []string{"github.com/revel/modules/"}
+
+func isRevelModules(slashPath string) bool {
+	for _, module := range RevelModules {
+		if strings.Contains(slashPath, module) {
+			return true
+		}
+	}
+	return false
+}
+
 type MixedEngine struct {
 	loader                     *TemplateLoader
 	templateSetsByPath         map[string]TemplateEngine
@@ -55,10 +66,14 @@ func (engine *MixedEngine) ParseAndAdd(templateName string, templateSource strin
 		var templateEngineName string
 		slashPath := filepath.ToSlash(basePath)
 		if strings.HasSuffix(slashPath, "/app/views") {
-			var err *Error
-			templateEngineName, err = engine.templateEngineNameFrom(templateName, basePath)
-			if nil != err {
-				return err
+			if isRevelModules(slashPath) {
+				templateEngineName = GO_TEMPLATE
+			} else {
+				var err *Error
+				templateEngineName, err = engine.templateEngineNameFrom(templateName, basePath)
+				if nil != err {
+					return err
+				}
 			}
 		} else if slashPath == filepath.ToSlash(path.Join(RevelPath, "templates")) {
 			templateEngineName = GO_TEMPLATE
