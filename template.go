@@ -16,6 +16,8 @@ import (
 const MIXED_TEMPLATE = "mixed"
 const GO_TEMPLATE = "go"
 
+var default_template_engine_name = GO_TEMPLATE
+
 var ERROR_CLASS = "hasError"
 
 // This object handles loading and parsing of templates.
@@ -71,7 +73,7 @@ func NewTemplateLoader(paths []string) *TemplateLoader {
 // Sets the template API methods for parsing and storing templates before rendering
 func (loader *TemplateLoader) CreateTemplateEngine(templateEngineName string) (TemplateEngine, error) {
 	if "" == templateEngineName {
-		templateEngineName = GO_TEMPLATE
+		templateEngineName = default_template_engine_name
 	}
 	factory := TemplateEngines[templateEngineName]
 	if nil == factory {
@@ -97,6 +99,12 @@ func (loader *TemplateLoader) Refresh() *Error {
 
 	// Walk through the template loader's paths and build up a template set.
 	templateEngineName, _ := Config.String(REVEL_TEMPLATE_ENGINE)
+	if MIXED_TEMPLATE == templateEngineName {
+		default_template_engine_name, _ = Config.String("template.default_engine")
+		if "" == default_template_engine_name {
+			default_template_engine_name = GO_TEMPLATE
+		}
+	}
 	var templatesAndEngine, err = loader.CreateTemplateEngine(templateEngineName)
 	if nil != err {
 		loader.compileError = &Error{

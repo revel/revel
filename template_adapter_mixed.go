@@ -46,8 +46,9 @@ func (engine *MixedEngine) ParseAndAdd(templateName string, templateSource strin
 		config.SetSection(mode)
 
 		templateEngineName := config.StringDefault(REVEL_TEMPLATE_ENGINE, "")
+		// preventing recursive load template engine.
 		if MIXED_TEMPLATE == templateEngineName {
-			templateEngineName = GO_TEMPLATE
+			templateEngineName = ""
 		}
 		templateSet, err = engine.loader.CreateTemplateEngine(templateEngineName)
 		if nil != err {
