@@ -201,7 +201,7 @@ func Init(mode, importPath, srcPath string) {
 	WARN = getLogger("warn")
 	ERROR = getLogger("error")
 
-	if GO_TEMPLATE == Config.StringDefault(REVEL_TEMPLATE_ENGINE, GO_TEMPLATE) {
+	if tmpl := Config.StringDefault(REVEL_TEMPLATE_ENGINE, GO_TEMPLATE); GO_TEMPLATE == tmpl || MIXED_TEMPLATE == tmpl {
 		TemplatePaths = append(TemplatePaths, path.Join(RevelPath, "templates"))
 	}
 
