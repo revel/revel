@@ -17,7 +17,7 @@ import (
 	"strings"
 )
 
-// ErrorCSSClass httml CSS error class name
+const MIXED_TEMPLATE = "mixed"
 var ErrorCSSClass = "hasError"
 const GO_TEMPLATE = "go"
 
@@ -73,8 +73,7 @@ func NewTemplateLoader(paths []string) *TemplateLoader {
 
 // Sets the template name from Config
 // Sets the template API methods for parsing and storing templates before rendering
-func (loader *TemplateLoader) createTemplateEngine() (TemplateEngine, error) {
-	templateEngineName, _ := Config.String(REVEL_TEMPLATE_ENGINE)
+func (loader *TemplateLoader) CreateTemplateEngine(templateEngineName string) (TemplateEngine, error) {
 	if "" == templateEngineName {
 		templateEngineName = GO_TEMPLATE
 	}
@@ -101,7 +100,8 @@ func (loader *TemplateLoader) Refresh() *Error {
 	loader.TemplatePaths = map[string]string{}
 
 	// Walk through the template loader's paths and build up a template set.
-	var templatesAndEngine, err = loader.createTemplateEngine()
+	templateEngineName, _ := Config.String(REVEL_TEMPLATE_ENGINE)
+	var templatesAndEngine, err = loader.CreateTemplateEngine(templateEngineName)
 	if nil != err {
 		loader.compileError = &Error{
 			Title:       "Panic (Template Loader)",
