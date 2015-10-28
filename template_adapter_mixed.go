@@ -45,7 +45,11 @@ func (engine *MixedEngine) ParseAndAdd(templateName string, templateSource strin
 		}
 		config.SetSection(mode)
 
-		templateSet, err = engine.loader.CreateTemplateEngine(config.StringDefault(REVEL_TEMPLATE_ENGINE, ""))
+		templateEngineName := config.StringDefault(REVEL_TEMPLATE_ENGINE, "")
+		if MIXED_TEMPLATE == templateEngineName {
+			templateEngineName = GO_TEMPLATE
+		}
+		templateSet, err = engine.loader.CreateTemplateEngine(templateEngineName)
 		if nil != err {
 			return &Error{
 				Title:       "Panic (Template Loader)",
