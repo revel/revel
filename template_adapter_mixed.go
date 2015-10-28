@@ -1,6 +1,7 @@
 package revel
 
 import (
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -14,42 +15,60 @@ type MixedEngine struct {
 	templateSetsByTemplateName map[string]TemplateEngine
 }
 
+func (engine *MixedEngine) templateEngineNameFrom(templateName, basePath string) (string, *Error) {
+	basePath = filepath.ToSlash(filepath.Join(strings.TrimSuffix(basePath, "/app/views"), "conf"))
+
+	// Load app.conf from basePath
+	config, err := revConfig.LoadContext("app.conf", []string{basePath})
+	if err != nil || config == nil {
+		return "", &Error{
+			Title:       "Panic (Template Loader)",
+			Description: "Failed to load template(" + templateName + "): cann't load " + basePath + "/app.conf:" + err.Error(),
+		}
+	}
+
+	// Ensure that the selected runmode appears in app.conf.
+	// If empty string is passed as the mode, treat it as "DEFAULT"
+	mode := RunMode
+	if mode == "" {
+		mode = robfigConfig.DEFAULT_SECTION
+	}
+	if !config.HasSection(mode) {
+		return "", &Error{
+			Title:       "Panic (Template Loader)",
+			Description: "Failed to load template(" + templateName + "): cann't load " + basePath + "/app.conf: No mode found: " + mode,
+		}
+	}
+	config.SetSection(mode)
+
+	templateEngineName := config.StringDefault(REVEL_TEMPLATE_ENGINE, "")
+	// preventing recursive load template engine.
+	if MIXED_TEMPLATE == templateEngineName {
+		templateEngineName = ""
+	}
+	return templateEngineName, nil
+}
+
 func (engine *MixedEngine) ParseAndAdd(templateName string, templateSource string, basePath string) *Error {
 	templateSet := engine.templateSetsByPath[basePath]
 	if nil == templateSet {
-		confPath := filepath.ToSlash(basePath)
-		if strings.HasSuffix(confPath, "/app/views") {
-			confPath = filepath.ToSlash(filepath.Join(strings.TrimSuffix(confPath, "/app/views"), "conf"))
-		}
-
-		// Load app.conf from confPath
-		config, err := revConfig.LoadContext("app.conf", []string{confPath})
-		if err != nil || config == nil {
+		var templateEngineName string
+		slashPath := filepath.ToSlash(basePath)
+		if strings.HasSuffix(slashPath, "/app/views") {
+			var err *Error
+			templateEngineName, err = engine.templateEngineNameFrom(templateName, basePath)
+			if nil != err {
+				return err
+			}
+		} else if slashPath == filepath.ToSlash(path.Join(RevelPath, "templates")) {
+			templateEngineName = GO_TEMPLATE
+		} else {
 			return &Error{
 				Title:       "Panic (Template Loader)",
-				Description: "Failed to load template(" + templateName + "): cann't load " + confPath + "/app.conf:" + err.Error(),
+				Description: "Failed to load template(" + templateName + "): cann't load " + slashPath + "/../../conf/app.conf: invalid views path.",
 			}
 		}
-
-		// Ensure that the selected runmode appears in app.conf.
-		// If empty string is passed as the mode, treat it as "DEFAULT"
-		mode := RunMode
-		if mode == "" {
-			mode = robfigConfig.DEFAULT_SECTION
-		}
-		if !config.HasSection(mode) {
-			return &Error{
-				Title:       "Panic (Template Loader)",
-				Description: "Failed to load template(" + templateName + "): cann't load " + confPath + "/app.conf: No mode found: " + mode,
-			}
-		}
-		config.SetSection(mode)
-
-		templateEngineName := config.StringDefault(REVEL_TEMPLATE_ENGINE, "")
-		// preventing recursive load template engine.
-		if MIXED_TEMPLATE == templateEngineName {
-			templateEngineName = ""
-		}
+		var err error
 		templateSet, err = engine.loader.CreateTemplateEngine(templateEngineName)
 		if nil != err {
 			return &Error{
@@ -57,6 +76,7 @@ func (engine *MixedEngine) ParseAndAdd(templateName string, templateSource strin
 				Description: "Failed to load template(" + templateName + "): " + err.Error(),
 			}
 		}
+		engine.templateSetsByPath[basePath] = templateSet
 	}
 
 	err := templateSet.ParseAndAdd(templateName, templateSource, basePath)
