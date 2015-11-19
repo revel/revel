@@ -159,8 +159,8 @@ func (c *Controller) RenderText(text string, objs ...interface{}) Result {
 	return &RenderTextResult{finalText}
 }
 
-// RenderText sets a custom content-type header, allowing flexibility of type returned e.g. various file extensions
-func (c *Controller) RenderText(contentType, text string) Result {
+// RenderCustom sets a custom content-type header, allowing flexibility of type returned e.g. various file extensions
+func (c *Controller) RenderCustom(contentType, text string) Result {
 	c.setStatusIfNil(http.StatusOK)
 
 	return &RenderCustomResult{
