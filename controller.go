@@ -87,7 +87,7 @@ func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
 	c.setStatusIfNil(http.StatusOK)
 
 	// Get the calling function name.
-	_, _, line, ok := runtime.Caller(1)
+	_, _, line, ok := runtime.Caller(2)
 	if !ok {
 		ERROR.Println("Failed to get Caller information")
 	}
