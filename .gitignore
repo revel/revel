@@ -5,3 +5,7 @@ revel/revel
 
 # editor
 *.swp
+
+.idea/
+*.iml
+
