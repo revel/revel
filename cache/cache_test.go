@@ -178,18 +178,18 @@ func testAdd(t *testing.T, newCache cacheFactory) {
 	var err error
 	cache := newCache(t, time.Hour)
 	// Add to an empty cache.
-	if err = cache.Add("int", 1, time.Second); err != nil {
+	if err = cache.Add("int", 1, time.Second * 3); err != nil {
 		t.Errorf("Unexpected error adding to empty cache: %s", err)
 	}
 
 	// Try to add again. (fail)
-	if err = cache.Add("int", 2, time.Second); err != ErrNotStored {
+	if err = cache.Add("int", 2, time.Second * 3); err != ErrNotStored {
 		t.Errorf("Expected ErrNotStored adding dupe to cache: %s", err)
 	}
 
 	// Wait for it to expire, and add again.
-	time.Sleep(2 * time.Second)
-	if err = cache.Add("int", 3, time.Second); err != nil {
+	time.Sleep(4 * time.Second)
+	if err = cache.Add("int", 3, time.Second * 3); err != nil {
 		t.Errorf("Unexpected error adding to cache: %s", err)
 	}
 
