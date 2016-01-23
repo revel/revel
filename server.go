@@ -66,6 +66,33 @@ func handleInternal(w http.ResponseWriter, r *http.Request, ws *websocket.Conn) 
 	INFO.Println("Completed", c.Response.Status, "in", duration, "\n")
 }
 
+// InitServer intializes the server and returns the handler
+// It can be used as an alternative entry-point if one needs the http handler
+// to be exposed. E.g. to run on multiple addresses and ports or to set custom
+// TLS options.
+func InitServer() http.HandlerFunc {
+	runStartupHooks()
+
+	// Load templates
+	MainTemplateLoader = NewTemplateLoader(TemplatePaths)
+	MainTemplateLoader.Refresh()
+
+	// The "watch" config variable can turn on and off all watching.
+	// (As a convenient way to control it all together.)
+	if Config.BoolDefault("watch", true) {
+		MainWatcher = NewWatcher()
+		Filters = append([]Filter{WatchFilter}, Filters...)
+	}
+
+	// If desired (or by default), create a watcher for templates and routes.
+	// The watcher calls Refresh() on things on the first request.
+	if MainWatcher != nil && Config.BoolDefault("watch.templates", true) {
+		MainWatcher.Listen(MainTemplateLoader, MainTemplateLoader.paths...)
+	}
+
+	return http.HandlerFunc(handle)
+}
+
 // Run the server.
 // This is called from the generated main file.
 // If port is non-zero, use that.  Else, read the port from app.conf.
@@ -96,24 +123,7 @@ func Run(port int) {
 		WriteTimeout: time.Duration(Config.IntDefault("timeout.write", 0)) * time.Second,
 	}
 
-	runStartupHooks()
-
-	// Load templates
-	MainTemplateLoader = NewTemplateLoader(TemplatePaths)
-	MainTemplateLoader.Refresh()
-
-	// The "watch" config variable can turn on and off all watching.
-	// (As a convenient way to control it all together.)
-	if Config.BoolDefault("watch", true) {
-		MainWatcher = NewWatcher()
-		Filters = append([]Filter{WatchFilter}, Filters...)
-	}
-
-	// If desired (or by default), create a watcher for templates and routes.
-	// The watcher calls Refresh() on things on the first request.
-	if MainWatcher != nil && Config.BoolDefault("watch.templates", true) {
-		MainWatcher.Listen(MainTemplateLoader, MainTemplateLoader.paths...)
-	}
+	InitServer()
 
 	go func() {
 		time.Sleep(100 * time.Millisecond)
