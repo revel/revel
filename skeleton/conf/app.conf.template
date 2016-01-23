@@ -74,10 +74,10 @@ results.chunked = false
 
 
 # Prefixes for each log message line
-log.trace.prefix = "TRACE "
-log.info.prefix  = "INFO  "
-log.warn.prefix  = "WARN  "
-log.error.prefix = "ERROR "
+# log.trace.prefix = "TRACE "
+# log.warn.prefix  = "WARN "
+# log.error.prefix = "ERROR "
+# log.info.prefix  = ""
 
 
 # The default language of this application.
@@ -154,6 +154,6 @@ module.testrunner =
 
 
 log.trace.output = off
-log.info.output  = off
+log.info.output  = %(app.name)s.log
 log.warn.output  = %(app.name)s.log
 log.error.output = %(app.name)s.log
