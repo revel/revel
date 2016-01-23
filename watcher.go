@@ -198,13 +198,13 @@ func (w *Watcher) Notify() *Error {
 	return nil
 }
 
-// If watcher.mode is set to eager, the application is rebuilt immediately
+// If watch.mode is set to eager, the application is rebuilt immediately
 // when a source file is changed.
 // This feature is available only in dev mode.
 func (w *Watcher) eagerRebuildEnabled() bool {
 	return Config.BoolDefault("mode.dev", true) &&
 		Config.BoolDefault("watch", true) &&
-		Config.StringDefault("watcher.mode", "normal") == "eager"
+		Config.StringDefault("watch.mode", "normal") == "eager"
 }
 
 func (w *Watcher) rebuildRequired(ev fsnotify.Event, listener Listener) bool {

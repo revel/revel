@@ -115,9 +115,9 @@ results.pretty = true
 watch = true
 
 
-# If you set watcher.mode = "eager", the server starts to recompile
+# If you set watch.mode = "eager", the server starts to recompile
 # your application every time your application's files change.
-watcher.mode = "normal"
+watch.mode = "normal"
 
 
 # Module to run code tests in the browser
