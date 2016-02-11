@@ -108,7 +108,6 @@ func (e *Error) ContextSource() []sourceLine {
 // Return the character index of the first relevant stack frame, or -1 if none were found.
 // Additionally it returns the base path of the tree in which the identified code resides.
 func findRelevantStackFrame(stack string) (int, string) {
-	fmt.Println(stack)
 	if frame := strings.Index(stack, filepath.ToSlash(BasePath)); frame != -1 {
 		return frame, BasePath
 	}
