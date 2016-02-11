@@ -2,6 +2,7 @@ package revel
 
 import (
 	"fmt"
+	"path/filepath"
 	"runtime/debug"
 	"strconv"
 	"strings"
@@ -107,11 +108,12 @@ func (e *Error) ContextSource() []sourceLine {
 // Return the character index of the first relevant stack frame, or -1 if none were found.
 // Additionally it returns the base path of the tree in which the identified code resides.
 func findRelevantStackFrame(stack string) (int, string) {
-	if frame := strings.Index(stack, BasePath); frame != -1 {
+	fmt.Println(stack)
+	if frame := strings.Index(stack, filepath.ToSlash(BasePath)); frame != -1 {
 		return frame, BasePath
 	}
 	for _, module := range Modules {
-		if frame := strings.Index(stack, module.Path); frame != -1 {
+		if frame := strings.Index(stack, filepath.ToSlash(module.Path)); frame != -1 {
 			return frame, module.Path
 		}
 	}
