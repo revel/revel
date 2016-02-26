@@ -2,6 +2,8 @@
 
 A high productivity, full-stack web framework for the [Go language](http://www.golang.org).
 
+[![codebeat](https://codebeat.co/badges/12d4e190-b6b0-49d2-a20f-06636ef7d8a9)](https://codebeat.co/projects/github-com-revel-revel)
+
 Current Version: 0.12.0 (Mar 25, 2015)
 
 **As of Revel 0.11.0, Go 1.3+ is required.**
