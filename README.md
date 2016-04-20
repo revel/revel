@@ -23,9 +23,9 @@ Open http://localhost:9000 in your browser and you should see "It works!"
 
 ## Learn More
 
-[Manual, Samples, Godocs, etc](http://revel.github.com)
-[Revel's Roadmap](https://github.com/revel/revel/wiki/Roadmap)
-[Articles Featuring Revel](https://github.com/revel/revel/wiki/Articles)
+* [Manual, Samples, Godocs, etc](http://revel.github.com)
+* [Revel's Roadmap](https://github.com/revel/revel/wiki/Roadmap)
+* [Articles Featuring Revel](https://github.com/revel/revel/wiki/Articles)
 
 ## Contributing
 
