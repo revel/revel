@@ -72,6 +72,10 @@ func ResolveContentType(req *http.Request) string {
 func ResolveFormat(req *http.Request) string {
 	accept := req.Header.Get("accept")
 
+	pos := strings.LastIndex(req.URL.Path, ".")
+	if pos > -1 {
+		return strings.ToLower(req.URL.Path[pos+1:])
+	}
 	switch {
 	case accept == "",
 		strings.HasPrefix(accept, "*/*"), // */
