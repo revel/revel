@@ -232,14 +232,18 @@ func getLogger(name string) *log.Logger {
 			output = os.DevNull
 		}
 
+		if !filepath.IsAbs(output) {
+                        output = BasePath + string(filepath.Separator) + output
+                }
+
 		logPath := filepath.Dir(output)
 		if _, err := os.Stat(logPath); err != nil {
 			if os.IsNotExist(err) {
-				if err := os.MkdirAll(logPath, 0777); err != nil {
-					log.Fatalln("Failed to create log dir", output, ":", err)
+				if err := os.MkdirAll(logPath, 0755); err != nil {
+					log.Fatalln("Failed to create log directory", output, ":", err)
 				}
 			} else {
-				log.Fatalln("Failed to stat log dir", output, ":", err)
+				log.Fatalln("Failed to stat log directory", output, ":", err)
 			}
 		}
 
