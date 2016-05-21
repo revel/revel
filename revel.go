@@ -232,6 +232,21 @@ func getLogger(name string) *log.Logger {
 			output = os.DevNull
 		}
 
+		if !filepath.IsAbs(output) {
+                        output = BasePath + string(filepath.Separator) + output
+                }
+
+		logPath := filepath.Dir(output)
+		if _, err := os.Stat(logPath); err != nil {
+			if os.IsNotExist(err) {
+				if err := os.MkdirAll(logPath, 0755); err != nil {
+					log.Fatalln("Failed to create log directory", output, ":", err)
+				}
+			} else {
+				log.Fatalln("Failed to stat log directory", output, ":", err)
+			}
+		}
+
 		file, err := os.OpenFile(output, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 		if err != nil {
 			log.Fatalln("Failed to open log file", output, ":", err)
