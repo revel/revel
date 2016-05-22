@@ -1,11 +1,12 @@
 language: go
 go:
-  - 1.3
   - 1.4
   - 1.5
+  - 1.6
 sudo: false
 services:
-  - memcache # github.com/revel/revel/cache
+  # github.com/revel/revel/cache
+  - memcache
   - redis-server
 install:
   - export PATH=$PATH:$HOME/gopath/bin
@@ -18,7 +19,7 @@ install:
   - git clone git://github.com/revel/samples ../samples/
   - go get -v github.com/revel/cmd/revel
 script:
-  - go test github.com/revel/revel...
+  - go test -v github.com/revel/revel...
 
   # Ensure the new-app flow works (plus the other commands).
   - revel new     my/testapp
