@@ -1,3 +1,3 @@
-version: 0.12.0dev
-buildDate: 2015-01-23
-minimumGo: >= go1.3
+version: 0.13.0-dev
+buildDate: TBD
+minimumGo: >= go1.4
