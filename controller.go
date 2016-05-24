@@ -59,7 +59,15 @@ func (c *Controller) SetCookie(cookie *http.Cookie) {
 }
 
 func (c *Controller) RenderError(err error) Result {
+	c.setStatusIfNil(http.StatusInternalServerError)
+
 	return ErrorResult{c.RenderArgs, err}
+}
+
+func (c *Controller) setStatusIfNil(status int) {
+	if c.Response.Status == 0 {
+		c.Response.Status = status
+	}
 }
 
 // Render a template corresponding to the calling Controller method.
@@ -76,6 +84,8 @@ func (c *Controller) RenderError(err error) Result {
 // This action will render views/Users/ShowUser.html, passing in an extra
 // key-value "user": (User).
 func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
+	c.setStatusIfNil(http.StatusOK)
+
 	// Get the calling function name.
 	_, _, line, ok := runtime.Caller(1)
 	if !ok {
@@ -103,6 +113,7 @@ func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
 // A less magical way to render a template.
 // Renders the given template, using the current RenderArgs.
 func (c *Controller) RenderTemplate(templatePath string) Result {
+	c.setStatusIfNil(http.StatusOK)
 
 	// Get the Template.
 	template, err := MainTemplateLoader.Template(templatePath)
@@ -118,21 +129,29 @@ func (c *Controller) RenderTemplate(templatePath string) Result {
 
 // Uses encoding/json.Marshal to return JSON to the client.
 func (c *Controller) RenderJson(o interface{}) Result {
+	c.setStatusIfNil(http.StatusOK)
+
 	return RenderJsonResult{o, ""}
 }
 
 // Renders a JSONP result using encoding/json.Marshal
 func (c *Controller) RenderJsonP(callback string, o interface{}) Result {
+	c.setStatusIfNil(http.StatusOK)
+
 	return RenderJsonResult{o, callback}
 }
 
 // Uses encoding/xml.Marshal to return XML to the client.
 func (c *Controller) RenderXml(o interface{}) Result {
+	c.setStatusIfNil(http.StatusOK)
+
 	return RenderXmlResult{o}
 }
 
 // Render plaintext in response, printf style.
 func (c *Controller) RenderText(text string, objs ...interface{}) Result {
+	c.setStatusIfNil(http.StatusOK)
+
 	finalText := text
 	if len(objs) > 0 {
 		finalText = fmt.Sprintf(text, objs...)
@@ -142,6 +161,8 @@ func (c *Controller) RenderText(text string, objs ...interface{}) Result {
 
 // Render html in response
 func (c *Controller) RenderHtml(html string) Result {
+	c.setStatusIfNil(http.StatusOK)
+
 	return &RenderHtmlResult{html}
 }
 
@@ -186,6 +207,8 @@ func (c *Controller) Forbidden(msg string, objs ...interface{}) Result {
 // RenderFile returns a file, either displayed inline or downloaded
 // as an attachment. The name and size are taken from the file info.
 func (c *Controller) RenderFile(file *os.File, delivery ContentDisposition) Result {
+	c.setStatusIfNil(http.StatusOK)
+
 	var (
 		modtime       = time.Now()
 		fileInfo, err = file.Stat()
@@ -205,6 +228,8 @@ func (c *Controller) RenderFile(file *os.File, delivery ContentDisposition) Resu
 // it implements io.Reader).  When called directly on something generated or
 // streamed, modtime should mostly likely be time.Now().
 func (c *Controller) RenderBinary(memfile io.Reader, filename string, delivery ContentDisposition, modtime time.Time) Result {
+	c.setStatusIfNil(http.StatusOK)
+
 	return &BinaryResult{
 		Reader:   memfile,
 		Name:     filename,
@@ -219,6 +244,8 @@ func (c *Controller) RenderBinary(memfile io.Reader, filename string, delivery C
 //   c.Redirect("/controller/action")
 //   c.Redirect("/controller/%d/action", id)
 func (c *Controller) Redirect(val interface{}, args ...interface{}) Result {
+	c.setStatusIfNil(http.StatusFound)
+
 	if url, ok := val.(string); ok {
 		if len(args) == 0 {
 			return &RedirectToUrlResult{url}
@@ -249,7 +276,7 @@ func (c *Controller) SetAction(controllerName, methodName string) error {
 		return errors.New("revel/controller: failed to find action " + methodName)
 	}
 
-	c.Name, c.MethodName = c.Type.Type.Name(), methodName
+	c.Name, c.MethodName = c.Type.Type.Name(), c.MethodType.Name
 	c.Action = c.Name + "." + c.MethodName
 
 	// Instantiate the controller.

@@ -29,6 +29,8 @@ type TemplateLoader struct {
 	paths []string
 	// Map from template name to the path from whence it was loaded.
 	templatePaths map[string]string
+	// templateNames is a map from lower case template name to the real template name.
+	templateNames map[string]string
 }
 
 type Template interface {
@@ -44,27 +46,43 @@ var (
 	// The functions available for use in the templates.
 	TemplateFuncs = map[string]interface{}{
 		"url": ReverseUrl,
-		"eq":  Equal,
-		"set": func(renderArgs map[string]interface{}, key string, value interface{}) template.HTML {
+		"set": func(renderArgs map[string]interface{}, key string, value interface{}) template.JS {
 			renderArgs[key] = value
-			return template.HTML("")
+			return template.JS("")
 		},
-		"append": func(renderArgs map[string]interface{}, key string, value interface{}) template.HTML {
+		"append": func(renderArgs map[string]interface{}, key string, value interface{}) template.JS {
 			if renderArgs[key] == nil {
 				renderArgs[key] = []interface{}{value}
 			} else {
 				renderArgs[key] = append(renderArgs[key].([]interface{}), value)
 			}
-			return template.HTML("")
+			return template.JS("")
 		},
 		"field": NewField,
-		"option": func(f *Field, val, label string) template.HTML {
+		"firstof": func(args ...interface{}) interface{} {
+			for _, val := range args {
+				switch val.(type) {
+				case nil:
+					continue
+				case string:
+					if val == "" {
+						continue
+					}
+					return val
+				default:
+					return val
+				}
+			}
+			return nil
+		},
+		"option": func(f *Field, val interface{}, label string) template.HTML {
 			selected := ""
-			if f.Flash() == val {
+			if f.Flash() == val || (f.Flash() == "" && f.Value() == val) {
 				selected = " selected"
 			}
+
 			return template.HTML(fmt.Sprintf(`<option value="%s"%s>%s</option>`,
-				html.EscapeString(val), selected, html.EscapeString(label)))
+				html.EscapeString(fmt.Sprintf("%v", val)), selected, html.EscapeString(label)))
 		},
 		"radio": func(f *Field, val string) template.HTML {
 			checked := ""
@@ -157,6 +175,7 @@ var (
 			return date.Format(DateTimeFormat)
 		},
 		"slug": Slug,
+		"even": func(a int) bool { return (a % 2) == 0 },
 	}
 )
 
@@ -175,6 +194,7 @@ func (loader *TemplateLoader) Refresh() *Error {
 
 	loader.compileError = nil
 	loader.templatePaths = map[string]string{}
+	loader.templateNames = map[string]string{}
 
 	// Set the template delimiters for the project if present, then split into left
 	// and right delimiters around a space character
@@ -191,10 +211,51 @@ func (loader *TemplateLoader) Refresh() *Error {
 	for _, basePath := range loader.paths {
 		// Walk only returns an error if the template loader is completely unusable
 		// (namely, if one of the TemplateFuncs does not have an acceptable signature).
-		funcErr := filepath.Walk(basePath, func(path string, info os.FileInfo, err error) error {
+
+		// Handling symlinked directories
+		var fullSrcDir string
+		f, err := os.Lstat(basePath)
+		if err == nil && f.Mode()&os.ModeSymlink == os.ModeSymlink {
+			fullSrcDir, err = filepath.EvalSymlinks(basePath)
+			if err != nil {
+				panic(err)
+			}
+		} else {
+			fullSrcDir = basePath
+		}
+
+		var templateWalker func(path string, info os.FileInfo, err error) error
+		templateWalker = func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				ERROR.Println("error walking templates:", err)
 				return nil
+			}
+
+			// is it a symlinked template?
+			link, err := os.Lstat(path)
+			if err == nil && link.Mode()&os.ModeSymlink == os.ModeSymlink {
+				TRACE.Println("symlink template:", path)
+				// lookup the actual target & check for goodness
+				targetPath, err := filepath.EvalSymlinks(path)
+				if err != nil {
+					ERROR.Println("Failed to read symlink", err)
+					return err
+				}
+				targetInfo, err := os.Stat(targetPath)
+				if err != nil {
+					ERROR.Println("Failed to stat symlink target", err)
+					return err
+				}
+
+				// set the template path to the target of the symlink
+				path = targetPath
+				info = targetInfo
+
+				// need to save state and restore for recursive call to Walk on symlink
+				tmp := fullSrcDir
+				fullSrcDir = filepath.Dir(targetPath)
+				filepath.Walk(targetPath, templateWalker)
+				fullSrcDir = tmp
 			}
 
 			// Walk into watchable directories
@@ -212,19 +273,22 @@ func (loader *TemplateLoader) Refresh() *Error {
 
 			var fileStr string
 
-			// addTemplate allows the same template to be added multiple
-			// times with different template names.
+			// addTemplate loads a template file into the Go template loader so it can be rendered later
 			addTemplate := func(templateName string) (err error) {
+				TRACE.Println("adding template: ", templateName)
 				// Convert template names to use forward slashes, even on Windows.
 				if os.PathSeparator == '\\' {
 					templateName = strings.Replace(templateName, `\`, `/`, -1) // `
 				}
 
 				// If we already loaded a template of this name, skip it.
-				if _, ok := loader.templatePaths[templateName]; ok {
+				lowerTemplateName := strings.ToLower(templateName)
+				if _, ok := loader.templateNames[lowerTemplateName]; ok {
 					return nil
 				}
+
 				loader.templatePaths[templateName] = path
+				loader.templateNames[lowerTemplateName] = templateName
 
 				// Load the file if we haven't already
 				if fileStr == "" {
@@ -277,13 +341,9 @@ func (loader *TemplateLoader) Refresh() *Error {
 				return err
 			}
 
-			templateName := path[len(basePath)+1:]
-
-			// Lower case the file name for case-insensitive matching
-			lowerCaseTemplateName := strings.ToLower(templateName)
+			templateName := path[len(fullSrcDir)+1:]
 
 			err = addTemplate(templateName)
-			err = addTemplate(lowerCaseTemplateName)
 
 			// Store / report the first error encountered.
 			if err != nil && loader.compileError == nil {
@@ -299,7 +359,9 @@ func (loader *TemplateLoader) Refresh() *Error {
 					templateName, line, description)
 			}
 			return nil
-		})
+		}
+
+		funcErr := filepath.Walk(fullSrcDir, templateWalker)
 
 		// If there was an error with the Funcs, set it and return immediately.
 		if funcErr != nil {
@@ -349,10 +411,11 @@ func parseTemplateError(err error) (templateName string, line int, description s
 // An Error is returned if there was any problem with any of the templates.  (In
 // this case, if a template is returned, it may still be usable.)
 func (loader *TemplateLoader) Template(name string) (Template, error) {
-	// Lower case the file name to support case-insensitive matching
-	name = strings.ToLower(name)
+	// Case-insensitive matching of template file name
+	templateName := loader.templateNames[strings.ToLower(name)]
+
 	// Look up and return the template.
-	tmpl := loader.templateSet.Lookup(name)
+	tmpl := loader.templateSet.Lookup(templateName)
 
 	// This is necessary.
 	// If a nil loader.compileError is returned directly, a caller testing against
@@ -391,12 +454,15 @@ func (gotmpl GoTemplate) Content() []string {
 
 // Return a url capable of invoking a given controller method:
 // "Application.ShowApp 123" => "/app/123"
-func ReverseUrl(args ...interface{}) (string, error) {
+func ReverseUrl(args ...interface{}) (template.URL, error) {
 	if len(args) == 0 {
 		return "", fmt.Errorf("no arguments provided to reverse route")
 	}
 
 	action := args[0].(string)
+	if action == "Root" {
+		return template.URL(AppRoot), nil
+	}
 	actionSplit := strings.Split(action, ".")
 	if len(actionSplit) != 2 {
 		return "", fmt.Errorf("reversing '%s', expected 'Controller.Action'", action)
@@ -408,13 +474,18 @@ func ReverseUrl(args ...interface{}) (string, error) {
 		return "", fmt.Errorf("reversing %s: %s", action, err)
 	}
 
+	if len(c.MethodType.Args) < len(args)-1 {
+		return "", fmt.Errorf("reversing %s: route defines %d args, but received %d",
+			action, len(c.MethodType.Args), len(args)-1)
+	}
+
 	// Unbind the arguments.
 	argsByName := make(map[string]string)
 	for i, argValue := range args[1:] {
 		Unbind(argsByName, c.MethodType.Args[i].Name, argValue)
 	}
 
-	return MainRouter.Reverse(args[0].(string), argsByName).Url, nil
+	return template.URL(MainRouter.Reverse(args[0].(string), argsByName).Url), nil
 }
 
 func Slug(text string) string {

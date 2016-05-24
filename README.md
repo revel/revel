@@ -2,35 +2,42 @@
 
 A high productivity, full-stack web framework for the [Go language](http://www.golang.org).
 
-Current Version: 0.9.1 (Mar 1, 2014)
+Current Version: 0.12.0 (Mar 25, 2015)
 
-[![Build Status](https://secure.travis-ci.org/revel/revel.png?branch=master)](http://travis-ci.org/revel/revel)
+**As of Revel 0.11.0, Go 1.3+ is required.**
+
+[![Build Status](https://secure.travis-ci.org/revel/revel.svg?branch=master)](http://travis-ci.org/revel/revel)
+
+## Quick Start
+
+Install revel framework:
+
+	go get -u github.com/revel/cmd/revel
+
+Create a new app and run it:
+
+	revel new github.com/myaccount/my-app
+	revel run github.com/myaccount/my-app
+
+Open http://localhost:9000 in your browser and you should see "It works!"
 
 ## Learn More
 
 [Manual, Samples, Godocs, etc](http://revel.github.com)
+[Revel's Roadmap](https://github.com/revel/revel/wiki/Roadmap)
+[Articles Featuring Revel](https://github.com/revel/revel/wiki/Articles)
 
-## Join The Community
+## Contributing
 
+* [Contributing Code Guidelines](https://github.com/revel/revel/blob/master/CONTRIBUTING.md)
 * [Google Groups](https://groups.google.com/forum/#!forum/revel-framework) via [revel-framework@googlegroups.com](mailto:revel-framework@googlegroups.com)
 * [GitHub Issues](https://github.com/revel/revel/issues)
+* [StackOverflow Questions](http://stackoverflow.com/questions/tagged/revel)
 * [IRC](http://webchat.freenode.net/?channels=%23revel&uio=d4) via #revel on Freenode
 
 ## Announcements
 
-### New GitHub Repo
+View the [v0.12.0 release notes](https://github.com/revel/revel/releases/tag/v0.12.0)
+for all of the relevant changes.
 
-We have moved to the @revel organization. See the [v0.9.0 release notes](https://github.com/revel/revel/releases/tag/v0.9.0)
-for how to update your app.
-
-### v1.0 Goal
-
-You'll notice that our next planned milestone release is v0.10 and you may wonder if Revel is
-production-ready. The short answer is yes. However, the team feels that there are still some
-features needed before we can make a whole-hearted endorsement of Revel as a true "batteries-included" web framework.
-
-For those of you new to Go or Revel, we'd like to invite you to join us on our march to v1.0
-and help make Revel a stable, secure and enjoyable web framework.
-
-We'd like to take this opportunity to thank the entire community for their feedback and
-regular contributions. Your support has been very encouraging and highly appreciated.
+We are working on increasing the speed and quality of our releases. Your feedback has never been so valuable, please share your thoughts with us and help shape Revel!

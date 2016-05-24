@@ -30,6 +30,7 @@ func (r *revelLogs) Write(p []byte) (n int, err error) {
 var (
 	// App details
 	AppName    string // e.g. "sample"
+	AppRoot    string // e.g. "/app1"
 	BasePath   string // e.g. "/Users/robfig/gocode/src/corp/sample"
 	AppPath    string // e.g. "/Users/robfig/gocode/src/corp/sample/app"
 	ViewsPath  string // e.g. "/Users/robfig/gocode/src/corp/sample/app/views"
@@ -65,7 +66,8 @@ var (
 
 	// All cookies dropped by the framework begin with this prefix.
 	CookiePrefix string
-
+	// Cookie domain
+	CookieDomain string
 	// Cookie flags
 	CookieHttpOnly bool
 	CookieSecure   bool
@@ -178,7 +180,9 @@ func Init(mode, importPath, srcPath string) {
 	}
 
 	AppName = Config.StringDefault("app.name", "(not set)")
+	AppRoot = Config.StringDefault("app.root", "")
 	CookiePrefix = Config.StringDefault("cookie.prefix", "REVEL")
+	CookieDomain = Config.StringDefault("cookie.domain", "")
 	CookieHttpOnly = Config.BoolDefault("cookie.httponly", false)
 	CookieSecure = Config.BoolDefault("cookie.secure", false)
 	TemplateDelims = Config.StringDefault("template.delimiters", "")
@@ -186,7 +190,11 @@ func Init(mode, importPath, srcPath string) {
 		secretKey = []byte(secretStr)
 	}
 
-	// Configure logging.
+	// Configure logging
+	if !Config.BoolDefault("log.colorize", true) {
+		gocolorize.SetPlain(true)
+	}
+
 	TRACE = getLogger("trace")
 	INFO = getLogger("info")
 	WARN = getLogger("warn")
@@ -195,6 +203,7 @@ func Init(mode, importPath, srcPath string) {
 	loadModules()
 
 	Initialized = true
+	INFO.Printf("Initialized Revel v%s (%s) for %s", VERSION, BUILD_DATE, MINIMUM_GO)
 }
 
 // Create a logger using log.* directives in app.conf plus the current settings
@@ -321,7 +330,7 @@ func addModule(name, importPath, modulePath string) {
 
 	// Hack: There is presently no way for the testrunner module to add the
 	// "test" subdirectory to the CodePaths.  So this does it instead.
-	if importPath == "github.com/revel/revel/modules/testrunner" {
+	if importPath == Config.StringDefault("module.testrunner", "github.com/revel/modules/testrunner") {
 		CodePaths = append(CodePaths, path.Join(BasePath, "tests"))
 	}
 }

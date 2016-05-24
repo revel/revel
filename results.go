@@ -11,7 +11,10 @@ import (
 	"net/http"
 	"reflect"
 	"strconv"
+	"strings"
 	"time"
+
+	"golang.org/x/net/websocket"
 )
 
 type Result interface {
@@ -92,8 +95,15 @@ func (r ErrorResult) Apply(req *Request, resp *Response) {
 		return
 	}
 
-	resp.WriteHeader(status, contentType)
-	b.WriteTo(resp.Out)
+	// need to check if we are on a websocket here
+	// net/http panics if we write to a hijacked connection
+	if req.Method != "WS" {
+		resp.WriteHeader(status, contentType)
+		b.WriteTo(resp.Out)
+	} else {
+		websocket.Message.Send(req.Websocket, fmt.Sprint(revelError))
+	}
+
 }
 
 type PlaintextErrorResult struct {
@@ -145,6 +155,49 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
 	// would carry a 200 status code)
 	var b bytes.Buffer
 	r.render(req, resp, &b)
+
+	// Trimming the HTML will do the following:
+	// * Remove all leading & trailing whitespace on every line
+	// * Remove all empty lines
+	// * Attempt to keep formatting inside <pre></pre> tags
+	//
+	// This is safe unless white-space: pre; is used in css for formatting.
+	// Since there is no way to detect that, you will have to keep trimming off in these cases.
+	if Config.BoolDefault("results.trim.html", false) {
+		var b2 bytes.Buffer
+		// Allocate length of original buffer, so we can write everything without allocating again
+		b2.Grow(b.Len())
+		insidePre := false
+		for {
+			text, err := b.ReadString('\n')
+			// Convert to lower case for finding <pre> tags.
+			tl := strings.ToLower(text)
+			if strings.Contains(tl, "<pre>") {
+				insidePre = true
+			}
+			// Trim if not inside a <pre> statement
+			if !insidePre {
+				// Cut trailing/leading whitespace
+				text = strings.Trim(text, " \t\r\n")
+				if len(text) > 0 {
+					b2.WriteString(text)
+					b2.WriteString("\n")
+				}
+			} else {
+				b2.WriteString(text)
+			}
+			if strings.Contains(tl, "</pre>") {
+				insidePre = false
+			}
+			// We are finished
+			if err != nil {
+				break
+			}
+		}
+		// Replace the buffer
+		b = b2
+	}
+
 	if !chunked {
 		resp.Out.Header().Set("Content-Length", strconv.Itoa(b.Len()))
 	}
@@ -269,7 +322,7 @@ type BinaryResult struct {
 func (r *BinaryResult) Apply(req *Request, resp *Response) {
 	disposition := string(r.Delivery)
 	if r.Name != "" {
-		disposition += fmt.Sprintf("; filename=%s", r.Name)
+		disposition += fmt.Sprintf(`; filename="%s"`, r.Name)
 	}
 	resp.Out.Header().Set("Content-Disposition", disposition)
 
@@ -278,6 +331,9 @@ func (r *BinaryResult) Apply(req *Request, resp *Response) {
 		// http.ServeContent doesn't know about response.ContentType, so we set the respective header.
 		if resp.ContentType != "" {
 			resp.Out.Header().Set("Content-Type", resp.ContentType)
+		} else {
+			contentType := ContentTypeByFilename(r.Name)
+			resp.Out.Header().Set("Content-Type", contentType)
 		}
 		http.ServeContent(resp.Out, req.Request, r.Name, r.ModTime, rs)
 	} else {

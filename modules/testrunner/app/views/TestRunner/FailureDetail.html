@@ -1,9 +1,0 @@
-<b>{{.Description}}</b><br>
-In {{.Path}}
-{{if .Line}}
-	(around {{if .Line}}line {{.Line}}{{end}}{{if .Column}} column {{.Column}}{{end}})
-{{end}}:
-{{range .ContextSource}}{{if .IsError}}<code>{{.Source}}</code>{{end}}{{end}}<br>
-<a style="cursor:pointer;" 
-onclick="x=this.nextSibling.style;if(!x.display)x.display='none';else x.display=''">
-	Show Stack</a><pre style="display:none;">{{.Stack}}</pre>

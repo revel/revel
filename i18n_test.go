@@ -187,7 +187,19 @@ func loadTestI18nConfigWithoutLanguageCookieOption(t *testing.T) {
 func buildRequestWithCookie(name, value string) *Request {
 	httpRequest, _ := http.NewRequest("GET", "/", nil)
 	request := NewRequest(httpRequest)
-	request.AddCookie(&http.Cookie{name, value, "", "", time.Now(), "", 0, false, false, "", nil})
+	request.AddCookie(&http.Cookie{
+		Name:       name,
+		Value:      value,
+		Path:       "",
+		Domain:     "",
+		Expires:    time.Now(),
+		RawExpires: "",
+		MaxAge:     0,
+		Secure:     false,
+		HttpOnly:   false,
+		Raw:        "",
+		Unparsed:   nil,
+	})
 	return request
 }
 

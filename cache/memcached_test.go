@@ -44,3 +44,7 @@ func TestMemcachedCache_Replace(t *testing.T) {
 func TestMemcachedCache_Add(t *testing.T) {
 	testAdd(t, newMemcachedCache)
 }
+
+func TestMemcachedCache_GetMulti(t *testing.T) {
+	testGetMulti(t, newMemcachedCache)
+}

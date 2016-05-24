@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"github.com/revel/revel"
 	"net"
 	"testing"
 	"time"
@@ -10,6 +11,8 @@ import (
 const redisTestServer = "localhost:6379"
 
 var newRedisCache = func(t *testing.T, defaultExpiration time.Duration) Cache {
+	revel.Config = revel.NewEmptyConfig()
+
 	c, err := net.Dial("tcp", redisTestServer)
 	if err == nil {
 		c.Write([]byte("flush_all\r\n"))
@@ -45,4 +48,8 @@ func TestRedisCache_Replace(t *testing.T) {
 
 func TestRedisCache_Add(t *testing.T) {
 	testAdd(t, newRedisCache)
+}
+
+func TestRedisCache_GetMulti(t *testing.T) {
+	testGetMulti(t, newRedisCache)
 }
