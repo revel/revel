@@ -1,6 +1,7 @@
 package revel
 
 import (
+	"io"
 	"reflect"
 
 	"golang.org/x/net/websocket"
@@ -25,6 +26,11 @@ func ActionInvoker(c *Controller, _ []Filter) {
 			boundArg = reflect.ValueOf(c.Request.Websocket)
 		} else {
 			boundArg = Bind(c.Params, arg.Name, arg.Type)
+			// #756 - If the argument is a closer, defer a Close call,
+			// so we don't risk on leaks.
+			if closer, ok := boundArg.Interface().(io.Closer); ok {
+				defer closer.Close()
+			}
 		}
 		methodArgs = append(methodArgs, boundArg)
 	}
