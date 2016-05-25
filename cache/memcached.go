@@ -2,9 +2,10 @@ package cache
 
 import (
 	"errors"
+	"time"
+
 	"github.com/bradfitz/gomemcache/memcache"
 	"github.com/revel/revel"
-	"time"
 )
 
 // Wraps the Memcached client to meet the Cache interface.
