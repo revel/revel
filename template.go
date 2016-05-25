@@ -361,6 +361,12 @@ func (loader *TemplateLoader) Refresh() *Error {
 			return nil
 		}
 
+		if _, err = os.Stat(fullSrcDir); os.IsNotExist(err) {
+			// #1058 Given views/template path is not exists
+			// so no need to walk, move on to next path
+			continue
+		}
+
 		funcErr := filepath.Walk(fullSrcDir, templateWalker)
 
 		// If there was an error with the Funcs, set it and return immediately.
