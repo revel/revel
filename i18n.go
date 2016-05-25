@@ -72,8 +72,8 @@ func Message(locale, message string, args ...interface{}) string {
 
 	// This works because unlike the goconfig documentation suggests it will actually
 	// try to resolve message in DEFAULT if it did not find it in the given section.
-	value, error := messageConfig.String(region, message)
-	if error != nil {
+	value, err := messageConfig.String(region, message)
+	if err != nil {
 		WARN.Printf("Unknown message '%s' for locale '%s'", message, locale)
 		return fmt.Sprintf(unknownValueFormat, message)
 	}
@@ -152,8 +152,8 @@ func loadMessageFile(path string, info os.FileInfo, osError error) error {
 	return nil
 }
 
-func parseMessagesFile(path string) (messageConfig *config.Config, error error) {
-	messageConfig, error = config.ReadDefault(path)
+func parseMessagesFile(path string) (messageConfig *config.Config, err error) {
+	messageConfig, err = config.ReadDefault(path)
 	return
 }
 
