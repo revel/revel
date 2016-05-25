@@ -35,12 +35,6 @@ type RouteMatch struct {
 	Params         map[string][]string // e.g. {id: 123}
 }
 
-type arg struct {
-	name       string
-	index      int
-	constraint *regexp.Regexp
-}
-
 // Prepares the route to be used in matching.
 func NewRoute(method, path, action, fixedArgs, routesPath string, line int) (r *Route) {
 	// Handle fixed arguments
