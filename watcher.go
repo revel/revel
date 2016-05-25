@@ -61,7 +61,8 @@ func (w *Watcher) Listen(listener Listener, roots ...string) {
 		// is the directory / file a symlink?
 		f, err := os.Lstat(p)
 		if err == nil && f.Mode()&os.ModeSymlink == os.ModeSymlink {
-			realPath, err := filepath.EvalSymlinks(p)
+			var realPath string
+			realPath, err = filepath.EvalSymlinks(p)
 			if err != nil {
 				panic(err)
 			}

@@ -207,7 +207,8 @@ func (c RedisCache) Decrement(key string, delta uint64) (newValue uint64, err er
 		return 0, err
 	}
 	if delta > uint64(currentVal) {
-		tempint, err := redis.Int64(conn.Do("DECRBY", key, currentVal))
+		var tempint int64
+		tempint, err = redis.Int64(conn.Do("DECRBY", key, currentVal))
 		return uint64(tempint), err
 	}
 	tempint, err := redis.Int64(conn.Do("DECRBY", key, delta))

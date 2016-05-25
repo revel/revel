@@ -264,9 +264,9 @@ func routeError(err error, routesPath, content string, n int) *Error {
 	}
 	// Load the route file content if necessary
 	if content == "" {
-		contentBytes, err := ioutil.ReadFile(routesPath)
-		if err != nil {
-			ERROR.Printf("Failed to read route file %s: %s\n", routesPath, err)
+		contentBytes, er := ioutil.ReadFile(routesPath)
+		if er != nil {
+			ERROR.Printf("Failed to read route file %s: %s\n", routesPath, er)
 		} else {
 			content = string(contentBytes)
 		}

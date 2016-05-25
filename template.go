@@ -265,7 +265,8 @@ func (loader *TemplateLoader) Refresh() *Error {
 
 				// Load the file if we haven't already
 				if fileStr == "" {
-					fileBytes, err := ioutil.ReadFile(path)
+					var fileBytes []byte
+					fileBytes, err = ioutil.ReadFile(path)
 					if err != nil {
 						ERROR.Println("Failed reading file:", path)
 						return nil
