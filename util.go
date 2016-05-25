@@ -37,7 +37,9 @@ type ExecutableTemplate interface {
 // Execute a template and returns the result as a string.
 func ExecuteTemplate(tmpl ExecutableTemplate, data interface{}) string {
 	var b bytes.Buffer
-	tmpl.Execute(&b, data)
+	if err := tmpl.Execute(&b, data); err != nil {
+		panic(err)
+	}
 	return b.String()
 }
 

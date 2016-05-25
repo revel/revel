@@ -99,9 +99,13 @@ func (r ErrorResult) Apply(req *Request, resp *Response) {
 	// net/http panics if we write to a hijacked connection
 	if req.Method != "WS" {
 		resp.WriteHeader(status, contentType)
-		b.WriteTo(resp.Out)
+		if _, err := b.WriteTo(resp.Out); err != nil {
+			panic(err)
+		}
 	} else {
-		websocket.Message.Send(req.Websocket, fmt.Sprint(revelError))
+		if err := websocket.Message.Send(req.Websocket, fmt.Sprint(revelError)); err != nil {
+			panic(err)
+		}
 	}
 
 }
@@ -113,7 +117,9 @@ type PlaintextErrorResult struct {
 // This method is used when the template loader or error template is not available.
 func (r PlaintextErrorResult) Apply(req *Request, resp *Response) {
 	resp.WriteHeader(http.StatusInternalServerError, "text/plain; charset=utf-8")
-	resp.Out.Write([]byte(r.Error.Error()))
+	if _, err := resp.Out.Write([]byte(r.Error.Error())); err != nil {
+		panic(err)
+	}
 }
 
 // Action methods return this result to request a template be rendered.
@@ -180,11 +186,17 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
 				// Cut trailing/leading whitespace
 				text = strings.Trim(text, " \t\r\n")
 				if len(text) > 0 {
-					b2.WriteString(text)
-					b2.WriteString("\n")
+					if _, err = b2.WriteString(text); err != nil {
+						panic(err)
+					}
+					if _, err = b2.WriteString("\n"); err != nil {
+						panic(err)
+					}
 				}
 			} else {
-				b2.WriteString(text)
+				if _, err = b2.WriteString(text); err != nil {
+					panic(err)
+				}
 			}
 			if strings.Contains(tl, "</pre>") {
 				insidePre = false
@@ -202,7 +214,9 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
 		resp.Out.Header().Set("Content-Length", strconv.Itoa(b.Len()))
 	}
 	resp.WriteHeader(http.StatusOK, "text/html; charset=utf-8")
-	b.WriteTo(out)
+	if _, err := b.WriteTo(out); err != nil {
+		panic(err)
+	}
 }
 
 func (r *RenderTemplateResult) render(req *Request, resp *Response, wr io.Writer) {
@@ -239,7 +253,9 @@ type RenderHtmlResult struct {
 
 func (r RenderHtmlResult) Apply(req *Request, resp *Response) {
 	resp.WriteHeader(http.StatusOK, "text/html; charset=utf-8")
-	resp.Out.Write([]byte(r.html))
+	if _, err := resp.Out.Write([]byte(r.html)); err != nil {
+		panic(err)
+	}
 }
 
 type RenderJsonResult struct {
@@ -263,14 +279,22 @@ func (r RenderJsonResult) Apply(req *Request, resp *Response) {
 
 	if r.callback == "" {
 		resp.WriteHeader(http.StatusOK, "application/json; charset=utf-8")
-		resp.Out.Write(b)
+		if _, err = resp.Out.Write(b); err != nil {
+			panic(err)
+		}
 		return
 	}
 
 	resp.WriteHeader(http.StatusOK, "application/javascript; charset=utf-8")
-	resp.Out.Write([]byte(r.callback + "("))
-	resp.Out.Write(b)
-	resp.Out.Write([]byte(");"))
+	if _, err = resp.Out.Write([]byte(r.callback + "(")); err != nil {
+		panic(err)
+	}
+	if _, err = resp.Out.Write(b); err != nil {
+		panic(err)
+	}
+	if _, err = resp.Out.Write([]byte(");")); err != nil {
+		panic(err)
+	}
 }
 
 type RenderXmlResult struct {
@@ -292,7 +316,9 @@ func (r RenderXmlResult) Apply(req *Request, resp *Response) {
 	}
 
 	resp.WriteHeader(http.StatusOK, "application/xml; charset=utf-8")
-	resp.Out.Write(b)
+	if _, err = resp.Out.Write(b); err != nil {
+		panic(err)
+	}
 }
 
 type RenderTextResult struct {
@@ -301,7 +327,9 @@ type RenderTextResult struct {
 
 func (r RenderTextResult) Apply(req *Request, resp *Response) {
 	resp.WriteHeader(http.StatusOK, "text/plain; charset=utf-8")
-	resp.Out.Write([]byte(r.text))
+	if _, err := resp.Out.Write([]byte(r.text)); err != nil {
+		panic(err)
+	}
 }
 
 type ContentDisposition string
@@ -342,12 +370,14 @@ func (r *BinaryResult) Apply(req *Request, resp *Response) {
 			resp.Out.Header().Set("Content-Length", strconv.FormatInt(r.Length, 10))
 		}
 		resp.WriteHeader(http.StatusOK, ContentTypeByFilename(r.Name))
-		io.Copy(resp.Out, r.Reader)
+		if _, err := io.Copy(resp.Out, r.Reader); err != nil {
+			panic(err)
+		}
 	}
 
 	// Close the Reader if we can
 	if v, ok := r.Reader.(io.Closer); ok {
-		v.Close()
+		_ = v.Close()
 	}
 }
 

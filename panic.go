@@ -23,7 +23,7 @@ func handleInvocationPanic(c *Controller, err interface{}) {
 		// Only show the sensitive information in the debug stack trace in development mode, not production
 		ERROR.Print(err, "\n", string(debug.Stack()))
 		c.Response.Out.WriteHeader(500)
-		c.Response.Out.Write(debug.Stack())
+		_, _ = c.Response.Out.Write(debug.Stack())
 		return
 	}
 

@@ -257,7 +257,9 @@ func TestRouteMatches(t *testing.T) {
 	BasePath = "/BasePath"
 	router := NewRouter("")
 	router.Routes, _ = parseRoutes("", "", TEST_ROUTES, false)
-	router.updateTree()
+	if err := router.updateTree(); err != nil {
+		panic(err)
+	}
 	for req, expected := range routeMatchTestCases {
 		t.Log("Routing:", req.Method, req.URL)
 		actual := router.Route(req)
@@ -354,7 +356,9 @@ func TestReverseRouting(t *testing.T) {
 func BenchmarkRouter(b *testing.B) {
 	router := NewRouter("")
 	router.Routes, _ = parseRoutes("", "", TEST_ROUTES, false)
-	router.updateTree()
+	if err := router.updateTree(); err != nil {
+		panic(err)
+	}
 	b.ResetTimer()
 	for i := 0; i < b.N/len(routeMatchTestCases); i++ {
 		for req := range routeMatchTestCases {
@@ -391,7 +395,9 @@ func BenchmarkLargeRouter(b *testing.B) {
 		router.Routes = append(router.Routes,
 			NewRoute("GET", p, "Controller.Action", "", "", 0))
 	}
-	router.updateTree()
+	if err := router.updateTree(); err != nil {
+		panic(err)
+	}
 
 	requestUrls := []string{
 		"http://example.org/",

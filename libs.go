@@ -15,7 +15,9 @@ func Sign(message string) string {
 		return ""
 	}
 	mac := hmac.New(sha1.New, secretKey)
-	io.WriteString(mac, message)
+	if _, err := io.WriteString(mac, message); err != nil {
+		panic(err)
+	}
 	return hex.EncodeToString(mac.Sum(nil))
 }
 

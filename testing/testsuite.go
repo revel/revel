@@ -337,7 +337,9 @@ func createFormFile(writer *multipart.Writer, fieldname, filename string) {
 	if err != nil {
 		panic(err)
 	}
-	defer file.Close()
+	defer func() {
+		_ = file.Close()
+	}()
 
 	// Create a new form-data header with the provided field name and file name.
 	// Determine Content-Type of the file by its extension.

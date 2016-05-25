@@ -11,7 +11,9 @@ func TestBenchmarkCompressed(t *testing.T) {
 	startFakeBookingApp()
 	resp := httptest.NewRecorder()
 	c := NewController(NewRequest(showRequest), NewResponse(resp))
-	c.SetAction("Hotels", "Show")
+	if err := c.SetAction("Hotels", "Show"); err != nil {
+		panic(err)
+	}
 	Config.SetOption("results.compressed", "true")
 	result := Hotels{c}.Show(3)
 	result.Apply(c.Request, c.Response)
@@ -25,7 +27,9 @@ func BenchmarkRenderCompressed(b *testing.B) {
 	resp := httptest.NewRecorder()
 	resp.Body = nil
 	c := NewController(NewRequest(showRequest), NewResponse(resp))
-	c.SetAction("Hotels", "Show")
+	if err := c.SetAction("Hotels", "Show"); err != nil {
+		panic(err)
+	}
 	Config.SetOption("results.compressed", "true")
 	b.ResetTimer()
 
@@ -40,7 +44,9 @@ func BenchmarkRenderUnCompressed(b *testing.B) {
 	resp := httptest.NewRecorder()
 	resp.Body = nil
 	c := NewController(NewRequest(showRequest), NewResponse(resp))
-	c.SetAction("Hotels", "Show")
+	if err := c.SetAction("Hotels", "Show"); err != nil {
+		panic(err)
+	}
 	Config.SetOption("results.compressed", "false")
 	b.ResetTimer()
 

@@ -180,9 +180,10 @@ var (
 )
 
 func NewTemplateLoader(paths []string) *TemplateLoader {
-	return &TemplateLoader{
+	loader := &TemplateLoader{
 		paths: paths,
 	}
+	return loader
 }
 
 // This scans the views directory and parses all templates as Go Templates.

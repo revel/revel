@@ -67,7 +67,9 @@ func startFakeBookingApp() {
 	ERROR = TRACE
 
 	MainTemplateLoader = NewTemplateLoader([]string{ViewsPath, path.Join(RevelPath, "templates")})
-	MainTemplateLoader.Refresh()
+	if err := MainTemplateLoader.Refresh(); err != nil {
+		panic(err)
+	}
 
 	RegisterController((*Hotels)(nil),
 		[]*MethodType{
