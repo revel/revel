@@ -32,13 +32,13 @@ var (
 // This allows you to set up your own loading and logging of translated texts.
 //
 // See Message(...) in i18n.go for example of function.
-var MessageFunc func(locale, message string, args ...interface{}) (value string) = Message
+var MessageFunc = Message
 
 // Return all currently loaded message languages.
 func MessageLanguages() []string {
 	languages := make([]string, len(messages))
 	i := 0
-	for language, _ := range messages {
+	for language := range messages {
 		languages[i] = language
 		i++
 	}
@@ -129,21 +129,22 @@ func loadMessageFile(path string, info os.FileInfo, osError error) error {
 	}
 
 	if matched, _ := regexp.MatchString(messageFilePattern, info.Name()); matched {
-		if config, error := parseMessagesFile(path); error != nil {
-			return error
-		} else {
-			locale := parseLocaleFromFileName(info.Name())
-
-			// If we have already parsed a message file for this locale, merge both
-			if _, exists := messages[locale]; exists {
-				messages[locale].Merge(config)
-				TRACE.Printf("Successfully merged messages for locale '%s'", locale)
-			} else {
-				messages[locale] = config
-			}
-
-			TRACE.Println("Successfully loaded messages from file", info.Name())
+		var config *config.Config
+		config, err := parseMessagesFile(path)
+		if err != nil {
+			return err
 		}
+		locale := parseLocaleFromFileName(info.Name())
+
+		// If we have already parsed a message file for this locale, merge both
+		if _, exists := messages[locale]; exists {
+			messages[locale].Merge(config)
+			TRACE.Printf("Successfully merged messages for locale '%s'", locale)
+		} else {
+			messages[locale] = config
+		}
+
+		TRACE.Println("Successfully loaded messages from file", info.Name())
 	} else {
 		TRACE.Printf("Ignoring file %s because it did not have a valid extension", info.Name())
 	}
@@ -203,11 +204,11 @@ func hasAcceptLanguageHeader(request *Request) (bool, string) {
 func hasLocaleCookie(request *Request) (bool, string) {
 	if request != nil && request.Cookies() != nil {
 		name := Config.StringDefault(localeCookieConfigKey, CookiePrefix+"_LANG")
-		if cookie, error := request.Cookie(name); error == nil {
+		cookie, err := request.Cookie(name)
+		if err == nil {
 			return true, cookie.Value
-		} else {
-			TRACE.Printf("Unable to read locale cookie with name '%s': %s", name, error.Error())
 		}
+		TRACE.Printf("Unable to read locale cookie with name '%s': %s", name, err.Error())
 	}
 
 	return false, ""

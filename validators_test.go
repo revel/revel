@@ -23,7 +23,7 @@ type Expect struct {
 func performTests(validator Validator, tests []Expect, t *testing.T) {
 	for _, test := range tests {
 		if validator.IsSatisfied(test.input) != test.expectedResult {
-			if test.expectedResult == false {
+			if !test.expectedResult {
 				t.Errorf(errorsMessage, reflect.TypeOf(validator), test.errorMessage)
 			} else {
 				t.Errorf(noErrorsMessage, reflect.TypeOf(validator), test.errorMessage)

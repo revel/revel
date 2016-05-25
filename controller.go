@@ -383,8 +383,8 @@ var controllers = make(map[string]*ControllerType)
 func RegisterController(c interface{}, methods []*MethodType) {
 	// De-star the controller type
 	// (e.g. given TypeOf((*Application)(nil)), want TypeOf(Application))
-	var t reflect.Type = reflect.TypeOf(c)
-	var elem reflect.Type = t.Elem()
+	var t = reflect.TypeOf(c)
+	var elem = t.Elem()
 
 	// De-star all of the method arg types too.
 	for _, m := range methods {

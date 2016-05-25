@@ -180,10 +180,9 @@ var (
 )
 
 func NewTemplateLoader(paths []string) *TemplateLoader {
-	loader := &TemplateLoader{
+	return &TemplateLoader{
 		paths: paths,
 	}
-	return loader
 }
 
 // This scans the views directory and parses all templates as Go Templates.
@@ -207,7 +206,7 @@ func (loader *TemplateLoader) Refresh() *Error {
 	}
 
 	// Walk through the template loader's paths and build up a template set.
-	var templateSet *template.Template = nil
+	var templateSet *template.Template
 	for _, basePath := range loader.paths {
 		// Walk only returns an error if the template loader is completely unusable
 		// (namely, if one of the TemplateFuncs does not have an acceptable signature).

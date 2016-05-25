@@ -357,7 +357,7 @@ func BenchmarkRouter(b *testing.B) {
 	router.updateTree()
 	b.ResetTimer()
 	for i := 0; i < b.N/len(routeMatchTestCases); i++ {
-		for req, _ := range routeMatchTestCases {
+		for req := range routeMatchTestCases {
 			r := router.Route(req)
 			if r == nil {
 				b.Errorf("Request not found: %s", req.URL.Path)

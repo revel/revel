@@ -99,7 +99,7 @@ func (e *Error) ContextSource() []sourceLine {
 		end = len(e.SourceLines)
 	}
 
-	var lines []sourceLine = make([]sourceLine, end-start)
+	var lines = make([]sourceLine, end-start)
 	for i, src := range e.SourceLines[start:end] {
 		fileLine := start + i + 1
 		lines[i] = sourceLine{src, fileLine, fileLine == e.Line}

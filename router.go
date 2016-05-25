@@ -254,11 +254,7 @@ func validateRoute(route *Route) error {
 	}
 
 	var c Controller
-	if err := c.SetAction(parts[0], parts[1]); err != nil {
-		return err
-	}
-
-	return nil
+	return c.SetAction(parts[0], parts[1])
 }
 
 // routeError adds context to a simple error message.
@@ -302,14 +298,14 @@ func getModuleRoutes(moduleName, joinedPath string, validate bool) ([]*Route, *E
 // 4: path
 // 5: action
 // 6: fixedargs
-var routePattern *regexp.Regexp = regexp.MustCompile(
+var routePattern = regexp.MustCompile(
 	"(?i)^(GET|POST|PUT|DELETE|PATCH|OPTIONS|HEAD|WS|\\*)" +
 		"[(]?([^)]*)(\\))?[ \t]+" +
 		"(.*/[^ \t]*)[ \t]+([^ \t(]+)" +
 		`\(?([^)]*)\)?[ \t]*$`)
 
 func parseRouteLine(line string) (method, path, action, fixedArgs string, found bool) {
-	var matches []string = routePattern.FindStringSubmatch(line)
+	var matches = routePattern.FindStringSubmatch(line)
 	if matches == nil {
 		return
 	}
@@ -429,7 +425,7 @@ func init() {
 
 func RouterFilter(c *Controller, fc []Filter) {
 	// Figure out the Controller/Action
-	var route *RouteMatch = MainRouter.Route(c.Request.Request)
+	var route = MainRouter.Route(c.Request.Request)
 	if route == nil {
 		c.Result = c.NotFound("No matching route found: " + c.Request.RequestURI)
 		return

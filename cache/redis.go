@@ -44,10 +44,8 @@ func NewRedisCache(host string, password string, defaultExpiration time.Duration
 		},
 		// custom connection test method
 		TestOnBorrow: func(c redis.Conn, t time.Time) error {
-			if _, err := c.Do("PING"); err != nil {
-				return err
-			}
-			return nil
+			_, err := c.Do("PING")
+			return err
 		},
 	}
 	return RedisCache{pool, defaultExpiration}
@@ -83,9 +81,8 @@ func (c RedisCache) Replace(key string, value interface{}, expires time.Duration
 	err = c.invoke(conn.Do, key, value, expires)
 	if value == nil {
 		return ErrNotStored
-	} else {
-		return err
 	}
+	return err
 }
 
 func (c RedisCache) Get(key string, ptrValue interface{}) error {
@@ -167,7 +164,7 @@ func (c RedisCache) Increment(key string, delta uint64) (uint64, error) {
 	if err != nil {
 		return 0, err
 	}
-	var sum int64 = currentVal + int64(delta)
+	var sum = currentVal + int64(delta)
 	_, err = conn.Do("SET", key, sum)
 	if err != nil {
 		return 0, err
@@ -225,12 +222,11 @@ func (c RedisCache) invoke(f func(string, ...interface{}) (interface{}, error),
 	conn := c.pool.Get()
 	defer conn.Close()
 	if expires > 0 {
-		_, err := f("SETEX", key, int32(expires/time.Second), b)
-		return err
-	} else {
-		_, err := f("SET", key, b)
+		_, err = f("SETEX", key, int32(expires/time.Second), b)
 		return err
 	}
+	_, err = f("SET", key, b)
+	return err
 }
 
 // Implement a Getter on top of the returned item map.
