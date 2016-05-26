@@ -2,8 +2,11 @@ package revel
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"io/ioutil"
+	"net"
+	"net/http"
 	"net/url"
 	"os"
 	"reflect"
@@ -11,6 +14,18 @@ import (
 	"strings"
 
 	"github.com/revel/revel/config"
+)
+
+const (
+	DefaultFileContentType = "application/octet-stream"
+)
+
+var (
+	cookieKeyValueParser = regexp.MustCompile("\x00([^:]*):([^\x00]*)\x00")
+	hdrForwardedFor      = http.CanonicalHeaderKey("X-Forwarded-For")
+	hdrRealIP            = http.CanonicalHeaderKey("X-Real-Ip")
+
+	mimeConfig *config.Context
 )
 
 // Add some more methods to the default Template.
@@ -65,10 +80,6 @@ func FindMethod(recvType reflect.Type, funcVal reflect.Value) *reflect.Method {
 	return nil
 }
 
-var (
-	cookieKeyValueParser = regexp.MustCompile("\x00([^:]*):([^\x00]*)\x00")
-)
-
 // Takes the raw (escaped) cookie value and parses out key values.
 func ParseKeyValueCookie(val string, cb func(key, val string)) {
 	val, _ = url.QueryUnescape(val)
@@ -79,10 +90,6 @@ func ParseKeyValueCookie(val string, cb func(key, val string)) {
 	}
 }
 
-const DefaultFileContentType = "application/octet-stream"
-
-var mimeConfig *config.Context
-
 // Load mime-types.conf on init.
 func LoadMimeConfig() {
 	var err error
@@ -90,10 +97,6 @@ func LoadMimeConfig() {
 	if err != nil {
 		ERROR.Fatalln("Failed to load mime type config:", err)
 	}
-}
-
-func init() {
-	OnAppStart(LoadMimeConfig)
 }
 
 // Returns a MIME content type based on the filename's extension.
@@ -171,4 +174,54 @@ func Equal(a, b interface{}) bool {
 		}
 	}
 	return false
+}
+
+// ClientIP method returns client IP address from HTTP request.
+//
+// Note: Set property "app.behind.proxy" to true only if Revel is running
+// behind proxy like nginx, haproxy, apache, etc. Otherwise
+// you may get inaccurate Client IP address. Revel parses the
+// IP address in the order of X-Forwarded-For, X-Real-IP.
+//
+// By default revel will get http.Request's RemoteAddr
+func ClientIP(r *http.Request) string {
+	if Config.BoolDefault("app.behind.proxy", false) {
+		// Header X-Forwarded-For
+		if fwdFor := strings.TrimSpace(r.Header.Get(hdrForwardedFor)); fwdFor != "" {
+			index := strings.Index(fwdFor, ",")
+			if index == -1 {
+				return fwdFor
+			}
+			return fwdFor[:index]
+		}
+
+		// Header X-Real-Ip
+		if realIP := strings.TrimSpace(r.Header.Get(hdrRealIP)); realIP != "" {
+			return realIP
+		}
+	}
+
+	if remoteAddr, _, err := net.SplitHostPort(r.RemoteAddr); err == nil {
+		return remoteAddr
+	}
+
+	return ""
+}
+
+// createDir method creates nested directories if not exists
+func createDir(path string) error {
+	if _, err := os.Stat(path); err != nil {
+		if os.IsNotExist(err) {
+			if err = os.MkdirAll(path, 0755); err != nil {
+				return fmt.Errorf("Failed to create directory '%v': %v", path, err)
+			}
+		} else {
+			return fmt.Errorf("Failed to create directory '%v': %v", path, err)
+		}
+	}
+	return nil
+}
+
+func init() {
+	OnAppStart(LoadMimeConfig)
 }

@@ -15,6 +15,9 @@ app.name = {{ .AppName }}
 # into your application
 app.secret = {{ .Secret }}
 
+# Revel running behind proxy like nginx, haproxy, etc
+app.behind.proxy = false
+
 
 # The IP address on which to listen.
 http.addr =
@@ -74,10 +77,12 @@ results.chunked = false
 
 
 # Prefixes for each log message line
-# log.trace.prefix = "TRACE "
-# log.warn.prefix  = "WARN "
-# log.error.prefix = "ERROR "
-# log.info.prefix  = ""
+# User can override these prefix values within any section
+# For e.g: [dev], [prod], etc
+log.trace.prefix = "TRACE "
+log.info.prefix  = "INFO  "
+log.warn.prefix  = "WARN  "
+log.error.prefix = "ERROR "
 
 
 # The default language of this application.
@@ -136,6 +141,27 @@ log.warn.output  = stderr
 log.error.output = stderr
 
 
+# Revel log flags. Possible flags defined by the Go `log` package,
+# please refer https://golang.org/pkg/log/#pkg-constants
+# Go log is "Bits or'ed together to control what's printed"
+# Examples:
+#   0  => just log the message, turn off the flags
+#   3  => log.LstdFlags (log.Ldate|log.Ltime)
+#   19 => log.Ldate|log.Ltime|log.Lshortfile
+#   23 => log.Ldate|log.Ltime|log.Lmicroseconds|log.Lshortfile
+log.trace.flags = 19
+log.info.flags  = 19
+log.warn.flags  = 19
+log.error.flags = 19
+
+
+# Revel request access log
+# Access log line format:
+# RequestStartTime ClientIP ResponseStatus RequestLatency HTTPMethod URLPath
+# Sample format:
+# 2016/05/25 17:46:37.112 127.0.0.1 200  270.157µs GET /
+log.request.output = stderr
+
 
 ################################################################################
 # Section: prod
@@ -157,6 +183,29 @@ module.testrunner =
 
 
 log.trace.output = off
-log.info.output  = %(app.name)s.log
-log.warn.output  = %(app.name)s.log
-log.error.output = %(app.name)s.log
+log.info.output  = off
+log.warn.output  = log/%(app.name)s.log
+log.error.output = log/%(app.name)s.log
+
+# Revel log flags. Possible flags defined by the Go `log` package,
+# please refer https://golang.org/pkg/log/#pkg-constants
+# Go log is "Bits or'ed together to control what's printed"
+# Examples:
+#   0  => just log the message, turn off the flags
+#   3  => log.LstdFlags (log.Ldate|log.Ltime)
+#   19 => log.Ldate|log.Ltime|log.Lshortfile
+#   23 => log.Ldate|log.Ltime|log.Lmicroseconds|log.Lshortfile
+log.trace.flags = 3
+log.info.flags  = 3
+log.warn.flags  = 3
+log.error.flags = 3
+
+
+# Revel request access log
+# Access log line format:
+# RequestStartTime ClientIP ResponseStatus RequestLatency HTTPMethod URLPath
+# Sample format:
+# 2016/05/25 17:46:37.112 127.0.0.1 200  270.157µs GET /
+# Example:
+#   log.request.output = %(app.name)s-request.log
+log.request.output = off
