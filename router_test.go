@@ -258,7 +258,7 @@ func TestRouteMatches(t *testing.T) {
 	router := NewRouter("")
 	router.Routes, _ = parseRoutes("", "", TEST_ROUTES, false)
 	if err := router.updateTree(); err != nil {
-		panic(err)
+		t.Errorf("updateTree failed: %s", err)
 	}
 	for req, expected := range routeMatchTestCases {
 		t.Log("Routing:", req.Method, req.URL)
@@ -357,7 +357,7 @@ func BenchmarkRouter(b *testing.B) {
 	router := NewRouter("")
 	router.Routes, _ = parseRoutes("", "", TEST_ROUTES, false)
 	if err := router.updateTree(); err != nil {
-		panic(err)
+		b.Errorf("updateTree failed: %s", err)
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N/len(routeMatchTestCases); i++ {
@@ -396,7 +396,7 @@ func BenchmarkLargeRouter(b *testing.B) {
 			NewRoute("GET", p, "Controller.Action", "", "", 0))
 	}
 	if err := router.updateTree(); err != nil {
-		panic(err)
+		b.Errorf("updateTree failed: %s", err)
 	}
 
 	requestUrls := []string{

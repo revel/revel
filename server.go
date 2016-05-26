@@ -32,7 +32,7 @@ func handle(w http.ResponseWriter, r *http.Request) {
 		websocket.Handler(func(ws *websocket.Conn) {
 			//Override default Read/Write timeout with sane value for a web socket request
 			if err := ws.SetDeadline(time.Now().Add(time.Hour * 24)); err != nil {
-				panic(err)
+				ERROR.Println("SetDeadLine failed:", err)
 			}
 			r.Method = "WS"
 			handleInternal(w, r, ws)

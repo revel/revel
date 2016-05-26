@@ -264,8 +264,7 @@ func routeError(err error, routesPath, content string, n int) *Error {
 	}
 	// Load the route file content if necessary
 	if content == "" {
-		contentBytes, er := ioutil.ReadFile(routesPath)
-		if er != nil {
+		if contentBytes, er := ioutil.ReadFile(routesPath); er != nil {
 			ERROR.Printf("Failed to read route file %s: %s\n", routesPath, er)
 		} else {
 			content = string(contentBytes)
@@ -305,7 +304,7 @@ var routePattern = regexp.MustCompile(
 		`\(?([^)]*)\)?[ \t]*$`)
 
 func parseRouteLine(line string) (method, path, action, fixedArgs string, found bool) {
-	var matches = routePattern.FindStringSubmatch(line)
+	matches := routePattern.FindStringSubmatch(line)
 	if matches == nil {
 		return
 	}
@@ -425,7 +424,7 @@ func init() {
 
 func RouterFilter(c *Controller, fc []Filter) {
 	// Figure out the Controller/Action
-	var route = MainRouter.Route(c.Request.Request)
+	route := MainRouter.Route(c.Request.Request)
 	if route == nil {
 		c.Result = c.NotFound("No matching route found: " + c.Request.RequestURI)
 		return

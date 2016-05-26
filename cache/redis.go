@@ -178,7 +178,7 @@ func (c RedisCache) Increment(key string, delta uint64) (uint64, error) {
 	if err != nil {
 		return 0, err
 	}
-	var sum = currentVal + int64(delta)
+	sum := currentVal + int64(delta)
 	_, err = conn.Do("SET", key, sum)
 	if err != nil {
 		return 0, err

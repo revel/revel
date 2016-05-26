@@ -100,11 +100,11 @@ func (r ErrorResult) Apply(req *Request, resp *Response) {
 	if req.Method != "WS" {
 		resp.WriteHeader(status, contentType)
 		if _, err := b.WriteTo(resp.Out); err != nil {
-			panic(err)
+			ERROR.Println("WriteTo failed:", err)
 		}
 	} else {
 		if err := websocket.Message.Send(req.Websocket, fmt.Sprint(revelError)); err != nil {
-			panic(err)
+			ERROR.Println("Send failed:", err)
 		}
 	}
 

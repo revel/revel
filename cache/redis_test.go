@@ -18,12 +18,12 @@ var newRedisCache = func(t *testing.T, defaultExpiration time.Duration) Cache {
 	c, err := net.Dial("tcp", redisTestServer)
 	if err == nil {
 		if _, err = c.Write([]byte("flush_all\r\n")); err != nil {
-			panic(err)
+			t.Errorf("Write failed: %s", err)
 		}
 		_ = c.Close()
 		redisCache := NewRedisCache(redisTestServer, "", defaultExpiration)
 		if err = redisCache.Flush(); err != nil {
-			panic(err)
+			t.Errorf("Flush failed: %s", err)
 		}
 		return redisCache
 	}

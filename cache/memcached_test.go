@@ -13,7 +13,7 @@ var newMemcachedCache = func(t *testing.T, defaultExpiration time.Duration) Cach
 	c, err := net.Dial("tcp", testServer)
 	if err == nil {
 		if _, err = c.Write([]byte("flush_all\r\n")); err != nil {
-			panic(err)
+			t.Errorf("Write failed: %s", err)
 		}
 		_ = c.Close()
 		return NewMemcachedCache([]string{testServer}, defaultExpiration)

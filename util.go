@@ -38,7 +38,7 @@ type ExecutableTemplate interface {
 func ExecuteTemplate(tmpl ExecutableTemplate, data interface{}) string {
 	var b bytes.Buffer
 	if err := tmpl.Execute(&b, data); err != nil {
-		panic(err)
+		ERROR.Println("Execute failed:", err)
 	}
 	return b.String()
 }

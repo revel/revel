@@ -12,7 +12,7 @@ func TestBenchmarkRender(t *testing.T) {
 	resp := httptest.NewRecorder()
 	c := NewController(NewRequest(showRequest), NewResponse(resp))
 	if err := c.SetAction("Hotels", "Show"); err != nil {
-		panic(err)
+		t.Errorf("SetAction failed: %s", err)
 	}
 	result := Hotels{c}.Show(3)
 	result.Apply(c.Request, c.Response)
@@ -27,7 +27,7 @@ func BenchmarkRenderChunked(b *testing.B) {
 	resp.Body = nil
 	c := NewController(NewRequest(showRequest), NewResponse(resp))
 	if err := c.SetAction("Hotels", "Show"); err != nil {
-		panic(err)
+		b.Errorf("SetAction failed: %s", err)
 	}
 	Config.SetOption("results.chunked", "true")
 	b.ResetTimer()
@@ -44,7 +44,7 @@ func BenchmarkRenderNotChunked(b *testing.B) {
 	resp.Body = nil
 	c := NewController(NewRequest(showRequest), NewResponse(resp))
 	if err := c.SetAction("Hotels", "Show"); err != nil {
-		panic(err)
+		b.Errorf("SetAction failed: %s", err)
 	}
 	Config.SetOption("results.chunked", "false")
 	b.ResetTimer()

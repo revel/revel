@@ -12,7 +12,7 @@ func TestBenchmarkCompressed(t *testing.T) {
 	resp := httptest.NewRecorder()
 	c := NewController(NewRequest(showRequest), NewResponse(resp))
 	if err := c.SetAction("Hotels", "Show"); err != nil {
-		panic(err)
+		t.Errorf("SetAction failed: %s", err)
 	}
 	Config.SetOption("results.compressed", "true")
 	result := Hotels{c}.Show(3)
@@ -28,7 +28,7 @@ func BenchmarkRenderCompressed(b *testing.B) {
 	resp.Body = nil
 	c := NewController(NewRequest(showRequest), NewResponse(resp))
 	if err := c.SetAction("Hotels", "Show"); err != nil {
-		panic(err)
+		b.Errorf("SetAction failed: %s", err)
 	}
 	Config.SetOption("results.compressed", "true")
 	b.ResetTimer()
@@ -45,7 +45,7 @@ func BenchmarkRenderUnCompressed(b *testing.B) {
 	resp.Body = nil
 	c := NewController(NewRequest(showRequest), NewResponse(resp))
 	if err := c.SetAction("Hotels", "Show"); err != nil {
-		panic(err)
+		b.Errorf("SetAction failed: %s", err)
 	}
 	Config.SetOption("results.compressed", "false")
 	b.ResetTimer()

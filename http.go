@@ -108,11 +108,11 @@ func (al AcceptLanguages) String() string {
 	output := bytes.NewBufferString("")
 	for i, language := range al {
 		if _, err := output.WriteString(fmt.Sprintf("%s (%1.1f)", language.Language, language.Quality)); err != nil {
-			panic(err)
+			ERROR.Println("WriteString failed:", err)
 		}
 		if i != len(al)-1 {
 			if _, err := output.WriteString(", "); err != nil {
-				panic(err)
+				ERROR.Println("WriteString failed:", err)
 			}
 		}
 	}
