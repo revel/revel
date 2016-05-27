@@ -106,6 +106,14 @@ func loadMessages(path string) {
 	if error := filepath.Walk(path, loadMessageFile); error != nil && !os.IsNotExist(error) {
 		ERROR.Println("Error reading messages files:", error)
 	}
+
+	// Read in messages from the modules
+	for _, module := range Modules {
+		TRACE.Println("Importing messages from ", filepath.Join(module.Path, messageFilesDirectory))
+		if error := filepath.Walk(filepath.Join(module.Path, messageFilesDirectory), loadMessageFile); error != nil && !os.IsNotExist(error) {
+			ERROR.Println("Error reading messages files:", error)
+		}
+	}
 }
 
 // Load a single message file
