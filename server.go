@@ -41,7 +41,7 @@ func handle(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleInternal(w http.ResponseWriter, r *http.Request, ws *websocket.Conn) {
-	// For now this okay to put logger here for all the requests
+	// TODO For now this okay to put logger here for all the requests
 	// However, it's best to have logging handler at server entry level
 	start := time.Now()
 
