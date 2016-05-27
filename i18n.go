@@ -2,11 +2,12 @@ package revel
 
 import (
 	"fmt"
-	"github.com/robfig/config"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	"github.com/robfig/config"
 )
 
 const (
@@ -103,16 +104,19 @@ func getUnknownValueFormat() string {
 func loadMessages(path string) {
 	messages = make(map[string]*config.Config)
 
-	if error := filepath.Walk(path, loadMessageFile); error != nil && !os.IsNotExist(error) {
-		ERROR.Println("Error reading messages files:", error)
-	}
-
 	// Read in messages from the modules
+	// Load the module messges first,
+	// so that it can be override in parent application
 	for _, module := range Modules {
 		TRACE.Println("Importing messages from ", filepath.Join(module.Path, messageFilesDirectory))
-		if error := filepath.Walk(filepath.Join(module.Path, messageFilesDirectory), loadMessageFile); error != nil && !os.IsNotExist(error) {
-			ERROR.Println("Error reading messages files:", error)
+		if err := filepath.Walk(filepath.Join(module.Path, messageFilesDirectory), loadMessageFile); err != nil &&
+			!os.IsNotExist(err) {
+			ERROR.Println("Error reading messages files from module:", err)
 		}
+	}
+
+	if error := filepath.Walk(path, loadMessageFile); error != nil && !os.IsNotExist(error) {
+		ERROR.Println("Error reading messages files:", error)
 	}
 }
 
