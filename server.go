@@ -41,8 +41,9 @@ func handle(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleInternal(w http.ResponseWriter, r *http.Request, ws *websocket.Conn) {
-	t1 := time.Now()
-	INFO.Println("\nStarted", r.Method, r.URL.String(), "at", time.Now().Format(time.RFC3339), "from", r.RemoteAddr)
+	// For now this okay to put logger here for all the requests
+	// However, it's best to have logging handler at server entry level
+	start := time.Now()
 
 	var (
 		req  = NewRequest(r)
@@ -62,8 +63,18 @@ func handleInternal(w http.ResponseWriter, r *http.Request, ws *websocket.Conn) 
 		w.Close()
 	}
 
-	duration := fmt.Sprintf("%.2fms", float64(time.Since(t1).Nanoseconds()/1e4)/100.0)
-	INFO.Println("Completed", c.Response.Status, "in", duration, "\n")
+	// Revel request access log format
+	// RequestStartTime ClientIP ResponseStatus RequestLatency HTTPMethod URLPath
+	// Sample format:
+	// 2016/05/25 17:46:37.112 127.0.0.1 200  270.157µs GET /
+	requestLog.Printf("%v %v %v %10v %v %v",
+		start.Format(requestLogTimeFormat),
+		ClientIP(r),
+		c.Response.Status,
+		time.Since(start),
+		r.Method,
+		r.URL.Path,
+	)
 }
 
 // InitServer intializes the server and returns the handler

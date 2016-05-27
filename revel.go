@@ -85,13 +85,18 @@ var (
 		"error": gocolorize.NewColor("red"),
 	}
 
-	error_log = revelLogs{c: colors["error"], w: os.Stderr}
+	errorLog = revelLogs{c: colors["error"], w: os.Stderr}
 
 	// Loggers
 	TRACE = log.New(ioutil.Discard, "TRACE ", log.Ldate|log.Ltime|log.Lshortfile)
-	INFO  = log.New(ioutil.Discard, "", 0)
+	INFO  = log.New(ioutil.Discard, "INFO ", log.Ldate|log.Ltime|log.Lshortfile)
 	WARN  = log.New(ioutil.Discard, "WARN ", log.Ldate|log.Ltime|log.Lshortfile)
-	ERROR = log.New(&error_log, "ERROR ", log.Ldate|log.Ltime|log.Lshortfile)
+	ERROR = log.New(&errorLog, "ERROR ", log.Ldate|log.Ltime|log.Lshortfile)
+
+	// Revel request access log, not exposed from package.
+	// However output settings can be controlled from app.conf
+	requestLog           = log.New(ioutil.Discard, "", 0)
+	requestLogTimeFormat = "2006/01/02 15:04:05.000"
 
 	Initialized bool
 
@@ -205,6 +210,10 @@ func Init(mode, importPath, srcPath string) {
 	WARN = getLogger("warn")
 	ERROR = getLogger("error")
 
+	// Revel request access logger, not exposed from package.
+	// However output settings can be controlled from app.conf
+	requestLog = getLogger("request")
+
 	loadModules()
 
 	Initialized = true
@@ -227,24 +236,16 @@ func getLogger(name string) *log.Logger {
 	case "stderr":
 		newlog = revelLogs{c: colors[name], w: os.Stderr}
 		logger = newLogger(&newlog)
+	case "off":
+		return newLogger(ioutil.Discard)
 	default:
-		if output == "off" {
-			output = os.DevNull
+		if !filepath.IsAbs(output) {
+			output = filepath.Join(BasePath, output)
 		}
 
-		if !filepath.IsAbs(output) {
-                        output = BasePath + string(filepath.Separator) + output
-                }
-
 		logPath := filepath.Dir(output)
-		if _, err := os.Stat(logPath); err != nil {
-			if os.IsNotExist(err) {
-				if err := os.MkdirAll(logPath, 0755); err != nil {
-					log.Fatalln("Failed to create log directory", output, ":", err)
-				}
-			} else {
-				log.Fatalln("Failed to stat log directory", output, ":", err)
-			}
+		if err := createDir(logPath); err != nil {
+			log.Fatalln(err)
 		}
 
 		file, err := os.OpenFile(output, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
@@ -252,6 +253,11 @@ func getLogger(name string) *log.Logger {
 			log.Fatalln("Failed to open log file", output, ":", err)
 		}
 		logger = newLogger(file)
+	}
+
+	if strings.EqualFold(name, "request") {
+		logger.SetFlags(0)
+		return logger
 	}
 
 	// Set the prefix / flags.
