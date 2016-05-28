@@ -104,19 +104,18 @@ func getUnknownValueFormat() string {
 func loadMessages(path string) {
 	messages = make(map[string]*config.Config)
 
-	// Read in messages from the modules
-	// Load the module messges first,
+	// Read in messages from the modules. Load the module messges first,
 	// so that it can be override in parent application
 	for _, module := range Modules {
 		TRACE.Println("Importing messages from ", filepath.Join(module.Path, messageFilesDirectory))
-		if err := filepath.Walk(filepath.Join(module.Path, messageFilesDirectory), loadMessageFile); err != nil &&
+		if err := Walk(filepath.Join(module.Path, messageFilesDirectory), loadMessageFile); err != nil &&
 			!os.IsNotExist(err) {
 			ERROR.Println("Error reading messages files from module:", err)
 		}
 	}
 
-	if error := filepath.Walk(path, loadMessageFile); error != nil && !os.IsNotExist(error) {
-		ERROR.Println("Error reading messages files:", error)
+	if err := Walk(path, loadMessageFile); err != nil && !os.IsNotExist(err) {
+		ERROR.Println("Error reading messages files:", err)
 	}
 }
 
