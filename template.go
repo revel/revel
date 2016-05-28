@@ -231,33 +231,6 @@ func (loader *TemplateLoader) Refresh() *Error {
 				return nil
 			}
 
-			// is it a symlinked template?
-			link, err := os.Lstat(path)
-			if err == nil && link.Mode()&os.ModeSymlink == os.ModeSymlink {
-				TRACE.Println("symlink template:", path)
-				// lookup the actual target & check for goodness
-				targetPath, err := filepath.EvalSymlinks(path)
-				if err != nil {
-					ERROR.Println("Failed to read symlink", err)
-					return err
-				}
-				targetInfo, err := os.Stat(targetPath)
-				if err != nil {
-					ERROR.Println("Failed to stat symlink target", err)
-					return err
-				}
-
-				// set the template path to the target of the symlink
-				path = targetPath
-				info = targetInfo
-
-				// need to save state and restore for recursive call to Walk on symlink
-				tmp := fullSrcDir
-				fullSrcDir = filepath.Dir(targetPath)
-				filepath.Walk(targetPath, templateWalker)
-				fullSrcDir = tmp
-			}
-
 			// Walk into watchable directories
 			if info.IsDir() {
 				if !loader.WatchDir(info) {
@@ -361,13 +334,13 @@ func (loader *TemplateLoader) Refresh() *Error {
 			return nil
 		}
 
-		if _, err = os.Stat(fullSrcDir); os.IsNotExist(err) {
+		if _, err = os.Lstat(fullSrcDir); os.IsNotExist(err) {
 			// #1058 Given views/template path is not exists
 			// so no need to walk, move on to next path
 			continue
 		}
 
-		funcErr := filepath.Walk(fullSrcDir, templateWalker)
+		funcErr := Walk(fullSrcDir, templateWalker)
 
 		// If there was an error with the Funcs, set it and return immediately.
 		if funcErr != nil {

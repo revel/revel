@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"reflect"
 	"regexp"
 	"strings"
@@ -208,6 +209,12 @@ func ClientIP(r *http.Request) string {
 	return ""
 }
 
+// Walk method extends filepath.Walk to also follow symlinks.
+// Always returns the path of the file or directory.
+func Walk(root string, walkFn filepath.WalkFunc) error {
+	return fsWalk(root, root, root, walkFn)
+}
+
 // createDir method creates nested directories if not exists
 func createDir(path string) error {
 	if _, err := os.Stat(path); err != nil {
@@ -220,6 +227,44 @@ func createDir(path string) error {
 		}
 	}
 	return nil
+}
+
+func fsWalk(path string, dirName string, linkDirName string, walkFn filepath.WalkFunc) error {
+	fsWalkFunc := func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		var name string
+		name, err = filepath.Rel(dirName, path)
+		if err != nil {
+			return err
+		}
+
+		path = filepath.Join(linkDirName, name)
+
+		if err == nil && info.Mode()&os.ModeSymlink == os.ModeSymlink {
+			var symlinkPath string
+			symlinkPath, err = filepath.EvalSymlinks(path)
+			if err != nil {
+				return err
+			}
+
+			// https://github.com/golang/go/blob/master/src/path/filepath/path.go#L392
+			info, err = os.Lstat(symlinkPath)
+			if err != nil {
+				return walkFn(path, info, err)
+			}
+
+			if info.IsDir() {
+				return fsWalk(symlinkPath, symlinkPath, path, walkFn)
+			}
+		}
+
+		return walkFn(path, info, err)
+	}
+
+	return filepath.Walk(path, fsWalkFunc)
 }
 
 func init() {
