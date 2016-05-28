@@ -34,12 +34,12 @@ Open http://localhost:9000 in your browser and you should see "It works!"
 
 ## Community
 
-Join on [Slack](https://revelframework.slack.com), [StackOverflow](http://stackoverflow.com/questions/tagged/revel), [IRC #revel](http://webchat.freenode.net/?channels=%23revel&uio=d4) and [Google Groups]((https://groups.google.com/forum/#!forum/revel-framework)
+Join on [Slack](https://revelframework.slack.com), [StackOverflow](http://stackoverflow.com/questions/tagged/revel), [IRC #revel](http://webchat.freenode.net/?channels=%23revel&uio=d4) and [Google Groups](https://groups.google.com/forum/#!forum/revel-framework)
 
 * Report bugs [here](https://github.com/revel/revel/issues)
-* Answer questions of other community members (via [StackOverflow](http://stackoverflow.com/questions/tagged/revel), [Google Groups]((https://groups.google.com/forum/#!forum/revel-framework) and [IRC](http://webchat.freenode.net/?channels=%23revel&uio=d4))
-* Give feedback on new feature discussions (via [GitHub Issues](https://github.com/revel/revel/issues) and [Google Groups]((https://groups.google.com/forum/#!forum/revel-framework))
-* Propose your own ideas (via [Slack](https://revelframework.slack.com) or [Google Groups]((https://groups.google.com/forum/#!forum/revel-framework))
+* Answer questions of other community members (via [StackOverflow](http://stackoverflow.com/questions/tagged/revel), [Google Groups](https://groups.google.com/forum/#!forum/revel-framework) and [IRC](http://webchat.freenode.net/?channels=%23revel&uio=d4))
+* Give feedback on new feature discussions (via [GitHub Issues](https://github.com/revel/revel/issues) and [Google Groups](https://groups.google.com/forum/#!forum/revel-framework))
+* Propose your own ideas (via [Slack](https://revelframework.slack.com) or [Google Groups](https://groups.google.com/forum/#!forum/revel-framework))
 
 ## Announcements
 
