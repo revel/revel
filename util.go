@@ -14,7 +14,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/revel/revel/config"
+	"github.com/revel/config"
 )
 
 const (

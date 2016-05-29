@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/robfig/config"
+	"github.com/revel/config"
 )
 
 const (
