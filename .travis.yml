@@ -22,11 +22,14 @@ script:
   - go test -v github.com/revel/revel...
 
   # Ensure the new-app flow works (plus the other commands).
+  - revel version
   - revel new     my/testapp
   - revel test    my/testapp
   - revel clean   my/testapp
   - revel build   my/testapp build/testapp
+  - revel build   my/testapp build/testapp prod
   - revel package my/testapp
+  - revel package my/testapp prod
 
   # Build & run the sample apps
   - revel test github.com/revel/samples/booking
