@@ -1,23 +1,41 @@
 language: go
+
 go:
   - 1.4
   - 1.5
   - 1.6
+  - tip
+
+os:
+  - linux
+  - osx
+
 sudo: false
+
 services:
   # github.com/revel/revel/cache
   - memcache
   - redis-server
+
+before_install:
+  # TRAVIS_OS_NAME - linux and osx
+  - 'if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update && brew install memcached redis; fi'
+  - 'if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then nohup /usr/local/opt/memcached/bin/memcached & fi'
+  - 'if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then nohup redis-server /usr/local/etc/redis.conf & fi'
+
 install:
+  # Setting environments variables
   - export PATH=$PATH:$HOME/gopath/bin
   - export REVEL_BRANCH="develop"
   - 'if [[ "$TRAVIS_BRANCH" == "master" ]]; then export REVEL_BRANCH="master"; fi'
   - 'echo "Travis branch: $TRAVIS_BRANCH, Revel dependency branch: $REVEL_BRANCH"'
+
   - go get -v github.com/revel/revel/...
   - git clone -b $REVEL_BRANCH git://github.com/revel/modules ../modules/
   - git clone -b $REVEL_BRANCH git://github.com/revel/cmd ../cmd/
   - git clone git://github.com/revel/samples ../samples/
   - go get -v github.com/revel/cmd/revel
+
 script:
   - go test -v github.com/revel/revel...
 
@@ -43,3 +61,7 @@ script:
   # Also http://personatestuser.org becomes non-responsive most of the time.
   # https://wiki.mozilla.org/Identity/Persona_Shutdown_Guidelines_for_Reliers
   # - revel test github.com/revel/samples/persona
+
+matrix:
+  allow_failures:
+    - go: tip
