@@ -1,7 +1,6 @@
 package cache
 
 import (
-	"fmt"
 	"math"
 	"testing"
 	"time"
@@ -227,7 +226,6 @@ func testGetMulti(t *testing.T, newCache cacheFactory) {
 	if err != nil {
 		t.Errorf("Error in get-multi: %s", err)
 	}
-	fmt.Println("GetMulti:", g) // for debug purpose on travis ci
 
 	var str string
 	if err = g.Get("str", &str); err != nil || str != "foo" {
