@@ -17,6 +17,8 @@ import (
 
 const (
 	REVEL_IMPORT_PATH = "github.com/revel/revel"
+	DEFAULT_DATE_FORMAT     = "2006-01-02"
+	DEFAULT_DATETIME_FORMAT = "2006-01-02 15:04"
 )
 
 type revelLogs struct {
@@ -101,6 +103,10 @@ var (
 	// Private
 	secretKey []byte // Key used to sign cookies. An empty key disables signing.
 	packaged  bool   // If true, this is running from a pre-built package.
+
+	TimeFormats = []string{}
+	DateFormat     string
+	DateTimeFormat string
 )
 
 func init() {
@@ -197,6 +203,11 @@ func Init(mode, importPath, srcPath string) {
 	if secretStr := Config.StringDefault("app.secret", ""); secretStr != "" {
 		secretKey = []byte(secretStr)
 	}
+
+	// Configure time formats
+	DateTimeFormat = Config.StringDefault("format.datetime", DEFAULT_DATETIME_FORMAT)
+	DateFormat = Config.StringDefault("format.date", DEFAULT_DATE_FORMAT)
+	TimeFormats = append(TimeFormats, DateTimeFormat, DateFormat)
 
 	// Configure logging
 	if !Config.BoolDefault("log.colorize", true) {

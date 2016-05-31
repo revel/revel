@@ -5,6 +5,8 @@ import (
 	"net/url"
 	"os"
 	"reflect"
+
+	"github.com/revel/revel/binding"
 )
 
 // Params provides a unified view of the request params.
@@ -29,6 +31,7 @@ type Params struct {
 	tmpFiles []*os.File                         // Temp files used during the request.
 }
 
+
 func ParseParams(params *Params, req *Request) {
 	params.Query = req.URL.Query()
 
@@ -37,6 +40,7 @@ func ParseParams(params *Params, req *Request) {
 	case "application/x-www-form-urlencoded":
 		// Typical form.
 		if err := req.ParseForm(); err != nil {
+			// TODO: should this be a warning or a panic?
 			WARN.Println("Error parsing request body:", err)
 		} else {
 			params.Form = req.Form
@@ -46,6 +50,7 @@ func ParseParams(params *Params, req *Request) {
 		// Multipart form.
 		// TODO: Extract the multipart form param so app can set it.
 		if err := req.ParseMultipartForm(32 << 20 /* 32 MB */); err != nil {
+			// TODO: should this be a warning or a panic?
 			WARN.Println("Error parsing request body:", err)
 		} else {
 			params.Form = req.MultipartForm.Value
@@ -55,6 +60,7 @@ func ParseParams(params *Params, req *Request) {
 
 	params.Values = params.calcValues()
 }
+
 
 // Bind looks for the named parameter, converts it to the requested type, and
 // writes it into "dest", which must be settable.  If the value can not be
@@ -68,8 +74,9 @@ func (p *Params) Bind(dest interface{}, name string) {
 	if !value.CanSet() {
 		panic("revel/params: non-settable variable passed to Bind: " + name)
 	}
-	value.Set(Bind(p, name, value.Type()))
+	value.Set(binding.Bind(p, name, value.Type()))
 }
+
 
 // calcValues returns a unified view of the component param maps.
 func (p *Params) calcValues() url.Values {
@@ -109,12 +116,13 @@ func (p *Params) calcValues() url.Values {
 	return values
 }
 
+
 func ParamsFilter(c *Controller, fc []Filter) {
 	ParseParams(c.Params, c.Request)
 
 	// Clean up from the request.
 	defer func() {
-		// Delete temp files.
+		// Delete temporary request files, if any
 		if c.Request.MultipartForm != nil {
 			err := c.Request.MultipartForm.RemoveAll()
 			if err != nil {
@@ -122,13 +130,18 @@ func ParamsFilter(c *Controller, fc []Filter) {
 			}
 		}
 
-		for _, tmpFile := range c.Params.tmpFiles {
-			err := os.Remove(tmpFile.Name())
-			if err != nil {
-				WARN.Println("Could not remove upload temp file:", err)
-			}
+		// Clean up any temporary resources in binding
+		if err := binding.Purge(); err != nil {
+			WARN.Println("Error removing binding resources:", err)
 		}
 	}()
 
 	fc[0](c, fc[1:])
+}
+
+func init() {
+	// Pass along configured time formatting settings
+	binding.DateTimeFormat = DateTimeFormat
+	binding.DateFormat = DateFormat
+	binding.TimeFormats = TimeFormats
 }

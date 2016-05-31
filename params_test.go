@@ -1,4 +1,4 @@
-package revel
+package params
 
 import (
 	"bytes"
@@ -8,6 +8,8 @@ import (
 	"net/url"
 	"reflect"
 	"testing"
+
+	"github.com/revel/revel"
 )
 
 // Params: Testing Multipart forms
@@ -74,6 +76,7 @@ var (
 	}
 )
 
+
 func getMultipartRequest() *http.Request {
 	req, _ := http.NewRequest("POST", "http://localhost/path",
 		bytes.NewBufferString(MULTIPART_FORM_DATA))
@@ -84,6 +87,7 @@ func getMultipartRequest() *http.Request {
 	return req
 }
 
+
 func BenchmarkParams(b *testing.B) {
 	c := Controller{
 		Request: NewRequest(getMultipartRequest()),
@@ -93,6 +97,7 @@ func BenchmarkParams(b *testing.B) {
 		ParamsFilter(&c, NilChain)
 	}
 }
+
 
 func TestMultipartForm(t *testing.T) {
 	c := Controller{
@@ -120,6 +125,7 @@ func TestMultipartForm(t *testing.T) {
 	}
 }
 
+
 func TestBind(t *testing.T) {
 	params := Params{
 		Values: url.Values{
@@ -132,6 +138,7 @@ func TestBind(t *testing.T) {
 		t.Errorf("Failed to bind x.  Value: %d", x)
 	}
 }
+
 
 func TestResolveAcceptLanguage(t *testing.T) {
 	request := buildHttpRequestWithAcceptLanguage("")
@@ -164,12 +171,14 @@ func TestResolveAcceptLanguage(t *testing.T) {
 	}
 }
 
+
 func BenchmarkResolveAcceptLanguage(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		request := buildHttpRequestWithAcceptLanguage("en-GB,en;q=0.8,nl;q=0.6,fr;q=0.5,de-DE;q=0.4,no-NO;q=0.4,ru;q=0.2")
 		ResolveAcceptLanguage(request)
 	}
 }
+
 
 func buildHttpRequestWithAcceptLanguage(acceptLanguage string) *http.Request {
 	request, _ := http.NewRequest("POST", "http://localhost/path", nil)

@@ -14,6 +14,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/revel/revel/binding"
 )
 
 var ERROR_CLASS = "hasError"
@@ -461,7 +463,7 @@ func ReverseUrl(args ...interface{}) (template.URL, error) {
 	// Unbind the arguments.
 	argsByName := make(map[string]string)
 	for i, argValue := range args[1:] {
-		Unbind(argsByName, c.MethodType.Args[i].Name, argValue)
+		binding.Unbind(argsByName, c.MethodType.Args[i].Name, argValue)
 	}
 
 	return template.URL(MainRouter.Reverse(args[0].(string), argsByName).Url), nil
