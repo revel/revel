@@ -66,8 +66,8 @@ session.expires = 720h
 
 # The date format used by Revel. Possible formats defined by the Go `time`
 # package (http://golang.org/pkg/time/#Parse)
-format.date     = 01/02/2006
-format.datetime = 01/02/2006 15:04
+format.date     = 2006-01-02
+format.datetime = 2006-01-02 15:04
 
 
 # Determines whether the template rendering should use chunked encoding.
