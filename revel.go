@@ -215,7 +215,7 @@ func Init(mode, importPath, srcPath string) {
 	loadModules()
 
 	Initialized = true
-	INFO.Printf("Initialized Revel v%s (%s) for %s", VERSION, BUILD_DATE, MINIMUM_GO)
+	INFO.Printf("Initialized Revel v%s (%s) for %s", Version, BuildDate, MinimumGoVersion)
 }
 
 // Create a logger using log.* directives in app.conf plus the current settings

@@ -212,7 +212,7 @@ func ClientIP(r *http.Request) string {
 // Walk method extends filepath.Walk to also follow symlinks.
 // Always returns the path of the file or directory.
 func Walk(root string, walkFn filepath.WalkFunc) error {
-	return fsWalk(root, root, root, walkFn)
+	return fsWalk(root, root, walkFn)
 }
 
 // createDir method creates nested directories if not exists
@@ -229,19 +229,19 @@ func createDir(path string) error {
 	return nil
 }
 
-func fsWalk(path string, dirName string, linkDirName string, walkFn filepath.WalkFunc) error {
+func fsWalk(fname string, linkName string, walkFn filepath.WalkFunc) error {
 	fsWalkFunc := func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
 
 		var name string
-		name, err = filepath.Rel(dirName, path)
+		name, err = filepath.Rel(fname, path)
 		if err != nil {
 			return err
 		}
 
-		path = filepath.Join(linkDirName, name)
+		path = filepath.Join(linkName, name)
 
 		if err == nil && info.Mode()&os.ModeSymlink == os.ModeSymlink {
 			var symlinkPath string
@@ -257,14 +257,14 @@ func fsWalk(path string, dirName string, linkDirName string, walkFn filepath.Wal
 			}
 
 			if info.IsDir() {
-				return fsWalk(symlinkPath, symlinkPath, path, walkFn)
+				return fsWalk(symlinkPath, path, walkFn)
 			}
 		}
 
 		return walkFn(path, info, err)
 	}
 
-	return filepath.Walk(path, fsWalkFunc)
+	return filepath.Walk(fname, fsWalkFunc)
 }
 
 func init() {

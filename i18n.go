@@ -107,7 +107,7 @@ func loadMessages(path string) {
 	// Read in messages from the modules. Load the module messges first,
 	// so that it can be override in parent application
 	for _, module := range Modules {
-		TRACE.Println("Importing messages from ", filepath.Join(module.Path, messageFilesDirectory))
+		TRACE.Println("Importing messages from module:", module.ImportPath)
 		if err := Walk(filepath.Join(module.Path, messageFilesDirectory), loadMessageFile); err != nil &&
 			!os.IsNotExist(err) {
 			ERROR.Println("Error reading messages files from module:", err)
