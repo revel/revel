@@ -33,6 +33,8 @@ install:
   - go get -v github.com/revel/revel/...
   - git clone -b $REVEL_BRANCH git://github.com/revel/modules ../modules/
   - git clone -b $REVEL_BRANCH git://github.com/revel/cmd ../cmd/
+  - git clone -b $REVEL_BRANCH git://github.com/revel/config ../config/
+  - git clone -b $REVEL_BRANCH git://github.com/revel/cron ../cron/
   - git clone git://github.com/revel/samples ../samples/
   - go get -v github.com/revel/cmd/revel
 
