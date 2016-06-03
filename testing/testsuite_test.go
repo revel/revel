@@ -203,6 +203,7 @@ func testHandle(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
 		if r.URL.Path == "/" {
 			_, _ = w.Write([]byte(`this is testcase homepage`))
+			return
 		}
 	}
 
@@ -223,11 +224,13 @@ func testHandle(w http.ResponseWriter, r *http.Request) {
 		}
 
 		handleFileUpload(w, r)
+		return
 	}
 
 	if r.Method == "DELETE" {
 		if r.URL.Path == "/purchases/10001" {
 			w.WriteHeader(http.StatusOK)
+			return
 		}
 	}
 
@@ -246,25 +249,32 @@ func testHandle(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "PATCH" {
 		if r.URL.Path == "/purchases/10003" {
 			w.WriteHeader(http.StatusNoContent)
+			return
 		}
 	}
 
 	w.WriteHeader(http.StatusNotFound)
-
 }
 
 func handleFileUpload(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path == "/upload" {
 		_ = r.ParseMultipartForm(10e6)
-
+		var buf bytes.Buffer
 		for _, fhdrs := range r.MultipartForm.File {
 			for _, hdr := range fhdrs {
 				dotPos := strings.LastIndex(hdr.Filename, ".")
 				fname := fmt.Sprintf("%s-%v%s", hdr.Filename[:dotPos], time.Now().Unix(), hdr.Filename[dotPos:])
-				_, _ = w.Write([]byte(fmt.Sprintf("Firstname: %v\nLastname: %v\nFile: %v\nHeader: %v\nUploaded as: %v\n",
-					r.FormValue("first_name"), r.FormValue("last_name"), hdr.Filename, hdr.Header, fname)))
+				_, _ = buf.WriteString(fmt.Sprintf(
+					"Firstname: %v\nLastname: %v\nFile: %v\nHeader: %v\nUploaded as: %v\n",
+					r.FormValue("first_name"),
+					r.FormValue("last_name"),
+					hdr.Filename,
+					hdr.Header,
+					fname))
 			}
 		}
+
+		_, _ = w.Write(buf.Bytes())
 
 		return
 	}
