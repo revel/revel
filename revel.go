@@ -45,11 +45,17 @@ var (
 	// Revel installation details
 	RevelPath string // e.g. "/Users/robfig/gocode/src/revel"
 
-	// Where to look for templates and configuration.
-	// Ordered by priority.  (Earlier paths take precedence over later paths.)
+	// Where to look for templates
+	// Ordered by priority. (Earlier paths take precedence over later paths.)
 	CodePaths     []string
-	ConfPaths     []string
 	TemplatePaths []string
+
+	// ConfPaths where to look for configurations
+	// Config load order
+	// 1. framework (revel/conf/*)
+	// 2. application (conf/*)
+	// 3. user supplied configs (...) - User configs can override/add any from above
+	ConfPaths []string
 
 	Modules []Module
 
@@ -145,11 +151,17 @@ func Init(mode, importPath, srcPath string) {
 	if ConfPaths == nil {
 		ConfPaths = []string{}
 	}
-	ConfPaths = append(
-		ConfPaths,
-		path.Join(BasePath, "conf"),
-		path.Join(RevelPath, "conf"),
-	)
+
+	// Config load order
+	// 1. framework (revel/conf/*)
+	// 2. application (conf/*)
+	// 3. user supplied configs (...) - User configs can override/add any from above
+	ConfPaths := append(
+		[]string{
+			path.Join(RevelPath, "conf"),
+			path.Join(BasePath, "conf"),
+		},
+		ConfPaths...)
 
 	TemplatePaths = []string{
 		ViewsPath,
