@@ -156,7 +156,7 @@ func Init(mode, importPath, srcPath string) {
 	// 1. framework (revel/conf/*)
 	// 2. application (conf/*)
 	// 3. user supplied configs (...) - User configs can override/add any from above
-	ConfPaths := append(
+	ConfPaths = append(
 		[]string{
 			path.Join(RevelPath, "conf"),
 			path.Join(BasePath, "conf"),

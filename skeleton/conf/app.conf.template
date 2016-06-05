@@ -69,6 +69,11 @@ session.expires = 720h
 format.date     = 2006-01-02
 format.datetime = 2006-01-02 15:04
 
+# Timeout specifies a time limit for request (in seconds) made by a single client.
+# A Timeout of zero means no timeout.
+timeout.read = 90
+timeout.write = 60
+
 
 # Determines whether the template rendering should use chunked encoding.
 # Chunked encoding can decrease the time to first byte on the client side by
