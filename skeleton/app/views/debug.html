@@ -41,21 +41,21 @@
 	{{end}}
 	</dl>
 </div>
-<a id="toggleSidebar" href="#" class="toggles"><i class="icon-chevron-left"></i></a>
+<a id="toggleSidebar" href="#" class="toggles"><i class="glyphicon glyphicon-chevron-left"></i></a>
 
 <script>
 	$sidebar = 0;
 	$('#toggleSidebar').click(function() {
 		if ($sidebar === 1) {
 			$('#sidebar').hide();
-			$('#toggleSidebar i').addClass('icon-chevron-left');
-			$('#toggleSidebar i').removeClass('icon-chevron-right');
+			$('#toggleSidebar i').addClass('glyphicon-chevron-left');
+			$('#toggleSidebar i').removeClass('glyphicon-chevron-right');
 			$sidebar = 0;
 		}
 		else {
 			$('#sidebar').show();
-			$('#toggleSidebar i').addClass('icon-chevron-right');
-			$('#toggleSidebar i').removeClass('icon-chevron-left');
+			$('#toggleSidebar i').addClass('glyphicon-chevron-right');
+			$('#toggleSidebar i').removeClass('glyphicon-chevron-left');
 			$sidebar = 1;
 		}
 
