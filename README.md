@@ -34,12 +34,12 @@ Open http://localhost:9000 in your browser and you should see "It works!"
 
 ## Community
 
-Join on [Slack](https://revelframework.slack.com), [StackOverflow](http://stackoverflow.com/questions/tagged/revel), [IRC #revel](http://webchat.freenode.net/?channels=%23revel&uio=d4) and [Google Groups](https://groups.google.com/forum/#!forum/revel-framework)
+Join on [StackOverflow](http://stackoverflow.com/questions/tagged/revel), [IRC #revel](http://webchat.freenode.net/?channels=%23revel&uio=d4) and [Google Groups](https://groups.google.com/forum/#!forum/revel-framework)
 
 * Report bugs [here](https://github.com/revel/revel/issues)
 * Answer questions of other community members (via [StackOverflow](http://stackoverflow.com/questions/tagged/revel), [Google Groups](https://groups.google.com/forum/#!forum/revel-framework) and [IRC](http://webchat.freenode.net/?channels=%23revel&uio=d4))
 * Give feedback on new feature discussions (via [GitHub Issues](https://github.com/revel/revel/issues) and [Google Groups](https://groups.google.com/forum/#!forum/revel-framework))
-* Propose your own ideas (via [Slack](https://revelframework.slack.com) or [Google Groups](https://groups.google.com/forum/#!forum/revel-framework))
+* Propose your own ideas via [Google Groups](https://groups.google.com/forum/#!forum/revel-framework)
 
 
 ## Gratitude
@@ -49,7 +49,7 @@ First and foremost, we'd like to thank the growing community of developers who e
 Also, thank you to those who have increased their level of involvement with Revel and revitalized the momentum of Revel:
 * [Jeeva](https://github.com/jeevatkm)
 * [Pedro](https://github.com/pedromorgan)
-* Many others weho provided valuable Pull Requests, testing, and feedback.
+* Many others who provided valuable Pull Requests, testing, and feedback.
 
 Finally, we'd like to thank the professional organizations that have supported the development of Revel:
 * [Looking Glass](https://www.lookingglasscyber.com/)
