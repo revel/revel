@@ -190,8 +190,8 @@ func testAdd(t *testing.T, newCache cacheFactory) {
 	}
 
 	// Wait for it to expire, and add again.
-	time.Sleep(6 * time.Second)
-	if err = cache.Add("int", 3, time.Second*3); err != nil {
+	time.Sleep(8 * time.Second)
+	if err = cache.Add("int", 3, time.Second*5); err != nil {
 		t.Errorf("Unexpected error adding to cache: %s", err)
 	}
 
@@ -217,7 +217,7 @@ func testGetMulti(t *testing.T, newCache cacheFactory) {
 	var keys []string
 	for key, value := range m {
 		keys = append(keys, key)
-		if err := cache.Set(key, value, time.Second*3); err != nil {
+		if err := cache.Set(key, value, time.Second*10); err != nil {
 			t.Errorf("Error setting a value: %s", err)
 		}
 	}
