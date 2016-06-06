@@ -30,7 +30,7 @@ install:
   - 'if [[ "$TRAVIS_BRANCH" == "master" ]]; then export REVEL_BRANCH="master"; fi'
   - 'echo "Travis branch: $TRAVIS_BRANCH, Revel dependency branch: $REVEL_BRANCH"'
   - go get -v github.com/revel/revel/...
-  - 'if [[ "$TRAVIS_BRANCH" == "develop" ]]; then rm -rf ../config; fi'  
+  - rm -rf ../config
   - git clone -b $REVEL_BRANCH git://github.com/revel/modules ../modules/
   - git clone -b $REVEL_BRANCH git://github.com/revel/cmd ../cmd/
   - git clone -b $REVEL_BRANCH git://github.com/revel/config ../config/
