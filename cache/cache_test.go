@@ -178,18 +178,20 @@ func testAdd(t *testing.T, newCache cacheFactory) {
 	var err error
 	cache := newCache(t, time.Hour)
 	// Add to an empty cache.
-	if err = cache.Add("int", 1, time.Second); err != nil {
+	if err = cache.Add("int", 1, time.Second*3); err != nil {
 		t.Errorf("Unexpected error adding to empty cache: %s", err)
 	}
 
 	// Try to add again. (fail)
-	if err = cache.Add("int", 2, time.Second); err != ErrNotStored {
-		t.Errorf("Expected ErrNotStored adding dupe to cache: %s", err)
+	if err = cache.Add("int", 2, time.Second*3); err != nil {
+		if err != ErrNotStored {
+			t.Errorf("Expected ErrNotStored adding dupe to cache: %s", err)
+		}
 	}
 
 	// Wait for it to expire, and add again.
-	time.Sleep(2 * time.Second)
-	if err = cache.Add("int", 3, time.Second); err != nil {
+	time.Sleep(6 * time.Second)
+	if err = cache.Add("int", 3, time.Second*3); err != nil {
 		t.Errorf("Unexpected error adding to cache: %s", err)
 	}
 
@@ -215,7 +217,7 @@ func testGetMulti(t *testing.T, newCache cacheFactory) {
 	var keys []string
 	for key, value := range m {
 		keys = append(keys, key)
-		if err := cache.Set(key, value, DEFAULT); err != nil {
+		if err := cache.Set(key, value, time.Second*3); err != nil {
 			t.Errorf("Error setting a value: %s", err)
 		}
 	}

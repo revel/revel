@@ -2,27 +2,37 @@ package revel
 
 import (
 	"fmt"
-	"github.com/robfig/config"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	"github.com/revel/config"
 )
 
 const (
 	CurrentLocaleRenderArg = "currentLocale" // The key for the current locale render arg value
 
-	messageFilesDirectory = "messages"
-	messageFilePattern    = `^\w+\.[a-zA-Z]{2}$`
-	unknownValueFormat    = "??? %s ???"
-	defaultLanguageOption = "i18n.default_language"
-	localeCookieConfigKey = "i18n.cookie"
+	messageFilesDirectory  = "messages"
+	messageFilePattern     = `^\w+\.[a-zA-Z]{2}$`
+	defaultUnknownFormat   = "??? %s ???"
+	unknownFormatConfigKey = "i18n.unknown_format"
+	defaultLanguageOption  = "i18n.default_language"
+	localeCookieConfigKey  = "i18n.cookie"
 )
 
 var (
 	// All currently loaded message configs.
 	messages map[string]*config.Config
 )
+
+// Setting MessageFunc allows you to override the translation interface.
+//
+// Set this to your own function that translates to the current locale.
+// This allows you to set up your own loading and logging of translated texts.
+//
+// See Message(...) in i18n.go for example of function.
+var MessageFunc func(locale, message string, args ...interface{}) (value string) = Message
 
 // Return all currently loaded message languages.
 func MessageLanguages() []string {
@@ -40,6 +50,7 @@ func MessageLanguages() []string {
 // When either an unknown locale or message is detected, a specially formatted string is returned.
 func Message(locale, message string, args ...interface{}) string {
 	language, region := parseLocale(locale)
+	unknownValueFormat := getUnknownValueFormat()
 
 	messageConfig, knownLanguage := messages[language]
 	if !knownLanguage {
@@ -84,12 +95,27 @@ func parseLocale(locale string) (language, region string) {
 	return locale, ""
 }
 
+// Retrieve message format or default format when i18n message is missing.
+func getUnknownValueFormat() string {
+	return Config.StringDefault(unknownFormatConfigKey, defaultUnknownFormat)
+}
+
 // Recursively read and cache all available messages from all message files on the given path.
 func loadMessages(path string) {
 	messages = make(map[string]*config.Config)
 
-	if error := filepath.Walk(path, loadMessageFile); error != nil && !os.IsNotExist(error) {
-		ERROR.Println("Error reading messages files:", error)
+	// Read in messages from the modules. Load the module messges first,
+	// so that it can be override in parent application
+	for _, module := range Modules {
+		TRACE.Println("Importing messages from module:", module.ImportPath)
+		if err := Walk(filepath.Join(module.Path, messageFilesDirectory), loadMessageFile); err != nil &&
+			!os.IsNotExist(err) {
+			ERROR.Println("Error reading messages files from module:", err)
+		}
+	}
+
+	if err := Walk(path, loadMessageFile); err != nil && !os.IsNotExist(err) {
+		ERROR.Println("Error reading messages files:", err)
 	}
 }
 

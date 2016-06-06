@@ -2,12 +2,13 @@ package revel
 
 import (
 	"fmt"
+	"path/filepath"
 	"runtime/debug"
 	"strconv"
 	"strings"
 )
 
-// An error description, used as an argument to the error template.
+// Error description, used as an argument to the error template.
 type Error struct {
 	SourceType               string   // The type of source that failed to build.
 	Title, Path, Description string   // Description of the error, as presented to the user.
@@ -25,9 +26,9 @@ type sourceLine struct {
 	IsError bool
 }
 
-// Find the deepest stack from in user code and provide a code listing of
-// that, on the line that eventually triggered the panic.  Returns nil if no
-// relevant stack frame can be found.
+// NewErrorFromPanic method finds the deepest stack from in user code and
+// provide a code listing of that, on the line that eventually triggered
+// the panic.  Returns nil if no relevant stack frame can be found.
 func NewErrorFromPanic(err interface{}) *Error {
 
 	// Parse the filename and line from the originating line of app code.
@@ -60,8 +61,9 @@ func NewErrorFromPanic(err interface{}) *Error {
 	}
 }
 
-// Construct a plaintext version of the error, taking account that fields are optionally set.
-// Returns e.g. Compilation Error (in views/header.html:51): expected right delim in end; got "}"
+// Error method constructs a plaintext version of the error, taking
+// account that fields are optionally set. Returns e.g. Compilation Error
+// (in views/header.html:51): expected right delim in end; got "}"
 func (e *Error) Error() string {
 	loc := ""
 	if e.Path != "" {
@@ -82,7 +84,8 @@ func (e *Error) Error() string {
 	return fmt.Sprintf("%s%s", header, e.Description)
 }
 
-// Returns a snippet of the source around where the error occurred.
+// ContextSource method returns a snippet of the source around
+// where the error occurred.
 func (e *Error) ContextSource() []sourceLine {
 	if e.SourceLines == nil {
 		return nil
@@ -104,23 +107,24 @@ func (e *Error) ContextSource() []sourceLine {
 	return lines
 }
 
-// Return the character index of the first relevant stack frame, or -1 if none were found.
-// Additionally it returns the base path of the tree in which the identified code resides.
-func findRelevantStackFrame(stack string) (int, string) {
-	if frame := strings.Index(stack, BasePath); frame != -1 {
-		return frame, BasePath
-	}
-	for _, module := range Modules {
-		if frame := strings.Index(stack, module.Path); frame != -1 {
-			return frame, module.Path
-		}
-	}
-	return -1, ""
-}
-
+// SetLink method prepares a link and assign to Error.Link attribute
 func (e *Error) SetLink(errorLink string) {
 	errorLink = strings.Replace(errorLink, "{{Path}}", e.Path, -1)
 	errorLink = strings.Replace(errorLink, "{{Line}}", strconv.Itoa(e.Line), -1)
 
 	e.Link = "<a href=" + errorLink + ">" + e.Path + ":" + strconv.Itoa(e.Line) + "</a>"
+}
+
+// Return the character index of the first relevant stack frame, or -1 if none were found.
+// Additionally it returns the base path of the tree in which the identified code resides.
+func findRelevantStackFrame(stack string) (int, string) {
+	if frame := strings.Index(stack, filepath.ToSlash(BasePath)); frame != -1 {
+		return frame, BasePath
+	}
+	for _, module := range Modules {
+		if frame := strings.Index(stack, filepath.ToSlash(module.Path)); frame != -1 {
+			return frame, module.Path
+		}
+	}
+	return -1, ""
 }

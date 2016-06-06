@@ -1,12 +1,13 @@
 package revel
 
 import (
-	"compress/gzip"
-	"compress/zlib"
 	"io"
 	"net/http"
 	"strconv"
 	"strings"
+
+	"github.com/klauspost/compress/gzip"
+	"github.com/klauspost/compress/zlib"
 )
 
 var compressionTypes = [...]string{
@@ -99,10 +100,10 @@ func (c *CompressResponseWriter) WriteHeader(status int) {
 
 func (c *CompressResponseWriter) Close() error {
 	if c.compressionType != "" {
-		c.compressWriter.Close()
+		_ = c.compressWriter.Close()
 	}
 	if w, ok := c.ResponseWriter.(io.Closer); ok {
-		w.Close()
+		_ = w.Close()
 	}
 	// Non-blocking write to the closenotifier, if we for some reason should
 	// get called multiple times
@@ -134,11 +135,13 @@ func (c *CompressResponseWriter) Write(b []byte) (int, error) {
 
 	if c.compressionType != "" {
 		return c.compressWriter.Write(b)
-	} else {
-		return c.ResponseWriter.Write(b)
 	}
+
+	return c.ResponseWriter.Write(b)
 }
 
+// DetectCompressionType method detects the comperssion type
+// from header "Accept-Encoding"
 func (c *CompressResponseWriter) DetectCompressionType(req *Request, resp *Response) {
 	if Config.BoolDefault("results.compressed", false) {
 		acceptedEncodings := strings.Split(req.Request.Header.Get("Accept-Encoding"), ",")
@@ -146,14 +149,22 @@ func (c *CompressResponseWriter) DetectCompressionType(req *Request, resp *Respo
 		largestQ := 0.0
 		chosenEncoding := len(compressionTypes)
 
+		// I have fixed one edge case for issue #914
+		// But it's better to cover all possible edge cases or
+		// Adapt to https://github.com/golang/gddo/blob/master/httputil/header/header.go#L172
 		for _, encoding := range acceptedEncodings {
 			encoding = strings.TrimSpace(encoding)
 			encodingParts := strings.SplitN(encoding, ";", 2)
 
 			// If we are the format "gzip;q=0.8"
 			if len(encodingParts) > 1 {
+				q := strings.TrimSpace(encodingParts[1])
+				if len(q) == 0 || !strings.HasPrefix(q, "q=") {
+					continue
+				}
+
 				// Strip off the q=
-				num, err := strconv.ParseFloat(strings.TrimSpace(encodingParts[1])[2:], 32)
+				num, err := strconv.ParseFloat(q[2:], 32)
 				if err != nil {
 					continue
 				}

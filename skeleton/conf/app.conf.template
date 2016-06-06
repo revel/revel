@@ -15,6 +15,9 @@ app.name = {{ .AppName }}
 # into your application
 app.secret = {{ .Secret }}
 
+# Revel running behind proxy like nginx, haproxy, etc
+app.behind.proxy = false
+
 
 # The IP address on which to listen.
 http.addr =
@@ -36,14 +39,6 @@ http.ssl = false
 # the fields of:
 # http://golang.org/pkg/net/http/#Cookie
 #
-# The HttpOnly attribute is supported by most modern browsers. On a supported
-# browser, an HttpOnly session cookie will be used only when transmitting HTTP
-# (or HTTPS) requests, thus restricting access from other, non-HTTP APIs (such
-# as JavaScript). This restriction mitigates, but does not eliminate the threat
-# of session cookie theft via cross-site scripting (XSS). This feature applies
-# only to session-management cookies, and not other browser cookies.
-cookie.httponly = false
-
 # Each cookie set by Revel is prefixed with this string.
 cookie.prefix = REVEL
 
@@ -51,7 +46,10 @@ cookie.prefix = REVEL
 # ensuring that the cookie is always encrypted when transmitting from client to
 # server. This makes the cookie less likely to be exposed to cookie theft via
 # eavesdropping.
-cookie.secure = false
+#
+# In dev mode, this will default to false, otherwise it will
+# default to true.
+# cookie.secure = false
 
 # Limit cookie access to a given domain
 #cookie.domain =
@@ -68,8 +66,13 @@ session.expires = 720h
 
 # The date format used by Revel. Possible formats defined by the Go `time`
 # package (http://golang.org/pkg/time/#Parse)
-format.date     = 01/02/2006
-format.datetime = 01/02/2006 15:04
+format.date     = 2006-01-02
+format.datetime = 2006-01-02 15:04
+
+# Timeout specifies a time limit for request (in seconds) made by a single client.
+# A Timeout of zero means no timeout.
+timeout.read = 90
+timeout.write = 60
 
 
 # Determines whether the template rendering should use chunked encoding.
@@ -79,6 +82,8 @@ results.chunked = false
 
 
 # Prefixes for each log message line
+# User can override these prefix values within any section
+# For e.g: [dev], [prod], etc
 log.trace.prefix = "TRACE "
 log.info.prefix  = "INFO  "
 log.warn.prefix  = "WARN  "
@@ -87,6 +92,10 @@ log.error.prefix = "ERROR "
 
 # The default language of this application.
 i18n.default_language = en
+
+# The default format when message is missing.
+# The original message shows in %s
+#i18n.unknown_format = "??? %s ???"
 
 
 # Module to serve static content such as CSS, JavaScript and Media files
@@ -116,9 +125,12 @@ results.pretty = true
 watch = true
 
 
-# If you set watcher.mode = "eager", the server starts to recompile
+# If you set watch.mode = "eager", the server starts to recompile
 # your application every time your application's files change.
-watcher.mode = "normal"
+watch.mode = "normal"
+
+# Watch the entire $GOPATH for code changes. Default is false.
+#watch.gopath = true
 
 
 # Module to run code tests in the browser
@@ -133,6 +145,27 @@ log.info.output  = stderr
 log.warn.output  = stderr
 log.error.output = stderr
 
+
+# Revel log flags. Possible flags defined by the Go `log` package,
+# please refer https://golang.org/pkg/log/#pkg-constants
+# Go log is "Bits or'ed together to control what's printed"
+# Examples:
+#   0  => just log the message, turn off the flags
+#   3  => log.LstdFlags (log.Ldate|log.Ltime)
+#   19 => log.Ldate|log.Ltime|log.Lshortfile
+#   23 => log.Ldate|log.Ltime|log.Lmicroseconds|log.Lshortfile
+log.trace.flags = 19
+log.info.flags  = 19
+log.warn.flags  = 19
+log.error.flags = 19
+
+
+# Revel request access log
+# Access log line format:
+# RequestStartTime ClientIP ResponseStatus RequestLatency HTTPMethod URLPath
+# Sample format:
+# 2016/05/25 17:46:37.112 127.0.0.1 200  270.157µs GET /
+log.request.output = stderr
 
 
 ################################################################################
@@ -156,5 +189,28 @@ module.testrunner =
 
 log.trace.output = off
 log.info.output  = off
-log.warn.output  = %(app.name)s.log
-log.error.output = %(app.name)s.log
+log.warn.output  = log/%(app.name)s.log
+log.error.output = log/%(app.name)s.log
+
+# Revel log flags. Possible flags defined by the Go `log` package,
+# please refer https://golang.org/pkg/log/#pkg-constants
+# Go log is "Bits or'ed together to control what's printed"
+# Examples:
+#   0  => just log the message, turn off the flags
+#   3  => log.LstdFlags (log.Ldate|log.Ltime)
+#   19 => log.Ldate|log.Ltime|log.Lshortfile
+#   23 => log.Ldate|log.Ltime|log.Lmicroseconds|log.Lshortfile
+log.trace.flags = 3
+log.info.flags  = 3
+log.warn.flags  = 3
+log.error.flags = 3
+
+
+# Revel request access log
+# Access log line format:
+# RequestStartTime ClientIP ResponseStatus RequestLatency HTTPMethod URLPath
+# Sample format:
+# 2016/05/25 17:46:37.112 127.0.0.1 200  270.157µs GET /
+# Example:
+#   log.request.output = %(app.name)s-request.log
+log.request.output = off

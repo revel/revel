@@ -87,7 +87,7 @@ func (s Session) Cookie() *http.Cookie {
 		Value:    Sign(sessionData) + "-" + sessionData,
 		Domain:   CookieDomain,
 		Path:     "/",
-		HttpOnly: CookieHttpOnly,
+		HttpOnly: true,
 		Secure:   CookieSecure,
 		Expires:  ts.UTC(),
 	}
@@ -121,7 +121,7 @@ func GetSessionFromCookie(cookie *http.Cookie) Session {
 
 	// Verify the signature.
 	if !Verify(data, sig) {
-		INFO.Println("Session cookie signature failed")
+		WARN.Println("Session cookie signature failed")
 		return session
 	}
 

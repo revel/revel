@@ -1,12 +1,13 @@
 package revel
 
 import (
-	"gopkg.in/fsnotify.v1"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
 	"sync"
+
+	"gopkg.in/fsnotify.v1"
 )
 
 // Listener is an interface for receivers of filesystem events.
@@ -90,28 +91,6 @@ func (w *Watcher) Listen(listener Listener, roots ...string) {
 				return nil
 			}
 
-			// is it a symlinked template?
-			link, err := os.Lstat(path)
-			if err == nil && link.Mode()&os.ModeSymlink == os.ModeSymlink {
-				TRACE.Println("Watcher symlink: ", path)
-				// lookup the actual target & check for goodness
-				targetPath, err := filepath.EvalSymlinks(path)
-				if err != nil {
-					ERROR.Println("Failed to read symlink", err)
-					return err
-				}
-				targetInfo, err := os.Stat(targetPath)
-				if err != nil {
-					ERROR.Println("Failed to stat symlink target", err)
-					return err
-				}
-
-				// set the template path to the target of the symlink
-				path = targetPath
-				info = targetInfo
-				filepath.Walk(path, watcherWalker)
-			}
-
 			if info.IsDir() {
 				if dl, ok := listener.(DiscerningListener); ok {
 					if !dl.WatchDir(info) {
@@ -128,7 +107,10 @@ func (w *Watcher) Listen(listener Listener, roots ...string) {
 		}
 
 		// Else, walk the directory tree.
-		filepath.Walk(p, watcherWalker)
+		err = Walk(p, watcherWalker)
+		if err != nil {
+			ERROR.Println("Failed to walk directory", p, ":", err)
+		}
 	}
 
 	if w.eagerRebuildEnabled() {
@@ -198,13 +180,13 @@ func (w *Watcher) Notify() *Error {
 	return nil
 }
 
-// If watcher.mode is set to eager, the application is rebuilt immediately
+// If watch.mode is set to eager, the application is rebuilt immediately
 // when a source file is changed.
 // This feature is available only in dev mode.
 func (w *Watcher) eagerRebuildEnabled() bool {
 	return Config.BoolDefault("mode.dev", true) &&
 		Config.BoolDefault("watch", true) &&
-		Config.StringDefault("watcher.mode", "normal") == "eager"
+		Config.StringDefault("watch.mode", "normal") == "eager"
 }
 
 func (w *Watcher) rebuildRequired(ev fsnotify.Event, listener Listener) bool {

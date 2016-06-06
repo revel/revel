@@ -1,8 +1,6 @@
 package revel
 
 import (
-	"github.com/agtorre/gocolorize"
-	"github.com/robfig/config"
 	"go/build"
 	"io"
 	"io/ioutil"
@@ -12,6 +10,9 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+
+	"github.com/agtorre/gocolorize"
+	"github.com/revel/config"
 )
 
 const (
@@ -37,18 +38,24 @@ var (
 	ImportPath string // e.g. "corp/sample"
 	SourcePath string // e.g. "/Users/robfig/gocode/src"
 
-	Config  *MergedConfig
+	Config  *config.Context
 	RunMode string // Application-defined (by default, "dev" or "prod")
 	DevMode bool   // if true, RunMode is a development mode.
 
 	// Revel installation details
 	RevelPath string // e.g. "/Users/robfig/gocode/src/revel"
 
-	// Where to look for templates and configuration.
-	// Ordered by priority.  (Earlier paths take precedence over later paths.)
+	// Where to look for templates
+	// Ordered by priority. (Earlier paths take precedence over later paths.)
 	CodePaths     []string
-	ConfPaths     []string
 	TemplatePaths []string
+
+	// ConfPaths where to look for configurations
+	// Config load order
+	// 1. framework (revel/conf/*)
+	// 2. application (conf/*)
+	// 3. user supplied configs (...) - User configs can override/add any from above
+	ConfPaths []string
 
 	Modules []Module
 
@@ -69,8 +76,7 @@ var (
 	// Cookie domain
 	CookieDomain string
 	// Cookie flags
-	CookieHttpOnly bool
-	CookieSecure   bool
+	CookieSecure bool
 
 	// Delimiters to use when rendering templates
 	TemplateDelims string
@@ -78,18 +84,23 @@ var (
 	//Logger colors
 	colors = map[string]gocolorize.Colorize{
 		"trace": gocolorize.NewColor("magenta"),
-		"info":  gocolorize.NewColor("green"),
+		"info":  gocolorize.NewColor("white"),
 		"warn":  gocolorize.NewColor("yellow"),
 		"error": gocolorize.NewColor("red"),
 	}
 
-	error_log = revelLogs{c: colors["error"], w: os.Stderr}
+	errorLog = revelLogs{c: colors["error"], w: os.Stderr}
 
 	// Loggers
 	TRACE = log.New(ioutil.Discard, "TRACE ", log.Ldate|log.Ltime|log.Lshortfile)
-	INFO  = log.New(ioutil.Discard, "INFO  ", log.Ldate|log.Ltime|log.Lshortfile)
-	WARN  = log.New(ioutil.Discard, "WARN  ", log.Ldate|log.Ltime|log.Lshortfile)
-	ERROR = log.New(&error_log, "ERROR ", log.Ldate|log.Ltime|log.Lshortfile)
+	INFO  = log.New(ioutil.Discard, "INFO ", log.Ldate|log.Ltime|log.Lshortfile)
+	WARN  = log.New(ioutil.Discard, "WARN ", log.Ldate|log.Ltime|log.Lshortfile)
+	ERROR = log.New(&errorLog, "ERROR ", log.Ldate|log.Ltime|log.Lshortfile)
+
+	// Revel request access log, not exposed from package.
+	// However output settings can be controlled from app.conf
+	requestLog           = log.New(ioutil.Discard, "", 0)
+	requestLogTimeFormat = "2006/01/02 15:04:05.000"
 
 	Initialized bool
 
@@ -137,10 +148,20 @@ func Init(mode, importPath, srcPath string) {
 
 	CodePaths = []string{AppPath}
 
-	ConfPaths = []string{
-		path.Join(BasePath, "conf"),
-		path.Join(RevelPath, "conf"),
+	if ConfPaths == nil {
+		ConfPaths = []string{}
 	}
+
+	// Config load order
+	// 1. framework (revel/conf/*)
+	// 2. application (conf/*)
+	// 3. user supplied configs (...) - User configs can override/add any from above
+	ConfPaths = append(
+		[]string{
+			path.Join(RevelPath, "conf"),
+			path.Join(BasePath, "conf"),
+		},
+		ConfPaths...)
 
 	TemplatePaths = []string{
 		ViewsPath,
@@ -149,7 +170,7 @@ func Init(mode, importPath, srcPath string) {
 
 	// Load app.conf
 	var err error
-	Config, err = LoadConfig("app.conf")
+	Config, err = config.LoadContext("app.conf", ConfPaths)
 	if err != nil || Config == nil {
 		log.Fatalln("Failed to load app.conf:", err)
 	}
@@ -183,8 +204,7 @@ func Init(mode, importPath, srcPath string) {
 	AppRoot = Config.StringDefault("app.root", "")
 	CookiePrefix = Config.StringDefault("cookie.prefix", "REVEL")
 	CookieDomain = Config.StringDefault("cookie.domain", "")
-	CookieHttpOnly = Config.BoolDefault("cookie.httponly", false)
-	CookieSecure = Config.BoolDefault("cookie.secure", false)
+	CookieSecure = Config.BoolDefault("cookie.secure", !DevMode)
 	TemplateDelims = Config.StringDefault("template.delimiters", "")
 	if secretStr := Config.StringDefault("app.secret", ""); secretStr != "" {
 		secretKey = []byte(secretStr)
@@ -200,10 +220,14 @@ func Init(mode, importPath, srcPath string) {
 	WARN = getLogger("warn")
 	ERROR = getLogger("error")
 
+	// Revel request access logger, not exposed from package.
+	// However output settings can be controlled from app.conf
+	requestLog = getLogger("request")
+
 	loadModules()
 
 	Initialized = true
-	INFO.Printf("Initialized Revel v%s (%s) for %s", VERSION, BUILD_DATE, MINIMUM_GO)
+	INFO.Printf("Initialized Revel v%s (%s) for %s", Version, BuildDate, MinimumGoVersion)
 }
 
 // Create a logger using log.* directives in app.conf plus the current settings
@@ -222,9 +246,16 @@ func getLogger(name string) *log.Logger {
 	case "stderr":
 		newlog = revelLogs{c: colors[name], w: os.Stderr}
 		logger = newLogger(&newlog)
+	case "off":
+		return newLogger(ioutil.Discard)
 	default:
-		if output == "off" {
-			output = os.DevNull
+		if !filepath.IsAbs(output) {
+			output = filepath.Join(BasePath, output)
+		}
+
+		logPath := filepath.Dir(output)
+		if err := createDir(logPath); err != nil {
+			log.Fatalln(err)
 		}
 
 		file, err := os.OpenFile(output, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
@@ -232,6 +263,11 @@ func getLogger(name string) *log.Logger {
 			log.Fatalln("Failed to open log file", output, ":", err)
 		}
 		logger = newLogger(file)
+	}
+
+	if strings.EqualFold(name, "request") {
+		logger.SetFlags(0)
+		return logger
 	}
 
 	// Set the prefix / flags.

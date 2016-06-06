@@ -2,13 +2,31 @@ package revel
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"io/ioutil"
+	"net"
+	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"reflect"
 	"regexp"
 	"strings"
+
+	"github.com/revel/config"
+)
+
+const (
+	DefaultFileContentType = "application/octet-stream"
+)
+
+var (
+	cookieKeyValueParser = regexp.MustCompile("\x00([^:]*):([^\x00]*)\x00")
+	hdrForwardedFor      = http.CanonicalHeaderKey("X-Forwarded-For")
+	hdrRealIP            = http.CanonicalHeaderKey("X-Real-Ip")
+
+	mimeConfig *config.Context
 )
 
 // Add some more methods to the default Template.
@@ -63,10 +81,6 @@ func FindMethod(recvType reflect.Type, funcVal reflect.Value) *reflect.Method {
 	return nil
 }
 
-var (
-	cookieKeyValueParser = regexp.MustCompile("\x00([^:]*):([^\x00]*)\x00")
-)
-
 // Takes the raw (escaped) cookie value and parses out key values.
 func ParseKeyValueCookie(val string, cb func(key, val string)) {
 	val, _ = url.QueryUnescape(val)
@@ -77,21 +91,13 @@ func ParseKeyValueCookie(val string, cb func(key, val string)) {
 	}
 }
 
-const DefaultFileContentType = "application/octet-stream"
-
-var mimeConfig *MergedConfig
-
 // Load mime-types.conf on init.
 func LoadMimeConfig() {
 	var err error
-	mimeConfig, err = LoadConfig("mime-types.conf")
+	mimeConfig, err = config.LoadContext("mime-types.conf", ConfPaths)
 	if err != nil {
 		ERROR.Fatalln("Failed to load mime type config:", err)
 	}
-}
-
-func init() {
-	OnAppStart(LoadMimeConfig)
 }
 
 // Returns a MIME content type based on the filename's extension.
@@ -169,4 +175,98 @@ func Equal(a, b interface{}) bool {
 		}
 	}
 	return false
+}
+
+// ClientIP method returns client IP address from HTTP request.
+//
+// Note: Set property "app.behind.proxy" to true only if Revel is running
+// behind proxy like nginx, haproxy, apache, etc. Otherwise
+// you may get inaccurate Client IP address. Revel parses the
+// IP address in the order of X-Forwarded-For, X-Real-IP.
+//
+// By default revel will get http.Request's RemoteAddr
+func ClientIP(r *http.Request) string {
+	if Config.BoolDefault("app.behind.proxy", false) {
+		// Header X-Forwarded-For
+		if fwdFor := strings.TrimSpace(r.Header.Get(hdrForwardedFor)); fwdFor != "" {
+			index := strings.Index(fwdFor, ",")
+			if index == -1 {
+				return fwdFor
+			}
+			return fwdFor[:index]
+		}
+
+		// Header X-Real-Ip
+		if realIP := strings.TrimSpace(r.Header.Get(hdrRealIP)); realIP != "" {
+			return realIP
+		}
+	}
+
+	if remoteAddr, _, err := net.SplitHostPort(r.RemoteAddr); err == nil {
+		return remoteAddr
+	}
+
+	return ""
+}
+
+// Walk method extends filepath.Walk to also follow symlinks.
+// Always returns the path of the file or directory.
+func Walk(root string, walkFn filepath.WalkFunc) error {
+	return fsWalk(root, root, walkFn)
+}
+
+// createDir method creates nested directories if not exists
+func createDir(path string) error {
+	if _, err := os.Stat(path); err != nil {
+		if os.IsNotExist(err) {
+			if err = os.MkdirAll(path, 0755); err != nil {
+				return fmt.Errorf("Failed to create directory '%v': %v", path, err)
+			}
+		} else {
+			return fmt.Errorf("Failed to create directory '%v': %v", path, err)
+		}
+	}
+	return nil
+}
+
+func fsWalk(fname string, linkName string, walkFn filepath.WalkFunc) error {
+	fsWalkFunc := func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		var name string
+		name, err = filepath.Rel(fname, path)
+		if err != nil {
+			return err
+		}
+
+		path = filepath.Join(linkName, name)
+
+		if err == nil && info.Mode()&os.ModeSymlink == os.ModeSymlink {
+			var symlinkPath string
+			symlinkPath, err = filepath.EvalSymlinks(path)
+			if err != nil {
+				return err
+			}
+
+			// https://github.com/golang/go/blob/master/src/path/filepath/path.go#L392
+			info, err = os.Lstat(symlinkPath)
+			if err != nil {
+				return walkFn(path, info, err)
+			}
+
+			if info.IsDir() {
+				return fsWalk(symlinkPath, path, walkFn)
+			}
+		}
+
+		return walkFn(path, info, err)
+	}
+
+	return filepath.Walk(fname, fsWalkFunc)
+}
+
+func init() {
+	OnAppStart(LoadMimeConfig)
 }
