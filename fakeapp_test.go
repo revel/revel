@@ -39,14 +39,14 @@ func (c Hotels) Index() Result {
 	return c.RenderText("Hello, World!")
 }
 
-func (c Static) Serve(prefix, filepath string) Result {
+func (c Static) Serve(prefix, path string) Result {
 	var basePath, dirName string
 
 	if !filepath.IsAbs(dirName) {
 		basePath = BasePath
 	}
 
-	fname := filepath.Join(basePath, prefix, filepath)
+	fname := filepath.Join(basePath, prefix, path)
 	file, err := os.Open(fname)
 	if os.IsNotExist(err) {
 		return c.NotFound("")
