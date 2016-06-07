@@ -35,6 +35,12 @@ http.ssl = false
 #http.sslkey =
 
 
+# Timeout specifies a time limit for request (in seconds) made by a single client.
+# A Timeout of zero means no timeout.
+timeout.read = 90
+timeout.write = 60
+
+
 # For any cookies set by Revel (Session,Flash,Error) these properties will set
 # the fields of:
 # http://golang.org/pkg/net/http/#Cookie
@@ -68,11 +74,6 @@ session.expires = 720h
 # package (http://golang.org/pkg/time/#Parse)
 format.date     = 2006-01-02
 format.datetime = 2006-01-02 15:04
-
-# Timeout specifies a time limit for request (in seconds) made by a single client.
-# A Timeout of zero means no timeout.
-timeout.read = 90
-timeout.write = 60
 
 
 # Determines whether the template rendering should use chunked encoding.

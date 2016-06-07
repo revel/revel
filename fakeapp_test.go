@@ -4,7 +4,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"path"
+	"path/filepath"
 	"reflect"
 )
 
@@ -42,11 +42,11 @@ func (c Hotels) Index() Result {
 func (c Static) Serve(prefix, filepath string) Result {
 	var basePath, dirName string
 
-	if !path.IsAbs(dirName) {
+	if !filepath.IsAbs(dirName) {
 		basePath = BasePath
 	}
 
-	fname := path.Join(basePath, prefix, filepath)
+	fname := filepath.Join(basePath, prefix, filepath)
 	file, err := os.Open(fname)
 	if os.IsNotExist(err) {
 		return c.NotFound("")
@@ -66,7 +66,7 @@ func startFakeBookingApp() {
 	WARN = TRACE
 	ERROR = TRACE
 
-	MainTemplateLoader = NewTemplateLoader([]string{ViewsPath, path.Join(RevelPath, "templates")})
+	MainTemplateLoader = NewTemplateLoader([]string{ViewsPath, filepath.Join(RevelPath, "templates")})
 	MainTemplateLoader.Refresh()
 
 	RegisterController((*Hotels)(nil),

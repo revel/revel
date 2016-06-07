@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"path"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -32,18 +31,18 @@ var (
 	// App details
 	AppName    string // e.g. "sample"
 	AppRoot    string // e.g. "/app1"
-	BasePath   string // e.g. "/Users/robfig/gocode/src/corp/sample"
-	AppPath    string // e.g. "/Users/robfig/gocode/src/corp/sample/app"
-	ViewsPath  string // e.g. "/Users/robfig/gocode/src/corp/sample/app/views"
+	BasePath   string // e.g. "$GOPATH/src/corp/sample"
+	AppPath    string // e.g. "$GOPATH/src/corp/sample/app"
+	ViewsPath  string // e.g. "$GOPATH/src/corp/sample/app/views"
 	ImportPath string // e.g. "corp/sample"
-	SourcePath string // e.g. "/Users/robfig/gocode/src"
+	SourcePath string // e.g. "$GOPATH/src"
 
 	Config  *config.Context
 	RunMode string // Application-defined (by default, "dev" or "prod")
 	DevMode bool   // if true, RunMode is a development mode.
 
 	// Revel installation details
-	RevelPath string // e.g. "/Users/robfig/gocode/src/revel"
+	RevelPath string // e.g. "$GOPATH/src/github.com/revel/revel"
 
 	// Where to look for templates
 	// Ordered by priority. (Earlier paths take precedence over later paths.)
@@ -136,7 +135,7 @@ func Init(mode, importPath, srcPath string) {
 		revelSourcePath, SourcePath = findSrcPaths(importPath)
 	} else {
 		// If the SourcePath was specified, assume both Revel and the app are within it.
-		SourcePath = path.Clean(SourcePath)
+		SourcePath = filepath.Clean(SourcePath)
 		revelSourcePath = SourcePath
 		packaged = true
 	}
@@ -158,14 +157,14 @@ func Init(mode, importPath, srcPath string) {
 	// 3. user supplied configs (...) - User configs can override/add any from above
 	ConfPaths = append(
 		[]string{
-			path.Join(RevelPath, "conf"),
-			path.Join(BasePath, "conf"),
+			filepath.Join(RevelPath, "conf"),
+			filepath.Join(BasePath, "conf"),
 		},
 		ConfPaths...)
 
 	TemplatePaths = []string{
 		ViewsPath,
-		path.Join(RevelPath, "templates"),
+		filepath.Join(RevelPath, "templates"),
 	}
 
 	// Load app.conf
@@ -343,7 +342,7 @@ func loadModules() {
 // Returns an error if the import path could not be found.
 func ResolveImportPath(importPath string) (string, error) {
 	if packaged {
-		return path.Join(SourcePath, importPath), nil
+		return filepath.Join(SourcePath, importPath), nil
 	}
 
 	modPkg, err := build.Import(importPath, "", build.FindOnly)

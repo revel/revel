@@ -2,7 +2,6 @@ package revel
 
 import (
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -191,7 +190,7 @@ func (w *Watcher) eagerRebuildEnabled() bool {
 
 func (w *Watcher) rebuildRequired(ev fsnotify.Event, listener Listener) bool {
 	// Ignore changes to dotfiles.
-	if strings.HasPrefix(path.Base(ev.Name), ".") {
+	if strings.HasPrefix(filepath.Base(ev.Name), ".") {
 		return false
 	}
 

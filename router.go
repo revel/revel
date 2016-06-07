@@ -7,7 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"path"
+	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -300,7 +300,7 @@ func getModuleRoutes(moduleName, joinedPath string, validate bool) ([]*Route, *E
 		INFO.Println("Skipping routes for inactive module", moduleName)
 		return nil, nil
 	}
-	return parseRoutesFile(path.Join(module.Path, "conf", "routes"), joinedPath, validate)
+	return parseRoutesFile(filepath.Join(module.Path, "conf", "routes"), joinedPath, validate)
 }
 
 // Groups:
@@ -422,7 +422,7 @@ func (router *Router) Reverse(action string, argValues map[string]string) *Actio
 
 func init() {
 	OnAppStart(func() {
-		MainRouter = NewRouter(path.Join(BasePath, "conf", "routes"))
+		MainRouter = NewRouter(filepath.Join(BasePath, "conf", "routes"))
 		err := MainRouter.Refresh()
 		if MainWatcher != nil && Config.BoolDefault("watch.routes", true) {
 			MainWatcher.Listen(MainRouter, MainRouter.path)
