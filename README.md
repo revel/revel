@@ -4,7 +4,7 @@
 
 A high productivity, full-stack web framework for the [Go language](http://www.golang.org).
 
-Current Version: 0.13.0 (2016-06-05)
+Current Version: 0.13.1 (2016-06-06)
 
 **As of Revel 0.13.0, Go 1.4+ is required.**
 
@@ -23,7 +23,7 @@ Open http://localhost:9000 in your browser and you should see "It works!"
 
 ## Learn More
 
-* [Manual, Samples, Godocs, etc](http://revel.github.com)
+* [Manual, Samples, Godocs, etc](http://revel.github.io)
 * [Apps using Revel](https://github.com/revel/revel/wiki/Apps-in-the-Wild)
 * [Articles Featuring Revel](https://github.com/revel/revel/wiki/Articles)
 

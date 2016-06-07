@@ -141,10 +141,10 @@ func Init(mode, importPath, srcPath string) {
 		packaged = true
 	}
 
-	RevelPath = path.Join(revelSourcePath, filepath.FromSlash(REVEL_IMPORT_PATH))
-	BasePath = path.Join(SourcePath, filepath.FromSlash(importPath))
-	AppPath = path.Join(BasePath, "app")
-	ViewsPath = path.Join(AppPath, "views")
+	RevelPath = filepath.Join(revelSourcePath, filepath.FromSlash(REVEL_IMPORT_PATH))
+	BasePath = filepath.Join(SourcePath, filepath.FromSlash(importPath))
+	AppPath = filepath.Join(BasePath, "app")
+	ViewsPath = filepath.Join(AppPath, "views")
 
 	CodePaths = []string{AppPath}
 
@@ -355,19 +355,19 @@ func ResolveImportPath(importPath string) (string, error) {
 
 func addModule(name, importPath, modulePath string) {
 	Modules = append(Modules, Module{Name: name, ImportPath: importPath, Path: modulePath})
-	if codePath := path.Join(modulePath, "app"); DirExists(codePath) {
+	if codePath := filepath.Join(modulePath, "app"); DirExists(codePath) {
 		CodePaths = append(CodePaths, codePath)
-		if viewsPath := path.Join(modulePath, "app", "views"); DirExists(viewsPath) {
+		if viewsPath := filepath.Join(modulePath, "app", "views"); DirExists(viewsPath) {
 			TemplatePaths = append(TemplatePaths, viewsPath)
 		}
 	}
 
-	INFO.Print("Loaded module ", path.Base(modulePath))
+	INFO.Print("Loaded module ", filepath.Base(modulePath))
 
 	// Hack: There is presently no way for the testrunner module to add the
 	// "test" subdirectory to the CodePaths.  So this does it instead.
 	if importPath == Config.StringDefault("module.testrunner", "github.com/revel/modules/testrunner") {
-		CodePaths = append(CodePaths, path.Join(BasePath, "tests"))
+		CodePaths = append(CodePaths, filepath.Join(BasePath, "tests"))
 	}
 }
 
