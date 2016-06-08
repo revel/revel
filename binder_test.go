@@ -180,7 +180,7 @@ func TestBinder(t *testing.T) {
 
 	// Get the keys in sorted order to make the expectation right.
 	keys := []string{}
-	for k, _ := range expectedFiles {
+	for k := range expectedFiles {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
@@ -217,7 +217,7 @@ func TestBinder(t *testing.T) {
 					t.Fatalf("%s (%s) - Number of files: (expected) %d != %d (actual)",
 						k, typ, len(fhs), actual.Len())
 				}
-				for i, _ := range fhs {
+				for i := range fhs {
 					returns := reflect.ValueOf(binding.f).Call([]reflect.Value{actual.Index(i)})
 					if !returns[0].IsValid() {
 						t.Errorf("%s (%s) - Returned nil.", k, typ)

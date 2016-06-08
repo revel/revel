@@ -160,9 +160,8 @@ func restoreSession(req *http.Request) Session {
 	cookie, err := req.Cookie(CookiePrefix + "_SESSION")
 	if err != nil {
 		return make(Session)
-	} else {
-		return GetSessionFromCookie(cookie)
 	}
+	return GetSessionFromCookie(cookie)
 }
 
 // getSessionExpirationCookie retrieves the cookie's time to live as a

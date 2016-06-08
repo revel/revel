@@ -2,10 +2,11 @@ package cache
 
 import (
 	"fmt"
-	"github.com/revel/revel"
-	"github.com/robfig/go-cache"
 	"reflect"
 	"time"
+
+	"github.com/revel/revel"
+	"github.com/robfig/go-cache"
 )
 
 type InMemoryCache struct {

@@ -107,9 +107,13 @@ func (al AcceptLanguages) Less(i, j int) bool { return al[i].Quality > al[j].Qua
 func (al AcceptLanguages) String() string {
 	output := bytes.NewBufferString("")
 	for i, language := range al {
-		output.WriteString(fmt.Sprintf("%s (%1.1f)", language.Language, language.Quality))
+		if _, err := output.WriteString(fmt.Sprintf("%s (%1.1f)", language.Language, language.Quality)); err != nil {
+			ERROR.Println("WriteString failed:", err)
+		}
 		if i != len(al)-1 {
-			output.WriteString(", ")
+			if _, err := output.WriteString(", "); err != nil {
+				ERROR.Println("WriteString failed:", err)
+			}
 		}
 	}
 	return output.String()

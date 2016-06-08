@@ -329,7 +329,7 @@ func unbindSlice(output map[string]string, name string, val interface{}) {
 func bindStruct(params *Params, name string, typ reflect.Type) reflect.Value {
 	result := reflect.New(typ).Elem()
 	fieldValues := make(map[string]reflect.Value)
-	for key, _ := range params.Values {
+	for key := range params.Values {
 		if !strings.HasPrefix(key, name+".") {
 			continue
 		}

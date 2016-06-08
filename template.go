@@ -207,7 +207,7 @@ func (loader *TemplateLoader) Refresh() *Error {
 	}
 
 	// Walk through the template loader's paths and build up a template set.
-	var templateSet *template.Template = nil
+	var templateSet *template.Template
 	for _, basePath := range loader.paths {
 		// Walk only returns an error if the template loader is completely unusable
 		// (namely, if one of the TemplateFuncs does not have an acceptable signature).
@@ -265,7 +265,8 @@ func (loader *TemplateLoader) Refresh() *Error {
 
 				// Load the file if we haven't already
 				if fileStr == "" {
-					fileBytes, err := ioutil.ReadFile(path)
+					var fileBytes []byte
+					fileBytes, err = ioutil.ReadFile(path)
 					if err != nil {
 						ERROR.Println("Failed reading file:", path)
 						return nil
