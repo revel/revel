@@ -31,7 +31,9 @@ func handle(w http.ResponseWriter, r *http.Request) {
 	if upgrade == "websocket" || upgrade == "Websocket" {
 		websocket.Handler(func(ws *websocket.Conn) {
 			//Override default Read/Write timeout with sane value for a web socket request
-			ws.SetDeadline(time.Now().Add(time.Hour * 24))
+			if err := ws.SetDeadline(time.Now().Add(time.Hour * 24)); err != nil {
+				ERROR.Println("SetDeadLine failed:", err)
+			}
 			r.Method = "WS"
 			handleInternal(w, r, ws)
 		}).ServeHTTP(w, r)
@@ -60,7 +62,7 @@ func handleInternal(w http.ResponseWriter, r *http.Request, ws *websocket.Conn) 
 	}
 	// Close the Writer if we can
 	if w, ok := resp.Out.(io.Closer); ok {
-		w.Close()
+		_ = w.Close()
 	}
 
 	// Revel request access log format
@@ -86,7 +88,9 @@ func InitServer() http.HandlerFunc {
 
 	// Load templates
 	MainTemplateLoader = NewTemplateLoader(TemplatePaths)
-	MainTemplateLoader.Refresh()
+	if err := MainTemplateLoader.Refresh(); err != nil {
+		ERROR.Println(err)
+	}
 
 	// The "watch" config variable can turn on and off all watching.
 	// (As a convenient way to control it all together.)

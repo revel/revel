@@ -68,9 +68,8 @@ func (f *Field) ErrorClass() string {
 	if f.Error != nil {
 		if errorClass, ok := f.renderArgs["ERROR_CLASS"]; ok {
 			return errorClass.(string)
-		} else {
-			return ERROR_CLASS
 		}
+		return ERROR_CLASS
 	}
 	return ""
 }

@@ -60,7 +60,8 @@ func (w *Watcher) Listen(listener Listener, roots ...string) {
 		// is the directory / file a symlink?
 		f, err := os.Lstat(p)
 		if err == nil && f.Mode()&os.ModeSymlink == os.ModeSymlink {
-			realPath, err := filepath.EvalSymlinks(p)
+			var realPath string
+			realPath, err = filepath.EvalSymlinks(p)
 			if err != nil {
 				panic(err)
 			}
@@ -129,7 +130,9 @@ func (w *Watcher) NotifyWhenUpdated(listener Listener, watcher *fsnotify.Watcher
 			if w.rebuildRequired(ev, listener) {
 				// Serialize listener.Refresh() calls.
 				w.notifyMutex.Lock()
-				listener.Refresh()
+				if err := listener.Refresh(); err != nil {
+					ERROR.Println("Failed when listener refresh:", err)
+				}
 				w.notifyMutex.Unlock()
 			}
 		case <-watcher.Errors:

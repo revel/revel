@@ -16,12 +16,12 @@ type Interface1 interface {
 }
 
 var (
-	struct1        Struct1     = Struct1{1}
-	ptrStruct      *Struct1    = &Struct1{2}
+	struct1                    = Struct1{1}
+	ptrStruct                  = &Struct1{2}
 	emptyIface     interface{} = Struct1{3}
 	iface1         Interface1  = Struct1{4}
-	sliceStruct    []Struct1   = []Struct1{{5}, {6}, {7}}
-	ptrSliceStruct []*Struct1  = []*Struct1{{8}, {9}, {10}}
+	sliceStruct                = []Struct1{{5}, {6}, {7}}
+	ptrSliceStruct             = []*Struct1{{8}, {9}, {10}}
 
 	VALUE_MAP = map[string]interface{}{
 		"bytes":          []byte{0x61, 0x62, 0x63, 0x64},

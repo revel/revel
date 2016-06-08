@@ -35,12 +35,6 @@ type RouteMatch struct {
 	Params         map[string][]string // e.g. {id: 123}
 }
 
-type arg struct {
-	name       string
-	index      int
-	constraint *regexp.Regexp
-}
-
 // Prepares the route to be used in matching.
 func NewRoute(method, path, action, fixedArgs, routesPath string, line int) (r *Route) {
 	// Handle fixed arguments
@@ -259,12 +253,10 @@ func validateRoute(route *Route) error {
 		return nil
 	}
 
+	// TODO need to check later
+	// does it do only validation or validation and instantiate the controller.
 	var c Controller
-	if err := c.SetAction(parts[0], parts[1]); err != nil {
-		return err
-	}
-
-	return nil
+	return c.SetAction(parts[0], parts[1])
 }
 
 // routeError adds context to a simple error message.
@@ -274,9 +266,8 @@ func routeError(err error, routesPath, content string, n int) *Error {
 	}
 	// Load the route file content if necessary
 	if content == "" {
-		contentBytes, err := ioutil.ReadFile(routesPath)
-		if err != nil {
-			ERROR.Printf("Failed to read route file %s: %s\n", routesPath, err)
+		if contentBytes, er := ioutil.ReadFile(routesPath); er != nil {
+			ERROR.Printf("Failed to read route file %s: %s\n", routesPath, er)
 		} else {
 			content = string(contentBytes)
 		}
@@ -308,14 +299,14 @@ func getModuleRoutes(moduleName, joinedPath string, validate bool) ([]*Route, *E
 // 4: path
 // 5: action
 // 6: fixedargs
-var routePattern *regexp.Regexp = regexp.MustCompile(
+var routePattern = regexp.MustCompile(
 	"(?i)^(GET|POST|PUT|DELETE|PATCH|OPTIONS|HEAD|WS|\\*)" +
 		"[(]?([^)]*)(\\))?[ \t]+" +
 		"(.*/[^ \t]*)[ \t]+([^ \t(]+)" +
 		`\(?([^)]*)\)?[ \t]*$`)
 
 func parseRouteLine(line string) (method, path, action, fixedArgs string, found bool) {
-	var matches []string = routePattern.FindStringSubmatch(line)
+	matches := routePattern.FindStringSubmatch(line)
 	if matches == nil {
 		return
 	}
@@ -435,7 +426,7 @@ func init() {
 
 func RouterFilter(c *Controller, fc []Filter) {
 	// Figure out the Controller/Action
-	var route *RouteMatch = MainRouter.Route(c.Request.Request)
+	route := MainRouter.Route(c.Request.Request)
 	if route == nil {
 		c.Result = c.NotFound("No matching route found: " + c.Request.RequestURI)
 		return

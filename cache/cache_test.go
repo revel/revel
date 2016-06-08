@@ -79,34 +79,38 @@ func expiration(t *testing.T, newCache cacheFactory) {
 	cache := newCache(t, time.Second)
 	// Test Set w/ DEFAULT
 	value := 10
-	cache.Set("int", value, DEFAULT)
+	if err = cache.Set("int", value, DEFAULT); err != nil {
+		t.Errorf("Set failed: %s", err)
+	}
 	time.Sleep(2 * time.Second)
-	err = cache.Get("int", &value)
-	if err != ErrCacheMiss {
+	if err = cache.Get("int", &value); err != ErrCacheMiss {
 		t.Errorf("Expected CacheMiss, but got: %s", err)
 	}
 
 	// Test Set w/ short time
-	cache.Set("int", value, time.Second)
+	if err = cache.Set("int", value, time.Second); err != nil {
+		t.Errorf("Set failed: %s", err)
+	}
 	time.Sleep(2 * time.Second)
-	err = cache.Get("int", &value)
-	if err != ErrCacheMiss {
+	if err = cache.Get("int", &value); err != ErrCacheMiss {
 		t.Errorf("Expected CacheMiss, but got: %s", err)
 	}
 
 	// Test Set w/ longer time.
-	cache.Set("int", value, time.Hour)
+	if err = cache.Set("int", value, time.Hour); err != nil {
+		t.Errorf("Set failed: %s", err)
+	}
 	time.Sleep(2 * time.Second)
-	err = cache.Get("int", &value)
-	if err != nil {
+	if err = cache.Get("int", &value); err != nil {
 		t.Errorf("Expected to get the value, but got: %s", err)
 	}
 
 	// Test Set w/ forever.
-	cache.Set("int", value, FOREVER)
+	if err = cache.Set("int", value, FOREVER); err != nil {
+		t.Errorf("Set failed: %s", err)
+	}
 	time.Sleep(2 * time.Second)
-	err = cache.Get("int", &value)
-	if err != nil {
+	if err = cache.Get("int", &value); err != nil {
 		t.Errorf("Expected to get the value, but got: %s", err)
 	}
 }

@@ -1,9 +1,10 @@
 package cache
 
 import (
-	"github.com/revel/revel"
 	"strings"
 	"time"
+
+	"github.com/revel/revel"
 )
 
 func init() {

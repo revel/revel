@@ -3,9 +3,10 @@ package cache
 import (
 	"bytes"
 	"encoding/gob"
-	"github.com/revel/revel"
 	"reflect"
 	"strconv"
+
+	"github.com/revel/revel"
 )
 
 // Serialize transforms the given value into bytes following these rules:

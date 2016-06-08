@@ -12,8 +12,10 @@ const testServer = "localhost:11211"
 var newMemcachedCache = func(t *testing.T, defaultExpiration time.Duration) Cache {
 	c, err := net.Dial("tcp", testServer)
 	if err == nil {
-		c.Write([]byte("flush_all\r\n"))
-		c.Close()
+		if _, err = c.Write([]byte("flush_all\r\n")); err != nil {
+			t.Errorf("Write failed: %s", err)
+		}
+		_ = c.Close()
 		return NewMemcachedCache([]string{testServer}, defaultExpiration)
 	}
 	t.Errorf("couldn't connect to memcached on %s", testServer)

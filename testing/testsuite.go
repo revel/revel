@@ -76,9 +76,8 @@ func (t *TestSuite) Host() string {
 func (t *TestSuite) BaseUrl() string {
 	if revel.HttpSsl {
 		return "https://" + t.Host()
-	} else {
-		return "http://" + t.Host()
 	}
+	return "http://" + t.Host()
 }
 
 // Return the base websocket URL of the server, e.g. "ws://127.0.0.1:8557"
@@ -136,13 +135,13 @@ func (t *TestSuite) PutCustom(uri string, contentType string, reader io.Reader) 
 // Issue a PUT request to the given path as a form put of the given key and
 // values, and store the result in Response and ResponseBody.
 func (t *TestSuite) PutForm(path string, data url.Values) {
-    t.PutFormCustom(t.BaseUrl()+path, data).Send()
+	t.PutFormCustom(t.BaseUrl()+path, data).Send()
 }
 
 // Return a PUT request to the given uri as a form put of the given key and values.
 // The request is in a form of TestRequest wrapper.
 func (t *TestSuite) PutFormCustom(uri string, data url.Values) *TestRequest {
-    return t.PutCustom(uri, "application/x-www-form-urlencoded", strings.NewReader(data.Encode()))
+	return t.PutCustom(uri, "application/x-www-form-urlencoded", strings.NewReader(data.Encode()))
 }
 
 // Issue a PATCH request to the given path, sending the given Content-Type and
@@ -338,7 +337,9 @@ func createFormFile(writer *multipart.Writer, fieldname, filename string) {
 	if err != nil {
 		panic(err)
 	}
-	defer file.Close()
+	defer func() {
+		_ = file.Close()
+	}()
 
 	// Create a new form-data header with the provided field name and file name.
 	// Determine Content-Type of the file by its extension.

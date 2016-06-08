@@ -117,8 +117,8 @@ type Cache interface {
 var (
 	Instance Cache
 
-	ErrCacheMiss = errors.New("revel/cache: key not found.")
-	ErrNotStored = errors.New("revel/cache: not stored.")
+	ErrCacheMiss = errors.New("revel/cache: key not found")
+	ErrNotStored = errors.New("revel/cache: not stored")
 )
 
 // The package implements the Cache interface (as sugar).

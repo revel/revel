@@ -147,9 +147,8 @@ func (conf FilterConfigurator) insertFilter(insert Filter, where When, target Fi
 		if FilterEq(f, target) {
 			if where == BEFORE {
 				return append(fc[:i], append([]Filter{insert}, fc[i:]...)...)
-			} else {
-				return append(fc[:i+1], append([]Filter{insert}, fc[i+1:]...)...)
 			}
+			return append(fc[:i+1], append([]Filter{insert}, fc[i+1:]...)...)
 		}
 	}
 	return fc
