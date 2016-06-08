@@ -13,8 +13,8 @@ import (
 // Params: Testing Multipart forms
 
 const (
-	MULTIPART_BOUNDARY  = "A"
-	MULTIPART_FORM_DATA = `--A
+	MultipartBoundary = "A"
+	MultipartFormData = `--A
 Content-Disposition: form-data; name="text1"
 
 data1
@@ -76,11 +76,11 @@ var (
 
 func getMultipartRequest() *http.Request {
 	req, _ := http.NewRequest("POST", "http://localhost/path",
-		bytes.NewBufferString(MULTIPART_FORM_DATA))
+		bytes.NewBufferString(MultipartFormData))
 	req.Header.Set(
-		"Content-Type", fmt.Sprintf("multipart/form-data; boundary=%s", MULTIPART_BOUNDARY))
+		"Content-Type", fmt.Sprintf("multipart/form-data; boundary=%s", MultipartBoundary))
 	req.Header.Set(
-		"Content-Length", fmt.Sprintf("%d", len(MULTIPART_FORM_DATA)))
+		"Content-Length", fmt.Sprintf("%d", len(MultipartFormData)))
 	return req
 }
 

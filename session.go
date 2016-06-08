@@ -16,8 +16,8 @@ import (
 type Session map[string]string
 
 const (
-	SESSION_ID_KEY = "_ID"
-	TIMESTAMP_KEY  = "_TS"
+	SessionIDKey = "_ID"
+	TimestampKey = "_TS"
 )
 
 // expireAfterDuration is the time to live, in seconds, of a session cookie.
@@ -43,7 +43,7 @@ func init() {
 // Id retrieves from the cookie or creates a time-based UUID identifying this
 // session.
 func (s Session) Id() string {
-	if sessionIdStr, ok := s[SESSION_ID_KEY]; ok {
+	if sessionIdStr, ok := s[SessionIDKey]; ok {
 		return sessionIdStr
 	}
 
@@ -52,14 +52,14 @@ func (s Session) Id() string {
 		panic(err)
 	}
 
-	s[SESSION_ID_KEY] = hex.EncodeToString(buffer)
-	return s[SESSION_ID_KEY]
+	s[SessionIDKey] = hex.EncodeToString(buffer)
+	return s[SessionIDKey]
 }
 
 // getExpiration return a time.Time with the session's expiration date.
 // If previous session has set to "session", remain it
 func (s Session) getExpiration() time.Time {
-	if expireAfterDuration == 0 || s[TIMESTAMP_KEY] == "session" {
+	if expireAfterDuration == 0 || s[TimestampKey] == "session" {
 		// Expire after closing browser
 		return time.Time{}
 	}
@@ -70,7 +70,7 @@ func (s Session) getExpiration() time.Time {
 func (s Session) Cookie() *http.Cookie {
 	var sessionValue string
 	ts := s.getExpiration()
-	s[TIMESTAMP_KEY] = getSessionExpirationCookie(ts)
+	s[TimestampKey] = getSessionExpirationCookie(ts)
 	for key, value := range s {
 		if strings.ContainsAny(key, ":\x00") {
 			panic("Session keys may not have colons or null bytes")
@@ -97,7 +97,7 @@ func (s Session) Cookie() *http.Cookie {
 // cookie is either not present or present but beyond its time to live; i.e.,
 // whether there is not a valid session.
 func sessionTimeoutExpiredOrMissing(session Session) bool {
-	if exp, present := session[TIMESTAMP_KEY]; !present {
+	if exp, present := session[TimestampKey]; !present {
 		return true
 	} else if exp == "session" {
 		return false
@@ -176,10 +176,10 @@ func getSessionExpirationCookie(t time.Time) string {
 
 // SetNoExpiration sets session to expire when browser session ends
 func (s Session) SetNoExpiration() {
-	s[TIMESTAMP_KEY] = "session"
+	s[TimestampKey] = "session"
 }
 
 // SetDefaultExpiration sets session to expire after default duration
 func (s Session) SetDefaultExpiration() {
-	delete(s, TIMESTAMP_KEY)
+	delete(s, TimestampKey)
 }

@@ -16,7 +16,7 @@ import (
 	"time"
 )
 
-var ERROR_CLASS = "hasError"
+var ErrorCSSClass = "hasError"
 
 // This object handles loading and parsing of templates.
 // Everything below the application's views directory is treated as a template.
@@ -118,7 +118,7 @@ var (
 			if !ok || valError == nil {
 				return template.HTML("")
 			}
-			return template.HTML(ERROR_CLASS)
+			return template.HTML(ErrorCSSClass)
 		},
 
 		"msg": func(renderArgs map[string]interface{}, message string, args ...interface{}) template.HTML {

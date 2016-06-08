@@ -63,13 +63,13 @@ func (f *Field) Value() interface{} {
 	return val.Interface()
 }
 
-// ErrorClass returns ERROR_CLASS if this field has a validation error, else empty string.
+// ErrorClass returns ErrorCSSClass if this field has a validation error, else empty string.
 func (f *Field) ErrorClass() string {
 	if f.Error != nil {
 		if errorClass, ok := f.renderArgs["ERROR_CLASS"]; ok {
 			return errorClass.(string)
 		}
-		return ERROR_CLASS
+		return ErrorCSSClass
 	}
 	return ""
 }

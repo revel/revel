@@ -26,7 +26,7 @@ func (c InterceptControllerP) methPN() Result  { return nil }
 func (c *InterceptControllerP) methPP() Result { return nil }
 
 // Methods accessible from InterceptControllerN
-var METHODS_N = []interface{}{
+var MethodN = []interface{}{
 	InterceptController.methN,
 	(*InterceptController).methP,
 	InterceptControllerN.methNN,
@@ -34,7 +34,7 @@ var METHODS_N = []interface{}{
 }
 
 // Methods accessible from InterceptControllerP
-var METHODS_P = []interface{}{
+var MethodP = []interface{}{
 	InterceptController.methN,
 	(*InterceptController).methP,
 	InterceptControllerP.methPN,
@@ -47,16 +47,16 @@ func TestInvokeArgType(t *testing.T) {
 	n := InterceptControllerN{InterceptController{&Controller{}}}
 	p := InterceptControllerP{&InterceptController{&Controller{}}}
 	np := InterceptControllerNP{&Controller{}, n, p}
-	testInterceptorController(t, reflect.ValueOf(&n), METHODS_N)
-	testInterceptorController(t, reflect.ValueOf(&p), METHODS_P)
-	testInterceptorController(t, reflect.ValueOf(&np), METHODS_N)
-	testInterceptorController(t, reflect.ValueOf(&np), METHODS_P)
+	testInterceptorController(t, reflect.ValueOf(&n), MethodN)
+	testInterceptorController(t, reflect.ValueOf(&p), MethodP)
+	testInterceptorController(t, reflect.ValueOf(&np), MethodN)
+	testInterceptorController(t, reflect.ValueOf(&np), MethodP)
 }
 
 func testInterceptorController(t *testing.T, appControllerPtr reflect.Value, methods []interface{}) {
 	interceptors = []*Interception{}
 	InterceptFunc(funcP, BEFORE, appControllerPtr.Elem().Interface())
-	InterceptFunc(funcP2, BEFORE, ALL_CONTROLLERS)
+	InterceptFunc(funcP2, BEFORE, AllControllers)
 	for _, m := range methods {
 		InterceptMethod(m, BEFORE)
 	}

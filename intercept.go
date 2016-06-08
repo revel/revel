@@ -48,7 +48,7 @@ const (
 type InterceptTarget int
 
 const (
-	ALL_CONTROLLERS InterceptTarget = iota
+	AllControllers InterceptTarget = iota
 )
 
 type Interception struct {
@@ -136,7 +136,7 @@ func InterceptFunc(intc InterceptorFunc, when When, target interface{}) {
 		function:     intc,
 		callable:     reflect.ValueOf(intc),
 		target:       reflect.TypeOf(target),
-		interceptAll: target == ALL_CONTROLLERS,
+		interceptAll: target == AllControllers,
 	})
 }
 

@@ -51,8 +51,8 @@ func ValueBinder(f func(value string, typ reflect.Type) reflect.Value) func(*Par
 }
 
 const (
-	DEFAULT_DATE_FORMAT     = "2006-01-02"
-	DEFAULT_DATETIME_FORMAT = "2006-01-02 15:04"
+	DefaultDateFormat     = "2006-01-02"
+	DefaultDateTimeFormat = "2006-01-02 15:04"
 )
 
 var (
@@ -189,46 +189,6 @@ var (
 		Unbind: unbindMap,
 	}
 )
-
-// Sadly, the binder lookups can not be declared initialized -- that results in
-// an "initialization loop" compile error.
-func init() {
-	KindBinders[reflect.Int] = IntBinder
-	KindBinders[reflect.Int8] = IntBinder
-	KindBinders[reflect.Int16] = IntBinder
-	KindBinders[reflect.Int32] = IntBinder
-	KindBinders[reflect.Int64] = IntBinder
-
-	KindBinders[reflect.Uint] = UintBinder
-	KindBinders[reflect.Uint8] = UintBinder
-	KindBinders[reflect.Uint16] = UintBinder
-	KindBinders[reflect.Uint32] = UintBinder
-	KindBinders[reflect.Uint64] = UintBinder
-
-	KindBinders[reflect.Float32] = FloatBinder
-	KindBinders[reflect.Float64] = FloatBinder
-
-	KindBinders[reflect.String] = StringBinder
-	KindBinders[reflect.Bool] = BoolBinder
-	KindBinders[reflect.Slice] = Binder{bindSlice, unbindSlice}
-	KindBinders[reflect.Struct] = Binder{bindStruct, unbindStruct}
-	KindBinders[reflect.Ptr] = PointerBinder
-	KindBinders[reflect.Map] = MapBinder
-
-	TypeBinders[reflect.TypeOf(time.Time{})] = TimeBinder
-
-	// Uploads
-	TypeBinders[reflect.TypeOf(&os.File{})] = Binder{bindFile, nil}
-	TypeBinders[reflect.TypeOf([]byte{})] = Binder{bindByteArray, nil}
-	TypeBinders[reflect.TypeOf((*io.Reader)(nil)).Elem()] = Binder{bindReadSeeker, nil}
-	TypeBinders[reflect.TypeOf((*io.ReadSeeker)(nil)).Elem()] = Binder{bindReadSeeker, nil}
-
-	OnAppStart(func() {
-		DateTimeFormat = Config.StringDefault("format.datetime", DEFAULT_DATETIME_FORMAT)
-		DateFormat = Config.StringDefault("format.date", DEFAULT_DATE_FORMAT)
-		TimeFormats = append(TimeFormats, DateTimeFormat, DateFormat)
-	})
-}
 
 // Used to keep track of the index for individual keyvalues.
 type sliceValue struct {
@@ -505,4 +465,44 @@ func binderForType(typ reflect.Type) (Binder, bool) {
 		}
 	}
 	return binder, true
+}
+
+// Sadly, the binder lookups can not be declared initialized -- that results in
+// an "initialization loop" compile error.
+func init() {
+	KindBinders[reflect.Int] = IntBinder
+	KindBinders[reflect.Int8] = IntBinder
+	KindBinders[reflect.Int16] = IntBinder
+	KindBinders[reflect.Int32] = IntBinder
+	KindBinders[reflect.Int64] = IntBinder
+
+	KindBinders[reflect.Uint] = UintBinder
+	KindBinders[reflect.Uint8] = UintBinder
+	KindBinders[reflect.Uint16] = UintBinder
+	KindBinders[reflect.Uint32] = UintBinder
+	KindBinders[reflect.Uint64] = UintBinder
+
+	KindBinders[reflect.Float32] = FloatBinder
+	KindBinders[reflect.Float64] = FloatBinder
+
+	KindBinders[reflect.String] = StringBinder
+	KindBinders[reflect.Bool] = BoolBinder
+	KindBinders[reflect.Slice] = Binder{bindSlice, unbindSlice}
+	KindBinders[reflect.Struct] = Binder{bindStruct, unbindStruct}
+	KindBinders[reflect.Ptr] = PointerBinder
+	KindBinders[reflect.Map] = MapBinder
+
+	TypeBinders[reflect.TypeOf(time.Time{})] = TimeBinder
+
+	// Uploads
+	TypeBinders[reflect.TypeOf(&os.File{})] = Binder{bindFile, nil}
+	TypeBinders[reflect.TypeOf([]byte{})] = Binder{bindByteArray, nil}
+	TypeBinders[reflect.TypeOf((*io.Reader)(nil)).Elem()] = Binder{bindReadSeeker, nil}
+	TypeBinders[reflect.TypeOf((*io.ReadSeeker)(nil)).Elem()] = Binder{bindReadSeeker, nil}
+
+	OnAppStart(func() {
+		DateTimeFormat = Config.StringDefault("format.datetime", DefaultDateTimeFormat)
+		DateFormat = Config.StringDefault("format.date", DefaultDateFormat)
+		TimeFormats = append(TimeFormats, DateTimeFormat, DateFormat)
+	})
 }

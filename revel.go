@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	REVEL_IMPORT_PATH = "github.com/revel/revel"
+	RevelImportPath = "github.com/revel/revel"
 )
 
 type revelLogs struct {
@@ -140,7 +140,7 @@ func Init(mode, importPath, srcPath string) {
 		packaged = true
 	}
 
-	RevelPath = filepath.Join(revelSourcePath, filepath.FromSlash(REVEL_IMPORT_PATH))
+	RevelPath = filepath.Join(revelSourcePath, filepath.FromSlash(RevelImportPath))
 	BasePath = filepath.Join(SourcePath, filepath.FromSlash(importPath))
 	AppPath = filepath.Join(BasePath, "app")
 	ViewsPath = filepath.Join(AppPath, "views")
@@ -311,7 +311,7 @@ func findSrcPaths(importPath string) (revelSourcePath, appSourcePath string) {
 		ERROR.Fatalln("Failed to import", importPath, "with error:", err)
 	}
 
-	revelPkg, err := build.Import(REVEL_IMPORT_PATH, "", build.FindOnly)
+	revelPkg, err := build.Import(RevelImportPath, "", build.FindOnly)
 	if err != nil {
 		ERROR.Fatalln("Failed to find Revel with error:", err)
 	}
