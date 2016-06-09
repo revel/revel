@@ -19,8 +19,8 @@ type Error struct {
 	Link                     string   // A configurable link to wrap the error source in
 }
 
-// An object to hold the per-source-line details.
-type sourceLine struct {
+// SourceLine structure to hold the per-source-line details.
+type SourceLine struct {
 	Source  string
 	Line    int
 	IsError bool
@@ -86,7 +86,7 @@ func (e *Error) Error() string {
 
 // ContextSource method returns a snippet of the source around
 // where the error occurred.
-func (e *Error) ContextSource() []sourceLine {
+func (e *Error) ContextSource() []SourceLine {
 	if e.SourceLines == nil {
 		return nil
 	}
@@ -99,10 +99,10 @@ func (e *Error) ContextSource() []sourceLine {
 		end = len(e.SourceLines)
 	}
 
-	lines := make([]sourceLine, end-start)
+	lines := make([]SourceLine, end-start)
 	for i, src := range e.SourceLines[start:end] {
 		fileLine := start + i + 1
-		lines[i] = sourceLine{src, fileLine, fileLine == e.Line}
+		lines[i] = SourceLine{src, fileLine, fileLine == e.Line}
 	}
 	return lines
 }

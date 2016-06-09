@@ -13,7 +13,7 @@ import (
 )
 
 type A struct {
-	Id      int
+	ID      int
 	Name    string
 	B       B
 	private int
@@ -57,19 +57,19 @@ var (
 		"2darr[0][1]":     {"1"},
 		"2darr[1][0]":     {"10"},
 		"2darr[1][1]":     {"11"},
-		"A.Id":            {"123"},
+		"A.ID":            {"123"},
 		"A.Name":          {"rob"},
-		"B.Id":            {"123"},
+		"B.ID":            {"123"},
 		"B.Name":          {"rob"},
 		"B.B.Extra":       {"hello"},
-		"pB.Id":           {"123"},
+		"pB.ID":           {"123"},
 		"pB.Name":         {"rob"},
 		"pB.B.Extra":      {"hello"},
 		"priv.private":    {"123"},
-		"arrC[0].Id":      {"5"},
+		"arrC[0].ID":      {"5"},
 		"arrC[0].Name":    {"rob"},
 		"arrC[0].B.Extra": {"foo"},
-		"arrC[1].Id":      {"8"},
+		"arrC[1].ID":      {"8"},
 		"arrC[1].Name":    {"bill"},
 		"m[a]":            {"foo"},
 		"m[b]":            {"bar"},
@@ -116,17 +116,17 @@ var binderTestCases = map[string]interface{}{
 	"uarr":       []int{1, 2},
 	"arruarr":    [][]int{{1, 2}, {3, 4}},
 	"2darr":      [][]int{{0, 1}, {10, 11}},
-	"A":          A{Id: 123, Name: "rob"},
-	"B":          A{Id: 123, Name: "rob", B: B{Extra: "hello"}},
-	"pB":         &A{Id: 123, Name: "rob", B: B{Extra: "hello"}},
+	"A":          A{ID: 123, Name: "rob"},
+	"B":          A{ID: 123, Name: "rob", B: B{Extra: "hello"}},
+	"pB":         &A{ID: 123, Name: "rob", B: B{Extra: "hello"}},
 	"arrC": []A{
 		{
-			Id:   5,
+			ID:   5,
 			Name: "rob",
 			B:    B{"foo"},
 		},
 		{
-			Id:   8,
+			ID:   8,
 			Name: "bill",
 		},
 	},
@@ -246,17 +246,17 @@ var unbinderTestCases = map[string]interface{}{
 	"datetime":   testDatetime,
 	"arr":        []int{1, 2, 0, 3},
 	"2darr":      [][]int{{0, 1}, {10, 11}},
-	"A":          A{Id: 123, Name: "rob"},
-	"B":          A{Id: 123, Name: "rob", B: B{Extra: "hello"}},
-	"pB":         &A{Id: 123, Name: "rob", B: B{Extra: "hello"}},
+	"A":          A{ID: 123, Name: "rob"},
+	"B":          A{ID: 123, Name: "rob", B: B{Extra: "hello"}},
+	"pB":         &A{ID: 123, Name: "rob", B: B{Extra: "hello"}},
 	"arrC": []A{
 		{
-			Id:   5,
+			ID:   5,
 			Name: "rob",
 			B:    B{"foo"},
 		},
 		{
-			Id:   8,
+			ID:   8,
 			Name: "bill",
 		},
 	},
@@ -275,15 +275,15 @@ var unbinderOverrideAnswers = map[string]map[string]string{
 		"arr[3]": "3",
 	},
 	"A": {
-		"A.Id":      "123",
+		"A.ID":      "123",
 		"A.Name":    "rob",
 		"A.B.Extra": "",
 	},
 	"arrC": {
-		"arrC[0].Id":      "5",
+		"arrC[0].ID":      "5",
 		"arrC[0].Name":    "rob",
 		"arrC[0].B.Extra": "foo",
-		"arrC[1].Id":      "8",
+		"arrC[1].ID":      "8",
 		"arrC[1].Name":    "bill",
 		"arrC[1].B.Extra": "",
 	},

@@ -21,8 +21,8 @@ func NewField(name string, renderArgs map[string]interface{}) *Field {
 	}
 }
 
-// Id returns an identifier suitable for use as an HTML id.
-func (f *Field) Id() string {
+// ID returns an identifier suitable for use as an HTML id.
+func (f *Field) ID() string {
 	return strings.Replace(f.Name, ".", "_", -1)
 }
 

@@ -39,7 +39,7 @@ type Binder struct {
 	Unbind func(output map[string]string, name string, val interface{})
 }
 
-// An adapter for easily making one-key-value binders.
+// ValueBinder is adapter for easily making one-key-value binders.
 func ValueBinder(f func(value string, typ reflect.Type) reflect.Value) func(*Params, string, reflect.Type) reflect.Value {
 	return func(params *Params, name string, typ reflect.Type) reflect.Value {
 		vals, ok := params.Values[name]
@@ -50,11 +50,13 @@ func ValueBinder(f func(value string, typ reflect.Type) reflect.Value) func(*Par
 	}
 }
 
+// Revel's default date and time constants
 const (
 	DefaultDateFormat     = "2006-01-02"
 	DefaultDateTimeFormat = "2006-01-02 15:04"
 )
 
+// Binders type and kind definition
 var (
 	// These are the lookups to find a Binder for any type of data.
 	// The most specific binder found will be used (Type before Kind)

@@ -118,7 +118,7 @@ module.static=github.com/revel/modules/static
 mode.dev = true
 
 
-# Pretty print JSON/XML when calling RenderJson/RenderXml
+# Pretty print JSON/XML when calling RenderJSON/RenderXML
 results.pretty = true
 
 

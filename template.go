@@ -16,9 +16,10 @@ import (
 	"time"
 )
 
+// ErrorCSSClass httml CSS error class name
 var ErrorCSSClass = "hasError"
 
-// This object handles loading and parsing of templates.
+// TemplateLoader object handles loading and parsing of templates.
 // Everything below the application's views directory is treated as a template.
 type TemplateLoader struct {
 	// This is the set of all templates under views
@@ -45,7 +46,7 @@ var whiteSpacePattern = regexp.MustCompile(`\s+`)
 var (
 	// The functions available for use in the templates.
 	TemplateFuncs = map[string]interface{}{
-		"url": ReverseUrl,
+		"url": ReverseURL,
 		"set": func(renderArgs map[string]interface{}, key string, value interface{}) template.JS {
 			renderArgs[key] = value
 			return template.JS("")
@@ -186,7 +187,7 @@ func NewTemplateLoader(paths []string) *TemplateLoader {
 	return loader
 }
 
-// This scans the views directory and parses all templates as Go Templates.
+// Refresh method scans the views directory and parses all templates as Go Templates.
 // If a template fails to parse, the error is set on the loader.
 // (It's awkward to refresh a single Go Template)
 func (loader *TemplateLoader) Refresh() *Error {
@@ -355,11 +356,15 @@ func (loader *TemplateLoader) Refresh() *Error {
 	return loader.compileError
 }
 
+// WatchDir returns true of directory doesn't start with . (dot)
+// otherwise false
 func (loader *TemplateLoader) WatchDir(info os.FileInfo) bool {
 	// Watch all directories, except the ones starting with a dot.
 	return !strings.HasPrefix(info.Name(), ".")
 }
 
+// WatchFile returns true of file doesn't start with . (dot)
+// otherwise false
 func (loader *TemplateLoader) WatchFile(basename string) bool {
 	// Watch all files, except the ones starting with a dot.
 	return !strings.HasPrefix(basename, ".")
@@ -385,7 +390,7 @@ func parseTemplateError(err error) (templateName string, line int, description s
 	return templateName, line, description
 }
 
-// Return the Template with the given name.  The name is the template's path
+// Template returns the Template with the given name.  The name is the template's path
 // relative to a template loader root.
 //
 // An Error is returned if there was any problem with any of the templates.  (In
@@ -412,13 +417,13 @@ func (loader *TemplateLoader) Template(name string) (Template, error) {
 	return GoTemplate{tmpl, loader}, err
 }
 
-// Adapter for Go Templates.
+// GoTemplate an adapter for Go Templates.
 type GoTemplate struct {
 	*template.Template
 	loader *TemplateLoader
 }
 
-// return a 'revel.Template' from Go's template.
+// Render returns a 'revel.Template' from Go's template.
 func (gotmpl GoTemplate) Render(wr io.Writer, arg interface{}) error {
 	return gotmpl.Execute(wr, arg)
 }
@@ -432,9 +437,9 @@ func (gotmpl GoTemplate) Content() []string {
 // Template functions
 /////////////////////
 
-// Return a url capable of invoking a given controller method:
+// ReverseURL returns a url capable of invoking a given controller method:
 // "Application.ShowApp 123" => "/app/123"
-func ReverseUrl(args ...interface{}) (template.URL, error) {
+func ReverseURL(args ...interface{}) (template.URL, error) {
 	if len(args) == 0 {
 		return "", fmt.Errorf("no arguments provided to reverse route")
 	}
@@ -465,7 +470,7 @@ func ReverseUrl(args ...interface{}) (template.URL, error) {
 		Unbind(argsByName, c.MethodType.Args[i].Name, argValue)
 	}
 
-	return template.URL(MainRouter.Reverse(args[0].(string), argsByName).Url), nil
+	return template.URL(MainRouter.Reverse(args[0].(string), argsByName).URL), nil
 }
 
 func Slug(text string) string {

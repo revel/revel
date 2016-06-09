@@ -15,6 +15,7 @@ import (
 )
 
 const (
+	// RevelImportPath Revel framework import path
 	RevelImportPath = "github.com/revel/revel"
 )
 
@@ -27,8 +28,8 @@ func (r *revelLogs) Write(p []byte) (n int, err error) {
 	return r.w.Write([]byte(r.c.Paint(string(p))))
 }
 
+// App details
 var (
-	// App details
 	AppName    string // e.g. "sample"
 	AppRoot    string // e.g. "/app1"
 	BasePath   string // e.g. "$GOPATH/src/corp/sample"
@@ -62,13 +63,13 @@ var (
 	//
 	// Alert: This is how the app is configured, which may be different from
 	// the current process reality.  For example, if the app is configured for
-	// port 9000, HttpPort will always be 9000, even though in dev mode it is
+	// port 9000, HTTPPort will always be 9000, even though in dev mode it is
 	// run on a random port and proxied.
-	HttpPort    int    // e.g. 9000
-	HttpAddr    string // e.g. "", "127.0.0.1"
-	HttpSsl     bool   // e.g. true if using ssl
-	HttpSslCert string // e.g. "/path/to/cert.pem"
-	HttpSslKey  string // e.g. "/path/to/key.pem"
+	HTTPPort    int    // e.g. 9000
+	HTTPAddr    string // e.g. "", "127.0.0.1"
+	HTTPSsl     bool   // e.g. true if using ssl
+	HTTPSslCert string // e.g. "/path/to/cert.pem"
+	HTTPSslKey  string // e.g. "/path/to/key.pem"
 
 	// All cookies dropped by the framework begin with this prefix.
 	CookiePrefix string
@@ -107,10 +108,6 @@ var (
 	secretKey []byte // Key used to sign cookies. An empty key disables signing.
 	packaged  bool   // If true, this is running from a pre-built package.
 )
-
-func init() {
-	log.SetFlags(INFO.Flags())
-}
 
 // Init initializes Revel -- it provides paths for getting around the app.
 //
@@ -176,7 +173,7 @@ func Init(mode, importPath, srcPath string) {
 	// Ensure that the selected runmode appears in app.conf.
 	// If empty string is passed as the mode, treat it as "DEFAULT"
 	if mode == "" {
-		mode = config.DEFAULT_SECTION
+		mode = config.DefaultSection
 	}
 	if !Config.HasSection(mode) {
 		log.Fatalln("app.conf: No mode found:", mode)
@@ -185,16 +182,16 @@ func Init(mode, importPath, srcPath string) {
 
 	// Configure properties from app.conf
 	DevMode = Config.BoolDefault("mode.dev", false)
-	HttpPort = Config.IntDefault("http.port", 9000)
-	HttpAddr = Config.StringDefault("http.addr", "")
-	HttpSsl = Config.BoolDefault("http.ssl", false)
-	HttpSslCert = Config.StringDefault("http.sslcert", "")
-	HttpSslKey = Config.StringDefault("http.sslkey", "")
-	if HttpSsl {
-		if HttpSslCert == "" {
+	HTTPPort = Config.IntDefault("http.port", 9000)
+	HTTPAddr = Config.StringDefault("http.addr", "")
+	HTTPSsl = Config.BoolDefault("http.ssl", false)
+	HTTPSslCert = Config.StringDefault("http.sslcert", "")
+	HTTPSslKey = Config.StringDefault("http.sslkey", "")
+	if HTTPSsl {
+		if HTTPSslCert == "" {
 			log.Fatalln("No http.sslcert provided.")
 		}
-		if HttpSslKey == "" {
+		if HTTPSslKey == "" {
 			log.Fatalln("No http.sslkey provided.")
 		}
 	}
@@ -380,8 +377,13 @@ func ModuleByName(name string) (m Module, found bool) {
 	return Module{}, false
 }
 
+// CheckInit method checks `revel.Initialized` if not initialized it panics
 func CheckInit() {
 	if !Initialized {
 		panic("Revel has not been initialized!")
 	}
+}
+
+func init() {
+	log.SetFlags(INFO.Flags())
 }

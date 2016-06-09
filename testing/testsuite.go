@@ -74,7 +74,7 @@ func (t *TestSuite) Host() string {
 // Return the base http/https URL of the server, e.g. "http://127.0.0.1:8557".
 // The scheme is set to https if http.ssl is set to true in the configuration file.
 func (t *TestSuite) BaseUrl() string {
-	if revel.HttpSsl {
+	if revel.HTTPSsl {
 		return "https://" + t.Host()
 	}
 	return "http://" + t.Host()

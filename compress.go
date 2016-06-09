@@ -28,6 +28,7 @@ var compressableMimes = [...]string{
 	"application/x-javascript",
 }
 
+// WriteFlusher interface for compress writer
 type WriteFlusher interface {
 	io.Writer
 	io.Closer
@@ -44,6 +45,8 @@ type CompressResponseWriter struct {
 	closed          bool
 }
 
+// CompressFilter does compresssion of response body in gzip/deflate if
+// `results.compressed=true` in the app.conf
 func CompressFilter(c *Controller, fc []Filter) {
 	fc[0](c, fc[1:])
 	if Config.BoolDefault("results.compressed", false) {

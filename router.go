@@ -14,6 +14,10 @@ import (
 	"github.com/robfig/pathtree"
 )
 
+const (
+	httpStatusCode = "404"
+)
+
 type Route struct {
 	Method         string   // e.g. GET
 	Path           string   // e.g. /app/:id
@@ -35,7 +39,7 @@ type RouteMatch struct {
 	Params         map[string][]string // e.g. {id: 123}
 }
 
-// Prepares the route to be used in matching.
+// NewRoute prepares the route to be used in matching.
 func NewRoute(method, path, action, fixedArgs, routesPath string, line int) (r *Route) {
 	// Handle fixed arguments
 	argsReader := strings.NewReader(fixedArgs)
@@ -108,7 +112,7 @@ func (router *Router) Route(req *http.Request) *RouteMatch {
 	}
 
 	// Special handling for explicit 404's.
-	if route.Action == "404" {
+	if route.Action == httpStatusCode {
 		return notFound
 	}
 
@@ -237,7 +241,7 @@ func parseRoutes(routesPath, joinedPath, content string, validate bool) ([]*Rout
 // validateRoute checks that every specified action exists.
 func validateRoute(route *Route) error {
 	// Skip 404s
-	if route.Action == "404" {
+	if route.Action == httpStatusCode {
 		return nil
 	}
 
@@ -323,13 +327,13 @@ func NewRouter(routesPath string) *Router {
 }
 
 type ActionDefinition struct {
-	Host, Method, Url, Action string
+	Host, Method, URL, Action string
 	Star                      bool
 	Args                      map[string]string
 }
 
 func (a *ActionDefinition) String() string {
-	return a.Url
+	return a.URL
 }
 
 func (router *Router) Reverse(action string, argValues map[string]string) *ActionDefinition {
@@ -399,7 +403,7 @@ func (router *Router) Reverse(action string, argValues map[string]string) *Actio
 		}
 
 		return &ActionDefinition{
-			Url:    url,
+			URL:    url,
 			Method: method,
 			Star:   star,
 			Action: action,
@@ -411,19 +415,6 @@ func (router *Router) Reverse(action string, argValues map[string]string) *Actio
 	return nil
 }
 
-func init() {
-	OnAppStart(func() {
-		MainRouter = NewRouter(filepath.Join(BasePath, "conf", "routes"))
-		err := MainRouter.Refresh()
-		if MainWatcher != nil && Config.BoolDefault("watch.routes", true) {
-			MainWatcher.Listen(MainRouter, MainRouter.path)
-		} else if err != nil {
-			// Not in dev mode and Route loading failed, we should crash.
-			ERROR.Panicln(err.Error())
-		}
-	})
-}
-
 func RouterFilter(c *Controller, fc []Filter) {
 	// Figure out the Controller/Action
 	route := MainRouter.Route(c.Request.Request)
@@ -433,7 +424,7 @@ func RouterFilter(c *Controller, fc []Filter) {
 	}
 
 	// The route may want to explicitly return a 404.
-	if route.Action == "404" {
+	if route.Action == httpStatusCode {
 		c.Result = c.NotFound("(intentionally)")
 		return
 	}
@@ -465,8 +456,8 @@ func RouterFilter(c *Controller, fc []Filter) {
 	fc[0](c, fc[1:])
 }
 
-// Override allowed http methods via form or browser param
-func HttpMethodOverride(c *Controller, fc []Filter) {
+// HTTPMethodOverride overrides allowed http methods via form or browser param
+func HTTPMethodOverride(c *Controller, fc []Filter) {
 	// An array of HTTP verbs allowed.
 	verbs := []string{"POST", "PUT", "PATCH", "DELETE"}
 
@@ -500,4 +491,17 @@ func HttpMethodOverride(c *Controller, fc []Filter) {
 	}
 
 	fc[0](c, fc[1:]) // Execute the next filter stage.
+}
+
+func init() {
+	OnAppStart(func() {
+		MainRouter = NewRouter(filepath.Join(BasePath, "conf", "routes"))
+		err := MainRouter.Refresh()
+		if MainWatcher != nil && Config.BoolDefault("watch.routes", true) {
+			MainWatcher.Listen(MainRouter, MainRouter.path)
+		} else if err != nil {
+			// Not in dev mode and Route loading failed, we should crash.
+			ERROR.Panicln(err.Error())
+		}
+	})
 }

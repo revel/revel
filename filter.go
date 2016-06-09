@@ -1,5 +1,6 @@
 package revel
 
+// Filter type definition for Revel's filter
 type Filter func(c *Controller, filterChain []Filter)
 
 // Filters is the default set of global filters.

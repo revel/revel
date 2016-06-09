@@ -18,6 +18,7 @@ import (
 )
 
 const (
+	// DefaultFileContentType Revel's default response content type
 	DefaultFileContentType = "application/octet-stream"
 )
 
@@ -29,12 +30,12 @@ var (
 	mimeConfig *config.Context
 )
 
-// Add some more methods to the default Template.
+// ExecutableTemplate adds some more methods to the default Template.
 type ExecutableTemplate interface {
 	Execute(io.Writer, interface{}) error
 }
 
-// Execute a template and returns the result as a string.
+// ExecuteTemplate execute a template and returns the result as a string.
 func ExecuteTemplate(tmpl ExecutableTemplate, data interface{}) string {
 	var b bytes.Buffer
 	if err := tmpl.Execute(&b, data); err != nil {
@@ -43,7 +44,7 @@ func ExecuteTemplate(tmpl ExecutableTemplate, data interface{}) string {
 	return b.String()
 }
 
-// Reads the lines of the given file.  Panics in the case of error.
+// MustReadLines reads the lines of the given file.  Panics in the case of error.
 func MustReadLines(filename string) []string {
 	r, err := ReadLines(filename)
 	if err != nil {
@@ -52,7 +53,7 @@ func MustReadLines(filename string) []string {
 	return r
 }
 
-// Reads the lines of the given file.  Panics in the case of error.
+// ReadLines reads the lines of the given file.  Panics in the case of error.
 func ReadLines(filename string) ([]string, error) {
 	bytes, err := ioutil.ReadFile(filename)
 	if err != nil {
@@ -70,7 +71,7 @@ func ContainsString(list []string, target string) bool {
 	return false
 }
 
-// Return the reflect.Method, given a Receiver type and Func value.
+// FindMethod returns the reflect.Method, given a Receiver type and Func value.
 func FindMethod(recvType reflect.Type, funcVal reflect.Value) *reflect.Method {
 	// It is not possible to get the name of the method from the Func.
 	// Instead, compare it to each method of the Controller.
@@ -83,7 +84,7 @@ func FindMethod(recvType reflect.Type, funcVal reflect.Value) *reflect.Method {
 	return nil
 }
 
-// Takes the raw (escaped) cookie value and parses out key values.
+// ParseKeyValueCookie takes the raw (escaped) cookie value and parses out key values.
 func ParseKeyValueCookie(val string, cb func(key, val string)) {
 	val, _ = url.QueryUnescape(val)
 	if matches := cookieKeyValueParser.FindAllStringSubmatch(val, -1); matches != nil {
@@ -93,7 +94,7 @@ func ParseKeyValueCookie(val string, cb func(key, val string)) {
 	}
 }
 
-// Load mime-types.conf on init.
+// LoadMimeConfig load mime-types.conf on init.
 func LoadMimeConfig() {
 	var err error
 	mimeConfig, err = config.LoadContext("mime-types.conf", ConfPaths)
@@ -102,7 +103,7 @@ func LoadMimeConfig() {
 	}
 }
 
-// Returns a MIME content type based on the filename's extension.
+// ContentTypeByFilename returns a MIME content type based on the filename's extension.
 // If no appropriate one is found, returns "application/octet-stream" by default.
 // Additionally, specifies the charset as UTF-8 for text/* types.
 func ContentTypeByFilename(filename string) string {

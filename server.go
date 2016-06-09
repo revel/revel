@@ -13,6 +13,7 @@ import (
 	"golang.org/x/net/websocket"
 )
 
+// Revel's variables server, router, etc
 var (
 	MainRouter         *Router
 	MainTemplateLoader *TemplateLoader
@@ -112,9 +113,9 @@ func InitServer() http.HandlerFunc {
 // This is called from the generated main file.
 // If port is non-zero, use that.  Else, read the port from app.conf.
 func Run(port int) {
-	address := HttpAddr
+	address := HTTPAddr
 	if port == 0 {
-		port = HttpPort
+		port = HTTPPort
 	}
 
 	var network = "tcp"
@@ -145,14 +146,14 @@ func Run(port int) {
 		fmt.Printf("Listening on %s...\n", Server.Addr)
 	}()
 
-	if HttpSsl {
+	if HTTPSsl {
 		if network != "tcp" {
 			// This limitation is just to reduce complexity, since it is standard
 			// to terminate SSL upstream when using unix domain sockets.
 			ERROR.Fatalln("SSL is only supported for TCP sockets. Specify a port to listen on.")
 		}
 		ERROR.Fatalln("Failed to listen:",
-			Server.ListenAndServeTLS(HttpSslCert, HttpSslKey))
+			Server.ListenAndServeTLS(HTTPSslCert, HTTPSslKey))
 	} else {
 		listener, err := net.Listen(network, Server.Addr)
 		if err != nil {
@@ -190,7 +191,7 @@ func (slice StartupHooks) Swap(i, j int) {
 	slice[i], slice[j] = slice[j], slice[i]
 }
 
-// Register a function to be run at app startup.
+// OnAppStart registers a function to be run at app startup.
 //
 // The order you register the functions will be the order they are run.
 // You can think of it as a FIFO queue.

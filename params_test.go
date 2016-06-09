@@ -134,12 +134,12 @@ func TestBind(t *testing.T) {
 }
 
 func TestResolveAcceptLanguage(t *testing.T) {
-	request := buildHttpRequestWithAcceptLanguage("")
+	request := buildHTTPRequestWithAcceptLanguage("")
 	if result := ResolveAcceptLanguage(request); result != nil {
 		t.Errorf("Expected Accept-Language to resolve to an empty string but it was '%s'", result)
 	}
 
-	request = buildHttpRequestWithAcceptLanguage("en-GB,en;q=0.8,nl;q=0.6")
+	request = buildHTTPRequestWithAcceptLanguage("en-GB,en;q=0.8,nl;q=0.6")
 	if result := ResolveAcceptLanguage(request); len(result) != 3 {
 		t.Errorf("Unexpected Accept-Language values length of %d (expected %d)", len(result), 3)
 	} else {
@@ -154,7 +154,7 @@ func TestResolveAcceptLanguage(t *testing.T) {
 		}
 	}
 
-	request = buildHttpRequestWithAcceptLanguage("en;q=0.8,nl;q=0.6,en-AU;q=malformed")
+	request = buildHTTPRequestWithAcceptLanguage("en;q=0.8,nl;q=0.6,en-AU;q=malformed")
 	if result := ResolveAcceptLanguage(request); len(result) != 3 {
 		t.Errorf("Unexpected Accept-Language values length of %d (expected %d)", len(result), 3)
 	} else {
@@ -166,12 +166,12 @@ func TestResolveAcceptLanguage(t *testing.T) {
 
 func BenchmarkResolveAcceptLanguage(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		request := buildHttpRequestWithAcceptLanguage("en-GB,en;q=0.8,nl;q=0.6,fr;q=0.5,de-DE;q=0.4,no-NO;q=0.4,ru;q=0.2")
+		request := buildHTTPRequestWithAcceptLanguage("en-GB,en;q=0.8,nl;q=0.6,fr;q=0.5,de-DE;q=0.4,no-NO;q=0.4,ru;q=0.2")
 		ResolveAcceptLanguage(request)
 	}
 }
 
-func buildHttpRequestWithAcceptLanguage(acceptLanguage string) *http.Request {
+func buildHTTPRequestWithAcceptLanguage(acceptLanguage string) *http.Request {
 	request, _ := http.NewRequest("POST", "http://localhost/path", nil)
 	request.Header.Set("Accept-Language", acceptLanguage)
 	return request

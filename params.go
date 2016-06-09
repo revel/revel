@@ -29,6 +29,7 @@ type Params struct {
 	tmpFiles []*os.File                         // Temp files used during the request.
 }
 
+// ParseParams parses the `http.Request` params into `revel.Controller.Params`
 func ParseParams(params *Params, req *Request) {
 	params.Query = req.URL.Query()
 

@@ -62,7 +62,7 @@ type Interception struct {
 	interceptAll bool
 }
 
-// Perform the given interception.
+// Invoke performs the given interception.
 // val is a pointer to the App Controller.
 func (i Interception) Invoke(val reflect.Value) reflect.Value {
 	var arg reflect.Value
@@ -126,7 +126,7 @@ func invokeInterceptors(when When, c *Controller) {
 
 var interceptors []*Interception
 
-// Install a general interceptor.
+// InterceptFunc installs a general interceptor.
 // This can be applied to any Controller.
 // It must have the signature of:
 //   func example(c *revel.Controller) revel.Result
@@ -140,7 +140,7 @@ func InterceptFunc(intc InterceptorFunc, when When, target interface{}) {
 	})
 }
 
-// Install an interceptor method that applies to its own Controller.
+// InterceptMethod installs an interceptor method that applies to its own Controller.
 //   func (c AppController) example() revel.Result
 //   func (c *AppController) example() revel.Result
 func InterceptMethod(intc InterceptorMethod, when When) {

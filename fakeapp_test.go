@@ -1,7 +1,6 @@
 package revel
 
 import (
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -9,7 +8,7 @@ import (
 )
 
 type Hotel struct {
-	HotelId          int
+	HotelID          int
 	Name, Address    string
 	City, State, Zip string
 	Country          string
@@ -32,7 +31,7 @@ func (c Hotels) Show(id int) Result {
 
 func (c Hotels) Book(id int) Result {
 	hotel := &Hotel{id, "A Hotel", "300 Main St.", "New York", "NY", "10010", "USA", 300}
-	return c.RenderJson(hotel)
+	return c.RenderJSON(hotel)
 }
 
 func (c Hotels) Index() Result {
@@ -61,7 +60,7 @@ func startFakeBookingApp() {
 	Init("prod", "github.com/revel/revel/testdata", "")
 
 	// Disable logging.
-	TRACE = log.New(ioutil.Discard, "", 0)
+	TRACE = log.New(os.Stderr, "", 0)
 	INFO = TRACE
 	WARN = TRACE
 	ERROR = TRACE
@@ -73,17 +72,17 @@ func startFakeBookingApp() {
 
 	RegisterController((*Hotels)(nil),
 		[]*MethodType{
-			&MethodType{
+			{
 				Name: "Index",
 			},
-			&MethodType{
+			{
 				Name: "Show",
 				Args: []*MethodArg{
 					{"id", reflect.TypeOf((*int)(nil))},
 				},
-				RenderArgNames: map[int][]string{30: []string{"title", "hotel"}},
+				RenderArgNames: map[int][]string{29: {"title", "hotel"}},
 			},
-			&MethodType{
+			{
 				Name: "Book",
 				Args: []*MethodArg{
 					{"id", reflect.TypeOf((*int)(nil))},
@@ -93,11 +92,11 @@ func startFakeBookingApp() {
 
 	RegisterController((*Static)(nil),
 		[]*MethodType{
-			&MethodType{
+			{
 				Name: "Serve",
 				Args: []*MethodArg{
-					&MethodArg{Name: "prefix", Type: reflect.TypeOf((*string)(nil))},
-					&MethodArg{Name: "filepath", Type: reflect.TypeOf((*string)(nil))},
+					{Name: "prefix", Type: reflect.TypeOf((*string)(nil))},
+					{Name: "filepath", Type: reflect.TypeOf((*string)(nil))},
 				},
 				RenderArgNames: map[int][]string{},
 			},

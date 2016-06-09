@@ -11,7 +11,8 @@ import (
 )
 
 const (
-	CurrentLocaleRenderArg = "currentLocale" // The key for the current locale render arg value
+	// CurrentLocaleRenderArg the key for the current locale render arg value
+	CurrentLocaleRenderArg = "currentLocale"
 
 	messageFilesDirectory  = "messages"
 	messageFilePattern     = `^\w+\.[a-zA-Z]{2}$`
@@ -26,7 +27,7 @@ var (
 	messages map[string]*config.Config
 )
 
-// Setting MessageFunc allows you to override the translation interface.
+// MessageFunc allows you to override the translation interface.
 //
 // Set this to your own function that translates to the current locale.
 // This allows you to set up your own loading and logging of translated texts.
@@ -34,7 +35,7 @@ var (
 // See Message(...) in i18n.go for example of function.
 var MessageFunc = Message
 
-// Return all currently loaded message languages.
+// MessageLanguages returns all currently loaded message languages.
 func MessageLanguages() []string {
 	languages := make([]string, len(messages))
 	i := 0
@@ -45,7 +46,7 @@ func MessageLanguages() []string {
 	return languages
 }
 
-// Perform a message look-up for the given locale and message using the given arguments.
+// Message performs a message look-up for the given locale and message using the given arguments.
 //
 // When either an unknown locale or message is detected, a specially formatted string is returned.
 func Message(locale, message string, args ...interface{}) string {
