@@ -5,7 +5,7 @@ import (
 	"reflect"
 )
 
-// An "interceptor" is functionality invoked by the framework BEFORE or AFTER
+// An InterceptorFunc is functionality invoked by the framework BEFORE or AFTER
 // an action.
 //
 // An interceptor may optionally return a Result (instead of nil).  Depending on

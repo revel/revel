@@ -7,12 +7,13 @@ import (
 	"github.com/revel/revel"
 )
 
-// Wraps the Redis client to meet the Cache interface.
+// RedisCache wraps the Redis client to meet the Cache interface.
 type RedisCache struct {
 	pool              *redis.Pool
 	defaultExpiration time.Duration
 }
 
+// NewRedisCache returns a new RedisCache with given parameters
 // until redigo supports sharding/clustering, only one host will be in hostList
 func NewRedisCache(host string, password string, defaultExpiration time.Duration) RedisCache {
 	var pool = &redis.Pool{
@@ -253,7 +254,7 @@ func (c RedisCache) invoke(f func(string, ...interface{}) (interface{}, error),
 	return err
 }
 
-// Implement a Getter on top of the returned item map.
+// RedisItemMapGetter implements a Getter on top of the returned item map.
 type RedisItemMapGetter map[string][]byte
 
 func (g RedisItemMapGetter) Get(key string, ptrValue interface{}) error {
