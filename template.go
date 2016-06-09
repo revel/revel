@@ -44,7 +44,7 @@ var invalidSlugPattern = regexp.MustCompile(`[^a-z0-9 _-]`)
 var whiteSpacePattern = regexp.MustCompile(`\s+`)
 
 var (
-	// The functions available for use in the templates.
+	// TemplateFuncs is the collection of functions available in templates
 	TemplateFuncs = map[string]interface{}{
 		"url": ReverseURL,
 		"set": func(renderArgs map[string]interface{}, key string, value interface{}) template.JS {
