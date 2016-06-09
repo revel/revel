@@ -1,6 +1,7 @@
 package revel
 
 import (
+	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -60,7 +61,7 @@ func startFakeBookingApp() {
 	Init("prod", "github.com/revel/revel/testdata", "")
 
 	// Disable logging.
-	TRACE = log.New(os.Stderr, "", 0)
+	TRACE = log.New(ioutil.Discard, "", 0)
 	INFO = TRACE
 	WARN = TRACE
 	ERROR = TRACE
@@ -80,7 +81,7 @@ func startFakeBookingApp() {
 				Args: []*MethodArg{
 					{"id", reflect.TypeOf((*int)(nil))},
 				},
-				RenderArgNames: map[int][]string{29: {"title", "hotel"}},
+				RenderArgNames: map[int][]string{30: {"title", "hotel"}},
 			},
 			{
 				Name: "Book",
