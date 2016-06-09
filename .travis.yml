@@ -29,13 +29,12 @@ install:
   - export REVEL_BRANCH="develop"
   - 'if [[ "$TRAVIS_BRANCH" == "master" ]]; then export REVEL_BRANCH="master"; fi'
   - 'echo "Travis branch: $TRAVIS_BRANCH, Revel dependency branch: $REVEL_BRANCH"'
-  - go get -v github.com/revel/revel/...
-  - rm -rf ../config
   - git clone -b $REVEL_BRANCH git://github.com/revel/modules ../modules/
   - git clone -b $REVEL_BRANCH git://github.com/revel/cmd ../cmd/
   - git clone -b $REVEL_BRANCH git://github.com/revel/config ../config/
   - git clone -b $REVEL_BRANCH git://github.com/revel/cron ../cron/
   - git clone -b $REVEL_BRANCH git://github.com/revel/samples ../samples/
+  - go get -v github.com/revel/revel/...
   - go get -v github.com/revel/cmd/revel
 
 script:
