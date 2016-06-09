@@ -8,7 +8,7 @@ import (
 	"github.com/revel/revel"
 )
 
-// Wraps the Memcached client to meet the Cache interface.
+// MemcachedCache wraps the Memcached client to meet the Cache interface.
 type MemcachedCache struct {
 	*memcache.Client
 	defaultExpiration time.Duration
@@ -87,7 +87,7 @@ func (c MemcachedCache) invoke(f func(*memcache.Client, *memcache.Item) error,
 	}))
 }
 
-// Implement a Getter on top of the returned item map.
+// ItemMapGetter implements a Getter on top of the returned item map.
 type ItemMapGetter map[string]*memcache.Item
 
 func (g ItemMapGetter) Get(key string, ptrValue interface{}) error {

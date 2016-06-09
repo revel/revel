@@ -258,8 +258,8 @@ func (c *Controller) Redirect(val interface{}, args ...interface{}) Result {
 	return &RedirectToActionResult{val}
 }
 
-// Perform a message lookup for the given message name using the given arguments
-// using the current language defined for this controller.
+// Message performs a lookup for the given message name using the given
+// arguments using the current language defined for this controller.
 //
 // The current language is set by the i18n plugin.
 func (c *Controller) Message(message string, args ...interface{}) (value string) {
