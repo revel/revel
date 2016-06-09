@@ -1,3 +1,7 @@
+// Copyright (c) 2012-2016 The Revel Framework Authors, All rights reserved.
+// Revel Framework source code and usage is governed by a MIT style
+// license that can be found in the LICENSE file.
+
 package revel
 
 import (
@@ -81,7 +85,7 @@ func startFakeBookingApp() {
 				Args: []*MethodArg{
 					{"id", reflect.TypeOf((*int)(nil))},
 				},
-				RenderArgNames: map[int][]string{30: {"title", "hotel"}},
+				RenderArgNames: map[int][]string{34: {"title", "hotel"}},
 			},
 			{
 				Name: "Book",
