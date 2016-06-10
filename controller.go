@@ -329,6 +329,12 @@ func findControllers(appControllerType reflect.Type) (indexes [][]int) {
 		}
 		queue = queue[1:]
 
+		// #944 if the type's Kind is not `Struct` move on,
+		// otherwise `elem.NumField()` will panic
+		if elemType.Kind() != reflect.Struct {
+			continue
+		}
+
 		// Look at all the struct fields.
 		for i := 0; i < elem.NumField(); i++ {
 			// If this is not an anonymous field, skip it.
