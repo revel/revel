@@ -12,6 +12,11 @@ os:
 
 sudo: false
 
+branches:
+  only:
+    - master
+    - develop
+
 services:
   # github.com/revel/revel/cache
   - memcache
