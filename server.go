@@ -51,6 +51,7 @@ func handleInternal(w http.ResponseWriter, r *http.Request, ws *websocket.Conn) 
 	// TODO For now this okay to put logger here for all the requests
 	// However, it's best to have logging handler at server entry level
 	start := time.Now()
+	clientIP := ClientIP(r)
 
 	var (
 		req  = NewRequest(r)
@@ -58,6 +59,7 @@ func handleInternal(w http.ResponseWriter, r *http.Request, ws *websocket.Conn) 
 		c    = NewController(req, resp)
 	)
 	req.Websocket = ws
+	c.ClientIP = clientIP
 
 	Filters[0](c, Filters[1:])
 	if c.Result != nil {
@@ -76,7 +78,7 @@ func handleInternal(w http.ResponseWriter, r *http.Request, ws *websocket.Conn) 
 	// 2016/05/25 17:46:37.112 127.0.0.1 200  270.157µs GET /
 	requestLog.Printf("%v %v %v %10v %v %v",
 		start.Format(requestLogTimeFormat),
-		ClientIP(r),
+		clientIP,
 		c.Response.Status,
 		time.Since(start),
 		r.Method,
