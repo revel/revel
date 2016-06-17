@@ -236,9 +236,9 @@ func (c RedisCache) invoke(f func(string, ...interface{}) (interface{}, error),
 	key string, value interface{}, expires time.Duration) error {
 
 	switch expires {
-	case DEFAULT:
+	case DefaultExpiryTime:
 		expires = c.defaultExpiration
-	case FOREVER:
+	case ForEverNeverExpiry:
 		expires = time.Duration(0)
 	}
 

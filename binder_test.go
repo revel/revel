@@ -28,7 +28,7 @@ type B struct {
 }
 
 var (
-	PARAMS = map[string][]string{
+	ParamTestValues = map[string][]string{
 		"int":             {"1"},
 		"int8":            {"1"},
 		"int16":           {"1"},
@@ -165,7 +165,7 @@ func TestBinder(t *testing.T) {
 	// Reuse the mvc_test.go multipart request to test the binder.
 	params := &Params{}
 	ParseParams(params, NewRequest(getMultipartRequest()))
-	params.Values = PARAMS
+	params.Values = ParamTestValues
 
 	// Values
 	for k, v := range binderTestCases {
@@ -269,7 +269,7 @@ var unbinderTestCases = map[string]interface{}{
 	"m3": map[string]int{"a": 1, "b": 2},
 }
 
-// Some of the unbinding results are not exactly what is in PARAMS, since it
+// Some of the unbinding results are not exactly what is in ParamTestValues, since it
 // serializes implicit zero values explicitly.
 var unbinderOverrideAnswers = map[string]map[string]string{
 	"arr": {
@@ -305,7 +305,7 @@ func TestUnbinder(t *testing.T) {
 		expected, ok := unbinderOverrideAnswers[k]
 		if !ok {
 			expected = make(map[string]string)
-			for k2, v2 := range PARAMS {
+			for k2, v2 := range ParamTestValues {
 				if k == k2 || strings.HasPrefix(k2, k+".") || strings.HasPrefix(k2, k+"[") {
 					expected[k2] = v2[0]
 				}

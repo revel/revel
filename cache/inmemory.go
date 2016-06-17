@@ -43,7 +43,7 @@ func (c InMemoryCache) GetMulti(keys ...string) (Getter, error) {
 }
 
 func (c InMemoryCache) Set(key string, value interface{}, expires time.Duration) error {
-	// NOTE: go-cache understands the values of DEFAULT and FOREVER
+	// NOTE: go-cache understands the values of DefaultExpiryTime and ForEverNeverExpiry
 	c.Cache.Set(key, value, expires)
 	return nil
 }

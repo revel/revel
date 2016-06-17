@@ -11,8 +11,8 @@ import (
 
 // Length of time to cache an item.
 const (
-	DEFAULT = time.Duration(0)
-	FOREVER = time.Duration(-1)
+	DefaultExpiryTime  = time.Duration(0)
+	ForEverNeverExpiry = time.Duration(-1)
 )
 
 // Getter is an interface for getting / decoding an element from a cache.
@@ -40,7 +40,7 @@ type Getter interface {
 //   var items []*Item
 //   if err := cache.Get("items", &items); err != nil {
 //     items = loadItems()
-//     go cache.Set("items", items, cache.DEFAULT)
+//     go cache.Set("items", items, cache.DefaultExpiryTime)
 //   }
 //
 // Note that the caller will frequently not wait for Set() to complete.

@@ -28,8 +28,6 @@ type PP2 struct {
 	PNN
 }
 
-var GENERATIONS = []interface{}{P{}, PN{}, PNN{}}
-
 func TestFindControllers(t *testing.T) {
 	controllers = make(map[string]*ControllerType)
 	RegisterController((*P)(nil), nil)
