@@ -140,19 +140,11 @@ var (
 		},
 	}
 
-	// Booleans support a couple different value formats:
-	// "true" and "false"
-	// "on" and "" (a checkbox)
-	// "1" and "0" (why not)
+	// Booleans support a various value formats,
+	// refer `revel.Atob` method.
 	BoolBinder = Binder{
 		Bind: ValueBinder(func(val string, typ reflect.Type) reflect.Value {
-			v := strings.TrimSpace(strings.ToLower(val))
-			switch v {
-			case "true", "on", "1":
-				return reflect.ValueOf(true)
-			}
-			// Return false by default.
-			return reflect.ValueOf(false)
+			return reflect.ValueOf(Atob(val))
 		}),
 		Unbind: func(output map[string]string, name string, val interface{}) {
 			output[name] = fmt.Sprintf("%t", val)
