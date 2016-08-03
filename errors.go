@@ -122,8 +122,25 @@ func (e *Error) SetLink(errorLink string) {
 // Return the character index of the first relevant stack frame, or -1 if none were found.
 // Additionally it returns the base path of the tree in which the identified code resides.
 func findRelevantStackFrame(stack string) (int, string) {
-	if frame := strings.Index(stack, filepath.ToSlash(BasePath)); frame != -1 {
-		return frame, BasePath
+	// Find first item in SourcePath that isn't in RevelPath.
+	// If first item is in RevelPath, keep track of position, trim and check again.
+	partialStack := stack
+	sourcePath := filepath.ToSlash(SourcePath)
+	revelPath := filepath.ToSlash(RevelPath)
+	sumFrame := 0
+	for {
+		frame := strings.Index(partialStack, sourcePath)
+		revelFrame := strings.Index(partialStack, revelPath)
+
+		if frame == -1 {
+			break
+		} else if frame != revelFrame {
+			return sumFrame + frame, SourcePath
+		} else {
+			// Need to at least trim off the first character so this frame isn't caught again.
+			partialStack = partialStack[frame + 1:]
+			sumFrame += frame + 1
+		}
 	}
 	for _, module := range Modules {
 		if frame := strings.Index(stack, filepath.ToSlash(module.Path)); frame != -1 {
