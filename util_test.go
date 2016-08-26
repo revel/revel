@@ -18,10 +18,9 @@ func TestContentTypeByFilename(t *testing.T) {
 		"helloworld":    "application/octet-stream",
 		"hello.world.c": "text/x-c; charset=utf-8",
 	}
-	srcPath, _ := findSrcPaths(RevelImportPath)
+	dirPath, _ := findSrcPaths(RevelImportPath)
 	ConfPaths = []string{filepath.Join(
-		srcPath,
-		filepath.FromSlash(RevelImportPath),
+		dirPath,
 		"conf"),
 	}
 	LoadMimeConfig()
