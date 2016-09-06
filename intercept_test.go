@@ -5,8 +5,18 @@ import (
 	"testing"
 )
 
-var funcP = func(c *Controller) Result { return nil }
-var funcP2 = func(c *Controller) Result { return nil }
+var funcP = func(c *Controller) Result {
+	return nil
+}
+var funcP2 = func(c *Controller) Result {
+	return nil
+}
+var func123 = func(c *Controller) Result {
+	return RenderTextResult{text: "123"}
+}
+var func456 = func(c *Controller) Result {
+	return RenderTextResult{text: "456"}
+}
 
 type InterceptController struct{ *Controller }
 type InterceptControllerN struct{ InterceptController }
@@ -17,13 +27,25 @@ type InterceptControllerNP struct {
 	InterceptControllerP
 }
 
-func (c InterceptController) methN() Result  { return nil }
-func (c *InterceptController) methP() Result { return nil }
+func (c InterceptController) methN() Result {
+	return nil
+}
+func (c *InterceptController) methP() Result {
+	return nil
+}
 
-func (c InterceptControllerN) methNN() Result  { return nil }
-func (c *InterceptControllerN) methNP() Result { return nil }
-func (c InterceptControllerP) methPN() Result  { return nil }
-func (c *InterceptControllerP) methPP() Result { return nil }
+func (c InterceptControllerN) methNN() Result {
+	return nil
+}
+func (c *InterceptControllerN) methNP() Result {
+	return nil
+}
+func (c InterceptControllerP) methPN() Result {
+	return nil
+}
+func (c *InterceptControllerP) methPP() Result {
+	return nil
+}
 
 // Methods accessible from InterceptControllerN
 var METHODS_N = []interface{}{
@@ -53,6 +75,19 @@ func TestInvokeArgType(t *testing.T) {
 	testInterceptorController(t, reflect.ValueOf(&np), METHODS_P)
 }
 
+func TestOrderedInterceptors(t *testing.T) {
+	interceptors = SortInterceptions{}
+	controller := InterceptController{}
+	controllerValue := reflect.ValueOf(controller)
+	InterceptFunc(func456, BEFORE, ALL_CONTROLLERS, 2)
+	InterceptFunc(func123, BEFORE, ALL_CONTROLLERS, 1)
+	ints := getInterceptors(BEFORE, controllerValue)
+	if len(ints) != 2 {
+		t.Fatalf("N: Expected 2, got %d", len(ints))
+	}
+	testFuncReturnRenderTextResult(t, ints[0].function, "123")
+	testFuncReturnRenderTextResult(t, ints[1].function, "456")
+}
 func testInterceptorController(t *testing.T, appControllerPtr reflect.Value, methods []interface{}) {
 	interceptors = []*Interception{}
 	InterceptFunc(funcP, BEFORE, appControllerPtr.Elem().Interface())
@@ -77,5 +112,19 @@ func testInterception(t *testing.T, intc *Interception, arg reflect.Value) {
 	val := intc.Invoke(arg)
 	if !val.IsNil() {
 		t.Errorf("Failed (%s): Expected nil got %v", intc, val)
+	}
+}
+
+func testFuncReturnRenderTextResult(t *testing.T, f InterceptorFunc, text string) {
+	if f == nil {
+		t.Fatalf("Nil function (Should return RenderTextResult with text: %s)", text)
+	}
+	res := f(&Controller{})
+	r, ok := res.(RenderTextResult)
+	if !ok {
+		t.Fatalf("Expected return type RenderTextResult, got %T", res)
+	}
+	if r.text != text {
+		t.Fatalf("Expected text value = '%s', got '%s'", text, r.text)
 	}
 }
