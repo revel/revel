@@ -2,7 +2,10 @@ package revel
 
 import (
 	"log"
+	"math"
 	"reflect"
+
+	"sort"
 )
 
 // An "interceptor" is functionality invoked by the framework BEFORE or AFTER
@@ -52,14 +55,28 @@ const (
 )
 
 type Interception struct {
-	When When
-
+	When     When
+	Priority int
 	function InterceptorFunc
 	method   InterceptorMethod
 
 	callable     reflect.Value
 	target       reflect.Type
 	interceptAll bool
+}
+// SortInterceptions is a type to sort array of *Interception
+type SortInterceptions []*Interception
+
+func (h SortInterceptions) Len() int {
+	return len(h)
+}
+
+func (h SortInterceptions) Less(i, j int) bool {
+	return h[i].Priority < h[j].Priority
+}
+
+func (h SortInterceptions) Swap(i, j int) {
+	h[i], h[j] = h[j], h[i]
 }
 
 // Perform the given interception.
@@ -124,37 +141,49 @@ func invokeInterceptors(when When, c *Controller) {
 	}
 }
 
-var interceptors []*Interception
+var interceptors SortInterceptions
 
 // Install a general interceptor.
 // This can be applied to any Controller.
 // It must have the signature of:
 //   func example(c *revel.Controller) revel.Result
-func InterceptFunc(intc InterceptorFunc, when When, target interface{}) {
+func InterceptFunc(intc InterceptorFunc, when When, target interface{}, priority ...int) {
+	pr := math.MaxInt32
+	if len(priority) > 0 {
+		pr = priority[0]
+	}
 	interceptors = append(interceptors, &Interception{
 		When:         when,
 		function:     intc,
 		callable:     reflect.ValueOf(intc),
 		target:       reflect.TypeOf(target),
 		interceptAll: target == ALL_CONTROLLERS,
+		Priority:     pr,
 	})
+	sort.Sort(&interceptors)
 }
 
 // Install an interceptor method that applies to its own Controller.
 //   func (c AppController) example() revel.Result
 //   func (c *AppController) example() revel.Result
-func InterceptMethod(intc InterceptorMethod, when When) {
+func InterceptMethod(intc InterceptorMethod, when When, priority ...int) {
 	methodType := reflect.TypeOf(intc)
 	if methodType.Kind() != reflect.Func || methodType.NumOut() != 1 || methodType.NumIn() != 1 {
 		log.Fatalln("Interceptor method should have signature like",
 			"'func (c *AppController) example() revel.Result' but was", methodType)
+	}
+	pr := math.MaxInt32
+	if len(priority) > 0 {
+		pr = priority[0]
 	}
 	interceptors = append(interceptors, &Interception{
 		When:     when,
 		method:   intc,
 		callable: reflect.ValueOf(intc),
 		target:   methodType.In(0),
+		Priority: pr,
 	})
+	sort.Sort(&interceptors)
 }
 
 func getInterceptors(when When, val reflect.Value) []*Interception {
