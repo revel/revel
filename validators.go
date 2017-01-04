@@ -390,6 +390,8 @@ func (d Domain) DefaultMessage() string {
 	return fmt.Sprintln("Must be a vaild domain address")
 }
 
+var urlPattern = regexp.MustCompile(`^((((https?|ftps?|gopher|telnet|nntp)://)|(mailto:|news:))(%[0-9A-Fa-f]{2}|[-()_.!~*';/?:@#&=+$,A-Za-z0-9\p{L}])+)([).!';/?:,][[:blank:]])?$`)
+
 type URL struct {
 	Domain
 }
@@ -401,11 +403,9 @@ func ValidURL() URL {
 func (u URL) IsSatisfied(obj interface{}) bool {
 
 	if str, ok := obj.(string); ok {
-		if url, err := url.Parse(str); err == nil {
-			if url.Scheme != "" && url.Host != "" && u.Domain.IsSatisfied(url.Host) == true {
-				return true
-			}
-		}
+
+		// TODO : Required lot of testing
+		return urlPattern.MatchString(str)
 	}
 
 	return false
