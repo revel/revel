@@ -546,3 +546,54 @@ func (p PureText) IsSatisfied(obj interface{}) bool {
 func (p PureText) DefaultMessage() string {
 	return fmt.Sprintln("Must be a vaild Text")
 }
+
+const (
+	ONLY_FILENAME       = 0
+	ALLOW_RELATIVE_PATH = 1
+)
+
+const regexDenyFileNameCharList = `[\x00-\x1f|\x21-\x2c|\x3b-\x40|\x5b-\x5e|\x60|\x7b-\x7f]+`
+const regexDenyFileName = `|\x2e\x2e\x2f+`
+
+var checkAllowRelativePath = regexp.MustCompile(`(?m)(` + regexDenyFileNameCharList + `)`)
+var checkDenyRelativePath = regexp.MustCompile(`(?m)(` + regexDenyFileNameCharList + regexDenyFileName + `)`)
+
+// Requires an string to be sanitary file path
+type FilePath struct {
+	mode int
+}
+
+func ValidFilePath(m int) FilePath {
+
+	if m != ONLY_FILENAME && m != ALLOW_RELATIVE_PATH {
+		m = ONLY_FILENAME
+	}
+	return FilePath{m}
+}
+
+func (f FilePath) IsSatisfied(obj interface{}) bool {
+
+	if str, ok := obj.(string); ok {
+
+		var ret bool
+		switch f.mode {
+
+		case ALLOW_RELATIVE_PATH:
+			ret = checkAllowRelativePath.MatchString(str)
+			if ret == false {
+				return true
+			}
+		default: //ONLY_FILENAME
+			ret = checkDenyRelativePath.MatchString(str)
+			if ret == false {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+func (f FilePath) DefaultMessage() string {
+	return fmt.Sprintln("Must be a unsanitary string")
+}

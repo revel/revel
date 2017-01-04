@@ -150,8 +150,13 @@ func (v *Validation) Domain(str string) *ValidationResult {
 func (v *Validation) URL(str string) *ValidationResult {
 	return v.apply(URL{}, str)
 }
-func (v *Validation) PureText(str string) *ValidationResult {
-	return v.apply(PureText{}, str)
+
+func (v *Validation) PureText(str string, m int) *ValidationResult {
+	return v.apply(PureText{m}, str)
+}
+
+func (v *Validation) FilePath(str string, m int) *ValidationResult {
+	return v.apply(FilePath{m}, str)
 }
 
 func (v *Validation) apply(chk Validator, obj interface{}) *ValidationResult {

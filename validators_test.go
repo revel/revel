@@ -541,8 +541,69 @@ func TestPureTextStrict(t *testing.T) {
 		tests = append(tests, Expect{input: txt, expectedResult: expected, errorMessage: fmt.Sprintf("invalid (%#v) text", txt)})
 	}
 
-	// normal
+	// strict
 	for _, txt := range []PureText{PureText{STRICT}, ValidPureText(STRICT)} {
 		performTests(txt, tests, t)
+	}
+}
+
+func TestFilePathOnlyFilePath(t *testing.T) {
+
+	test_filepaths := map[string]bool{
+		"../../qwdqwdqwd/../qwdqwdqwd.txt": false,
+		`../../qwdqwdqwd/..
+				        /qwdqwdqwd.txt`: false,
+		"\t../../qwdqwdqwd/../qwdqwdqwd.txt": false,
+		`../../qwdqwdqwd/../qwdqwdqwd.txt`: false,
+		`../../qwdqwdqwd/../qwdqwdqwd.txt`: false,
+		"../../etc/passwd":                 false,
+		"a.txt;rm -rf /":                   false,
+		"sudo rm -rf ../":                  false,
+		"a-1-s-d-v-we-wd_+qwd-qwd-qwd.txt": false,
+		"a-qwdqwd_qwdqwdqwd-123.txt":       true,
+		"a.txt": true,
+		"a-1-e-r-t-_1_21234_d_1234_qwed_1423_.txt": true,
+	}
+
+	tests := []Expect{}
+
+	for filepath, expected := range test_filepaths {
+		tests = append(tests, Expect{input: filepath, expectedResult: expected, errorMessage: fmt.Sprintf("unsanitary (%#v) string", filepath)})
+	}
+
+	// filename without relative path
+	for _, filepath := range []FilePath{FilePath{ONLY_FILENAME}, ValidFilePath(ONLY_FILENAME)} {
+		performTests(filepath, tests, t)
+	}
+}
+
+func TestFilePathAllowRelativePath(t *testing.T) {
+
+	test_filepaths := map[string]bool{
+		"../../qwdqwdqwd/../qwdqwdqwd.txt": true,
+		`../../qwdqwdqwd/..
+				        /qwdqwdqwd.txt`: false,
+		"\t../../qwdqwdqwd/../qwdqwdqwd.txt": false,
+		`../../qwdqwdqwd/../qwdqwdqwd.txt`: false,
+		`../../qwdqwdqwd/../qwdqwdqwd.txt`: false,
+		"../../etc/passwd":                 true,
+		"a.txt;rm -rf /":                   false,
+		"sudo rm -rf ../":                  true,
+		"a-1-s-d-v-we-wd_+qwd-qwd-qwd.txt": false,
+		"a-qwdqwd_qwdqwdqwd-123.txt":       true,
+		"a.txt": true,
+		"a-1-e-r-t-_1_21234_d_1234_qwed_1423_.txt":                                       true,
+		"/asdasd/asdasdasd/qwdqwd_qwdqwd/12-12/a-1-e-r-t-_1_21234_d_1234_qwed_1423_.txt": true,
+	}
+
+	tests := []Expect{}
+
+	for filepath, expected := range test_filepaths {
+		tests = append(tests, Expect{input: filepath, expectedResult: expected, errorMessage: fmt.Sprintf("unsanitary (%#v) string", filepath)})
+	}
+
+	// filename with relative path
+	for _, filepath := range []FilePath{FilePath{ALLOW_RELATIVE_PATH}, ValidFilePath(ALLOW_RELATIVE_PATH)} {
+		performTests(filepath, tests, t)
 	}
 }
