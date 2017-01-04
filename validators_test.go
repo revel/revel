@@ -469,7 +469,7 @@ func TestURL(t *testing.T) {
 
 }
 
-func TestPureText(t *testing.T) {
+func TestPureTextNormal(t *testing.T) {
 
 	test_txts := map[string]bool{
 		"<script ?>qwdpijqwd</script>qd08j123lneqw\t\nqwedojiqwd\rqwdoihjqwd1d[08jaedl;jkqwd\r\nqdolijqdwqwd":       false,
@@ -478,13 +478,22 @@ func TestPureText(t *testing.T) {
 		`Foo<12>Bar`:              true,
 		`Foo<>Bar`:                true,
 		`Foo</br>Bar`:             false,
-		`Foo <!-- Bar --> Baz`:    true,
+		`Foo <!-- Bar --> Baz`:    false,
 		`I <3 Ponies!`:            true,
 		`I &#32; like Golang\t\n`: true,
 		`I &amp; like Golang\t\n`: false,
 		`<?xml version="1.0" encoding="UTF-8" ?> <!DOCTYPE log4j:configuration SYSTEM "log4j.dtd"> <log4j:configuration debug="true" xmlns:log4j='http://jakarta.apache.org/log4j/'> <appender name="console" class="org.apache.log4j.ConsoleAppender"> <layout class="org.apache.log4j.PatternLayout"> <param name="ConversionPattern" value="%d{yyyy-MM-dd HH:mm:ss} %-5p %c{1}:%L - %m%n" /> </layout> </appender> <root> <level value="DEBUG" /> <appender-ref ref="console" /> </root> </log4j:configuration>`: false,
-		"I like Golang\r\n":  true,
-		"I like Golang\r\na": false,
+		"I like Golang\r\n":       true,
+		"I like Golang\r\na":      true,
+		"I &#32; like Golang\t\n": true,
+		"I &amp; like Golang\t\n": false,
+		"ハイレゾ対応ウォークマン®、ヘッドホン、スピーカー「Winter Gift Collection ～Presented by JUJU～」をソニーストアにて販売開始":                                                                      true,
+		"VAIOパーソナルコンピューター type T TZシリーズ 無償点検・修理のお知らせとお詫び（2009年10月15日更新）":                                                                                          true,
+		"把百度设为主页关于百度About  Baidu百度推广":                                                                                                                             true,
+		"%E6%8A%8A%E7%99%BE%E5%BA%A6%E8%AE%BE%E4%B8%BA%E4%B8%BB%E9%A1%B5%E5%85%B3%E4%BA%8E%E7%99%BE%E5%BA%A6About++Baidu%E7%99%BE%E5%BA%A6%E6%8E%A8%E5%B9%BF":     true,
+		"%E6%8A%8A%E7%99%BE%E5%BA%A6%E8%AE%BE%E4%B8%BA%E4%B8%BB%E9%A1%B5%E5%85%B3%E4%BA%8E%E7%99%BE%E5%BA%A6About%20%20Baidu%E7%99%BE%E5%BA%A6%E6%8E%A8%E5%B9%BF": true,
+		"abcd/>qwdqwdoijhwer/>qwdojiqwdqwd</>qwdoijqwdoiqjd":                                                                                                      true,
+		"abcd/>qwdqwdoijhwer/>qwdojiqwdqwd</a>qwdoijqwdoiqjd":                                                                                                     false,
 	}
 
 	tests := []Expect{}
@@ -493,7 +502,47 @@ func TestPureText(t *testing.T) {
 		tests = append(tests, Expect{input: txt, expectedResult: expected, errorMessage: fmt.Sprintf("invalid (%#v) text", txt)})
 	}
 
-	for _, txt := range []PureText{PureText{}, ValidPureText()} {
+	// normal
+	for _, txt := range []PureText{PureText{NORMAL}, ValidPureText(NORMAL)} {
+		performTests(txt, tests, t)
+	}
+}
+
+func TestPureTextStrict(t *testing.T) {
+
+	test_txts := map[string]bool{
+		"<script ?>qwdpijqwd</script>qd08j123lneqw\t\nqwedojiqwd\rqwdoihjqwd1d[08jaedl;jkqwd\r\nqdolijqdwqwd":       false,
+		"a\r\nb<script ?>qwdpijqwd</script>qd08j123lneqw\t\nqwedojiqwd\rqwdoihjqwd1d[08jaedl;jkqwd\r\nqdolijqdwqwd": false,
+		`Foo<script type="text/javascript">alert(1337)</script>Bar`:                                                 false,
+		`Foo<12>Bar`:              true,
+		`Foo<>Bar`:                true,
+		`Foo</br>Bar`:             false,
+		`Foo <!-- Bar --> Baz`:    false,
+		`I <3 Ponies!`:            true,
+		`I &#32; like Golang\t\n`: true,
+		`I &amp; like Golang\t\n`: false,
+		`<?xml version="1.0" encoding="UTF-8" ?> <!DOCTYPE log4j:configuration SYSTEM "log4j.dtd"> <log4j:configuration debug="true" xmlns:log4j='http://jakarta.apache.org/log4j/'> <appender name="console" class="org.apache.log4j.ConsoleAppender"> <layout class="org.apache.log4j.PatternLayout"> <param name="ConversionPattern" value="%d{yyyy-MM-dd HH:mm:ss} %-5p %c{1}:%L - %m%n" /> </layout> </appender> <root> <level value="DEBUG" /> <appender-ref ref="console" /> </root> </log4j:configuration>`: false,
+		"I like Golang\r\n":       true,
+		"I like Golang\r\na":      true,
+		"I &#32; like Golang\t\n": true,
+		"I &amp; like Golang\t\n": false,
+		"ハイレゾ対応ウォークマン®、ヘッドホン、スピーカー「Winter Gift Collection ～Presented by JUJU～」をソニーストアにて販売開始":                                                                      true,
+		"VAIOパーソナルコンピューター type T TZシリーズ 無償点検・修理のお知らせとお詫び（2009年10月15日更新）":                                                                                          true,
+		"把百度设为主页关于百度About  Baidu百度推广":                                                                                                                             true,
+		"%E6%8A%8A%E7%99%BE%E5%BA%A6%E8%AE%BE%E4%B8%BA%E4%B8%BB%E9%A1%B5%E5%85%B3%E4%BA%8E%E7%99%BE%E5%BA%A6About++Baidu%E7%99%BE%E5%BA%A6%E6%8E%A8%E5%B9%BF":     true,
+		"%E6%8A%8A%E7%99%BE%E5%BA%A6%E8%AE%BE%E4%B8%BA%E4%B8%BB%E9%A1%B5%E5%85%B3%E4%BA%8E%E7%99%BE%E5%BA%A6About%20%20Baidu%E7%99%BE%E5%BA%A6%E6%8E%A8%E5%B9%BF": true,
+		"abcd/>qwdqwdoijhwer/>qwdojiqwdqwd</>qwdoijqwdoiqjd":                                                                                                      true,
+		"abcd/>qwdqwdoijhwer/>qwdojiqwdqwd</a>qwdoijqwdoiqjd":                                                                                                     false,
+	}
+
+	tests := []Expect{}
+
+	for txt, expected := range test_txts {
+		tests = append(tests, Expect{input: txt, expectedResult: expected, errorMessage: fmt.Sprintf("invalid (%#v) text", txt)})
+	}
+
+	// normal
+	for _, txt := range []PureText{PureText{STRICT}, ValidPureText(STRICT)} {
 		performTests(txt, tests, t)
 	}
 }
