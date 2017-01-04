@@ -3,6 +3,7 @@ package revel
 import (
 	"errors"
 	"fmt"
+	"html"
 	"net"
 	"net/url"
 	"reflect"
@@ -216,7 +217,7 @@ func (e Email) DefaultMessage() string {
 
 const (
 	None               = 0
-	IPAll              = 1
+	IPAny              = 1
 	IPv4               = 32 // IPv4 (32 chars)
 	IPv6               = 39 // IPv6(39 chars)
 	IPv4MappedIPv6     = 45 // IP4-mapped IPv6 (45 chars) , Ex) ::FFFF:129.144.52.38
@@ -225,15 +226,17 @@ const (
 	IPv4MappedIPv6CIDR = IPv4MappedIPv6 + 3
 )
 
+// Requires a string(IP Address) to be within IP Pattern type inclusive.
 type IPAddr struct {
 	vaildtypes []int
 }
 
+// Requires an IP Address string to be exactly a given  validation type (IPv4, IPv6, IPv4MappedIPv6, IPv4CIDR, IPv6CIDR, IPv4MappedIPv6CIDR OR IPAny)
 func ValidIPAddr(cktypes ...int) IPAddr {
 
 	for _, cktype := range cktypes {
 
-		if cktype != IPAll && cktype != IPv4 && cktype != IPv6 && cktype != IPv4MappedIPv6 && cktype != IPv4CIDR && cktype != IPv6CIDR && cktype != IPv4MappedIPv6CIDR {
+		if cktype != IPAny && cktype != IPv4 && cktype != IPv6 && cktype != IPv4MappedIPv6 && cktype != IPv4CIDR && cktype != IPv6CIDR && cktype != IPv4MappedIPv6CIDR {
 			return IPAddr{vaildtypes: []int{None}}
 		}
 	}
@@ -301,7 +304,7 @@ func (i IPAddr) IsSatisfied(obj interface{}) bool {
 
 		for _, ck := range i.vaildtypes {
 
-			if ret != None && (ck == ret || ck == IPAll) {
+			if ret != None && (ck == ret || ck == IPAny) {
 
 				switch ret {
 				case IPv4, IPv6, IPv4MappedIPv6:
@@ -328,6 +331,7 @@ func (i IPAddr) DefaultMessage() string {
 	return fmt.Sprintln("Must be a vaild IP address")
 }
 
+// Requires a MAC Address string to be exactly
 type MacAddr struct{}
 
 func ValidMacAddr() MacAddr {
@@ -352,6 +356,7 @@ func (m MacAddr) DefaultMessage() string {
 
 var domainPattern = regexp.MustCompile(`^(([a-zA-Z0-9-\p{L}]{1,63}\.)?(xn--)?[a-zA-Z0-9\p{L}]+(-[a-zA-Z0-9\p{L}]+)*\.)+[a-zA-Z\p{L}]{2,63}$`)
 
+// Requires a Domain string to be exactly
 type Domain struct {
 	Regexp *regexp.Regexp
 }
@@ -397,7 +402,6 @@ func (u URL) IsSatisfied(obj interface{}) bool {
 
 	if str, ok := obj.(string); ok {
 		if url, err := url.Parse(str); err == nil {
-
 			if url.Scheme != "" && url.Host != "" && u.Domain.IsSatisfied(url.Host) == true {
 				return true
 			}
@@ -411,13 +415,28 @@ func (u URL) DefaultMessage() string {
 	return fmt.Sprintln("Must be a vaild URL address")
 }
 
-type PureText struct{}
+/*
+NORMAL BenchmarkRegex-8   	2000000000	         0.24 ns/op
+STRICT BenchmarkLoop-8    	2000000000	         0.01 ns/op
+*/
+const (
+	NORMAL = 0
+	STRICT = 4
+)
 
-func ValidPureText() PureText {
-	return PureText{}
+// Requires a string to be without invisible characters
+type PureText struct {
+	mode int
 }
 
-func isPureText(str string) (bool, error) {
+func ValidPureText(m int) PureText {
+	if m != NORMAL && m != STRICT { // Q:required fatal error
+		m = STRICT
+	}
+	return PureText{m}
+}
+
+func isPureTextStrict(str string) (bool, error) {
 
 	l := len(str)
 
@@ -425,23 +444,31 @@ func isPureText(str string) (bool, error) {
 
 		c := str[i]
 
-		// deny : control char
+		// deny : control char (00-31 without 9(TAB) and Single 10(LF),13(CR)
 		if c >= 0 && c <= 31 && c != 9 && c != 10 && c != 13 {
 			return false, errors.New("detect control character")
 		}
 
-		//deny : CRLF
-		if c == 13 && i+2 < l && str[i+1] == 10 {
-			return false, errors.New("detect <CR><LF>")
+		// deny : control char (DEL)
+		if c == 127 {
+			return false, errors.New("detect control character (DEL)")
 		}
 
 		//deny : html tag (< ~ >)
 		if c == 60 {
 
+			ds := 0
 			for n := i; n < l; n++ {
 
-				if str[n] == 60 && n+1 <= l && str[n+1] == 47 {
-					return false, errors.New("detect tag (<~>)")
+				// 60 (<) , 47(/) | 33(!) | 63(?)
+				if str[n] == 60 && n+1 <= l && (str[n+1] == 47 || str[n+1] == 33 || str[n+1] == 63) {
+					ds = 1
+					n += 3 //jump to next char
+				}
+
+				// 62 (>)
+				if ds == 1 && str[n] == 62 {
+					return false, errors.New("detect tag (<[!|?]~>)")
 				}
 			}
 		}
@@ -449,8 +476,11 @@ func isPureText(str string) (bool, error) {
 		//deby : html encoded tag (&xxx;)
 		if c == 38 && i+1 <= l && str[i+1] != 35 {
 
-			for n := i; n < (n + 10); n++ {
-
+			max := i + 64
+			if max > l {
+				max = l
+			}
+			for n := i; n < max; n++ {
 				if str[n] == 59 {
 					return false, errors.New("detect html encoded ta (&XXX;)")
 				}
@@ -461,11 +491,52 @@ func isPureText(str string) (bool, error) {
 	return true, nil
 }
 
+// Requires a string to match a given html tag elements regex pattern
+// referrer : http://www.w3schools.com/Tags/
+var elementPattern = regexp.MustCompile(`(?im)<(?P<tag>(/*\s*|\?*|\!*)(figcaption|expression|blockquote|plaintext|textarea|progress|optgroup|noscript|noframes|menuitem|frameset|fieldset|!DOCTYPE|datalist|colgroup|behavior|basefont|summary|section|isindex|details|caption|bgsound|article|address|acronym|strong|strike|source|select|script|output|option|object|legend|keygen|ilayer|iframe|header|footer|figure|dialog|center|canvas|button|applet|video|track|title|thead|tfoot|tbody|table|style|small|param|meter|layer|label|input|frame|embed|blink|audio|aside|alert|time|span|samp|ruby|meta|menu|mark|main|link|html|head|form|font|code|cite|body|base|area|abbr|xss|xml|wbr|var|svg|sup|sub|pre|nav|map|kbd|ins|img|div|dir|dfn|del|col|big|bdo|bdi|!--|ul|tt|tr|th|td|rt|rp|ol|li|hr|em|dt|dl|dd|br|u|s|q|p|i|b|a|(h[0-9]+)))([^><]*)([><]*)`)
+
+// Requires a string to match a given urlencoded regex pattern
+var urlencodedPattern = regexp.MustCompile(`(?im)(\%[0-9a-fA-F]{1,})`)
+
+// Requires a string to match a given control characters regex pattern (ASCII : 00-08, 11, 12, 14, 15-31)
+var controlcharPattern = regexp.MustCompile(`(?im)([\x00-\x08\x0B\x0C\x0E-\x1F\x7F]+)`)
+
+func isPureTextNormal(str string) (bool, error) {
+
+	decoded_str := html.UnescapeString(str)
+
+	matched_urlencoded := urlencodedPattern.MatchString(decoded_str)
+	if matched_urlencoded == true {
+		temp_buf, err := url.QueryUnescape(decoded_str)
+		if err == nil {
+			decoded_str = temp_buf
+		}
+	}
+
+	matched_element := elementPattern.MatchString(decoded_str)
+	if matched_element == true {
+		return false, errors.New("detect html element")
+	}
+
+	matched_cc := controlcharPattern.MatchString(decoded_str)
+	if matched_cc == true {
+		return false, errors.New("detect control character")
+	}
+
+	return true, nil
+}
+
 func (p PureText) IsSatisfied(obj interface{}) bool {
 
 	if str, ok := obj.(string); ok {
 
-		ret, _ := isPureText(str)
+		var ret bool
+		switch p.mode {
+		case STRICT:
+			ret, _ = isPureTextStrict(str)
+		case NORMAL:
+			ret, _ = isPureTextStrict(str)
+		}
 		return ret
 	}
 
