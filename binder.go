@@ -155,7 +155,12 @@ var (
 
 	PointerBinder = Binder{
 		Bind: func(params *Params, name string, typ reflect.Type) reflect.Value {
-			return Bind(params, name, typ.Elem()).Addr()
+			v := Bind(params, name, typ.Elem())
+			if v.CanAddr() {
+				return v.Addr()
+			}
+
+			return v
 		},
 		Unbind: func(output map[string]string, name string, val interface{}) {
 			Unbind(output, name, reflect.ValueOf(val).Elem().Interface())
