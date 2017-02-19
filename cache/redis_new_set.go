@@ -15,11 +15,28 @@ func (c RedisCache) CheckRedis() error {
 	}
 }
 
-func (c RedisCache) Life(key string) (interface{}, error) {
+func (c RedisCache) Life(key string) (int64, error) {
 	conn := c.pool.Get()
 	defer conn.Close()
 
-	return conn.Do("TTL", key)
+	res, err := conn.Do("TTL", key)
+	if err != nil {
+		return 0, err
+	} else {
+		return int64(res.(int64)), nil
+	}
+}
+
+func (c RedisCache) Type(key string) (string, error) {
+	conn := c.pool.Get()
+	defer conn.Close()
+
+	res, err := conn.Do("TYPE", key)
+	if err != nil {
+		return "", err
+	} else {
+		return string(res.(string)), nil
+	}
 }
 
 func (c RedisCache) SADD(key string, expires time.Duration, args ...interface{}) error {
