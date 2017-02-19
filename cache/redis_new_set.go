@@ -21,7 +21,7 @@ func (c RedisCache) Life(key string) (int64, error) {
 
 	res, err := conn.Do("TTL", key)
 	if err != nil {
-		return 0, err
+		return -1, err
 	} else {
 		return int64(res.(int64)), nil
 	}
@@ -101,7 +101,7 @@ func (c RedisCache) SCARD(key string) (int64, error) {
 
 	res, err := conn.Do("SCARD", key)
 	if err != nil {
-		return 0, err
+		return -1, err
 	}
 
 	return int64(res.(int64)), nil
