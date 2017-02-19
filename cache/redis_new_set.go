@@ -24,7 +24,6 @@ func (c RedisCache) Life(key string) (interface{}, error) {
 
 func (c RedisCache) SADD(key string, expires time.Duration, args ...interface{}) error {
 
-	//先把时间换算成秒
 	times := int(expires / time.Second)
 
 	conn := c.pool.Get()
@@ -32,7 +31,6 @@ func (c RedisCache) SADD(key string, expires time.Duration, args ...interface{})
 
 	for _, v := range args {
 		if times > 0 {
-			//大于0的时候，就先设置数据，再设置时间
 			_, err := conn.Do("SADD", key, v)
 			if err != nil {
 				return err
@@ -44,7 +42,6 @@ func (c RedisCache) SADD(key string, expires time.Duration, args ...interface{})
 			}
 
 		} else {
-			//等于0的时候，就直接设置值。
 			_, err := conn.Do("SADD", key, v)
 			if err != nil {
 				return err
@@ -78,9 +75,5 @@ func (c RedisCache) SISMEMBER(key string, value interface{}) ( bool, error) {
 		return false, err
 	}
 
-	if int64(res.(int64)) == 1 {
-		return true, nil
-	} else {
-		return false, nil
-	}
+	return int64(res.(int64)) == 1, nil
 }
