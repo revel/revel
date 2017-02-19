@@ -66,7 +66,7 @@ func (c RedisCache) SREM(key string, args ...interface{}) error {
 	return nil
 }
 
-func (c RedisCache) SISMEMBER(key string, value interface{}) ( bool, error) {
+func (c RedisCache) SISMEMBER(key string, value interface{}) (bool, error) {
 	conn := c.pool.Get()
 	defer conn.Close()
 
@@ -76,4 +76,16 @@ func (c RedisCache) SISMEMBER(key string, value interface{}) ( bool, error) {
 	}
 
 	return int64(res.(int64)) == 1, nil
+}
+
+func (c RedisCache) SCARD(key string) (int64, error) {
+	conn := c.pool.Get()
+	defer conn.Close()
+
+	res, err := conn.Do("SCARD", key)
+	if err != nil {
+		return 0, err
+	}
+
+	return int64(res.(int64)), nil
 }
