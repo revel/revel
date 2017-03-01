@@ -304,6 +304,17 @@ func (r RenderTextResult) Apply(req *Request, resp *Response) {
 	resp.Out.Write([]byte(r.text))
 }
 
+// CustomResultType - Use this to return a custom content-type e.g. file extension
+type RenderCustomResult struct {
+	ContentType string
+	Data        string
+}
+
+func (c RenderCustomResult) Apply(req *Request, resp *Response) {
+	resp.WriteHeader(http.StatusOK, c.ContentType+"; charset=utf-8")
+	resp.Out.Write([]byte(c.Data))
+}
+
 type ContentDisposition string
 
 var (
