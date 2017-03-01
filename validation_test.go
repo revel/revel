@@ -74,3 +74,17 @@ func TestValidationNoKeepCookiePreviouslySet(t *testing.T) {
 		t.Fatalf("cookie should be deleted")
 	}
 }
+
+// Test that field names can be properly formatted for validation error messages
+func TestFieldNameFormatting(t *testing.T) {
+	fieldAscii := "someField"
+	expectedAscii := "Some field"
+	fieldUnicode := "sömeϜield"
+	expectedUnicode := "Söme ϝield"
+	if formattedAscii := formatFieldName(fieldAscii); formattedAscii != expectedAscii {
+		t.Errorf("ASCII field formatting failed. Expecting %s, got %s", expectedAscii, formattedAscii)
+	}
+	if formattedUnicode := formatFieldName(fieldUnicode); formattedUnicode != expectedUnicode {
+		t.Errorf("ASCII field formatting failed. Expecting %s, got %s", expectedUnicode, formattedUnicode)
+	}
+}

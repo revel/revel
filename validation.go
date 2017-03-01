@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"regexp"
 	"runtime"
+	"unicode"
 )
 
 // Simple struct to store the Message & Key of a validation error
@@ -153,7 +154,7 @@ func (v *Validation) apply(chk Validator, obj interface{}) *ValidationResult {
 
 	// Add the error to the validation context.
 	err := &ValidationError{
-		Message: chk.DefaultMessage(),
+		Message: fmt.Sprintf("%s %s", formatFieldName(key), chk.DefaultMessage()),
 		Key:     key,
 	}
 	v.Errors = append(v.Errors, err)
@@ -243,6 +244,24 @@ func restoreValidationErrors(req *http.Request) ([]*ValidationError, error) {
 		})
 	}
 	return errors, err
+}
+
+// Format field name for display
+func formatFieldName(field string) (formattedField string) {
+	if field == "" {
+		formattedField = "Field"
+	} else {
+		var words []rune
+		for _, character := range field {
+			if unicode.IsUpper(character) {
+				words = append(words, rune(' '))
+			}
+			words = append(words, unicode.ToLower(rune(character)))
+		}
+		words[0] = unicode.ToUpper(words[0])
+		formattedField = string(words)
+	}
+	return
 }
 
 // Register default validation keys for all calls to Controller.Validation.Func().
