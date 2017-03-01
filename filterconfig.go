@@ -62,7 +62,7 @@ func newFilterConfigurator(controllerName, methodName string) FilterConfigurator
 
 // FilterController returns a configurator for the filters applied to all
 // actions on the given controller instance.  For example:
-//   FilterAction(MyController{})
+//   FilterController(MyController{})
 func FilterController(controllerInstance interface{}) FilterConfigurator {
 	t := reflect.TypeOf(controllerInstance)
 	for t.Kind() == reflect.Ptr {
