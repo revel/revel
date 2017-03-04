@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2016 The Revel Framework Authors, All rights reserved.
+// Copyright (c) 2012-2017 The Revel Framework Authors, All rights reserved.
 // Revel Framework source code and usage is governed by a MIT style
 // license that can be found in the LICENSE file.
 
@@ -97,20 +97,28 @@ func (p *Params) calcValues() url.Values {
 		return p.Form
 	}
 
-	// Copy everything into the same map.
+	// Copy everything into a param map
+	// and in order of priority of lowest to most trusted
+	// and get overwritten
 	values := make(url.Values, numParams)
-	for k, v := range p.Fixed {
-		values[k] = append(values[k], v...)
-	}
+
+	// ?query vars first
 	for k, v := range p.Query {
 		values[k] = append(values[k], v...)
 	}
-	for k, v := range p.Route {
-		values[k] = append(values[k], v...)
-	}
+	// form vars second
 	for k, v := range p.Form {
 		values[k] = append(values[k], v...)
 	}
+	// :/route url vars
+	for k, v := range p.Route {
+		values[k] = append(values[k], v...)
+	}
+	// fixed vars
+	for k, v := range p.Fixed {
+		values[k] = append(values[k], v...)
+	}
+
 	return values
 }
 
