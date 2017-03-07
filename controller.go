@@ -1,9 +1,11 @@
 package revel
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -124,6 +126,22 @@ func (c *Controller) RenderTemplate(templatePath string) Result {
 	return &RenderTemplateResult{
 		Template:   template,
 		RenderArgs: c.RenderArgs,
+	}
+}
+
+//receive a post method of json request.
+//WARNING: the arg must be &receive
+func (c *Controller) ReceiveJSON(receive interface{}) error {
+	if strings.Contains(c.Request.ContentType, "application/json") {
+		content, _ := ioutil.ReadAll(c.Request.Body)
+		err := json.Unmarshal([]byte(content), &receive)
+		if err != nil {
+			return err
+		} else {
+			return nil
+		}
+	} else {
+		return errors.New("It's not a JSON request!")
 	}
 }
 
