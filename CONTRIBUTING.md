@@ -79,7 +79,7 @@ new git branch. For example,
 ```
 $ git checkout -b feature/useful-new-thing origin/develop    # Create a new branch based on develop and switch to it
 $ ...                                                 # Make your changes and commit them
-$ git push fork develop                               # After new commits, push to your fork
+$ git push fork feature/useful-new-thing                               # After new commits, push to your fork
 ```
 
 ### Format Your Code
