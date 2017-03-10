@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	revConfig "github.com/revel/revel/config"
+	revConfig "github.com/revel/config"
 	robfigConfig "github.com/robfig/config"
 )
 

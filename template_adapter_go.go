@@ -14,7 +14,7 @@ import (
 var (
 	// The functions available for use in the templates.
 	TemplateFuncs = map[string]interface{}{
-		"url": ReverseUrl,
+		"url": ReverseURL,
 		"set": func(renderArgs map[string]interface{}, key string, value interface{}) template.JS {
 			renderArgs[key] = value
 			return template.JS("")
@@ -87,7 +87,7 @@ var (
 			if !ok || valError == nil {
 				return template.HTML("")
 			}
-			return template.HTML(ERROR_CLASS)
+			return template.HTML(ErrorCSSClass)
 		},
 
 		"msg": func(renderArgs map[string]interface{}, message string, args ...interface{}) template.HTML {

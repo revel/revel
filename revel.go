@@ -217,7 +217,7 @@ func Init(mode, importPath, srcPath string) {
 	ERROR = getLogger("error")
 
 	if tmpl := Config.StringDefault(REVEL_TEMPLATE_ENGINE, GO_TEMPLATE); GO_TEMPLATE == tmpl || MIXED_TEMPLATE == tmpl {
-		TemplatePaths = append(TemplatePaths, path.Join(RevelPath, "templates"))
+		TemplatePaths = append(TemplatePaths, filepath.Join(RevelPath, "templates"))
 	}
 
 	// Revel request access logger, not exposed from package.
