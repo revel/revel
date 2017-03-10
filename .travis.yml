@@ -38,7 +38,7 @@ install:
   - git clone -b $REVEL_BRANCH git://github.com/revel/cmd ../cmd/
   - git clone -b $REVEL_BRANCH git://github.com/revel/config ../config/
   - git clone -b $REVEL_BRANCH git://github.com/revel/cron ../cron/
-  - git clone -b $REVEL_BRANCH git://github.com/revel/examples ../example/
+  - git clone -b $REVEL_BRANCH git://github.com/revel/examples ../examples/
   - go get -v github.com/revel/revel/...
   - go get -v github.com/revel/cmd/revel
 
@@ -58,7 +58,7 @@ script:
   # Commented out persona test sample, since persona.org gonna be shutdown.
   # Also http://personatestuser.org becomes non-responsive most of the time.
   # https://wiki.mozilla.org/Identity/Persona_Shutdown_Guidelines_for_Reliers
-  # - revel test github.com/revel/example/persona
+  # - revel test github.com/revel/examples/persona
 
 matrix:
   allow_failures:
