@@ -49,6 +49,7 @@ script:
   - revel version
   - revel new     my/testapp
   - cat /home/travis/gopath/src/my/testapp/app/init.go
+  - cat /Users/travis/gopath/src/my/testapp/app/init.go
   - revel test    my/testapp
   - revel clean   my/testapp
   - revel build   my/testapp build/testapp
