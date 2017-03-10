@@ -38,7 +38,7 @@ install:
   - git clone -b $REVEL_BRANCH git://github.com/revel/cmd ../cmd/
   - git clone -b $REVEL_BRANCH git://github.com/revel/config ../config/
   - git clone -b $REVEL_BRANCH git://github.com/revel/cron ../cron/
-  - git clone -b $REVEL_BRANCH git://github.com/revel/example ../example/
+  - git clone -b $REVEL_BRANCH git://github.com/revel/examples ../example/
   - go get -v github.com/revel/revel/...
   - go get -v github.com/revel/cmd/revel
 
@@ -56,12 +56,12 @@ script:
   - revel package my/testapp prod
 
   # Build & run the sample apps
-  - revel test github.com/revel/example/booking
-  - revel test github.com/revel/example/chat
-  - revel test github.com/revel/example/facebook-oauth2
-  - revel test github.com/revel/example/twitter-oauth
-  - revel test github.com/revel/example/validation
-  - revel test github.com/revel/example/upload
+  - revel test github.com/revel/examples/booking
+  - revel test github.com/revel/examples/chat
+  - revel test github.com/revel/examples/facebook-oauth2
+  - revel test github.com/revel/examples/twitter-oauth
+  - revel test github.com/revel/examples/validation
+  - revel test github.com/revel/examples/upload
 
   # Commented out persona test sample, since persona.org gonna be shutdown.
   # Also http://personatestuser.org becomes non-responsive most of the time.
