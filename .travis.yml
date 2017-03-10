@@ -55,14 +55,6 @@ script:
   - revel package my/testapp
   - revel package my/testapp prod
 
-  # Build & run the sample apps
-  - revel test github.com/revel/examples/booking
-  - revel test github.com/revel/examples/chat
-  - revel test github.com/revel/examples/facebook-oauth2
-  - revel test github.com/revel/examples/twitter-oauth
-  - revel test github.com/revel/examples/validation
-  - revel test github.com/revel/examples/upload
-
   # Commented out persona test sample, since persona.org gonna be shutdown.
   # Also http://personatestuser.org becomes non-responsive most of the time.
   # https://wiki.mozilla.org/Identity/Persona_Shutdown_Guidelines_for_Reliers
