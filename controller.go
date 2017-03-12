@@ -36,7 +36,7 @@ type Controller struct {
 	Session    Session                // Session, stored in cookie, signed.
 	Params     *Params                // Parameters from URL and form (including multipart).
 	Args       map[string]interface{} // Per-request scratch space.
-	RenderArgs map[string]interface{} // Args passed to the template.
+	ViewArgs   map[string]interface{} // Variables passed to the template.
 	Validation *Validation            // Data validation helpers
 }
 
@@ -47,7 +47,7 @@ func NewController(req *Request, resp *Response) *Controller {
 		Response: resp,
 		Params:   new(Params),
 		Args:     map[string]interface{}{},
-		RenderArgs: map[string]interface{}{
+		ViewArgs: map[string]interface{}{
 			"RunMode": RunMode,
 			"DevMode": DevMode,
 		},
@@ -69,7 +69,7 @@ func (c *Controller) SetCookie(cookie *http.Cookie) {
 func (c *Controller) RenderError(err error) Result {
 	c.setStatusIfNil(http.StatusInternalServerError)
 
-	return ErrorResult{c.RenderArgs, err}
+	return ErrorResult{c.ViewArgs, err}
 }
 
 func (c *Controller) setStatusIfNil(status int) {
