@@ -1,3 +1,7 @@
+// Copyright (c) 2012-2016 The Revel Framework Authors, All rights reserved.
+// Revel Framework source code and usage is governed by a MIT style
+// license that can be found in the LICENSE file.
+
 package revel
 
 import (
@@ -21,11 +25,11 @@ type Result interface {
 	Apply(req *Request, resp *Response)
 }
 
-// This result handles all kinds of error codes (500, 404, ..).
+// ErrorResult structure used to handles all kinds of error codes (500, 404, ..).
 // It renders the relevant error page (errors/CODE.format, e.g. errors/500.json).
 // If RunMode is "dev", this results in a friendly error page.
 type ErrorResult struct {
-	RenderArgs map[string]interface{}
+	ViewArgs map[string]interface{}
 	Error      error
 }
 
@@ -78,16 +82,16 @@ func (r ErrorResult) Apply(req *Request, resp *Response) {
 		panic("no error provided")
 	}
 
-	if r.RenderArgs == nil {
-		r.RenderArgs = make(map[string]interface{})
+	if r.ViewArgs == nil {
+		r.ViewArgs = make(map[string]interface{})
 	}
-	r.RenderArgs["RunMode"] = RunMode
-	r.RenderArgs["Error"] = revelError
-	r.RenderArgs["Router"] = MainRouter
+	r.ViewArgs["RunMode"] = RunMode
+	r.ViewArgs["Error"] = revelError
+	r.ViewArgs["Router"] = MainRouter
 
 	// Render it.
 	var b bytes.Buffer
-	err = tmpl.Render(&b, r.RenderArgs)
+	err = tmpl.Render(&b, r.ViewArgs)
 
 	// If there was an error, print it in plain text.
 	if err != nil {
@@ -97,11 +101,15 @@ func (r ErrorResult) Apply(req *Request, resp *Response) {
 
 	// need to check if we are on a websocket here
 	// net/http panics if we write to a hijacked connection
-	if req.Method != "WS" {
-		resp.WriteHeader(status, contentType)
-		b.WriteTo(resp.Out)
+	if req.Method == "WS" {
+		if err := websocket.Message.Send(req.Websocket, fmt.Sprint(revelError)); err != nil {
+			ERROR.Println("Send failed:", err)
+		}
 	} else {
-		websocket.Message.Send(req.Websocket, fmt.Sprint(revelError))
+		resp.WriteHeader(status, contentType)
+		if _, err := b.WriteTo(resp.Out); err != nil {
+			ERROR.Println("Response WriteTo failed:", err)
+		}
 	}
 
 }
@@ -110,16 +118,19 @@ type PlaintextErrorResult struct {
 	Error error
 }
 
-// This method is used when the template loader or error template is not available.
+// Apply method is used when the template loader or error template is not available.
 func (r PlaintextErrorResult) Apply(req *Request, resp *Response) {
 	resp.WriteHeader(http.StatusInternalServerError, "text/plain; charset=utf-8")
-	resp.Out.Write([]byte(r.Error.Error()))
+	if _, err := resp.Out.Write([]byte(r.Error.Error())); err != nil {
+		ERROR.Println("Write error:", err)
+	}
 }
 
-// Action methods return this result to request a template be rendered.
+// RenderTemplateResult action methods returns this result to request
+// a template be rendered.
 type RenderTemplateResult struct {
 	Template   Template
-	RenderArgs map[string]interface{}
+	ViewArgs map[string]interface{}
 }
 
 func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
@@ -180,11 +191,17 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
 				// Cut trailing/leading whitespace
 				text = strings.Trim(text, " \t\r\n")
 				if len(text) > 0 {
-					b2.WriteString(text)
-					b2.WriteString("\n")
+					if _, err = b2.WriteString(text); err != nil {
+						ERROR.Println(err)
+					}
+					if _, err = b2.WriteString("\n"); err != nil {
+						ERROR.Println(err)
+					}
 				}
 			} else {
-				b2.WriteString(text)
+				if _, err = b2.WriteString(text); err != nil {
+					ERROR.Println(err)
+				}
 			}
 			if strings.Contains(tl, "</pre>") {
 				insidePre = false
@@ -202,11 +219,13 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
 		resp.Out.Header().Set("Content-Length", strconv.Itoa(b.Len()))
 	}
 	resp.WriteHeader(http.StatusOK, "text/html; charset=utf-8")
-	b.WriteTo(out)
+	if _, err := b.WriteTo(out); err != nil {
+		ERROR.Println("Response write failed:", err)
+	}
 }
 
 func (r *RenderTemplateResult) render(req *Request, resp *Response, wr io.Writer) {
-	err := r.Template.Render(wr, r.RenderArgs)
+	err := r.Template.Render(wr, r.ViewArgs)
 	if err == nil {
 		return
 	}
@@ -230,24 +249,26 @@ func (r *RenderTemplateResult) render(req *Request, resp *Response, wr io.Writer
 	}
 	resp.Status = 500
 	ERROR.Printf("Template Execution Error (in %s): %s", templateName, description)
-	ErrorResult{r.RenderArgs, compileError}.Apply(req, resp)
+	ErrorResult{r.ViewArgs, compileError}.Apply(req, resp)
 }
 
-type RenderHtmlResult struct {
+type RenderHTMLResult struct {
 	html string
 }
 
-func (r RenderHtmlResult) Apply(req *Request, resp *Response) {
+func (r RenderHTMLResult) Apply(req *Request, resp *Response) {
 	resp.WriteHeader(http.StatusOK, "text/html; charset=utf-8")
-	resp.Out.Write([]byte(r.html))
+	if _, err := resp.Out.Write([]byte(r.html)); err != nil {
+		ERROR.Println("Response write failed:", err)
+	}
 }
 
-type RenderJsonResult struct {
+type RenderJSONResult struct {
 	obj      interface{}
 	callback string
 }
 
-func (r RenderJsonResult) Apply(req *Request, resp *Response) {
+func (r RenderJSONResult) Apply(req *Request, resp *Response) {
 	var b []byte
 	var err error
 	if Config.BoolDefault("results.pretty", false) {
@@ -263,21 +284,29 @@ func (r RenderJsonResult) Apply(req *Request, resp *Response) {
 
 	if r.callback == "" {
 		resp.WriteHeader(http.StatusOK, "application/json; charset=utf-8")
-		resp.Out.Write(b)
+		if _, err = resp.Out.Write(b); err != nil {
+			ERROR.Println("Response write failed:", err)
+		}
 		return
 	}
 
 	resp.WriteHeader(http.StatusOK, "application/javascript; charset=utf-8")
-	resp.Out.Write([]byte(r.callback + "("))
-	resp.Out.Write(b)
-	resp.Out.Write([]byte(");"))
+	if _, err = resp.Out.Write([]byte(r.callback + "(")); err != nil {
+		ERROR.Println("Response write failed:", err)
+	}
+	if _, err = resp.Out.Write(b); err != nil {
+		ERROR.Println("Response write failed:", err)
+	}
+	if _, err = resp.Out.Write([]byte(");")); err != nil {
+		ERROR.Println("Response write failed:", err)
+	}
 }
 
-type RenderXmlResult struct {
+type RenderXMLResult struct {
 	obj interface{}
 }
 
-func (r RenderXmlResult) Apply(req *Request, resp *Response) {
+func (r RenderXMLResult) Apply(req *Request, resp *Response) {
 	var b []byte
 	var err error
 	if Config.BoolDefault("results.pretty", false) {
@@ -292,7 +321,9 @@ func (r RenderXmlResult) Apply(req *Request, resp *Response) {
 	}
 
 	resp.WriteHeader(http.StatusOK, "application/xml; charset=utf-8")
-	resp.Out.Write(b)
+	if _, err = resp.Out.Write(b); err != nil {
+		ERROR.Println("Response write failed:", err)
+	}
 }
 
 type RenderTextResult struct {
@@ -301,7 +332,9 @@ type RenderTextResult struct {
 
 func (r RenderTextResult) Apply(req *Request, resp *Response) {
 	resp.WriteHeader(http.StatusOK, "text/plain; charset=utf-8")
-	resp.Out.Write([]byte(r.text))
+	if _, err := resp.Out.Write([]byte(r.text)); err != nil {
+		ERROR.Println("Response write failed:", err)
+	}
 }
 
 type ContentDisposition string
@@ -342,20 +375,22 @@ func (r *BinaryResult) Apply(req *Request, resp *Response) {
 			resp.Out.Header().Set("Content-Length", strconv.FormatInt(r.Length, 10))
 		}
 		resp.WriteHeader(http.StatusOK, ContentTypeByFilename(r.Name))
-		io.Copy(resp.Out, r.Reader)
+		if _, err := io.Copy(resp.Out, r.Reader); err != nil {
+			ERROR.Println("Response write failed:", err)
+		}
 	}
 
 	// Close the Reader if we can
 	if v, ok := r.Reader.(io.Closer); ok {
-		v.Close()
+		_ = v.Close()
 	}
 }
 
-type RedirectToUrlResult struct {
+type RedirectToURLResult struct {
 	url string
 }
 
-func (r *RedirectToUrlResult) Apply(req *Request, resp *Response) {
+func (r *RedirectToURLResult) Apply(req *Request, resp *Response) {
 	resp.Out.Header().Set("Location", r.url)
 	resp.WriteHeader(http.StatusFound, "")
 }
@@ -365,7 +400,7 @@ type RedirectToActionResult struct {
 }
 
 func (r *RedirectToActionResult) Apply(req *Request, resp *Response) {
-	url, err := getRedirectUrl(r.val)
+	url, err := getRedirectURL(r.val)
 	if err != nil {
 		ERROR.Println("Couldn't resolve redirect:", err.Error())
 		ErrorResult{Error: err}.Apply(req, resp)
@@ -375,7 +410,7 @@ func (r *RedirectToActionResult) Apply(req *Request, resp *Response) {
 	resp.WriteHeader(http.StatusFound, "")
 }
 
-func getRedirectUrl(item interface{}) (string, error) {
+func getRedirectURL(item interface{}) (string, error) {
 	// Handle strings
 	if url, ok := item.(string); ok {
 		return url, nil

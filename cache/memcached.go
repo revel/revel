@@ -1,13 +1,18 @@
+// Copyright (c) 2012-2016 The Revel Framework Authors, All rights reserved.
+// Revel Framework source code and usage is governed by a MIT style
+// license that can be found in the LICENSE file.
+
 package cache
 
 import (
 	"errors"
+	"time"
+
 	"github.com/bradfitz/gomemcache/memcache"
 	"github.com/revel/revel"
-	"time"
 )
 
-// Wraps the Memcached client to meet the Cache interface.
+// MemcachedCache wraps the Memcached client to meet the Cache interface.
 type MemcachedCache struct {
 	*memcache.Client
 	defaultExpiration time.Duration
@@ -60,7 +65,7 @@ func (c MemcachedCache) Decrement(key string, delta uint64) (newValue uint64, er
 }
 
 func (c MemcachedCache) Flush() error {
-	err := errors.New("revel/cache: can not flush memcached.")
+	err := errors.New("revel/cache: can not flush memcached")
 	revel.ERROR.Println(err)
 	return err
 }
@@ -69,9 +74,9 @@ func (c MemcachedCache) invoke(f func(*memcache.Client, *memcache.Item) error,
 	key string, value interface{}, expires time.Duration) error {
 
 	switch expires {
-	case DEFAULT:
+	case DefaultExpiryTime:
 		expires = c.defaultExpiration
-	case FOREVER:
+	case ForEverNeverExpiry:
 		expires = time.Duration(0)
 	}
 
@@ -86,7 +91,7 @@ func (c MemcachedCache) invoke(f func(*memcache.Client, *memcache.Item) error,
 	}))
 }
 
-// Implement a Getter on top of the returned item map.
+// ItemMapGetter implements a Getter on top of the returned item map.
 type ItemMapGetter map[string]*memcache.Item
 
 func (g ItemMapGetter) Get(key string, ptrValue interface{}) error {

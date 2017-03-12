@@ -1,3 +1,7 @@
+// Copyright (c) 2012-2017 The Revel Framework Authors, All rights reserved.
+// Revel Framework source code and usage is governed by a MIT style
+// license that can be found in the LICENSE file.
+
 package revel
 
 import (
@@ -29,6 +33,7 @@ type Params struct {
 	tmpFiles []*os.File                         // Temp files used during the request.
 }
 
+// ParseParams parses the `http.Request` params into `revel.Controller.Params`
 func ParseParams(params *Params, req *Request) {
 	params.Query = req.URL.Query()
 
@@ -92,20 +97,27 @@ func (p *Params) calcValues() url.Values {
 		return p.Form
 	}
 
-	// Copy everything into the same map.
+	// Copy everything into a param map,
+	// order of priority is least to most trusted
 	values := make(url.Values, numParams)
-	for k, v := range p.Fixed {
-		values[k] = append(values[k], v...)
-	}
+
+	// ?query vars first
 	for k, v := range p.Query {
 		values[k] = append(values[k], v...)
 	}
-	for k, v := range p.Route {
-		values[k] = append(values[k], v...)
-	}
+	// form vars overwrite
 	for k, v := range p.Form {
 		values[k] = append(values[k], v...)
 	}
+	// :/path vars overwrite
+	for k, v := range p.Route {
+		values[k] = append(values[k], v...)
+	}
+	// fixed vars overwrite
+	for k, v := range p.Fixed {
+		values[k] = append(values[k], v...)
+	}
+
 	return values
 }
 

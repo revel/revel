@@ -1,3 +1,7 @@
+// Copyright (c) 2012-2016 The Revel Framework Authors, All rights reserved.
+// Revel Framework source code and usage is governed by a MIT style
+// license that can be found in the LICENSE file.
+
 package testing
 
 import (
@@ -63,7 +67,7 @@ func (t *TestSuite) NewTestRequest(req *http.Request) *TestRequest {
 	}
 }
 
-// Return the address and port of the server, e.g. "127.0.0.1:8557"
+// Host returns the address and port of the server, e.g. "127.0.0.1:8557"
 func (t *TestSuite) Host() string {
 	if revel.Server.Addr[0] == ':' {
 		return "127.0.0.1" + revel.Server.Addr
@@ -71,28 +75,27 @@ func (t *TestSuite) Host() string {
 	return revel.Server.Addr
 }
 
-// Return the base http/https URL of the server, e.g. "http://127.0.0.1:8557".
+// BaseUrl returns the base http/https URL of the server, e.g. "http://127.0.0.1:8557".
 // The scheme is set to https if http.ssl is set to true in the configuration file.
 func (t *TestSuite) BaseUrl() string {
-	if revel.HttpSsl {
+	if revel.HTTPSsl {
 		return "https://" + t.Host()
-	} else {
-		return "http://" + t.Host()
 	}
+	return "http://" + t.Host()
 }
 
-// Return the base websocket URL of the server, e.g. "ws://127.0.0.1:8557"
+// WebSocketUrl returns the base websocket URL of the server, e.g. "ws://127.0.0.1:8557"
 func (t *TestSuite) WebSocketUrl() string {
 	return "ws://" + t.Host()
 }
 
-// Issue a GET request to the given path and store the result in Response and
-// ResponseBody.
+// Get issues a GET request to the given path and stores the result in Response
+// and ResponseBody.
 func (t *TestSuite) Get(path string) {
 	t.GetCustom(t.BaseUrl() + path).Send()
 }
 
-// Return a GET request to the given uri in a form of its wrapper.
+// GetCustom returns a GET request to the given URI in a form of its wrapper.
 func (t *TestSuite) GetCustom(uri string) *TestRequest {
 	req, err := http.NewRequest("GET", uri, nil)
 	if err != nil {
@@ -101,13 +104,14 @@ func (t *TestSuite) GetCustom(uri string) *TestRequest {
 	return t.NewTestRequest(req)
 }
 
-// Issue a DELETE request to the given path and store the result in Response and
-// ResponseBody.
+// Delete issues a DELETE request to the given path and stores the result in
+// Response and ResponseBody.
 func (t *TestSuite) Delete(path string) {
 	t.DeleteCustom(t.BaseUrl() + path).Send()
 }
 
-// Return a DELETE request to the given uri in a form of its wrapper.
+// DeleteCustom returns a DELETE request to the given URI in a form of its
+// wrapper.
 func (t *TestSuite) DeleteCustom(uri string) *TestRequest {
 	req, err := http.NewRequest("DELETE", uri, nil)
 	if err != nil {
@@ -116,14 +120,14 @@ func (t *TestSuite) DeleteCustom(uri string) *TestRequest {
 	return t.NewTestRequest(req)
 }
 
-// Issue a PUT request to the given path, sending the given Content-Type and
-// data, and store the result in Response and ResponseBody.  "data" may be nil.
+// Put issues a PUT request to the given path, sending the given Content-Type
+// and data, storing the result in Response and ResponseBody. "data" may be nil.
 func (t *TestSuite) Put(path string, contentType string, reader io.Reader) {
 	t.PutCustom(t.BaseUrl()+path, contentType, reader).Send()
 }
 
-// Return a PUT request to the given uri with specified Content-Type and data
-// in a form of wrapper. "data" may be nil.
+// PutCustom returns a PUT request to the given URI with specified Content-Type
+// and data in a form of wrapper. "data" may be nil.
 func (t *TestSuite) PutCustom(uri string, contentType string, reader io.Reader) *TestRequest {
 	req, err := http.NewRequest("PUT", uri, reader)
 	if err != nil {
@@ -133,26 +137,27 @@ func (t *TestSuite) PutCustom(uri string, contentType string, reader io.Reader) 
 	return t.NewTestRequest(req)
 }
 
-// Issue a PUT request to the given path as a form put of the given key and
-// values, and store the result in Response and ResponseBody.
+// PutForm issues a PUT request to the given path as a form put of the given key
+// and values, and stores the result in Response and ResponseBody.
 func (t *TestSuite) PutForm(path string, data url.Values) {
-    t.PutFormCustom(t.BaseUrl()+path, data).Send()
+	t.PutFormCustom(t.BaseUrl()+path, data).Send()
 }
 
-// Return a PUT request to the given uri as a form put of the given key and values.
-// The request is in a form of TestRequest wrapper.
+// PutFormCustom returns a PUT request to the given URI as a form put of the
+// given key and values. The request is in a form of TestRequest wrapper.
 func (t *TestSuite) PutFormCustom(uri string, data url.Values) *TestRequest {
-    return t.PutCustom(uri, "application/x-www-form-urlencoded", strings.NewReader(data.Encode()))
+	return t.PutCustom(uri, "application/x-www-form-urlencoded", strings.NewReader(data.Encode()))
 }
 
-// Issue a PATCH request to the given path, sending the given Content-Type and
-// data, and store the result in Response and ResponseBody.  "data" may be nil.
+// Patch issues a PATCH request to the given path, sending the given
+// Content-Type and data, and stores the result in Response and ResponseBody.
+// "data" may be nil.
 func (t *TestSuite) Patch(path string, contentType string, reader io.Reader) {
 	t.PatchCustom(t.BaseUrl()+path, contentType, reader).Send()
 }
 
-// Return a PATCH request to the given uri with specified Content-Type and data
-// in a form of wrapper. "data" may be nil.
+// PatchCustom returns a PATCH request to the given URI with specified
+// Content-Type and data in a form of wrapper. "data" may be nil.
 func (t *TestSuite) PatchCustom(uri string, contentType string, reader io.Reader) *TestRequest {
 	req, err := http.NewRequest("PATCH", uri, reader)
 	if err != nil {
@@ -162,14 +167,14 @@ func (t *TestSuite) PatchCustom(uri string, contentType string, reader io.Reader
 	return t.NewTestRequest(req)
 }
 
-// Issue a POST request to the given path, sending the given Content-Type and
-// data, and store the result in Response and ResponseBody.  "data" may be nil.
+// Post issues a POST request to the given path, sending the given Content-Type
+// and data, storing the result in Response and ResponseBody. "data" may be nil.
 func (t *TestSuite) Post(path string, contentType string, reader io.Reader) {
 	t.PostCustom(t.BaseUrl()+path, contentType, reader).Send()
 }
 
-// Return a POST request to the given uri with specified Content-Type and data
-// in a form of wrapper. "data" may be nil.
+// PostCustom returns a POST request to the given URI with specified
+// Content-Type and data in a form of wrapper. "data" may be nil.
 func (t *TestSuite) PostCustom(uri string, contentType string, reader io.Reader) *TestRequest {
 	req, err := http.NewRequest("POST", uri, reader)
 	if err != nil {
@@ -179,26 +184,26 @@ func (t *TestSuite) PostCustom(uri string, contentType string, reader io.Reader)
 	return t.NewTestRequest(req)
 }
 
-// Issue a POST request to the given path as a form post of the given key and
-// values, and store the result in Response and ResponseBody.
+// PostForm issues a POST request to the given path as a form post of the given
+// key and values, and stores the result in Response and ResponseBody.
 func (t *TestSuite) PostForm(path string, data url.Values) {
 	t.PostFormCustom(t.BaseUrl()+path, data).Send()
 }
 
-// Return a POST request to the given uri as a form post of the given key and values.
-// The request is in a form of TestRequest wrapper.
+// PostFormCustom returns a POST request to the given URI as a form post of the
+// given key and values. The request is in a form of TestRequest wrapper.
 func (t *TestSuite) PostFormCustom(uri string, data url.Values) *TestRequest {
 	return t.PostCustom(uri, "application/x-www-form-urlencoded", strings.NewReader(data.Encode()))
 }
 
-// Issue a multipart request to the given path sending given params and files,
-// and store the result in Response and ResponseBody.
+// PostFile issues a multipart request to the given path sending given params
+// and files, and stores the result in Response and ResponseBody.
 func (t *TestSuite) PostFile(path string, params url.Values, filePaths url.Values) {
 	t.PostFileCustom(t.BaseUrl()+path, params, filePaths).Send()
 }
 
-// Return a multipart request to the given uri in a form of its wrapper
-// with the given params and files.
+// PostFileCustom returns a multipart request to the given URI in a form of its
+// wrapper with the given params and files.
 func (t *TestSuite) PostFileCustom(uri string, params url.Values, filePaths url.Values) *TestRequest {
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
@@ -221,7 +226,7 @@ func (t *TestSuite) PostFileCustom(uri string, params url.Values, filePaths url.
 	return t.PostCustom(uri, writer.FormDataContentType(), body)
 }
 
-// Issue any request and read the response. If successful, the caller may
+// Send issues any request and reads the response. If successful, the caller may
 // examine the Response and ResponseBody properties. Session data will be
 // added to the request cookies for you.
 func (r *TestRequest) Send() {
@@ -229,8 +234,8 @@ func (r *TestRequest) Send() {
 	r.MakeRequest()
 }
 
-// Issue any request and read the response. If successful, the caller may
-// examine the Response and ResponseBody properties. You will need to
+// MakeRequest issues any request and read the response. If successful, the
+// caller may examine the Response and ResponseBody properties. You will need to
 // manage session / cookie data manually
 func (r *TestRequest) MakeRequest() {
 	var err error
@@ -251,7 +256,7 @@ func (r *TestRequest) MakeRequest() {
 	}
 }
 
-// Create a websocket connection to the given path and return the connection
+// WebSocket creates a websocket connection to the given path and returns it
 func (t *TestSuite) WebSocket(path string) *websocket.Conn {
 	origin := t.BaseUrl() + "/"
 	url := t.WebSocketUrl() + path
@@ -309,21 +314,21 @@ func (t *TestSuite) Assertf(exp bool, formatStr string, args ...interface{}) {
 	}
 }
 
-// Assert that the response contains the given string.
+// AssertContains asserts that the response contains the given string.
 func (t *TestSuite) AssertContains(s string) {
 	if !bytes.Contains(t.ResponseBody, []byte(s)) {
 		panic(fmt.Errorf("Assertion failed. Expected response to contain %s", s))
 	}
 }
 
-// Assert that the response does not contain the given string.
+// AssertNotContains asserts that the response does not contain the given string.
 func (t *TestSuite) AssertNotContains(s string) {
 	if bytes.Contains(t.ResponseBody, []byte(s)) {
 		panic(fmt.Errorf("Assertion failed. Expected response not to contain %s", s))
 	}
 }
 
-// Assert that the response matches the given regular expression.
+// AssertContainsRegex asserts that the response matches the given regular expression.
 func (t *TestSuite) AssertContainsRegex(regex string) {
 	r := regexp.MustCompile(regex)
 
@@ -338,7 +343,9 @@ func createFormFile(writer *multipart.Writer, fieldname, filename string) {
 	if err != nil {
 		panic(err)
 	}
-	defer file.Close()
+	defer func() {
+		_ = file.Close()
+	}()
 
 	// Create a new form-data header with the provided field name and file name.
 	// Determine Content-Type of the file by its extension.

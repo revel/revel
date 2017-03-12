@@ -1,3 +1,7 @@
+// Copyright (c) 2012-2016 The Revel Framework Authors, All rights reserved.
+// Revel Framework source code and usage is governed by a MIT style
+// license that can be found in the LICENSE file.
+
 package revel
 
 import (
@@ -26,7 +30,7 @@ func (c InterceptControllerP) methPN() Result  { return nil }
 func (c *InterceptControllerP) methPP() Result { return nil }
 
 // Methods accessible from InterceptControllerN
-var METHODS_N = []interface{}{
+var MethodN = []interface{}{
 	InterceptController.methN,
 	(*InterceptController).methP,
 	InterceptControllerN.methNN,
@@ -34,7 +38,7 @@ var METHODS_N = []interface{}{
 }
 
 // Methods accessible from InterceptControllerP
-var METHODS_P = []interface{}{
+var MethodP = []interface{}{
 	InterceptController.methN,
 	(*InterceptController).methP,
 	InterceptControllerP.methPN,
@@ -47,16 +51,16 @@ func TestInvokeArgType(t *testing.T) {
 	n := InterceptControllerN{InterceptController{&Controller{}}}
 	p := InterceptControllerP{&InterceptController{&Controller{}}}
 	np := InterceptControllerNP{&Controller{}, n, p}
-	testInterceptorController(t, reflect.ValueOf(&n), METHODS_N)
-	testInterceptorController(t, reflect.ValueOf(&p), METHODS_P)
-	testInterceptorController(t, reflect.ValueOf(&np), METHODS_N)
-	testInterceptorController(t, reflect.ValueOf(&np), METHODS_P)
+	testInterceptorController(t, reflect.ValueOf(&n), MethodN)
+	testInterceptorController(t, reflect.ValueOf(&p), MethodP)
+	testInterceptorController(t, reflect.ValueOf(&np), MethodN)
+	testInterceptorController(t, reflect.ValueOf(&np), MethodP)
 }
 
 func testInterceptorController(t *testing.T, appControllerPtr reflect.Value, methods []interface{}) {
 	interceptors = []*Interception{}
 	InterceptFunc(funcP, BEFORE, appControllerPtr.Elem().Interface())
-	InterceptFunc(funcP2, BEFORE, ALL_CONTROLLERS)
+	InterceptFunc(funcP2, BEFORE, AllControllers)
 	for _, m := range methods {
 		InterceptMethod(m, BEFORE)
 	}
@@ -76,6 +80,6 @@ func testInterceptorController(t *testing.T, appControllerPtr reflect.Value, met
 func testInterception(t *testing.T, intc *Interception, arg reflect.Value) {
 	val := intc.Invoke(arg)
 	if !val.IsNil() {
-		t.Errorf("Failed (%s): Expected nil got %v", intc, val)
+		t.Errorf("Failed (%v): Expected nil got %v", intc, val)
 	}
 }

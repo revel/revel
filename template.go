@@ -1,3 +1,7 @@
+// Copyright (c) 2012-2016 The Revel Framework Authors, All rights reserved.
+// Revel Framework source code and usage is governed by a MIT style
+// license that can be found in the LICENSE file.
+
 package revel
 
 import (
@@ -16,9 +20,10 @@ import (
 	"time"
 )
 
-var ERROR_CLASS = "hasError"
+// ErrorCSSClass httml CSS error class name
+var ErrorCSSClass = "hasError"
 
-// This object handles loading and parsing of templates.
+// TemplateLoader object handles loading and parsing of templates.
 // Everything below the application's views directory is treated as a template.
 type TemplateLoader struct {
 	// This is the set of all templates under views
@@ -43,9 +48,9 @@ var invalidSlugPattern = regexp.MustCompile(`[^a-z0-9 _-]`)
 var whiteSpacePattern = regexp.MustCompile(`\s+`)
 
 var (
-	// The functions available for use in the templates.
+	// TemplateFuncs is the collection of functions available in templates
 	TemplateFuncs = map[string]interface{}{
-		"url": ReverseUrl,
+		"url": ReverseURL,
 		"set": func(renderArgs map[string]interface{}, key string, value interface{}) template.JS {
 			renderArgs[key] = value
 			return template.JS("")
@@ -118,7 +123,7 @@ var (
 			if !ok || valError == nil {
 				return template.HTML("")
 			}
-			return template.HTML(ERROR_CLASS)
+			return template.HTML(ErrorCSSClass)
 		},
 
 		"msg": func(renderArgs map[string]interface{}, message string, args ...interface{}) template.HTML {
@@ -186,7 +191,7 @@ func NewTemplateLoader(paths []string) *TemplateLoader {
 	return loader
 }
 
-// This scans the views directory and parses all templates as Go Templates.
+// Refresh method scans the views directory and parses all templates as Go Templates.
 // If a template fails to parse, the error is set on the loader.
 // (It's awkward to refresh a single Go Template)
 func (loader *TemplateLoader) Refresh() *Error {
@@ -207,7 +212,7 @@ func (loader *TemplateLoader) Refresh() *Error {
 	}
 
 	// Walk through the template loader's paths and build up a template set.
-	var templateSet *template.Template = nil
+	var templateSet *template.Template
 	for _, basePath := range loader.paths {
 		// Walk only returns an error if the template loader is completely unusable
 		// (namely, if one of the TemplateFuncs does not have an acceptable signature).
@@ -265,7 +270,8 @@ func (loader *TemplateLoader) Refresh() *Error {
 
 				// Load the file if we haven't already
 				if fileStr == "" {
-					fileBytes, err := ioutil.ReadFile(path)
+					var fileBytes []byte
+					fileBytes, err = ioutil.ReadFile(path)
 					if err != nil {
 						ERROR.Println("Failed reading file:", path)
 						return nil
@@ -354,11 +360,15 @@ func (loader *TemplateLoader) Refresh() *Error {
 	return loader.compileError
 }
 
+// WatchDir returns true of directory doesn't start with . (dot)
+// otherwise false
 func (loader *TemplateLoader) WatchDir(info os.FileInfo) bool {
 	// Watch all directories, except the ones starting with a dot.
 	return !strings.HasPrefix(info.Name(), ".")
 }
 
+// WatchFile returns true of file doesn't start with . (dot)
+// otherwise false
 func (loader *TemplateLoader) WatchFile(basename string) bool {
 	// Watch all files, except the ones starting with a dot.
 	return !strings.HasPrefix(basename, ".")
@@ -384,7 +394,7 @@ func parseTemplateError(err error) (templateName string, line int, description s
 	return templateName, line, description
 }
 
-// Return the Template with the given name.  The name is the template's path
+// Template returns the Template with the given name.  The name is the template's path
 // relative to a template loader root.
 //
 // An Error is returned if there was any problem with any of the templates.  (In
@@ -411,13 +421,13 @@ func (loader *TemplateLoader) Template(name string) (Template, error) {
 	return GoTemplate{tmpl, loader}, err
 }
 
-// Adapter for Go Templates.
+// GoTemplate an adapter for Go Templates.
 type GoTemplate struct {
 	*template.Template
 	loader *TemplateLoader
 }
 
-// return a 'revel.Template' from Go's template.
+// Render returns a 'revel.Template' from Go's template.
 func (gotmpl GoTemplate) Render(wr io.Writer, arg interface{}) error {
 	return gotmpl.Execute(wr, arg)
 }
@@ -431,9 +441,9 @@ func (gotmpl GoTemplate) Content() []string {
 // Template functions
 /////////////////////
 
-// Return a url capable of invoking a given controller method:
+// ReverseURL returns a url capable of invoking a given controller method:
 // "Application.ShowApp 123" => "/app/123"
-func ReverseUrl(args ...interface{}) (template.URL, error) {
+func ReverseURL(args ...interface{}) (template.URL, error) {
 	if len(args) == 0 {
 		return "", fmt.Errorf("no arguments provided to reverse route")
 	}
@@ -464,7 +474,7 @@ func ReverseUrl(args ...interface{}) (template.URL, error) {
 		Unbind(argsByName, c.MethodType.Args[i].Name, argValue)
 	}
 
-	return template.URL(MainRouter.Reverse(args[0].(string), argsByName).Url), nil
+	return template.URL(MainRouter.Reverse(args[0].(string), argsByName).URL), nil
 }
 
 func Slug(text string) string {

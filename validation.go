@@ -1,3 +1,7 @@
+// Copyright (c) 2012-2016 The Revel Framework Authors, All rights reserved.
+// Revel Framework source code and usage is governed by a MIT style
+// license that can be found in the LICENSE file.
+
 package revel
 
 import (
@@ -8,7 +12,7 @@ import (
 	"runtime"
 )
 
-// Simple struct to store the Message & Key of a validation error
+// ValidationError simple struct to store the Message & Key of a validation error
 type ValidationError struct {
 	Message, Key string
 }
@@ -21,7 +25,7 @@ func (e *ValidationError) String() string {
 	return e.Message
 }
 
-// A Validation context manages data validation and error messages.
+// Validation context manages data validation and error messages.
 type Validation struct {
 	Errors []*ValidationError
 	keep   bool
@@ -70,7 +74,7 @@ func (v *Validation) Error(message string, args ...interface{}) *ValidationResul
 	return result
 }
 
-// A ValidationResult is returned from every validation method.
+// ValidationResult is returned from every validation method.
 // It provides an indication of success, and a pointer to the Error (if any).
 type ValidationResult struct {
 	Error *ValidationError
@@ -165,7 +169,7 @@ func (v *Validation) apply(chk Validator, obj interface{}) *ValidationResult {
 	}
 }
 
-// Apply a group of validators to a field, in order, and return the
+// Check applies a group of validators to a field, in order, and return the
 // ValidationResult from the first one that fails, or the last one that
 // succeeds.
 func (v *Validation) Check(obj interface{}, checks ...Validator) *ValidationResult {
@@ -179,7 +183,7 @@ func (v *Validation) Check(obj interface{}, checks ...Validator) *ValidationResu
 	return result
 }
 
-// Revel Filter function to be hooked into the filter chain.
+// ValidationFilter revel Filter function to be hooked into the filter chain.
 func ValidationFilter(c *Controller, fc []Filter) {
 	errors, err := restoreValidationErrors(c.Request.Request)
 	c.Validation = &Validation{
@@ -190,8 +194,8 @@ func ValidationFilter(c *Controller, fc []Filter) {
 
 	fc[0](c, fc[1:])
 
-	// Add Validation errors to RenderArgs.
-	c.RenderArgs["errors"] = c.Validation.ErrorMap()
+	// Add Validation errors to ViewArgs.
+	c.ViewArgs["errors"] = c.Validation.ErrorMap()
 
 	// Store the Validation errors
 	var errorsValue string
@@ -245,7 +249,7 @@ func restoreValidationErrors(req *http.Request) ([]*ValidationError, error) {
 	return errors, err
 }
 
-// Register default validation keys for all calls to Controller.Validation.Func().
+// DefaultValidationKeys register default validation keys for all calls to Controller.Validation.Func().
 // Map from (package).func => (line => name of first arg to Validation func)
 // E.g. "myapp/controllers.helper" or "myapp/controllers.(*Application).Action"
 // This is set on initialization in the generated main.go file.

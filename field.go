@@ -1,3 +1,7 @@
+// Copyright (c) 2012-2016 The Revel Framework Authors, All rights reserved.
+// Revel Framework source code and usage is governed by a MIT style
+// license that can be found in the LICENSE file.
+
 package revel
 
 import (
@@ -21,8 +25,8 @@ func NewField(name string, renderArgs map[string]interface{}) *Field {
 	}
 }
 
-// Id returns an identifier suitable for use as an HTML id.
-func (f *Field) Id() string {
+// ID returns an identifier suitable for use as an HTML id.
+func (f *Field) ID() string {
 	return strings.Replace(f.Name, ".", "_", -1)
 }
 
@@ -63,14 +67,13 @@ func (f *Field) Value() interface{} {
 	return val.Interface()
 }
 
-// ErrorClass returns ERROR_CLASS if this field has a validation error, else empty string.
+// ErrorClass returns ErrorCSSClass if this field has a validation error, else empty string.
 func (f *Field) ErrorClass() string {
 	if f.Error != nil {
 		if errorClass, ok := f.renderArgs["ERROR_CLASS"]; ok {
 			return errorClass.(string)
-		} else {
-			return ERROR_CLASS
 		}
+		return ErrorCSSClass
 	}
 	return ""
 }
