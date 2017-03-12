@@ -95,6 +95,11 @@ func InitServer() http.HandlerFunc {
 
 	// Load templates
 	MainTemplateLoader = NewTemplateLoader(TemplatePaths)
+    // Initialize the template engines
+    if err:=MainTemplateLoader.InitializeEngines(Config.StringDefault(REVEL_TEMPLATE_ENGINES, GO_TEMPLATE)); err!=nil {
+        ERROR.Println(err)
+    }
+
 	if err := MainTemplateLoader.Refresh(); err != nil {
 		ERROR.Println(err)
 	}

@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 )
+const GO_TEMPLATE = "go"
 
 var (
 	// The functions available for use in the templates.
@@ -152,6 +153,7 @@ var (
 type GoTemplate struct {
 	*template.Template
 	engine *GoEngine
+    *BaseTemplate
 }
 
 // return a 'revel.Template' from Go's template.
@@ -168,20 +170,20 @@ type GoEngine struct {
 	loader      *TemplateLoader
 	templateSet *template.Template
 	// TemplatesBylowerName is a map from lower case template name to the real template.
-	templatesBylowerName map[string]*template.Template
+	templatesBylowerName map[string]*GoTemplate
 	splitDelims          []string
 }
 
-func (engine *GoEngine) ParseAndAdd(templateName string, templateSource string, basePath string) *Error {
+func (engine *GoEngine) ParseAndAdd(templateName string, templateSourceBytes []byte, basePath *BaseTemplate) error {
 	// If alternate delimiters set for the project, change them for this set
-	if engine.splitDelims != nil && basePath == ViewsPath {
+	if engine.splitDelims != nil && basePath.Location() == ViewsPath {
 		engine.templateSet.Delims(engine.splitDelims[0], engine.splitDelims[1])
 	} else {
 		// Reset to default otherwise
 		engine.templateSet.Delims("", "")
 	}
-
-	tmpl, err := engine.templateSet.New(templateName).Parse(templateSource)
+    templateSource:=string(templateSourceBytes)
+	tpl, err := engine.templateSet.New(templateName).Parse(templateSource)
 	if nil != err {
 		_, line, description := parseTemplateError(err)
 		return &Error{
@@ -192,21 +194,22 @@ func (engine *GoEngine) ParseAndAdd(templateName string, templateSource string, 
 			SourceLines: strings.Split(templateSource, "\n"),
 		}
 	}
-	engine.templatesBylowerName[strings.ToLower(templateName)] = tmpl
+	engine.templatesBylowerName[strings.ToLower(templateName)] = &GoTemplate{Template:tpl, engine:engine,BaseTemplate:basePath}
 	return nil
 }
 
 func (engine *GoEngine) Lookup(templateName string) Template {
 	// Case-insensitive matching of template file name
-	tpl := engine.templatesBylowerName[strings.ToLower(templateName)]
-	if nil == tpl {
-		return nil
-	}
-	return GoTemplate{tpl, engine}
+	if tpl ,found := engine.templatesBylowerName[strings.ToLower(templateName)];found {
+        return tpl
+    }
+	return nil
 }
-
+func (engine *GoEngine) Name() string {
+    return GO_TEMPLATE
+}
 func init() {
-	TemplateEngines[GO_TEMPLATE] = func(loader *TemplateLoader) (TemplateEngine, error) {
+	RegisterTemplateLoader(GO_TEMPLATE, func(loader *TemplateLoader) (TemplateEngine, error) {
 		// Set the template delimiters for the project if present, then split into left
 		// and right delimiters around a space character
 
@@ -222,8 +225,8 @@ func init() {
 		return &GoEngine{
 			loader:               loader,
 			templateSet:          template.New("__root__").Funcs(TemplateFuncs),
-			templatesBylowerName: map[string]*template.Template{},
+			templatesBylowerName: map[string]*GoTemplate{},
 			splitDelims:          splitDelims,
 		}, nil
-	}
+	})
 }

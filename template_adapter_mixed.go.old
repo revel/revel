@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	revConfig "github.com/revel/config"
-	robfigConfig "github.com/robfig/config"
 )
 
 var RevelModules = []string{"github.com/revel/modules/"}
@@ -42,7 +41,7 @@ func (engine *MixedEngine) templateEngineNameFrom(templateName, basePath string)
 	// If empty string is passed as the mode, treat it as "DEFAULT"
 	mode := RunMode
 	if mode == "" {
-		mode = robfigConfig.DEFAULT_SECTION
+		mode = revConfig.DefaultSection
 	}
 	if !config.HasSection(mode) {
 		return "", &Error{
