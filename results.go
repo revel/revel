@@ -29,7 +29,7 @@ type Result interface {
 // It renders the relevant error page (errors/CODE.format, e.g. errors/500.json).
 // If RunMode is "dev", this results in a friendly error page.
 type ErrorResult struct {
-	RenderArgs map[string]interface{}
+	ViewArgs map[string]interface{}
 	Error      error
 }
 
@@ -82,16 +82,16 @@ func (r ErrorResult) Apply(req *Request, resp *Response) {
 		panic("no error provided")
 	}
 
-	if r.RenderArgs == nil {
-		r.RenderArgs = make(map[string]interface{})
+	if r.ViewArgs == nil {
+		r.ViewArgs = make(map[string]interface{})
 	}
-	r.RenderArgs["RunMode"] = RunMode
-	r.RenderArgs["Error"] = revelError
-	r.RenderArgs["Router"] = MainRouter
+	r.ViewArgs["RunMode"] = RunMode
+	r.ViewArgs["Error"] = revelError
+	r.ViewArgs["Router"] = MainRouter
 
 	// Render it.
 	var b bytes.Buffer
-	err = tmpl.Render(&b, r.RenderArgs)
+	err = tmpl.Render(&b, r.ViewArgs)
 
 	// If there was an error, print it in plain text.
 	if err != nil {
@@ -130,7 +130,7 @@ func (r PlaintextErrorResult) Apply(req *Request, resp *Response) {
 // a template be rendered.
 type RenderTemplateResult struct {
 	Template   Template
-	RenderArgs map[string]interface{}
+	ViewArgs map[string]interface{}
 }
 
 func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
@@ -225,7 +225,7 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
 }
 
 func (r *RenderTemplateResult) render(req *Request, resp *Response, wr io.Writer) {
-	err := r.Template.Render(wr, r.RenderArgs)
+	err := r.Template.Render(wr, r.ViewArgs)
 	if err == nil {
 		return
 	}
@@ -249,7 +249,7 @@ func (r *RenderTemplateResult) render(req *Request, resp *Response, wr io.Writer
 	}
 	resp.Status = 500
 	ERROR.Printf("Template Execution Error (in %s): %s", templateName, description)
-	ErrorResult{r.RenderArgs, compileError}.Apply(req, resp)
+	ErrorResult{r.ViewArgs, compileError}.Apply(req, resp)
 }
 
 type RenderHTMLResult struct {
