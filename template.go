@@ -5,9 +5,6 @@
 package revel
 
 import (
-	"bufio"
-	"bytes"
-	"errors"
 	"fmt"
 	"html/template"
 	"io"
@@ -19,9 +16,12 @@ import (
 	"strings"
 )
 
-var ErrorCSSClass = "hasError"
-
-var default_template_engine_name = GO_TEMPLATE
+var (
+    ErrorCSSClass = "hasError"
+    TEMPLATE_REFRESH="template_refresh"
+    TEMPLATE_REFRESH_COMPLETE="template_refresh_complete"
+    default_template_engine_name = GO_TEMPLATE
+)
 
 // TemplateLoader object handles loading and parsing of templates.
 // Everything below the application's views directory is treated as a template.
@@ -36,21 +36,6 @@ type TemplateLoader struct {
 	TemplatePaths map[string]string
 }
 
-var templateLoaderMap = map[string]func(loader *TemplateLoader) (TemplateEngine, error){}
-
-type TemplateEngine interface {
-	// #ParseAndAdd: prase template string and add template to the set.
-	//   arg: templateName string
-	//   arg: templateSource *string
-	//   arg: basePath string - where templates are located
-	ParseAndAdd(templateName string, templateSource []byte, basePath *BaseTemplate) error
-
-	// #Lookup: returns Template corresponding to the given templateName
-	//   arg: templateSet *abstractTemplateSet
-	//   arg: templateName string
-	Lookup(templateName string) Template
-	Name() string
-}
 
 type TemplateWatcher interface {
 	WatchDir(info os.FileInfo) bool
@@ -71,74 +56,28 @@ func NewTemplateLoader(paths []string) *TemplateLoader {
 	loader := &TemplateLoader{
 		paths: paths,
 	}
-    return loader
+	return loader
 }
 
-// Allow for templates to be registered during init but not initialized until application has been started
-func RegisterTemplateLoader(key string, loader func(loader *TemplateLoader) (TemplateEngine, error)) (err error) {
-	if _, found := templateLoaderMap[key]; found {
-		err = fmt.Errorf("Template loader %s already exists", key)
-	}
-	templateLoaderMap[key] = loader
-	return
-}
-// Sets the template name from Config
-// Sets the template API methods for parsing and storing templates before rendering
-func (loader *TemplateLoader) CreateTemplateEngine(templateEngineName string) (TemplateEngine, error) {
-	if "" == templateEngineName {
-		templateEngineName = default_template_engine_name
-	}
-	factory := templateLoaderMap[templateEngineName]
-	if nil == factory {
-        fmt.Printf("registered factories %#v\n %s \n",templateLoaderMap,templateEngineName)
-        panic("Run to here")
-		return nil, errors.New("Unknown template engine name - " + templateEngineName + ".")
-	}
-	templateEngine, err := factory(loader)
-	if nil != err {
-		return nil, errors.New("Failed to init template engine (" + templateEngineName + "), " + err.Error())
-	}
-
-	INFO.Println("init templates:", templateEngineName)
-	return templateEngine, nil
-}
-
-// Passing in a comma delimited list of engine names to be used with this loader to parse the template files
-func (loader *TemplateLoader) InitializeEngines(templateEngineNameList string) (err *Error) {
-	// Walk through the template loader's paths and build up a template set.
-	if templateEngineNameList=="" {
-        templateEngineNameList = GO_TEMPLATE
-
-    }
-	loader.templatesAndEngineList = []TemplateEngine{}
-	for _, engine := range strings.Split(templateEngineNameList, ",") {
-		engine := strings.TrimSpace(strings.ToLower(engine))
-
-		if templateLoader, err := loader.CreateTemplateEngine(engine); err != nil {
-			loader.compileError = &Error{
-				Title:       "Panic (Template Loader)",
-				Description: err.Error(),
-			}
-			return loader.compileError
-		} else {
-			// Always assign a default engine, switch it if it is specified in the config
-			loader.templatesAndEngineList = append(loader.templatesAndEngineList,templateLoader)
-		}
-	}
-    return
-}
 
 // Refresh method scans the views directory and parses all templates as Go Templates.
 // If a template fails to parse, the error is set on the loader.
 // (It's awkward to refresh a single Go Template)
 func (loader *TemplateLoader) Refresh() (err *Error) {
 	TRACE.Printf("Refreshing templates from %s", loader.paths)
-    if len(loader.templatesAndEngineList)==0 {
-        if 	err =loader.InitializeEngines(GO_TEMPLATE);err!=nil {
-            return
-        }
+	if len(loader.templatesAndEngineList) == 0 {
+		if err = loader.InitializeEngines(GO_TEMPLATE); err != nil {
+			return
+		}
+	}
+    for _,engine:= range loader.templatesAndEngineList {
+        engine.Event(TEMPLATE_REFRESH,nil)
     }
-
+    defer func() {
+        for _,engine:= range loader.templatesAndEngineList {
+            engine.Event(TEMPLATE_REFRESH_COMPLETE,nil)
+        }
+    }()
 	// Resort the paths, make sure the revel path is the last path,
 	// so anything can override it
 	revelTemplatePath := filepath.Join(RevelPath, "templates")
@@ -152,7 +91,6 @@ func (loader *TemplateLoader) Refresh() (err *Error) {
 
 	loader.compileError = nil
 	loader.TemplatePaths = map[string]string{}
-
 
 	for _, basePath := range loader.paths {
 		// Walk only returns an error if the template loader is completely unusable
@@ -196,7 +134,7 @@ func (loader *TemplateLoader) Refresh() (err *Error) {
 			if err != nil && loader.compileError == nil {
 				loader.compileError, _ = err.(*Error)
 				if nil == loader.compileError {
-					_, line, description := parseTemplateError(err)
+					_, line, description := ParseTemplateError(err)
 					loader.compileError = &Error{
 						Title:       "Template Compilation Error",
 						Path:        path,
@@ -241,7 +179,7 @@ func (loader *TemplateLoader) Refresh() (err *Error) {
 
 // WatchDir returns true of directory doesn't start with . (dot)
 // otherwise false
-func (loader *TemplateLoader) findAndAddTemplate(path, fullSrcDir, basePath string) (fileBytes []byte,err error) {
+func (loader *TemplateLoader) findAndAddTemplate(path, fullSrcDir, basePath string) (fileBytes []byte, err error) {
 	templateName := filepath.ToSlash(path[len(fullSrcDir)+1:])
 	// Convert template names to use forward slashes, even on Windows.
 	if os.PathSeparator == '\\' {
@@ -261,40 +199,31 @@ func (loader *TemplateLoader) findAndAddTemplate(path, fullSrcDir, basePath stri
 		return
 	}
 	// if we have an engine picked for this template process it now
-	baseTemplate := &BaseTemplate{location: basePath}
-	// Sniff the first line of the file, if it has a shebang read it and use it to determine the template
-	if line, _, e := bufio.NewReader(bytes.NewBuffer(fileBytes)).ReadLine(); e == nil && string(line[:2]) == "#! " {
-		// Advance the read file bytes so it does not include the shebang
-		fileBytes = fileBytes[:len(line)]
-		// Extract the shebang and look at the rest of the line
-		// #! pong2
-		// #! go
-		templateType := strings.TrimSpace(string(line[2:]))
-        for _,engine := range loader.templatesAndEngineList {
-            if engine.Name()==templateType {
-                _, err = loader.loadIntoEngine(engine, templateName, path, baseTemplate, fileBytes)
-                return
-            }
-        }
-        return fileBytes, fmt.Errorf("Template specified type %s but it is not loaded %s",templateType,path)
-	}
-    // Try all engines available
-    var defaultError error
+	baseTemplate := NewBaseTemplate(templateName,path,basePath,fileBytes)
+
+    // Try to find a default engine for the file
     for _, engine := range loader.templatesAndEngineList {
-        if loaded, loaderr := loader.loadIntoEngine(engine, templateName, path, baseTemplate, fileBytes); loaded {
-            TRACE.Printf("Engine '%s' compiled %s", engine.Name(), path)
-            loader.TemplatePaths[templateName] = path
+        if engine.IsEngineFor(engine,baseTemplate) {
+            _, err = loader.loadIntoEngine(engine, baseTemplate)
             return
-        }  else {
-            TRACE.Printf("Engine '%s' unable to compile %s %s", engine.Name(), path,loaderr)
-            if defaultError==nil {
-                defaultError = loaderr
-            }
         }
     }
 
-    // Assign the error from the first parser
-    err = defaultError
+	// Try all engines available
+	var defaultError error
+	for _, engine := range loader.templatesAndEngineList {
+		if loaded, loaderr := loader.loadIntoEngine(engine,  baseTemplate); loaded {
+			return
+		} else {
+			TRACE.Printf("Engine '%s' unable to compile %s %s", engine.Name(), path, loaderr)
+			if defaultError == nil {
+				defaultError = loaderr
+			}
+		}
+	}
+
+	// Assign the error from the first parser
+	err = defaultError
 
 	// No engines could be found return the err
 	if err != nil {
@@ -304,18 +233,20 @@ func (loader *TemplateLoader) findAndAddTemplate(path, fullSrcDir, basePath stri
 	return
 }
 
-func (loader *TemplateLoader) loadIntoEngine(engine TemplateEngine, templateName, path string, baseTemplate *BaseTemplate, fileBytes []byte) (loaded bool, err error) {
-	if template := engine.Lookup(templateName); template != nil {
+func (loader *TemplateLoader) loadIntoEngine(engine TemplateEngine, baseTemplate *BaseTemplate) (loaded bool, err error) {
+	if template := engine.Lookup(baseTemplate.TemplateName); template != nil {
 		// Duplicate template found for engine
-		TRACE.Println("template is already exists: ", templateName, "\r\n\told file:",
-			loader.TemplatePaths[templateName], "\r\n\tnew file:", path)
+		TRACE.Println("template already exists: ", baseTemplate.TemplateName, " in engine ", engine.Name(), "\r\n\told file:",
+			template.Location(), "\r\n\tnew file:", baseTemplate.FilePath)
 		loaded = true
+        return
 	}
-	if err = engine.ParseAndAdd(templateName, fileBytes, baseTemplate); err == nil {
-		loader.TemplatePaths[templateName] = path
+	if err = engine.ParseAndAdd(baseTemplate); err == nil {
+		loader.TemplatePaths[baseTemplate.TemplateName] = baseTemplate.FilePath
+        TRACE.Printf("Engine '%s' compiled %s", engine.Name(), baseTemplate.FilePath)
 		loaded = true
 	} else {
-		TRACE.Printf("Engine '%s' failed to compile %s %s", engine.Name(), path, err)
+		TRACE.Printf("Engine '%s' failed to compile %s %s", engine.Name(), baseTemplate.FilePath, err)
 	}
 	return
 }
@@ -333,7 +264,7 @@ func (loader *TemplateLoader) WatchFile(basename string) bool {
 
 // Parse the line, and description from an error message like:
 // html/template:Application/Register.html:36: no such template "footer.html"
-func parseTemplateError(err error) (templateName string, line int, description string) {
+func ParseTemplateError(err error) (templateName string, line int, description string) {
 	if e, ok := err.(*Error); ok {
 		return "", e.Line, e.Description
 	}
@@ -380,11 +311,22 @@ func (loader *TemplateLoader) Template(name string) (tmpl Template, err error) {
 }
 
 type BaseTemplate struct {
-	location string
+    TemplateName string
+    FilePath string
+    BasePath string
+    FileBytes []byte
+    EngineType string
 }
 
 func (i *BaseTemplate) Location() string {
-	return i.location
+	return i.FilePath
+}
+// Called by the template loader after engine successfully parses file
+func (i *BaseTemplate) Free() {
+	i.FileBytes = nil
+}
+func NewBaseTemplate(templateName, filePath, basePath string, fileBytes []byte) *BaseTemplate {
+    return &BaseTemplate{TemplateName:templateName,FilePath:filePath,FileBytes:fileBytes,BasePath:basePath}
 }
 
 /////////////////////

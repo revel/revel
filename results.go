@@ -232,7 +232,7 @@ func (r *RenderTemplateResult) render(req *Request, resp *Response, wr io.Writer
 	compileError, ok := err.(*Error)
 	if !ok || nil == compileError {
 		var templateContent []string
-		templateName, line, description := parseTemplateError(err)
+		templateName, line, description := ParseTemplateError(err)
 		if templateName == "" {
 			templateName = r.Template.Name()
 			templateContent = r.Template.Content()
