@@ -28,6 +28,7 @@ before_install:
   - 'if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update && brew install memcached redis; fi'
   - 'if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then nohup /usr/local/opt/memcached/bin/memcached & fi'
   - 'if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then nohup redis-server /usr/local/etc/redis.conf & fi'
+  - redis-cli info
 
 install:
   # Setting environments variables
