@@ -16,6 +16,7 @@ import (
 
 	"github.com/agtorre/gocolorize"
 	"github.com/revel/config"
+	"net/http"
 )
 
 const (
@@ -204,7 +205,7 @@ func Init(mode, importPath, srcPath string) {
 	AppRoot = Config.StringDefault("app.root", "")
 	CookiePrefix = Config.StringDefault("cookie.prefix", "REVEL")
 	CookieDomain = Config.StringDefault("cookie.domain", "")
-	CookieSecure = Config.BoolDefault("cookie.secure", !DevMode)
+	CookieSecure = Config.BoolDefault("cookie.secure", HTTPSsl)
 	TemplateDelims = Config.StringDefault("template.delimiters", "")
 	if secretStr := Config.StringDefault("app.secret", ""); secretStr != "" {
 		secretKey = []byte(secretStr)
