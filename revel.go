@@ -16,7 +16,6 @@ import (
 
 	"github.com/agtorre/gocolorize"
 	"github.com/revel/config"
-	"net/http"
 )
 
 const (
