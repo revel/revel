@@ -26,9 +26,9 @@ services:
 before_install:
   # TRAVIS_OS_NAME - linux and osx
   - echo $TRAVIS_OS_NAME
-  - 'if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update && brew install memcached redis && brew services start redis; fi'
-  - 'if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then nohup /usr/local/opt/memcached/bin/memcached & fi'
-  - 'if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then nohup redis-server /usr/local/etc/redis.conf & fi'
+  - 'if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update && brew install memcached redis && brew services start redis && brew services start memcached; fi'
+  #- 'if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then nohup /usr/local/opt/memcached/bin/memcached & fi'
+  #- 'if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then nohup redis-server /usr/local/etc/redis.conf & fi'
   - 'if [[ "$TRAVIS_OS_NAME" != "osx" ]]; then sudo start redis-server & fi'
   - redis-cli info
 
