@@ -31,6 +31,7 @@ before_install:
   #- 'if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then nohup /usr/local/opt/memcached/bin/memcached & fi'
   #- 'if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then nohup redis-server /usr/local/etc/redis.conf & fi'
 #  - 'if [[ "$TRAVIS_OS_NAME" != "osx" ]]; then sudo start redis-server & fi'
+  - redis-server --daemonize yes
   - redis-cli info
 
 install:
