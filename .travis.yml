@@ -1,6 +1,7 @@
 language: go
 
 go:
+  - 1.4
   - 1.5
   - 1.6
   - 1.7
@@ -26,11 +27,10 @@ services:
 before_install:
   # TRAVIS_OS_NAME - linux and osx
   - echo $TRAVIS_OS_NAME
-  - 'if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update && brew install memcached redis && brew services start redis && brew services start memcached; fi'
-#  - 'if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew services start redis-server && brew services start memcached; fi'
-  #- 'if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then nohup /usr/local/opt/memcached/bin/memcached & fi'
-  #- 'if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then nohup redis-server /usr/local/etc/redis.conf & fi'
-#  - 'if [[ "$TRAVIS_OS_NAME" != "osx" ]]; then sudo start redis-server & fi'
+  - |
+    if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+      brew update && brew install memcached redis && brew services start redis && brew services start memcached
+    fi
   - redis-server --daemonize yes
   - redis-cli info
 
