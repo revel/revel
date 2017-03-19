@@ -1,3 +1,7 @@
+// Copyright (c) 2012-2016 The Revel Framework Authors, All rights reserved.
+// Revel Framework source code and usage is governed by a MIT style
+// license that can be found in the LICENSE file.
+
 package revel
 
 import (
@@ -13,6 +17,8 @@ import (
 	"time"
 )
 
+// Controller Revel's controller structure that gets embedded in user defined
+// controllers
 type Controller struct {
 	Name          string          // The controller name, e.g. "Application"
 	Type          *ControllerType // A description of the controller type.
@@ -20,6 +26,7 @@ type Controller struct {
 	MethodType    *MethodType     // A description of the invoked action type.
 	AppController interface{}     // The controller that was instantiated.
 	Action        string          // The fully qualified action name, e.g. "App.Index"
+	ClientIP      string          // holds IP address of request came from
 
 	Request  *Request
 	Response *Response
@@ -33,6 +40,7 @@ type Controller struct {
 	Validation *Validation            // Data validation helpers
 }
 
+// NewController returns new controller instance for Request and Response
 func NewController(req *Request, resp *Response) *Controller {
 	return &Controller{
 		Request:  req,
@@ -110,7 +118,7 @@ func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
 	return c.RenderTemplate(c.Name + "/" + c.MethodType.Name + "." + c.Request.Format)
 }
 
-// A less magical way to render a template.
+// RenderTemplate method does less magical way to render a template.
 // Renders the given template, using the current RenderArgs.
 func (c *Controller) RenderTemplate(templatePath string) Result {
 	c.setStatusIfNil(http.StatusOK)
@@ -127,28 +135,28 @@ func (c *Controller) RenderTemplate(templatePath string) Result {
 	}
 }
 
-// Uses encoding/json.Marshal to return JSON to the client.
-func (c *Controller) RenderJson(o interface{}) Result {
+// RenderJSON uses encoding/json.Marshal to return JSON to the client.
+func (c *Controller) RenderJSON(o interface{}) Result {
 	c.setStatusIfNil(http.StatusOK)
 
-	return RenderJsonResult{o, ""}
+	return RenderJSONResult{o, ""}
 }
 
-// Renders a JSONP result using encoding/json.Marshal
-func (c *Controller) RenderJsonP(callback string, o interface{}) Result {
+// RenderJSONP renders JSONP result using encoding/json.Marshal
+func (c *Controller) RenderJSONP(callback string, o interface{}) Result {
 	c.setStatusIfNil(http.StatusOK)
 
-	return RenderJsonResult{o, callback}
+	return RenderJSONResult{o, callback}
 }
 
-// Uses encoding/xml.Marshal to return XML to the client.
-func (c *Controller) RenderXml(o interface{}) Result {
+// RenderXML uses encoding/xml.Marshal to return XML to the client.
+func (c *Controller) RenderXML(o interface{}) Result {
 	c.setStatusIfNil(http.StatusOK)
 
-	return RenderXmlResult{o}
+	return RenderXMLResult{o}
 }
 
-// Render plaintext in response, printf style.
+// RenderText renders plaintext in response, printf style.
 func (c *Controller) RenderText(text string, objs ...interface{}) Result {
 	c.setStatusIfNil(http.StatusOK)
 
@@ -159,11 +167,11 @@ func (c *Controller) RenderText(text string, objs ...interface{}) Result {
 	return &RenderTextResult{finalText}
 }
 
-// Render html in response
-func (c *Controller) RenderHtml(html string) Result {
+// RenderHTML renders html in response
+func (c *Controller) RenderHTML(html string) Result {
 	c.setStatusIfNil(http.StatusOK)
 
-	return &RenderHtmlResult{html}
+	return &RenderHTMLResult{html}
 }
 
 // Todo returns an HTTP 501 Not Implemented "todo" indicating that the
@@ -248,15 +256,15 @@ func (c *Controller) Redirect(val interface{}, args ...interface{}) Result {
 
 	if url, ok := val.(string); ok {
 		if len(args) == 0 {
-			return &RedirectToUrlResult{url}
+			return &RedirectToURLResult{url}
 		}
-		return &RedirectToUrlResult{fmt.Sprintf(url, args...)}
+		return &RedirectToURLResult{fmt.Sprintf(url, args...)}
 	}
 	return &RedirectToActionResult{val}
 }
 
-// Perform a message lookup for the given message name using the given arguments
-// using the current language defined for this controller.
+// Message performs a lookup for the given message name using the given
+// arguments using the current language defined for this controller.
 //
 // The current language is set by the i18n plugin.
 func (c *Controller) Message(message string, args ...interface{}) (value string) {
@@ -322,6 +330,12 @@ func findControllers(appControllerType reflect.Type) (indexes [][]int) {
 		}
 		queue = queue[1:]
 
+		// #944 if the type's Kind is not `Struct` move on,
+		// otherwise `elem.NumField()` will panic
+		if elemType.Kind() != reflect.Struct {
+			continue
+		}
+
 		// Look at all the struct fields.
 		for i := 0; i < elem.NumField(); i++ {
 			// If this is not an anonymous field, skip it.
@@ -379,12 +393,12 @@ func (ct *ControllerType) Method(name string) *MethodType {
 
 var controllers = make(map[string]*ControllerType)
 
-// Register a Controller and its Methods with Revel.
+// RegisterController registers a Controller and its Methods with Revel.
 func RegisterController(c interface{}, methods []*MethodType) {
 	// De-star the controller type
 	// (e.g. given TypeOf((*Application)(nil)), want TypeOf(Application))
-	var t reflect.Type = reflect.TypeOf(c)
-	var elem reflect.Type = t.Elem()
+	t := reflect.TypeOf(c)
+	elem := t.Elem()
 
 	// De-star all of the method arg types too.
 	for _, m := range methods {

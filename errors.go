@@ -1,3 +1,7 @@
+// Copyright (c) 2012-2016 The Revel Framework Authors, All rights reserved.
+// Revel Framework source code and usage is governed by a MIT style
+// license that can be found in the LICENSE file.
+
 package revel
 
 import (
@@ -19,8 +23,8 @@ type Error struct {
 	Link                     string   // A configurable link to wrap the error source in
 }
 
-// An object to hold the per-source-line details.
-type sourceLine struct {
+// SourceLine structure to hold the per-source-line details.
+type SourceLine struct {
 	Source  string
 	Line    int
 	IsError bool
@@ -32,7 +36,7 @@ type sourceLine struct {
 func NewErrorFromPanic(err interface{}) *Error {
 
 	// Parse the filename and line from the originating line of app code.
-	// /Users/robfig/code/gocode/src/revel/samples/booking/app/controllers/hotels.go:191 (0x44735)
+	// /Users/robfig/code/gocode/src/revel/examples/booking/app/controllers/hotels.go:191 (0x44735)
 	stack := string(debug.Stack())
 	frame, basePath := findRelevantStackFrame(stack)
 	if frame == -1 {
@@ -86,7 +90,7 @@ func (e *Error) Error() string {
 
 // ContextSource method returns a snippet of the source around
 // where the error occurred.
-func (e *Error) ContextSource() []sourceLine {
+func (e *Error) ContextSource() []SourceLine {
 	if e.SourceLines == nil {
 		return nil
 	}
@@ -99,10 +103,10 @@ func (e *Error) ContextSource() []sourceLine {
 		end = len(e.SourceLines)
 	}
 
-	var lines []sourceLine = make([]sourceLine, end-start)
+	lines := make([]SourceLine, end-start)
 	for i, src := range e.SourceLines[start:end] {
 		fileLine := start + i + 1
-		lines[i] = sourceLine{src, fileLine, fileLine == e.Line}
+		lines[i] = SourceLine{src, fileLine, fileLine == e.Line}
 	}
 	return lines
 }
@@ -118,8 +122,25 @@ func (e *Error) SetLink(errorLink string) {
 // Return the character index of the first relevant stack frame, or -1 if none were found.
 // Additionally it returns the base path of the tree in which the identified code resides.
 func findRelevantStackFrame(stack string) (int, string) {
-	if frame := strings.Index(stack, filepath.ToSlash(BasePath)); frame != -1 {
-		return frame, BasePath
+	// Find first item in SourcePath that isn't in RevelPath.
+	// If first item is in RevelPath, keep track of position, trim and check again.
+	partialStack := stack
+	sourcePath := filepath.ToSlash(SourcePath)
+	revelPath := filepath.ToSlash(RevelPath)
+	sumFrame := 0
+	for {
+		frame := strings.Index(partialStack, sourcePath)
+		revelFrame := strings.Index(partialStack, revelPath)
+
+		if frame == -1 {
+			break
+		} else if frame != revelFrame {
+			return sumFrame + frame, SourcePath
+		} else {
+			// Need to at least trim off the first character so this frame isn't caught again.
+			partialStack = partialStack[frame + 1:]
+			sumFrame += frame + 1
+		}
 	}
 	for _, module := range Modules {
 		if frame := strings.Index(stack, filepath.ToSlash(module.Path)); frame != -1 {

@@ -4,6 +4,8 @@ go:
   - 1.4
   - 1.5
   - 1.6
+  - 1.7
+  - 1.8
   - tip
 
 os:
@@ -12,6 +14,11 @@ os:
 
 sudo: false
 
+branches:
+  only:
+    - master
+    - develop
+
 services:
   # github.com/revel/revel/cache
   - memcache
@@ -19,9 +26,13 @@ services:
 
 before_install:
   # TRAVIS_OS_NAME - linux and osx
-  - 'if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update && brew install memcached redis; fi'
-  - 'if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then nohup /usr/local/opt/memcached/bin/memcached & fi'
-  - 'if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then nohup redis-server /usr/local/etc/redis.conf & fi'
+  - echo $TRAVIS_OS_NAME
+  - |
+    if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+      brew update && brew install memcached redis && brew services start redis && brew services start memcached
+    fi
+  - redis-server --daemonize yes
+  - redis-cli info
 
 install:
   # Setting environments variables
@@ -29,17 +40,16 @@ install:
   - export REVEL_BRANCH="develop"
   - 'if [[ "$TRAVIS_BRANCH" == "master" ]]; then export REVEL_BRANCH="master"; fi'
   - 'echo "Travis branch: $TRAVIS_BRANCH, Revel dependency branch: $REVEL_BRANCH"'
-  - go get -v github.com/revel/revel/...
-  - rm -rf ../config
   - git clone -b $REVEL_BRANCH git://github.com/revel/modules ../modules/
   - git clone -b $REVEL_BRANCH git://github.com/revel/cmd ../cmd/
   - git clone -b $REVEL_BRANCH git://github.com/revel/config ../config/
   - git clone -b $REVEL_BRANCH git://github.com/revel/cron ../cron/
-  - git clone git://github.com/revel/samples ../samples/
+  - git clone -b $REVEL_BRANCH git://github.com/revel/examples ../examples/
+  - go get -v github.com/revel/revel/...
   - go get -v github.com/revel/cmd/revel
 
 script:
-  - go test -v github.com/revel/revel...
+  - go test -v github.com/revel/revel/...
 
   # Ensure the new-app flow works (plus the other commands).
   - revel version
@@ -51,18 +61,10 @@ script:
   - revel package my/testapp
   - revel package my/testapp prod
 
-  # Build & run the sample apps
-  - revel test github.com/revel/samples/booking
-  - revel test github.com/revel/samples/chat
-  - revel test github.com/revel/samples/facebook-oauth2
-  - revel test github.com/revel/samples/twitter-oauth
-  - revel test github.com/revel/samples/validation
-  - revel test github.com/revel/samples/upload
-
   # Commented out persona test sample, since persona.org gonna be shutdown.
   # Also http://personatestuser.org becomes non-responsive most of the time.
   # https://wiki.mozilla.org/Identity/Persona_Shutdown_Guidelines_for_Reliers
-  # - revel test github.com/revel/samples/persona
+  # - revel test github.com/revel/examples/persona
 
 matrix:
   allow_failures:

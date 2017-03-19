@@ -1,15 +1,19 @@
+// Copyright (c) 2012-2016 The Revel Framework Authors, All rights reserved.
+// Revel Framework source code and usage is governed by a MIT style
+// license that can be found in the LICENSE file.
+
 package revel
 
 import (
 	"io/ioutil"
 	"log"
 	"os"
-	"path"
+	"path/filepath"
 	"reflect"
 )
 
 type Hotel struct {
-	HotelId          int
+	HotelID          int
 	Name, Address    string
 	City, State, Zip string
 	Country          string
@@ -32,21 +36,21 @@ func (c Hotels) Show(id int) Result {
 
 func (c Hotels) Book(id int) Result {
 	hotel := &Hotel{id, "A Hotel", "300 Main St.", "New York", "NY", "10010", "USA", 300}
-	return c.RenderJson(hotel)
+	return c.RenderJSON(hotel)
 }
 
 func (c Hotels) Index() Result {
 	return c.RenderText("Hello, World!")
 }
 
-func (c Static) Serve(prefix, filepath string) Result {
+func (c Static) Serve(prefix, path string) Result {
 	var basePath, dirName string
 
-	if !path.IsAbs(dirName) {
+	if !filepath.IsAbs(dirName) {
 		basePath = BasePath
 	}
 
-	fname := path.Join(basePath, prefix, filepath)
+	fname := filepath.Join(basePath, prefix, path)
 	file, err := os.Open(fname)
 	if os.IsNotExist(err) {
 		return c.NotFound("")
@@ -66,22 +70,24 @@ func startFakeBookingApp() {
 	WARN = TRACE
 	ERROR = TRACE
 
-	MainTemplateLoader = NewTemplateLoader([]string{ViewsPath, path.Join(RevelPath, "templates")})
-	MainTemplateLoader.Refresh()
+	MainTemplateLoader = NewTemplateLoader([]string{ViewsPath, filepath.Join(RevelPath, "templates")})
+	if err := MainTemplateLoader.Refresh(); err != nil {
+		ERROR.Fatal(err)
+	}
 
 	RegisterController((*Hotels)(nil),
 		[]*MethodType{
-			&MethodType{
+			{
 				Name: "Index",
 			},
-			&MethodType{
+			{
 				Name: "Show",
 				Args: []*MethodArg{
 					{"id", reflect.TypeOf((*int)(nil))},
 				},
-				RenderArgNames: map[int][]string{30: []string{"title", "hotel"}},
+				RenderArgNames: map[int][]string{34: {"title", "hotel"}},
 			},
-			&MethodType{
+			{
 				Name: "Book",
 				Args: []*MethodArg{
 					{"id", reflect.TypeOf((*int)(nil))},
@@ -91,11 +97,11 @@ func startFakeBookingApp() {
 
 	RegisterController((*Static)(nil),
 		[]*MethodType{
-			&MethodType{
+			{
 				Name: "Serve",
 				Args: []*MethodArg{
-					&MethodArg{Name: "prefix", Type: reflect.TypeOf((*string)(nil))},
-					&MethodArg{Name: "filepath", Type: reflect.TypeOf((*string)(nil))},
+					{Name: "prefix", Type: reflect.TypeOf((*string)(nil))},
+					{Name: "filepath", Type: reflect.TypeOf((*string)(nil))},
 				},
 				RenderArgNames: map[int][]string{},
 			},

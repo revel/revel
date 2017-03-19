@@ -1,3 +1,7 @@
+// Copyright (c) 2012-2016 The Revel Framework Authors, All rights reserved.
+// Revel Framework source code and usage is governed by a MIT style
+// license that can be found in the LICENSE file.
+
 package revel
 
 import (
@@ -11,6 +15,7 @@ import (
 	"golang.org/x/net/websocket"
 )
 
+// Request Revel's HTTP request object structure
 type Request struct {
 	*http.Request
 	ContentType     string
@@ -20,6 +25,7 @@ type Request struct {
 	Websocket       *websocket.Conn
 }
 
+// Response Revel's HTTP response object structure
 type Response struct {
 	Status      int
 	ContentType string
@@ -27,10 +33,12 @@ type Response struct {
 	Out http.ResponseWriter
 }
 
+// NewResponse returns a Revel's HTTP response instance with given instance
 func NewResponse(w http.ResponseWriter) *Response {
 	return &Response{Out: w}
 }
 
+// NewRequest returns a Revel's HTTP request instance with given HTTP instance
 func NewRequest(r *http.Request) *Request {
 	return &Request{
 		Request:         r,
@@ -40,7 +48,7 @@ func NewRequest(r *http.Request) *Request {
 	}
 }
 
-// Write the header (for now, just the status code).
+// WriteHeader writes the header (for now, just the status code).
 // The status may be set directly by the application (c.Response.Status = 501).
 // if it isn't, then fall back to the provided status code.
 func (resp *Response) WriteHeader(defaultStatusCode int, defaultContentType string) {
@@ -54,7 +62,7 @@ func (resp *Response) WriteHeader(defaultStatusCode int, defaultContentType stri
 	resp.Out.WriteHeader(resp.Status)
 }
 
-// Get the content type.
+// ResolveContentType gets the content type.
 // e.g. From "multipart/form-data; boundary=--" to "multipart/form-data"
 // If none is specified, returns "text/html" by default.
 func ResolveContentType(req *http.Request) string {
@@ -107,9 +115,13 @@ func (al AcceptLanguages) Less(i, j int) bool { return al[i].Quality > al[j].Qua
 func (al AcceptLanguages) String() string {
 	output := bytes.NewBufferString("")
 	for i, language := range al {
-		output.WriteString(fmt.Sprintf("%s (%1.1f)", language.Language, language.Quality))
+		if _, err := output.WriteString(fmt.Sprintf("%s (%1.1f)", language.Language, language.Quality)); err != nil {
+			ERROR.Println("WriteString failed:", err)
+		}
 		if i != len(al)-1 {
-			output.WriteString(", ")
+			if _, err := output.WriteString(", "); err != nil {
+				ERROR.Println("WriteString failed:", err)
+			}
 		}
 	}
 	return output.String()

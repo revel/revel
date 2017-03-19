@@ -1,3 +1,7 @@
+// Copyright (c) 2012-2016 The Revel Framework Authors, All rights reserved.
+// Revel Framework source code and usage is governed by a MIT style
+// license that can be found in the LICENSE file.
+
 package revel
 
 import (
@@ -13,7 +17,7 @@ import (
 )
 
 type A struct {
-	Id      int
+	ID      int
 	Name    string
 	B       B
 	private int
@@ -24,7 +28,7 @@ type B struct {
 }
 
 var (
-	PARAMS = map[string][]string{
+	ParamTestValues = map[string][]string{
 		"int":             {"1"},
 		"int8":            {"1"},
 		"int16":           {"1"},
@@ -43,7 +47,9 @@ var (
 		"bool-on":         {"on"},
 		"bool-false":      {"false"},
 		"bool-0":          {"0"},
-		"bool-off":        {""},
+		"bool-0.0":        {"0.0"},
+		"bool-off":        {"off"},
+		"bool-f":          {"f"},
 		"date":            {"1982-07-09"},
 		"datetime":        {"1982-07-09 21:30"},
 		"customDate":      {"07/09/1982"},
@@ -57,19 +63,19 @@ var (
 		"2darr[0][1]":     {"1"},
 		"2darr[1][0]":     {"10"},
 		"2darr[1][1]":     {"11"},
-		"A.Id":            {"123"},
+		"A.ID":            {"123"},
 		"A.Name":          {"rob"},
-		"B.Id":            {"123"},
+		"B.ID":            {"123"},
 		"B.Name":          {"rob"},
 		"B.B.Extra":       {"hello"},
-		"pB.Id":           {"123"},
+		"pB.ID":           {"123"},
 		"pB.Name":         {"rob"},
 		"pB.B.Extra":      {"hello"},
 		"priv.private":    {"123"},
-		"arrC[0].Id":      {"5"},
+		"arrC[0].ID":      {"5"},
 		"arrC[0].Name":    {"rob"},
 		"arrC[0].B.Extra": {"foo"},
-		"arrC[1].Id":      {"8"},
+		"arrC[1].ID":      {"8"},
 		"arrC[1].Name":    {"bill"},
 		"m[a]":            {"foo"},
 		"m[b]":            {"bar"},
@@ -108,7 +114,9 @@ var binderTestCases = map[string]interface{}{
 	"bool-on":    true,
 	"bool-false": false,
 	"bool-0":     false,
+	"bool-0.0":   false,
 	"bool-off":   false,
+	"bool-f":     false,
 	"date":       testDate,
 	"datetime":   testDatetime,
 	"customDate": testDate,
@@ -116,17 +124,17 @@ var binderTestCases = map[string]interface{}{
 	"uarr":       []int{1, 2},
 	"arruarr":    [][]int{{1, 2}, {3, 4}},
 	"2darr":      [][]int{{0, 1}, {10, 11}},
-	"A":          A{Id: 123, Name: "rob"},
-	"B":          A{Id: 123, Name: "rob", B: B{Extra: "hello"}},
-	"pB":         &A{Id: 123, Name: "rob", B: B{Extra: "hello"}},
+	"A":          A{ID: 123, Name: "rob"},
+	"B":          A{ID: 123, Name: "rob", B: B{Extra: "hello"}},
+	"pB":         &A{ID: 123, Name: "rob", B: B{Extra: "hello"}},
 	"arrC": []A{
 		{
-			Id:   5,
+			ID:   5,
 			Name: "rob",
 			B:    B{"foo"},
 		},
 		{
-			Id:   8,
+			ID:   8,
 			Name: "bill",
 		},
 	},
@@ -140,17 +148,11 @@ var binderTestCases = map[string]interface{}{
 	// The point of these is to ensure that invalid user input does not cause panics.
 	"invalidInt":     0,
 	"invalidInt2":    0,
-	"invalidBool":    false,
+	"invalidBool":    true,
 	"invalidArr":     []int{},
 	"priv":           A{},
 	"int8-overflow":  int8(0),
 	"uint8-overflow": uint8(0),
-}
-
-func init() {
-	DateFormat = DEFAULT_DATE_FORMAT
-	DateTimeFormat = DEFAULT_DATETIME_FORMAT
-	TimeFormats = append(TimeFormats, DEFAULT_DATE_FORMAT, DEFAULT_DATETIME_FORMAT, "01/02/2006")
 }
 
 // Types that files may be bound to, and a func that can read the content from
@@ -167,7 +169,7 @@ func TestBinder(t *testing.T) {
 	// Reuse the mvc_test.go multipart request to test the binder.
 	params := &Params{}
 	ParseParams(params, NewRequest(getMultipartRequest()))
-	params.Values = PARAMS
+	params.Values = ParamTestValues
 
 	// Values
 	for k, v := range binderTestCases {
@@ -180,7 +182,7 @@ func TestBinder(t *testing.T) {
 
 	// Get the keys in sorted order to make the expectation right.
 	keys := []string{}
-	for k, _ := range expectedFiles {
+	for k := range expectedFiles {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
@@ -217,7 +219,7 @@ func TestBinder(t *testing.T) {
 					t.Fatalf("%s (%s) - Number of files: (expected) %d != %d (actual)",
 						k, typ, len(fhs), actual.Len())
 				}
-				for i, _ := range fhs {
+				for i := range fhs {
 					returns := reflect.ValueOf(binding.f).Call([]reflect.Value{actual.Index(i)})
 					if !returns[0].IsValid() {
 						t.Errorf("%s (%s) - Returned nil.", k, typ)
@@ -252,17 +254,17 @@ var unbinderTestCases = map[string]interface{}{
 	"datetime":   testDatetime,
 	"arr":        []int{1, 2, 0, 3},
 	"2darr":      [][]int{{0, 1}, {10, 11}},
-	"A":          A{Id: 123, Name: "rob"},
-	"B":          A{Id: 123, Name: "rob", B: B{Extra: "hello"}},
-	"pB":         &A{Id: 123, Name: "rob", B: B{Extra: "hello"}},
+	"A":          A{ID: 123, Name: "rob"},
+	"B":          A{ID: 123, Name: "rob", B: B{Extra: "hello"}},
+	"pB":         &A{ID: 123, Name: "rob", B: B{Extra: "hello"}},
 	"arrC": []A{
 		{
-			Id:   5,
+			ID:   5,
 			Name: "rob",
 			B:    B{"foo"},
 		},
 		{
-			Id:   8,
+			ID:   8,
 			Name: "bill",
 		},
 	},
@@ -271,31 +273,31 @@ var unbinderTestCases = map[string]interface{}{
 	"m3": map[string]int{"a": 1, "b": 2},
 }
 
-// Some of the unbinding results are not exactly what is in PARAMS, since it
+// Some of the unbinding results are not exactly what is in ParamTestValues, since it
 // serializes implicit zero values explicitly.
 var unbinderOverrideAnswers = map[string]map[string]string{
-	"arr": map[string]string{
+	"arr": {
 		"arr[0]": "1",
 		"arr[1]": "2",
 		"arr[2]": "0",
 		"arr[3]": "3",
 	},
-	"A": map[string]string{
-		"A.Id":      "123",
+	"A": {
+		"A.ID":      "123",
 		"A.Name":    "rob",
 		"A.B.Extra": "",
 	},
-	"arrC": map[string]string{
-		"arrC[0].Id":      "5",
+	"arrC": {
+		"arrC[0].ID":      "5",
 		"arrC[0].Name":    "rob",
 		"arrC[0].B.Extra": "foo",
-		"arrC[1].Id":      "8",
+		"arrC[1].ID":      "8",
 		"arrC[1].Name":    "bill",
 		"arrC[1].B.Extra": "",
 	},
-	"m":  map[string]string{"m[a]": "foo", "m[b]": "bar"},
-	"m2": map[string]string{"m2[1]": "foo", "m2[2]": "bar"},
-	"m3": map[string]string{"m3[a]": "1", "m3[b]": "2"},
+	"m":  {"m[a]": "foo", "m[b]": "bar"},
+	"m2": {"m2[1]": "foo", "m2[2]": "bar"},
+	"m3": {"m3[a]": "1", "m3[b]": "2"},
 }
 
 func TestUnbinder(t *testing.T) {
@@ -307,7 +309,7 @@ func TestUnbinder(t *testing.T) {
 		expected, ok := unbinderOverrideAnswers[k]
 		if !ok {
 			expected = make(map[string]string)
-			for k2, v2 := range PARAMS {
+			for k2, v2 := range ParamTestValues {
 				if k == k2 || strings.HasPrefix(k2, k+".") || strings.HasPrefix(k2, k+"[") {
 					expected[k2] = v2[0]
 				}
@@ -363,4 +365,10 @@ func valEq(t *testing.T, name string, actual, expected reflect.Value) {
 	default:
 		eq(t, name, actual.Interface(), expected.Interface())
 	}
+}
+
+func init() {
+	DateFormat = DefaultDateFormat
+	DateTimeFormat = DefaultDateTimeFormat
+	TimeFormats = append(TimeFormats, DefaultDateFormat, DefaultDateTimeFormat, "01/02/2006")
 }

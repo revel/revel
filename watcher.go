@@ -1,8 +1,11 @@
+// Copyright (c) 2012-2016 The Revel Framework Authors, All rights reserved.
+// Revel Framework source code and usage is governed by a MIT style
+// license that can be found in the LICENSE file.
+
 package revel
 
 import (
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -61,7 +64,8 @@ func (w *Watcher) Listen(listener Listener, roots ...string) {
 		// is the directory / file a symlink?
 		f, err := os.Lstat(p)
 		if err == nil && f.Mode()&os.ModeSymlink == os.ModeSymlink {
-			realPath, err := filepath.EvalSymlinks(p)
+			var realPath string
+			realPath, err = filepath.EvalSymlinks(p)
 			if err != nil {
 				panic(err)
 			}
@@ -130,7 +134,9 @@ func (w *Watcher) NotifyWhenUpdated(listener Listener, watcher *fsnotify.Watcher
 			if w.rebuildRequired(ev, listener) {
 				// Serialize listener.Refresh() calls.
 				w.notifyMutex.Lock()
-				listener.Refresh()
+				if err := listener.Refresh(); err != nil {
+					ERROR.Println("Failed when listener refresh:", err)
+				}
 				w.notifyMutex.Unlock()
 			}
 		case <-watcher.Errors:
@@ -191,7 +197,7 @@ func (w *Watcher) eagerRebuildEnabled() bool {
 
 func (w *Watcher) rebuildRequired(ev fsnotify.Event, listener Listener) bool {
 	// Ignore changes to dotfiles.
-	if strings.HasPrefix(path.Base(ev.Name), ".") {
+	if strings.HasPrefix(filepath.Base(ev.Name), ".") {
 		return false
 	}
 

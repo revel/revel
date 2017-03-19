@@ -1,3 +1,7 @@
+// Copyright (c) 2012-2016 The Revel Framework Authors, All rights reserved.
+// Revel Framework source code and usage is governed by a MIT style
+// license that can be found in the LICENSE file.
+
 package revel
 
 import (
@@ -23,8 +27,6 @@ type PP2 struct {
 	P2
 	PNN
 }
-
-var GENERATIONS = []interface{}{P{}, PN{}, PNN{}}
 
 func TestFindControllers(t *testing.T) {
 	controllers = make(map[string]*ControllerType)

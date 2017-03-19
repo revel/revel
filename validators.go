@@ -1,3 +1,7 @@
+// Copyright (c) 2012-2016 The Revel Framework Authors, All rights reserved.
+// Revel Framework source code and usage is governed by a MIT style
+// license that can be found in the LICENSE file.
+
 package revel
 
 import (
@@ -87,7 +91,7 @@ func (m Max) DefaultMessage() string {
 	return fmt.Sprintln("Maximum is", m.Max)
 }
 
-// Requires an integer to be within Min, Max inclusive.
+// Range requires an integer to be within Min, Max inclusive.
 type Range struct {
 	Min
 	Max
@@ -105,7 +109,7 @@ func (r Range) DefaultMessage() string {
 	return fmt.Sprintln("Range is", r.Min.Min, "to", r.Max.Max)
 }
 
-// Requires an array or string to be at least a given length.
+// MinSize requires an array or string to be at least a given length.
 type MinSize struct {
 	Min int
 }
@@ -129,7 +133,7 @@ func (m MinSize) DefaultMessage() string {
 	return fmt.Sprintln("Minimum size is", m.Min)
 }
 
-// Requires an array or string to be at most a given length.
+// MaxSize requires an array or string to be at most a given length.
 type MaxSize struct {
 	Max int
 }
@@ -153,7 +157,7 @@ func (m MaxSize) DefaultMessage() string {
 	return fmt.Sprintln("Maximum size is", m.Max)
 }
 
-// Requires an array or string to be exactly a given length.
+// Length requires an array or string to be exactly a given length.
 type Length struct {
 	N int
 }
@@ -177,7 +181,7 @@ func (s Length) DefaultMessage() string {
 	return fmt.Sprintln("Required length is", s.N)
 }
 
-// Requires a string to match a given regex.
+// Match requires a string to match a given regex.
 type Match struct {
 	Regexp *regexp.Regexp
 }
