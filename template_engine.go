@@ -48,12 +48,11 @@ func RegisterTemplateLoader(key string, loader func(loader *TemplateLoader) (Tem
 // Sets the template API methods for parsing and storing templates before rendering
 func (loader *TemplateLoader) CreateTemplateEngine(templateEngineName string) (TemplateEngine, error) {
 	if "" == templateEngineName {
-		templateEngineName = default_template_engine_name
+		templateEngineName = GO_TEMPLATE
 	}
 	factory := templateLoaderMap[templateEngineName]
 	if nil == factory {
 		fmt.Printf("registered factories %#v\n %s \n", templateLoaderMap, templateEngineName)
-		panic("Run to here")
 		return nil, errors.New("Unknown template engine name - " + templateEngineName + ".")
 	}
 	templateEngine, err := factory(loader)
@@ -92,7 +91,7 @@ func (loader *TemplateLoader) InitializeEngines(templateEngineNameList string) (
 
 // BaseTemplateEngine allows new engines to use the default
 type BaseTemplateEngine struct {
-
+    CaseInsensitiveMode bool
 }
 func (i *BaseTemplateEngine) IsEngineFor(engine TemplateEngine,description *BaseTemplate) bool {
 	if line, _, e := bufio.NewReader(bytes.NewBuffer(description.FileBytes)).ReadLine(); e == nil && string(line[:3]) == "#! " {
@@ -117,4 +116,10 @@ func (i *BaseTemplateEngine) IsEngineFor(engine TemplateEngine,description *Base
         }
 	}
     return false
+}
+func (i *BaseTemplateEngine) ConvertPath(path string) string {
+    if i.CaseInsensitiveMode {
+        return strings.ToLower(path)
+    }
+    return path
 }

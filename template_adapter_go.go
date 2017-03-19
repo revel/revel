@@ -9,6 +9,7 @@ import (
 	"reflect"
 	"strings"
 	"time"
+    "github.com/revel.old/revel"
 )
 
 const GO_TEMPLATE = "go"
@@ -162,11 +163,6 @@ func (gotmpl GoTemplate) Render(wr io.Writer, arg interface{}) error {
 	return gotmpl.Execute(wr, arg)
 }
 
-func (gotmpl GoTemplate) Content() []string {
-	content, _ := ReadLines(gotmpl.engine.loader.TemplatePaths[gotmpl.Name()])
-	return content
-}
-
 type GoEngine struct {
 	loader      *TemplateLoader
 	templateSet *template.Template
@@ -185,6 +181,7 @@ func (engine *GoEngine) ParseAndAdd(baseTemplate *BaseTemplate) error {
 		engine.templateSet.Delims("", "")
 	}
 	templateSource := string(baseTemplate.FileBytes)
+    baseTemplate.TemplateName = engine.ConvertPath(baseTemplate.TemplateName)
 	tpl, err := engine.templateSet.New(baseTemplate.TemplateName).Parse(templateSource)
 	if nil != err {
 		_, line, description := ParseTemplateError(err)
@@ -196,13 +193,14 @@ func (engine *GoEngine) ParseAndAdd(baseTemplate *BaseTemplate) error {
 			SourceLines: strings.Split(templateSource, "\n"),
 		}
 	}
-	engine.templatesBylowerName[strings.ToLower(baseTemplate.TemplateName)] = &GoTemplate{Template: tpl, engine: engine, BaseTemplate: baseTemplate}
+	engine.templatesBylowerName[baseTemplate.TemplateName] = &GoTemplate{Template: tpl, engine: engine, BaseTemplate: baseTemplate}
 	return nil
 }
 
 func (engine *GoEngine) Lookup(templateName string) Template {
 	// Case-insensitive matching of template file name
-	if tpl, found := engine.templatesBylowerName[strings.ToLower(templateName)]; found {
+
+	if tpl, found := engine.templatesBylowerName[engine.ConvertPath(templateName)]; found {
 		return tpl
 	}
 	return nil
@@ -211,10 +209,12 @@ func (engine *GoEngine) Name() string {
 	return GO_TEMPLATE
 }
 func (engine *GoEngine) Event(action string, i interface{}) {
-	if action == "template-refresh" {
+	if action == TEMPLATE_REFRESH {
 		// At this point all the templates have been passed into the
 		engine.templatesBylowerName = map[string]*GoTemplate{}
 		engine.templateSet = template.New("__root__").Funcs(TemplateFuncs)
+        // Check to see what should be used for case sensitivity
+        engine.CaseInsensitiveMode = revel.Config.StringDefault("go.template.path","lower")!="case"
 	}
 }
 func init() {

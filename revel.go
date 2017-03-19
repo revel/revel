@@ -48,8 +48,8 @@ var (
 
 	// Where to look for templates
 	// Ordered by priority. (Earlier paths take precedence over later paths.)
-	CodePaths     []string
-	TemplatePaths []string
+	CodePaths     []string            // Code base directories, for modules and app
+	TemplatePaths []string            // Template path directories manually added
 
 	// ConfPaths where to look for configurations
 	// Config load order
@@ -302,7 +302,7 @@ func findSrcPaths(importPath string) (revelSourcePath, appSourcePath string) {
 
 	appPkg, err := build.Import(importPath, "", build.FindOnly)
 	if err != nil {
-		ERROR.Fatalln("Failed to import", importPath, "with error:", err)
+		ERROR.Panicf("Failed to import", importPath, "with error:", err)
 	}
 
 	revelPkg, err := build.Import(RevelImportPath, "", build.FindOnly)

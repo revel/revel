@@ -14,13 +14,14 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+    "bytes"
+    "bufio"
 )
 
 var (
     ErrorCSSClass = "hasError"
     TEMPLATE_REFRESH="template_refresh"
     TEMPLATE_REFRESH_COMPLETE="template_refresh_complete"
-    default_template_engine_name = GO_TEMPLATE
 )
 
 // TemplateLoader object handles loading and parsing of templates.
@@ -81,6 +82,7 @@ func (loader *TemplateLoader) Refresh() (err *Error) {
 	// Resort the paths, make sure the revel path is the last path,
 	// so anything can override it
 	revelTemplatePath := filepath.Join(RevelPath, "templates")
+    // Go through the paths
 	for i, o := range loader.paths {
 		if o == revelTemplatePath && i != len(loader.paths)-1 {
 			loader.paths[i] = loader.paths[len(loader.paths)-1]
@@ -179,7 +181,7 @@ func (loader *TemplateLoader) Refresh() (err *Error) {
 
 // WatchDir returns true of directory doesn't start with . (dot)
 // otherwise false
-func (loader *TemplateLoader) findAndAddTemplate(path, fullSrcDir, basePath string) (fileBytes []byte, err error) {
+func (loader *TemplateLoader) findAndAddTemplate(path, module, fullSrcDir, basePath string) (fileBytes []byte, err error) {
 	templateName := filepath.ToSlash(path[len(fullSrcDir)+1:])
 	// Convert template names to use forward slashes, even on Windows.
 	if os.PathSeparator == '\\' {
@@ -321,9 +323,16 @@ type BaseTemplate struct {
 func (i *BaseTemplate) Location() string {
 	return i.FilePath
 }
-// Called by the template loader after engine successfully parses file
-func (i *BaseTemplate) Free() {
-	i.FileBytes = nil
+func (i *BaseTemplate) Content() (content []string){
+    if i.FileBytes!=nil {
+        // Parse the bytes
+        buffer := bytes.NewBuffer(i.FileBytes)
+        reader := bufio.NewScanner(buffer)
+        for reader.Scan() {
+            content = append(content, string(reader.Bytes()))
+        }
+    }
+	return nil
 }
 func NewBaseTemplate(templateName, filePath, basePath string, fileBytes []byte) *BaseTemplate {
     return &BaseTemplate{TemplateName:templateName,FilePath:filePath,FileBytes:fileBytes,BasePath:basePath}

@@ -66,6 +66,7 @@ func ReadLines(filename string) ([]string, error) {
 	return strings.Split(string(bytes), "\n"), nil
 }
 
+
 func ContainsString(list []string, target string) bool {
 	for _, el := range list {
 		if el == target {
