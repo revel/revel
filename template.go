@@ -181,7 +181,7 @@ func (loader *TemplateLoader) Refresh() (err *Error) {
 
 // WatchDir returns true of directory doesn't start with . (dot)
 // otherwise false
-func (loader *TemplateLoader) findAndAddTemplate(path, module, fullSrcDir, basePath string) (fileBytes []byte, err error) {
+func (loader *TemplateLoader) findAndAddTemplate(path, fullSrcDir, basePath string) (fileBytes []byte, err error) {
 	templateName := filepath.ToSlash(path[len(fullSrcDir)+1:])
 	// Convert template names to use forward slashes, even on Windows.
 	if os.PathSeparator == '\\' {
