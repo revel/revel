@@ -151,7 +151,7 @@ func SessionFilter(c *Controller, fc []Filter) {
 	sessionWasEmpty := len(c.Session) == 0
 
 	// Make session vars available in templates as {{.session.xyz}}
-	c.RenderArgs["session"] = c.Session
+	c.ViewArgs["session"] = c.Session
 
 	fc[0](c, fc[1:])
 
