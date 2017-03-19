@@ -76,7 +76,7 @@ func TestGetCustom(t *testing.T) {
 
 	testSuite.AssertOk()
 	testSuite.AssertContentType("application/json")
-	testSuite.AssertHeader("Server", "nginx")
+	testSuite.AssertHeader("Server", "gunicorn/19.7.0")
 	testSuite.AssertContains("httpbin.org")
 	testSuite.AssertContainsRegex("gzip|deflate")
 }
