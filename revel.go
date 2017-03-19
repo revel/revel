@@ -100,6 +100,7 @@ var (
 	requestLog           = log.New(ioutil.Discard, "", 0)
 	requestLogTimeFormat = "2006/01/02 15:04:05.000"
 
+    // True when revel engine has been initialized (Init has returned)
 	Initialized bool
 
 	// Private
@@ -221,6 +222,11 @@ func Init(mode, importPath, srcPath string) {
 
 	Initialized = true
 	INFO.Printf("Initialized Revel v%s (%s) for %s", Version, BuildDate, MinimumGoVersion)
+}
+
+func SetSecretKey(newKey []byte ) error{
+    secretKey = newKey
+    return nil
 }
 
 // Create a logger using log.* directives in app.conf plus the current settings

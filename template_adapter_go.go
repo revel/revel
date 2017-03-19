@@ -9,7 +9,6 @@ import (
 	"reflect"
 	"strings"
 	"time"
-    "github.com/revel.old/revel"
 )
 
 const GO_TEMPLATE = "go"
@@ -214,7 +213,7 @@ func (engine *GoEngine) Event(action string, i interface{}) {
 		engine.templatesBylowerName = map[string]*GoTemplate{}
 		engine.templateSet = template.New("__root__").Funcs(TemplateFuncs)
         // Check to see what should be used for case sensitivity
-        engine.CaseInsensitiveMode = revel.Config.StringDefault("go.template.path","lower")!="case"
+        engine.CaseInsensitiveMode = Config.StringDefault("go.template.path","lower")!="case"
 	}
 }
 func init() {
