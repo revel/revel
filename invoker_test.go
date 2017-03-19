@@ -104,7 +104,7 @@ func BenchmarkSetAction(b *testing.B) {
 	RegisterController((*Mixin2)(nil), []*MethodType{{Name: "Method"}})
 	RegisterController((*Benchmark)(nil), []*MethodType{{Name: "Method"}})
 	c := Controller{
-		RenderArgs: make(map[string]interface{}),
+		ViewArgs: make(map[string]interface{}),
 	}
 
 	for i := 0; i < b.N; i++ {
@@ -118,7 +118,7 @@ func BenchmarkSetAction(b *testing.B) {
 func BenchmarkInvoker(b *testing.B) {
 	startFakeBookingApp()
 	c := Controller{
-		RenderArgs: make(map[string]interface{}),
+		ViewArgs: make(map[string]interface{}),
 	}
 	if err := c.SetAction("Hotels", "Show"); err != nil {
 		b.Errorf("Failed to set action: %s", err)
