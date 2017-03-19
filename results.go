@@ -1,7 +1,3 @@
-// Copyright (c) 2012-2016 The Revel Framework Authors, All rights reserved.
-// Revel Framework source code and usage is governed by a MIT style
-// license that can be found in the LICENSE file.
-
 package revel
 
 import (
@@ -14,6 +10,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"reflect"
+	"runtime/debug"
 	"strconv"
 	"strings"
 	"time"
@@ -111,7 +108,6 @@ func (r ErrorResult) Apply(req *Request, resp *Response) {
 			ERROR.Println("Response WriteTo failed:", err)
 		}
 	}
-
 }
 
 type PlaintextErrorResult struct {
@@ -137,9 +133,8 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
 	// Handle panics when rendering templates.
 	defer func() {
 		if err := recover(); err != nil {
-			ERROR.Println(err)
-			PlaintextErrorResult{fmt.Errorf("Template Execution Panic in %s:\n%s",
-				r.Template.Name(), err)}.Apply(req, resp)
+			PlaintextErrorResult{fmt.Errorf("Template Execution Panic in %s:\n%s\n\n%s",
+				r.Template.Name(), err, string(debug.Stack()))}.Apply(req, resp)
 		}
 	}()
 
@@ -230,25 +225,28 @@ func (r *RenderTemplateResult) render(req *Request, resp *Response, wr io.Writer
 		return
 	}
 
-	var templateContent []string
-	templateName, line, description := parseTemplateError(err)
-	if templateName == "" {
-		templateName = r.Template.Name()
-		templateContent = r.Template.Content()
-	} else {
-		if tmpl, err := MainTemplateLoader.Template(templateName); err == nil {
-			templateContent = tmpl.Content()
+	compileError, ok := err.(*Error)
+	if !ok || nil == compileError {
+		var templateContent []string
+		templateName, line, description := ParseTemplateError(err)
+		if templateName == "" {
+			templateName = r.Template.Name()
+			templateContent = r.Template.Content()
+		} else {
+			if tmpl, err := MainTemplateLoader.Template(templateName); err == nil {
+				templateContent = tmpl.Content()
+			}
+		}
+		compileError = &Error{
+			Title:       "Template Execution Error",
+			Path:        templateName,
+			Description: description,
+			Line:        line,
+			SourceLines: templateContent,
 		}
 	}
-	compileError := &Error{
-		Title:       "Template Execution Error",
-		Path:        templateName,
-		Description: description,
-		Line:        line,
-		SourceLines: templateContent,
-	}
 	resp.Status = 500
-	ERROR.Printf("Template Execution Error (in %s): %s", templateName, description)
+	ERROR.Printf("Template Execution Error (in %s): %s", compileError.Path, compileError.Description)
 	ErrorResult{r.RenderArgs, compileError}.Apply(req, resp)
 }
 
