@@ -194,8 +194,8 @@ func ValidationFilter(c *Controller, fc []Filter) {
 
 	fc[0](c, fc[1:])
 
-	// Add Validation errors to RenderArgs.
-	c.RenderArgs["errors"] = c.Validation.ErrorMap()
+	// Add Validation errors to ViewArgs.
+	c.ViewArgs["errors"] = c.Validation.ErrorMap()
 
 	// Store the Validation errors
 	var errorsValue string
