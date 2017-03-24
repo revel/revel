@@ -1,3 +1,7 @@
+// Copyright (c) 2012-2016 The Revel Framework Authors, All rights reserved.
+// Revel Framework source code and usage is governed by a MIT style
+// license that can be found in the LICENSE file.
+
 package revel
 
 import (
@@ -13,6 +17,7 @@ import (
 	"golang.org/x/net/websocket"
 )
 
+// Revel's variables server, router, etc
 var (
 	MainRouter         *Router
 	MainTemplateLoader *TemplateLoader
@@ -31,7 +36,9 @@ func handle(w http.ResponseWriter, r *http.Request) {
 	if upgrade == "websocket" || upgrade == "Websocket" {
 		websocket.Handler(func(ws *websocket.Conn) {
 			//Override default Read/Write timeout with sane value for a web socket request
-			ws.SetDeadline(time.Now().Add(time.Hour * 24))
+			if err := ws.SetDeadline(time.Now().Add(time.Hour * 24)); err != nil {
+				ERROR.Println("SetDeadLine failed:", err)
+			}
 			r.Method = "WS"
 			handleInternal(w, r, ws)
 		}).ServeHTTP(w, r)
@@ -44,6 +51,7 @@ func handleInternal(w http.ResponseWriter, r *http.Request, ws *websocket.Conn) 
 	// TODO For now this okay to put logger here for all the requests
 	// However, it's best to have logging handler at server entry level
 	start := time.Now()
+	clientIP := ClientIP(r)
 
 	var (
 		req  = NewRequest(r)
@@ -51,6 +59,7 @@ func handleInternal(w http.ResponseWriter, r *http.Request, ws *websocket.Conn) 
 		c    = NewController(req, resp)
 	)
 	req.Websocket = ws
+	c.ClientIP = clientIP
 
 	Filters[0](c, Filters[1:])
 	if c.Result != nil {
@@ -60,7 +69,7 @@ func handleInternal(w http.ResponseWriter, r *http.Request, ws *websocket.Conn) 
 	}
 	// Close the Writer if we can
 	if w, ok := resp.Out.(io.Closer); ok {
-		w.Close()
+		_ = w.Close()
 	}
 
 	// Revel request access log format
@@ -69,7 +78,7 @@ func handleInternal(w http.ResponseWriter, r *http.Request, ws *websocket.Conn) 
 	// 2016/05/25 17:46:37.112 127.0.0.1 200  270.157µs GET /
 	requestLog.Printf("%v %v %v %10v %v %v",
 		start.Format(requestLogTimeFormat),
-		ClientIP(r),
+		clientIP,
 		c.Response.Status,
 		time.Since(start),
 		r.Method,
@@ -86,7 +95,9 @@ func InitServer() http.HandlerFunc {
 
 	// Load templates
 	MainTemplateLoader = NewTemplateLoader(TemplatePaths)
-	MainTemplateLoader.Refresh()
+	if err := MainTemplateLoader.Refresh(); err != nil {
+		ERROR.Println(err)
+	}
 
 	// The "watch" config variable can turn on and off all watching.
 	// (As a convenient way to control it all together.)
@@ -108,9 +119,9 @@ func InitServer() http.HandlerFunc {
 // This is called from the generated main file.
 // If port is non-zero, use that.  Else, read the port from app.conf.
 func Run(port int) {
-	address := HttpAddr
+	address := HTTPAddr
 	if port == 0 {
-		port = HttpPort
+		port = HTTPPort
 	}
 
 	var network = "tcp"
@@ -130,8 +141,8 @@ func Run(port int) {
 	Server = &http.Server{
 		Addr:         localAddress,
 		Handler:      http.HandlerFunc(handle),
-		ReadTimeout:  time.Duration(Config.IntDefault("timeout.read", 0)) * time.Second,
-		WriteTimeout: time.Duration(Config.IntDefault("timeout.write", 0)) * time.Second,
+		ReadTimeout:  time.Duration(Config.IntDefault("http.timeout.read", 0)) * time.Second,
+		WriteTimeout: time.Duration(Config.IntDefault("http.timeout.write", 0)) * time.Second,
 	}
 
 	InitServer()
@@ -141,14 +152,14 @@ func Run(port int) {
 		fmt.Printf("Listening on %s...\n", Server.Addr)
 	}()
 
-	if HttpSsl {
+	if HTTPSsl {
 		if network != "tcp" {
 			// This limitation is just to reduce complexity, since it is standard
 			// to terminate SSL upstream when using unix domain sockets.
 			ERROR.Fatalln("SSL is only supported for TCP sockets. Specify a port to listen on.")
 		}
 		ERROR.Fatalln("Failed to listen:",
-			Server.ListenAndServeTLS(HttpSslCert, HttpSslKey))
+			Server.ListenAndServeTLS(HTTPSslCert, HTTPSslKey))
 	} else {
 		listener, err := net.Listen(network, Server.Addr)
 		if err != nil {
@@ -186,7 +197,7 @@ func (slice StartupHooks) Swap(i, j int) {
 	slice[i], slice[j] = slice[j], slice[i]
 }
 
-// Register a function to be run at app startup.
+// OnAppStart registers a function to be run at app startup.
 //
 // The order you register the functions will be the order they are run.
 // You can think of it as a FIFO queue.

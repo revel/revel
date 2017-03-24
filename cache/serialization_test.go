@@ -1,3 +1,7 @@
+// Copyright (c) 2012-2016 The Revel Framework Authors, All rights reserved.
+// Revel Framework source code and usage is governed by a MIT style
+// license that can be found in the LICENSE file.
+
 package cache
 
 import (
@@ -16,14 +20,14 @@ type Interface1 interface {
 }
 
 var (
-	struct1        Struct1     = Struct1{1}
-	ptrStruct      *Struct1    = &Struct1{2}
+	struct1                    = Struct1{1}
+	ptrStruct                  = &Struct1{2}
 	emptyIface     interface{} = Struct1{3}
 	iface1         Interface1  = Struct1{4}
-	sliceStruct    []Struct1   = []Struct1{{5}, {6}, {7}}
-	ptrSliceStruct []*Struct1  = []*Struct1{{8}, {9}, {10}}
+	sliceStruct                = []Struct1{{5}, {6}, {7}}
+	ptrSliceStruct             = []*Struct1{{8}, {9}, {10}}
 
-	VALUE_MAP = map[string]interface{}{
+	valueMap = map[string]interface{}{
 		"bytes":          []byte{0x61, 0x62, 0x63, 0x64},
 		"string":         "string",
 		"bool":           true,
@@ -53,7 +57,7 @@ var (
 
 // Test passing all kinds of data between serialize and deserialize.
 func TestRoundTrip(t *testing.T) {
-	for _, expected := range VALUE_MAP {
+	for _, expected := range valueMap {
 		bytes, err := Serialize(expected)
 		if err != nil {
 			t.Error(err)

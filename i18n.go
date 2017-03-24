@@ -1,3 +1,7 @@
+// Copyright (c) 2012-2016 The Revel Framework Authors, All rights reserved.
+// Revel Framework source code and usage is governed by a MIT style
+// license that can be found in the LICENSE file.
+
 package revel
 
 import (
@@ -11,7 +15,8 @@ import (
 )
 
 const (
-	CurrentLocaleRenderArg = "currentLocale" // The key for the current locale render arg value
+	// CurrentLocaleRenderArg the key for the current locale render arg value
+	CurrentLocaleRenderArg = "currentLocale"
 
 	messageFilesDirectory  = "messages"
 	messageFilePattern     = `^\w+\.[a-zA-Z]{2}$`
@@ -26,26 +31,26 @@ var (
 	messages map[string]*config.Config
 )
 
-// Setting MessageFunc allows you to override the translation interface.
+// MessageFunc allows you to override the translation interface.
 //
 // Set this to your own function that translates to the current locale.
 // This allows you to set up your own loading and logging of translated texts.
 //
 // See Message(...) in i18n.go for example of function.
-var MessageFunc func(locale, message string, args ...interface{}) (value string) = Message
+var MessageFunc = Message
 
-// Return all currently loaded message languages.
+// MessageLanguages returns all currently loaded message languages.
 func MessageLanguages() []string {
 	languages := make([]string, len(messages))
 	i := 0
-	for language, _ := range messages {
+	for language := range messages {
 		languages[i] = language
 		i++
 	}
 	return languages
 }
 
-// Perform a message look-up for the given locale and message using the given arguments.
+// Message performs a message look-up for the given locale and message using the given arguments.
 //
 // When either an unknown locale or message is detected, a specially formatted string is returned.
 func Message(locale, message string, args ...interface{}) string {
@@ -72,8 +77,8 @@ func Message(locale, message string, args ...interface{}) string {
 
 	// This works because unlike the goconfig documentation suggests it will actually
 	// try to resolve message in DEFAULT if it did not find it in the given section.
-	value, error := messageConfig.String(region, message)
-	if error != nil {
+	value, err := messageConfig.String(region, message)
+	if err != nil {
 		WARN.Printf("Unknown message '%s' for locale '%s'", message, locale)
 		return fmt.Sprintf(unknownValueFormat, message)
 	}
@@ -129,21 +134,22 @@ func loadMessageFile(path string, info os.FileInfo, osError error) error {
 	}
 
 	if matched, _ := regexp.MatchString(messageFilePattern, info.Name()); matched {
-		if config, error := parseMessagesFile(path); error != nil {
-			return error
-		} else {
-			locale := parseLocaleFromFileName(info.Name())
-
-			// If we have already parsed a message file for this locale, merge both
-			if _, exists := messages[locale]; exists {
-				messages[locale].Merge(config)
-				TRACE.Printf("Successfully merged messages for locale '%s'", locale)
-			} else {
-				messages[locale] = config
-			}
-
-			TRACE.Println("Successfully loaded messages from file", info.Name())
+		var config *config.Config
+		config, err := parseMessagesFile(path)
+		if err != nil {
+			return err
 		}
+		locale := parseLocaleFromFileName(info.Name())
+
+		// If we have already parsed a message file for this locale, merge both
+		if _, exists := messages[locale]; exists {
+			messages[locale].Merge(config)
+			TRACE.Printf("Successfully merged messages for locale '%s'", locale)
+		} else {
+			messages[locale] = config
+		}
+
+		TRACE.Println("Successfully loaded messages from file", info.Name())
 	} else {
 		TRACE.Printf("Ignoring file %s because it did not have a valid extension", info.Name())
 	}
@@ -151,8 +157,8 @@ func loadMessageFile(path string, info os.FileInfo, osError error) error {
 	return nil
 }
 
-func parseMessagesFile(path string) (messageConfig *config.Config, error error) {
-	messageConfig, error = config.ReadDefault(path)
+func parseMessagesFile(path string) (messageConfig *config.Config, err error) {
+	messageConfig, err = config.ReadDefault(path)
 	return
 }
 
@@ -184,7 +190,7 @@ func I18nFilter(c *Controller, fc []Filter) {
 // Set the current locale controller argument (CurrentLocaleControllerArg) with the given locale.
 func setCurrentLocaleControllerArguments(c *Controller, locale string) {
 	c.Request.Locale = locale
-	c.RenderArgs[CurrentLocaleRenderArg] = locale
+	c.ViewArgs[CurrentLocaleRenderArg] = locale
 }
 
 // Determine whether the given request has valid Accept-Language value.
@@ -203,11 +209,11 @@ func hasAcceptLanguageHeader(request *Request) (bool, string) {
 func hasLocaleCookie(request *Request) (bool, string) {
 	if request != nil && request.Cookies() != nil {
 		name := Config.StringDefault(localeCookieConfigKey, CookiePrefix+"_LANG")
-		if cookie, error := request.Cookie(name); error == nil {
+		cookie, err := request.Cookie(name)
+		if err == nil {
 			return true, cookie.Value
-		} else {
-			TRACE.Printf("Unable to read locale cookie with name '%s': %s", name, error.Error())
 		}
+		TRACE.Printf("Unable to read locale cookie with name '%s': %s", name, err.Error())
 	}
 
 	return false, ""

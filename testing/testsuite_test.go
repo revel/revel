@@ -31,11 +31,11 @@ func TestMisc(t *testing.T) {
 	if !strings.EqualFold("http://127.0.0.1:9001", testSuite.BaseUrl()) {
 		t.Error("Incorrect BaseUrl http value found.")
 	}
-	revel.HttpSsl = true
+	revel.HTTPSsl = true
 	if !strings.EqualFold("https://127.0.0.1:9001", testSuite.BaseUrl()) {
 		t.Error("Incorrect BaseUrl https value found.")
 	}
-	revel.HttpSsl = false
+	revel.HTTPSsl = false
 
 	// test WebSocketUrl
 	if !strings.EqualFold("ws://127.0.0.1:9001", testSuite.WebSocketUrl()) {
@@ -76,7 +76,6 @@ func TestGetCustom(t *testing.T) {
 
 	testSuite.AssertOk()
 	testSuite.AssertContentType("application/json")
-	testSuite.AssertHeader("Server", "nginx")
 	testSuite.AssertContains("httpbin.org")
 	testSuite.AssertContainsRegex("gzip|deflate")
 }

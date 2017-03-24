@@ -1,3 +1,7 @@
+// Copyright (c) 2012-2016 The Revel Framework Authors, All rights reserved.
+// Revel Framework source code and usage is governed by a MIT style
+// license that can be found in the LICENSE file.
+
 package revel
 
 import (
@@ -5,7 +9,7 @@ import (
 	"reflect"
 )
 
-// An "interceptor" is functionality invoked by the framework BEFORE or AFTER
+// An InterceptorFunc is functionality invoked by the framework BEFORE or AFTER
 // an action.
 //
 // An interceptor may optionally return a Result (instead of nil).  Depending on
@@ -48,7 +52,7 @@ const (
 type InterceptTarget int
 
 const (
-	ALL_CONTROLLERS InterceptTarget = iota
+	AllControllers InterceptTarget = iota
 )
 
 type Interception struct {
@@ -62,7 +66,7 @@ type Interception struct {
 	interceptAll bool
 }
 
-// Perform the given interception.
+// Invoke performs the given interception.
 // val is a pointer to the App Controller.
 func (i Interception) Invoke(val reflect.Value) reflect.Value {
 	var arg reflect.Value
@@ -126,7 +130,7 @@ func invokeInterceptors(when When, c *Controller) {
 
 var interceptors []*Interception
 
-// Install a general interceptor.
+// InterceptFunc installs a general interceptor.
 // This can be applied to any Controller.
 // It must have the signature of:
 //   func example(c *revel.Controller) revel.Result
@@ -136,11 +140,11 @@ func InterceptFunc(intc InterceptorFunc, when When, target interface{}) {
 		function:     intc,
 		callable:     reflect.ValueOf(intc),
 		target:       reflect.TypeOf(target),
-		interceptAll: target == ALL_CONTROLLERS,
+		interceptAll: target == AllControllers,
 	})
 }
 
-// Install an interceptor method that applies to its own Controller.
+// InterceptMethod installs an interceptor method that applies to its own Controller.
 //   func (c AppController) example() revel.Result
 //   func (c *AppController) example() revel.Result
 func InterceptMethod(intc InterceptorMethod, when When) {

@@ -1,3 +1,7 @@
+// Copyright (c) 2012-2016 The Revel Framework Authors, All rights reserved.
+// Revel Framework source code and usage is governed by a MIT style
+// license that can be found in the LICENSE file.
+
 package revel
 
 import (
@@ -11,13 +15,16 @@ import (
 	"time"
 )
 
-// A signed cookie (and thus limited to 4kb in size).
+// Session a signed cookie (and thus limited to 4kb in size).
 // Restriction: Keys may not have a colon in them.
 type Session map[string]string
 
+// Session constants
 const (
-	SESSION_ID_KEY = "_ID"
-	TIMESTAMP_KEY  = "_TS"
+	SessionIDKey = "_ID"
+	TimestampKey = "_TS"
+
+	sessionKeyName = "session"
 )
 
 // expireAfterDuration is the time to live, in seconds, of a session cookie.
@@ -32,7 +39,7 @@ func init() {
 		var err error
 		if expiresString, ok := Config.String("session.expires"); !ok {
 			expireAfterDuration = 30 * 24 * time.Hour
-		} else if expiresString == "session" {
+		} else if expiresString == sessionKeyName {
 			expireAfterDuration = 0
 		} else if expireAfterDuration, err = time.ParseDuration(expiresString); err != nil {
 			panic(fmt.Errorf("session.expires invalid: %s", err))
@@ -40,11 +47,11 @@ func init() {
 	})
 }
 
-// Id retrieves from the cookie or creates a time-based UUID identifying this
+// ID retrieves from the cookie or creates a time-based UUID identifying this
 // session.
-func (s Session) Id() string {
-	if sessionIdStr, ok := s[SESSION_ID_KEY]; ok {
-		return sessionIdStr
+func (s Session) ID() string {
+	if sessionIDStr, ok := s[SessionIDKey]; ok {
+		return sessionIDStr
 	}
 
 	buffer := make([]byte, 32)
@@ -52,14 +59,14 @@ func (s Session) Id() string {
 		panic(err)
 	}
 
-	s[SESSION_ID_KEY] = hex.EncodeToString(buffer)
-	return s[SESSION_ID_KEY]
+	s[SessionIDKey] = hex.EncodeToString(buffer)
+	return s[SessionIDKey]
 }
 
 // getExpiration return a time.Time with the session's expiration date.
 // If previous session has set to "session", remain it
 func (s Session) getExpiration() time.Time {
-	if expireAfterDuration == 0 || s[TIMESTAMP_KEY] == "session" {
+	if expireAfterDuration == 0 || s[TimestampKey] == sessionKeyName {
 		// Expire after closing browser
 		return time.Time{}
 	}
@@ -70,7 +77,7 @@ func (s Session) getExpiration() time.Time {
 func (s Session) Cookie() *http.Cookie {
 	var sessionValue string
 	ts := s.getExpiration()
-	s[TIMESTAMP_KEY] = getSessionExpirationCookie(ts)
+	s[TimestampKey] = getSessionExpirationCookie(ts)
 	for key, value := range s {
 		if strings.ContainsAny(key, ":\x00") {
 			panic("Session keys may not have colons or null bytes")
@@ -97,9 +104,9 @@ func (s Session) Cookie() *http.Cookie {
 // cookie is either not present or present but beyond its time to live; i.e.,
 // whether there is not a valid session.
 func sessionTimeoutExpiredOrMissing(session Session) bool {
-	if exp, present := session[TIMESTAMP_KEY]; !present {
+	if exp, present := session[TimestampKey]; !present {
 		return true
-	} else if exp == "session" {
+	} else if exp == sessionKeyName {
 		return false
 	} else if expInt, _ := strconv.Atoi(exp); int64(expInt) < time.Now().Unix() {
 		return true
@@ -144,7 +151,7 @@ func SessionFilter(c *Controller, fc []Filter) {
 	sessionWasEmpty := len(c.Session) == 0
 
 	// Make session vars available in templates as {{.session.xyz}}
-	c.RenderArgs["session"] = c.Session
+	c.ViewArgs["session"] = c.Session
 
 	fc[0](c, fc[1:])
 
@@ -160,9 +167,8 @@ func restoreSession(req *http.Request) Session {
 	cookie, err := req.Cookie(CookiePrefix + "_SESSION")
 	if err != nil {
 		return make(Session)
-	} else {
-		return GetSessionFromCookie(cookie)
 	}
+	return GetSessionFromCookie(cookie)
 }
 
 // getSessionExpirationCookie retrieves the cookie's time to live as a
@@ -170,17 +176,17 @@ func restoreSession(req *http.Request) Session {
 // "session".
 func getSessionExpirationCookie(t time.Time) string {
 	if t.IsZero() {
-		return "session"
+		return sessionKeyName
 	}
 	return strconv.FormatInt(t.Unix(), 10)
 }
 
 // SetNoExpiration sets session to expire when browser session ends
 func (s Session) SetNoExpiration() {
-	s[TIMESTAMP_KEY] = "session"
+	s[TimestampKey] = sessionKeyName
 }
 
 // SetDefaultExpiration sets session to expire after default duration
 func (s Session) SetDefaultExpiration() {
-	delete(s, TIMESTAMP_KEY)
+	delete(s, TimestampKey)
 }

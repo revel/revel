@@ -1,3 +1,7 @@
+// Copyright (c) 2012-2016 The Revel Framework Authors, All rights reserved.
+// Revel Framework source code and usage is governed by a MIT style
+// license that can be found in the LICENSE file.
+
 package cache
 
 import (
@@ -7,8 +11,8 @@ import (
 
 // Length of time to cache an item.
 const (
-	DEFAULT = time.Duration(0)
-	FOREVER = time.Duration(-1)
+	DefaultExpiryTime  = time.Duration(0)
+	ForEverNeverExpiry = time.Duration(-1)
 )
 
 // Getter is an interface for getting / decoding an element from a cache.
@@ -36,7 +40,7 @@ type Getter interface {
 //   var items []*Item
 //   if err := cache.Get("items", &items); err != nil {
 //     items = loadItems()
-//     go cache.Set("items", items, cache.DEFAULT)
+//     go cache.Set("items", items, cache.DefaultExpiryTime)
 //   }
 //
 // Note that the caller will frequently not wait for Set() to complete.
@@ -117,8 +121,8 @@ type Cache interface {
 var (
 	Instance Cache
 
-	ErrCacheMiss = errors.New("revel/cache: key not found.")
-	ErrNotStored = errors.New("revel/cache: not stored.")
+	ErrCacheMiss = errors.New("revel/cache: key not found")
+	ErrNotStored = errors.New("revel/cache: not stored")
 )
 
 // The package implements the Cache interface (as sugar).

@@ -1,3 +1,7 @@
+// Copyright (c) 2012-2016 The Revel Framework Authors, All rights reserved.
+// Revel Framework source code and usage is governed by a MIT style
+// license that can be found in the LICENSE file.
+
 package revel
 
 import (
@@ -23,8 +27,6 @@ type PP2 struct {
 	P2
 	PNN
 }
-
-var GENERATIONS = []interface{}{P{}, PN{}, PNN{}}
 
 func TestFindControllers(t *testing.T) {
 	controllers = make(map[string]*ControllerType)
@@ -102,7 +104,7 @@ func BenchmarkSetAction(b *testing.B) {
 	RegisterController((*Mixin2)(nil), []*MethodType{{Name: "Method"}})
 	RegisterController((*Benchmark)(nil), []*MethodType{{Name: "Method"}})
 	c := Controller{
-		RenderArgs: make(map[string]interface{}),
+		ViewArgs: make(map[string]interface{}),
 	}
 
 	for i := 0; i < b.N; i++ {
@@ -116,7 +118,7 @@ func BenchmarkSetAction(b *testing.B) {
 func BenchmarkInvoker(b *testing.B) {
 	startFakeBookingApp()
 	c := Controller{
-		RenderArgs: make(map[string]interface{}),
+		ViewArgs: make(map[string]interface{}),
 	}
 	if err := c.SetAction("Hotels", "Show"); err != nil {
 		b.Errorf("Failed to set action: %s", err)

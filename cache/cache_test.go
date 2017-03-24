@@ -1,3 +1,7 @@
+// Copyright (c) 2012-2016 The Revel Framework Authors, All rights reserved.
+// Revel Framework source code and usage is governed by a MIT style
+// license that can be found in the LICENSE file.
+
 package cache
 
 import (
@@ -16,7 +20,7 @@ func typicalGetSet(t *testing.T, newCache cacheFactory) {
 	cache := newCache(t, time.Hour)
 
 	value := "foo"
-	if err = cache.Set("value", value, DEFAULT); err != nil {
+	if err = cache.Set("value", value, DefaultExpiryTime); err != nil {
 		t.Errorf("Error setting a value: %s", err)
 	}
 
@@ -36,7 +40,7 @@ func incrDecr(t *testing.T, newCache cacheFactory) {
 	cache := newCache(t, time.Hour)
 
 	// Normal increment / decrement operation.
-	if err = cache.Set("int", 10, DEFAULT); err != nil {
+	if err = cache.Set("int", 10, ForEverNeverExpiry); err != nil {
 		t.Errorf("Error setting int: %s", err)
 	}
 	newValue, err := cache.Increment("int", 50)
@@ -77,36 +81,40 @@ func expiration(t *testing.T, newCache cacheFactory) {
 	// memcached does not support expiration times less than 1 second.
 	var err error
 	cache := newCache(t, time.Second)
-	// Test Set w/ DEFAULT
+	// Test Set w/ DefaultExpiryTime
 	value := 10
-	cache.Set("int", value, DEFAULT)
+	if err = cache.Set("int", value, DefaultExpiryTime); err != nil {
+		t.Errorf("Set failed: %s", err)
+	}
 	time.Sleep(2 * time.Second)
-	err = cache.Get("int", &value)
-	if err != ErrCacheMiss {
+	if err = cache.Get("int", &value); err != ErrCacheMiss {
 		t.Errorf("Expected CacheMiss, but got: %s", err)
 	}
 
 	// Test Set w/ short time
-	cache.Set("int", value, time.Second)
+	if err = cache.Set("int", value, time.Second); err != nil {
+		t.Errorf("Set failed: %s", err)
+	}
 	time.Sleep(2 * time.Second)
-	err = cache.Get("int", &value)
-	if err != ErrCacheMiss {
+	if err = cache.Get("int", &value); err != ErrCacheMiss {
 		t.Errorf("Expected CacheMiss, but got: %s", err)
 	}
 
 	// Test Set w/ longer time.
-	cache.Set("int", value, time.Hour)
+	if err = cache.Set("int", value, time.Hour); err != nil {
+		t.Errorf("Set failed: %s", err)
+	}
 	time.Sleep(2 * time.Second)
-	err = cache.Get("int", &value)
-	if err != nil {
+	if err = cache.Get("int", &value); err != nil {
 		t.Errorf("Expected to get the value, but got: %s", err)
 	}
 
 	// Test Set w/ forever.
-	cache.Set("int", value, FOREVER)
+	if err = cache.Set("int", value, ForEverNeverExpiry); err != nil {
+		t.Errorf("Set failed: %s", err)
+	}
 	time.Sleep(2 * time.Second)
-	err = cache.Get("int", &value)
-	if err != nil {
+	if err = cache.Get("int", &value); err != nil {
 		t.Errorf("Expected to get the value, but got: %s", err)
 	}
 }
@@ -144,7 +152,7 @@ func testReplace(t *testing.T, newCache cacheFactory) {
 	cache := newCache(t, time.Hour)
 
 	// Replace in an empty cache.
-	if err = cache.Replace("notexist", 1, FOREVER); err != ErrNotStored {
+	if err = cache.Replace("notexist", 1, ForEverNeverExpiry); err != ErrNotStored {
 		t.Errorf("Replace in empty cache: expected ErrNotStored, got: %s", err)
 	}
 
@@ -190,8 +198,8 @@ func testAdd(t *testing.T, newCache cacheFactory) {
 	}
 
 	// Wait for it to expire, and add again.
-	time.Sleep(6 * time.Second)
-	if err = cache.Add("int", 3, time.Second*3); err != nil {
+	time.Sleep(8 * time.Second)
+	if err = cache.Add("int", 3, time.Second*5); err != nil {
 		t.Errorf("Unexpected error adding to cache: %s", err)
 	}
 
@@ -217,7 +225,7 @@ func testGetMulti(t *testing.T, newCache cacheFactory) {
 	var keys []string
 	for key, value := range m {
 		keys = append(keys, key)
-		if err := cache.Set(key, value, time.Second*3); err != nil {
+		if err := cache.Set(key, value, time.Second*10); err != nil {
 			t.Errorf("Error setting a value: %s", err)
 		}
 	}
