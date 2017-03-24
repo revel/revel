@@ -177,7 +177,7 @@ func Init(mode, importPath, srcPath string) {
 	// Ensure that the selected runmode appears in app.conf.
 	// If empty string is passed as the mode, treat it as "DEFAULT"
 	if mode == "" {
-		mode = config.DEFAULT_SECTION
+		mode = config.DefaultSection
 	}
 	if !Config.HasSection(mode) {
 		log.Fatalln("app.conf: No mode found:", mode)
