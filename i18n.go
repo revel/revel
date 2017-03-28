@@ -6,6 +6,7 @@ package revel
 
 import (
 	"fmt"
+	"html/template"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -85,7 +86,18 @@ func Message(locale, message string, args ...interface{}) string {
 
 	if len(args) > 0 {
 		TRACE.Printf("Arguments detected, formatting '%s' with %v", value, args)
-		value = fmt.Sprintf(value, args...)
+		safeArgs := make([]interface{}, 0, len(args))
+		for _, arg := range args {
+			switch a := arg.(type) {
+			case template.HTML:
+				safeArgs = append(safeArgs, a)
+			case string:
+				safeArgs = append(safeArgs, template.HTML(template.HTMLEscapeString(a)))
+			default:
+				safeArgs = append(safeArgs, a)
+			}
+		}
+		value = fmt.Sprintf(value, safeArgs...)
 	}
 
 	return value
