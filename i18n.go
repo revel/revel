@@ -190,7 +190,7 @@ func I18nFilter(c *Controller, fc []Filter) {
 // Set the current locale controller argument (CurrentLocaleControllerArg) with the given locale.
 func setCurrentLocaleControllerArguments(c *Controller, locale string) {
 	c.Request.Locale = locale
-	c.RenderArgs[CurrentLocaleRenderArg] = locale
+	c.ViewArgs[CurrentLocaleRenderArg] = locale
 }
 
 // Determine whether the given request has valid Accept-Language value.

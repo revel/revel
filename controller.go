@@ -36,7 +36,7 @@ type Controller struct {
 	Session    Session                // Session, stored in cookie, signed.
 	Params     *Params                // Parameters from URL and form (including multipart).
 	Args       map[string]interface{} // Per-request scratch space.
-	RenderArgs map[string]interface{} // Args passed to the template.
+	ViewArgs   map[string]interface{} // Variables passed to the template.
 	Validation *Validation            // Data validation helpers
 }
 
@@ -47,7 +47,7 @@ func NewController(req *Request, resp *Response) *Controller {
 		Response: resp,
 		Params:   new(Params),
 		Args:     map[string]interface{}{},
-		RenderArgs: map[string]interface{}{
+		ViewArgs: map[string]interface{}{
 			"RunMode": RunMode,
 			"DevMode": DevMode,
 		},
@@ -69,7 +69,7 @@ func (c *Controller) SetCookie(cookie *http.Cookie) {
 func (c *Controller) RenderError(err error) Result {
 	c.setStatusIfNil(http.StatusInternalServerError)
 
-	return ErrorResult{c.RenderArgs, err}
+	return ErrorResult{c.ViewArgs, err}
 }
 
 func (c *Controller) setStatusIfNil(status int) {
@@ -79,7 +79,7 @@ func (c *Controller) setStatusIfNil(status int) {
 }
 
 // Render a template corresponding to the calling Controller method.
-// Arguments will be added to c.RenderArgs prior to rendering the template.
+// Arguments will be added to c.ViewArgs prior to rendering the template.
 // They are keyed on their local identifier.
 //
 // For example:
@@ -91,7 +91,7 @@ func (c *Controller) setStatusIfNil(status int) {
 //
 // This action will render views/Users/ShowUser.html, passing in an extra
 // key-value "user": (User).
-func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
+func (c *Controller) Render(extraViewArgs ...interface{}) Result {
 	c.setStatusIfNil(http.StatusOK)
 
 	// Get the calling function name.
@@ -100,15 +100,15 @@ func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
 		ERROR.Println("Failed to get Caller information")
 	}
 
-	// Get the extra RenderArgs passed in.
+	// Get the extra ViewArgs passed in.
 	if renderArgNames, ok := c.MethodType.RenderArgNames[line]; ok {
-		if len(renderArgNames) == len(extraRenderArgs) {
-			for i, extraRenderArg := range extraRenderArgs {
-				c.RenderArgs[renderArgNames[i]] = extraRenderArg
+		if len(renderArgNames) == len(extraViewArgs) {
+			for i, extraRenderArg := range extraViewArgs {
+				c.ViewArgs[renderArgNames[i]] = extraRenderArg
 			}
 		} else {
 			ERROR.Println(len(renderArgNames), "RenderArg names found for",
-				len(extraRenderArgs), "extra RenderArgs")
+				len(extraViewArgs), "extra ViewArgs")
 		}
 	} else {
 		ERROR.Println("No RenderArg names found for Render call on line", line,
@@ -119,7 +119,7 @@ func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
 }
 
 // RenderTemplate method does less magical way to render a template.
-// Renders the given template, using the current RenderArgs.
+// Renders the given template, using the current ViewArgs.
 func (c *Controller) RenderTemplate(templatePath string) Result {
 	c.setStatusIfNil(http.StatusOK)
 
@@ -131,7 +131,7 @@ func (c *Controller) RenderTemplate(templatePath string) Result {
 
 	return &RenderTemplateResult{
 		Template:   template,
-		RenderArgs: c.RenderArgs,
+		ViewArgs: c.ViewArgs,
 	}
 }
 

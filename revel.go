@@ -1,3 +1,7 @@
+// Copyright (c) 2012-2016 The Revel Framework Authors, All rights reserved.
+// Revel Framework source code and usage is governed by a MIT style
+// license that can be found in the LICENSE file.
+
 package revel
 
 import (
@@ -16,7 +20,8 @@ import (
 )
 
 const (
-	REVEL_TEMPLATE_ENGINES = "template.engines"
+	// RevelImportPath Revel framework import path
+    REVEL_TEMPLATE_ENGINES = "template.engines"
 	RevelImportPath = "github.com/revel/revel"
 )
 
@@ -199,7 +204,7 @@ func Init(mode, importPath, srcPath string) {
 	AppRoot = Config.StringDefault("app.root", "")
 	CookiePrefix = Config.StringDefault("cookie.prefix", "REVEL")
 	CookieDomain = Config.StringDefault("cookie.domain", "")
-	CookieSecure = Config.BoolDefault("cookie.secure", !DevMode)
+	CookieSecure = Config.BoolDefault("cookie.secure", HTTPSsl)
 	if secretStr := Config.StringDefault("app.secret", ""); secretStr != "" {
 		secretKey = []byte(secretStr)
 	}

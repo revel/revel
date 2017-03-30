@@ -77,9 +77,9 @@ you have a validated your ideas with other community members)!
 In order to have your pull requests accepted, we recommend you make your changes to Revel on a
 new git branch. For example,
 ```
-$ git checkout -b feature/useful-new-thing develop    # Create a new branch based on develop and switch to it
-$ ...                                                 # Make your changes and commit them
-$ git push fork develop                               # After new commits, push to your fork
+$ git checkout -b feature/useful-new-thing origin/develop    # Create a new branch based on develop and switch to it
+$ ...                                                        # Make your changes and commit them
+$ git push fork feature/useful-new-thing                     # After new commits, push to your fork
 ```
 
 ### Format Your Code
