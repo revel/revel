@@ -207,7 +207,7 @@ func (engine *GoEngine) Lookup(templateName string) Template {
 func (engine *GoEngine) Name() string {
 	return GO_TEMPLATE
 }
-func (engine *GoEngine) Event(action string, i interface{}) {
+func (engine *GoEngine) Event(action int, i interface{}) {
 	if action == TEMPLATE_REFRESH {
 		// At this point all the templates have been passed into the
 		engine.templatesBylowerName = map[string]*GoTemplate{}

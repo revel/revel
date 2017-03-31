@@ -21,7 +21,7 @@ type TemplateEngine interface {
 	// #Event: Fired by the template loader when events occur
 	//   arg: event string
 	//   arg: arg interface{}
-	Event(event string,arg interface{})
+	Event(event int,arg interface{})
 
 	// #IsEngineFor: returns true if this engine should be used to parse the file specified in baseTemplate
 	//   arg: engine The calling engine
@@ -31,7 +31,10 @@ type TemplateEngine interface {
 	// #Name: Returns the name of the engine
 	Name() string
 }
-
+const (
+    TEMPLATE_REFRESH=iota
+    TEMPLATE_REFRESH_COMPLETE
+)
 var templateLoaderMap = map[string]func(loader *TemplateLoader) (TemplateEngine, error){}
 
 // Allow for templates to be registered during init but not initialized until application has been started

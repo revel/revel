@@ -20,8 +20,6 @@ import (
 
 var (
     ErrorCSSClass = "hasError"
-    TEMPLATE_REFRESH="template_refresh"
-    TEMPLATE_REFRESH_COMPLETE="template_refresh_complete"
 )
 
 // TemplateLoader object handles loading and parsing of templates.
