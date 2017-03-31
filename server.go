@@ -24,6 +24,15 @@ var (
     serverEngineMap  = map[string]ServerEngine{}
     CurrentEngine      ServerEngine
     ServerEngineInit   *EngineInit
+    SE_BEGIN="BEGIN_REQUEST"
+    SE_END="END_REQUEST"
+    
+)
+
+const (
+    ENGINE_EVENT_PREINIT = iota
+    ENGINE_EVENT_STARTUP
+    ENGINE_EVENT_SHUTDOWN
 )
 
 func RegisterServerEngine(newEngine ServerEngine) {
@@ -108,9 +117,13 @@ func InitServer() {
 // If port is non-zero, use that.  Else, read the port from app.conf.
 func Run(port int) {
 
+    // Create the CurrentEngine instance from the application config
     InitServerEngine(port, Config.StringDefault("server.engine",GO_NATIVE_SERVER_ENGINE))
+    CurrentEngine.Event(ENGINE_EVENT_PREINIT,nil)
     InitServer()
+    CurrentEngine.Event(ENGINE_EVENT_STARTUP,nil)
     CurrentEngine.Start()
+    CurrentEngine.Event(ENGINE_EVENT_SHUTDOWN,nil)
 }
 
 func InitServerEngine(port int, serverEngine string) {
@@ -137,6 +150,7 @@ func InitServerEngine(port int, serverEngine string) {
     if CurrentEngine,ok = serverEngineMap[serverEngine];!ok {
         panic("Server Engine " + serverEngine +" Not found")
     } else {
+        TRACE.Println("Found server engine and invoking",CurrentEngine.Name())
         ServerEngineInit = &EngineInit{
             Address:localAddress,
             Network:network,
