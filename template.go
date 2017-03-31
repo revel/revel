@@ -44,9 +44,15 @@ type TemplateWatcher interface {
 }
 
 type Template interface {
+	// #Name: The name of the template.
 	Name() string      // Name of template
+	// #Content: The content of the template as a string (Used in error handling).
 	Content() []string // Content
+	// #Render: Called by the server to render the template out the io.Writer, args contains the arguements to be passed to the template.
+	//   arg: wr io.Writer
+	//   arg: arg interface{}
 	Render(wr io.Writer, arg interface{}) error
+	// #Location: The full path to the file on the disk.
 	Location() string // Disk location
 }
 
