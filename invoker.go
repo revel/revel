@@ -7,14 +7,10 @@ package revel
 import (
 	"io"
 	"reflect"
-	//"golang.org/x/net/websocket"
 )
 
 var (
-	controllerType    = reflect.TypeOf(Controller{})
 	controllerPtrType = reflect.TypeOf(&Controller{})
-	//websocketType     = reflect.TypeOf((*websocket.Conn)(nil))
-	// websocketType = reflect.TypeOf((ServerWebSocket)(nil))
 	websocketType = reflect.TypeOf((*ServerWebSocket)(nil)).Elem()
 )
 

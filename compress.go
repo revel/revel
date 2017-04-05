@@ -61,7 +61,7 @@ func CompressFilter(c *Controller, fc []Filter) {
 			if ok {
 				writer.parentNotify = w.CloseNotify()
 			}
-			c.Response.Out = &writer
+			c.Response.Out.SetWriter(&writer)
 		} else {
 			TRACE.Printf("Compression disabled for response status (%d)", c.Response.Status)
 		}

@@ -39,26 +39,20 @@ type Controller struct {
 	ViewArgs   map[string]interface{} // Variables passed to the template.
 	Validation *Validation            // Data validation helpers
 }
-type BaseController struct {
-	SetAppController (interface{})
-}
 
 // NewController returns new controller instance for Request and Response
 func NewControllerEmpty() *Controller {
 	return &Controller{}
 }
+
+// New controller, creates a new instance wrapping the request and response in it
 func NewController(req *Request, resp *Response) *Controller {
-	return &Controller{
-		Request:  req,
-		Response: resp,
-		Params:   new(Params),
-		Args:     map[string]interface{}{},
-		ViewArgs: map[string]interface{}{
-			"RunMode": RunMode,
-			"DevMode": DevMode,
-		},
-	}
+    c := NewControllerEmpty()
+    c.SetController(req, resp)
+	return c
 }
+
+// Sets the request and the response for the controller
 func (c *Controller) SetController(req *Request, resp *Response) {
 
 	c.Request = req
@@ -362,17 +356,19 @@ func (c *Controller) SetAction(controllerName, methodName string) error {
 	c.AppController = cachedControllerMap[c.Name].Pop()
 	c.setAppControllerFields()
 
-	// TODO Old method, remove c.AppController = initNewAppController(c.Type, c).Interface()
-
 	return nil
 }
+
+// Injects this instance (c) into the AppController instance
 func (c *Controller) setAppControllerFields() {
-	appController := reflect.ValueOf(c.AppController).Elem() //.(reflect.Value).Elem()
+	appController := reflect.ValueOf(c.AppController).Elem()
 	cValue := reflect.ValueOf(c)
 	for _, index := range c.Type.ControllerIndexes {
 		appController.FieldByIndex(index).Set(cValue)
 	}
 }
+
+// Removes this instance (c) from the AppController instance
 func (c *Controller) resetAppControllerFields() {
 	appController := reflect.ValueOf(c.AppController).Elem()
 	// Zero out controller
@@ -380,22 +376,6 @@ func (c *Controller) resetAppControllerFields() {
 		appController.FieldByIndex(index).Set(reflect.Zero(reflect.TypeOf(c.AppController).Elem().FieldByIndex(index).Type))
 	}
 }
-
-// This is a helper that initializes (zeros) a new app controller value.
-// Specifically, it sets all *revel.Controller embedded types to the provided controller.
-// Returns a value representing a pointer to the new app controller.
-// TODO Unneeded method
-//func initNewAppController(appControllerType *ControllerType, c *Controller) reflect.Value {
-//	var (
-//		appControllerPtr = reflect.New(appControllerType.Type)
-//		appController    = appControllerPtr.Elem()
-//		cValue           = reflect.ValueOf(c)
-//	)
-//	for _, index := range appControllerType.ControllerIndexes {
-//		appController.FieldByIndex(index).Set(cValue)
-//	}
-//	return appControllerPtr
-//}
 
 func findControllers(appControllerType reflect.Type) (indexes [][]int) {
 	// It might be a multi-level embedding. To find the controllers, we follow

@@ -358,30 +358,27 @@ func (r *BinaryResult) Apply(req *Request, resp *Response) {
 	if r.Name != "" {
 		disposition += fmt.Sprintf(`; filename="%s"`, r.Name)
 	}
-	resp.Out.Header().Set("Content-Disposition", disposition)
+    header := resp.Out.Header()
+	header.Set("Content-Disposition", disposition)
+    if resp.ContentType != "" {
+        header.Set("Content-Type", resp.ContentType)
+    } else {
+        contentType := ContentTypeByFilename(r.Name)
+        header.Set("Content-Type", contentType)
+    }
+    if content,ok:=r.Reader.(io.ReadSeeker);ok && r.Length<0 {
+        // get the size from the stream
+        if size, err := content.Seek(0, io.SeekEnd); err == nil {
+            if _, err = content.Seek(0, io.SeekStart); err == nil {
+                r.Length = size
+            }
+        }
+    }
 
-	//// TODO Remove this block
-	//// If we have a ReadSeeker, delegate to http.ServeContent
-	//if rs, ok := r.Reader.(io.ReadSeeker); ok {
-	//	// http.ServeContent doesn't know about response.ContentType, so we set the respective header.
-	//	if resp.ContentType != "" {
-	//		resp.Out.Header().Set("Content-Type", resp.ContentType)
-	//	} else {
-	//		contentType := ContentTypeByFilename(r.Name)
-	//		resp.Out.Header().Set("Content-Type", contentType)
-	//	}
-	//	http.ServeContent(resp.Out, req.Request, r.Name, r.ModTime, rs)
-	//} else {
-	// Else, do a simple io.Copy.
-	if r.Length != -1 {
-		resp.Out.Header().Set("Content-Length", strconv.FormatInt(r.Length, 10))
-	}
-	resp.WriteHeader(http.StatusOK, ContentTypeByFilename(r.Name))
-
-	if _, err := io.Copy(resp.Out.GetWriter(), r.Reader); err != nil {
-		ERROR.Println("Response write failed:", err)
-	}
-	//}
+    // Write stream writes the status code to the header as well
+    if err := resp.Out.WriteStream( r.Name, r.Length, r.ModTime, r.Reader);err!=nil {
+        ERROR.Println("Response write failed:", err)
+    }
 
 	// Close the Reader if we can
 	if v, ok := r.Reader.(io.Closer); ok {

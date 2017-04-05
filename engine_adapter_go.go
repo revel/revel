@@ -10,6 +10,7 @@ import (
     "io"
     "mime/multipart"
     "net/url"
+    "strconv"
 )
 
 // Register the GOHttpServer engine
@@ -76,7 +77,7 @@ func (g *GOHttpServer) Handle(w http.ResponseWriter, r *http.Request) {
         goRequestStack.Push(request)
     }()
     request.Set(r)
-    response.Set(w)
+    response.Set(w,r)
 
     if upgrade == "websocket" || upgrade == "Websocket" {
         websocket.Handler(func(ws *websocket.Conn) {
@@ -129,6 +130,8 @@ type (
     GOResponse struct {
         Original http.ResponseWriter
         Goheader *GOHeader
+        Writer io.Writer
+        Request *http.Request
     }
     GOMultipartForm struct {
         Form *multipart.Form
@@ -207,7 +210,7 @@ func (r *GORequest) Destroy() {
     r.ParsedForm = nil
 }
 func (r *GOResponse) GetWriter() io.Writer {
-    return r.Original
+    return r.Writer
 }
 func (r *GOResponse) Header() ServerHeader {
     return r.Goheader
@@ -215,16 +218,58 @@ func (r *GOResponse) Header() ServerHeader {
 func (r *GOResponse) GetRaw() interface{} {
     return r.Original
 }
+func (r *GOResponse) SetWriter(writer io.Writer) {
+    r.Writer = writer
+}
+func (r *GOResponse) WriteStream(name string, contentlen int64, modtime time.Time,reader io.Reader) error {
+
+	if rs, ok := reader.(io.ReadSeeker); ok {
+		// http.ServeContent doesn't know about response.ContentType, so we set the respective header.
+        http.ServeContent(r.Original, r.Request, name, modtime, rs)
+	} else {
+        // Else, do a simple io.Copy.
+        ius := r.Request.Header.Get("If-Unmodified-Since")
+        if t, err := http.ParseTime(ius); err == nil && !modtime.IsZero() {
+            // The Date-Modified header truncates sub-second precision, so
+            // use mtime < t+1s instead of mtime <= t to check for unmodified.
+            if modtime.Before(t.Add(1 * time.Second)) {
+                h := r.Original.Header()
+                delete(h, "Content-Type")
+                delete(h, "Content-Length")
+                if h.Get("Etag") != "" {
+                    delete(h, "Last-Modified")
+                }
+                r.Original.WriteHeader(http.StatusNotModified)
+                return nil
+            }
+        }
+
+        if contentlen != -1 {
+            r.Original.Header().Set("Content-Length", strconv.FormatInt(contentlen, 10))
+        }
+        if _, err := io.Copy(r.Writer, reader); err != nil {
+            r.Original.WriteHeader(http.StatusInternalServerError)
+            return err
+        } else {
+            r.Original.WriteHeader(http.StatusOK)
+        }
+	}
+    return nil
+}
 
 func (r *GOResponse) Destroy() {
-    if c, ok := r.Original.(io.Closer); ok {
+    if c, ok := r.Writer.(io.Closer); ok {
         c.Close()
     }
     r.Goheader.Source = nil
     r.Original = nil
+    r.Writer = nil
+    r.Request = nil
 }
-func (r *GOResponse) Set(w http.ResponseWriter) {
+func (r *GOResponse) Set(w http.ResponseWriter, request *http.Request) {
     r.Original = w
+    r.Writer = w
+    r.Request = request
     r.Goheader.Source = r
     r.Goheader.isResponse = true
 

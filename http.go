@@ -7,11 +7,9 @@ package revel
 import (
 	"bytes"
 	"fmt"
-	// "net/http"
 	"sort"
 	"strconv"
 	"strings"
-	// "golang.org/x/net/websocket"
 )
 
 // Request Revel's HTTP request object structure
