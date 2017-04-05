@@ -250,7 +250,7 @@ func (r *TestRequest) MakeRequest() {
 	sessionCookieName := r.testSuite.Session.Cookie().Name
 	for _, cookie := range r.testSuite.Client.Jar.Cookies(r.Request.URL) {
 		if cookie.Name == sessionCookieName {
-			r.testSuite.Session = revel.GetSessionFromCookie(cookie)
+			r.testSuite.Session = revel.GetSessionFromCookie(revel.GoCookie(*cookie))
 			break
 		}
 	}

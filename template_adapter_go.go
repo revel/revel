@@ -168,7 +168,7 @@ type GoEngine struct {
 	// TemplatesBylowerName is a map from lower case template name to the real template.
 	templatesBylowerName map[string]*GoTemplate
 	splitDelims          []string
-    BaseTemplateEngine
+	BaseTemplateEngine
 }
 
 func (engine *GoEngine) ParseAndAdd(baseTemplate *BaseTemplate) error {
@@ -180,7 +180,7 @@ func (engine *GoEngine) ParseAndAdd(baseTemplate *BaseTemplate) error {
 		engine.templateSet.Delims("", "")
 	}
 	templateSource := string(baseTemplate.FileBytes)
-    baseTemplate.TemplateName = engine.ConvertPath(baseTemplate.TemplateName)
+	baseTemplate.TemplateName = engine.ConvertPath(baseTemplate.TemplateName)
 	tpl, err := engine.templateSet.New(baseTemplate.TemplateName).Parse(templateSource)
 	if nil != err {
 		_, line, description := ParseTemplateError(err)
@@ -212,8 +212,8 @@ func (engine *GoEngine) Event(action int, i interface{}) {
 		// At this point all the templates have been passed into the
 		engine.templatesBylowerName = map[string]*GoTemplate{}
 		engine.templateSet = template.New("__root__").Funcs(TemplateFuncs)
-        // Check to see what should be used for case sensitivity
-        engine.CaseInsensitiveMode = Config.StringDefault("go.template.path","lower")!="case"
+		// Check to see what should be used for case sensitivity
+		engine.CaseInsensitiveMode = Config.StringDefault("go.template.path", "lower") != "case"
 	}
 }
 func init() {

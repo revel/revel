@@ -185,7 +185,7 @@ func (v *Validation) Check(obj interface{}, checks ...Validator) *ValidationResu
 
 // ValidationFilter revel Filter function to be hooked into the filter chain.
 func ValidationFilter(c *Controller, fc []Filter) {
-	errors, err := restoreValidationErrors(c.Request.Request)
+	errors, err := restoreValidationErrors(c.Request.In)
 	c.Validation = &Validation{
 		Errors: errors,
 		keep:   false,
@@ -232,14 +232,14 @@ func ValidationFilter(c *Controller, fc []Filter) {
 }
 
 // Restore Validation.Errors from a request.
-func restoreValidationErrors(req *http.Request) ([]*ValidationError, error) {
+func restoreValidationErrors(req ServerRequest) ([]*ValidationError, error) {
 	var (
 		err    error
-		cookie *http.Cookie
+		cookie ServerCookie
 		errors = make([]*ValidationError, 0, 5)
 	)
-	if cookie, err = req.Cookie(CookiePrefix + "_ERRORS"); err == nil {
-		ParseKeyValueCookie(cookie.Value, func(key, val string) {
+	if cookie, err = req.GetHeader().GetCookie(CookiePrefix + "_ERRORS"); err == nil {
+		ParseKeyValueCookie(cookie.GetValue(), func(key, val string) {
 			errors = append(errors, &ValidationError{
 				Key:     key,
 				Message: val,

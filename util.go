@@ -66,7 +66,6 @@ func ReadLines(filename string) ([]string, error) {
 	return strings.Split(string(bytes), "\n"), nil
 }
 
-
 func ContainsString(list []string, target string) bool {
 	for _, el := range list {
 		if el == target {
@@ -193,10 +192,10 @@ func Equal(a, b interface{}) bool {
 // IP address in the order of X-Forwarded-For, X-Real-IP.
 //
 // By default revel will get http.Request's RemoteAddr
-func ClientIP(r *http.Request) string {
+func ClientIP(r ServerRequest) string {
 	if Config.BoolDefault("app.behind.proxy", false) {
 		// Header X-Forwarded-For
-		if fwdFor := strings.TrimSpace(r.Header.Get(hdrForwardedFor)); fwdFor != "" {
+		if fwdFor := strings.TrimSpace(r.GetHeader().Get(hdrForwardedFor)); fwdFor != "" {
 			index := strings.Index(fwdFor, ",")
 			if index == -1 {
 				return fwdFor
@@ -205,12 +204,12 @@ func ClientIP(r *http.Request) string {
 		}
 
 		// Header X-Real-Ip
-		if realIP := strings.TrimSpace(r.Header.Get(hdrRealIP)); realIP != "" {
+		if realIP := strings.TrimSpace(r.GetHeader().Get(hdrRealIP)); realIP != "" {
 			return realIP
 		}
 	}
 
-	if remoteAddr, _, err := net.SplitHostPort(r.RemoteAddr); err == nil {
+	if remoteAddr, _, err := net.SplitHostPort(r.GetRemoteAddr()); err == nil {
 		return remoteAddr
 	}
 

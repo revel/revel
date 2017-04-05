@@ -35,26 +35,25 @@ type Params struct {
 
 // ParseParams parses the `http.Request` params into `revel.Controller.Params`
 func ParseParams(params *Params, req *Request) {
-	params.Query = req.URL.Query()
+	params.Query = req.In.GetQuery()
 
 	// Parse the body depending on the content type.
 	switch req.ContentType {
 	case "application/x-www-form-urlencoded":
 		// Typical form.
-		if err := req.ParseForm(); err != nil {
+		var err error
+		if params.Form, err = req.In.GetForm(); err != nil {
 			WARN.Println("Error parsing request body:", err)
-		} else {
-			params.Form = req.Form
 		}
 
 	case "multipart/form-data":
 		// Multipart form.
 		// TODO: Extract the multipart form param so app can set it.
-		if err := req.ParseMultipartForm(32 << 20 /* 32 MB */); err != nil {
+		if mp, err := req.In.GetMultipartForm(32 << 20 /* 32 MB */); err != nil {
 			WARN.Println("Error parsing request body:", err)
 		} else {
-			params.Form = req.MultipartForm.Value
-			params.Files = req.MultipartForm.File
+			params.Form = mp.GetValue()
+			params.Files = mp.GetFile()
 		}
 	}
 
@@ -101,21 +100,24 @@ func (p *Params) calcValues() url.Values {
 	// order of priority is least to most trusted
 	values := make(url.Values, numParams)
 
-	// ?query vars first
+	// ?query vars are first
 	for k, v := range p.Query {
 		values[k] = append(values[k], v...)
 	}
-	// form vars overwrite
+
+	// form vars append
 	for k, v := range p.Form {
 		values[k] = append(values[k], v...)
 	}
+
 	// :/path vars overwrite
 	for k, v := range p.Route {
-		values[k] = append(values[k], v...)
+		values[k] = v
 	}
+
 	// fixed vars overwrite
 	for k, v := range p.Fixed {
-		values[k] = append(values[k], v...)
+		values[k] = v
 	}
 
 	return values
@@ -127,8 +129,8 @@ func ParamsFilter(c *Controller, fc []Filter) {
 	// Clean up from the request.
 	defer func() {
 		// Delete temp files.
-		if c.Request.MultipartForm != nil {
-			err := c.Request.MultipartForm.RemoveAll()
+		if frm, _ := c.Request.In.GetMultipartForm(-1); frm != nil {
+			err := frm.RemoveAll()
 			if err != nil {
 				WARN.Println("Error removing temporary files:", err)
 			}

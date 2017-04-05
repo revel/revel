@@ -44,7 +44,7 @@ func (f Flash) Success(msg string, args ...interface{}) {
 // Within Revel, it is available as a Flash attribute on Controller instances.
 // The name of the Flash cookie is set as CookiePrefix + "_FLASH".
 func FlashFilter(c *Controller, fc []Filter) {
-	c.Flash = restoreFlash(c.Request.Request)
+	c.Flash = restoreFlash(c.Request.In)
 	c.ViewArgs["flash"] = c.Flash.Data
 
 	fc[0](c, fc[1:])
@@ -64,13 +64,13 @@ func FlashFilter(c *Controller, fc []Filter) {
 }
 
 // restoreFlash deserializes a Flash cookie struct from a request.
-func restoreFlash(req *http.Request) Flash {
+func restoreFlash(req ServerRequest) Flash {
 	flash := Flash{
 		Data: make(map[string]string),
 		Out:  make(map[string]string),
 	}
-	if cookie, err := req.Cookie(CookiePrefix + "_FLASH"); err == nil {
-		ParseKeyValueCookie(cookie.Value, func(key, val string) {
+	if cookie, err := req.GetHeader().GetCookie(CookiePrefix + "_FLASH"); err == nil {
+		ParseKeyValueCookie(cookie.GetValue(), func(key, val string) {
 			flash.Data[key] = val
 		})
 	}

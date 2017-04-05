@@ -7,22 +7,24 @@ package revel
 import (
 	"bytes"
 	"fmt"
-	"net/http"
+	// "net/http"
 	"sort"
 	"strconv"
 	"strings"
-
-	"golang.org/x/net/websocket"
+	// "golang.org/x/net/websocket"
 )
 
 // Request Revel's HTTP request object structure
 type Request struct {
-	*http.Request
+	In              ServerRequest
 	ContentType     string
 	Format          string // "html", "xml", "json", or "txt"
 	AcceptLanguages AcceptLanguages
 	Locale          string
-	Websocket       *websocket.Conn
+	Websocket       ServerWebSocket
+	Method          string
+    RemoteAddr      string
+    Host            string
 }
 
 // Response Revel's HTTP response object structure
@@ -30,22 +32,55 @@ type Response struct {
 	Status      int
 	ContentType string
 
-	Out http.ResponseWriter
+	Out ServerResponse
 }
 
 // NewResponse returns a Revel's HTTP response instance with given instance
-func NewResponse(w http.ResponseWriter) *Response {
+func NewResponse(w ServerResponse) *Response {
 	return &Response{Out: w}
 }
 
 // NewRequest returns a Revel's HTTP request instance with given HTTP instance
-func NewRequest(r *http.Request) *Request {
-	return &Request{
-		Request:         r,
-		ContentType:     ResolveContentType(r),
-		Format:          ResolveFormat(r),
-		AcceptLanguages: ResolveAcceptLanguage(r),
+func NewRequest(r ServerRequest) *Request {
+	req := &Request{}
+	if r != nil {
+		req.SetRequest(r)
 	}
+	return req
+}
+func (req *Request) SetRequest(r ServerRequest) {
+	req.In = r
+	req.ContentType = ResolveContentType(r)
+	req.Format = ResolveFormat(r)
+	req.AcceptLanguages = ResolveAcceptLanguage(r)
+	req.Method = r.GetMethod()
+    req.RemoteAddr = r.GetRemoteAddr()
+    req.Host = r.GetHost()
+}
+func (req *Request) Destroy() {
+	req.In = nil
+	req.ContentType = ""
+	req.Format = ""
+	req.AcceptLanguages = nil
+	req.Method = ""
+    req.RemoteAddr = ""
+    req.Host = ""
+}
+func (resp *Response) SetResponse(r ServerResponse) {
+	resp.Out = r
+}
+func (resp *Response) Destroy() {
+	resp.Out = nil
+	resp.Status = 0
+	resp.ContentType = ""
+}
+// UserAgent returns the client's User-Agent, if sent in the request.
+func (r *Request) UserAgent() string {
+    return r.In.GetHeader().Get("User-Agent")
+}
+
+func (r *Request) Referer() string {
+    return r.In.GetHeader().Get("Referer")
 }
 
 // WriteHeader writes the header (for now, just the status code).
@@ -59,14 +94,15 @@ func (resp *Response) WriteHeader(defaultStatusCode int, defaultContentType stri
 		resp.ContentType = defaultContentType
 	}
 	resp.Out.Header().Set("Content-Type", resp.ContentType)
-	resp.Out.WriteHeader(resp.Status)
+	resp.Out.Header().SetStatus(resp.Status)
 }
 
 // ResolveContentType gets the content type.
 // e.g. From "multipart/form-data; boundary=--" to "multipart/form-data"
 // If none is specified, returns "text/html" by default.
-func ResolveContentType(req *http.Request) string {
-	contentType := req.Header.Get("Content-Type")
+func ResolveContentType(req ServerRequest) string {
+
+	contentType := req.GetHeader().Get("Content-Type")
 	if contentType == "" {
 		return "text/html"
 	}
@@ -77,8 +113,8 @@ func ResolveContentType(req *http.Request) string {
 // a Request.Format attribute, specifically "html", "xml", "json", or "txt",
 // returning a default of "html" when Accept header cannot be mapped to a
 // value above.
-func ResolveFormat(req *http.Request) string {
-	accept := req.Header.Get("accept")
+func ResolveFormat(req ServerRequest) string {
+	accept := req.GetHeader().Get("accept")
 
 	switch {
 	case accept == "",
@@ -136,8 +172,8 @@ func (al AcceptLanguages) String() string {
 //
 // See the HTTP header fields specification
 // (http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.4) for more details.
-func ResolveAcceptLanguage(req *http.Request) AcceptLanguages {
-	header := req.Header.Get("Accept-Language")
+func ResolveAcceptLanguage(req ServerRequest) AcceptLanguages {
+	header := req.GetHeader().Get("Accept-Language")
 	if header == "" {
 		return nil
 	}

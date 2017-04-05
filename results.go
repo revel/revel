@@ -17,8 +17,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"golang.org/x/net/websocket"
 )
 
 type Result interface {
@@ -30,7 +28,7 @@ type Result interface {
 // If RunMode is "dev", this results in a friendly error page.
 type ErrorResult struct {
 	ViewArgs map[string]interface{}
-	Error      error
+	Error    error
 }
 
 func (r ErrorResult) Apply(req *Request, resp *Response) {
@@ -102,12 +100,12 @@ func (r ErrorResult) Apply(req *Request, resp *Response) {
 	// need to check if we are on a websocket here
 	// net/http panics if we write to a hijacked connection
 	if req.Method == "WS" {
-		if err := websocket.Message.Send(req.Websocket, fmt.Sprint(revelError)); err != nil {
+		if err := req.Websocket.MessageSendJson(fmt.Sprint(revelError)); err != nil {
 			ERROR.Println("Send failed:", err)
 		}
 	} else {
 		resp.WriteHeader(status, contentType)
-		if _, err := b.WriteTo(resp.Out); err != nil {
+		if _, err := b.WriteTo(resp.Out.GetWriter()); err != nil {
 			ERROR.Println("Response WriteTo failed:", err)
 		}
 	}
@@ -121,7 +119,7 @@ type PlaintextErrorResult struct {
 // Apply method is used when the template loader or error template is not available.
 func (r PlaintextErrorResult) Apply(req *Request, resp *Response) {
 	resp.WriteHeader(http.StatusInternalServerError, "text/plain; charset=utf-8")
-	if _, err := resp.Out.Write([]byte(r.Error.Error())); err != nil {
+	if _, err := resp.Out.GetWriter().Write([]byte(r.Error.Error())); err != nil {
 		ERROR.Println("Write error:", err)
 	}
 }
@@ -129,7 +127,7 @@ func (r PlaintextErrorResult) Apply(req *Request, resp *Response) {
 // RenderTemplateResult action methods returns this result to request
 // a template be rendered.
 type RenderTemplateResult struct {
-	Template   Template
+	Template Template
 	ViewArgs map[string]interface{}
 }
 
@@ -146,7 +144,7 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
 	chunked := Config.BoolDefault("results.chunked", false)
 
 	// If it's a HEAD request, throw away the bytes.
-	out := io.Writer(resp.Out)
+	out := io.Writer(resp.Out.GetWriter())
 	if req.Method == "HEAD" {
 		out = ioutil.Discard
 	}
@@ -261,7 +259,7 @@ type RenderHTMLResult struct {
 
 func (r RenderHTMLResult) Apply(req *Request, resp *Response) {
 	resp.WriteHeader(http.StatusOK, "text/html; charset=utf-8")
-	if _, err := resp.Out.Write([]byte(r.html)); err != nil {
+	if _, err := resp.Out.GetWriter().Write([]byte(r.html)); err != nil {
 		ERROR.Println("Response write failed:", err)
 	}
 }
@@ -287,20 +285,20 @@ func (r RenderJSONResult) Apply(req *Request, resp *Response) {
 
 	if r.callback == "" {
 		resp.WriteHeader(http.StatusOK, "application/json; charset=utf-8")
-		if _, err = resp.Out.Write(b); err != nil {
+		if _, err = resp.Out.GetWriter().Write(b); err != nil {
 			ERROR.Println("Response write failed:", err)
 		}
 		return
 	}
 
 	resp.WriteHeader(http.StatusOK, "application/javascript; charset=utf-8")
-	if _, err = resp.Out.Write([]byte(r.callback + "(")); err != nil {
+	if _, err = resp.Out.GetWriter().Write([]byte(r.callback + "(")); err != nil {
 		ERROR.Println("Response write failed:", err)
 	}
-	if _, err = resp.Out.Write(b); err != nil {
+	if _, err = resp.Out.GetWriter().Write(b); err != nil {
 		ERROR.Println("Response write failed:", err)
 	}
-	if _, err = resp.Out.Write([]byte(");")); err != nil {
+	if _, err = resp.Out.GetWriter().Write([]byte(");")); err != nil {
 		ERROR.Println("Response write failed:", err)
 	}
 }
@@ -324,7 +322,7 @@ func (r RenderXMLResult) Apply(req *Request, resp *Response) {
 	}
 
 	resp.WriteHeader(http.StatusOK, "application/xml; charset=utf-8")
-	if _, err = resp.Out.Write(b); err != nil {
+	if _, err = resp.Out.GetWriter().Write(b); err != nil {
 		ERROR.Println("Response write failed:", err)
 	}
 }
@@ -335,7 +333,7 @@ type RenderTextResult struct {
 
 func (r RenderTextResult) Apply(req *Request, resp *Response) {
 	resp.WriteHeader(http.StatusOK, "text/plain; charset=utf-8")
-	if _, err := resp.Out.Write([]byte(r.text)); err != nil {
+	if _, err := resp.Out.GetWriter().Write([]byte(r.text)); err != nil {
 		ERROR.Println("Response write failed:", err)
 	}
 }
@@ -362,26 +360,28 @@ func (r *BinaryResult) Apply(req *Request, resp *Response) {
 	}
 	resp.Out.Header().Set("Content-Disposition", disposition)
 
-	// If we have a ReadSeeker, delegate to http.ServeContent
-	if rs, ok := r.Reader.(io.ReadSeeker); ok {
-		// http.ServeContent doesn't know about response.ContentType, so we set the respective header.
-		if resp.ContentType != "" {
-			resp.Out.Header().Set("Content-Type", resp.ContentType)
-		} else {
-			contentType := ContentTypeByFilename(r.Name)
-			resp.Out.Header().Set("Content-Type", contentType)
-		}
-		http.ServeContent(resp.Out, req.Request, r.Name, r.ModTime, rs)
-	} else {
-		// Else, do a simple io.Copy.
-		if r.Length != -1 {
-			resp.Out.Header().Set("Content-Length", strconv.FormatInt(r.Length, 10))
-		}
-		resp.WriteHeader(http.StatusOK, ContentTypeByFilename(r.Name))
-		if _, err := io.Copy(resp.Out, r.Reader); err != nil {
-			ERROR.Println("Response write failed:", err)
-		}
+	//// TODO Remove this block
+	//// If we have a ReadSeeker, delegate to http.ServeContent
+	//if rs, ok := r.Reader.(io.ReadSeeker); ok {
+	//	// http.ServeContent doesn't know about response.ContentType, so we set the respective header.
+	//	if resp.ContentType != "" {
+	//		resp.Out.Header().Set("Content-Type", resp.ContentType)
+	//	} else {
+	//		contentType := ContentTypeByFilename(r.Name)
+	//		resp.Out.Header().Set("Content-Type", contentType)
+	//	}
+	//	http.ServeContent(resp.Out, req.Request, r.Name, r.ModTime, rs)
+	//} else {
+	// Else, do a simple io.Copy.
+	if r.Length != -1 {
+		resp.Out.Header().Set("Content-Length", strconv.FormatInt(r.Length, 10))
 	}
+	resp.WriteHeader(http.StatusOK, ContentTypeByFilename(r.Name))
+
+	if _, err := io.Copy(resp.Out.GetWriter(), r.Reader); err != nil {
+		ERROR.Println("Response write failed:", err)
+	}
+	//}
 
 	// Close the Reader if we can
 	if v, ok := r.Reader.(io.Closer); ok {

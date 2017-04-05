@@ -116,15 +116,16 @@ func sessionTimeoutExpiredOrMissing(session Session) bool {
 
 // GetSessionFromCookie returns a Session struct pulled from the signed
 // session cookie.
-func GetSessionFromCookie(cookie *http.Cookie) Session {
+func GetSessionFromCookie(cookie ServerCookie) Session {
 	session := make(Session)
 
 	// Separate the data from the signature.
-	hyphen := strings.Index(cookie.Value, "-")
-	if hyphen == -1 || hyphen >= len(cookie.Value)-1 {
+	cookieValue := cookie.GetValue()
+	hyphen := strings.Index(cookieValue, "-")
+	if hyphen == -1 || hyphen >= len(cookieValue)-1 {
 		return session
 	}
-	sig, data := cookie.Value[:hyphen], cookie.Value[hyphen+1:]
+	sig, data := cookieValue[:hyphen], cookieValue[hyphen+1:]
 
 	// Verify the signature.
 	if !Verify(data, sig) {
@@ -147,7 +148,7 @@ func GetSessionFromCookie(cookie *http.Cookie) Session {
 // Within Revel, it is available as a Session attribute on Controller instances.
 // The name of the Session cookie is set as CookiePrefix + "_SESSION".
 func SessionFilter(c *Controller, fc []Filter) {
-	c.Session = restoreSession(c.Request.Request)
+	c.Session = restoreSession(c.Request.In)
 	sessionWasEmpty := len(c.Session) == 0
 
 	// Make session vars available in templates as {{.session.xyz}}
@@ -163,8 +164,8 @@ func SessionFilter(c *Controller, fc []Filter) {
 
 // restoreSession returns either the current session, retrieved from the
 // session cookie, or a new session.
-func restoreSession(req *http.Request) Session {
-	cookie, err := req.Cookie(CookiePrefix + "_SESSION")
+func restoreSession(req ServerRequest) Session {
+	cookie, err := req.GetHeader().GetCookie(CookiePrefix + "_SESSION")
 	if err != nil {
 		return make(Session)
 	}

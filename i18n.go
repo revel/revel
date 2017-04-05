@@ -207,11 +207,11 @@ func hasAcceptLanguageHeader(request *Request) (bool, string) {
 
 // Determine whether the given request has a valid language cookie value.
 func hasLocaleCookie(request *Request) (bool, string) {
-	if request != nil && request.Cookies() != nil {
+	if request != nil {
 		name := Config.StringDefault(localeCookieConfigKey, CookiePrefix+"_LANG")
-		cookie, err := request.Cookie(name)
+		cookie, err := request.In.GetHeader().GetCookie(name)
 		if err == nil {
-			return true, cookie.Value
+			return true, cookie.GetValue()
 		}
 		TRACE.Printf("Unable to read locale cookie with name '%s': %s", name, err.Error())
 	}

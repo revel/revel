@@ -40,7 +40,7 @@ type WriteFlusher interface {
 }
 
 type CompressResponseWriter struct {
-	http.ResponseWriter
+	ServerResponse
 	compressWriter  WriteFlusher
 	compressionType string
 	headersWritten  bool
@@ -102,14 +102,14 @@ func (c *CompressResponseWriter) prepareHeaders() {
 func (c *CompressResponseWriter) WriteHeader(status int) {
 	c.headersWritten = true
 	c.prepareHeaders()
-	c.ResponseWriter.WriteHeader(status)
+	c.ServerResponse.Header().SetStatus(status)
 }
 
 func (c *CompressResponseWriter) Close() error {
 	if c.compressionType != "" {
 		_ = c.compressWriter.Close()
 	}
-	if w, ok := c.ResponseWriter.(io.Closer); ok {
+	if w, ok := c.ServerResponse.GetWriter().(io.Closer); ok {
 		_ = w.Close()
 	}
 	// Non-blocking write to the closenotifier, if we for some reason should
@@ -144,14 +144,14 @@ func (c *CompressResponseWriter) Write(b []byte) (int, error) {
 		return c.compressWriter.Write(b)
 	}
 
-	return c.ResponseWriter.Write(b)
+	return c.ServerResponse.GetWriter().Write(b)
 }
 
 // DetectCompressionType method detects the comperssion type
 // from header "Accept-Encoding"
 func (c *CompressResponseWriter) DetectCompressionType(req *Request, resp *Response) {
 	if Config.BoolDefault("results.compressed", false) {
-		acceptedEncodings := strings.Split(req.Request.Header.Get("Accept-Encoding"), ",")
+		acceptedEncodings := strings.Split(req.In.GetHeader().Get("Accept-Encoding"), ",")
 
 		largestQ := 0.0
 		chosenEncoding := len(compressionTypes)
@@ -220,9 +220,9 @@ func (c *CompressResponseWriter) DetectCompressionType(req *Request, resp *Respo
 
 		switch c.compressionType {
 		case "gzip":
-			c.compressWriter = gzip.NewWriter(resp.Out)
+			c.compressWriter = gzip.NewWriter(resp.Out.GetWriter())
 		case "deflate":
-			c.compressWriter = zlib.NewWriter(resp.Out)
+			c.compressWriter = zlib.NewWriter(resp.Out.GetWriter())
 		}
 	}
 }

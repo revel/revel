@@ -5,14 +5,9 @@
 package revel
 
 import (
-	"io"
-	"net/http"
 	"sort"
 	"strconv"
 	"strings"
-	"time"
-
-	"golang.org/x/net/websocket"
 )
 
 // Revel's variables server, router, etc
@@ -20,77 +15,39 @@ var (
 	MainRouter         *Router
 	MainTemplateLoader *TemplateLoader
 	MainWatcher        *Watcher
-	//Server             *http.Server
-    serverEngineMap  = map[string]ServerEngine{}
-    CurrentEngine      ServerEngine
-    ServerEngineInit   *EngineInit
-    SE_BEGIN="BEGIN_REQUEST"
-    SE_END="END_REQUEST"
-    
+	serverEngineMap    = map[string]ServerEngine{}
+	CurrentEngine      ServerEngine
+	ServerEngineInit   *EngineInit
 )
 
 const (
-    ENGINE_EVENT_PREINIT = iota
-    ENGINE_EVENT_STARTUP
-    ENGINE_EVENT_SHUTDOWN
+	ENGINE_EVENT_PREINIT = iota
+	ENGINE_EVENT_STARTUP
+	ENGINE_EVENT_SHUTDOWN
 )
 
 func RegisterServerEngine(newEngine ServerEngine) {
-    serverEngineMap[newEngine.Name()]=newEngine
+    println("registered",newEngine.Name())
+	serverEngineMap[newEngine.Name()] = newEngine
 }
 
-func handleInternal(w http.ResponseWriter, r *http.Request, ws *websocket.Conn) {
-	// TODO For now this okay to put logger here for all the requests
-	// However, it's best to have logging handler at server entry level
-	start := time.Now()
-	clientIP := ClientIP(r)
-
-	var (
-		req  = NewRequest(r)
-		resp = NewResponse(w)
-		c    = NewController(req, resp)
-	)
-	req.Websocket = ws
-	c.ClientIP = clientIP
-
-	Filters[0](c, Filters[1:])
-	if c.Result != nil {
-		c.Result.Apply(req, resp)
-	} else if c.Response.Status != 0 {
-		c.Response.Out.WriteHeader(c.Response.Status)
-	}
-	// Close the Writer if we can
-	if w, ok := resp.Out.(io.Closer); ok {
-		_ = w.Close()
-	}
-
-	// Revel request access log format
-	// RequestStartTime ClientIP ResponseStatus RequestLatency HTTPMethod URLPath
-	// Sample format:
-	// 2016/05/25 17:46:37.112 127.0.0.1 200  270.157µs GET /
-	requestLog.Printf("%v %v %v %10v %v %v",
-		start.Format(requestLogTimeFormat),
-		clientIP,
-		c.Response.Status,
-		time.Since(start),
-		r.Method,
-		r.URL.Path,
-	)
-}
-
-// InitServer intializes the server and returns the handler
+// InitServer initializes the server and returns the handler
 // It can be used as an alternative entry-point if one needs the http handler
 // to be exposed. E.g. to run on multiple addresses and ports or to set custom
 // TLS options.
 func InitServer() {
+	requestStack    = NewStackLock(Config.IntDefault("revel.request.stack",100), func() interface{} { return NewRequest(nil) })
+	responseStack   = NewStackLock(Config.IntDefault("revel.response.stack",100), func() interface{} { return NewResponse(nil) })
+	controllerStack = NewStackLock(Config.IntDefault("revel.controller.stack",100), func() interface{} { return NewControllerEmpty() })
+    cachedControllerStackSize = Config.IntDefault("revel.cache.controller.stack",10)
 	runStartupHooks()
 
 	// Load templates
 	MainTemplateLoader = NewTemplateLoader(TemplatePaths)
-    // Initialize the template engines
-    if err:=MainTemplateLoader.InitializeEngines(Config.StringDefault(REVEL_TEMPLATE_ENGINES, GO_TEMPLATE)); err!=nil {
-        ERROR.Println(err)
-    }
+	// Initialize the template engines
+	if err := MainTemplateLoader.InitializeEngines(Config.StringDefault(REVEL_TEMPLATE_ENGINES, GO_TEMPLATE)); err != nil {
+		ERROR.Println(err)
+	}
 
 	if err := MainTemplateLoader.Refresh(); err != nil {
 		ERROR.Println(err)
@@ -117,13 +74,13 @@ func InitServer() {
 // If port is non-zero, use that.  Else, read the port from app.conf.
 func Run(port int) {
 
-    // Create the CurrentEngine instance from the application config
-    InitServerEngine(port, Config.StringDefault("server.engine",GO_NATIVE_SERVER_ENGINE))
-    CurrentEngine.Event(ENGINE_EVENT_PREINIT,nil)
-    InitServer()
-    CurrentEngine.Event(ENGINE_EVENT_STARTUP,nil)
-    CurrentEngine.Start()
-    CurrentEngine.Event(ENGINE_EVENT_SHUTDOWN,nil)
+	// Create the CurrentEngine instance from the application config
+	InitServerEngine(port, Config.StringDefault("server.engine", GO_NATIVE_SERVER_ENGINE))
+	CurrentEngine.Event(ENGINE_EVENT_PREINIT, nil)
+	InitServer()
+	CurrentEngine.Event(ENGINE_EVENT_STARTUP, nil)
+	CurrentEngine.Start()
+	CurrentEngine.Event(ENGINE_EVENT_SHUTDOWN, nil)
 }
 
 func InitServerEngine(port int, serverEngine string) {
@@ -146,19 +103,19 @@ func InitServerEngine(port int, serverEngine string) {
 		localAddress = address + ":" + strconv.Itoa(port)
 	}
 
-    var ok bool
-    if CurrentEngine,ok = serverEngineMap[serverEngine];!ok {
-        panic("Server Engine " + serverEngine +" Not found")
-    } else {
-        TRACE.Println("Found server engine and invoking",CurrentEngine.Name())
-        ServerEngineInit = &EngineInit{
-            Address:localAddress,
-            Network:network,
-            Port:port,
-            Callback:handleInternal,
-        }
-        CurrentEngine.Init(ServerEngineInit)
-    }
+	var ok bool
+	if CurrentEngine, ok = serverEngineMap[serverEngine]; !ok {
+		panic("Server Engine " + serverEngine + " Not found")
+	} else {
+		TRACE.Println("Found server engine and invoking", CurrentEngine.Name())
+		ServerEngineInit = &EngineInit{
+			Address:  localAddress,
+			Network:  network,
+			Port:     port,
+			Callback: handleInternal,
+		}
+		CurrentEngine.Init(ServerEngineInit)
+	}
 }
 
 func runStartupHooks() {

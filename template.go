@@ -5,6 +5,8 @@
 package revel
 
 import (
+	"bufio"
+	"bytes"
 	"fmt"
 	"html/template"
 	"io"
@@ -14,12 +16,10 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-    "bytes"
-    "bufio"
 )
 
 var (
-    ErrorCSSClass = "hasError"
+	ErrorCSSClass = "hasError"
 )
 
 // TemplateLoader object handles loading and parsing of templates.
@@ -35,7 +35,6 @@ type TemplateLoader struct {
 	TemplatePaths map[string]string
 }
 
-
 type TemplateWatcher interface {
 	WatchDir(info os.FileInfo) bool
 	WatchFile(basename string) bool
@@ -43,7 +42,7 @@ type TemplateWatcher interface {
 
 type Template interface {
 	// #Name: The name of the template.
-	Name() string      // Name of template
+	Name() string // Name of template
 	// #Content: The content of the template as a string (Used in error handling).
 	Content() []string // Content
 	// #Render: Called by the server to render the template out the io.Writer, args contains the arguements to be passed to the template.
@@ -64,7 +63,6 @@ func NewTemplateLoader(paths []string) *TemplateLoader {
 	return loader
 }
 
-
 // Refresh method scans the views directory and parses all templates as Go Templates.
 // If a template fails to parse, the error is set on the loader.
 // (It's awkward to refresh a single Go Template)
@@ -75,18 +73,18 @@ func (loader *TemplateLoader) Refresh() (err *Error) {
 			return
 		}
 	}
-    for _,engine:= range loader.templatesAndEngineList {
-        engine.Event(TEMPLATE_REFRESH,nil)
-    }
-    defer func() {
-        for _,engine:= range loader.templatesAndEngineList {
-            engine.Event(TEMPLATE_REFRESH_COMPLETE,nil)
-        }
-    }()
+	for _, engine := range loader.templatesAndEngineList {
+		engine.Event(TEMPLATE_REFRESH, nil)
+	}
+	defer func() {
+		for _, engine := range loader.templatesAndEngineList {
+			engine.Event(TEMPLATE_REFRESH_COMPLETE, nil)
+		}
+	}()
 	// Resort the paths, make sure the revel path is the last path,
 	// so anything can override it
 	revelTemplatePath := filepath.Join(RevelPath, "templates")
-    // Go through the paths
+	// Go through the paths
 	for i, o := range loader.paths {
 		if o == revelTemplatePath && i != len(loader.paths)-1 {
 			loader.paths[i] = loader.paths[len(loader.paths)-1]
@@ -205,20 +203,20 @@ func (loader *TemplateLoader) findAndAddTemplate(path, fullSrcDir, basePath stri
 		return
 	}
 	// if we have an engine picked for this template process it now
-	baseTemplate := NewBaseTemplate(templateName,path,basePath,fileBytes)
+	baseTemplate := NewBaseTemplate(templateName, path, basePath, fileBytes)
 
-    // Try to find a default engine for the file
-    for _, engine := range loader.templatesAndEngineList {
-        if engine.IsEngineFor(engine,baseTemplate) {
-            _, err = loader.loadIntoEngine(engine, baseTemplate)
-            return
-        }
-    }
+	// Try to find a default engine for the file
+	for _, engine := range loader.templatesAndEngineList {
+		if engine.IsEngineFor(engine, baseTemplate) {
+			_, err = loader.loadIntoEngine(engine, baseTemplate)
+			return
+		}
+	}
 
 	// Try all engines available
 	var defaultError error
 	for _, engine := range loader.templatesAndEngineList {
-		if loaded, loaderr := loader.loadIntoEngine(engine,  baseTemplate); loaded {
+		if loaded, loaderr := loader.loadIntoEngine(engine, baseTemplate); loaded {
 			return
 		} else {
 			TRACE.Printf("Engine '%s' unable to compile %s %s", engine.Name(), path, loaderr)
@@ -245,11 +243,11 @@ func (loader *TemplateLoader) loadIntoEngine(engine TemplateEngine, baseTemplate
 		TRACE.Println("template already exists: ", baseTemplate.TemplateName, " in engine ", engine.Name(), "\r\n\told file:",
 			template.Location(), "\r\n\tnew file:", baseTemplate.FilePath)
 		loaded = true
-        return
+		return
 	}
 	if err = engine.ParseAndAdd(baseTemplate); err == nil {
 		loader.TemplatePaths[baseTemplate.TemplateName] = baseTemplate.FilePath
-        TRACE.Printf("Engine '%s' compiled %s", engine.Name(), baseTemplate.FilePath)
+		TRACE.Printf("Engine '%s' compiled %s", engine.Name(), baseTemplate.FilePath)
 		loaded = true
 	} else {
 		TRACE.Printf("Engine '%s' failed to compile %s %s", engine.Name(), baseTemplate.FilePath, err)
@@ -317,29 +315,29 @@ func (loader *TemplateLoader) Template(name string) (tmpl Template, err error) {
 }
 
 type BaseTemplate struct {
-    TemplateName string
-    FilePath string
-    BasePath string
-    FileBytes []byte
-    EngineType string
+	TemplateName string
+	FilePath     string
+	BasePath     string
+	FileBytes    []byte
+	EngineType   string
 }
 
 func (i *BaseTemplate) Location() string {
 	return i.FilePath
 }
-func (i *BaseTemplate) Content() (content []string){
-    if i.FileBytes!=nil {
-        // Parse the bytes
-        buffer := bytes.NewBuffer(i.FileBytes)
-        reader := bufio.NewScanner(buffer)
-        for reader.Scan() {
-            content = append(content, string(reader.Bytes()))
-        }
-    }
+func (i *BaseTemplate) Content() (content []string) {
+	if i.FileBytes != nil {
+		// Parse the bytes
+		buffer := bytes.NewBuffer(i.FileBytes)
+		reader := bufio.NewScanner(buffer)
+		for reader.Scan() {
+			content = append(content, string(reader.Bytes()))
+		}
+	}
 	return nil
 }
 func NewBaseTemplate(templateName, filePath, basePath string, fileBytes []byte) *BaseTemplate {
-    return &BaseTemplate{TemplateName:templateName,FilePath:filePath,FileBytes:fileBytes,BasePath:basePath}
+	return &BaseTemplate{TemplateName: templateName, FilePath: filePath, FileBytes: fileBytes, BasePath: basePath}
 }
 
 /////////////////////
