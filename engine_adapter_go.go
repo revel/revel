@@ -223,10 +223,10 @@ func (r *GOResponse) SetWriter(writer io.Writer) {
 }
 func (r *GOResponse) WriteStream(name string, contentlen int64, modtime time.Time,reader io.Reader) error {
 
-	if rs, ok := reader.(io.ReadSeeker); ok {
-		// http.ServeContent doesn't know about response.ContentType, so we set the respective header.
+    if rs, ok := reader.(io.ReadSeeker); ok {
+        // Call ServeContent to serve the content
         http.ServeContent(r.Original, r.Request, name, modtime, rs)
-	} else {
+    } else {
         // Else, do a simple io.Copy.
         ius := r.Request.Header.Get("If-Unmodified-Since")
         if t, err := http.ParseTime(ius); err == nil && !modtime.IsZero() {
@@ -253,7 +253,7 @@ func (r *GOResponse) WriteStream(name string, contentlen int64, modtime time.Tim
         } else {
             r.Original.WriteHeader(http.StatusOK)
         }
-	}
+    }
     return nil
 }
 

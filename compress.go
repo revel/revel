@@ -40,7 +40,8 @@ type WriteFlusher interface {
 }
 
 type CompressResponseWriter struct {
-	ServerResponse
+	Header          ServerHeader
+	OriginalWriter  io.Writer
 	compressWriter  WriteFlusher
 	compressionType string
 	headersWritten  bool
@@ -52,20 +53,20 @@ type CompressResponseWriter struct {
 // CompressFilter does compresssion of response body in gzip/deflate if
 // `results.compressed=true` in the app.conf
 func CompressFilter(c *Controller, fc []Filter) {
-	fc[0](c, fc[1:])
 	if Config.BoolDefault("results.compressed", false) {
 		if c.Response.Status != http.StatusNoContent && c.Response.Status != http.StatusNotModified {
-			writer := CompressResponseWriter{c.Response.Out, nil, "", false, make(chan bool, 1), nil, false}
-			writer.DetectCompressionType(c.Request, c.Response)
-			w, ok := c.Response.Out.(http.CloseNotifier)
-			if ok {
-				writer.parentNotify = w.CloseNotify()
+			if found, compressType, compressWriter := detectCompressionType(c.Request, c.Response); found {
+				writer := CompressResponseWriter{c.Response.Out.Header(), c.Response.Out.GetWriter(), compressWriter, compressType, false, make(chan bool, 1), nil, false}
+				if w, ok := c.Response.Out.(http.CloseNotifier); ok {
+					writer.parentNotify = w.CloseNotify()
+				}
+				c.Response.Out.SetWriter(&writer)
 			}
-			c.Response.Out.SetWriter(&writer)
 		} else {
 			TRACE.Printf("Compression disabled for response status (%d)", c.Response.Status)
 		}
 	}
+	fc[0](c, fc[1:])
 }
 
 func (c CompressResponseWriter) CloseNotify() <-chan bool {
@@ -77,16 +78,16 @@ func (c CompressResponseWriter) CloseNotify() <-chan bool {
 
 func (c *CompressResponseWriter) prepareHeaders() {
 	if c.compressionType != "" {
-		responseMime := c.Header().Get("Content-Type")
+		responseMime := c.Header.Get("Content-Type")
 		responseMime = strings.TrimSpace(strings.SplitN(responseMime, ";", 2)[0])
 		shouldEncode := false
 
-		if c.Header().Get("Content-Encoding") == "" {
+		if c.Header.Get("Content-Encoding") == "" {
 			for _, compressableMime := range compressableMimes {
 				if responseMime == compressableMime {
 					shouldEncode = true
-					c.Header().Set("Content-Encoding", c.compressionType)
-					c.Header().Del("Content-Length")
+					c.Header.Set("Content-Encoding", c.compressionType)
+					c.Header.Del("Content-Length")
 					break
 				}
 			}
@@ -102,15 +103,14 @@ func (c *CompressResponseWriter) prepareHeaders() {
 func (c *CompressResponseWriter) WriteHeader(status int) {
 	c.headersWritten = true
 	c.prepareHeaders()
-	c.ServerResponse.Header().SetStatus(status)
+	c.Header.SetStatus(status)
 }
 
 func (c *CompressResponseWriter) Close() error {
 	if c.compressionType != "" {
-		_ = c.compressWriter.Close()
-	}
-	if w, ok := c.ServerResponse.GetWriter().(io.Closer); ok {
-		_ = w.Close()
+		if err := c.compressWriter.Close(); err != nil {
+			ERROR.Println("Error closing compress writer", err)
+		}
 	}
 	// Non-blocking write to the closenotifier, if we for some reason should
 	// get called multiple times
@@ -139,17 +139,15 @@ func (c *CompressResponseWriter) Write(b []byte) (int, error) {
 		c.prepareHeaders()
 		c.headersWritten = true
 	}
-
 	if c.compressionType != "" {
 		return c.compressWriter.Write(b)
 	}
-
-	return c.ServerResponse.GetWriter().Write(b)
+	return c.OriginalWriter.Write(b)
 }
 
-// DetectCompressionType method detects the comperssion type
+// DetectCompressionType method detects the compression type
 // from header "Accept-Encoding"
-func (c *CompressResponseWriter) DetectCompressionType(req *Request, resp *Response) {
+func detectCompressionType(req *Request, resp *Response) (found bool, compressionType string, compressionKind WriteFlusher) {
 	if Config.BoolDefault("results.compressed", false) {
 		acceptedEncodings := strings.Split(req.In.GetHeader().Get("Accept-Encoding"), ",")
 
@@ -216,13 +214,16 @@ func (c *CompressResponseWriter) DetectCompressionType(req *Request, resp *Respo
 			return
 		}
 
-		c.compressionType = compressionTypes[chosenEncoding]
+		compressionType = compressionTypes[chosenEncoding]
 
-		switch c.compressionType {
+		switch compressionType {
 		case "gzip":
-			c.compressWriter = gzip.NewWriter(resp.Out.GetWriter())
+			compressionKind = gzip.NewWriter(resp.Out.GetWriter())
+			found = true
 		case "deflate":
-			c.compressWriter = zlib.NewWriter(resp.Out.GetWriter())
+			compressionKind = zlib.NewWriter(resp.Out.GetWriter())
+			found = true
 		}
 	}
+	return
 }
