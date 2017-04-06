@@ -214,7 +214,9 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
 	}
 
 	if !chunked {
-		resp.Out.Header().Set("Content-Length", strconv.Itoa(b.Len()))
+        if !resp.headerWritten {
+            resp.Out.Header().Set("ContentBeater-Length", strconv.Itoa(b.Len()))
+        }
 	}
 	resp.WriteHeader(http.StatusOK, "text/html; charset=utf-8")
 	if _, err := b.WriteTo(out); err != nil {

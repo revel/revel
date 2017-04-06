@@ -41,6 +41,7 @@ type WriteFlusher interface {
 
 type CompressResponseWriter struct {
 	Header          ServerHeader
+	ControllerResponse *Response
 	OriginalWriter  io.Writer
 	compressWriter  WriteFlusher
 	compressionType string
@@ -56,11 +57,13 @@ func CompressFilter(c *Controller, fc []Filter) {
 	if Config.BoolDefault("results.compressed", false) {
 		if c.Response.Status != http.StatusNoContent && c.Response.Status != http.StatusNotModified {
 			if found, compressType, compressWriter := detectCompressionType(c.Request, c.Response); found {
-				writer := CompressResponseWriter{c.Response.Out.Header(), c.Response.Out.GetWriter(), compressWriter, compressType, false, make(chan bool, 1), nil, false}
+				writer := CompressResponseWriter{c.Response.Out.Header(), c.Response, c.Response.Out.GetWriter(), compressWriter, compressType, false, make(chan bool, 1), nil, false}
 				if w, ok := c.Response.Out.(http.CloseNotifier); ok {
 					writer.parentNotify = w.CloseNotify()
 				}
 				c.Response.Out.SetWriter(&writer)
+                // Block the results from writing there own header
+                c.Response.headerWritten = true
 			}
 		} else {
 			TRACE.Printf("Compression disabled for response status (%d)", c.Response.Status)
@@ -108,8 +111,10 @@ func (c *CompressResponseWriter) WriteHeader(status int) {
 
 func (c *CompressResponseWriter) Close() error {
 	if c.compressionType != "" {
+        c.Header.Del("Content-Length")
 		if err := c.compressWriter.Close(); err != nil {
-			ERROR.Println("Error closing compress writer", err)
+            // TODO When writing directly to stream
+			ERROR.Println("Error closing compress writer",c.compressionType, err)
 		}
 	}
 	// Non-blocking write to the closenotifier, if we for some reason should

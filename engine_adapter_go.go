@@ -223,9 +223,12 @@ func (r *GOResponse) SetWriter(writer io.Writer) {
 }
 func (r *GOResponse) WriteStream(name string, contentlen int64, modtime time.Time,reader io.Reader) error {
 
-    if rs, ok := reader.(io.ReadSeeker); ok {
-        // Call ServeContent to serve the content
-        http.ServeContent(r.Original, r.Request, name, modtime, rs)
+    // Check to see if the output stream is modified, if not send it using the
+    // Native writer
+    if _,ok:=r.Writer.(http.ResponseWriter);ok {
+        if rs, ok := reader.(io.ReadSeeker); ok {
+            http.ServeContent(r.Original, r.Request, name, modtime, rs)
+        }
     } else {
         // Else, do a simple io.Copy.
         ius := r.Request.Header.Get("If-Unmodified-Since")
