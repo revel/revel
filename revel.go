@@ -258,6 +258,15 @@ func getLogger(name string) *log.Logger {
 			log.Fatalln(err)
 		}
 
+		dir_path := path.Dir(output)
+		_, err := os.Stat(dir_path)
+		if os.IsNotExist(err) {
+			err = os.MkdirAll(dir_path, 0700)
+			if err != nil {
+				log.Fatalf("Failed to creating log directory",  dir_path, ": ", err)
+			}
+		}
+
 		file, err := os.OpenFile(output, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 		if err != nil {
 			log.Fatalln("Failed to open log file", output, ":", err)
