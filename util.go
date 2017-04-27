@@ -195,7 +195,7 @@ func Equal(a, b interface{}) bool {
 func ClientIP(r *Request) string {
 	if Config.BoolDefault("app.behind.proxy", false) {
 		// Header X-Forwarded-For
-		if fwdFor := strings.TrimSpace(r.HttpHeaderValue(hdrForwardedFor)); fwdFor != "" {
+		if fwdFor := strings.TrimSpace(r.GetHttpHeader(hdrForwardedFor)); fwdFor != "" {
 			index := strings.Index(fwdFor, ",")
 			if index == -1 {
 				return fwdFor
@@ -204,7 +204,7 @@ func ClientIP(r *Request) string {
 		}
 
 		// Header X-Real-Ip
-		if realIP := strings.TrimSpace(r.HttpHeaderValue(hdrRealIP)); realIP != "" {
+		if realIP := strings.TrimSpace(r.GetHttpHeader(hdrRealIP)); realIP != "" {
 			return realIP
 		}
 	}

@@ -127,13 +127,13 @@ func (resp *Response) Destroy() {
 }
 // UserAgent returns the client's User-Agent, if sent in the request.
 func (r *Request) UserAgent() string {
-    return r.HttpHeaderValue("User-Agent")
+    return r.GetHttpHeader("User-Agent")
 }
 
 func (r *Request) Referer() (string) {
-    return r.HttpHeaderValue("Referer")
+    return r.GetHttpHeader("Referer")
 }
-func (r *Request) HttpHeaderValue(key string) (value string) {
+func (r *Request) GetHttpHeader(key string) (value string) {
     if r.ServerHeader!=nil {
         value = r.ServerHeader.Get(key)
     }
@@ -143,9 +143,6 @@ func (r *Request) GetValue(key int) (value interface{}) {
     value, _ = r.In.Get(key)
     return
 }
-func (r *Request) Header() (ServerHeader) {
-    return r.ServerHeader
-}
 
 // WriteHeader writes the header (for now, just the status code).
 // The status may be set directly by the application (c.Response.Status = 501).
@@ -154,18 +151,20 @@ func (resp *Response) WriteHeader(defaultStatusCode int, defaultContentType stri
     if resp.ContentType == "" {
         resp.ContentType = defaultContentType
     }
-    resp.SetHeader("Content-Type", resp.ContentType)
+    resp.SetHttpHeader("Content-Type", resp.ContentType)
     if resp.Status == 0 {
         resp.Status = defaultStatusCode
     }
     resp.SetStatus(resp.Status)
 }
-func (resp *Response) SetHeader(key, value string) {
-    
-    print("Set header **** ", key,value)
-
+func (resp *Response) SetHttpHeader(key, value string) {
     if resp.ServerHeader != nil {
         resp.ServerHeader.Set(key,value)
+    }
+}
+func (resp *Response) AddHttpHeader(key, value string) {
+    if resp.ServerHeader != nil {
+        resp.ServerHeader.Add(key,value)
     }
 }
 func (resp *Response) SetCookie(cookie string) {
@@ -206,7 +205,7 @@ func (resp *Response) GetStreamWriter() (writer StreamWriter) {
 // If none is specified, returns "text/html" by default.
 func ResolveContentType(req *Request) string {
 
-	contentType := req.HttpHeaderValue("Content-Type")
+	contentType := req.GetHttpHeader("Content-Type")
 	if contentType == "" {
 		return "text/html"
 	}
@@ -218,7 +217,7 @@ func ResolveContentType(req *Request) string {
 // returning a default of "html" when Accept header cannot be mapped to a
 // value above.
 func ResolveFormat(req *Request) string {
-	accept := req.HttpHeaderValue("accept")
+	accept := req.GetHttpHeader("accept")
 
 	switch {
 	case accept == "",
@@ -277,7 +276,7 @@ func (al AcceptLanguages) String() string {
 // See the HTTP header fields specification
 // (http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.4) for more details.
 func ResolveAcceptLanguage(req *Request) AcceptLanguages {
-	header := req.HttpHeaderValue("Accept-Language")
+	header := req.GetHttpHeader("Accept-Language")
 	if header == "" {
 		return nil
 	}
