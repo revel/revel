@@ -141,7 +141,6 @@ func (c *CompressResponseWriter) Close() error {
 }
 
 func (c *CompressResponseWriter) Write(b []byte) (int, error) {
-    println("*** Write called")
 	// Abort if parent has been closed
 	if c.parentNotify != nil {
 		select {
