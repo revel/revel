@@ -238,10 +238,10 @@ func (loader *TemplateLoader) findAndAddTemplate(path, fullSrcDir, basePath stri
 }
 
 func (loader *TemplateLoader) loadIntoEngine(engine TemplateEngine, baseTemplate *BaseTemplate) (loaded bool, err error) {
-	if template := engine.Lookup(baseTemplate.TemplateName); template != nil {
+	if loadedTemplate := engine.Lookup(baseTemplate.TemplateName); loadedTemplate != nil {
 		// Duplicate template found for engine
 		TRACE.Println("template already exists: ", baseTemplate.TemplateName, " in engine ", engine.Name(), "\r\n\told file:",
-			template.Location(), "\r\n\tnew file:", baseTemplate.FilePath)
+			loadedTemplate.Location(), "\r\n\tnew file:", baseTemplate.FilePath)
 		loaded = true
 		return
 	}

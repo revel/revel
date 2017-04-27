@@ -27,7 +27,7 @@ const (
 )
 
 func RegisterServerEngine(newEngine ServerEngine) {
-    println("registered",newEngine.Name())
+    INFO.Printf("Registered engine %s",newEngine.Name())
 	serverEngineMap[newEngine.Name()] = newEngine
 }
 
@@ -36,10 +36,11 @@ func RegisterServerEngine(newEngine ServerEngine) {
 // to be exposed. E.g. to run on multiple addresses and ports or to set custom
 // TLS options.
 func InitServer() {
-	requestStack    = NewStackLock(Config.IntDefault("revel.request.stack",100), func() interface{} { return NewRequest(nil) })
-	responseStack   = NewStackLock(Config.IntDefault("revel.response.stack",100), func() interface{} { return NewResponse(nil) })
-	controllerStack = NewStackLock(Config.IntDefault("revel.controller.stack",100), func() interface{} { return NewControllerEmpty() })
+	controllerStack = NewStackLock(
+        Config.IntDefault("revel.controller.stack",10),
+        Config.IntDefault("revel.controller.maxstack",200), func() interface{} { return NewControllerEmpty() })
     cachedControllerStackSize = Config.IntDefault("revel.cache.controller.stack",10)
+    cachedControllerStackMaxSize = Config.IntDefault("revel.cache.controller.maxstack",100)
 	runStartupHooks()
 
 	// Load templates

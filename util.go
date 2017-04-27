@@ -192,10 +192,10 @@ func Equal(a, b interface{}) bool {
 // IP address in the order of X-Forwarded-For, X-Real-IP.
 //
 // By default revel will get http.Request's RemoteAddr
-func ClientIP(r ServerRequest) string {
+func ClientIP(r *Request) string {
 	if Config.BoolDefault("app.behind.proxy", false) {
 		// Header X-Forwarded-For
-		if fwdFor := strings.TrimSpace(r.GetHeader().Get(hdrForwardedFor)); fwdFor != "" {
+		if fwdFor := strings.TrimSpace(r.HttpHeaderValue(hdrForwardedFor)); fwdFor != "" {
 			index := strings.Index(fwdFor, ",")
 			if index == -1 {
 				return fwdFor
@@ -204,12 +204,12 @@ func ClientIP(r ServerRequest) string {
 		}
 
 		// Header X-Real-Ip
-		if realIP := strings.TrimSpace(r.GetHeader().Get(hdrRealIP)); realIP != "" {
+		if realIP := strings.TrimSpace(r.HttpHeaderValue(hdrRealIP)); realIP != "" {
 			return realIP
 		}
 	}
 
-	if remoteAddr, _, err := net.SplitHostPort(r.GetRemoteAddr()); err == nil {
+	if remoteAddr, _, err := net.SplitHostPort(r.RemoteAddr); err == nil {
 		return remoteAddr
 	}
 

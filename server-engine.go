@@ -9,33 +9,60 @@ import (
     "mime/multipart"
     "net/url"
     "time"
+    "errors"
 )
+const (
+    /* Minimum Engine Type Values */
+    _ = iota
+    ENGINE_RESPONSE_STATUS
+    ENGINE_WRITER
+    ENGINE_PARAMETERS
+    ENGINE_PATH
+    ENGINE_REQUEST
+    ENGINE_RESPONSE
 
+)
+const (
+    /* HTTP Engine Type Values Starts at 1000 */
+    HTTP_QUERY = ENGINE_PARAMETERS
+    HTTP_PATH  = ENGINE_PATH
+    HTTP_FORM  = iota + 1000
+    HTTP_MULTIPART_FORM = iota + 1000
+    HTTP_METHOD = iota + 1000
+    HTTP_REQUEST_URI = iota + 1000
+    HTTP_REMOTE_ADDR = iota + 1000
+    HTTP_HOST = iota + 1000
+    HTTP_SERVER_HEADER = iota + 1000
+    HTTP_STREAM_WRITER = iota + 1000
+    HTTP_WRITER = ENGINE_WRITER
+)
 type (
+    ServerContext interface {
+        GetRequest()  ServerRequest
+        GetResponse() ServerResponse
+    }
+
+
+    // Callback ServerRequest type
     ServerRequest interface {
-        GetQuery() url.Values
-        GetForm() (url.Values, error)
-        GetMultipartForm(maxsize int64) (ServerMultipartForm, error)
-        GetHeader() ServerHeader
         GetRaw() interface{}
-        GetMethod() string
-        GetPath() string
-        GetRequestURI() string
-        GetRemoteAddr() string
-        GetHost() string
+        Get(theType int) (interface{}, error)
+        Set(theType int, theValue interface{}) bool
     }
+    // Callback ServerResponse type
     ServerResponse interface {
-        GetWriter() io.Writer
-        SetWriter(io.Writer)
-        Header() ServerHeader
         GetRaw() interface{}
-        WriteStream(name string,contentlen int64, modtime time.Time, reader io.Reader) error
+        Get(theType int) (interface{}, error)
+        Set(theType int, theValue interface{}) bool
     }
-    ServerMultipartForm interface {
-        GetFile() map[string][]*multipart.FileHeader
-        GetValue() url.Values
-        RemoveAll() error
+    // Callback WebSocket type
+    ServerWebSocket interface {
+        ServerResponse
+        MessageSendJson(v interface{}) error
+        MessageReceiveJson(v interface{}) error
     }
+
+    // Expected response for HTTP_SERVER_HEADER type (if implemented)
     ServerHeader interface {
         SetCookie(cookie string)
         GetCookie(key string) (value ServerCookie, err error)
@@ -45,13 +72,22 @@ type (
         Get(key string) (value string)
         SetStatus(statusCode int)
     }
+
+    // Expected response for FROM_HTTP_COOKIE type (if implemented)
     ServerCookie interface {
         GetValue() string
     }
-    ServerWebSocket interface {
-        MessageSendJson(v interface{}) error
-        MessageReceiveJson(v interface{}) error
+
+    // Expected response for HTTP_MULTIPART_FORM
+    ServerMultipartForm interface {
+        GetFile() map[string][]*multipart.FileHeader
+        GetValue() url.Values
+        RemoveAll() error
     }
+    StreamWriter interface {
+        WriteStream(name string,contentlen int64, modtime time.Time, reader io.Reader) error
+    }
+
 )
 
 type ServerEngine interface {
@@ -72,38 +108,36 @@ type EngineInit struct {
     Address,
     Network string
     Port     int
-    Callback func(ServerResponse, ServerRequest, ServerWebSocket)
+    Callback func(ServerContext)
+}
+type ServerEngineEmpty struct {
+
 }
 
 var (
     // The simple stacks for response and controllers are a linked list
     // of reused objects. 
-    requestStack              *SimpleLockStack
-    responseStack             *SimpleLockStack
     controllerStack           *SimpleLockStack
     cachedControllerMap       = map[string]*SimpleLockStack{}
     cachedControllerStackSize = 10
+    cachedControllerStackMaxSize = 10
 )
 
-func handleInternal(w ServerResponse, r ServerRequest, ws ServerWebSocket) {
-    // TODO For now this okay to put logger here for all the requests
-    // However, it's best to have logging handler at server entry level
+func handleInternal(ctx ServerContext) {
     start := time.Now()
-    clientIP := ClientIP(r)
 
     var (
-        req, resp, c = requestStack.Pop().(*Request), responseStack.Pop().(*Response), controllerStack.Pop().(*Controller)
+        c = controllerStack.Pop().(*Controller)
+        req,resp = c.Request, c.Response
     )
-    req.SetRequest(r)
-    req.Websocket = ws
-    resp.SetResponse(w)
+    c.SetController(ctx)
+    req.Websocket, _ = ctx.GetResponse().(ServerWebSocket)
 
-    c.SetController(req, resp)
+    clientIP := ClientIP(req)
+
 
     // Once finished in the internal, we can return these to the stack
     defer func() {
-        requestStack.Push(req)
-        responseStack.Push(resp)
         controllerStack.Push(c)
     }()
 
@@ -113,10 +147,10 @@ func handleInternal(w ServerResponse, r ServerRequest, ws ServerWebSocket) {
     if c.Result != nil {
         c.Result.Apply(req, resp)
     } else if c.Response.Status != 0 {
-        c.Response.Out.Header().SetStatus(c.Response.Status)
+        c.Response.SetStatus(c.Response.Status)
     }
     // Close the Writer if we can
-    if w, ok := resp.Out.GetWriter().(io.Closer); ok {
+    if w, ok := resp.GetWriter().(io.Closer); ok {
         _ = w.Close()
     }
 
@@ -129,7 +163,19 @@ func handleInternal(w ServerResponse, r ServerRequest, ws ServerWebSocket) {
         clientIP,
         c.Response.Status,
         time.Since(start),
-        r.GetMethod(),
-        r.GetPath(),
+        req.Method,
+        req.GetPath(),
     )
 }
+
+var (
+    ENGINE_UNKNOWN_GET = errors.New("Server Engine Invalid Get")
+)
+
+func (e *ServerEngineEmpty) Get(_ string) interface{} {
+    return nil
+}
+func (e *ServerEngineEmpty) Set(_ string, _ interface{}) bool {
+    return false
+}
+

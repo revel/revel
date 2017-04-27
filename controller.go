@@ -42,21 +42,21 @@ type Controller struct {
 
 // NewController returns new controller instance for Request and Response
 func NewControllerEmpty() *Controller {
-	return &Controller{}
+	return &Controller{Request:NewRequest(nil),Response:NewResponse(nil)}
 }
 
 // New controller, creates a new instance wrapping the request and response in it
-func NewController(req *Request, resp *Response) *Controller {
+func NewController(context ServerContext) *Controller {
     c := NewControllerEmpty()
-    c.SetController(req, resp)
+    c.SetController(context)
 	return c
 }
 
 // Sets the request and the response for the controller
-func (c *Controller) SetController(req *Request, resp *Response) {
+func (c *Controller) SetController(context ServerContext) {
 
-	c.Request = req
-	c.Response = resp
+	c.Request.SetRequest(context.GetRequest())
+	c.Response.SetResponse(context.GetResponse())
 	c.Params = new(Params)
 	c.Args = map[string]interface{}{}
 	c.ViewArgs = map[string]interface{}{
@@ -81,8 +81,8 @@ func (c *Controller) Destroy() {
 		cachedControllerMap[c.Name].Push(appController)
 		c.AppController = nil
 	}
-	c.Request = nil
-	c.Response = nil
+    c.Request.Destroy()
+    c.Response.Destroy()
 	c.Params = nil
 	c.Args = nil
 	c.ViewArgs = nil
@@ -109,8 +109,7 @@ func (c *Controller) FlashParams() {
 }
 
 func (c *Controller) SetCookie(cookie *http.Cookie) {
-	c.Response.Out.Header().SetCookie(cookie.String())
-
+	c.Response.SetCookie(cookie.String())
 }
 
 func (c *Controller) RenderError(err error) Result {
@@ -315,8 +314,6 @@ func (c *Controller) Redirect(val interface{}, args ...interface{}) Result {
 func (c *Controller) Stats() map[string]interface{} {
     result := CurrentEngine.Stats()
     result["revel-controllers"] = controllerStack.String()
-    result["revel-requests"] = requestStack.String()
-    result["revel-response"] = responseStack.String()
     for key,appStack := range cachedControllerMap {
         result["app-" + key] = appStack.String()
     }
@@ -348,8 +345,11 @@ func (c *Controller) SetAction(controllerName, methodName string) error {
 	if _, ok := cachedControllerMap[c.Name]; !ok {
 		// Create a new stack for this controller
 		localType := c.Type.Type
-		cachedControllerMap[c.Name] = NewStackLock(cachedControllerStackSize, func() interface{} {
-			return reflect.New(localType).Interface()
+		cachedControllerMap[c.Name] = NewStackLock(
+            cachedControllerStackSize,
+            cachedControllerStackMaxSize,
+            func() interface{} {
+    			return reflect.New(localType).Interface()
 		})
 	}
 	// Instantiate the controller.

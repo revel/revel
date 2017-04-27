@@ -148,7 +148,7 @@ func GetSessionFromCookie(cookie ServerCookie) Session {
 // Within Revel, it is available as a Session attribute on Controller instances.
 // The name of the Session cookie is set as CookiePrefix + "_SESSION".
 func SessionFilter(c *Controller, fc []Filter) {
-	c.Session = restoreSession(c.Request.In)
+	c.Session = restoreSession(c.Request)
 	sessionWasEmpty := len(c.Session) == 0
 
 	// Make session vars available in templates as {{.session.xyz}}
@@ -164,8 +164,8 @@ func SessionFilter(c *Controller, fc []Filter) {
 
 // restoreSession returns either the current session, retrieved from the
 // session cookie, or a new session.
-func restoreSession(req ServerRequest) Session {
-	cookie, err := req.GetHeader().GetCookie(CookiePrefix + "_SESSION")
+func restoreSession(req *Request) Session {
+	cookie, err := req.GetCookie(CookiePrefix + "_SESSION")
 	if err != nil {
 		return make(Session)
 	}

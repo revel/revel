@@ -35,21 +35,20 @@ type Params struct {
 
 // ParseParams parses the `http.Request` params into `revel.Controller.Params`
 func ParseParams(params *Params, req *Request) {
-	params.Query = req.In.GetQuery()
+	params.Query = req.GetQuery()
 
 	// Parse the body depending on the content type.
 	switch req.ContentType {
 	case "application/x-www-form-urlencoded":
 		// Typical form.
 		var err error
-		if params.Form, err = req.In.GetForm(); err != nil {
+		if params.Form, err = req.GetForm(); err != nil {
 			WARN.Println("Error parsing request body:", err)
 		}
 
 	case "multipart/form-data":
 		// Multipart form.
-		// TODO: Extract the multipart form param so app can set it.
-		if mp, err := req.In.GetMultipartForm(32 << 20 /* 32 MB */); err != nil {
+		if mp, err := req.GetMultipartForm(); err != nil {
 			WARN.Println("Error parsing request body:", err)
 		} else {
 			params.Form = mp.GetValue()
@@ -128,14 +127,6 @@ func ParamsFilter(c *Controller, fc []Filter) {
 
 	// Clean up from the request.
 	defer func() {
-		// Delete temp files.
-		if frm, _ := c.Request.In.GetMultipartForm(-1); frm != nil {
-			err := frm.RemoveAll()
-			if err != nil {
-				WARN.Println("Error removing temporary files:", err)
-			}
-		}
-
 		for _, tmpFile := range c.Params.tmpFiles {
 			err := os.Remove(tmpFile.Name())
 			if err != nil {

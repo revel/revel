@@ -134,8 +134,7 @@ func loadMessageFile(path string, info os.FileInfo, osError error) error {
 	}
 
 	if matched, _ := regexp.MatchString(messageFilePattern, info.Name()); matched {
-		var config *config.Config
-		config, err := parseMessagesFile(path)
+		messageConfig, err := parseMessagesFile(path)
 		if err != nil {
 			return err
 		}
@@ -143,10 +142,10 @@ func loadMessageFile(path string, info os.FileInfo, osError error) error {
 
 		// If we have already parsed a message file for this locale, merge both
 		if _, exists := messages[locale]; exists {
-			messages[locale].Merge(config)
+			messages[locale].Merge(messageConfig)
 			TRACE.Printf("Successfully merged messages for locale '%s'", locale)
 		} else {
-			messages[locale] = config
+			messages[locale] = messageConfig
 		}
 
 		TRACE.Println("Successfully loaded messages from file", info.Name())
@@ -209,7 +208,7 @@ func hasAcceptLanguageHeader(request *Request) (bool, string) {
 func hasLocaleCookie(request *Request) (bool, string) {
 	if request != nil {
 		name := Config.StringDefault(localeCookieConfigKey, CookiePrefix+"_LANG")
-		cookie, err := request.In.GetHeader().GetCookie(name)
+		cookie, err := request.GetCookie(name)
 		if err == nil {
 			return true, cookie.GetValue()
 		}

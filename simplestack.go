@@ -12,6 +12,7 @@ type (
 		len      int
 		capacity int
 		active   int
+        maxsize  int
 		lock     sync.Mutex
 	}
 	SimpleLockStackElement struct {
@@ -24,10 +25,10 @@ type (
 	}
 )
 
-func NewStackLock(size int, creator func() interface{}) *SimpleLockStack {
-	ss := &SimpleLockStack{lock: sync.Mutex{}, Current: &SimpleLockStackElement{Value: creator()}, Creator: creator}
-	if size > 0 {
-		elements := make([]SimpleLockStackElement, size-1)
+func NewStackLock(startsize,maxsize int, creator func() interface{}) *SimpleLockStack {
+	ss := &SimpleLockStack{lock: sync.Mutex{}, Current: &SimpleLockStackElement{Value: creator()}, Creator: creator, maxsize:maxsize}
+	if startsize > 0 {
+		elements := make([]SimpleLockStackElement, startsize-1)
 		current := ss.Current
 		for i := range elements {
 			e := elements[i]
@@ -38,7 +39,7 @@ func NewStackLock(size int, creator func() interface{}) *SimpleLockStack {
 			e.Previous = current
 			current = &e
 		}
-		ss.capacity, ss.len, ss.active = size, size, 0
+		ss.capacity, ss.len, ss.active = startsize, startsize, 0
 
 		ss.Current = current
 
@@ -78,7 +79,7 @@ func (s *SimpleLockStack) Push(value interface{}) {
 	defer s.lock.Unlock()
 	if s.len == 0 {
 		s.Current.Value = value
-	} else {
+	} else if s.len<s.maxsize {
 		if s.Current.Next == nil {
 			s.Current.Next = &SimpleLockStackElement{Value: value, Previous: s.Current}
 			s.capacity++
@@ -86,7 +87,10 @@ func (s *SimpleLockStack) Push(value interface{}) {
 			s.Current.Next.Value = value
 		}
 		s.Current = s.Current.Next
-	}
+	} else {
+        // If we exceeded the capacity of stack do not store the created object
+        return
+    }
 	s.len++
     s.active--
 	//println("Push ",value, s.len, s.active, s.capacity)
