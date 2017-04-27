@@ -106,6 +106,6 @@ func startFakeBookingApp() {
 				RenderArgNames: map[int][]string{},
 			},
 		})
-
+	InitServerEngine(9000, GO_NATIVE_SERVER_ENGINE)
 	runStartupHooks()
 }

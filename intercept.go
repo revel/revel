@@ -113,6 +113,7 @@ func invokeInterceptors(when When, c *Controller) {
 		app    = reflect.ValueOf(c.AppController)
 		result Result
 	)
+
 	for _, intc := range getInterceptors(when, app) {
 		resultValue := intc.Invoke(app)
 		if !resultValue.IsNil() {

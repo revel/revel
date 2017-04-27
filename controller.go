@@ -24,7 +24,7 @@ type Controller struct {
 	Type          *ControllerType // A description of the controller type.
 	MethodName    string          // The method name, e.g. "Index"
 	MethodType    *MethodType     // A description of the invoked action type.
-	AppController interface{}     // The controller that was instantiated.
+	AppController interface{}     // The controller that was instantiated. extends from revel.Controller
 	Action        string          // The fully qualified action name, e.g. "App.Index"
 	ClientIP      string          // holds IP address of request came from
 
@@ -41,17 +41,63 @@ type Controller struct {
 }
 
 // NewController returns new controller instance for Request and Response
-func NewController(req *Request, resp *Response) *Controller {
-	return &Controller{
-		Request:  req,
-		Response: resp,
-		Params:   new(Params),
-		Args:     map[string]interface{}{},
-		ViewArgs: map[string]interface{}{
-			"RunMode": RunMode,
-			"DevMode": DevMode,
-		},
+func NewControllerEmpty() *Controller {
+	return &Controller{Request:NewRequest(nil),Response:NewResponse(nil)}
+}
+
+// New controller, creates a new instance wrapping the request and response in it
+func NewController(context ServerContext) *Controller {
+    c := NewControllerEmpty()
+    c.SetController(context)
+	return c
+}
+
+// Sets the request and the response for the controller
+func (c *Controller) SetController(context ServerContext) {
+
+	c.Request.SetRequest(context.GetRequest())
+	c.Response.SetResponse(context.GetResponse())
+	c.Params = new(Params)
+	c.Args = map[string]interface{}{}
+	c.ViewArgs = map[string]interface{}{
+		"RunMode": RunMode,
+		"DevMode": DevMode,
 	}
+
+}
+func (c *Controller) Destroy() {
+	// When the instantiated controller gets injected
+	// It inherits this method, so we need to
+	// check to see if the controller is nil before performing
+	// any actions
+	if c == nil {
+		return
+	}
+	if c.AppController != nil {
+		c.resetAppControllerFields()
+		// Return this instance to the pool
+		appController := c.AppController
+		c.AppController = nil
+		cachedControllerMap[c.Name].Push(appController)
+		c.AppController = nil
+	}
+    c.Request.Destroy()
+    c.Response.Destroy()
+	c.Params = nil
+	c.Args = nil
+	c.ViewArgs = nil
+	c.Name = ""
+	c.Type = nil
+	c.MethodName = ""
+	c.MethodType = nil
+	c.Action = ""
+	c.ClientIP = ""
+	c.Result = nil
+	c.Flash = Flash{}
+	c.Session = Session{}
+	c.Params = nil
+	c.Validation = nil
+
 }
 
 // FlashParams serializes the contents of Controller.Params to the Flash
@@ -63,7 +109,7 @@ func (c *Controller) FlashParams() {
 }
 
 func (c *Controller) SetCookie(cookie *http.Cookie) {
-	http.SetCookie(c.Response.Out, cookie)
+	c.Response.SetCookie(cookie.String())
 }
 
 func (c *Controller) RenderError(err error) Result {
@@ -130,7 +176,7 @@ func (c *Controller) RenderTemplate(templatePath string) Result {
 	}
 
 	return &RenderTemplateResult{
-		Template:   template,
+		Template: template,
 		ViewArgs: c.ViewArgs,
 	}
 }
@@ -263,11 +309,21 @@ func (c *Controller) Redirect(val interface{}, args ...interface{}) Result {
 	return &RedirectToActionResult{val}
 }
 
+// This stats returns some interesting stats based on what is cached in memory
+// and what is available directly
+func (c *Controller) Stats() map[string]interface{} {
+    result := CurrentEngine.Stats()
+    result["revel-controllers"] = controllerStack.String()
+    for key,appStack := range cachedControllerMap {
+        result["app-" + key] = appStack.String()
+    }
+    return result
+}
 // Message performs a lookup for the given message name using the given
 // arguments using the current language defined for this controller.
 //
 // The current language is set by the i18n plugin.
-func (c *Controller) Message(message string, args ...interface{}) (value string) {
+func (c *Controller) Message(message string, args ...interface{}) string {
 	return MessageFunc(c.Request.Locale, message, args...)
 }
 
@@ -286,26 +342,39 @@ func (c *Controller) SetAction(controllerName, methodName string) error {
 
 	c.Name, c.MethodName = c.Type.Type.Name(), c.MethodType.Name
 	c.Action = c.Name + "." + c.MethodName
-
+	if _, ok := cachedControllerMap[c.Name]; !ok {
+		// Create a new stack for this controller
+		localType := c.Type.Type
+		cachedControllerMap[c.Name] = NewStackLock(
+            cachedControllerStackSize,
+            cachedControllerStackMaxSize,
+            func() interface{} {
+    			return reflect.New(localType).Interface()
+		})
+	}
 	// Instantiate the controller.
-	c.AppController = initNewAppController(c.Type, c).Interface()
+	c.AppController = cachedControllerMap[c.Name].Pop()
+	c.setAppControllerFields()
 
 	return nil
 }
 
-// This is a helper that initializes (zeros) a new app controller value.
-// Specifically, it sets all *revel.Controller embedded types to the provided controller.
-// Returns a value representing a pointer to the new app controller.
-func initNewAppController(appControllerType *ControllerType, c *Controller) reflect.Value {
-	var (
-		appControllerPtr = reflect.New(appControllerType.Type)
-		appController    = appControllerPtr.Elem()
-		cValue           = reflect.ValueOf(c)
-	)
-	for _, index := range appControllerType.ControllerIndexes {
+// Injects this instance (c) into the AppController instance
+func (c *Controller) setAppControllerFields() {
+	appController := reflect.ValueOf(c.AppController).Elem()
+	cValue := reflect.ValueOf(c)
+	for _, index := range c.Type.ControllerIndexes {
 		appController.FieldByIndex(index).Set(cValue)
 	}
-	return appControllerPtr
+}
+
+// Removes this instance (c) from the AppController instance
+func (c *Controller) resetAppControllerFields() {
+	appController := reflect.ValueOf(c.AppController).Elem()
+	// Zero out controller
+	for _, index := range c.Type.ControllerIndexes {
+		appController.FieldByIndex(index).Set(reflect.Zero(reflect.TypeOf(c.AppController).Elem().FieldByIndex(index).Type))
+	}
 }
 
 func findControllers(appControllerType reflect.Type) (indexes [][]int) {

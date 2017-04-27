@@ -16,11 +16,13 @@ import (
 
 	"github.com/agtorre/gocolorize"
 	"github.com/revel/config"
+	"sort"
 )
 
 const (
 	// RevelImportPath Revel framework import path
-	RevelImportPath = "github.com/revel/revel"
+	REVEL_TEMPLATE_ENGINES = "template.engines"
+	RevelImportPath        = "github.com/revel/revel"
 )
 
 type revelLogs struct {
@@ -51,8 +53,8 @@ var (
 
 	// Where to look for templates
 	// Ordered by priority. (Earlier paths take precedence over later paths.)
-	CodePaths     []string
-	TemplatePaths []string
+	CodePaths     []string // Code base directories, for modules and app
+	TemplatePaths []string // Template path directories manually added
 
 	// ConfPaths where to look for configurations
 	// Config load order
@@ -82,9 +84,6 @@ var (
 	// Cookie flags
 	CookieSecure bool
 
-	// Delimiters to use when rendering templates
-	TemplateDelims string
-
 	//Logger colors
 	colors = map[string]gocolorize.Colorize{
 		"trace": gocolorize.NewColor("magenta"),
@@ -106,6 +105,7 @@ var (
 	requestLog           = log.New(ioutil.Discard, "", 0)
 	requestLogTimeFormat = "2006/01/02 15:04:05.000"
 
+	// True when revel engine has been initialized (Init has returned)
 	Initialized bool
 
 	// Private
@@ -205,7 +205,6 @@ func Init(mode, importPath, srcPath string) {
 	CookiePrefix = Config.StringDefault("cookie.prefix", "REVEL")
 	CookieDomain = Config.StringDefault("cookie.domain", "")
 	CookieSecure = Config.BoolDefault("cookie.secure", HTTPSsl)
-	TemplateDelims = Config.StringDefault("template.delimiters", "")
 	if secretStr := Config.StringDefault("app.secret", ""); secretStr != "" {
 		secretKey = []byte(secretStr)
 	}
@@ -228,6 +227,11 @@ func Init(mode, importPath, srcPath string) {
 
 	Initialized = true
 	INFO.Printf("Initialized Revel v%s (%s) for %s", Version, BuildDate, MinimumGoVersion)
+}
+
+func SetSecretKey(newKey []byte) error {
+	secretKey = newKey
+	return nil
 }
 
 // Create a logger using log.* directives in app.conf plus the current settings
@@ -309,7 +313,7 @@ func findSrcPaths(importPath string) (revelSourcePath, appSourcePath string) {
 
 	appPkg, err := build.Import(importPath, "", build.FindOnly)
 	if err != nil {
-		ERROR.Fatalln("Failed to import", importPath, "with error:", err)
+		ERROR.Panicf("Failed to import", importPath, "with error:", err)
 	}
 
 	revelPkg, err := build.Import(RevelImportPath, "", build.FindOnly)
@@ -325,7 +329,17 @@ type Module struct {
 }
 
 func loadModules() {
+	keys := []string{}
 	for _, key := range Config.Options("module.") {
+		keys = append(keys, key)
+	}
+	// Reorder module order by key name, a poor mans sort but at least it is consistent
+	sort.Strings(keys)
+	for _, key := range keys {
+		println("Sorted keys", key)
+
+	}
+	for _, key := range keys {
 		moduleImportPath := Config.StringDefault(key, "")
 		if moduleImportPath == "" {
 			continue
@@ -335,7 +349,13 @@ func loadModules() {
 		if err != nil {
 			log.Fatalln("Failed to load module.  Import of", moduleImportPath, "failed:", err)
 		}
-		addModule(key[len("module."):], moduleImportPath, modulePath)
+		// Drop anything between module.???.<name of module>
+		subKey := key[len("module."):]
+		if index := strings.Index(subKey, "."); index > -1 {
+			subKey = subKey[index+1:]
+		}
+
+		addModule(subKey, moduleImportPath, modulePath)
 	}
 }
 

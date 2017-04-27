@@ -40,7 +40,9 @@ type WriteFlusher interface {
 }
 
 type CompressResponseWriter struct {
-	http.ResponseWriter
+	Header          *BufferedServerHeader
+	ControllerResponse *Response
+	OriginalWriter  io.Writer
 	compressWriter  WriteFlusher
 	compressionType string
 	headersWritten  bool
@@ -49,23 +51,33 @@ type CompressResponseWriter struct {
 	closed          bool
 }
 
-// CompressFilter does compresssion of response body in gzip/deflate if
+// CompressFilter does compression of response body in gzip/deflate if
 // `results.compressed=true` in the app.conf
 func CompressFilter(c *Controller, fc []Filter) {
-	fc[0](c, fc[1:])
-	if Config.BoolDefault("results.compressed", false) {
+	if c.Response.ServerHeader!=nil && Config.BoolDefault("results.compressed", false) {
 		if c.Response.Status != http.StatusNoContent && c.Response.Status != http.StatusNotModified {
-			writer := CompressResponseWriter{c.Response.Out, nil, "", false, make(chan bool, 1), nil, false}
-			writer.DetectCompressionType(c.Request, c.Response)
-			w, ok := c.Response.Out.(http.CloseNotifier)
-			if ok {
-				writer.parentNotify = w.CloseNotify()
+			if found, compressType, compressWriter := detectCompressionType(c.Request, c.Response); found {
+				writer := CompressResponseWriter{
+                    ControllerResponse:c.Response,
+                    OriginalWriter: c.Response.GetWriter(),
+                    compressWriter: compressWriter,
+                    compressionType:compressType,
+                    headersWritten:false,
+                    closeNotify: make(chan bool, 1),
+                    closed: false}
+                // Swap out the header with our own
+                writer.Header = NewBufferedServerHeader(c.Response.ServerHeader)
+                c.Response.ServerHeader = writer.Header
+				if w, ok := c.Response.GetWriter().(http.CloseNotifier); ok {
+					writer.parentNotify = w.CloseNotify()
+				}
+				c.Response.SetWriter(&writer)
 			}
-			c.Response.Out = &writer
 		} else {
 			TRACE.Printf("Compression disabled for response status (%d)", c.Response.Status)
 		}
 	}
+	fc[0](c, fc[1:])
 }
 
 func (c CompressResponseWriter) CloseNotify() <-chan bool {
@@ -77,16 +89,16 @@ func (c CompressResponseWriter) CloseNotify() <-chan bool {
 
 func (c *CompressResponseWriter) prepareHeaders() {
 	if c.compressionType != "" {
-		responseMime := c.Header().Get("Content-Type")
+		responseMime := c.Header.Get("Content-Type")
 		responseMime = strings.TrimSpace(strings.SplitN(responseMime, ";", 2)[0])
 		shouldEncode := false
 
-		if c.Header().Get("Content-Encoding") == "" {
+		if c.Header.Get("Content-Encoding") == "" {
 			for _, compressableMime := range compressableMimes {
 				if responseMime == compressableMime {
 					shouldEncode = true
-					c.Header().Set("Content-Encoding", c.compressionType)
-					c.Header().Del("Content-Length")
+					c.Header.Set("Content-Encoding", c.compressionType)
+					c.Header.Del("Content-Length")
 					break
 				}
 			}
@@ -97,20 +109,26 @@ func (c *CompressResponseWriter) prepareHeaders() {
 			c.compressionType = ""
 		}
 	}
+    c.Header.Release()
 }
 
 func (c *CompressResponseWriter) WriteHeader(status int) {
 	c.headersWritten = true
 	c.prepareHeaders()
-	c.ResponseWriter.WriteHeader(status)
+	c.Header.SetStatus(status)
 }
 
 func (c *CompressResponseWriter) Close() error {
-	if c.compressionType != "" {
-		_ = c.compressWriter.Close()
-	}
-	if w, ok := c.ResponseWriter.(io.Closer); ok {
-		_ = w.Close()
+    if !c.headersWritten {
+        c.prepareHeaders()
+    }
+    if c.compressionType != "" {
+        c.Header.Del("Content-Length")
+		if err := c.compressWriter.Close(); err != nil {
+            // TODO When writing directly to stream, an error will be generated
+			ERROR.Println("Error closing compress writer",c.compressionType, err)
+		}
+
 	}
 	// Non-blocking write to the closenotifier, if we for some reason should
 	// get called multiple times
@@ -123,6 +141,7 @@ func (c *CompressResponseWriter) Close() error {
 }
 
 func (c *CompressResponseWriter) Write(b []byte) (int, error) {
+    println("*** Write called")
 	// Abort if parent has been closed
 	if c.parentNotify != nil {
 		select {
@@ -135,23 +154,22 @@ func (c *CompressResponseWriter) Write(b []byte) (int, error) {
 	if c.closed {
 		return 0, io.ErrClosedPipe
 	}
+
 	if !c.headersWritten {
 		c.prepareHeaders()
 		c.headersWritten = true
 	}
-
 	if c.compressionType != "" {
 		return c.compressWriter.Write(b)
 	}
-
-	return c.ResponseWriter.Write(b)
+	return c.OriginalWriter.Write(b)
 }
 
-// DetectCompressionType method detects the comperssion type
+// DetectCompressionType method detects the compression type
 // from header "Accept-Encoding"
-func (c *CompressResponseWriter) DetectCompressionType(req *Request, resp *Response) {
+func detectCompressionType(req *Request, resp *Response) (found bool, compressionType string, compressionKind WriteFlusher) {
 	if Config.BoolDefault("results.compressed", false) {
-		acceptedEncodings := strings.Split(req.Request.Header.Get("Accept-Encoding"), ",")
+		acceptedEncodings := strings.Split(req.HttpHeaderValue("Accept-Encoding"), ",")
 
 		largestQ := 0.0
 		chosenEncoding := len(compressionTypes)
@@ -216,13 +234,98 @@ func (c *CompressResponseWriter) DetectCompressionType(req *Request, resp *Respo
 			return
 		}
 
-		c.compressionType = compressionTypes[chosenEncoding]
+		compressionType = compressionTypes[chosenEncoding]
 
-		switch c.compressionType {
+		switch compressionType {
 		case "gzip":
-			c.compressWriter = gzip.NewWriter(resp.Out)
+			compressionKind = gzip.NewWriter(resp.GetWriter())
+			found = true
 		case "deflate":
-			c.compressWriter = zlib.NewWriter(resp.Out)
+			compressionKind = zlib.NewWriter(resp.GetWriter())
+			found = true
 		}
 	}
+	return
+}
+
+
+// This class will not send content out until the Released is called, from that point on it will act normally
+// It implements all the ServerHeader
+type BufferedServerHeader struct {
+    cookieList []string
+    headerMap map[string][]string
+    status int
+    released bool
+    original ServerHeader
+}
+func NewBufferedServerHeader(o ServerHeader) *BufferedServerHeader {
+    return &BufferedServerHeader{original:o,headerMap:map[string][]string{}}
+}
+func (bsh *BufferedServerHeader) SetCookie(cookie string) {
+    if bsh.released {
+        bsh.original.SetCookie(cookie)
+    } else {
+        bsh.cookieList = append(bsh.cookieList,cookie)
+    }
+}
+func (bsh *BufferedServerHeader) GetCookie(key string) (value ServerCookie, err error) {
+    return bsh.original.GetCookie(key)
+}
+func (bsh *BufferedServerHeader) Set(key string, value string){
+    if bsh.released {
+        bsh.original.Set(key,value)
+    } else {
+        bsh.headerMap[key]=[]string{value}
+    }
+}
+func (bsh *BufferedServerHeader) Add(key string, value string) {
+    if bsh.released {
+        bsh.original.Set(key,value)
+    } else {
+        old := []string{}
+        if v,found := bsh.headerMap[key];found {
+            old = v
+        }
+        bsh.headerMap[key]=append(old,value)
+    }
+
+}
+func (bsh *BufferedServerHeader) Del(key string){
+    if bsh.released {
+        bsh.original.Del(key)
+    } else {
+        delete(bsh.headerMap,key)
+    }
+
+}
+func (bsh *BufferedServerHeader) Get(key string) (value string){
+    if bsh.released {
+        value = bsh.original.Get(key)
+    } else {
+        if v,found := bsh.headerMap[key]; found && len(v)>0{
+            value = v[0]
+        } else {
+            value = bsh.original.Get(key)
+        }
+    }
+    return
+}
+func (bsh *BufferedServerHeader) SetStatus(statusCode int) {
+    if bsh.released {
+        bsh.original.SetStatus(statusCode)
+    } else {
+        bsh.status = statusCode
+    }
+}
+func (bsh *BufferedServerHeader) Release() {
+    bsh.released = true
+    bsh.original.SetStatus(bsh.status)
+    for k,v := range bsh.headerMap {
+        for _,r:=range v {
+            bsh.original.Set(k, r)
+        }
+    }
+    for _,c:=range bsh.cookieList {
+        bsh.original.SetCookie(c)
+    }
 }
