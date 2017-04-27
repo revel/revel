@@ -169,7 +169,7 @@ func (c *CompressResponseWriter) Write(b []byte) (int, error) {
 // from header "Accept-Encoding"
 func detectCompressionType(req *Request, resp *Response) (found bool, compressionType string, compressionKind WriteFlusher) {
 	if Config.BoolDefault("results.compressed", false) {
-		acceptedEncodings := strings.Split(req.HttpHeaderValue("Accept-Encoding"), ",")
+		acceptedEncodings := strings.Split(req.GetHttpHeader("Accept-Encoding"), ",")
 
 		largestQ := 0.0
 		chosenEncoding := len(compressionTypes)
