@@ -26,6 +26,7 @@ const (
     /* HTTP Engine Type Values Starts at 1000 */
     HTTP_QUERY = ENGINE_PARAMETERS
     HTTP_PATH  = ENGINE_PATH
+    HTTP_BODY = iota + 1000
     HTTP_FORM  = iota + 1000
     HTTP_MULTIPART_FORM = iota + 1000
     HTTP_METHOD = iota + 1000
