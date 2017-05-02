@@ -21,14 +21,34 @@ import (
 
 const (
 	// RevelImportPath Revel framework import path
-	REVEL_TEMPLATE_ENGINES = "template.engines"
 	RevelImportPath        = "github.com/revel/revel"
+)
+const (
+    // Called before all module loads, events thrown to handlers added to AddInitEventHandler
+    REVEL_BEFORE_LOAD_MODULE = iota
+    // Called after all module loads, events thrown to handlers added to AddInitEventHandler
+    REVEL_AFTER_LOAD_MODULE
+
+    // Called when templates are going to be refreshed (receivers are registered template engines added to the template.engine conf option)
+	TEMPLATE_REFRESH
+    // Called when templates are refreshed (receivers are registered template engines added to the template.engine conf option)
+	TEMPLATE_REFRESH_COMPLETE
+
+    // Called before server engine is initialized, receivers are active server engine and handlers added to AddInitEventHandler
+	ENGINE_EVENT_PREINIT
+    // Called before server engine is started, receivers are active server engine and handlers added to AddInitEventHandler
+	ENGINE_EVENT_STARTUP
+    // Called after server engine is stopped, receivers are active server engine and handlers added to AddInitEventHandler
+	ENGINE_EVENT_SHUTDOWN
+
 )
 
 type revelLogs struct {
 	c gocolorize.Colorize
 	w io.Writer
 }
+type EventHandler func(typeOf int) (responseOf int)
+
 
 func (r *revelLogs) Write(p []byte) (n int, err error) {
 	return r.w.Write([]byte(r.c.Paint(string(p))))
@@ -111,6 +131,7 @@ var (
 	// Private
 	secretKey []byte // Key used to sign cookies. An empty key disables signing.
 	packaged  bool   // If true, this is running from a pre-built package.
+    initEventList = []EventHandler{}
 )
 
 // Init initializes Revel -- it provides paths for getting around the app.
@@ -223,10 +244,26 @@ func Init(mode, importPath, srcPath string) {
 	// However output settings can be controlled from app.conf
 	requestLog = getLogger("request")
 
+    fireEvent(REVEL_BEFORE_LOAD_MODULE)
 	loadModules()
+    fireEvent(REVEL_AFTER_LOAD_MODULE)
 
 	Initialized = true
 	INFO.Printf("Initialized Revel v%s (%s) for %s", Version, BuildDate, MinimumGoVersion)
+}
+
+// Fires system events from revel
+func fireEvent(key int) (response int) {
+    for _, handler := range initEventList {
+        response |= handler(key)
+    }
+    return
+}
+
+// Add event handler to listen for system events
+func AddInitEventHandler(handler EventHandler) {
+    initEventList = append(initEventList, handler)
+    return
 }
 
 func SetSecretKey(newKey []byte) error {

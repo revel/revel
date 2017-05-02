@@ -20,12 +20,6 @@ var (
 	ServerEngineInit   *EngineInit
 )
 
-const (
-	ENGINE_EVENT_PREINIT = iota
-	ENGINE_EVENT_STARTUP
-	ENGINE_EVENT_SHUTDOWN
-)
-
 func RegisterServerEngine(newEngine ServerEngine) {
     INFO.Printf("Registered engine %s",newEngine.Name())
 	serverEngineMap[newEngine.Name()] = newEngine
@@ -46,7 +40,7 @@ func InitServer() {
 	// Load templates
 	MainTemplateLoader = NewTemplateLoader(TemplatePaths)
 	// Initialize the template engines
-	if err := MainTemplateLoader.InitializeEngines(Config.StringDefault(REVEL_TEMPLATE_ENGINES, GO_TEMPLATE)); err != nil {
+	if err := MainTemplateLoader.InitializeEngines(Config.StringDefault("template.engines", GO_TEMPLATE)); err != nil {
 		ERROR.Println(err)
 	}
 
@@ -78,7 +72,9 @@ func Run(port int) {
 	// Create the CurrentEngine instance from the application config
 	InitServerEngine(port, Config.StringDefault("server.engine", GO_NATIVE_SERVER_ENGINE))
 	CurrentEngine.Event(ENGINE_EVENT_PREINIT, nil)
+    fireEvent(ENGINE_EVENT_PREINIT)
 	InitServer()
+    fireEvent(ENGINE_EVENT_STARTUP)
 	CurrentEngine.Event(ENGINE_EVENT_STARTUP, nil)
 	CurrentEngine.Start()
 	CurrentEngine.Event(ENGINE_EVENT_SHUTDOWN, nil)

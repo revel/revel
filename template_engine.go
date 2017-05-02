@@ -32,11 +32,6 @@ type TemplateEngine interface {
 	Name() string
 }
 
-const (
-	TEMPLATE_REFRESH = iota
-	TEMPLATE_REFRESH_COMPLETE
-)
-
 var templateLoaderMap = map[string]func(loader *TemplateLoader) (TemplateEngine, error){}
 
 // Allow for templates to be registered during init but not initialized until application has been started
