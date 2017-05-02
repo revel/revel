@@ -85,6 +85,10 @@ func (req *Request) GetPath() (path string) {
     path, _ = req.GetValue(ENGINE_PATH).(string)
     return
 }
+func (req *Request) GetBody() (body io.Reader) {
+    body, _ = req.GetValue(HTTP_BODY).(io.Reader)
+    return
+}
 
 func (req *Request) GetForm() (url.Values, error) {
     if form,err:=req.In.Get(HTTP_FORM);err!=nil {
