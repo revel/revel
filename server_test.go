@@ -48,7 +48,7 @@ func benchmarkRequest(b *testing.B, req *http.Request) {
 	b.ResetTimer()
 	resp := httptest.NewRecorder()
 	for i := 0; i < b.N; i++ {
-		CurrentEngine.Handle(resp, req)
+		CurrentEngine.(*GOHttpServer).Handle(resp, req)
 	}
 }
 
@@ -59,14 +59,14 @@ func TestFakeServer(t *testing.T) {
 	resp := httptest.NewRecorder()
 
 	// First, test that the expected responses are actually generated
-	CurrentEngine.Handle(resp, showRequest)
+	CurrentEngine.(*GOHttpServer).Handle(resp, showRequest)
 	if !strings.Contains(resp.Body.String(), "300 Main St.") {
 		t.Errorf("Failed to find hotel address in action response:\n%s", resp.Body)
 		t.FailNow()
 	}
 	resp.Body.Reset()
 
-	CurrentEngine.Handle(resp, staticRequest)
+	CurrentEngine.(*GOHttpServer).Handle(resp, staticRequest)
 	sessvarsSize := getFileSize(t, filepath.Join(BasePath, "public", "js", "sessvars.js"))
 	if int64(resp.Body.Len()) != sessvarsSize {
 		t.Errorf("Expected sessvars.js to have %d bytes, got %d:\n%s", sessvarsSize, resp.Body.Len(), resp.Body)
@@ -74,14 +74,14 @@ func TestFakeServer(t *testing.T) {
 	}
 	resp.Body.Reset()
 
-	CurrentEngine.Handle(resp, jsonRequest)
+	CurrentEngine.(*GOHttpServer).Handle(resp, jsonRequest)
 	if !strings.Contains(resp.Body.String(), `"Address":"300 Main St."`) {
 		t.Errorf("Failed to find hotel address in JSON response:\n%s", resp.Body)
 		t.FailNow()
 	}
 	resp.Body.Reset()
 
-	CurrentEngine.Handle(resp, plaintextRequest)
+	CurrentEngine.(*GOHttpServer).Handle(resp, plaintextRequest)
 	if resp.Body.String() != "Hello, World!" {
 		t.Errorf("Failed to find greeting in plaintext response:\n%s", resp.Body)
 		t.FailNow()

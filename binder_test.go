@@ -14,6 +14,7 @@ import (
 	"strings"
 	"testing"
 	"time"
+    "encoding/json"
 )
 
 type A struct {
@@ -164,11 +165,31 @@ var fileBindings = []struct{ val, arrval, f interface{} }{
 	{(*io.Reader)(nil), []io.Reader{}, ioutil.ReadAll},
 	{(*io.ReadSeeker)(nil), []io.ReadSeeker{}, ioutil.ReadAll},
 }
+func TestJsonBinder(t *testing.T) {
+    // Reuse the mvc_test.go multipart request to test the binder.
+    foo := struct {
+        A string
+    }{}
+    d,_ := json.Marshal(map[string]string{"a":"b"})
+    params := &Params{JsonRequest:true,Json:d}
+    c := NewGOContext(nil)
+    c.Request.SetRequest(getMultipartRequest())
+    ParseParams(params, NewRequest(c.Request ))
 
+    actual := Bind(params, "test", reflect.TypeOf(foo))
+    if actual.Interface().(struct {
+        A string
+    }).A!="b" {
+        t.Fail()
+    }
+
+}
 func TestBinder(t *testing.T) {
 	// Reuse the mvc_test.go multipart request to test the binder.
 	params := &Params{}
-	ParseParams(params, NewRequest(getMultipartRequest()))
+    c := NewGOContext(nil)
+    c.Request.SetRequest(getMultipartRequest())
+    ParseParams(params, NewRequest(c.Request ))
 	params.Values = ParamTestValues
 
 	// Values

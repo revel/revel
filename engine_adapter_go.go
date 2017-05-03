@@ -23,16 +23,18 @@ type GOHttpServer struct {
 	Server     *http.Server
 	ServerInit *EngineInit
     MaxMultipartSize int64
+	goContextStack      *SimpleLockStack
+	goMultipartFormStack *SimpleLockStack
 }
 
 func (g *GOHttpServer) Init(init *EngineInit) {
     g.MaxMultipartSize = int64(Config.IntDefault("server.request.max.multipart.filesize", 32)) << 20 /* 32 MB */
-	goContextStack = NewStackLock(Config.IntDefault("server.context.stack", 100),
+	g.goContextStack = NewStackLock(Config.IntDefault("server.context.stack", 100),
         Config.IntDefault("server.context.maxstack", 200),
         func() interface{} {
             return NewGOContext(g)
             })
-	goMultipartFormStack = NewStackLock(Config.IntDefault("server.form.stack", 100),
+	g.goMultipartFormStack = NewStackLock(Config.IntDefault("server.form.stack", 100),
         Config.IntDefault("server.form.maxstack", 200),
         func() interface{} { return &GOMultipartForm{} })
 	g.ServerInit = init
@@ -78,9 +80,9 @@ func (g *GOHttpServer) Handle(w http.ResponseWriter, r *http.Request) {
 	}
 
 	upgrade := r.Header.Get("Upgrade")
-	context := goContextStack.Pop().(*GOContext)
+	context := g.goContextStack.Pop().(*GOContext)
 	defer func() {
-		goContextStack.Push(context)
+		g.goContextStack.Push(context)
 	}()
 	context.Request.SetRequest(r)
 	context.Response.SetResponse(w)
@@ -109,8 +111,8 @@ func (g *GOHttpServer) Name() string {
 
 func (g *GOHttpServer) Stats() map[string]interface{} {
 	return map[string]interface{}{
-		"Go Engine Context": goContextStack.String(),
-		"Go Engine Forms":    goMultipartFormStack.String(),
+		"Go Engine Context": g.goContextStack.String(),
+		"Go Engine Forms":    g.goMultipartFormStack.String(),
 	}
 }
 
@@ -159,14 +161,15 @@ type (
 	GoCookie http.Cookie
 )
 
-var (
-	goContextStack      *SimpleLockStack
-	goMultipartFormStack *SimpleLockStack
-)
-
 func NewGOContext(instance *GOHttpServer) *GOContext {
     if instance==nil {
         instance = &GOHttpServer{MaxMultipartSize:32 << 20}
+        instance.goContextStack = NewStackLock(100, 200,
+            func() interface{} {
+                return NewGOContext(instance)
+                })
+        instance.goMultipartFormStack = NewStackLock(100, 200,
+            func() interface{} { return &GOMultipartForm{} })
     }
     c:= &GOContext{Request: &GORequest{Goheader: &GOHeader{}, Engine:instance}}
                 c.Response=&GOResponse{Goheader: &GOHeader{},Request:c.Request, Engine:instance}
@@ -234,7 +237,7 @@ func (r *GORequest) GetMultipartForm() (ServerMultipartForm, error) {
         if e := r.Original.ParseMultipartForm(r.Engine.MaxMultipartSize); e != nil {
 			return nil, e
 		}
-		r.ParsedForm = goMultipartFormStack.Pop().(*GOMultipartForm)
+		r.ParsedForm =r.Engine.goMultipartFormStack.Pop().(*GOMultipartForm)
 		r.ParsedForm.Form = r.Original.MultipartForm
 	}
 
