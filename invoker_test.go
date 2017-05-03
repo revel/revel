@@ -117,10 +117,10 @@ func BenchmarkSetAction(b *testing.B) {
 
 func BenchmarkInvoker(b *testing.B) {
 	startFakeBookingApp()
-    context := NewGOContext(nil)
-    context.Request.SetRequest(showRequest)
-    c := NewController(context)
-    c.ViewArgs = make(map[string]interface{})
+	context := NewGOContext(nil)
+	context.Request.SetRequest(showRequest)
+	c := NewController(context)
+	c.ViewArgs = make(map[string]interface{})
 	if err := c.SetAction("Hotels", "Show"); err != nil {
 		b.Errorf("Failed to set action: %s", err)
 		return

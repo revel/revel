@@ -9,7 +9,7 @@ type SimpleStackTest struct {
 }
 
 func TestUnique(b *testing.T) {
-	stack := NewStackLock(10,40, func() interface{} {
+	stack := NewStackLock(10, 40, func() interface{} {
 		newone := &SimpleStackTest{}
 		return newone
 	})
@@ -62,7 +62,7 @@ func TestUnique(b *testing.T) {
 
 }
 func TestLimits(b *testing.T) {
-	stack := NewStackLock(10,20, func() interface{} {
+	stack := NewStackLock(10, 20, func() interface{} {
 		newone := &SimpleStackTest{}
 		return newone
 	})
@@ -73,13 +73,13 @@ func TestLimits(b *testing.T) {
 	if stack.active != 50 {
 		b.Errorf("Failed to match 50 active %v ", stack.active)
 	}
-    for _,v := range values {
-        stack.Push(v)
-    }
+	for _, v := range values {
+		stack.Push(v)
+	}
 	if stack.Capacity() != 20 {
 		b.Errorf("Failed to match 20 capcity %v ", stack.Capacity())
 	}
-    
+
 }
 func isDifferent(values ...*SimpleStackTest) bool {
 	if len(values) == 2 {
@@ -94,22 +94,22 @@ func isDifferent(values ...*SimpleStackTest) bool {
 }
 
 func BenchmarkCreateWrite(b *testing.B) {
-	stack := NewStackLock(0,40, func() interface{} { return &SimpleStackTest{} })
+	stack := NewStackLock(0, 40, func() interface{} { return &SimpleStackTest{} })
 	for x := 0; x < b.N; x++ {
 		stack.Push(x)
 	}
 }
 func BenchmarkAllocWrite(b *testing.B) {
-	stack := NewStackLock(b.N,b.N+100, func() interface{} { return &SimpleStackTest{} })
+	stack := NewStackLock(b.N, b.N+100, func() interface{} { return &SimpleStackTest{} })
 	for x := 0; x < b.N; x++ {
 		stack.Push(x)
 	}
 }
 func BenchmarkCreate(b *testing.B) {
-	NewStackLock(b.N,b.N+100,  func() interface{} { return &SimpleStackTest{} })
+	NewStackLock(b.N, b.N+100, func() interface{} { return &SimpleStackTest{} })
 }
 func BenchmarkParrallel(b *testing.B) {
-	stack := NewStackLock(b.N,b.N+100,  func() interface{} { return &SimpleStackTest{} })
+	stack := NewStackLock(b.N, b.N+100, func() interface{} { return &SimpleStackTest{} })
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			for x := 0; x < 50000; x++ {

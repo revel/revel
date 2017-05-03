@@ -107,6 +107,6 @@ func startFakeBookingApp() {
 			},
 		})
 	InitServerEngine(9000, GO_NATIVE_SERVER_ENGINE)
-    initControllerStack()
+	initControllerStack()
 	runStartupHooks()
 }

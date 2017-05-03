@@ -24,10 +24,10 @@ func getRecordedCookie(recorder *httptest.ResponseRecorder, name string) (*http.
 
 func validationTester(req *Request, fn func(c *Controller)) *httptest.ResponseRecorder {
 	recorder := httptest.NewRecorder()
-    context := NewGOContext(nil)
-    context.Request.SetRequest(req.In.GetRaw().(*http.Request))
-    context.Response.SetResponse(recorder)
-    c := NewController(context)
+	context := NewGOContext(nil)
+	context.Request.SetRequest(req.In.GetRaw().(*http.Request))
+	context.Response.SetResponse(recorder)
+	c := NewController(context)
 
 	ValidationFilter(c, []Filter{func(c *Controller, _ []Filter) {
 		fn(c)
