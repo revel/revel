@@ -20,23 +20,23 @@ func init() {
 }
 
 type GOHttpServer struct {
-	Server     *http.Server
-	ServerInit *EngineInit
-    MaxMultipartSize int64
-	goContextStack      *SimpleLockStack
+	Server               *http.Server
+	ServerInit           *EngineInit
+	MaxMultipartSize     int64
+	goContextStack       *SimpleLockStack
 	goMultipartFormStack *SimpleLockStack
 }
 
 func (g *GOHttpServer) Init(init *EngineInit) {
-    g.MaxMultipartSize = int64(Config.IntDefault("server.request.max.multipart.filesize", 32)) << 20 /* 32 MB */
+	g.MaxMultipartSize = int64(Config.IntDefault("server.request.max.multipart.filesize", 32)) << 20 /* 32 MB */
 	g.goContextStack = NewStackLock(Config.IntDefault("server.context.stack", 100),
-        Config.IntDefault("server.context.maxstack", 200),
-        func() interface{} {
-            return NewGOContext(g)
-            })
+		Config.IntDefault("server.context.maxstack", 200),
+		func() interface{} {
+			return NewGOContext(g)
+		})
 	g.goMultipartFormStack = NewStackLock(Config.IntDefault("server.form.stack", 100),
-        Config.IntDefault("server.form.maxstack", 200),
-        func() interface{} { return &GOMultipartForm{} })
+		Config.IntDefault("server.form.maxstack", 200),
+		func() interface{} { return &GOMultipartForm{} })
 	g.ServerInit = init
 	g.Server = &http.Server{
 		Addr: init.Address,
@@ -95,7 +95,7 @@ func (g *GOHttpServer) Handle(w http.ResponseWriter, r *http.Request) {
 			}
 			r.Method = "WS"
 			context.Request.WebSocket = ws
-			context.WebSocket = &GOWebsocket{Conn: ws,GOResponse:*context.Response}
+			context.WebSocket = &GOWebsocket{Conn: ws, GOResponse: *context.Response}
 			g.ServerInit.Callback(context)
 		}).ServeHTTP(w, r)
 	} else {
@@ -112,7 +112,7 @@ func (g *GOHttpServer) Name() string {
 func (g *GOHttpServer) Stats() map[string]interface{} {
 	return map[string]interface{}{
 		"Go Engine Context": g.goContextStack.String(),
-		"Go Engine Forms":    g.goMultipartFormStack.String(),
+		"Go Engine Forms":   g.goMultipartFormStack.String(),
 	}
 }
 
@@ -125,11 +125,11 @@ func (g *GOHttpServer) Event(event int, args interface{}) {
 }
 
 type (
-    GOContext struct {
-        Request *GORequest
-        Response *GOResponse
-        WebSocket *GOWebsocket
-    }
+	GOContext struct {
+		Request   *GORequest
+		Response  *GOResponse
+		WebSocket *GOWebsocket
+	}
 	GORequest struct {
 		Original        *http.Request
 		FormParsed      bool
@@ -137,7 +137,7 @@ type (
 		WebSocket       *websocket.Conn
 		ParsedForm      *GOMultipartForm
 		Goheader        *GOHeader
-        Engine          *GOHttpServer
+		Engine          *GOHttpServer
 	}
 
 	GOResponse struct {
@@ -145,7 +145,7 @@ type (
 		Goheader *GOHeader
 		Writer   io.Writer
 		Request  *GORequest
-        Engine   *GOHttpServer
+		Engine   *GOHttpServer
 	}
 	GOMultipartForm struct {
 		Form *multipart.Form
@@ -156,71 +156,71 @@ type (
 	}
 	GOWebsocket struct {
 		Conn *websocket.Conn
-        GOResponse
+		GOResponse
 	}
 	GoCookie http.Cookie
 )
 
 func NewGOContext(instance *GOHttpServer) *GOContext {
-    if instance==nil {
-        instance = &GOHttpServer{MaxMultipartSize:32 << 20}
-        instance.goContextStack = NewStackLock(100, 200,
-            func() interface{} {
-                return NewGOContext(instance)
-                })
-        instance.goMultipartFormStack = NewStackLock(100, 200,
-            func() interface{} { return &GOMultipartForm{} })
-    }
-    c:= &GOContext{Request: &GORequest{Goheader: &GOHeader{}, Engine:instance}}
-                c.Response=&GOResponse{Goheader: &GOHeader{},Request:c.Request, Engine:instance}
-    return c
+	if instance == nil {
+		instance = &GOHttpServer{MaxMultipartSize: 32 << 20}
+		instance.goContextStack = NewStackLock(100, 200,
+			func() interface{} {
+				return NewGOContext(instance)
+			})
+		instance.goMultipartFormStack = NewStackLock(100, 200,
+			func() interface{} { return &GOMultipartForm{} })
+	}
+	c := &GOContext{Request: &GORequest{Goheader: &GOHeader{}, Engine: instance}}
+	c.Response = &GOResponse{Goheader: &GOHeader{}, Request: c.Request, Engine: instance}
+	return c
 }
 func (c *GOContext) GetRequest() ServerRequest {
-    return c.Request
+	return c.Request
 }
 func (c *GOContext) GetResponse() ServerResponse {
-    if c.WebSocket!=nil {
-        return c.WebSocket
-    }
-    return c.Response
+	if c.WebSocket != nil {
+		return c.WebSocket
+	}
+	return c.Response
 }
 func (c *GOContext) Destroy() {
-    c.Response.Destroy()
-    c.Request.Destroy()
-    if c.WebSocket!=nil {
-        c.WebSocket.Destroy()
-    }
+	c.Response.Destroy()
+	c.Request.Destroy()
+	if c.WebSocket != nil {
+		c.WebSocket.Destroy()
+	}
 }
 func (r *GORequest) Get(key int) (value interface{}, err error) {
-    switch key {
-    case HTTP_SERVER_HEADER:
-        value = r.GetHeader()
-    case HTTP_MULTIPART_FORM:
-        value,err = r.GetMultipartForm()
-    case HTTP_QUERY:
-        value = r.Original.URL.Query()
-    case HTTP_FORM:
-        value,err = r.GetForm()
-    case HTTP_REQUEST_URI:
-        value = r.Original.URL.RequestURI()
-    case HTTP_REMOTE_ADDR:
-        value = r.Original.RemoteAddr
-    case HTTP_METHOD:
-        value = r.Original.Method
-    case HTTP_PATH:
-        value = r.Original.URL.Path
-    case HTTP_HOST:
-        value = r.Original.Host
-    case HTTP_BODY:
-        value = r.Original.Body
-    default :
-        err = ENGINE_UNKNOWN_GET
-    }
+	switch key {
+	case HTTP_SERVER_HEADER:
+		value = r.GetHeader()
+	case HTTP_MULTIPART_FORM:
+		value, err = r.GetMultipartForm()
+	case HTTP_QUERY:
+		value = r.Original.URL.Query()
+	case HTTP_FORM:
+		value, err = r.GetForm()
+	case HTTP_REQUEST_URI:
+		value = r.Original.URL.RequestURI()
+	case HTTP_REMOTE_ADDR:
+		value = r.Original.RemoteAddr
+	case HTTP_METHOD:
+		value = r.Original.Method
+	case HTTP_PATH:
+		value = r.Original.URL.Path
+	case HTTP_HOST:
+		value = r.Original.Host
+	case HTTP_BODY:
+		value = r.Original.Body
+	default:
+		err = ENGINE_UNKNOWN_GET
+	}
 
-    return
+	return
 }
-func (r *GORequest) Set(key int, value interface{}) (bool) {
-    return false
+func (r *GORequest) Set(key int, value interface{}) bool {
+	return false
 }
 
 func (r *GORequest) GetForm() (url.Values, error) {
@@ -234,10 +234,10 @@ func (r *GORequest) GetForm() (url.Values, error) {
 }
 func (r *GORequest) GetMultipartForm() (ServerMultipartForm, error) {
 	if !r.MultiFormParsed {
-        if e := r.Original.ParseMultipartForm(r.Engine.MaxMultipartSize); e != nil {
+		if e := r.Original.ParseMultipartForm(r.Engine.MaxMultipartSize); e != nil {
 			return nil, e
 		}
-		r.ParsedForm =r.Engine.goMultipartFormStack.Pop().(*GOMultipartForm)
+		r.ParsedForm = r.Engine.goMultipartFormStack.Pop().(*GOMultipartForm)
 		r.ParsedForm.Form = r.Original.MultipartForm
 	}
 
@@ -262,26 +262,26 @@ func (r *GORequest) Destroy() {
 	r.MultiFormParsed = false
 	r.ParsedForm = nil
 }
-func (r *GOResponse) Get(key int) (value interface{}, err error){
-	switch(key) {
-    case HTTP_SERVER_HEADER:
-        value = r.Header()
-    case HTTP_STREAM_WRITER:
-        value = r
-    case HTTP_WRITER:
-        value = r.Writer
-    default :
-        err = ENGINE_UNKNOWN_GET
-    }
-    return
+func (r *GOResponse) Get(key int) (value interface{}, err error) {
+	switch key {
+	case HTTP_SERVER_HEADER:
+		value = r.Header()
+	case HTTP_STREAM_WRITER:
+		value = r
+	case HTTP_WRITER:
+		value = r.Writer
+	default:
+		err = ENGINE_UNKNOWN_GET
+	}
+	return
 }
-func (r *GOResponse) Set(key int, value interface{})(set bool){
-	switch(key) {
-    case HTTP_WRITER:
-        r.SetWriter(value.(io.Writer))
-        set = true
-    }
-    return
+func (r *GOResponse) Set(key int, value interface{}) (set bool) {
+	switch key {
+	case HTTP_WRITER:
+		r.SetWriter(value.(io.Writer))
+		set = true
+	}
+	return
 }
 
 func (r *GOResponse) Header() ServerHeader {
@@ -341,7 +341,7 @@ func (r *GOResponse) Destroy() {
 	r.Writer = nil
 }
 
-func (r *GOResponse)  SetResponse(w http.ResponseWriter) {
+func (r *GOResponse) SetResponse(w http.ResponseWriter) {
 	r.Original = w
 	r.Writer = w
 	r.Goheader.Source = r

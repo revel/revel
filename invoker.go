@@ -11,7 +11,7 @@ import (
 
 var (
 	controllerPtrType = reflect.TypeOf(&Controller{})
-	websocketType = reflect.TypeOf((*ServerWebSocket)(nil)).Elem()
+	websocketType     = reflect.TypeOf((*ServerWebSocket)(nil)).Elem()
 )
 
 func ActionInvoker(c *Controller, _ []Filter) {

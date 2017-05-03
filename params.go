@@ -5,11 +5,11 @@
 package revel
 
 import (
+	"io/ioutil"
 	"mime/multipart"
 	"net/url"
 	"os"
 	"reflect"
-    "io/ioutil"
 )
 
 // Params provides a unified view of the request params.
@@ -30,10 +30,10 @@ type Params struct {
 	Query url.Values // Parameters from the query string, e.g. /index?limit=10
 	Form  url.Values // Parameters from the request body.
 
-	Files    map[string][]*multipart.FileHeader // Files uploaded in a multipart form
-	tmpFiles []*os.File                         // Temp files used during the request.
-    Json []byte
-    JsonRequest bool
+	Files       map[string][]*multipart.FileHeader // Files uploaded in a multipart form
+	tmpFiles    []*os.File                         // Temp files used during the request.
+	Json        []byte
+	JsonRequest bool
 }
 
 // ParseParams parses the `http.Request` params into `revel.Controller.Params`
@@ -57,13 +57,13 @@ func ParseParams(params *Params, req *Request) {
 			params.Form = mp.GetValue()
 			params.Files = mp.GetFile()
 		}
-    case "application/json":
-        fallthrough
-    case "text/json":
-        content, _ := ioutil.ReadAll(req.GetBody())
-        // We wont bind it until we determine what we are binding too
-        params.Json = content
-        params.JsonRequest = true
+	case "application/json":
+		fallthrough
+	case "text/json":
+		content, _ := ioutil.ReadAll(req.GetBody())
+		// We wont bind it until we determine what we are binding too
+		params.Json = content
+		params.JsonRequest = true
 	}
 
 	params.Values = params.calcValues()

@@ -214,7 +214,7 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
 	}
 
 	if !chunked {
-        resp.SetHttpHeader("ContentBeater-Length", strconv.Itoa(b.Len()))
+		resp.SetHttpHeader("ContentBeater-Length", strconv.Itoa(b.Len()))
 	}
 	resp.WriteHeader(http.StatusOK, "text/html; charset=utf-8")
 	if _, err := b.WriteTo(out); err != nil {
@@ -360,27 +360,27 @@ func (r *BinaryResult) Apply(req *Request, resp *Response) {
 	}
 
 	resp.SetHttpHeader("Content-Disposition", disposition)
-    if resp.ContentType != "" {
-        resp.SetHttpHeader("Content-Type", resp.ContentType)
-    } else {
-        contentType := ContentTypeByFilename(r.Name)
-        resp.SetHttpHeader("Content-Type", contentType)
-    }
-    if content,ok:=r.Reader.(io.ReadSeeker);ok && r.Length<0 {
-        // get the size from the stream
-        if size, err := content.Seek(0, io.SeekEnd); err == nil {
-            if _, err = content.Seek(0, io.SeekStart); err == nil {
-                r.Length = size
-            }
-        }
-    }
+	if resp.ContentType != "" {
+		resp.SetHttpHeader("Content-Type", resp.ContentType)
+	} else {
+		contentType := ContentTypeByFilename(r.Name)
+		resp.SetHttpHeader("Content-Type", contentType)
+	}
+	if content, ok := r.Reader.(io.ReadSeeker); ok && r.Length < 0 {
+		// get the size from the stream
+		if size, err := content.Seek(0, io.SeekEnd); err == nil {
+			if _, err = content.Seek(0, io.SeekStart); err == nil {
+				r.Length = size
+			}
+		}
+	}
 
-    // Write stream writes the status code to the header as well
-    if ws:= resp.GetStreamWriter();ws!=nil {
-        if err := ws.WriteStream(r.Name, r.Length, r.ModTime, r.Reader); err != nil {
-            ERROR.Println("Response write failed:", err)
-        }
-    }
+	// Write stream writes the status code to the header as well
+	if ws := resp.GetStreamWriter(); ws != nil {
+		if err := ws.WriteStream(r.Name, r.Length, r.ModTime, r.Reader); err != nil {
+			ERROR.Println("Response write failed:", err)
+		}
+	}
 
 	// Close the Reader if we can
 	if v, ok := r.Reader.(io.Closer); ok {

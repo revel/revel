@@ -1,8 +1,8 @@
 package revel
 
 import (
-    "sync"
-    "fmt"
+	"fmt"
+	"sync"
 )
 
 type (
@@ -12,7 +12,7 @@ type (
 		len      int
 		capacity int
 		active   int
-        maxsize  int
+		maxsize  int
 		lock     sync.Mutex
 	}
 	SimpleLockStackElement struct {
@@ -25,8 +25,8 @@ type (
 	}
 )
 
-func NewStackLock(startsize,maxsize int, creator func() interface{}) *SimpleLockStack {
-	ss := &SimpleLockStack{lock: sync.Mutex{}, Current: &SimpleLockStackElement{Value: creator()}, Creator: creator, maxsize:maxsize}
+func NewStackLock(startsize, maxsize int, creator func() interface{}) *SimpleLockStack {
+	ss := &SimpleLockStack{lock: sync.Mutex{}, Current: &SimpleLockStackElement{Value: creator()}, Creator: creator, maxsize: maxsize}
 	if startsize > 0 {
 		elements := make([]SimpleLockStackElement, startsize-1)
 		current := ss.Current
@@ -68,7 +68,7 @@ func (s *SimpleLockStack) Pop() (value interface{}) {
 		}
 	}
 	// println("Pop ",value, s.len, s.active, s.capacity, s.Current.Next)
-    s.active++
+	s.active++
 	return
 }
 func (s *SimpleLockStack) Push(value interface{}) {
@@ -79,7 +79,7 @@ func (s *SimpleLockStack) Push(value interface{}) {
 	defer s.lock.Unlock()
 	if s.len == 0 {
 		s.Current.Value = value
-	} else if s.len<s.maxsize {
+	} else if s.len < s.maxsize {
 		if s.Current.Next == nil {
 			s.Current.Next = &SimpleLockStackElement{Value: value, Previous: s.Current}
 			s.capacity++
@@ -88,11 +88,11 @@ func (s *SimpleLockStack) Push(value interface{}) {
 		}
 		s.Current = s.Current.Next
 	} else {
-        // If we exceeded the capacity of stack do not store the created object
-        return
-    }
+		// If we exceeded the capacity of stack do not store the created object
+		return
+	}
 	s.len++
-    s.active--
+	s.active--
 	//println("Push ",value, s.len, s.active, s.capacity)
 	return
 }
@@ -106,5 +106,5 @@ func (s *SimpleLockStack) Active() int {
 	return s.active
 }
 func (s *SimpleLockStack) String() string {
-    return fmt.Sprintf("SS: Capacity:%d Active:%d Stored:%d",s.capacity,s.active,s.len)
+	return fmt.Sprintf("SS: Capacity:%d Active:%d Stored:%d", s.capacity, s.active, s.len)
 }

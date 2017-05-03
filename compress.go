@@ -40,34 +40,34 @@ type WriteFlusher interface {
 }
 
 type CompressResponseWriter struct {
-	Header          *BufferedServerHeader
+	Header             *BufferedServerHeader
 	ControllerResponse *Response
-	OriginalWriter  io.Writer
-	compressWriter  WriteFlusher
-	compressionType string
-	headersWritten  bool
-	closeNotify     chan bool
-	parentNotify    <-chan bool
-	closed          bool
+	OriginalWriter     io.Writer
+	compressWriter     WriteFlusher
+	compressionType    string
+	headersWritten     bool
+	closeNotify        chan bool
+	parentNotify       <-chan bool
+	closed             bool
 }
 
 // CompressFilter does compression of response body in gzip/deflate if
 // `results.compressed=true` in the app.conf
 func CompressFilter(c *Controller, fc []Filter) {
-	if c.Response.ServerHeader!=nil && Config.BoolDefault("results.compressed", false) {
+	if c.Response.ServerHeader != nil && Config.BoolDefault("results.compressed", false) {
 		if c.Response.Status != http.StatusNoContent && c.Response.Status != http.StatusNotModified {
 			if found, compressType, compressWriter := detectCompressionType(c.Request, c.Response); found {
 				writer := CompressResponseWriter{
-                    ControllerResponse:c.Response,
-                    OriginalWriter: c.Response.GetWriter(),
-                    compressWriter: compressWriter,
-                    compressionType:compressType,
-                    headersWritten:false,
-                    closeNotify: make(chan bool, 1),
-                    closed: false}
-                // Swap out the header with our own
-                writer.Header = NewBufferedServerHeader(c.Response.ServerHeader)
-                c.Response.ServerHeader = writer.Header
+					ControllerResponse: c.Response,
+					OriginalWriter:     c.Response.GetWriter(),
+					compressWriter:     compressWriter,
+					compressionType:    compressType,
+					headersWritten:     false,
+					closeNotify:        make(chan bool, 1),
+					closed:             false}
+				// Swap out the header with our own
+				writer.Header = NewBufferedServerHeader(c.Response.ServerHeader)
+				c.Response.ServerHeader = writer.Header
 				if w, ok := c.Response.GetWriter().(http.CloseNotifier); ok {
 					writer.parentNotify = w.CloseNotify()
 				}
@@ -109,7 +109,7 @@ func (c *CompressResponseWriter) prepareHeaders() {
 			c.compressionType = ""
 		}
 	}
-    c.Header.Release()
+	c.Header.Release()
 }
 
 func (c *CompressResponseWriter) WriteHeader(status int) {
@@ -119,14 +119,14 @@ func (c *CompressResponseWriter) WriteHeader(status int) {
 }
 
 func (c *CompressResponseWriter) Close() error {
-    if !c.headersWritten {
-        c.prepareHeaders()
-    }
-    if c.compressionType != "" {
-        c.Header.Del("Content-Length")
+	if !c.headersWritten {
+		c.prepareHeaders()
+	}
+	if c.compressionType != "" {
+		c.Header.Del("Content-Length")
 		if err := c.compressWriter.Close(); err != nil {
-            // TODO When writing directly to stream, an error will be generated
-			ERROR.Println("Error closing compress writer",c.compressionType, err)
+			// TODO When writing directly to stream, an error will be generated
+			ERROR.Println("Error closing compress writer", c.compressionType, err)
 		}
 
 	}
@@ -247,84 +247,84 @@ func detectCompressionType(req *Request, resp *Response) (found bool, compressio
 	return
 }
 
-
 // This class will not send content out until the Released is called, from that point on it will act normally
 // It implements all the ServerHeader
 type BufferedServerHeader struct {
-    cookieList []string
-    headerMap map[string][]string
-    status int
-    released bool
-    original ServerHeader
+	cookieList []string
+	headerMap  map[string][]string
+	status     int
+	released   bool
+	original   ServerHeader
 }
+
 func NewBufferedServerHeader(o ServerHeader) *BufferedServerHeader {
-    return &BufferedServerHeader{original:o,headerMap:map[string][]string{}}
+	return &BufferedServerHeader{original: o, headerMap: map[string][]string{}}
 }
 func (bsh *BufferedServerHeader) SetCookie(cookie string) {
-    if bsh.released {
-        bsh.original.SetCookie(cookie)
-    } else {
-        bsh.cookieList = append(bsh.cookieList,cookie)
-    }
+	if bsh.released {
+		bsh.original.SetCookie(cookie)
+	} else {
+		bsh.cookieList = append(bsh.cookieList, cookie)
+	}
 }
 func (bsh *BufferedServerHeader) GetCookie(key string) (value ServerCookie, err error) {
-    return bsh.original.GetCookie(key)
+	return bsh.original.GetCookie(key)
 }
-func (bsh *BufferedServerHeader) Set(key string, value string){
-    if bsh.released {
-        bsh.original.Set(key,value)
-    } else {
-        bsh.headerMap[key]=[]string{value}
-    }
+func (bsh *BufferedServerHeader) Set(key string, value string) {
+	if bsh.released {
+		bsh.original.Set(key, value)
+	} else {
+		bsh.headerMap[key] = []string{value}
+	}
 }
 func (bsh *BufferedServerHeader) Add(key string, value string) {
-    if bsh.released {
-        bsh.original.Set(key,value)
-    } else {
-        old := []string{}
-        if v,found := bsh.headerMap[key];found {
-            old = v
-        }
-        bsh.headerMap[key]=append(old,value)
-    }
+	if bsh.released {
+		bsh.original.Set(key, value)
+	} else {
+		old := []string{}
+		if v, found := bsh.headerMap[key]; found {
+			old = v
+		}
+		bsh.headerMap[key] = append(old, value)
+	}
 
 }
-func (bsh *BufferedServerHeader) Del(key string){
-    if bsh.released {
-        bsh.original.Del(key)
-    } else {
-        delete(bsh.headerMap,key)
-    }
+func (bsh *BufferedServerHeader) Del(key string) {
+	if bsh.released {
+		bsh.original.Del(key)
+	} else {
+		delete(bsh.headerMap, key)
+	}
 
 }
-func (bsh *BufferedServerHeader) Get(key string) (value string){
-    if bsh.released {
-        value = bsh.original.Get(key)
-    } else {
-        if v,found := bsh.headerMap[key]; found && len(v)>0{
-            value = v[0]
-        } else {
-            value = bsh.original.Get(key)
-        }
-    }
-    return
+func (bsh *BufferedServerHeader) Get(key string) (value string) {
+	if bsh.released {
+		value = bsh.original.Get(key)
+	} else {
+		if v, found := bsh.headerMap[key]; found && len(v) > 0 {
+			value = v[0]
+		} else {
+			value = bsh.original.Get(key)
+		}
+	}
+	return
 }
 func (bsh *BufferedServerHeader) SetStatus(statusCode int) {
-    if bsh.released {
-        bsh.original.SetStatus(statusCode)
-    } else {
-        bsh.status = statusCode
-    }
+	if bsh.released {
+		bsh.original.SetStatus(statusCode)
+	} else {
+		bsh.status = statusCode
+	}
 }
 func (bsh *BufferedServerHeader) Release() {
-    bsh.released = true
-    bsh.original.SetStatus(bsh.status)
-    for k,v := range bsh.headerMap {
-        for _,r:=range v {
-            bsh.original.Set(k, r)
-        }
-    }
-    for _,c:=range bsh.cookieList {
-        bsh.original.SetCookie(c)
-    }
+	bsh.released = true
+	bsh.original.SetStatus(bsh.status)
+	for k, v := range bsh.headerMap {
+		for _, r := range v {
+			bsh.original.Set(k, r)
+		}
+	}
+	for _, c := range bsh.cookieList {
+		bsh.original.SetCookie(c)
+	}
 }

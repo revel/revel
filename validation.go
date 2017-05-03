@@ -185,56 +185,56 @@ func (v *Validation) Check(obj interface{}, checks ...Validator) *ValidationResu
 
 // ValidationFilter revel Filter function to be hooked into the filter chain.
 func ValidationFilter(c *Controller, fc []Filter) {
-    // Ignore cookies on json requests
-    if c.Params !=nil && c.Params.JsonRequest {
-        c.Validation = &Validation{}
-        fc[0](c, fc[1:])
-    } else {
-        errors, err := restoreValidationErrors(c.Request)
-        c.Validation = &Validation{
-            Errors: errors,
-            keep:   false,
-        }
-        hasCookie := (err != http.ErrNoCookie)
+	// Ignore cookies on json requests
+	if c.Params != nil && c.Params.JsonRequest {
+		c.Validation = &Validation{}
+		fc[0](c, fc[1:])
+	} else {
+		errors, err := restoreValidationErrors(c.Request)
+		c.Validation = &Validation{
+			Errors: errors,
+			keep:   false,
+		}
+		hasCookie := (err != http.ErrNoCookie)
 
-        fc[0](c, fc[1:])
+		fc[0](c, fc[1:])
 
-        // Add Validation errors to ViewArgs.
-        c.ViewArgs["errors"] = c.Validation.ErrorMap()
+		// Add Validation errors to ViewArgs.
+		c.ViewArgs["errors"] = c.Validation.ErrorMap()
 
-        // Store the Validation errors
-        var errorsValue string
-        if c.Validation.keep {
-            for _, error := range c.Validation.Errors {
-                if error.Message != "" {
-                    errorsValue += "\x00" + error.Key + ":" + error.Message + "\x00"
-                }
-            }
-        }
+		// Store the Validation errors
+		var errorsValue string
+		if c.Validation.keep {
+			for _, error := range c.Validation.Errors {
+				if error.Message != "" {
+					errorsValue += "\x00" + error.Key + ":" + error.Message + "\x00"
+				}
+			}
+		}
 
-        // When there are errors from Validation and Keep() has been called, store the
-        // values in a cookie. If there previously was a cookie but no errors, remove
-        // the cookie.
-        if errorsValue != "" {
-            c.SetCookie(&http.Cookie{
-                Name:     CookiePrefix + "_ERRORS",
-                Value:    url.QueryEscape(errorsValue),
-                Domain:   CookieDomain,
-                Path:     "/",
-                HttpOnly: true,
-                Secure:   CookieSecure,
-            })
-        } else if hasCookie {
-            c.SetCookie(&http.Cookie{
-                Name:     CookiePrefix + "_ERRORS",
-                MaxAge:   -1,
-                Domain:   CookieDomain,
-                Path:     "/",
-                HttpOnly: true,
-                Secure:   CookieSecure,
-            })
-        }
-    }
+		// When there are errors from Validation and Keep() has been called, store the
+		// values in a cookie. If there previously was a cookie but no errors, remove
+		// the cookie.
+		if errorsValue != "" {
+			c.SetCookie(&http.Cookie{
+				Name:     CookiePrefix + "_ERRORS",
+				Value:    url.QueryEscape(errorsValue),
+				Domain:   CookieDomain,
+				Path:     "/",
+				HttpOnly: true,
+				Secure:   CookieSecure,
+			})
+		} else if hasCookie {
+			c.SetCookie(&http.Cookie{
+				Name:     CookiePrefix + "_ERRORS",
+				MaxAge:   -1,
+				Domain:   CookieDomain,
+				Path:     "/",
+				HttpOnly: true,
+				Secure:   CookieSecure,
+			})
+		}
+	}
 }
 
 // Restore Validation.Errors from a request.

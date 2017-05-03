@@ -42,13 +42,13 @@ type Controller struct {
 
 // NewController returns new controller instance for Request and Response
 func NewControllerEmpty() *Controller {
-	return &Controller{Request:NewRequest(nil),Response:NewResponse(nil)}
+	return &Controller{Request: NewRequest(nil), Response: NewResponse(nil)}
 }
 
 // New controller, creates a new instance wrapping the request and response in it
 func NewController(context ServerContext) *Controller {
-    c := NewControllerEmpty()
-    c.SetController(context)
+	c := NewControllerEmpty()
+	c.SetController(context)
 	return c
 }
 
@@ -81,8 +81,8 @@ func (c *Controller) Destroy() {
 		cachedControllerMap[c.Name].Push(appController)
 		c.AppController = nil
 	}
-    c.Request.Destroy()
-    c.Response.Destroy()
+	c.Request.Destroy()
+	c.Response.Destroy()
 	c.Params = nil
 	c.Args = nil
 	c.ViewArgs = nil
@@ -312,13 +312,14 @@ func (c *Controller) Redirect(val interface{}, args ...interface{}) Result {
 // This stats returns some interesting stats based on what is cached in memory
 // and what is available directly
 func (c *Controller) Stats() map[string]interface{} {
-    result := CurrentEngine.Stats()
-    result["revel-controllers"] = controllerStack.String()
-    for key,appStack := range cachedControllerMap {
-        result["app-" + key] = appStack.String()
-    }
-    return result
+	result := CurrentEngine.Stats()
+	result["revel-controllers"] = controllerStack.String()
+	for key, appStack := range cachedControllerMap {
+		result["app-"+key] = appStack.String()
+	}
+	return result
 }
+
 // Message performs a lookup for the given message name using the given
 // arguments using the current language defined for this controller.
 //
@@ -346,11 +347,11 @@ func (c *Controller) SetAction(controllerName, methodName string) error {
 		// Create a new stack for this controller
 		localType := c.Type.Type
 		cachedControllerMap[c.Name] = NewStackLock(
-            cachedControllerStackSize,
-            cachedControllerStackMaxSize,
-            func() interface{} {
-    			return reflect.New(localType).Interface()
-		})
+			cachedControllerStackSize,
+			cachedControllerStackMaxSize,
+			func() interface{} {
+				return reflect.New(localType).Interface()
+			})
 	}
 	// Instantiate the controller.
 	c.AppController = cachedControllerMap[c.Name].Pop()

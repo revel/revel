@@ -5,6 +5,7 @@
 package revel
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -14,7 +15,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-    "encoding/json"
 )
 
 // A Binder translates between string parameters and Go data structures.
@@ -291,16 +291,16 @@ func unbindSlice(output map[string]string, name string, val interface{}) {
 }
 
 func bindStruct(params *Params, name string, typ reflect.Type) reflect.Value {
-    resultPointer:= reflect.New(typ)
+	resultPointer := reflect.New(typ)
 	result := resultPointer.Elem()
-    if params.JsonRequest {
-        // Try to inject the response as a json into the created result
-        if err := json.Unmarshal(params.Json, resultPointer.Interface());err!=nil {
-            WARN.Println("W: bindStruct: Unable to unmarshal request:", name,err)
-        }
-        return result
+	if params.JsonRequest {
+		// Try to inject the response as a json into the created result
+		if err := json.Unmarshal(params.Json, resultPointer.Interface()); err != nil {
+			WARN.Println("W: bindStruct: Unable to unmarshal request:", name, err)
+		}
+		return result
 
-    }
+	}
 	fieldValues := make(map[string]reflect.Value)
 	for key := range params.Values {
 		if !strings.HasPrefix(key, name+".") {
