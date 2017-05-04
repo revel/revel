@@ -89,21 +89,23 @@ func getMultipartRequest() *http.Request {
 }
 
 func BenchmarkParams(b *testing.B) {
-	c := Controller{
-		Request: NewRequest(getMultipartRequest()),
-		Params:  &Params{},
-	}
+	context := NewGOContext(nil)
+	context.Request.SetRequest(showRequest)
+	c := NewController(context)
+	c.Params = &Params{}
+
 	for i := 0; i < b.N; i++ {
-		ParamsFilter(&c, NilChain)
+		ParamsFilter(c, NilChain)
 	}
 }
 
 func TestMultipartForm(t *testing.T) {
-	c := Controller{
-		Request: NewRequest(getMultipartRequest()),
-		Params:  &Params{},
-	}
-	ParamsFilter(&c, NilChain)
+	context := NewGOContext(nil)
+	context.Request.SetRequest(getMultipartRequest())
+	c := NewController(context)
+	c.Params = &Params{}
+
+	ParamsFilter(c, NilChain)
 
 	if !reflect.DeepEqual(expectedValues, map[string][]string(c.Params.Values)) {
 		t.Errorf("Param values: (expected) %v != %v (actual)",
@@ -175,8 +177,12 @@ func BenchmarkResolveAcceptLanguage(b *testing.B) {
 	}
 }
 
-func buildHTTPRequestWithAcceptLanguage(acceptLanguage string) *http.Request {
+func buildHTTPRequestWithAcceptLanguage(acceptLanguage string) *Request {
 	request, _ := http.NewRequest("POST", "http://localhost/path", nil)
 	request.Header.Set("Accept-Language", acceptLanguage)
-	return request
+	context := NewGOContext(nil)
+	context.Request.SetRequest(request)
+	c := NewController(context)
+
+	return c.Request
 }
