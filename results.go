@@ -231,7 +231,7 @@ func (r *RenderTemplateResult) render(req *Request, resp *Response, wr io.Writer
 	}
 
 	var templateContent []string
-	templateName, line, description := parseTemplateError(err)
+	templateName, line, description := ParseTemplateError(err)
 	if templateName == "" {
 		templateName = r.Template.Name()
 		templateContent = r.Template.Content()

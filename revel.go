@@ -22,11 +22,19 @@ const (
 	// RevelImportPath Revel framework import path
 	RevelImportPath = "github.com/revel/revel"
 )
+const (
+	// Called when templates are going to be refreshed (receivers are registered template engines added to the template.engine conf option)
+	TEMPLATE_REFRESH = iota
+	// Called when templates are refreshed (receivers are registered template engines added to the template.engine conf option)
+	TEMPLATE_REFRESH_COMPLETE
 
+)
 type revelLogs struct {
 	c gocolorize.Colorize
 	w io.Writer
 }
+
+type EventHandler func(typeOf int, value interface{}) (responseOf int)
 
 func (r *revelLogs) Write(p []byte) (n int, err error) {
 	return r.w.Write([]byte(r.c.Paint(string(p))))
@@ -111,6 +119,7 @@ var (
 	// Private
 	secretKey []byte // Key used to sign cookies. An empty key disables signing.
 	packaged  bool   // If true, this is running from a pre-built package.
+	initEventList = []EventHandler{} // Event handler list for receiving events
 )
 
 // Init initializes Revel -- it provides paths for getting around the app.
@@ -228,6 +237,25 @@ func Init(mode, importPath, srcPath string) {
 
 	Initialized = true
 	INFO.Printf("Initialized Revel v%s (%s) for %s", Version, BuildDate, MinimumGoVersion)
+}
+
+// Fires system events from revel
+func fireEvent(key int, value interface{}) (response int) {
+	for _, handler := range initEventList {
+		response |= handler(key, value)
+	}
+	return
+}
+
+// Add event handler to listen for all system events
+func AddInitEventHandler(handler EventHandler) {
+	initEventList = append(initEventList, handler)
+	return
+}
+
+func SetSecretKey(newKey []byte) error {
+	secretKey = newKey
+	return nil
 }
 
 // Create a logger using log.* directives in app.conf plus the current settings
