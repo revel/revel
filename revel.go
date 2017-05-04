@@ -46,7 +46,8 @@ type revelLogs struct {
 	c gocolorize.Colorize
 	w io.Writer
 }
-type EventHandler func(typeOf int) (responseOf int)
+
+type EventHandler func(typeOf int, value interface{}) (responseOf int)
 
 func (r *revelLogs) Write(p []byte) (n int, err error) {
 	return r.w.Write([]byte(r.c.Paint(string(p))))
@@ -242,23 +243,23 @@ func Init(mode, importPath, srcPath string) {
 	// However output settings can be controlled from app.conf
 	requestLog = getLogger("request")
 
-	fireEvent(REVEL_BEFORE_LOAD_MODULE)
+	fireEvent(REVEL_BEFORE_LOAD_MODULE, nil)
 	loadModules()
-	fireEvent(REVEL_AFTER_LOAD_MODULE)
+	fireEvent(REVEL_AFTER_LOAD_MODULE, nil)
 
 	Initialized = true
 	INFO.Printf("Initialized Revel v%s (%s) for %s", Version, BuildDate, MinimumGoVersion)
 }
 
 // Fires system events from revel
-func fireEvent(key int) (response int) {
+func fireEvent(key int, value interface{}) (response int) {
 	for _, handler := range initEventList {
-		response |= handler(key)
+		response |= handler(key, value)
 	}
 	return
 }
 
-// Add event handler to listen for system events
+// Add event handler to listen for all system events
 func AddInitEventHandler(handler EventHandler) {
 	initEventList = append(initEventList, handler)
 	return

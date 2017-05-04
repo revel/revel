@@ -76,10 +76,12 @@ func (loader *TemplateLoader) Refresh() (err *Error) {
 	for _, engine := range loader.templatesAndEngineList {
 		engine.Event(TEMPLATE_REFRESH, nil)
 	}
+	fireEvent(TEMPLATE_REFRESH, nil)
 	defer func() {
 		for _, engine := range loader.templatesAndEngineList {
 			engine.Event(TEMPLATE_REFRESH_COMPLETE, nil)
 		}
+		fireEvent(TEMPLATE_REFRESH_COMPLETE, nil)
 	}()
 	// Resort the paths, make sure the revel path is the last path,
 	// so anything can override it

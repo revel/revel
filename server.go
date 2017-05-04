@@ -68,9 +68,9 @@ func Run(port int) {
 	// Create the CurrentEngine instance from the application config
 	InitServerEngine(port, Config.StringDefault("server.engine", GO_NATIVE_SERVER_ENGINE))
 	CurrentEngine.Event(ENGINE_EVENT_PREINIT, nil)
-	fireEvent(ENGINE_EVENT_PREINIT)
+	fireEvent(ENGINE_EVENT_PREINIT, nil)
 	InitServer()
-	fireEvent(ENGINE_EVENT_STARTUP)
+	fireEvent(ENGINE_EVENT_STARTUP, nil)
 	CurrentEngine.Event(ENGINE_EVENT_STARTUP, nil)
 	CurrentEngine.Start()
 	CurrentEngine.Event(ENGINE_EVENT_SHUTDOWN, nil)
