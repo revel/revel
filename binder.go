@@ -5,6 +5,7 @@
 package revel
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -290,7 +291,16 @@ func unbindSlice(output map[string]string, name string, val interface{}) {
 }
 
 func bindStruct(params *Params, name string, typ reflect.Type) reflect.Value {
-	result := reflect.New(typ).Elem()
+	resultPointer := reflect.New(typ)
+	result := resultPointer.Elem()
+	if params.JsonRequest {
+		// Try to inject the response as a json into the created result
+		if err := json.Unmarshal(params.Json, resultPointer.Interface()); err != nil {
+			WARN.Println("W: bindStruct: Unable to unmarshal request:", name, err)
+		}
+		return result
+
+	}
 	fieldValues := make(map[string]reflect.Value)
 	for key := range params.Values {
 		if !strings.HasPrefix(key, name+".") {

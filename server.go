@@ -5,16 +5,9 @@
 package revel
 
 import (
-	"fmt"
-	"io"
-	"net"
-	"net/http"
 	"sort"
 	"strconv"
 	"strings"
-	"time"
-
-	"golang.org/x/net/websocket"
 )
 
 // Revel's variables server, router, etc
@@ -22,75 +15,22 @@ var (
 	MainRouter         *Router
 	MainTemplateLoader *TemplateLoader
 	MainWatcher        *Watcher
-	Server             *http.Server
+	serverEngineMap    = map[string]ServerEngine{}
+	CurrentEngine      ServerEngine
+	ServerEngineInit   *EngineInit
 )
 
-// This method handles all requests.  It dispatches to handleInternal after
-// handling / adapting websocket connections.
-func handle(w http.ResponseWriter, r *http.Request) {
-	if maxRequestSize := int64(Config.IntDefault("http.maxrequestsize", 0)); maxRequestSize > 0 {
-		r.Body = http.MaxBytesReader(w, r.Body, maxRequestSize)
-	}
-
-	upgrade := r.Header.Get("Upgrade")
-	if upgrade == "websocket" || upgrade == "Websocket" {
-		websocket.Handler(func(ws *websocket.Conn) {
-			//Override default Read/Write timeout with sane value for a web socket request
-			if err := ws.SetDeadline(time.Now().Add(time.Hour * 24)); err != nil {
-				ERROR.Println("SetDeadLine failed:", err)
-			}
-			r.Method = "WS"
-			handleInternal(w, r, ws)
-		}).ServeHTTP(w, r)
-	} else {
-		handleInternal(w, r, nil)
-	}
+func RegisterServerEngine(newEngine ServerEngine) {
+	INFO.Printf("Registered engine %s", newEngine.Name())
+	serverEngineMap[newEngine.Name()] = newEngine
 }
 
-func handleInternal(w http.ResponseWriter, r *http.Request, ws *websocket.Conn) {
-	// TODO For now this okay to put logger here for all the requests
-	// However, it's best to have logging handler at server entry level
-	start := time.Now()
-	clientIP := ClientIP(r)
-
-	var (
-		req  = NewRequest(r)
-		resp = NewResponse(w)
-		c    = NewController(req, resp)
-	)
-	req.Websocket = ws
-	c.ClientIP = clientIP
-
-	Filters[0](c, Filters[1:])
-	if c.Result != nil {
-		c.Result.Apply(req, resp)
-	} else if c.Response.Status != 0 {
-		c.Response.Out.WriteHeader(c.Response.Status)
-	}
-	// Close the Writer if we can
-	if w, ok := resp.Out.(io.Closer); ok {
-		_ = w.Close()
-	}
-
-	// Revel request access log format
-	// RequestStartTime ClientIP ResponseStatus RequestLatency HTTPMethod URLPath
-	// Sample format:
-	// 2016/05/25 17:46:37.112 127.0.0.1 200  270.157µs GET /
-	requestLog.Printf("%v %v %v %10v %v %v",
-		start.Format(requestLogTimeFormat),
-		clientIP,
-		c.Response.Status,
-		time.Since(start),
-		r.Method,
-		r.URL.Path,
-	)
-}
-
-// InitServer intializes the server and returns the handler
+// InitServer initializes the server and returns the handler
 // It can be used as an alternative entry-point if one needs the http handler
 // to be exposed. E.g. to run on multiple addresses and ports or to set custom
 // TLS options.
-func InitServer() http.HandlerFunc {
+func InitServer() {
+	initControllerStack()
 	runStartupHooks()
 
 	// Load templates
@@ -112,13 +52,26 @@ func InitServer() http.HandlerFunc {
 		MainWatcher.Listen(MainTemplateLoader, MainTemplateLoader.paths...)
 	}
 
-	return http.HandlerFunc(handle)
+	// return http.HandlerFunc(handle)
 }
 
 // Run the server.
 // This is called from the generated main file.
 // If port is non-zero, use that.  Else, read the port from app.conf.
 func Run(port int) {
+
+	// Create the CurrentEngine instance from the application config
+	InitServerEngine(port, Config.StringDefault("server.engine", GO_NATIVE_SERVER_ENGINE))
+	CurrentEngine.Event(ENGINE_EVENT_PREINIT, nil)
+	fireEvent(ENGINE_EVENT_PREINIT, nil)
+	InitServer()
+	fireEvent(ENGINE_EVENT_STARTUP, nil)
+	CurrentEngine.Event(ENGINE_EVENT_STARTUP, nil)
+	CurrentEngine.Start()
+	CurrentEngine.Event(ENGINE_EVENT_SHUTDOWN, nil)
+}
+
+func InitServerEngine(port int, serverEngine string) {
 	address := HTTPAddr
 	if port == 0 {
 		port = HTTPPort
@@ -138,37 +91,27 @@ func Run(port int) {
 		localAddress = address + ":" + strconv.Itoa(port)
 	}
 
-	Server = &http.Server{
-		Addr:         localAddress,
-		Handler:      http.HandlerFunc(handle),
-		ReadTimeout:  time.Duration(Config.IntDefault("http.timeout.read", 0)) * time.Second,
-		WriteTimeout: time.Duration(Config.IntDefault("http.timeout.write", 0)) * time.Second,
-	}
-
-	InitServer()
-
-	go func() {
-		time.Sleep(100 * time.Millisecond)
-		fmt.Printf("Listening on %s...\n", Server.Addr)
-	}()
-
-	if HTTPSsl {
-		if network != "tcp" {
-			// This limitation is just to reduce complexity, since it is standard
-			// to terminate SSL upstream when using unix domain sockets.
-			ERROR.Fatalln("SSL is only supported for TCP sockets. Specify a port to listen on.")
-		}
-		ERROR.Fatalln("Failed to listen:",
-			Server.ListenAndServeTLS(HTTPSslCert, HTTPSslKey))
+	var ok bool
+	if CurrentEngine, ok = serverEngineMap[serverEngine]; !ok {
+		panic("Server Engine " + serverEngine + " Not found")
 	} else {
-		listener, err := net.Listen(network, Server.Addr)
-		if err != nil {
-			ERROR.Fatalln("Failed to listen:", err)
+		TRACE.Println("Found server engine and invoking", CurrentEngine.Name())
+		ServerEngineInit = &EngineInit{
+			Address:  localAddress,
+			Network:  network,
+			Port:     port,
+			Callback: handleInternal,
 		}
-		ERROR.Fatalln("Failed to serve:", Server.Serve(listener))
+		CurrentEngine.Init(ServerEngineInit)
 	}
 }
-
+func initControllerStack() {
+	controllerStack = NewStackLock(
+		Config.IntDefault("revel.controller.stack", 10),
+		Config.IntDefault("revel.controller.maxstack", 200), func() interface{} { return NewControllerEmpty() })
+	cachedControllerStackSize = Config.IntDefault("revel.cache.controller.stack", 10)
+	cachedControllerStackMaxSize = Config.IntDefault("revel.cache.controller.maxstack", 100)
+}
 func runStartupHooks() {
 	sort.Sort(startupHooks)
 	for _, hook := range startupHooks {

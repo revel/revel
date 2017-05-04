@@ -69,10 +69,10 @@ func (t *TestSuite) NewTestRequest(req *http.Request) *TestRequest {
 
 // Host returns the address and port of the server, e.g. "127.0.0.1:8557"
 func (t *TestSuite) Host() string {
-	if revel.Server.Addr[0] == ':' {
-		return "127.0.0.1" + revel.Server.Addr
+	if revel.ServerEngineInit.Address[0] == ':' {
+		return "127.0.0.1" + revel.ServerEngineInit.Address
 	}
-	return revel.Server.Addr
+	return revel.ServerEngineInit.Address
 }
 
 // BaseUrl returns the base http/https URL of the server, e.g. "http://127.0.0.1:8557".
@@ -250,7 +250,7 @@ func (r *TestRequest) MakeRequest() {
 	sessionCookieName := r.testSuite.Session.Cookie().Name
 	for _, cookie := range r.testSuite.Client.Jar.Cookies(r.Request.URL) {
 		if cookie.Name == sessionCookieName {
-			r.testSuite.Session = revel.GetSessionFromCookie(cookie)
+			r.testSuite.Session = revel.GetSessionFromCookie(revel.GoCookie(*cookie))
 			break
 		}
 	}

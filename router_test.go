@@ -266,7 +266,12 @@ func TestRouteMatches(t *testing.T) {
 	}
 	for req, expected := range routeMatchTestCases {
 		t.Log("Routing:", req.Method, req.URL)
-		actual := router.Route(req)
+
+		context := NewGOContext(nil)
+		context.Request.SetRequest(req)
+		c := NewTestController(nil, req)
+
+		actual := router.Route(c.Request)
 		if !eq(t, "Found route", actual != nil, expected != nil) {
 			continue
 		}
@@ -366,7 +371,8 @@ func BenchmarkRouter(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N/len(routeMatchTestCases); i++ {
 		for req := range routeMatchTestCases {
-			r := router.Route(req)
+			c := NewTestController(nil, req)
+			r := router.Route(c.Request)
 			if r == nil {
 				b.Errorf("Request not found: %s", req.URL.Path)
 			}
@@ -419,7 +425,8 @@ func BenchmarkLargeRouter(b *testing.B) {
 
 	for i := 0; i < b.N/len(reqs); i++ {
 		for _, req := range reqs {
-			route := router.Route(req)
+			c := NewTestController(nil, req)
+			route := router.Route(c.Request)
 			if route == nil {
 				b.Errorf("Failed to route: %s", req.URL.Path)
 			}
@@ -430,8 +437,8 @@ func BenchmarkLargeRouter(b *testing.B) {
 func BenchmarkRouterFilter(b *testing.B) {
 	startFakeBookingApp()
 	controllers := []*Controller{
-		{Request: NewRequest(showRequest)},
-		{Request: NewRequest(staticRequest)},
+		NewTestController(nil, showRequest),
+		NewTestController(nil, staticRequest),
 	}
 	for _, c := range controllers {
 		c.Params = &Params{}
@@ -449,12 +456,10 @@ func BenchmarkRouterFilter(b *testing.B) {
 func TestOverrideMethodFilter(t *testing.T) {
 	req, _ := http.NewRequest("POST", "/hotels/3", strings.NewReader("_method=put"))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; param=value")
-	c := Controller{
-		Request: NewRequest(req),
-	}
+	c := NewTestController(nil, req)
 
-	if HTTPMethodOverride(&c, NilChain); c.Request.Request.Method != "PUT" {
-		t.Errorf("Expected to override current method '%s' in route, found '%s' instead", "", c.Request.Request.Method)
+	if HTTPMethodOverride(c, NilChain); c.Request.Method != "PUT" {
+		t.Errorf("Expected to override current method '%s' in route, found '%s' instead", "", c.Request.Method)
 	}
 }
 

@@ -5,6 +5,7 @@
 package revel
 
 import (
+	"io/ioutil"
 	"mime/multipart"
 	"net/url"
 	"os"
@@ -29,33 +30,40 @@ type Params struct {
 	Query url.Values // Parameters from the query string, e.g. /index?limit=10
 	Form  url.Values // Parameters from the request body.
 
-	Files    map[string][]*multipart.FileHeader // Files uploaded in a multipart form
-	tmpFiles []*os.File                         // Temp files used during the request.
+	Files       map[string][]*multipart.FileHeader // Files uploaded in a multipart form
+	tmpFiles    []*os.File                         // Temp files used during the request.
+	Json        []byte
+	JsonRequest bool
 }
 
 // ParseParams parses the `http.Request` params into `revel.Controller.Params`
 func ParseParams(params *Params, req *Request) {
-	params.Query = req.URL.Query()
+	params.Query = req.GetQuery()
 
 	// Parse the body depending on the content type.
 	switch req.ContentType {
 	case "application/x-www-form-urlencoded":
 		// Typical form.
-		if err := req.ParseForm(); err != nil {
+		var err error
+		if params.Form, err = req.GetForm(); err != nil {
 			WARN.Println("Error parsing request body:", err)
-		} else {
-			params.Form = req.Form
 		}
 
 	case "multipart/form-data":
 		// Multipart form.
-		// TODO: Extract the multipart form param so app can set it.
-		if err := req.ParseMultipartForm(32 << 20 /* 32 MB */); err != nil {
+		if mp, err := req.GetMultipartForm(); err != nil {
 			WARN.Println("Error parsing request body:", err)
 		} else {
-			params.Form = req.MultipartForm.Value
-			params.Files = req.MultipartForm.File
+			params.Form = mp.GetValue()
+			params.Files = mp.GetFile()
 		}
+	case "application/json":
+		fallthrough
+	case "text/json":
+		content, _ := ioutil.ReadAll(req.GetBody())
+		// We wont bind it until we determine what we are binding too
+		params.Json = content
+		params.JsonRequest = true
 	}
 
 	params.Values = params.calcValues()
@@ -101,21 +109,24 @@ func (p *Params) calcValues() url.Values {
 	// order of priority is least to most trusted
 	values := make(url.Values, numParams)
 
-	// ?query vars first
+	// ?query vars are first
 	for k, v := range p.Query {
 		values[k] = append(values[k], v...)
 	}
-	// form vars overwrite
+
+	// form vars append
 	for k, v := range p.Form {
 		values[k] = append(values[k], v...)
 	}
+
 	// :/path vars overwrite
 	for k, v := range p.Route {
-		values[k] = append(values[k], v...)
+		values[k] = v
 	}
+
 	// fixed vars overwrite
 	for k, v := range p.Fixed {
-		values[k] = append(values[k], v...)
+		values[k] = v
 	}
 
 	return values
@@ -126,14 +137,6 @@ func ParamsFilter(c *Controller, fc []Filter) {
 
 	// Clean up from the request.
 	defer func() {
-		// Delete temp files.
-		if c.Request.MultipartForm != nil {
-			err := c.Request.MultipartForm.RemoveAll()
-			if err != nil {
-				WARN.Println("Error removing temporary files:", err)
-			}
-		}
-
 		for _, tmpFile := range c.Params.tmpFiles {
 			err := os.Remove(tmpFile.Name())
 			if err != nil {

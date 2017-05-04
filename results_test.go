@@ -14,7 +14,7 @@ import (
 func TestBenchmarkRender(t *testing.T) {
 	startFakeBookingApp()
 	resp := httptest.NewRecorder()
-	c := NewController(NewRequest(showRequest), NewResponse(resp))
+	c := NewTestController(resp,showRequest)
 	if err := c.SetAction("Hotels", "Show"); err != nil {
 		t.Errorf("SetAction failed: %s", err)
 	}
@@ -29,7 +29,7 @@ func BenchmarkRenderChunked(b *testing.B) {
 	startFakeBookingApp()
 	resp := httptest.NewRecorder()
 	resp.Body = nil
-	c := NewController(NewRequest(showRequest), NewResponse(resp))
+	c := NewTestController(resp,showRequest)
 	if err := c.SetAction("Hotels", "Show"); err != nil {
 		b.Errorf("SetAction failed: %s", err)
 	}
@@ -46,7 +46,7 @@ func BenchmarkRenderNotChunked(b *testing.B) {
 	startFakeBookingApp()
 	resp := httptest.NewRecorder()
 	resp.Body = nil
-	c := NewController(NewRequest(showRequest), NewResponse(resp))
+	c := NewTestController(resp,showRequest)
 	if err := c.SetAction("Hotels", "Show"); err != nil {
 		b.Errorf("SetAction failed: %s", err)
 	}
