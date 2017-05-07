@@ -5,6 +5,7 @@
 package revel
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -163,6 +164,16 @@ var fileBindings = []struct{ val, arrval, f interface{} }{
 	{(*[]byte)(nil), [][]byte{}, func(b []byte) []byte { return b }},
 	{(*io.Reader)(nil), []io.Reader{}, ioutil.ReadAll},
 	{(*io.ReadSeeker)(nil), []io.ReadSeeker{}, ioutil.ReadAll},
+}
+
+func TestJsonBinder(t *testing.T) {
+	// create a structure to be populated
+	foo := struct {A string}{}
+	d, _ := json.Marshal(map[string]string{"a": "b"})
+	params := &Params{JsonRequest: true, Json: d}
+	ParseParams(params, NewRequest(getMultipartRequest()))
+	actual := Bind(params, "test", reflect.TypeOf(foo))
+	valEq(t, "TestJsonBinder", reflect.ValueOf(actual.Interface().(struct {A string}).A), reflect.ValueOf("b"))
 }
 
 func TestBinder(t *testing.T) {
