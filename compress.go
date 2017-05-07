@@ -54,7 +54,7 @@ type CompressResponseWriter struct {
 // CompressFilter does compression of response body in gzip/deflate if
 // `results.compressed=true` in the app.conf
 func CompressFilter(c *Controller, fc []Filter) {
-	if c.Response.ServerHeader != nil && Config.BoolDefault("results.compressed", false) {
+	if c.Response.Out.internalHeader.Server != nil && Config.BoolDefault("results.compressed", false) {
 		if c.Response.Status != http.StatusNoContent && c.Response.Status != http.StatusNotModified {
 			if found, compressType, compressWriter := detectCompressionType(c.Request, c.Response); found {
 				writer := CompressResponseWriter{
@@ -66,8 +66,8 @@ func CompressFilter(c *Controller, fc []Filter) {
 					closeNotify:        make(chan bool, 1),
 					closed:             false}
 				// Swap out the header with our own
-				writer.Header = NewBufferedServerHeader(c.Response.ServerHeader)
-				c.Response.ServerHeader = writer.Header
+				writer.Header = NewBufferedServerHeader(c.Response.Out.internalHeader.Server)
+				c.Response.Out.internalHeader.Server = writer.Header
 				if w, ok := c.Response.GetWriter().(http.CloseNotifier); ok {
 					writer.parentNotify = w.CloseNotify()
 				}
@@ -89,11 +89,14 @@ func (c CompressResponseWriter) CloseNotify() <-chan bool {
 
 func (c *CompressResponseWriter) prepareHeaders() {
 	if c.compressionType != "" {
-		responseMime := c.Header.Get("Content-Type")
+		responseMime := ""
+		if t := c.Header.Get("Content-Type"); len(t)>0 {
+			responseMime = t[0]
+		}
 		responseMime = strings.TrimSpace(strings.SplitN(responseMime, ";", 2)[0])
 		shouldEncode := false
 
-		if c.Header.Get("Content-Encoding") == "" {
+		if len(c.Header.Get("Content-Encoding")) == 0 {
 			for _, compressableMime := range compressableMimes {
 				if responseMime == compressableMime {
 					shouldEncode = true
@@ -297,12 +300,12 @@ func (bsh *BufferedServerHeader) Del(key string) {
 	}
 
 }
-func (bsh *BufferedServerHeader) Get(key string) (value string) {
+func (bsh *BufferedServerHeader) Get(key string) (value []string) {
 	if bsh.released {
 		value = bsh.original.Get(key)
 	} else {
 		if v, found := bsh.headerMap[key]; found && len(v) > 0 {
-			value = v[0]
+			value = v
 		} else {
 			value = bsh.original.Get(key)
 		}

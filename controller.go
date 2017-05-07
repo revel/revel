@@ -41,7 +41,7 @@ type Controller struct {
 }
 
 // NewController returns new controller instance for Request and Response
-func NewControllerEmpty() *Controller {
+func NewControllerEmpty() (*Controller) {
 	return &Controller{Request: NewRequest(nil), Response: NewResponse(nil)}
 }
 
@@ -109,7 +109,7 @@ func (c *Controller) FlashParams() {
 }
 
 func (c *Controller) SetCookie(cookie *http.Cookie) {
-	c.Response.SetCookie(cookie.String())
+	c.Response.Out.internalHeader.SetCookie(cookie.String())
 }
 
 func (c *Controller) RenderError(err error) Result {

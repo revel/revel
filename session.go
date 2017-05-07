@@ -165,7 +165,7 @@ func SessionFilter(c *Controller, fc []Filter) {
 // restoreSession returns either the current session, retrieved from the
 // session cookie, or a new session.
 func restoreSession(req *Request) Session {
-	cookie, err := req.GetCookie(CookiePrefix + "_SESSION")
+	cookie, err := req.Cookie(CookiePrefix + "_SESSION")
 	if err != nil {
 		return make(Session)
 	}

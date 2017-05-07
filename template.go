@@ -18,6 +18,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"errors"
 )
 
 // ErrorCSSClass httml CSS error class name
@@ -445,7 +446,7 @@ func (gotmpl GoTemplate) Content() []string {
 // "Application.ShowApp 123" => "/app/123"
 func ReverseURL(args ...interface{}) (template.URL, error) {
 	if len(args) == 0 {
-		return "", fmt.Errorf("no arguments provided to reverse route")
+		return "", errors.New("no arguments provided to reverse route")
 	}
 
 	action := args[0].(string)

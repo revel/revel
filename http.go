@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"net/url"
 	"sort"
 	"strconv"
@@ -18,7 +19,7 @@ import (
 // Request Revel's HTTP request object structure
 type Request struct {
 	In              ServerRequest
-	ServerHeader    ServerHeader
+	Header          *RevelHeader
 	ContentType     string
 	Format          string // "html", "xml", "json", or "txt"
 	AcceptLanguages AcceptLanguages
@@ -29,21 +30,30 @@ type Request struct {
 	Host            string
 }
 
-var COOKIE_NOT_FOUND = errors.New("Cookie Not Found")
 var FORM_NOT_FOUND = errors.New("Form Not Found")
 
 // Response Revel's HTTP response object structure
 type Response struct {
-	Status       int
-	ContentType  string
-	ServerHeader ServerHeader
-	Out          ServerResponse
-	writer       io.Writer
+	Status      int
+	ContentType string
+	Out         OutResponse
+	writer      io.Writer
+}
+type OutResponse struct {
+	internalHeader *RevelHeader
+	Server         ServerResponse
+	response       *Response
+}
+
+type RevelHeader struct {
+	Server ServerHeader
 }
 
 // NewResponse returns a Revel's HTTP response instance with given instance
-func NewResponse(w ServerResponse) *Response {
-	return &Response{Out: w}
+func NewResponse(w ServerResponse) (r *Response) {
+	r = &Response{Out: OutResponse{Server: w, internalHeader: &RevelHeader{}}}
+	r.Out.response = r
+	return r
 }
 
 // NewRequest returns a Revel's HTTP request instance with given HTTP instance
@@ -57,7 +67,7 @@ func NewRequest(r ServerRequest) *Request {
 func (req *Request) SetRequest(r ServerRequest) {
 	req.In = r
 	if h, e := req.In.Get(HTTP_SERVER_HEADER); e == nil {
-		req.ServerHeader, _ = h.(ServerHeader)
+		req.Header.Server = h.(ServerHeader)
 	}
 	req.ContentType = ResolveContentType(req)
 	req.Format = ResolveFormat(req)
@@ -67,11 +77,11 @@ func (req *Request) SetRequest(r ServerRequest) {
 	req.Host, _ = req.GetValue(HTTP_HOST).(string)
 
 }
-func (req *Request) GetCookie(key string) (ServerCookie, error) {
-	if req.ServerHeader != nil {
-		return req.ServerHeader.GetCookie(key)
+func (req *Request) Cookie(key string) (ServerCookie, error) {
+	if req.Header.Server != nil {
+		return req.Header.Server.GetCookie(key)
 	}
-	return nil, COOKIE_NOT_FOUND
+	return nil, http.ErrNoCookie
 }
 
 func (req *Request) GetRequestURI() string {
@@ -115,36 +125,40 @@ func (req *Request) Destroy() {
 	req.Method = ""
 	req.RemoteAddr = ""
 	req.Host = ""
-	req.ServerHeader = nil
+	req.Header.Destroy()
 }
 func (resp *Response) SetResponse(r ServerResponse) {
-	resp.Out = r
+	resp.Out.response = r
 	if h, e := r.Get(HTTP_SERVER_HEADER); e == nil {
-		resp.ServerHeader, _ = h.(ServerHeader)
+		resp.Out.internalHeader.Server, _ = h.(ServerHeader)
 	}
 }
+func (o *OutResponse) Destroy() {
+	o.response = nil
+	o.internalHeader.Destroy()
+}
+func (h *RevelHeader) Destroy() {
+	h.Server = nil
+}
 func (resp *Response) Destroy() {
-	resp.Out = nil
+	resp.Out.Destroy()
 	resp.Status = 0
 	resp.ContentType = ""
-	resp.ServerHeader = nil
 	resp.writer = nil
 }
 
 // UserAgent returns the client's User-Agent, if sent in the request.
 func (r *Request) UserAgent() string {
-	return r.GetHttpHeader("User-Agent")
+	return r.Header.Get("User-Agent")
 }
 
 func (r *Request) Referer() string {
-	return r.GetHttpHeader("Referer")
+	return r.Header.Get("Referer")
 }
-func (r *Request) GetHttpHeader(key string) (value string) {
-	if r.ServerHeader != nil {
-		value = r.ServerHeader.Get(key)
-	}
-	return
+func (r *Request) GetHttpHeader(key string) string {
+	return r.Header.Get("Referer")
 }
+
 func (r *Request) GetValue(key int) (value interface{}) {
 	value, _ = r.In.Get(key)
 	return
@@ -157,38 +171,24 @@ func (resp *Response) WriteHeader(defaultStatusCode int, defaultContentType stri
 	if resp.ContentType == "" {
 		resp.ContentType = defaultContentType
 	}
-	resp.SetHttpHeader("Content-Type", resp.ContentType)
+	resp.Out.internalHeader.Set("Content-Type", resp.ContentType)
 	if resp.Status == 0 {
 		resp.Status = defaultStatusCode
 	}
 	resp.SetStatus(resp.Status)
 }
-func (resp *Response) SetHttpHeader(key, value string) {
-	if resp.ServerHeader != nil {
-		resp.ServerHeader.Set(key, value)
-	}
-}
-func (resp *Response) AddHttpHeader(key, value string) {
-	if resp.ServerHeader != nil {
-		resp.ServerHeader.Add(key, value)
-	}
-}
-func (resp *Response) SetCookie(cookie string) {
-	if resp.ServerHeader != nil {
-		resp.ServerHeader.SetCookie(cookie)
-	}
-}
-func (resp *Response) SetStatus(status int) {
-	if resp.ServerHeader != nil {
-		resp.ServerHeader.SetStatus(status)
+func (resp *Response) SetStatus(statusCode int) {
+	if resp.Out.internalHeader.Server == nil {
+		resp.Out.internalHeader.Server.SetStatus(statusCode)
 	} else {
-		resp.Out.Set(ENGINE_RESPONSE_STATUS, status)
+		resp.Out.Server.Set(ENGINE_RESPONSE_STATUS, statusCode)
 	}
+
 }
 func (resp *Response) GetWriter() (writer io.Writer) {
 	writer = resp.writer
 	if writer == nil {
-		if w, e := resp.Out.Get(ENGINE_WRITER); e == nil {
+		if w, e := resp.Out.Server.Get(ENGINE_WRITER); e == nil {
 			writer, resp.writer = w.(io.Writer), w.(io.Writer)
 		}
 	}
@@ -197,11 +197,54 @@ func (resp *Response) GetWriter() (writer io.Writer) {
 func (resp *Response) SetWriter(writer io.Writer) bool {
 	resp.writer = writer
 	// Leave it up to the engine to flush and close the writer
-	return resp.Out.Set(ENGINE_WRITER, writer)
+	return resp.Out.Server.Set(ENGINE_WRITER, writer)
 }
 func (resp *Response) GetStreamWriter() (writer StreamWriter) {
-	if w, e := resp.Out.Get(HTTP_STREAM_WRITER); e == nil {
+	if w, e := resp.Out.Server.Get(HTTP_STREAM_WRITER); e == nil {
 		writer = w.(StreamWriter)
+	}
+	return
+}
+func (o *OutResponse) Header() *RevelHeader {
+	return o.internalHeader
+}
+func (o *OutResponse) Write(data []byte) (int, error) {
+	return o.response.GetWriter().Write(data)
+}
+func (h *RevelHeader) Set(key, value string) {
+	if h.Server != nil {
+		h.Server.Set(key, value)
+	}
+}
+func (h *RevelHeader) Add(key, value string) {
+	if h.Server != nil {
+		h.Server.Add(key, value)
+	}
+}
+func (h *RevelHeader) SetCookie(cookie string) {
+	if h.Server != nil {
+		h.Server.SetCookie(cookie)
+	}
+}
+func (h *RevelHeader) SetStatus(status int) {
+	if h.Server != nil {
+		h.Server.SetStatus(status)
+	}
+}
+
+//
+func (h *RevelHeader) Get(key string) (value string) {
+	values := h.GetAll(key)
+	if len(values) > 0 {
+		value = values[0]
+	}
+	return
+}
+
+// Return []string of items (the header split by a comma)
+func (h *RevelHeader) GetAll(key string) (values []string) {
+	if h.Server != nil {
+		values = h.Server.Get(key)
 	}
 	return
 }
@@ -211,7 +254,7 @@ func (resp *Response) GetStreamWriter() (writer StreamWriter) {
 // If none is specified, returns "text/html" by default.
 func ResolveContentType(req *Request) string {
 
-	contentType := req.GetHttpHeader("Content-Type")
+	contentType := req.Header.Get("Content-Type")
 	if contentType == "" {
 		return "text/html"
 	}
@@ -223,7 +266,7 @@ func ResolveContentType(req *Request) string {
 // returning a default of "html" when Accept header cannot be mapped to a
 // value above.
 func ResolveFormat(req *Request) string {
-	accept := req.GetHttpHeader("accept")
+	accept := req.Header.Get("accept")
 
 	switch {
 	case accept == "",
@@ -282,7 +325,7 @@ func (al AcceptLanguages) String() string {
 // See the HTTP header fields specification
 // (http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.4) for more details.
 func ResolveAcceptLanguage(req *Request) AcceptLanguages {
-	header := req.GetHttpHeader("Accept-Language")
+	header := req.Header.Get("Accept-Language")
 	if header == "" {
 		return nil
 	}

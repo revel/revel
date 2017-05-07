@@ -379,11 +379,11 @@ func (r *GOHeader) Del(key string) {
 		r.Source.(*GOResponse).Original.Header().Del(key)
 	}
 }
-func (r *GOHeader) Get(key string) (value string) {
+func (r *GOHeader) Get(key string) (value []string) {
 	if !r.isResponse {
-		value = r.Source.(*GORequest).Original.Header.Get(key)
+		value = r.Source.(*GORequest).Original.Header[key]
 	} else {
-		value = r.Source.(*GOResponse).Original.Header().Get(key)
+		value = r.Source.(*GOResponse).Original.Header()[key]
 	}
 	return
 }

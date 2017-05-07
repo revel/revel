@@ -70,7 +70,7 @@ type (
 		Set(key string, value string)
 		Add(key string, value string)
 		Del(key string)
-		Get(key string) (value string)
+		Get(key string) (value []string)
 		SetStatus(statusCode int)
 	}
 

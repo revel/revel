@@ -208,7 +208,7 @@ func hasAcceptLanguageHeader(request *Request) (bool, string) {
 func hasLocaleCookie(request *Request) (bool, string) {
 	if request != nil {
 		name := Config.StringDefault(localeCookieConfigKey, CookiePrefix+"_LANG")
-		cookie, err := request.GetCookie(name)
+		cookie, err := request.Cookie(name)
 		if err == nil {
 			return true, cookie.GetValue()
 		}

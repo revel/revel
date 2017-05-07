@@ -214,7 +214,7 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
 	}
 
 	if !chunked {
-		resp.SetHttpHeader("ContentBeater-Length", strconv.Itoa(b.Len()))
+		resp.Out.Header().Set("ContentBeater-Length", strconv.Itoa(b.Len()))
 	}
 	resp.WriteHeader(http.StatusOK, "text/html; charset=utf-8")
 	if _, err := b.WriteTo(out); err != nil {
@@ -359,12 +359,12 @@ func (r *BinaryResult) Apply(req *Request, resp *Response) {
 		disposition += fmt.Sprintf(`; filename="%s"`, r.Name)
 	}
 
-	resp.SetHttpHeader("Content-Disposition", disposition)
+	resp.Out.internalHeader.Set("Content-Disposition", disposition)
 	if resp.ContentType != "" {
-		resp.SetHttpHeader("Content-Type", resp.ContentType)
+		resp.Out.internalHeader.Set("Content-Type", resp.ContentType)
 	} else {
 		contentType := ContentTypeByFilename(r.Name)
-		resp.SetHttpHeader("Content-Type", contentType)
+		resp.Out.internalHeader.Set("Content-Type", contentType)
 	}
 	if content, ok := r.Reader.(io.ReadSeeker); ok && r.Length < 0 {
 		// get the size from the stream
@@ -393,7 +393,7 @@ type RedirectToURLResult struct {
 }
 
 func (r *RedirectToURLResult) Apply(req *Request, resp *Response) {
-	resp.SetHttpHeader("Location", r.url)
+	resp.Out.internalHeader.Set("Location", r.url)
 	resp.WriteHeader(http.StatusFound, "")
 }
 
@@ -408,7 +408,7 @@ func (r *RedirectToActionResult) Apply(req *Request, resp *Response) {
 		ErrorResult{Error: err}.Apply(req, resp)
 		return
 	}
-	resp.SetHttpHeader("Location", url)
+	resp.Out.internalHeader.Set("Location", url)
 	resp.WriteHeader(http.StatusFound, "")
 }
 
