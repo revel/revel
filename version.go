@@ -6,7 +6,7 @@ package revel
 
 const (
 	// Version current Revel version
-	Version = "0.15.0"
+	Version = "0.16.0-dev"
 
 	// BuildDate latest commit/release date
 	BuildDate = "2017-05-11"

@@ -1,7 +1,7 @@
 # CHANGELOG
 
 # v0.15.0
-@shawncatz released this on 2017-05-09
+@shawncatz released this on 2017-05-11
 
 Deprecating support for golang versions prior to 1.7
 
