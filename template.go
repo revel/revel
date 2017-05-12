@@ -18,6 +18,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+    "code.google.com/p/go.text/unicode/norm"
+    "unicode"	
 )
 
 // ErrorCSSClass httml CSS error class name
@@ -44,8 +46,8 @@ type Template interface {
 	Render(wr io.Writer, arg interface{}) error
 }
 
-var invalidSlugPattern = regexp.MustCompile(`[^a-z0-9 _-]`)
-var whiteSpacePattern = regexp.MustCompile(`\s+`)
+var lat = []*unicode.RangeTable{unicode.Letter, unicode.Number}
+var nop = []*unicode.RangeTable{unicode.Mark, unicode.Sk, unicode.Lm}
 
 var (
 	// TemplateFuncs is the collection of functions available in templates
@@ -477,11 +479,27 @@ func ReverseURL(args ...interface{}) (template.URL, error) {
 	return template.URL(MainRouter.Reverse(args[0].(string), argsByName).URL), nil
 }
 
-func Slug(text string) string {
-	separator := "-"
-	text = strings.ToLower(text)
-	text = invalidSlugPattern.ReplaceAllString(text, "")
-	text = whiteSpacePattern.ReplaceAllString(text, separator)
-	text = strings.Trim(text, separator)
-	return text
+/*
+ * credits go to https://github.com/extemporalgenome/slug
+ */
+func Slug(s string) string {
+        buf := make([]rune, 0, len(s))
+        dash := false
+        for _, r := range norm.NFKD.String(s) {
+                switch {
+                // unicode 'letters' like mandarin characters pass through
+                case unicode.IsOneOf(lat, r):
+                        buf = append(buf, unicode.ToLower(r))
+                        dash = true
+                case unicode.IsOneOf(nop, r):
+                        // skip
+                case dash:
+                        buf = append(buf, '-')
+                        dash = false
+                }
+        }
+        if i := len(buf) - 1; i >= 0 && buf[i] == '-' {
+                buf = buf[:i]
+        }
+        return string(buf)
 }
