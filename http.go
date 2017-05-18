@@ -58,7 +58,7 @@ func NewResponse(w ServerResponse) (r *Response) {
 
 // NewRequest returns a Revel's HTTP request instance with given HTTP instance
 func NewRequest(r ServerRequest) *Request {
-	req := &Request{}
+	req := &Request{Header:&RevelHeader{}}
 	if r != nil {
 		req.SetRequest(r)
 	}
@@ -128,7 +128,7 @@ func (req *Request) Destroy() {
 	req.Header.Destroy()
 }
 func (resp *Response) SetResponse(r ServerResponse) {
-	resp.Out.response = r
+	resp.Out.Server = r
 	if h, e := r.Get(HTTP_SERVER_HEADER); e == nil {
 		resp.Out.internalHeader.Server, _ = h.(ServerHeader)
 	}
