@@ -97,6 +97,7 @@ func (s Session) Cookie() *http.Cookie {
 		HttpOnly: true,
 		Secure:   CookieSecure,
 		Expires:  ts.UTC(),
+		MaxAge:   int(expireAfterDuration.Seconds()),
 	}
 }
 
