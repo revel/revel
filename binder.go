@@ -293,7 +293,7 @@ func unbindSlice(output map[string]string, name string, val interface{}) {
 func bindStruct(params *Params, name string, typ reflect.Type) reflect.Value {
 	resultPointer := reflect.New(typ)
 	result := resultPointer.Elem()
-	if params.JsonRequest {
+	if params.Json!=nil {
 		// Try to inject the response as a json into the created result
 		if err := json.Unmarshal(params.Json, resultPointer.Interface()); err != nil {
 			WARN.Println("W: bindStruct: Unable to unmarshal request:", name, err)
@@ -416,10 +416,20 @@ func bindReadSeeker(params *Params, name string, typ reflect.Type) reflect.Value
 //   params["a[5]"]=foo, name="a", typ=map[int]string => map[int]string{5: "foo"}
 func bindMap(params *Params, name string, typ reflect.Type) reflect.Value {
 	var (
-		result    = reflect.MakeMap(typ)
 		keyType   = typ.Key()
 		valueType = typ.Elem()
+		resultPtr = reflect.New(reflect.MapOf(keyType, valueType))
+		result    = resultPtr.Elem()
 	)
+	result.Set(reflect.MakeMap(typ))
+	if params.Json!=nil {
+		// Try to inject the response as a json into the created result
+		if err := json.Unmarshal(params.Json, resultPtr.Interface()); err != nil {
+			WARN.Println("W: bindMap: Unable to unmarshal request:", name, err)
+		}
+		return result
+	}
+
 	for paramName, values := range params.Values {
 		if !strings.HasPrefix(paramName, name+"[") || paramName[len(paramName)-1] != ']' {
 			continue

@@ -187,7 +187,7 @@ func (v *Validation) Check(obj interface{}, checks ...Validator) *ValidationResu
 func ValidationFilter(c *Controller, fc []Filter) {
 	// If json request, we shall assume json response is intended,
 	// as such no validation cookies should be tied response
-	if c.Params != nil && c.Params.JsonRequest {
+	if c.Params != nil && c.Params.Json != nil {
 		c.Validation = &Validation{}
 		fc[0](c, fc[1:])
 	} else {
