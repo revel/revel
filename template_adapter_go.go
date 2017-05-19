@@ -17,15 +17,15 @@ var (
 	// The functions available for use in the templates.
 	TemplateFuncs = map[string]interface{}{
 		"url": ReverseURL,
-		"set": func(renderArgs map[string]interface{}, key string, value interface{}) template.JS {
-			renderArgs[key] = value
+		"set": func(viewArgs map[string]interface{}, key string, value interface{}) template.JS {
+			viewArgs[key] = value
 			return template.JS("")
 		},
-		"append": func(renderArgs map[string]interface{}, key string, value interface{}) template.JS {
-			if renderArgs[key] == nil {
-				renderArgs[key] = []interface{}{value}
+		"append": func(viewArgs map[string]interface{}, key string, value interface{}) template.JS {
+			if viewArgs[key] == nil {
+				viewArgs[key] = []interface{}{value}
 			} else {
-				renderArgs[key] = append(renderArgs[key].([]interface{}), value)
+				viewArgs[key] = append(viewArgs[key].([]interface{}), value)
 			}
 			return template.JS("")
 		},
@@ -79,10 +79,10 @@ var (
 			return template.HTML(html.EscapeString(str) + strings.Repeat("&nbsp;", width-len(str)))
 		},
 
-		"errorClass": func(name string, renderArgs map[string]interface{}) template.HTML {
-			errorMap, ok := renderArgs["errors"].(map[string]*ValidationError)
+		"errorClass": func(name string, viewArgs map[string]interface{}) template.HTML {
+			errorMap, ok := viewArgs["errors"].(map[string]*ValidationError)
 			if !ok || errorMap == nil {
-				WARN.Println("Called 'errorClass' without 'errors' in the render args.")
+				WARN.Println("Called 'errorClass' without 'errors' in the view args.")
 				return template.HTML("")
 			}
 			valError, ok := errorMap[name]
@@ -92,8 +92,8 @@ var (
 			return template.HTML(ErrorCSSClass)
 		},
 
-		"msg": func(renderArgs map[string]interface{}, message string, args ...interface{}) template.HTML {
-			str, ok := renderArgs[CurrentLocaleRenderArg].(string)
+		"msg": func(viewArgs map[string]interface{}, message string, args ...interface{}) template.HTML {
+			str, ok := viewArgs[CurrentLocaleViewArg].(string)
 			if !ok {
 				return ""
 			}
@@ -154,7 +154,7 @@ var (
 type GoTemplate struct {
 	*template.Template
 	engine *GoEngine
-	*BaseTemplate
+	*TemplateView
 }
 
 // return a 'revel.Template' from Go's template.
@@ -168,10 +168,10 @@ type GoEngine struct {
 	// TemplatesBylowerName is a map from lower case template name to the real template.
 	templatesBylowerName map[string]*GoTemplate
 	splitDelims          []string
-	BaseTemplateEngine
+	TemplateEngineHelper
 }
 
-func (engine *GoEngine) ParseAndAdd(baseTemplate *BaseTemplate) error {
+func (engine *GoEngine) ParseAndAdd(baseTemplate *TemplateView) error {
 	// If alternate delimiters set for the project, change them for this set
 	if engine.splitDelims != nil && baseTemplate.Location() == ViewsPath {
 		engine.templateSet.Delims(engine.splitDelims[0], engine.splitDelims[1])
@@ -180,7 +180,7 @@ func (engine *GoEngine) ParseAndAdd(baseTemplate *BaseTemplate) error {
 		engine.templateSet.Delims("", "")
 	}
 	templateSource := string(baseTemplate.FileBytes)
-	baseTemplate.TemplateName = engine.ConvertPath(baseTemplate.TemplateName)
+	lowerTemplateName := engine.ConvertPath(baseTemplate.TemplateName)
 	tpl, err := engine.templateSet.New(baseTemplate.TemplateName).Parse(templateSource)
 	if nil != err {
 		_, line, description := ParseTemplateError(err)
@@ -192,13 +192,12 @@ func (engine *GoEngine) ParseAndAdd(baseTemplate *BaseTemplate) error {
 			SourceLines: strings.Split(templateSource, "\n"),
 		}
 	}
-	engine.templatesBylowerName[baseTemplate.TemplateName] = &GoTemplate{Template: tpl, engine: engine, BaseTemplate: baseTemplate}
+	engine.templatesBylowerName[lowerTemplateName] = &GoTemplate{Template: tpl, engine: engine, TemplateView: baseTemplate}
 	return nil
 }
 
 func (engine *GoEngine) Lookup(templateName string) Template {
 	// Case-insensitive matching of template file name
-
 	if tpl, found := engine.templatesBylowerName[engine.ConvertPath(templateName)]; found {
 		return tpl
 	}

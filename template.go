@@ -33,18 +33,18 @@ type TemplateLoader struct {
 	paths []string
 	// Map from template name to the path from whence it was loaded.
 	TemplatePaths map[string]string
+	// A map of looked up template results
+	TemplateMap   map[string]Template
 }
 
 type Template interface {
-	// #Name: The name of the template.
+	// The name of the template.
 	Name() string // Name of template
-	// #Content: The content of the template as a string (Used in error handling).
+	// The content of the template as a string (Used in error handling).
 	Content() []string // Content
-	// #Render: Called by the server to render the template out the io.Writer, args contains the arguements to be passed to the template.
-	//   arg: wr io.Writer
-	//   arg: arg interface{}
-	Render(wr io.Writer, arg interface{}) error
-	// #Location: The full path to the file on the disk.
+	// Called by the server to render the template out the io.Writer, context contains the view args to be passed to the template.
+	Render(wr io.Writer, context interface{}) error
+	// The full path to the file on the disk.
 	Location() string // Disk location
 }
 
@@ -80,6 +80,9 @@ func (loader *TemplateLoader) Refresh() (err *Error) {
 			engine.Event(TEMPLATE_REFRESH_COMPLETE, nil)
 		}
 		fireEvent(TEMPLATE_REFRESH_COMPLETE, nil)
+		// Reset the TemplateMap, we don't prepopulate the map because
+		loader.TemplateMap = map[string]Template{}
+
 	}()
 	// Resort the paths, make sure the revel path is the last path,
 	// so anything can override it
@@ -237,7 +240,7 @@ func (loader *TemplateLoader) findAndAddTemplate(path, fullSrcDir, basePath stri
 	return
 }
 
-func (loader *TemplateLoader) loadIntoEngine(engine TemplateEngine, baseTemplate *BaseTemplate) (loaded bool, err error) {
+func (loader *TemplateLoader) loadIntoEngine(engine TemplateEngine, baseTemplate *TemplateView) (loaded bool, err error) {
 	if loadedTemplate := engine.Lookup(baseTemplate.TemplateName); loadedTemplate != nil {
 		// Duplicate template found for engine
 		TRACE.Println("template already exists: ", baseTemplate.TemplateName, " in engine ", engine.Name(), "\r\n\told file:",
@@ -303,12 +306,17 @@ func (loader *TemplateLoader) Template(name string) (tmpl Template, err error) {
 		return nil, loader.compileError
 	}
 
-	// Look up and return the template.
-	for _, engine := range loader.templatesAndEngineList {
-		if tmpl = engine.Lookup(name); tmpl != nil {
-			break
+	if t,found := loader.TemplateMap[name];!found && t != nil {
+		tmpl = t
+	} else {
+		// Look up and return the template.
+		for _, engine := range loader.templatesAndEngineList {
+			if tmpl = engine.Lookup(name); tmpl != nil {
+				loader.TemplateMap[name] = tmpl
+				break
+			}
 		}
-	}
+}
 
 	if tmpl == nil && err == nil {
 		err = fmt.Errorf("Template %s not found.", name)
@@ -317,18 +325,10 @@ func (loader *TemplateLoader) Template(name string) (tmpl Template, err error) {
 	return
 }
 
-type BaseTemplate struct {
-	TemplateName string
-	FilePath     string
-	BasePath     string
-	FileBytes    []byte
-	EngineType   string
-}
-
-func (i *BaseTemplate) Location() string {
+func (i *TemplateView) Location() string {
 	return i.FilePath
 }
-func (i *BaseTemplate) Content() (content []string) {
+func (i *TemplateView) Content() (content []string) {
 	if i.FileBytes != nil {
 		// Parse the bytes
 		buffer := bytes.NewBuffer(i.FileBytes)
@@ -339,8 +339,8 @@ func (i *BaseTemplate) Content() (content []string) {
 	}
 	return nil
 }
-func NewBaseTemplate(templateName, filePath, basePath string, fileBytes []byte) *BaseTemplate {
-	return &BaseTemplate{TemplateName: templateName, FilePath: filePath, FileBytes: fileBytes, BasePath: basePath}
+func NewBaseTemplate(templateName, filePath, basePath string, fileBytes []byte) *TemplateView {
+	return &TemplateView{TemplateName: templateName, FilePath: filePath, FileBytes: fileBytes, BasePath: basePath}
 }
 
 /////////////////////

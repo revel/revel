@@ -10,26 +10,34 @@ import (
 )
 
 type TemplateEngine interface {
-	// #ParseAndAdd: prase template string and add template to the set.
-	//   arg: basePath *BaseTemplate
-	ParseAndAdd(basePath *BaseTemplate) error
+	// prase template string and add template to the set.
+	ParseAndAdd(basePath *TemplateView) error
 
-	// #Lookup: returns Template corresponding to the given templateName
-	//   arg: templateName string
+	// returns Template corresponding to the given templateName, or nil
 	Lookup(templateName string) Template
 
-	// #Event: Fired by the template loader when events occur
-	//   arg: event string
-	//   arg: arg interface{}
+	// Fired by the template loader when events occur
 	Event(event int, arg interface{})
 
-	// #IsEngineFor: returns true if this engine should be used to parse the file specified in baseTemplate
-	//   arg: engine The calling engine
-	//   arg: baseTemplate The base template
-	IsEngineFor(engine TemplateEngine, baseTemplate *BaseTemplate) bool
+	// returns true if this engine should be used to parse the file specified in baseTemplate
+	IsEngineFor(engine TemplateEngine, templateView *TemplateView) bool
 
-	// #Name: Returns the name of the engine
+	// returns the name of the engine
 	Name() string
+}
+
+// The template view information
+type TemplateView struct {
+	TemplateName string // The name of the view
+	FilePath     string // The file path (view relative)
+	BasePath     string // The file system base path
+	FileBytes    []byte // The file loaded
+	EngineType   string // The name of the engine used to render the view
+}
+
+// Template engine helper
+type TemplateEngineHelper struct {
+	CaseInsensitiveMode bool
 }
 
 var templateLoaderMap = map[string]func(loader *TemplateLoader) (TemplateEngine, error){}
@@ -88,12 +96,7 @@ func (loader *TemplateLoader) InitializeEngines(templateEngineNameList string) (
 	return
 }
 
-// BaseTemplateEngine allows new engines to use the default
-type BaseTemplateEngine struct {
-	CaseInsensitiveMode bool
-}
-
-func (i *BaseTemplateEngine) IsEngineFor(engine TemplateEngine, description *BaseTemplate) bool {
+func (i *TemplateEngineHelper) IsEngineFor(engine TemplateEngine, description *TemplateView) bool {
 	if line, _, e := bufio.NewReader(bytes.NewBuffer(description.FileBytes)).ReadLine(); e == nil && string(line[:3]) == "#! " {
 		// Extract the shebang and look at the rest of the line
 		// #! pong2
@@ -117,7 +120,7 @@ func (i *BaseTemplateEngine) IsEngineFor(engine TemplateEngine, description *Bas
 	}
 	return false
 }
-func (i *BaseTemplateEngine) ConvertPath(path string) string {
+func (i *TemplateEngineHelper) ConvertPath(path string) string {
 	if i.CaseInsensitiveMode {
 		return strings.ToLower(path)
 	}
