@@ -458,6 +458,25 @@ func TestOverrideMethodFilter(t *testing.T) {
 	}
 }
 
+var extensionTestCases = map[string]string{
+	"/hotels/3":      "html",
+	"/hotels/3.json": "json",
+	"/hotels/3.xml":  "xml",
+	"/hotels/3.txt":  "txt",
+	"/hotels/3.mp3":  "html",
+}
+
+func TestExtensionFormats(t *testing.T) {
+	for path, format := range extensionTestCases {
+		httpReq, _ := http.NewRequest("GET", "http://localhost"+path, nil)
+		req := NewRequest(httpReq)
+
+		if req.Format != format {
+			t.Errorf("Wrong format for route %s\n  actual: %s\nexpected: %s", path, req.Format, format)
+		}
+	}
+}
+
 // Helpers
 
 func eq(t *testing.T, name string, a, b interface{}) bool {
