@@ -78,8 +78,11 @@ func ResolveContentType(req *http.Request) string {
 // returning a default of "html" when Accept header cannot be mapped to a
 // value above.
 func ResolveFormat(req *http.Request) string {
+	pos := strings.LastIndex(req.URL.Path, ".")
+	if pos > -1 {
+		return strings.ToLower(req.URL.Path[pos+1:])
+	}
 	accept := req.Header.Get("accept")
-
 	switch {
 	case accept == "",
 		strings.HasPrefix(accept, "*/*"), // */
