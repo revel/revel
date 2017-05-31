@@ -210,7 +210,7 @@ func (loader *TemplateLoader) findAndAddTemplate(path, fullSrcDir, basePath stri
 
 	// Try to find a default engine for the file
 	for _, engine := range loader.templatesAndEngineList {
-		if engine.IsEngineFor(engine, baseTemplate) {
+		if engine.Handles(baseTemplate) {
 			_, err = loader.loadIntoEngine(engine, baseTemplate)
 			return
 		}
@@ -296,16 +296,36 @@ func ParseTemplateError(err error) (templateName string, line int, description s
 	return templateName, line, description
 }
 
+// DEPRECATED Use TemplateLang, will be removed in future release
+func (loader *TemplateLoader) Template(name string) (tmpl Template, err error) {
+	return loader.TemplateLang(name, "")
+}
 // Template returns the Template with the given name.  The name is the template's path
 // relative to a template loader root.
 //
 // An Error is returned if there was any problem with any of the templates.  (In
 // this case, if a template is returned, it may still be usable.)
-func (loader *TemplateLoader) Template(name string) (tmpl Template, err error) {
+func (loader *TemplateLoader) TemplateLang(name, lang string) (tmpl Template, err error) {
 	if loader.compileError != nil {
 		return nil, loader.compileError
 	}
+// Attempt to load a localized template first.
+	if lang != "" {
+		// Look up and return the template.
+		tmpl = loader.templateLoad(name + "." + lang)
+	}
+	// Return non localized version
+	if tmpl == nil {
+		tmpl = loader.templateLoad(name)
+	}
 
+	if tmpl == nil && err == nil {
+		err = fmt.Errorf("Template %s not found.", name)
+	}
+
+	return
+}
+func (loader *TemplateLoader) templateLoad(name string) (tmpl Template) {
 	if t,found := loader.TemplateMap[name];!found && t != nil {
 		tmpl = t
 	} else {
@@ -316,12 +336,7 @@ func (loader *TemplateLoader) Template(name string) (tmpl Template, err error) {
 				break
 			}
 		}
-}
-
-	if tmpl == nil && err == nil {
-		err = fmt.Errorf("Template %s not found.", name)
 	}
-
 	return
 }
 

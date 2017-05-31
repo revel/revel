@@ -9,6 +9,7 @@ import (
 	"reflect"
 	"strings"
 	"time"
+	"bytes"
 )
 
 const GO_TEMPLATE = "go"
@@ -147,6 +148,43 @@ var (
 		},
 		"slug": Slug,
 		"even": func(a int) bool { return (a % 2) == 0 },
+		"i18ntemplate": func(args ...interface{}) (template.HTML, error) {
+			templateName, lang := "", ""
+			var viewArgs interface{}
+			switch len(args) {
+			case 0:
+				ERROR.Printf("No arguements passed to template call")
+			case 1:
+				// Assume only the template name is passed in
+				templateName = args[0].(string)
+			case 2:
+				// Assume template name and viewArgs is passed in
+				templateName = args[0].(string)
+				viewArgs = args[1]
+				// Try to extract language from the view args
+				if viewargsmap,ok := viewArgs.(map[string]interface{});ok {
+					lang,_ = viewargsmap[CurrentLocaleViewArg].(string)
+				}
+			default:
+				// Assume third argument is the region
+				templateName = args[0].(string)
+				viewArgs = args[1]
+				lang, _ = args[2].(string)
+				if len(args)>3 {
+					ERROR.Printf("Received more parameters then needed for %s",templateName)
+				}
+			}
+
+			var buf bytes.Buffer
+			// Get template
+			tmpl, err := MainTemplateLoader.TemplateLang(templateName, lang)
+			if err == nil {
+				err = tmpl.Render(&buf, viewArgs)
+			} else {
+				ERROR.Printf("Failed to render i18ntemplate %s %v",templateName,err)
+			}
+			return template.HTML(buf.String()), err
+		},
 	}
 )
 
@@ -168,7 +206,18 @@ type GoEngine struct {
 	// TemplatesBylowerName is a map from lower case template name to the real template.
 	templatesBylowerName map[string]*GoTemplate
 	splitDelims          []string
-	TemplateEngineHelper
+	CaseInsensitiveMode bool
+}
+
+func (i *GoEngine) ConvertPath(path string) string {
+	if i.CaseInsensitiveMode {
+		return strings.ToLower(path)
+	}
+	return path
+}
+
+func (i *GoEngine) Handles(templateView *TemplateView) bool{
+	return EngineHandles(i, templateView)
 }
 
 func (engine *GoEngine) ParseAndAdd(baseTemplate *TemplateView) error {

@@ -20,7 +20,7 @@ type TemplateEngine interface {
 	Event(event int, arg interface{})
 
 	// returns true if this engine should be used to parse the file specified in baseTemplate
-	IsEngineFor(engine TemplateEngine, templateView *TemplateView) bool
+	Handles(templateView *TemplateView) bool
 
 	// returns the name of the engine
 	Name() string
@@ -33,11 +33,6 @@ type TemplateView struct {
 	BasePath     string // The file system base path
 	FileBytes    []byte // The file loaded
 	EngineType   string // The name of the engine used to render the view
-}
-
-// Template engine helper
-type TemplateEngineHelper struct {
-	CaseInsensitiveMode bool
 }
 
 var templateLoaderMap = map[string]func(loader *TemplateLoader) (TemplateEngine, error){}
@@ -96,33 +91,27 @@ func (loader *TemplateLoader) InitializeEngines(templateEngineNameList string) (
 	return
 }
 
-func (i *TemplateEngineHelper) IsEngineFor(engine TemplateEngine, description *TemplateView) bool {
-	if line, _, e := bufio.NewReader(bytes.NewBuffer(description.FileBytes)).ReadLine(); e == nil && string(line[:3]) == "#! " {
+func EngineHandles(engine TemplateEngine, templateView *TemplateView) bool {
+	if line, _, e := bufio.NewReader(bytes.NewBuffer(templateView.FileBytes)).ReadLine(); e == nil && string(line[:3]) == "#! " {
 		// Extract the shebang and look at the rest of the line
 		// #! pong2
 		// #! go
 		templateType := strings.TrimSpace(string(line[2:]))
 		if engine.Name() == templateType {
 			// Advance the read file bytes so it does not include the shebang
-			description.FileBytes = description.FileBytes[len(line)+1:]
-			description.EngineType = templateType
+			templateView.FileBytes = templateView.FileBytes[len(line)+1:]
+			templateView.EngineType = templateType
 			return true
 		}
 	}
-	filename := filepath.Base(description.FilePath)
+	filename := filepath.Base(templateView.FilePath)
 	bits := strings.Split(filename, ".")
 	if len(bits) > 2 {
 		templateType := strings.TrimSpace(bits[len(bits)-2])
 		if engine.Name() == templateType {
-			description.EngineType = templateType
+			templateView.EngineType = templateType
 			return true
 		}
 	}
 	return false
-}
-func (i *TemplateEngineHelper) ConvertPath(path string) string {
-	if i.CaseInsensitiveMode {
-		return strings.ToLower(path)
-	}
-	return path
 }
