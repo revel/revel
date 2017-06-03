@@ -64,7 +64,10 @@ var (
 			return template.JS("")
 		},
 		"isEmpty": func(v interface{}) bool {
-			return IsEmpty(reflect.ValueOf(v))
+			if v != nil {
+				return IsEmpty(reflect.ValueOf(v))
+			}
+			return true
 		},
 		"field": NewField,
 		"firstof": func(args ...interface{}) interface{} {
