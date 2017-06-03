@@ -498,13 +498,13 @@ func IsEmpty(v reflect.Value) bool {
 	case reflect.Array:
 		z := true
 		for i := 0; i < v.Len(); i++ {
-			z = z && isZero(v.Index(i))
+			z = z && IsEmpty(v.Index(i))
 		}
 		return z
 	case reflect.Struct:
 		z := true
 		for i := 0; i < v.NumField(); i++ {
-			z = z && isZero(v.Field(i))
+			z = z && IsEmpty(v.Field(i))
 		}
 		return z
 	}
