@@ -16,8 +16,8 @@ import (
 )
 
 const (
-	// CurrentLocaleRenderArg the key for the current locale render arg value
-	CurrentLocaleRenderArg = "currentLocale"
+	// CurrentLocaleViewArg the key for the current locale view arg value
+	CurrentLocaleViewArg = "currentLocale"
 
 	messageFilesDirectory  = "messages"
 	messageFilePattern     = `^\w+\.[a-zA-Z]{2}$`
@@ -202,7 +202,7 @@ func I18nFilter(c *Controller, fc []Filter) {
 // Set the current locale controller argument (CurrentLocaleControllerArg) with the given locale.
 func setCurrentLocaleControllerArguments(c *Controller, locale string) {
 	c.Request.Locale = locale
-	c.ViewArgs[CurrentLocaleRenderArg] = locale
+	c.ViewArgs[CurrentLocaleViewArg] = locale
 }
 
 // Determine whether the given request has valid Accept-Language value.

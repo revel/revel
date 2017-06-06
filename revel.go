@@ -16,17 +16,26 @@ import (
 
 	"github.com/agtorre/gocolorize"
 	"github.com/revel/config"
+	"sort"
 )
 
 const (
 	// RevelImportPath Revel framework import path
 	RevelImportPath = "github.com/revel/revel"
 )
+const (
+	// Called when templates are going to be refreshed (receivers are registered template engines added to the template.engine conf option)
+	TEMPLATE_REFRESH_REQUESTED = iota
+	// Called when templates are refreshed (receivers are registered template engines added to the template.engine conf option)
+	TEMPLATE_REFRESH_COMPLETED
 
+)
 type revelLogs struct {
 	c gocolorize.Colorize
 	w io.Writer
 }
+
+type EventHandler func(typeOf int, value interface{}) (responseOf int)
 
 func (r *revelLogs) Write(p []byte) (n int, err error) {
 	return r.w.Write([]byte(r.c.Paint(string(p))))
@@ -111,6 +120,7 @@ var (
 	// Private
 	secretKey []byte // Key used to sign cookies. An empty key disables signing.
 	packaged  bool   // If true, this is running from a pre-built package.
+	initEventList = []EventHandler{} // Event handler list for receiving events
 )
 
 // Init initializes Revel -- it provides paths for getting around the app.
@@ -230,6 +240,25 @@ func Init(mode, importPath, srcPath string) {
 	INFO.Printf("Initialized Revel v%s (%s) for %s", Version, BuildDate, MinimumGoVersion)
 }
 
+// Fires system events from revel
+func fireEvent(key int, value interface{}) (response int) {
+	for _, handler := range initEventList {
+		response |= handler(key, value)
+	}
+	return
+}
+
+// Add event handler to listen for all system events
+func AddInitEventHandler(handler EventHandler) {
+	initEventList = append(initEventList, handler)
+	return
+}
+
+func SetSecretKey(newKey []byte) error {
+	secretKey = newKey
+	return nil
+}
+
 // Create a logger using log.* directives in app.conf plus the current settings
 // on the default logger.
 func getLogger(name string) *log.Logger {
@@ -325,7 +354,17 @@ type Module struct {
 }
 
 func loadModules() {
+	keys := []string{}
 	for _, key := range Config.Options("module.") {
+		keys = append(keys, key)
+	}
+	// Reorder module order by key name, a poor mans sort but at least it is consistent
+	sort.Strings(keys)
+	for _, key := range keys {
+		println("Sorted keys", key)
+
+	}
+	for _, key := range keys {
 		moduleImportPath := Config.StringDefault(key, "")
 		if moduleImportPath == "" {
 			continue
@@ -335,7 +374,13 @@ func loadModules() {
 		if err != nil {
 			log.Fatalln("Failed to load module.  Import of", moduleImportPath, "failed:", err)
 		}
-		addModule(key[len("module."):], moduleImportPath, modulePath)
+		// Drop anything between module.???.<name of module>
+		subKey := key[len("module."):]
+		if index := strings.Index(subKey, "."); index > -1 {
+			subKey = subKey[index+1:]
+		}
+
+		addModule(subKey, moduleImportPath, modulePath)
 	}
 }
 
