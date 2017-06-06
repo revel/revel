@@ -5,6 +5,7 @@
 package revel
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -163,6 +164,33 @@ var fileBindings = []struct{ val, arrval, f interface{} }{
 	{(*[]byte)(nil), [][]byte{}, func(b []byte) []byte { return b }},
 	{(*io.Reader)(nil), []io.Reader{}, ioutil.ReadAll},
 	{(*io.ReadSeeker)(nil), []io.ReadSeeker{}, ioutil.ReadAll},
+}
+
+func TestJsonBinder(t *testing.T) {
+	// create a structure to be populated
+	{
+		d, _ := json.Marshal(map[string]int{"a": 1})
+		params := &Params{JSON: d}
+		foo := struct{ A int }{}
+		ParseParams(params, NewRequest(getMultipartRequest()))
+		actual := Bind(params, "test", reflect.TypeOf(foo))
+		valEq(t, "TestJsonBinder", reflect.ValueOf(actual.Interface().(struct{ A int }).A), reflect.ValueOf(1))
+	}
+	{
+		d, _ := json.Marshal(map[string]interface{}{"a": map[string]int{"b": 45}})
+		params := &Params{JSON: d}
+		testMap := map[string]interface{}{}
+		actual := Bind(params, "test", reflect.TypeOf(testMap)).Interface().(map[string]interface{})
+		if actual["a"].(map[string]interface{})["b"].(float64) != 45 {
+			t.Errorf("Failed to fetch map value %#v", actual["a"])
+		}
+		// Check to see if a named map works
+		actualb := Bind(params, "test", reflect.TypeOf(map[string]map[string]float64{})).Interface().(map[string]map[string]float64)
+		if actualb["a"]["b"] != 45 {
+			t.Errorf("Failed to fetch map value %#v", actual["a"])
+		}
+
+	}
 }
 
 func TestBinder(t *testing.T) {
