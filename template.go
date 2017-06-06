@@ -72,14 +72,14 @@ func (loader *TemplateLoader) Refresh() (err *Error) {
 		}
 	}
 	for _, engine := range loader.templatesAndEngineList {
-		engine.Event(TEMPLATE_REFRESH, nil)
+		engine.Event(TEMPLATE_REFRESH_REQUESTED, nil)
 	}
-	fireEvent(TEMPLATE_REFRESH, nil)
+	fireEvent(TEMPLATE_REFRESH_REQUESTED, nil)
 	defer func() {
 		for _, engine := range loader.templatesAndEngineList {
-			engine.Event(TEMPLATE_REFRESH_COMPLETE, nil)
+			engine.Event(TEMPLATE_REFRESH_COMPLETED, nil)
 		}
-		fireEvent(TEMPLATE_REFRESH_COMPLETE, nil)
+		fireEvent(TEMPLATE_REFRESH_COMPLETED, nil)
 		// Reset the TemplateMap, we don't prepopulate the map because
 		loader.TemplateMap = map[string]Template{}
 

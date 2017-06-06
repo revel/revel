@@ -25,9 +25,9 @@ const (
 )
 const (
 	// Called when templates are going to be refreshed (receivers are registered template engines added to the template.engine conf option)
-	TEMPLATE_REFRESH = iota
+	TEMPLATE_REFRESH_REQUESTED = iota
 	// Called when templates are refreshed (receivers are registered template engines added to the template.engine conf option)
-	TEMPLATE_REFRESH_COMPLETE
+	TEMPLATE_REFRESH_COMPLETED
 
 )
 type revelLogs struct {
