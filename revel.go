@@ -195,7 +195,7 @@ func Init(mode, importPath, srcPath string) {
 	Config.SetSection(mode)
 
 	// Configure properties from app.conf
-	DevMode = Config.BoolDefault("mode.dev", false)
+	DevMode = RunMode == "dev" // derive DevMode from RunMode
 	HTTPPort = Config.IntDefault("http.port", 9000)
 	HTTPAddr = Config.StringDefault("http.addr", "")
 	HTTPSsl = Config.BoolDefault("http.ssl", false)
