@@ -146,15 +146,15 @@ func (p *Params) calcValues() url.Values {
 	}
 	// form vars overwrite
 	for k, v := range p.Form {
-		values[k] = append(values[k], v...)
+		values[k] = v
 	}
 	// :/path vars overwrite
 	for k, v := range p.Route {
-		values[k] = append(values[k], v...)
+		values[k] = v
 	}
 	// fixed vars overwrite
 	for k, v := range p.Fixed {
-		values[k] = append(values[k], v...)
+		values[k] = v
 	}
 
 	return values
