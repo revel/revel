@@ -14,6 +14,8 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+	"path/filepath"
 )
 
 // Request Revel's HTTP request object structure
@@ -266,6 +268,18 @@ func ResolveContentType(req *Request) string {
 // returning a default of "html" when Accept header cannot be mapped to a
 // value above.
 func ResolveFormat(req *Request) string {
+	ext := strings.ToLower(filepath.Ext(req.URL.Path))
+	switch ext {
+	case ".html":
+		return "html"
+	case ".json":
+		return "json"
+	case ".xml":
+		return "xml"
+	case ".txt":
+		return "txt"
+	}
+
 	accept := req.Header.Get("accept")
 
 	switch {

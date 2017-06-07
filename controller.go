@@ -170,7 +170,8 @@ func (c *Controller) RenderTemplate(templatePath string) Result {
 	c.setStatusIfNil(http.StatusOK)
 
 	// Get the Template.
-	template, err := MainTemplateLoader.Template(templatePath)
+	lang, _ := c.ViewArgs[CurrentLocaleViewArg].(string)
+	template, err := MainTemplateLoader.TemplateLang(templatePath, lang)
 	if err != nil {
 		return c.RenderError(err)
 	}

@@ -42,11 +42,11 @@ func (r ErrorResult) Apply(req *Request, resp *Response) {
 	if contentType == DefaultFileContentType {
 		contentType = "text/plain"
 	}
-
+	lang, _ := r.ViewArgs[CurrentLocaleViewArg].(string)
 	// Get the error template.
 	var err error
 	templatePath := fmt.Sprintf("errors/%d.%s", status, format)
-	tmpl, err := MainTemplateLoader.Template(templatePath)
+	tmpl, err := MainTemplateLoader.TemplateLang(templatePath, lang)
 
 	// This func shows a plaintext error message, in case the template rendering
 	// doesn't work.
@@ -214,7 +214,7 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
 	}
 
 	if !chunked {
-		resp.Out.Header().Set("ContentBeater-Length", strconv.Itoa(b.Len()))
+		resp.Out.Header().Set("Content-Length", strconv.Itoa(b.Len()))
 	}
 	resp.WriteHeader(http.StatusOK, "text/html; charset=utf-8")
 	if _, err := b.WriteTo(out); err != nil {
@@ -228,25 +228,23 @@ func (r *RenderTemplateResult) render(req *Request, resp *Response, wr io.Writer
 		return
 	}
 
-	compileError, ok := err.(*Error)
-	if !ok || nil == compileError {
-		var templateContent []string
-		templateName, line, description := parseTemplateError(err)
-		if templateName == "" {
-			templateName = r.Template.Name()
-			templateContent = r.Template.Content()
-		} else {
-			if tmpl, err := MainTemplateLoader.Template(templateName); err == nil {
-				templateContent = tmpl.Content()
-			}
+	var templateContent []string
+	templateName, line, description := ParseTemplateError(err)
+	if templateName == "" {
+		templateName = r.Template.Name()
+		templateContent = r.Template.Content()
+	} else {
+		lang, _ := r.ViewArgs[CurrentLocaleViewArg].(string)
+		if tmpl, err := MainTemplateLoader.TemplateLang(templateName, lang); err == nil {
+			templateContent = tmpl.Content()
 		}
-		compileError = &Error{
-			Title:       "Template Execution Error",
-			Path:        templateName,
-			Description: description,
-			Line:        line,
-			SourceLines: templateContent,
-		}
+	}
+	compileError := &Error{
+		Title:       "Template Execution Error",
+		Path:        templateName,
+		Description: description,
+		Line:        line,
+		SourceLines: templateContent,
 	}
 	resp.Status = 500
 	ERROR.Printf("Template Execution Error (in %s): %s", compileError.Path, compileError.Description)

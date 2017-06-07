@@ -167,30 +167,36 @@ var fileBindings = []struct{ val, arrval, f interface{} }{
 }
 
 func TestJsonBinder(t *testing.T) {
-	// Reuse the mvc_test.go multipart request to test the binder.
-	foo := struct {
-		A string
-	}{}
-	d, _ := json.Marshal(map[string]string{"a": "b"})
-	params := &Params{JsonRequest: true, Json: d}
-	c := NewGOContext(nil)
-	c.Request.SetRequest(getMultipartRequest())
-	ParseParams(params, NewRequest(c.Request))
-
-	actual := Bind(params, "test", reflect.TypeOf(foo))
-	if actual.Interface().(struct {
-		A string
-	}).A != "b" {
-		t.Fail()
+	// create a structure to be populated
+	{
+		d, _ := json.Marshal(map[string]int{"a": 1})
+		params := &Params{JSON: d}
+		foo := struct{ A int }{}
+		ParseParams(params, NewRequest(getMultipartRequest()))
+		actual := Bind(params, "test", reflect.TypeOf(foo))
+		valEq(t, "TestJsonBinder", reflect.ValueOf(actual.Interface().(struct{ A int }).A), reflect.ValueOf(1))
 	}
+	{
+		d, _ := json.Marshal(map[string]interface{}{"a": map[string]int{"b": 45}})
+		params := &Params{JSON: d}
+		testMap := map[string]interface{}{}
+		actual := Bind(params, "test", reflect.TypeOf(testMap)).Interface().(map[string]interface{})
+		if actual["a"].(map[string]interface{})["b"].(float64) != 45 {
+			t.Errorf("Failed to fetch map value %#v", actual["a"])
+		}
+		// Check to see if a named map works
+		actualb := Bind(params, "test", reflect.TypeOf(map[string]map[string]float64{})).Interface().(map[string]map[string]float64)
+		if actualb["a"]["b"] != 45 {
+			t.Errorf("Failed to fetch map value %#v", actual["a"])
+		}
 
+	}
 }
+
 func TestBinder(t *testing.T) {
 	// Reuse the mvc_test.go multipart request to test the binder.
 	params := &Params{}
-	c := NewGOContext(nil)
-	c.Request.SetRequest(getMultipartRequest())
-	ParseParams(params, NewRequest(c.Request))
+	ParseParams(params, NewRequest(getMultipartRequest()))
 	params.Values = ParamTestValues
 
 	// Values

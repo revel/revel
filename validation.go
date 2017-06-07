@@ -185,12 +185,13 @@ func (v *Validation) Check(obj interface{}, checks ...Validator) *ValidationResu
 
 // ValidationFilter revel Filter function to be hooked into the filter chain.
 func ValidationFilter(c *Controller, fc []Filter) {
-	// Ignore cookies on json requests
-	if c.Params != nil && c.Params.JsonRequest {
+	// If json request, we shall assume json response is intended,
+	// as such no validation cookies should be tied response
+	if c.Params != nil && c.Params.JSON != nil {
 		c.Validation = &Validation{}
 		fc[0](c, fc[1:])
 	} else {
-		errors, err := restoreValidationErrors(c.Request)
+		errors, err := restoreValidationErrors(c.Request.Request)
 		c.Validation = &Validation{
 			Errors: errors,
 			keep:   false,
@@ -205,9 +206,9 @@ func ValidationFilter(c *Controller, fc []Filter) {
 		// Store the Validation errors
 		var errorsValue string
 		if c.Validation.keep {
-			for _, error := range c.Validation.Errors {
-				if error.Message != "" {
-					errorsValue += "\x00" + error.Key + ":" + error.Message + "\x00"
+			for _, err := range c.Validation.Errors {
+				if err.Message != "" {
+					errorsValue += "\x00" + err.Key + ":" + err.Message + "\x00"
 				}
 			}
 		}
@@ -238,14 +239,14 @@ func ValidationFilter(c *Controller, fc []Filter) {
 }
 
 // Restore Validation.Errors from a request.
-func restoreValidationErrors(req *Request) ([]*ValidationError, error) {
+func restoreValidationErrors(req *http.Request) ([]*ValidationError, error) {
 	var (
 		err    error
-		cookie ServerCookie
+		cookie *http.Cookie
 		errors = make([]*ValidationError, 0, 5)
 	)
 	if cookie, err = req.Cookie(CookiePrefix + "_ERRORS"); err == nil {
-		ParseKeyValueCookie(cookie.GetValue(), func(key, val string) {
+		ParseKeyValueCookie(cookie.Value, func(key, val string) {
 			errors = append(errors, &ValidationError{
 				Key:     key,
 				Message: val,

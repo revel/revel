@@ -16,6 +16,7 @@ import (
 
 	"github.com/agtorre/gocolorize"
 	"github.com/revel/config"
+	"sort"
 )
 
 const (
@@ -23,8 +24,13 @@ const (
 	RevelImportPath = "github.com/revel/revel"
 )
 const (
+	// Called when templates are going to be refreshed (receivers are registered template engines added to the template.engine conf option)
+	TEMPLATE_REFRESH_REQUESTED = iota
+	// Called when templates are refreshed (receivers are registered template engines added to the template.engine conf option)
+	TEMPLATE_REFRESH_COMPLETED
 	// Called before all module loads, events thrown to handlers added to AddInitEventHandler
-	REVEL_BEFORE_LOAD_MODULE = iota
+
+	REVEL_BEFORE_LOAD_MODULE
 	// Called after all module loads, events thrown to handlers added to AddInitEventHandler
 	REVEL_AFTER_LOAD_MODULE
 
@@ -125,9 +131,9 @@ var (
 	Initialized bool
 
 	// Private
-	secretKey     []byte // Key used to sign cookies. An empty key disables signing.
-	packaged      bool   // If true, this is running from a pre-built package.
-	initEventList = []EventHandler{}
+	secretKey []byte // Key used to sign cookies. An empty key disables signing.
+	packaged  bool   // If true, this is running from a pre-built package.
+	initEventList = []EventHandler{} // Event handler list for receiving events
 )
 
 // Init initializes Revel -- it provides paths for getting around the app.
@@ -363,7 +369,17 @@ type Module struct {
 }
 
 func loadModules() {
+	keys := []string{}
 	for _, key := range Config.Options("module.") {
+		keys = append(keys, key)
+	}
+	// Reorder module order by key name, a poor mans sort but at least it is consistent
+	sort.Strings(keys)
+	for _, key := range keys {
+		println("Sorted keys", key)
+
+	}
+	for _, key := range keys {
 		moduleImportPath := Config.StringDefault(key, "")
 		if moduleImportPath == "" {
 			continue
@@ -373,7 +389,13 @@ func loadModules() {
 		if err != nil {
 			log.Fatalln("Failed to load module.  Import of", moduleImportPath, "failed:", err)
 		}
-		addModule(key[len("module."):], moduleImportPath, modulePath)
+		// Drop anything between module.???.<name of module>
+		subKey := key[len("module."):]
+		if index := strings.Index(subKey, "."); index > -1 {
+			subKey = subKey[index+1:]
+		}
+
+		addModule(subKey, moduleImportPath, modulePath)
 	}
 }
 
@@ -405,7 +427,12 @@ func addModule(name, importPath, modulePath string) {
 	// Hack: There is presently no way for the testrunner module to add the
 	// "test" subdirectory to the CodePaths.  So this does it instead.
 	if importPath == Config.StringDefault("module.testrunner", "github.com/revel/modules/testrunner") {
+		INFO.Print("Found testrunner module, adding `tests` path ", filepath.Join(BasePath, "tests"))
 		CodePaths = append(CodePaths, filepath.Join(BasePath, "tests"))
+	}
+	if testsPath := filepath.Join(modulePath, "tests"); DirExists(testsPath) {
+		INFO.Print("Found tests path ", testsPath)
+		CodePaths = append(CodePaths, testsPath)
 	}
 }
 
