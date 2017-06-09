@@ -52,15 +52,13 @@ type (
 	}
 	// Callback ServerResponse type
 	ServerResponse interface {
-		GetRaw() interface{}
-		Get(theType int) (interface{}, error)
-		Set(theType int, theValue interface{}) bool
+		ServerRequest
 	}
 	// Callback WebSocket type
 	ServerWebSocket interface {
 		ServerResponse
-		MessageSendJson(v interface{}) error
-		MessageReceiveJson(v interface{}) error
+		MessageSendJSON(v interface{}) error
+		MessageReceiveJSON(v interface{}) error
 	}
 
 	// Expected response for HTTP_SERVER_HEADER type (if implemented)

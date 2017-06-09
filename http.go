@@ -15,6 +15,7 @@ import (
 	"strconv"
 	"strings"
 
+	"mime/multipart"
 	"path/filepath"
 )
 
@@ -30,6 +31,13 @@ type Request struct {
 	Method          string
 	RemoteAddr      string
 	Host            string
+	// DEPRECATED use request methods
+	URL             *url.URL
+	// DEPRECATED use GetForm()
+	Form url.Values
+	// DEPRECATED use GetMultipartForm()
+	MultipartForm *MultipartForm
+	controller    *Controller
 }
 
 var FORM_NOT_FOUND = errors.New("Form Not Found")
@@ -60,7 +68,7 @@ func NewResponse(w ServerResponse) (r *Response) {
 
 // NewRequest returns a Revel's HTTP request instance with given HTTP instance
 func NewRequest(r ServerRequest) *Request {
-	req := &Request{Header:&RevelHeader{}}
+	req := &Request{Header: &RevelHeader{}}
 	if r != nil {
 		req.SetRequest(r)
 	}
@@ -71,6 +79,8 @@ func (req *Request) SetRequest(r ServerRequest) {
 	if h, e := req.In.Get(HTTP_SERVER_HEADER); e == nil {
 		req.Header.Server = h.(ServerHeader)
 	}
+
+	req.URL, _ = url.Parse(req.GetRequestURI())
 	req.ContentType = ResolveContentType(req)
 	req.Format = ResolveFormat(req)
 	req.AcceptLanguages = ResolveAcceptLanguage(req)
@@ -103,14 +113,69 @@ func (req *Request) GetBody() (body io.Reader) {
 	return
 }
 
+// Deprecated use controller.Params.Get()
+func (req *Request) FormValue(key string) (value string) {
+	return req.controller.Params.Get(key)
+}
+
+// Deprecated use controller.Params.Form[Key]
+func (req *Request) PostFormValue(key string) (value string) {
+	valueList := req.controller.Params.Form[key]
+	if len(valueList)>0 {
+		value = valueList[0]
+	}
+	return 
+}
+
+// Deprecated use GetForm() instead
+func (req *Request) ParseForm() (e error) {
+	if req.Form==nil {
+		req.Form, e = req.GetForm()
+	}
+	return
+}
+
 func (req *Request) GetForm() (url.Values, error) {
 	if form, err := req.In.Get(HTTP_FORM); err != nil {
 		return nil, nil
 	} else if values, found := form.(url.Values); found {
+		req.Form = values
 		return values, nil
 	}
 	return nil, FORM_NOT_FOUND
 }
+
+// Deprecated for backwards compatibility only
+type MultipartForm struct {
+	File   map[string][]*multipart.FileHeader
+	Value  url.Values
+	origin ServerMultipartForm
+}
+
+func (r *Request) MultipartReader() (*multipart.Reader, error) {
+
+	return nil, errors.New("MultipartReader not supported, use controller.Param")
+}
+
+// Deprecated for backwards compatibility only
+func newMultipareForm(s ServerMultipartForm) (f *MultipartForm) {
+	return &MultipartForm{File: s.GetFile(), Value: s.GetValue(), origin: s}
+}
+
+// Deprecated use GetMultipartForm() instead
+func (req *Request) ParseMultipartForm(_ int64) (e error) {
+	var s ServerMultipartForm
+	if s, e = req.GetMultipartForm(); e == nil {
+		req.MultipartForm = newMultipareForm(s)
+	}
+	return
+}
+
+// Return the args for the context
+func (req *Request) Context() map[string]interface{} {
+	return req.controller.Args
+}
+
 func (req *Request) GetMultipartForm() (ServerMultipartForm, error) {
 	if form, err := req.In.Get(HTTP_MULTIPART_FORM); err != nil {
 		return nil, nil
@@ -128,7 +193,11 @@ func (req *Request) Destroy() {
 	req.RemoteAddr = ""
 	req.Host = ""
 	req.Header.Destroy()
+	req.URL = nil
+	req.Form = nil
+	req.MultipartForm = nil
 }
+
 func (resp *Response) SetResponse(r ServerResponse) {
 	resp.Out.Server = r
 	if h, e := r.Get(HTTP_SERVER_HEADER); e == nil {
@@ -158,7 +227,7 @@ func (r *Request) Referer() string {
 	return r.Header.Get("Referer")
 }
 func (r *Request) GetHttpHeader(key string) string {
-	return r.Header.Get("Referer")
+	return r.Header.Get(key)
 }
 
 func (r *Request) GetValue(key int) (value interface{}) {
@@ -187,6 +256,7 @@ func (resp *Response) SetStatus(statusCode int) {
 	}
 
 }
+
 func (resp *Response) GetWriter() (writer io.Writer) {
 	writer = resp.writer
 	if writer == nil {
@@ -194,6 +264,7 @@ func (resp *Response) GetWriter() (writer io.Writer) {
 			writer, resp.writer = w.(io.Writer), w.(io.Writer)
 		}
 	}
+
 	return
 }
 func (resp *Response) SetWriter(writer io.Writer) bool {
@@ -268,7 +339,7 @@ func ResolveContentType(req *Request) string {
 // returning a default of "html" when Accept header cannot be mapped to a
 // value above.
 func ResolveFormat(req *Request) string {
-	ext := strings.ToLower(filepath.Ext(req.URL.Path))
+	ext := strings.ToLower(filepath.Ext(req.GetPath()))
 	switch ext {
 	case ".html":
 		return "html"
@@ -280,7 +351,7 @@ func ResolveFormat(req *Request) string {
 		return "txt"
 	}
 
-	accept := req.Header.Get("accept")
+	accept := req.GetHttpHeader("accept")
 
 	switch {
 	case accept == "",

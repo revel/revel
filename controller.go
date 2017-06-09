@@ -57,6 +57,7 @@ func (c *Controller) SetController(context ServerContext) {
 
 	c.Request.SetRequest(context.GetRequest())
 	c.Response.SetResponse(context.GetResponse())
+	c.Request.controller = c
 	c.Params = new(Params)
 	c.Args = map[string]interface{}{}
 	c.ViewArgs = map[string]interface{}{
@@ -81,6 +82,7 @@ func (c *Controller) Destroy() {
 		cachedControllerMap[c.Name].Push(appController)
 		c.AppController = nil
 	}
+
 	c.Request.Destroy()
 	c.Response.Destroy()
 	c.Params = nil

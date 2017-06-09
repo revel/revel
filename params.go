@@ -39,32 +39,30 @@ type Params struct {
 
 // ParseParams parses the `http.Request` params into `revel.Controller.Params`
 func ParseParams(params *Params, req *Request) {
-	params.Query = req.URL.Query()
+	params.Query = req.GetQuery()
 
 	// Parse the body depending on the content type.
 	switch req.ContentType {
 	case "application/x-www-form-urlencoded":
 		// Typical form.
-		if err := req.ParseForm(); err != nil {
+		var err error
+		if params.Form, err = req.GetForm(); err != nil {
 			WARN.Println("Error parsing request body:", err)
-		} else {
-			params.Form = req.Form
 		}
 
 	case "multipart/form-data":
 		// Multipart form.
-		// TODO: Extract the multipart form param so app can set it.
-		if err := req.ParseMultipartForm(32 << 20 /* 32 MB */); err != nil {
+		if mp, err := req.GetMultipartForm(); err != nil {
 			WARN.Println("Error parsing request body:", err)
 		} else {
-			params.Form = req.MultipartForm.Value
-			params.Files = req.MultipartForm.File
+			params.Form = mp.GetValue()
+			params.Files = mp.GetFile()
 		}
 	case "application/json":
 		fallthrough
 	case "text/json":
-		if req.Body != nil {
-			if content, err := ioutil.ReadAll(req.Body); err == nil {
+		if body := req.GetBody(); body != nil {
+			if content, err := ioutil.ReadAll(body); err == nil {
 				// We wont bind it until we determine what we are binding too
 				params.JSON = content
 			} else {
@@ -140,7 +138,7 @@ func (p *Params) calcValues() url.Values {
 	// order of priority is least to most trusted
 	values := make(url.Values, numParams)
 
-	// ?query vars first
+	// ?query vars are first
 	for k, v := range p.Query {
 		values[k] = append(values[k], v...)
 	}
@@ -149,6 +147,7 @@ func (p *Params) calcValues() url.Values {
 	for k, v := range p.Form {
 		values[k] = append(values[k], v...)
 	}
+
 	// :/path vars overwrite
 	for k, v := range p.Route {
 		values[k] = v

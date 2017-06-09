@@ -16,7 +16,7 @@ import (
 // Register the GOHttpServer engine
 
 func init() {
-	RegisterServerEngine(&GOHttpServer{})
+	RegisterServerEngine(GO_NATIVE_SERVER_ENGINE, func() ServerEngine { return &GOHttpServer{} })
 }
 
 type GOHttpServer struct {
@@ -202,7 +202,7 @@ func (r *GORequest) Get(key int) (value interface{}, err error) {
 	case HTTP_FORM:
 		value, err = r.GetForm()
 	case HTTP_REQUEST_URI:
-		value = r.Original.URL.RequestURI()
+		value = r.Original.URL.String()
 	case HTTP_REMOTE_ADDR:
 		value = r.Original.RemoteAddr
 	case HTTP_METHOD:
@@ -230,6 +230,7 @@ func (r *GORequest) GetForm() (url.Values, error) {
 		}
 		r.FormParsed = true
 	}
+
 	return r.Original.Form, nil
 }
 func (r *GORequest) GetMultipartForm() (ServerMultipartForm, error) {
@@ -277,6 +278,9 @@ func (r *GOResponse) Get(key int) (value interface{}, err error) {
 }
 func (r *GOResponse) Set(key int, value interface{}) (set bool) {
 	switch key {
+	case ENGINE_RESPONSE_STATUS:
+		r.Header().SetStatus(value.(int))
+		set = true
 	case HTTP_WRITER:
 		r.SetWriter(value.(io.Writer))
 		set = true
@@ -404,9 +408,9 @@ func (f *GOMultipartForm) GetValue() url.Values {
 func (f *GOMultipartForm) RemoveAll() error {
 	return f.Form.RemoveAll()
 }
-func (g *GOWebsocket) MessageSendJson(v interface{}) error {
+func (g *GOWebsocket) MessageSendJSON(v interface{}) error {
 	return websocket.JSON.Send(g.Conn, v)
 }
-func (g *GOWebsocket) MessageReceiveJson(v interface{}) error {
+func (g *GOWebsocket) MessageReceiveJSON(v interface{}) error {
 	return websocket.Message.Receive(g.Conn, v)
 }

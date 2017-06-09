@@ -15,14 +15,14 @@ var (
 	MainRouter         *Router
 	MainTemplateLoader *TemplateLoader
 	MainWatcher        *Watcher
-	serverEngineMap    = map[string]ServerEngine{}
+	serverEngineMap    = map[string]func() ServerEngine{}
 	CurrentEngine      ServerEngine
 	ServerEngineInit   *EngineInit
 )
 
-func RegisterServerEngine(newEngine ServerEngine) {
-	INFO.Printf("Registered engine %s", newEngine.Name())
-	serverEngineMap[newEngine.Name()] = newEngine
+func RegisterServerEngine(name string, loader func() ServerEngine) {
+	INFO.Printf("Registered engine %s", name)
+	serverEngineMap[name] = loader
 }
 
 // InitServer initializes the server and returns the handler
@@ -91,10 +91,10 @@ func InitServerEngine(port int, serverEngine string) {
 		localAddress = address + ":" + strconv.Itoa(port)
 	}
 
-	var ok bool
-	if CurrentEngine, ok = serverEngineMap[serverEngine]; !ok {
+	if engineLoader, ok := serverEngineMap[serverEngine]; !ok {
 		panic("Server Engine " + serverEngine + " Not found")
 	} else {
+		CurrentEngine = engineLoader()
 		TRACE.Println("Found server engine and invoking", CurrentEngine.Name())
 		ServerEngineInit = &EngineInit{
 			Address:  localAddress,
