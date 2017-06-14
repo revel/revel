@@ -256,8 +256,8 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 		Params:         map[string][]string{"id": {"123"}},
 	},
 }
-
 func TestRouteMatches(t *testing.T) {
+	initControllers()
 	BasePath = "/BasePath"
 	router := NewRouter("")
 	router.Routes, _ = parseRoutes("", "", TestRoutes, false)
@@ -342,7 +342,16 @@ var reverseRoutingTestCases = map[*ReverseRouteArgs]*ActionDefinition{
 	},
 }
 
+type testController struct {
+	*Controller
+}
+func initControllers() {
+	controllers["implicit"] = &ControllerType{}
+	controllers["static"] = &ControllerType{}
+	controllers["application"] = &ControllerType{}
+}
 func TestReverseRouting(t *testing.T) {
+	initControllers()
 	router := NewRouter("")
 	router.Routes, _ = parseRoutes("", "", TestRoutes, false)
 	for routeArgs, expected := range reverseRoutingTestCases {

@@ -7,6 +7,7 @@ package revel
 import (
 	"errors"
 	"fmt"
+	"go/build"
 	"io"
 	"net/http"
 	"os"
@@ -131,7 +132,7 @@ func (c *Controller) RenderTemplate(templatePath string) Result {
 	}
 
 	return &RenderTemplateResult{
-		Template:   template,
+		Template: template,
 		ViewArgs: c.ViewArgs,
 	}
 }
@@ -364,6 +365,7 @@ func findControllers(appControllerType reflect.Type) (indexes [][]int) {
 // Controller registry and types.
 
 type ControllerType struct {
+	ModuleSource      *Module // The module for the controller
 	Type              reflect.Type
 	Methods           []*MethodType
 	ControllerIndexes [][]int // FieldByIndex to all embedded *Controllers
@@ -398,8 +400,7 @@ var controllers = make(map[string]*ControllerType)
 func RegisterController(c interface{}, methods []*MethodType) {
 	// De-star the controller type
 	// (e.g. given TypeOf((*Application)(nil)), want TypeOf(Application))
-	t := reflect.TypeOf(c)
-	elem := t.Elem()
+	elem := reflect.TypeOf(c).Elem()
 
 	// De-star all of the method arg types too.
 	for _, m := range methods {
@@ -408,8 +409,27 @@ func RegisterController(c interface{}, methods []*MethodType) {
 			arg.Type = arg.Type.Elem()
 		}
 	}
+	path := elem.PkgPath()
+	gopathList := filepath.SplitList(build.Default.GOPATH)
+	var controllerModule *Module
+
+	// See if the path exists in the module based
+	for i := range Modules {
+		found := false
+		for _, gopath := range gopathList {
+			if strings.HasPrefix(gopath+"/src/"+path, Modules[i].Path) {
+				controllerModule = Modules[i]
+				found = true
+				break
+			}
+		}
+		if found {
+			break
+		}
+	}
 
 	controllers[strings.ToLower(elem.Name())] = &ControllerType{
+		ModuleSource:      controllerModule,
 		Type:              elem,
 		Methods:           methods,
 		ControllerIndexes: findControllers(elem),

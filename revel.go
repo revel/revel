@@ -70,7 +70,7 @@ var (
 	// 3. user supplied configs (...) - User configs can override/add any from above
 	ConfPaths []string
 
-	Modules []Module
+	Modules []*Module
 
 	// Server config.
 	//
@@ -399,7 +399,7 @@ func ResolveImportPath(importPath string) (string, error) {
 }
 
 func addModule(name, importPath, modulePath string) {
-	Modules = append(Modules, Module{Name: name, ImportPath: importPath, Path: modulePath})
+	Modules = append(Modules, &Module{Name: name, ImportPath: importPath, Path: modulePath})
 	if codePath := filepath.Join(modulePath, "app"); DirExists(codePath) {
 		CodePaths = append(CodePaths, codePath)
 		if viewsPath := filepath.Join(modulePath, "app", "views"); DirExists(viewsPath) {
@@ -422,13 +422,13 @@ func addModule(name, importPath, modulePath string) {
 }
 
 // ModuleByName returns the module of the given name, if loaded.
-func ModuleByName(name string) (m Module, found bool) {
+func ModuleByName(name string) (m *Module, found bool) {
 	for _, module := range Modules {
 		if module.Name == name {
 			return module, true
 		}
 	}
-	return Module{}, false
+	return nil, false
 }
 
 // CheckInit method checks `revel.Initialized` if not initialized it panics

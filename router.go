@@ -15,7 +15,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/robfig/pathtree"
+	"github.com/revel/pathtree"
 )
 
 const (
@@ -23,6 +23,7 @@ const (
 )
 
 type Route struct {
+	ModuleSource   *Module  // Module name of route
 	Method         string   // e.g. GET
 	Path           string   // e.g. /app/:id
 	Action         string   // e.g. "Application.ShowApp", "404"
@@ -89,12 +90,13 @@ func treePath(method, path string) string {
 type Router struct {
 	Routes []*Route
 	Tree   *pathtree.Node
+	Module string // The module the route is associated with
 	path   string // path to the routes file
 }
 
 var notFound = &RouteMatch{Action: "404"}
 
-func (router *Router) Route(req *http.Request) *RouteMatch {
+func (router *Router) Route(req *http.Request) (routeMatch *RouteMatch) {
 	// Override method if set in header
 	if method := req.Header.Get("X-HTTP-Method-Override"); method != "" && req.Method == "POST" {
 		req.Method = method
@@ -104,7 +106,8 @@ func (router *Router) Route(req *http.Request) *RouteMatch {
 	if leaf == nil {
 		return nil
 	}
-	route := leaf.Value.(*Route)
+	routeList := leaf.Value.([]*Route)
+	INFO.Printf("Found route %s %#v",req.URL.Path,routeList)
 
 	// Create a map of the route parameters.
 	var params url.Values
@@ -114,27 +117,51 @@ func (router *Router) Route(req *http.Request) *RouteMatch {
 			params[leaf.Wildcards[i]] = []string{v}
 		}
 	}
+	var route *Route
+	var controllerName string
+	for index := range routeList {
+		route = routeList[index]
+		// Special handling for explicit 404's.
+		if route.Action == httpStatusCode {
+			route = nil
+			break
+		}
 
-	// Special handling for explicit 404's.
-	if route.Action == httpStatusCode {
-		return notFound
+		// If the action is variablized, replace into it with the captured args.
+		controllerName = route.ControllerName
+		if controllerName[0] == ':' {
+			controllerName = params[controllerName[1:]][0]
+
+			// Check that the controller comes from a matching route
+			if controller, found := controllers[strings.ToLower(controllerName)]; found {
+
+				if route.ModuleSource == controller.ModuleSource {
+					break
+				}
+			}
+		} else {
+			break
+		}
+		route = nil
 	}
 
-	// If the action is variablized, replace into it with the captured args.
-	controllerName, methodName := route.ControllerName, route.MethodName
-	if controllerName[0] == ':' {
-		controllerName = params[controllerName[1:]][0]
-	}
-	if methodName[0] == ':' {
-		methodName = params[methodName[1:]][0]
+	if route ==nil {
+		routeMatch = notFound
+	} else {
+		methodName := route.MethodName
+		if methodName[0] == ':' {
+			methodName = params[methodName[1:]][0]
+		}
+
+		routeMatch = &RouteMatch{
+			ControllerName: controllerName,
+			MethodName:     methodName,
+			Params:         params,
+			FixedParams:    route.FixedParams,
+		}
 	}
 
-	return &RouteMatch{
-		ControllerName: controllerName,
-		MethodName:     methodName,
-		Params:         params,
-		FixedParams:    route.FixedParams,
-	}
+	return
 }
 
 // Refresh re-reads the routes file and re-calculates the routing table.
@@ -150,17 +177,32 @@ func (router *Router) Refresh() (err *Error) {
 
 func (router *Router) updateTree() *Error {
 	router.Tree = pathtree.New()
+	pathMap := map[string][]*Route{}
+
+	allPathsOrdered := []string{}
+	// It is possible for some route paths to overlap
+	// based on wildcard matches,
+	// TODO when pathtree is fixed (made to be smart enough to not require a predefined intake order) keeping the routes in order is not necessary
 	for _, route := range router.Routes {
-		err := router.Tree.Add(route.TreePath, route)
+		if _,found := pathMap[route.TreePath];!found {
+			pathMap[route.TreePath] = append(pathMap[route.TreePath], route)
+			allPathsOrdered = append(allPathsOrdered, route.TreePath)
+		} else {
+			pathMap[route.TreePath] = append(pathMap[route.TreePath], route)
+		}
+	}
+	for _,path := range allPathsOrdered {
+		routeList := pathMap[path]
+		err := router.Tree.Add(path, routeList)
 
 		// Allow GETs to respond to HEAD requests.
-		if err == nil && route.Method == "GET" {
-			err = router.Tree.Add(treePath("HEAD", route.Path), route)
+		if err == nil && routeList[0].Method == "GET" {
+			err = router.Tree.Add(treePath("HEAD", routeList[0].Path), routeList)
 		}
 
 		// Error adding a route to the pathtree.
 		if err != nil {
-			return routeError(err, route.routesPath, "", route.line)
+			return routeError(err, path, fmt.Sprintf("%#v",routeList), routeList[0].line)
 		}
 	}
 	return nil
@@ -291,7 +333,7 @@ func routeError(err error, routesPath, content string, n int) *Error {
 
 // getModuleRoutes loads the routes file for the given module and returns the
 // list of routes.
-func getModuleRoutes(moduleName, joinedPath string, validate bool) ([]*Route, *Error) {
+func getModuleRoutes(moduleName, joinedPath string, validate bool) (routes []*Route, err *Error) {
 	// Look up the module.  It may be not found due to the common case of e.g. the
 	// testrunner module being active only in dev mode.
 	module, found := ModuleByName(moduleName)
@@ -299,7 +341,14 @@ func getModuleRoutes(moduleName, joinedPath string, validate bool) ([]*Route, *E
 		INFO.Println("Skipping routes for inactive module", moduleName)
 		return nil, nil
 	}
-	return parseRoutesFile(filepath.Join(module.Path, "conf", "routes"), joinedPath, validate)
+	routes, err = parseRoutesFile(filepath.Join(module.Path, "conf", "routes"), joinedPath, validate)
+	if err == nil {
+		for _, route := range routes {
+			route.ModuleSource = module
+		}
+	}
+
+	return routes,err
 }
 
 // Groups:
@@ -366,6 +415,20 @@ func (router *Router) Reverse(action string, argValues map[string]string) *Actio
 		}
 		if methodWildcard {
 			argValues[route.MethodName[1:]] = methodName
+		}
+
+		// Constraint match - wildcard matches can only be made by the same module that created them
+		if controllerWildcard || methodWildcard {
+			if controller, found := controllers[strings.ToLower(controllerName)]; found {
+				// Wildcard match boundary
+				if controller.ModuleSource != route.ModuleSource {
+					continue
+				}
+				// See if the path exists in the module based
+			} else {
+				ERROR.Printf("Controller %s not found in reverse lookup", controllerName)
+				continue
+			}
 		}
 
 		// Build up the URL.
