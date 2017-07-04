@@ -64,22 +64,22 @@ func testInterceptorController(t *testing.T, appControllerPtr reflect.Value, met
 	for _, m := range methods {
 		InterceptMethod(m, BEFORE)
 	}
-	ints := getInterceptors(BEFORE, appControllerPtr)
+	entries := getInterceptorEntries(BEFORE, appControllerPtr)
 
-	if len(ints) != 6 {
-		t.Fatalf("N: Expected 6 interceptors, got %d.", len(ints))
+	if len(entries) != 6 {
+		t.Fatalf("N: Expected 6 interceptors, got %d.", len(entries))
 	}
 
-	testInterception(t, ints[0], reflect.ValueOf(&Controller{}))
-	testInterception(t, ints[1], reflect.ValueOf(&Controller{}))
+	testInterception(t, entries[0], reflect.ValueOf(&Controller{}))
+	testInterception(t, entries[1], reflect.ValueOf(&Controller{}))
 	for i := range methods {
-		testInterception(t, ints[i+2], appControllerPtr)
+		testInterception(t, entries[i+2], appControllerPtr)
 	}
 }
 
-func testInterception(t *testing.T, intc *Interception, arg reflect.Value) {
-	val := intc.Invoke(arg)
+func testInterception(t *testing.T, entry *interceptionEntry, arg reflect.Value) {
+	val := entry.intc.Invoke(arg, entry.target)
 	if !val.IsNil() {
-		t.Errorf("Failed (%v): Expected nil got %v", intc, val)
+		t.Errorf("Failed (%v): Expected nil got %v", entry.intc, val)
 	}
 }
