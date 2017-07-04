@@ -27,6 +27,9 @@ var (
 
 // This method handles all requests.  It dispatches to handleInternal after
 // handling / adapting websocket connections.
+func Handle(w http.ResponseWriter, r *http.Request) {
+	handle(w, r)
+}
 func handle(w http.ResponseWriter, r *http.Request) {
 	if maxRequestSize := int64(Config.IntDefault("http.maxrequestsize", 0)); maxRequestSize > 0 {
 		r.Body = http.MaxBytesReader(w, r.Body, maxRequestSize)

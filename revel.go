@@ -16,7 +16,6 @@ import (
 
 	"github.com/agtorre/gocolorize"
 	"github.com/revel/config"
-	"sort"
 )
 
 const (
@@ -28,6 +27,11 @@ const (
 	TEMPLATE_REFRESH_REQUESTED = iota
 	// Called when templates are refreshed (receivers are registered template engines added to the template.engine conf option)
 	TEMPLATE_REFRESH_COMPLETED
+
+	// Called before routes are refreshed
+	ROUTE_REFRESH_REQUESTED
+	// Called after routes have been refreshed
+	ROUTE_REFRESH_COMPLETED
 
 )
 type revelLogs struct {
@@ -349,40 +353,6 @@ func findSrcPaths(importPath string) (revelSourcePath, appSourcePath string) {
 	return revelPkg.SrcRoot, appPkg.SrcRoot
 }
 
-type Module struct {
-	Name, ImportPath, Path string
-}
-
-func loadModules() {
-	keys := []string{}
-	for _, key := range Config.Options("module.") {
-		keys = append(keys, key)
-	}
-	// Reorder module order by key name, a poor mans sort but at least it is consistent
-	sort.Strings(keys)
-	for _, key := range keys {
-		println("Sorted keys", key)
-
-	}
-	for _, key := range keys {
-		moduleImportPath := Config.StringDefault(key, "")
-		if moduleImportPath == "" {
-			continue
-		}
-
-		modulePath, err := ResolveImportPath(moduleImportPath)
-		if err != nil {
-			log.Fatalln("Failed to load module.  Import of", moduleImportPath, "failed:", err)
-		}
-		// Drop anything between module.???.<name of module>
-		subKey := key[len("module."):]
-		if index := strings.Index(subKey, "."); index > -1 {
-			subKey = subKey[index+1:]
-		}
-
-		addModule(subKey, moduleImportPath, modulePath)
-	}
-}
 
 // ResolveImportPath returns the filesystem path for the given import path.
 // Returns an error if the import path could not be found.

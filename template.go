@@ -184,8 +184,8 @@ func (loader *TemplateLoader) Refresh() (err *Error) {
 	return loader.compileError
 }
 
-// WatchDir returns true of directory doesn't start with . (dot)
-// otherwise false
+// Checks to see if template exists in templatePaths, if so it is skipped (templates are imported in order
+// reads the template file into memory, replaces namespace keys with module (if found
 func (loader *TemplateLoader) findAndAddTemplate(path, fullSrcDir, basePath string) (fileBytes []byte, err error) {
 	templateName := filepath.ToSlash(path[len(fullSrcDir)+1:])
 	// Convert template names to use forward slashes, even on Windows.
@@ -205,6 +205,12 @@ func (loader *TemplateLoader) findAndAddTemplate(path, fullSrcDir, basePath stri
 		ERROR.Println("Failed reading file:", path)
 		return
 	}
+	// Parse template file and replace the "_RNS_|" in the template with the module name
+	// allow for namespaces to be renamed "_RNS_(.*?)|"
+	if module := ModuleFromPath(path, false);module != nil {
+		fileBytes = namespaceReplace(fileBytes, module)
+	}
+
 	// if we have an engine picked for this template process it now
 	baseTemplate := NewBaseTemplate(templateName, path, basePath, fileBytes)
 
