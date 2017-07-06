@@ -40,6 +40,9 @@ type Controller struct {
 	Validation *Validation            // Data validation helpers
 }
 
+// The map of controllers, controllers are mapped by using the namespace|controller_name as the key
+var controllers = make(map[string]*ControllerType)
+
 // NewController returns new controller instance for Request and Response
 func NewController(req *Request, resp *Response) *Controller {
 	return &Controller{
@@ -285,9 +288,18 @@ func (c *Controller) Message(message string, args ...interface{}) (value string)
 // It sets the following properties: Name, Action, Type, MethodType
 func (c *Controller) SetAction(controllerName, methodName string) error {
 
+	return c.SetTypeAction(controllerName, methodName, nil)
+}
+// SetAction sets the assigns the Controller type, sets the action and initializes the controller
+func (c *Controller) SetTypeAction(controllerName, methodName string, typeOfController *ControllerType) error {
+
 	// Look up the controller and method types.
-	if c.Type = ControllerTypeByName(controllerName, anyModule); c.Type==nil {
-		return errors.New("revel/controller: failed to find controller " + controllerName)
+	if typeOfController== nil {
+		if c.Type = ControllerTypeByName(controllerName, anyModule); c.Type == nil {
+			return errors.New("revel/controller: failed to find controller " + controllerName)
+		}
+	} else {
+		c.Type = typeOfController
 	}
 
 	// Note method name is case insensitive search
@@ -303,6 +315,7 @@ func (c *Controller) SetAction(controllerName, methodName string) error {
 
 	return nil
 }
+
 func ControllerTypeByName(controllerName string, moduleSource *Module) (c *ControllerType) {
 	var found bool
 	if c, found = controllers[controllerName]; !found {
@@ -413,6 +426,8 @@ type MethodArg struct {
 	Type reflect.Type
 }
 
+// Adds the controller to the controllers map using its namespace, also adds it to the module list of controllers.
+// If the controller is in the main application it is added without its namespace as well.
 func AddControllerType(moduleSource *Module,controllerType reflect.Type,methods []*MethodType) (newControllerType *ControllerType) {
 	if moduleSource==nil {
 		moduleSource = appModule
@@ -448,17 +463,15 @@ func (ct *ControllerType) Method(name string) *MethodType {
 	return nil
 }
 
-// The controller name without the namespace
+// The controller name with the namespace
 func (ct *ControllerType) Name() (string) {
 	return ct.Namespace + ct.ShortName()
 }
 
-// The controller name with the namespace
+// The controller name without the namespace
 func (ct *ControllerType) ShortName() (string) {
 	return strings.ToLower(ct.Type.Name())
 }
-
-var controllers = make(map[string]*ControllerType)
 
 // RegisterController registers a Controller and its Methods with Revel.
 func RegisterController(c interface{}, methods []*MethodType) {

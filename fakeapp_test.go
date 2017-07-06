@@ -126,6 +126,14 @@ func registerControllers() {
 				},
 				RenderArgNames: map[int][]string{},
 			},
+			{
+				Name: "Index",
+				Args: []*MethodArg{
+					{Name: "foo", Type: reflect.TypeOf((*string)(nil))},
+					{Name: "bar", Type: reflect.TypeOf((*string)(nil))},
+				},
+				RenderArgNames: map[int][]string{},
+			},
 		})
 }
 func startFakeBookingApp() {

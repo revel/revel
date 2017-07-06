@@ -74,8 +74,6 @@ var (
 	// 3. user supplied configs (...) - User configs can override/add any from above
 	ConfPaths []string
 
-	Modules []*Module
-
 	// Server config.
 	//
 	// Alert: This is how the app is configured, which may be different from
@@ -366,39 +364,6 @@ func ResolveImportPath(importPath string) (string, error) {
 		return "", err
 	}
 	return modPkg.Dir, nil
-}
-
-func addModule(name, importPath, modulePath string) {
-	Modules = append(Modules, &Module{Name: name, ImportPath: importPath, Path: modulePath})
-	if codePath := filepath.Join(modulePath, "app"); DirExists(codePath) {
-		CodePaths = append(CodePaths, codePath)
-		if viewsPath := filepath.Join(modulePath, "app", "views"); DirExists(viewsPath) {
-			TemplatePaths = append(TemplatePaths, viewsPath)
-		}
-	}
-
-	INFO.Print("Loaded module ", filepath.Base(modulePath))
-
-	// Hack: There is presently no way for the testrunner module to add the
-	// "test" subdirectory to the CodePaths.  So this does it instead.
-	if importPath == Config.StringDefault("module.testrunner", "github.com/revel/modules/testrunner") {
-		INFO.Print("Found testrunner module, adding `tests` path ", filepath.Join(BasePath, "tests"))
-		CodePaths = append(CodePaths, filepath.Join(BasePath, "tests"))
-	}
-	if testsPath := filepath.Join(modulePath, "tests"); DirExists(testsPath) {
-		INFO.Print("Found tests path ", testsPath)
-		CodePaths = append(CodePaths, testsPath)
-	}
-}
-
-// ModuleByName returns the module of the given name, if loaded.
-func ModuleByName(name string) (m *Module, found bool) {
-	for _, module := range Modules {
-		if module.Name == name {
-			return module, true
-		}
-	}
-	return nil, false
 }
 
 // CheckInit method checks `revel.Initialized` if not initialized it panics

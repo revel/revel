@@ -7,14 +7,14 @@ import (
 
 // Module matching template syntax allows for modules to replace this text with the name of the module declated on import
 // this allows the reverse router to use correct syntax
-// Match _RNS_.static| or  _RNS_|
-var namespaceReplacment, _ = regexp.Compile(`(_RNS_)(\.(.*?))?\|`)
+// Match _RNS_.static or  _RNS_|
+var namespaceReplacement = regexp.MustCompile(`(_RNS_)(\.(.*?))?\|`)
 
 // Function to replace the bytes data that may match the _RNS_ namespace specifier,
 // the replacement will be the current module.Name
 func namespaceReplace(fileBytes []byte, module *Module) ([]byte){
 	newBytes, lastIndex  := &bytes.Buffer{}, 0
-	matches := namespaceReplacment.FindAllSubmatchIndex(fileBytes,-1)
+	matches := namespaceReplacement.FindAllSubmatchIndex(fileBytes,-1)
 	for _, match := range matches {
 		// Write up to first bytes
 		newBytes.Write(fileBytes[lastIndex:match[0]])

@@ -20,40 +20,44 @@ import (
 )
 
 const (
-	httpStatusCode     = "404"
+	httpStatusCode = "404"
 )
 
 type Route struct {
-	ModuleSource        *Module  // Module name of route
-	Method              string   // e.g. GET
-	Path                string   // e.g. /app/:id
-	Action              string   // e.g. "Application.ShowApp", "404"
-	ControllerNamespace string   // e.g. "testmodule.",
-	ControllerName      string   // e.g. "Application", ""
-	MethodName          string   // e.g. "ShowApp", ""
-	FixedParams         []string // e.g. "arg1","arg2","arg3" (CSV formatting)
-	TreePath            string   // e.g. "/GET/app/:id"
+	ModuleSource        *Module         // Module name of route
+	Method              string          // e.g. GET
+	Path                string          // e.g. /app/:id
+	Action              string          // e.g. "Application.ShowApp", "404"
+	ControllerNamespace string          // e.g. "testmodule.",
+	ControllerName      string          // e.g. "Application", ""
+	MethodName          string          // e.g. "ShowApp", ""
+	FixedParams         []string        // e.g. "arg1","arg2","arg3" (CSV formatting)
+	TreePath            string          // e.g. "/GET/app/:id"
+	TypeOfController    *ControllerType // The controller type (if route is not wild carded)
 
 	routesPath string // e.g. /Users/robfig/gocode/src/myapp/conf/routes
 	line       int    // e.g. 3
 }
 
 type RouteMatch struct {
-	Action         string // e.g. 404
-	ControllerName string // e.g. Application
-	MethodName     string // e.g. ShowApp
-	FixedParams    []string
-	Params         map[string][]string // e.g. {id: 123}
+	Action           string // e.g. 404
+	ControllerName   string // e.g. Application
+	MethodName       string // e.g. ShowApp
+	FixedParams      []string
+	Params           map[string][]string // e.g. {id: 123}
+	TypeOfController *ControllerType     // The controller type
 }
 
 type ActionPathData struct {
-	ControllerNamespace string
-	ControllerName string
-	MethodName string
-	Action string
-	ModuleSource *Module
-	Route *Route
-	TypeOfController *ControllerType
+	Key                 string            // The unique key
+	ControllerNamespace string            // The controller namespace
+	ControllerName      string            // The controller name
+	MethodName          string            // The method name
+	Action              string            // The action
+	ModuleSource        *Module           // The module
+	Route               *Route            // The route
+	FixedParamsByName   map[string]string // The fixed parameters
+	TypeOfController    *ControllerType   // The controller type
 }
 
 var (
@@ -65,9 +69,8 @@ var (
 	notFound = &RouteMatch{Action: "404"}
 )
 
-
 func init() {
-	AddInitEventHandler(func(typeOf int, value interface{}) (responseOf int){
+	AddInitEventHandler(func(typeOf int, value interface{}) (responseOf int) {
 		// Add in an
 		if typeOf == ROUTE_REFRESH_REQUESTED {
 			// Clear the actionPathCacheMap cache
@@ -82,7 +85,7 @@ func init() {
 // NewRoute prepares the route to be used in matching.
 func NewRoute(moduleSource *Module, method, path, action, fixedArgs, routesPath string, line int) (r *Route) {
 	// Handle fixed arguments
-	argsReader := strings.NewReader(fixedArgs)
+	argsReader := strings.NewReader(string(namespaceReplace([]byte(fixedArgs), moduleSource)))
 	csv := csv.NewReader(argsReader)
 	csv.TrimLeadingSpace = true
 	fargs, err := csv.Read()
@@ -94,7 +97,7 @@ func NewRoute(moduleSource *Module, method, path, action, fixedArgs, routesPath 
 		ModuleSource: moduleSource,
 		Method:       strings.ToUpper(method),
 		Path:         path,
-		Action:       action,
+		Action:       string(namespaceReplace([]byte(action), moduleSource)),
 		FixedParams:  fargs,
 		TreePath:     treePath(strings.ToUpper(method), path),
 		routesPath:   routesPath,
@@ -109,19 +112,32 @@ func NewRoute(moduleSource *Module, method, path, action, fixedArgs, routesPath 
 
 	// Ignore the not found status code
 	if action != httpStatusCode {
-		action = string(namespaceReplace([]byte(action),moduleSource))
-		pathData, found := splitActionPath(&ActionPathData{ModuleSource: moduleSource, Route:r}, action, false)
+		pathData, found := splitActionPath(&ActionPathData{ModuleSource: moduleSource, Route: r}, r.Action, false)
 		if found {
+			if pathData.TypeOfController != nil {
+				// Assign controller type to avoid looking it up based on name
+				r.TypeOfController = pathData.TypeOfController
+				// Create the fixed parameters
+				if l := len(pathData.Route.FixedParams); l > 0 && len(pathData.FixedParamsByName) == 0 {
+					methodType := pathData.TypeOfController.Method(pathData.MethodName)
+					if methodType != nil {
+						pathData.FixedParamsByName = make(map[string]string, l)
+						for i, argValue := range pathData.Route.FixedParams {
+							Unbind(pathData.FixedParamsByName, methodType.Args[i].Name, argValue)
+						}
+					} else {
+						ERROR.Panicf("Method %s not found for controller %s", pathData.MethodName, pathData.ControllerName)
+					}
+				}
+			}
 			r.ControllerNamespace = pathData.ControllerNamespace
 			r.ControllerName = pathData.ControllerName
 			r.ModuleSource = pathData.ModuleSource
 			r.MethodName = pathData.MethodName
+
 			// The same action path could be used for multiple routes (like the Static.Serve)
-			if pathData.Route == nil {
-				pathData.Route = r
-			}
 		} else {
-			ERROR.Panicf("Failed to find controller for route path action %s", path+"?"+action)
+			ERROR.Panicf("Failed to find controller for route path action %s \n%#v\n", path+"?"+r.Action,actionPathCacheMap)
 		}
 	}
 	return
@@ -164,11 +180,13 @@ func (router *Router) Route(req *http.Request) (routeMatch *RouteMatch) {
 			params[leaf.Wildcards[i]] = []string{v}
 		}
 	}
-	var route  *Route
+	var route *Route
 	var controllerName, methodName string
 
 	// The leaf value is now a list of possible routes to match, only a controller
 	routeList := leaf.Value.([]*Route)
+	var typeOfController *ControllerType
+
 	//INFO.Printf("Found route for path %s %#v", req.URL.Path, len(routeList))
 	for index := range routeList {
 		route = routeList[index]
@@ -189,10 +207,11 @@ func (router *Router) Route(req *http.Request) (routeMatch *RouteMatch) {
 		controllerName = route.ControllerName
 		if controllerName[0] == ':' {
 			controllerName = strings.ToLower(params[controllerName[1:]][0])
-			if route.ModuleSource.ControllerByName(controllerName, methodName)!=nil {
+			if route.ModuleSource.ControllerByName(controllerName, methodName) != nil {
 				break
 			}
 		} else {
+			typeOfController = route.TypeOfController
 			break
 		}
 		route = nil
@@ -203,10 +222,11 @@ func (router *Router) Route(req *http.Request) (routeMatch *RouteMatch) {
 	} else {
 
 		routeMatch = &RouteMatch{
-			ControllerName: route.ControllerNamespace + controllerName,
-			MethodName:     methodName,
-			Params:         params,
-			FixedParams:    route.FixedParams,
+			ControllerName:   route.ControllerNamespace + controllerName,
+			MethodName:       methodName,
+			Params:           params,
+			FixedParams:      route.FixedParams,
+			TypeOfController: typeOfController,
 		}
 	}
 
@@ -262,48 +282,74 @@ func (router *Router) updateTree() *Error {
 // Returns the controller namespace and name, action and module if found from the actionPath specified
 func splitActionPath(actionPathData *ActionPathData, actionPath string, useCache bool) (pathData *ActionPathData, found bool) {
 	actionPath = strings.ToLower(actionPath)
-	if pathData, found = actionPathCacheMap[actionPath];found && useCache {
+	if pathData, found = actionPathCacheMap[actionPath]; found && useCache {
 		return
 	}
-	var controllerNamespace, controllerName,methodName, action string
-	var foundModuleSource *Module
+	var (
+		controllerNamespace, controllerName, methodName, action string
+		foundModuleSource                                       *Module
+		typeOfController                                        *ControllerType
+	)
 	actionSplit := strings.Split(actionPath, ".")
+	if actionPathData!=nil {
+		foundModuleSource = actionPathData.ModuleSource
+	}
 	if len(actionSplit) == 2 {
-		controllerName, methodName = strings.ToLower(actionSplit[0]),strings.ToLower(actionSplit[1])
+		controllerName, methodName = strings.ToLower(actionSplit[0]), strings.ToLower(actionSplit[1])
+		if i := strings.Index(methodName, "("); i > 0 {
+			methodName = methodName[:i]
+		}
 		//INFO.Println("Check", controllerName,methodName)
 		if i := strings.Index(controllerName, namespaceSeperator); i > -1 {
-			controllerNamespace = controllerName[:i + 1]
+			controllerNamespace = controllerName[:i+1]
 			if moduleSource, found := ModuleByName(controllerNamespace[:len(controllerNamespace)-1]); found {
 				foundModuleSource = moduleSource
+				controllerNamespace = moduleSource.Namespace()
 			} else {
 				WARN.Printf("Unable to find module %s for action: %s", controllerNamespace[:len(controllerNamespace)-1], actionPath)
 			}
-			controllerName = controllerName[i + 1:]
-			found = true
-		} else if actionPathData != nil && actionPathData.ModuleSource!=nil {
+			controllerName = controllerName[i+1:]
+			// Check for the type of controller
+			typeOfController = foundModuleSource.ControllerByName(controllerName,methodName)
+			found = typeOfController != nil
+		} else if controllerName[0] != ':' {
+			// First attempt to find the controller in the module source
+			if foundModuleSource!=nil {
+				typeOfController = foundModuleSource.ControllerByName(controllerName,methodName)
+				if typeOfController!=nil {
+					controllerNamespace = typeOfController.Namespace
+				}
+			}
+
+			if typeOfController == nil {
+				// Check to see if we can determine the controller from only the controller name
+				// an actionPath without a moduleSource will only come from
+				// Scan through the controllers
+				matchName := controllerName
+				for key, controller := range controllers {
+					// Strip away the namespace from the controller. to be match
+					regularName := key
+					if i := strings.Index(key, "|"); i > -1 {
+						regularName = regularName[i+1:]
+					}
+					if regularName == matchName {
+						// Found controller match
+						typeOfController = controller
+						controllerNamespace = typeOfController.Namespace
+						controllerName = typeOfController.ShortName()
+						foundModuleSource = typeOfController.ModuleSource
+						found = true
+						break
+					}
+				}
+			} else {
+				found = true
+			}
+		} else {
+			// If wildcard assign the route the controller namespace found
 			controllerNamespace = actionPathData.ModuleSource.Name + namespaceSeperator
 			foundModuleSource = actionPathData.ModuleSource
 			found = true
-		} else {
-			// Check to see if we can determine the controller from only the controller name
-			// an actionPath without a moduleSource will only come from
-			// Scan through the controllers
-			matchName := controllerName
-			for key, controller := range controllers {
-				// Strip away the namespace from the controller. to be match
-				regularName := key
-				if i:= strings.Index(key,"|"); i>-1 {
-					regularName = regularName[i+1:]
-				}
-				if regularName == matchName {
-					// Found controller match
-					controllerNamespace = controller.Namespace
-					controllerName = regularName
-					foundModuleSource = controller.ModuleSource
-					found = true
-					break
-				}
-			}
 		}
 		action = actionSplit[1]
 	} else {
@@ -315,12 +361,13 @@ func splitActionPath(actionPathData *ActionPathData, actionPath string, useCache
 	if found {
 		actionPathCacheLock.Lock()
 		defer actionPathCacheLock.Unlock()
-		if actionPathData!=nil {
+		if actionPathData != nil {
 			actionPathData.ControllerNamespace = controllerNamespace
 			actionPathData.ControllerName = controllerName
 			actionPathData.MethodName = methodName
 			actionPathData.Action = action
 			actionPathData.ModuleSource = foundModuleSource
+			actionPathData.TypeOfController = typeOfController
 		} else {
 			actionPathData = &ActionPathData{
 				ControllerNamespace: controllerNamespace,
@@ -328,17 +375,28 @@ func splitActionPath(actionPathData *ActionPathData, actionPath string, useCache
 				MethodName:          methodName,
 				Action:              action,
 				ModuleSource:        foundModuleSource,
+				TypeOfController:    typeOfController,
 			}
 		}
-		actionPathData.TypeOfController = foundModuleSource.ControllerByName(controllerName,"")
-		if actionPathData.TypeOfController == nil {
-			WARN.Printf("Router: No controller found for %s %#v",foundModuleSource.Namespace()+controllerName,controllers)
+		actionPathData.TypeOfController = foundModuleSource.ControllerByName(controllerName, "")
+		if actionPathData.TypeOfController == nil && actionPathData.ControllerName[0]!=':' {
+			WARN.Printf("Router: No controller found for %s %#v", foundModuleSource.Namespace()+controllerName, controllers)
 		}
 
 		pathData = actionPathData
-		if actionPathData.Route!=nil {
-			INFO.Printf("Storing recognized action path %s for route  %#v ", actionPath, actionPathData.Route)
+		if pathData.Route != nil && len(pathData.Route.FixedParams) > 0 {
+			// If there are fixed params on the route then add them to the path
+			// This will give it a unique path and it should still be usable for a reverse lookup provided the name is matchable
+			// for example
+			// GET   /test/                     Application.Index("Test", "Test2")
+			// {{url "Application.Index(test,test)" }}
+			// should be parseable
+			actionPath = actionPath + "(" + strings.ToLower(strings.Join(pathData.Route.FixedParams, ",")) + ")"
 		}
+		if actionPathData.Route != nil {
+			TRACE.Printf("Split Storing recognized action path %s for route  %#v ", actionPath, actionPathData.Route)
+		}
+		pathData.Key = actionPath
 		actionPathCacheMap[actionPath] = pathData
 	}
 	return
@@ -447,7 +505,7 @@ func validateRoute(route *Route) error {
 	// TODO need to check later
 	// does it do only validation or validation and instantiate the controller.
 	var c Controller
-	return c.SetAction(route.ControllerNamespace+route.ControllerName, route.MethodName)
+	return c.SetTypeAction(route.ControllerNamespace+route.ControllerName, route.MethodName, route.TypeOfController)
 }
 
 // routeError adds context to a simple error message.
@@ -532,8 +590,9 @@ func (a *ActionDefinition) String() string {
 
 func (router *Router) Reverse(action string, argValues map[string]string) (ad *ActionDefinition) {
 	pathData, found := splitActionPath(nil, action, true)
+
 	if found {
-		if pathData.Route==nil {
+		if pathData.Route == nil {
 			var possibleRoute *Route
 			// If the route is nil then we need to go through the routes to find the first matching route
 			// from this controllers namespace, this is likely a wildcard route match
@@ -542,30 +601,30 @@ func (router *Router) Reverse(action string, argValues map[string]string) (ad *A
 				if route.ControllerName == "" || route.MethodName == "" {
 					continue
 				}
-				if route.ModuleSource==pathData.ModuleSource && route.ControllerName[0]==':' {
+				if route.ModuleSource == pathData.ModuleSource && route.ControllerName[0] == ':' {
 					// Wildcard match in same module space
 					pathData.Route = route
 					break
-				} else if route.ActionPath()==pathData.ModuleSource.Namespace() + pathData.ControllerName {
+				} else if route.ActionPath() == pathData.ModuleSource.Namespace()+pathData.ControllerName {
 					// Action path match
 					pathData.Route = route
 					break
-				} else if route.ControllerName==pathData.ControllerName {
+				} else if route.ControllerName == pathData.ControllerName {
 					// Controller name match
 					possibleRoute = route
 				}
 			}
 			if pathData.Route == nil && possibleRoute != nil {
 				pathData.Route = possibleRoute
-				WARN.Printf("For reverse action %s matched path route %#v",action,possibleRoute)
+				WARN.Printf("For reverse action %s matched path route %#v", action, possibleRoute)
 			}
-			if pathData.Route!=nil {
-				INFO.Printf("Storing recognized action path %s for route  %#v ", action, pathData.Route)
+			if pathData.Route != nil {
+				TRACE.Printf("Reverse Storing recognized action path %s for route %#v\n", action, pathData.Route)
 			}
 		}
 
 		// Likely unknown route because of a wildcard, perform manual lookup
-		if pathData.Route!=nil {
+		if pathData.Route != nil {
 			route := pathData.Route
 
 			// If the controller or method are wildcards we need to populate the argValues
@@ -583,7 +642,7 @@ func (router *Router) Reverse(action string, argValues map[string]string) (ad *A
 			// with wildcard routes
 			if pathData.TypeOfController == nil {
 				if controllerWildcard || methodWildcard {
-					if controller := ControllerTypeByName(pathData.ControllerNamespace+pathData.ControllerName, route.ModuleSource); controller!=nil {
+					if controller := ControllerTypeByName(pathData.ControllerNamespace+pathData.ControllerName, route.ModuleSource); controller != nil {
 						// Wildcard match boundary
 						pathData.TypeOfController = controller
 						// See if the path exists in the module based
@@ -599,8 +658,8 @@ func (router *Router) Reverse(action string, argValues map[string]string) (ad *A
 				return
 			}
 			var (
-				queryValues= make(url.Values)
-				pathElements= strings.Split(route.Path, "/")
+				queryValues  = make(url.Values)
+				pathElements = strings.Split(route.Path, "/")
 			)
 			for i, el := range pathElements {
 				if el == "" || (el[0] != ':' && el[0] != '*') {
@@ -666,7 +725,7 @@ func RouterFilter(c *Controller, fc []Filter) {
 	}
 
 	// Set the action.
-	if err := c.SetAction(route.ControllerName, route.MethodName); err != nil {
+	if err := c.SetTypeAction(route.ControllerName, route.MethodName, route.TypeOfController); err != nil {
 		c.Result = c.NotFound(err.Error())
 		return
 	}
