@@ -24,7 +24,7 @@ func ActionInvoker(c *Controller, _ []Filter) {
 		// If they accept a websocket connection, treat that arg specially.
 		var boundArg reflect.Value
 		if arg.Type.Implements(websocketType) {
-			boundArg = reflect.ValueOf(c.Request.Websocket)
+			boundArg = reflect.ValueOf(c.Request.WebSocket)
 		} else {
 			boundArg = Bind(c.Params, arg.Name, arg.Type)
 			// #756 - If the argument is a closer, defer a Close call,

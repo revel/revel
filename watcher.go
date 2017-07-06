@@ -56,7 +56,7 @@ func (w *Watcher) Listen(listener Listener, roots ...string) {
 	// Otherwise multiple change events only come out one at a time, across
 	// multiple page views.  (There appears no way to "pump" the events out of
 	// the watcher)
-	// This causes a notification when you do a check in GOLang, since you are modifying a buffer in use
+	// This causes a notification when you do a check in go, since you are modifying a buffer in use
 	watcher.Events = make(chan fsnotify.Event, 100)
 	watcher.Errors = make(chan error, 10)
 

@@ -13,13 +13,13 @@ import (
 	"strconv"
 )
 
-// Register the GOHttpServer engine
+// Register the GoHttpServer engine
 
 func init() {
-	RegisterServerEngine(GO_NATIVE_SERVER_ENGINE, func() ServerEngine { return &GOHttpServer{} })
+	RegisterServerEngine(GO_NATIVE_SERVER_ENGINE, func() ServerEngine { return &GoHttpServer{} })
 }
 
-type GOHttpServer struct {
+type GoHttpServer struct {
 	Server               *http.Server
 	ServerInit           *EngineInit
 	MaxMultipartSize     int64
@@ -27,16 +27,16 @@ type GOHttpServer struct {
 	goMultipartFormStack *SimpleLockStack
 }
 
-func (g *GOHttpServer) Init(init *EngineInit) {
+func (g *GoHttpServer) Init(init *EngineInit) {
 	g.MaxMultipartSize = int64(Config.IntDefault("server.request.max.multipart.filesize", 32)) << 20 /* 32 MB */
 	g.goContextStack = NewStackLock(Config.IntDefault("server.context.stack", 100),
 		Config.IntDefault("server.context.maxstack", 200),
 		func() interface{} {
-			return NewGOContext(g)
+			return NewGoContext(g)
 		})
 	g.goMultipartFormStack = NewStackLock(Config.IntDefault("server.form.stack", 100),
 		Config.IntDefault("server.form.maxstack", 200),
-		func() interface{} { return &GOMultipartForm{} })
+		func() interface{} { return &GoMultipartForm{} })
 	g.ServerInit = init
 	g.Server = &http.Server{
 		Addr: init.Address,
@@ -51,7 +51,7 @@ func (g *GOHttpServer) Init(init *EngineInit) {
 }
 
 // Handler is assigned in the Init
-func (g *GOHttpServer) Start() {
+func (g *GoHttpServer) Start() {
 	go func() {
 		time.Sleep(100 * time.Millisecond)
 		fmt.Printf("Listening on %s...\n", g.Server.Addr)
@@ -74,13 +74,13 @@ func (g *GOHttpServer) Start() {
 
 }
 
-func (g *GOHttpServer) Handle(w http.ResponseWriter, r *http.Request) {
+func (g *GoHttpServer) Handle(w http.ResponseWriter, r *http.Request) {
 	if maxRequestSize := int64(Config.IntDefault("http.maxrequestsize", 0)); maxRequestSize > 0 {
 		r.Body = http.MaxBytesReader(w, r.Body, maxRequestSize)
 	}
 
 	upgrade := r.Header.Get("Upgrade")
-	context := g.goContextStack.Pop().(*GOContext)
+	context := g.goContextStack.Pop().(*GoContext)
 	defer func() {
 		g.goContextStack.Push(context)
 	}()
@@ -95,7 +95,7 @@ func (g *GOHttpServer) Handle(w http.ResponseWriter, r *http.Request) {
 			}
 			r.Method = "WS"
 			context.Request.WebSocket = ws
-			context.WebSocket = &GOWebsocket{Conn: ws, GOResponse: *context.Response}
+			context.WebSocket = &GoWebSocket{Conn: ws, GoResponse: *context.Response}
 			g.ServerInit.Callback(context)
 		}).ServeHTTP(w, r)
 	} else {
@@ -105,93 +105,93 @@ func (g *GOHttpServer) Handle(w http.ResponseWriter, r *http.Request) {
 
 const GO_NATIVE_SERVER_ENGINE = "go"
 
-func (g *GOHttpServer) Name() string {
+func (g *GoHttpServer) Name() string {
 	return GO_NATIVE_SERVER_ENGINE
 }
 
-func (g *GOHttpServer) Stats() map[string]interface{} {
+func (g *GoHttpServer) Stats() map[string]interface{} {
 	return map[string]interface{}{
 		"Go Engine Context": g.goContextStack.String(),
 		"Go Engine Forms":   g.goMultipartFormStack.String(),
 	}
 }
 
-func (g *GOHttpServer) Engine() interface{} {
+func (g *GoHttpServer) Engine() interface{} {
 	return g.Server
 }
 
-func (g *GOHttpServer) Event(event int, args interface{}) {
+func (g *GoHttpServer) Event(event int, args interface{}) {
 
 }
 
 type (
-	GOContext struct {
-		Request   *GORequest
-		Response  *GOResponse
-		WebSocket *GOWebsocket
+	GoContext struct {
+		Request   *GoRequest
+		Response  *GoResponse
+		WebSocket *GoWebSocket
 	}
-	GORequest struct {
+	GoRequest struct {
 		Original        *http.Request
 		FormParsed      bool
 		MultiFormParsed bool
 		WebSocket       *websocket.Conn
-		ParsedForm      *GOMultipartForm
-		Goheader        *GOHeader
-		Engine          *GOHttpServer
+		ParsedForm      *GoMultipartForm
+		Goheader        *GoHeader
+		Engine          *GoHttpServer
 	}
 
-	GOResponse struct {
+	GoResponse struct {
 		Original http.ResponseWriter
-		Goheader *GOHeader
+		Goheader *GoHeader
 		Writer   io.Writer
-		Request  *GORequest
-		Engine   *GOHttpServer
+		Request  *GoRequest
+		Engine   *GoHttpServer
 	}
-	GOMultipartForm struct {
+	GoMultipartForm struct {
 		Form *multipart.Form
 	}
-	GOHeader struct {
+	GoHeader struct {
 		Source     interface{}
 		isResponse bool
 	}
-	GOWebsocket struct {
+	GoWebSocket struct {
 		Conn *websocket.Conn
-		GOResponse
+		GoResponse
 	}
 	GoCookie http.Cookie
 )
 
-func NewGOContext(instance *GOHttpServer) *GOContext {
+func NewGoContext(instance *GoHttpServer) *GoContext {
 	if instance == nil {
-		instance = &GOHttpServer{MaxMultipartSize: 32 << 20}
+		instance = &GoHttpServer{MaxMultipartSize: 32 << 20}
 		instance.goContextStack = NewStackLock(100, 200,
 			func() interface{} {
-				return NewGOContext(instance)
+				return NewGoContext(instance)
 			})
 		instance.goMultipartFormStack = NewStackLock(100, 200,
-			func() interface{} { return &GOMultipartForm{} })
+			func() interface{} { return &GoMultipartForm{} })
 	}
-	c := &GOContext{Request: &GORequest{Goheader: &GOHeader{}, Engine: instance}}
-	c.Response = &GOResponse{Goheader: &GOHeader{}, Request: c.Request, Engine: instance}
+	c := &GoContext{Request: &GoRequest{Goheader: &GoHeader{}, Engine: instance}}
+	c.Response = &GoResponse{Goheader: &GoHeader{}, Request: c.Request, Engine: instance}
 	return c
 }
-func (c *GOContext) GetRequest() ServerRequest {
+func (c *GoContext) GetRequest() ServerRequest {
 	return c.Request
 }
-func (c *GOContext) GetResponse() ServerResponse {
+func (c *GoContext) GetResponse() ServerResponse {
 	if c.WebSocket != nil {
 		return c.WebSocket
 	}
 	return c.Response
 }
-func (c *GOContext) Destroy() {
+func (c *GoContext) Destroy() {
 	c.Response.Destroy()
 	c.Request.Destroy()
 	if c.WebSocket != nil {
 		c.WebSocket.Destroy()
 	}
 }
-func (r *GORequest) Get(key int) (value interface{}, err error) {
+func (r *GoRequest) Get(key int) (value interface{}, err error) {
 	switch key {
 	case HTTP_SERVER_HEADER:
 		value = r.GetHeader()
@@ -219,11 +219,11 @@ func (r *GORequest) Get(key int) (value interface{}, err error) {
 
 	return
 }
-func (r *GORequest) Set(key int, value interface{}) bool {
+func (r *GoRequest) Set(key int, value interface{}) bool {
 	return false
 }
 
-func (r *GORequest) GetForm() (url.Values, error) {
+func (r *GoRequest) GetForm() (url.Values, error) {
 	if !r.FormParsed {
 		if e := r.Original.ParseForm(); e != nil {
 			return nil, e
@@ -233,37 +233,37 @@ func (r *GORequest) GetForm() (url.Values, error) {
 
 	return r.Original.Form, nil
 }
-func (r *GORequest) GetMultipartForm() (ServerMultipartForm, error) {
+func (r *GoRequest) GetMultipartForm() (ServerMultipartForm, error) {
 	if !r.MultiFormParsed {
 		if e := r.Original.ParseMultipartForm(r.Engine.MaxMultipartSize); e != nil {
 			return nil, e
 		}
-		r.ParsedForm = r.Engine.goMultipartFormStack.Pop().(*GOMultipartForm)
+		r.ParsedForm = r.Engine.goMultipartFormStack.Pop().(*GoMultipartForm)
 		r.ParsedForm.Form = r.Original.MultipartForm
 	}
 
 	return r.ParsedForm, nil
 }
-func (r *GORequest) GetHeader() ServerHeader {
+func (r *GoRequest) GetHeader() ServerHeader {
 	return r.Goheader
 }
-func (r *GORequest) GetRaw() interface{} {
+func (r *GoRequest) GetRaw() interface{} {
 	return r.Original
 }
-func (r *GORequest) SetRequest(req *http.Request) {
+func (r *GoRequest) SetRequest(req *http.Request) {
 	r.Original = req
 	r.Goheader.Source = r
 	r.Goheader.isResponse = false
 
 }
-func (r *GORequest) Destroy() {
+func (r *GoRequest) Destroy() {
 	r.Goheader.Source = nil
 	r.Original = nil
 	r.FormParsed = false
 	r.MultiFormParsed = false
 	r.ParsedForm = nil
 }
-func (r *GOResponse) Get(key int) (value interface{}, err error) {
+func (r *GoResponse) Get(key int) (value interface{}, err error) {
 	switch key {
 	case HTTP_SERVER_HEADER:
 		value = r.Header()
@@ -276,7 +276,7 @@ func (r *GOResponse) Get(key int) (value interface{}, err error) {
 	}
 	return
 }
-func (r *GOResponse) Set(key int, value interface{}) (set bool) {
+func (r *GoResponse) Set(key int, value interface{}) (set bool) {
 	switch key {
 	case ENGINE_RESPONSE_STATUS:
 		r.Header().SetStatus(value.(int))
@@ -288,16 +288,16 @@ func (r *GOResponse) Set(key int, value interface{}) (set bool) {
 	return
 }
 
-func (r *GOResponse) Header() ServerHeader {
+func (r *GoResponse) Header() ServerHeader {
 	return r.Goheader
 }
-func (r *GOResponse) GetRaw() interface{} {
+func (r *GoResponse) GetRaw() interface{} {
 	return r.Original
 }
-func (r *GOResponse) SetWriter(writer io.Writer) {
+func (r *GoResponse) SetWriter(writer io.Writer) {
 	r.Writer = writer
 }
-func (r *GOResponse) WriteStream(name string, contentlen int64, modtime time.Time, reader io.Reader) error {
+func (r *GoResponse) WriteStream(name string, contentlen int64, modtime time.Time, reader io.Reader) error {
 
 	// Check to see if the output stream is modified, if not send it using the
 	// Native writer
@@ -336,7 +336,7 @@ func (r *GOResponse) WriteStream(name string, contentlen int64, modtime time.Tim
 	return nil
 }
 
-func (r *GOResponse) Destroy() {
+func (r *GoResponse) Destroy() {
 	if c, ok := r.Writer.(io.Closer); ok {
 		c.Close()
 	}
@@ -345,22 +345,22 @@ func (r *GOResponse) Destroy() {
 	r.Writer = nil
 }
 
-func (r *GOResponse) SetResponse(w http.ResponseWriter) {
+func (r *GoResponse) SetResponse(w http.ResponseWriter) {
 	r.Original = w
 	r.Writer = w
 	r.Goheader.Source = r
 	r.Goheader.isResponse = true
 
 }
-func (r *GOHeader) SetCookie(cookie string) {
+func (r *GoHeader) SetCookie(cookie string) {
 	if r.isResponse {
-		r.Source.(*GOResponse).Original.Header().Add("Set-Cookie", cookie)
+		r.Source.(*GoResponse).Original.Header().Add("Set-Cookie", cookie)
 	}
 }
-func (r *GOHeader) GetCookie(key string) (value ServerCookie, err error) {
+func (r *GoHeader) GetCookie(key string) (value ServerCookie, err error) {
 	if !r.isResponse {
 		var cookie *http.Cookie
-		if cookie, err = r.Source.(*GORequest).Original.Cookie(key); err == nil {
+		if cookie, err = r.Source.(*GoRequest).Original.Cookie(key); err == nil {
 			value = GoCookie(*cookie)
 
 		}
@@ -368,49 +368,49 @@ func (r *GOHeader) GetCookie(key string) (value ServerCookie, err error) {
 	}
 	return
 }
-func (r *GOHeader) Set(key string, value string) {
+func (r *GoHeader) Set(key string, value string) {
 	if r.isResponse {
-		r.Source.(*GOResponse).Original.Header().Set(key, value)
+		r.Source.(*GoResponse).Original.Header().Set(key, value)
 	}
 }
-func (r *GOHeader) Add(key string, value string) {
+func (r *GoHeader) Add(key string, value string) {
 	if r.isResponse {
-		r.Source.(*GOResponse).Original.Header().Add(key, value)
+		r.Source.(*GoResponse).Original.Header().Add(key, value)
 	}
 }
-func (r *GOHeader) Del(key string) {
+func (r *GoHeader) Del(key string) {
 	if r.isResponse {
-		r.Source.(*GOResponse).Original.Header().Del(key)
+		r.Source.(*GoResponse).Original.Header().Del(key)
 	}
 }
-func (r *GOHeader) Get(key string) (value []string) {
+func (r *GoHeader) Get(key string) (value []string) {
 	if !r.isResponse {
-		value = r.Source.(*GORequest).Original.Header[key]
+		value = r.Source.(*GoRequest).Original.Header[key]
 	} else {
-		value = r.Source.(*GOResponse).Original.Header()[key]
+		value = r.Source.(*GoResponse).Original.Header()[key]
 	}
 	return
 }
-func (r *GOHeader) SetStatus(statusCode int) {
+func (r *GoHeader) SetStatus(statusCode int) {
 	if r.isResponse {
-		r.Source.(*GOResponse).Original.WriteHeader(statusCode)
+		r.Source.(*GoResponse).Original.WriteHeader(statusCode)
 	}
 }
 func (r GoCookie) GetValue() string {
 	return r.Value
 }
-func (f *GOMultipartForm) GetFile() map[string][]*multipart.FileHeader {
+func (f *GoMultipartForm) GetFile() map[string][]*multipart.FileHeader {
 	return f.Form.File
 }
-func (f *GOMultipartForm) GetValue() url.Values {
+func (f *GoMultipartForm) GetValue() url.Values {
 	return url.Values(f.Form.Value)
 }
-func (f *GOMultipartForm) RemoveAll() error {
+func (f *GoMultipartForm) RemoveAll() error {
 	return f.Form.RemoveAll()
 }
-func (g *GOWebsocket) MessageSendJSON(v interface{}) error {
+func (g *GoWebSocket) MessageSendJSON(v interface{}) error {
 	return websocket.JSON.Send(g.Conn, v)
 }
-func (g *GOWebsocket) MessageReceiveJSON(v interface{}) error {
+func (g *GoWebSocket) MessageReceiveJSON(v interface{}) error {
 	return websocket.Message.Receive(g.Conn, v)
 }

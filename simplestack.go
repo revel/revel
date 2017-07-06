@@ -42,13 +42,6 @@ func NewStackLock(startsize, maxsize int, creator func() interface{}) *SimpleLoc
 		ss.capacity, ss.len, ss.active = startsize, startsize, 0
 
 		ss.Current = current
-
-		//nc := *current
-		//for i:=0;nc.Previous!=nil; {
-		//    println("index",i,nc.Value,nc.Previous,nc.Next)
-		//    nc=*nc.Previous
-		//}
-		//println("index",nc.Value,nc.Next)
 	}
 	return ss
 }

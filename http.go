@@ -22,12 +22,12 @@ import (
 // Request Revel's HTTP request object structure
 type Request struct {
 	In              ServerRequest
-	Header          *RevelHeader
+	ServerHeader    *RevelHeader
 	ContentType     string
 	Format          string // "html", "xml", "json", or "txt"
 	AcceptLanguages AcceptLanguages
 	Locale          string
-	Websocket       ServerWebSocket
+	WebSocket       ServerWebSocket
 	Method          string
 	RemoteAddr      string
 	Host            string
@@ -59,7 +59,7 @@ type RevelHeader struct {
 	Server ServerHeader
 }
 
-// NewResponse returns a Revel's HTTP response instance with given instance
+// NewResponse wraps ServerResponse inside a Revel's Response and returns it
 func NewResponse(w ServerResponse) (r *Response) {
 	r = &Response{Out: OutResponse{Server: w, internalHeader: &RevelHeader{}}}
 	r.Out.response = r
@@ -68,7 +68,7 @@ func NewResponse(w ServerResponse) (r *Response) {
 
 // NewRequest returns a Revel's HTTP request instance with given HTTP instance
 func NewRequest(r ServerRequest) *Request {
-	req := &Request{Header: &RevelHeader{}}
+	req := &Request{ServerHeader: &RevelHeader{}}
 	if r != nil {
 		req.SetRequest(r)
 	}
@@ -77,7 +77,7 @@ func NewRequest(r ServerRequest) *Request {
 func (req *Request) SetRequest(r ServerRequest) {
 	req.In = r
 	if h, e := req.In.Get(HTTP_SERVER_HEADER); e == nil {
-		req.Header.Server = h.(ServerHeader)
+		req.ServerHeader.Server = h.(ServerHeader)
 	}
 
 	req.URL, _ = url.Parse(req.GetRequestURI())
@@ -90,8 +90,8 @@ func (req *Request) SetRequest(r ServerRequest) {
 
 }
 func (req *Request) Cookie(key string) (ServerCookie, error) {
-	if req.Header.Server != nil {
-		return req.Header.Server.GetCookie(key)
+	if req.ServerHeader.Server != nil {
+		return req.ServerHeader.Server.GetCookie(key)
 	}
 	return nil, http.ErrNoCookie
 }
@@ -159,7 +159,7 @@ func (r *Request) MultipartReader() (*multipart.Reader, error) {
 
 // Deprecated for backwards compatibility only
 func newMultipareForm(s ServerMultipartForm) (f *MultipartForm) {
-	return &MultipartForm{File: s.GetFile(), Value: s.GetValue(), origin: s}
+	return &MultipartForm{File: s.GetFiles(), Value: s.GetValues(), origin: s}
 }
 
 // Deprecated use GetMultipartForm() instead
@@ -192,7 +192,7 @@ func (req *Request) Destroy() {
 	req.Method = ""
 	req.RemoteAddr = ""
 	req.Host = ""
-	req.Header.Destroy()
+	req.ServerHeader.Destroy()
 	req.URL = nil
 	req.Form = nil
 	req.MultipartForm = nil
@@ -218,16 +218,17 @@ func (resp *Response) Destroy() {
 	resp.writer = nil
 }
 
-// UserAgent returns the client's User-Agent, if sent in the request.
+// UserAgent returns the client's User-Agent header string.
 func (r *Request) UserAgent() string {
-	return r.Header.Get("User-Agent")
+	return r.ServerHeader.Get("User-Agent")
 }
 
+// Referer returns the client's Referer header string.
 func (r *Request) Referer() string {
-	return r.Header.Get("Referer")
+	return r.ServerHeader.Get("Referer")
 }
 func (r *Request) GetHttpHeader(key string) string {
-	return r.Header.Get(key)
+	return r.ServerHeader.Get(key)
 }
 
 func (r *Request) GetValue(key int) (value interface{}) {
@@ -237,7 +238,7 @@ func (r *Request) GetValue(key int) (value interface{}) {
 
 // WriteHeader writes the header (for now, just the status code).
 // The status may be set directly by the application (c.Response.Status = 501).
-// if it isn't, then fall back to the provided status code.
+// If it isn't, then fall back to the provided status code.
 func (resp *Response) WriteHeader(defaultStatusCode int, defaultContentType string) {
 	if resp.ContentType == "" {
 		resp.ContentType = defaultContentType
@@ -314,7 +315,7 @@ func (h *RevelHeader) Get(key string) (value string) {
 	return
 }
 
-// Return []string of items (the header split by a comma)
+// GetAll returns []string of items (the header split by a comma)
 func (h *RevelHeader) GetAll(key string) (values []string) {
 	if h.Server != nil {
 		values = h.Server.Get(key)
@@ -327,7 +328,7 @@ func (h *RevelHeader) GetAll(key string) (values []string) {
 // If none is specified, returns "text/html" by default.
 func ResolveContentType(req *Request) string {
 
-	contentType := req.Header.Get("Content-Type")
+	contentType := req.ServerHeader.Get("Content-Type")
 	if contentType == "" {
 		return "text/html"
 	}
@@ -410,7 +411,7 @@ func (al AcceptLanguages) String() string {
 // See the HTTP header fields specification
 // (http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.4) for more details.
 func ResolveAcceptLanguage(req *Request) AcceptLanguages {
-	header := req.Header.Get("Accept-Language")
+	header := req.ServerHeader.Get("Accept-Language")
 	if header == "" {
 		return nil
 	}

@@ -55,8 +55,8 @@ func ParseParams(params *Params, req *Request) {
 		if mp, err := req.GetMultipartForm(); err != nil {
 			WARN.Println("Error parsing request body:", err)
 		} else {
-			params.Form = mp.GetValue()
-			params.Files = mp.GetFile()
+			params.Form = mp.GetValues()
+			params.Files = mp.GetFiles()
 		}
 	case "application/json":
 		fallthrough
@@ -138,22 +138,22 @@ func (p *Params) calcValues() url.Values {
 	// order of priority is least to most trusted
 	values := make(url.Values, numParams)
 
-	// ?query vars are first
+	// ?query string parameters are first
 	for k, v := range p.Query {
 		values[k] = append(values[k], v...)
 	}
 
-	// form vars append
+	// form parameters append
 	for k, v := range p.Form {
 		values[k] = append(values[k], v...)
 	}
 
-	// :/path vars overwrite
+	// :/path parameters overwrite
 	for k, v := range p.Route {
 		values[k] = v
 	}
 
-	// fixed vars overwrite
+	// fixed route parameters overwrite
 	for k, v := range p.Fixed {
 		values[k] = v
 	}

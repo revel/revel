@@ -250,7 +250,7 @@ func detectCompressionType(req *Request, resp *Response) (found bool, compressio
 	return
 }
 
-// This class will not send content out until the Released is called, from that point on it will act normally
+// BufferedServerHeader will not send content out until the Released is called, from that point on it will act normally
 // It implements all the ServerHeader
 type BufferedServerHeader struct {
 	cookieList []string

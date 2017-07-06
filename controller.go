@@ -24,7 +24,7 @@ type Controller struct {
 	Type          *ControllerType // A description of the controller type.
 	MethodName    string          // The method name, e.g. "Index"
 	MethodType    *MethodType     // A description of the invoked action type.
-	AppController interface{}     // The controller that was instantiated. extends from revel.Controller
+	AppController interface{}     // The controller that was instantiated. embeds revel.Controller
 	Action        string          // The fully qualified action name, e.g. "App.Index"
 	ClientIP      string          // holds IP address of request came from
 

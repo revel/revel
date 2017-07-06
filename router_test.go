@@ -267,7 +267,7 @@ func TestRouteMatches(t *testing.T) {
 	for req, expected := range routeMatchTestCases {
 		t.Log("Routing:", req.Method, req.URL)
 
-		context := NewGOContext(nil)
+		context := NewGoContext(nil)
 		context.Request.SetRequest(req)
 		c := NewTestController(nil, req)
 

@@ -5,7 +5,7 @@ import (
 )
 
 func NewTestController(w http.ResponseWriter, r *http.Request) *Controller{
-	context := NewGOContext(nil)
+	context := NewGoContext(nil)
 	context.Request.SetRequest(r)
 	context.Response.SetResponse(w)
 	c := NewController(context)

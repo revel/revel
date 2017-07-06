@@ -79,8 +79,8 @@ type (
 
 	// Expected response for HTTP_MULTIPART_FORM
 	ServerMultipartForm interface {
-		GetFile() map[string][]*multipart.FileHeader
-		GetValue() url.Values
+		GetFiles() map[string][]*multipart.FileHeader
+		GetValues() url.Values
 		RemoveAll() error
 	}
 	StreamWriter interface {
@@ -128,7 +128,7 @@ func handleInternal(ctx ServerContext) {
 		req, resp = c.Request, c.Response
 	)
 	c.SetController(ctx)
-	req.Websocket, _ = ctx.GetResponse().(ServerWebSocket)
+	req.WebSocket, _ = ctx.GetResponse().(ServerWebSocket)
 
 	clientIP := ClientIP(req)
 

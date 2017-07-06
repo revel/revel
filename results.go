@@ -100,7 +100,7 @@ func (r ErrorResult) Apply(req *Request, resp *Response) {
 	// need to check if we are on a websocket here
 	// net/http panics if we write to a hijacked connection
 	if req.Method == "WS" {
-		if err := req.Websocket.MessageSendJSON(fmt.Sprint(revelError)); err != nil {
+		if err := req.WebSocket.MessageSendJSON(fmt.Sprint(revelError)); err != nil {
 			ERROR.Println("Send failed:", err)
 		}
 	} else {

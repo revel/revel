@@ -24,22 +24,23 @@ const (
 	RevelImportPath = "github.com/revel/revel"
 )
 const (
-	// Called when templates are going to be refreshed (receivers are registered template engines added to the template.engine conf option)
+	// Event type when templates are going to be refreshed (receivers are registered template engines added to the template.engine conf option)
 	TEMPLATE_REFRESH_REQUESTED = iota
-	// Called when templates are refreshed (receivers are registered template engines added to the template.engine conf option)
+	// Event type when templates are refreshed (receivers are registered template engines added to the template.engine conf option)
 	TEMPLATE_REFRESH_COMPLETED
-	// Called before all module loads, events thrown to handlers added to AddInitEventHandler
+	// Event type before all module loads, events thrown to handlers added to AddInitEventHandler
 
-	REVEL_BEFORE_LOAD_MODULE
-	// Called after all module loads, events thrown to handlers added to AddInitEventHandler
-	REVEL_AFTER_LOAD_MODULE
+	// Event type before all module loads, events thrown to handlers added to AddInitEventHandler
+	REVEL_BEFORE_MODULES_LOADED
+	// Event type after all module loads, events thrown to handlers added to AddInitEventHandler
+	REVEL_AFTER_MODULES_LOADED
 
-	// Called before server engine is initialized, receivers are active server engine and handlers added to AddInitEventHandler
-	ENGINE_EVENT_PREINIT
-	// Called before server engine is started, receivers are active server engine and handlers added to AddInitEventHandler
-	ENGINE_EVENT_STARTUP
-	// Called after server engine is stopped, receivers are active server engine and handlers added to AddInitEventHandler
-	ENGINE_EVENT_SHUTDOWN
+	// Event type before server engine is initialized, receivers are active server engine and handlers added to AddInitEventHandler
+	ENGINE_BEFORE_INITIALIZED
+	// Event type before server engine is started, receivers are active server engine and handlers added to AddInitEventHandler
+	ENGINE_STARTED
+	// Event type after server engine is stopped, receivers are active server engine and handlers added to AddInitEventHandler
+	ENGINE_SHUTDOWN
 )
 
 type revelLogs struct {
@@ -247,9 +248,9 @@ func Init(mode, importPath, srcPath string) {
 	// However output settings can be controlled from app.conf
 	requestLog = getLogger("request")
 
-	fireEvent(REVEL_BEFORE_LOAD_MODULE, nil)
+	fireEvent(REVEL_BEFORE_MODULES_LOADED, nil)
 	loadModules()
-	fireEvent(REVEL_AFTER_LOAD_MODULE, nil)
+	fireEvent(REVEL_AFTER_MODULES_LOADED, nil)
 
 	Initialized = true
 	INFO.Printf("Initialized Revel v%s (%s) for %s", Version, BuildDate, MinimumGoVersion)
