@@ -299,7 +299,7 @@ func splitActionPath(actionPathData *ActionPathData, actionPath string, useCache
 		if i := strings.Index(methodName, "("); i > 0 {
 			methodName = methodName[:i]
 		}
-		//INFO.Println("Check", controllerName,methodName)
+		// INFO.Println("Check", actionPath, controllerName,methodName)
 		if i := strings.Index(controllerName, namespaceSeperator); i > -1 {
 			controllerNamespace = controllerName[:i+1]
 			if moduleSource, found := ModuleByName(controllerNamespace[:len(controllerNamespace)-1]); found {
@@ -320,6 +320,7 @@ func splitActionPath(actionPathData *ActionPathData, actionPath string, useCache
 					controllerNamespace = typeOfController.Namespace
 				}
 			}
+			// INFO.Println("Check for controller by module", typeOfController)
 
 			if typeOfController == nil {
 				// Check to see if we can determine the controller from only the controller name
@@ -329,7 +330,7 @@ func splitActionPath(actionPathData *ActionPathData, actionPath string, useCache
 				for key, controller := range controllers {
 					// Strip away the namespace from the controller. to be match
 					regularName := key
-					if i := strings.Index(key, "|"); i > -1 {
+					if i := strings.Index(key, namespaceSeperator); i > -1 {
 						regularName = regularName[i+1:]
 					}
 					if regularName == matchName {

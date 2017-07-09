@@ -121,7 +121,7 @@ GET   /app/:id/                  Application.Show
 GET   /app-wild/*id/             Application.WildShow
 POST  /app/:id                   Application.Save
 PATCH /app/:id/                  Application.Update
-GET   /javascript/:filepath      App|Static.Serve("public/js")
+GET   /javascript/:filepath      App\Static.Serve("public/js")
 GET   /public/*filepath          Static.Serve("public")
 *     /:controller/:action       :controller.:action
 

@@ -5,12 +5,12 @@ import (
 	"bytes"
 )
 
-// Module matching template syntax allows for modules to replace this text with the name of the module declated on import
+// Module matching template syntax allows for modules to replace this text with the name of the module declared on import
 // this allows the reverse router to use correct syntax
-// Match _RNS_.static or  _RNS_|
-var namespaceReplacement = regexp.MustCompile(`(_RNS_)(\.(.*?))?\|`)
+// Match _LOCAL_.static or  _LOCAL_|
+var namespaceReplacement = regexp.MustCompile(`(_LOCAL_)(\.(.*?))?\\`)
 
-// Function to replace the bytes data that may match the _RNS_ namespace specifier,
+// Function to replace the bytes data that may match the _LOCAL_ namespace specifier,
 // the replacement will be the current module.Name
 func namespaceReplace(fileBytes []byte, module *Module) ([]byte){
 	newBytes, lastIndex  := &bytes.Buffer{}, 0

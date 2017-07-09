@@ -28,6 +28,11 @@ const (
 	// Called when templates are refreshed (receivers are registered template engines added to the template.engine conf option)
 	TEMPLATE_REFRESH_COMPLETED
 
+	// Event type before all module loads, events thrown to handlers added to AddInitEventHandler
+	REVEL_BEFORE_MODULES_LOADED
+	// Event type after all module loads, events thrown to handlers added to AddInitEventHandler
+	REVEL_AFTER_MODULES_LOADED
+
 	// Called before routes are refreshed
 	ROUTE_REFRESH_REQUESTED
 	// Called after routes have been refreshed
@@ -236,7 +241,9 @@ func Init(mode, importPath, srcPath string) {
 	// However output settings can be controlled from app.conf
 	requestLog = getLogger("request")
 
+	fireEvent(REVEL_BEFORE_MODULES_LOADED, nil)
 	loadModules()
+	fireEvent(REVEL_AFTER_MODULES_LOADED, nil)
 
 	Initialized = true
 	INFO.Printf("Initialized Revel v%s (%s) for %s", Version, BuildDate, MinimumGoVersion)
