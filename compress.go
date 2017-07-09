@@ -64,7 +64,8 @@ func CompressFilter(c *Controller, fc []Filter) {
 					compressionType:    compressType,
 					headersWritten:     false,
 					closeNotify:        make(chan bool, 1),
-					closed:             false}
+					closed:             false,
+				}
 				// Swap out the header with our own
 				writer.Header = NewBufferedServerHeader(c.Response.Out.internalHeader.Server)
 				c.Response.Out.internalHeader.Server = writer.Header
@@ -90,7 +91,7 @@ func (c CompressResponseWriter) CloseNotify() <-chan bool {
 func (c *CompressResponseWriter) prepareHeaders() {
 	if c.compressionType != "" {
 		responseMime := ""
-		if t := c.Header.Get("Content-Type"); len(t)>0 {
+		if t := c.Header.Get("Content-Type"); len(t) > 0 {
 			responseMime = t[0]
 		}
 		responseMime = strings.TrimSpace(strings.SplitN(responseMime, ";", 2)[0])
