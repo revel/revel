@@ -7,9 +7,7 @@ package revel
 import (
 	"bufio"
 	"bytes"
-	"errors"
 	"fmt"
-	"html/template"
 	"io"
 	"io/ioutil"
 	"os"
@@ -184,8 +182,8 @@ func (loader *TemplateLoader) Refresh() (err *Error) {
 	return loader.compileError
 }
 
-// WatchDir returns true of directory doesn't start with . (dot)
-// otherwise false
+// Checks to see if template exists in templatePaths, if so it is skipped (templates are imported in order
+// reads the template file into memory, replaces namespace keys with module (if found
 func (loader *TemplateLoader) findAndAddTemplate(path, fullSrcDir, basePath string) (fileBytes []byte, err error) {
 	templateName := filepath.ToSlash(path[len(fullSrcDir)+1:])
 	// Convert template names to use forward slashes, even on Windows.
@@ -205,6 +203,12 @@ func (loader *TemplateLoader) findAndAddTemplate(path, fullSrcDir, basePath stri
 		ERROR.Println("Failed reading file:", path)
 		return
 	}
+	// Parse template file and replace the "_RNS_|" in the template with the module name
+	// allow for namespaces to be renamed "_RNS_(.*?)|"
+	if module := ModuleFromPath(path, false);module != nil {
+		fileBytes = namespaceReplace(fileBytes, module)
+	}
+
 	// if we have an engine picked for this template process it now
 	baseTemplate := NewBaseTemplate(templateName, path, basePath, fileBytes)
 
@@ -358,51 +362,3 @@ func NewBaseTemplate(templateName, filePath, basePath string, fileBytes []byte) 
 	return &TemplateView{TemplateName: templateName, FilePath: filePath, FileBytes: fileBytes, BasePath: basePath}
 }
 
-/////////////////////
-// Template functions
-/////////////////////
-
-// ReverseURL returns a url capable of invoking a given controller method:
-// "Application.ShowApp 123" => "/app/123"
-func ReverseURL(args ...interface{}) (template.URL, error) {
-	if len(args) == 0 {
-		return "", errors.New("no arguments provided to reverse route")
-	}
-
-	action := args[0].(string)
-	if action == "Root" {
-		return template.URL(AppRoot), nil
-	}
-	actionSplit := strings.Split(action, ".")
-	if len(actionSplit) != 2 {
-		return "", fmt.Errorf("reversing '%s', expected 'Controller.Action'", action)
-	}
-
-	// Look up the types.
-	var c Controller
-	if err := c.SetAction(actionSplit[0], actionSplit[1]); err != nil {
-		return "", fmt.Errorf("reversing %s: %s", action, err)
-	}
-
-	if len(c.MethodType.Args) < len(args)-1 {
-		return "", fmt.Errorf("reversing %s: route defines %d args, but received %d",
-			action, len(c.MethodType.Args), len(args)-1)
-	}
-
-	// Unbind the arguments.
-	argsByName := make(map[string]string)
-	for i, argValue := range args[1:] {
-		Unbind(argsByName, c.MethodType.Args[i].Name, argValue)
-	}
-
-	return template.URL(MainRouter.Reverse(args[0].(string), argsByName).URL), nil
-}
-
-func Slug(text string) string {
-	separator := "-"
-	text = strings.ToLower(text)
-	text = invalidSlugPattern.ReplaceAllString(text, "")
-	text = whiteSpacePattern.ReplaceAllString(text, separator)
-	text = strings.Trim(text, separator)
-	return text
-}
