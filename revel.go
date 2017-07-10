@@ -16,7 +16,6 @@ import (
 
 	"github.com/agtorre/gocolorize"
 	"github.com/revel/config"
-	"sort"
 )
 
 const (
@@ -41,6 +40,12 @@ const (
 	ENGINE_STARTED
 	// Event type after server engine is stopped, receivers are active server engine and handlers added to AddInitEventHandler
 	ENGINE_SHUTDOWN
+
+	// Called before routes are refreshed
+	ROUTE_REFRESH_REQUESTED
+	// Called after routes have been refreshed
+	ROUTE_REFRESH_COMPLETED
+
 )
 
 type revelLogs struct {
@@ -82,8 +87,6 @@ var (
 	// 2. application (conf/*)
 	// 3. user supplied configs (...) - User configs can override/add any from above
 	ConfPaths []string
-
-	Modules []Module
 
 	// Server config.
 	//
@@ -365,40 +368,6 @@ func findSrcPaths(importPath string) (revelSourcePath, appSourcePath string) {
 	return revelPkg.SrcRoot, appPkg.SrcRoot
 }
 
-type Module struct {
-	Name, ImportPath, Path string
-}
-
-func loadModules() {
-	keys := []string{}
-	for _, key := range Config.Options("module.") {
-		keys = append(keys, key)
-	}
-	// Reorder module order by key name, a poor mans sort but at least it is consistent
-	sort.Strings(keys)
-	for _, key := range keys {
-		println("Sorted keys", key)
-
-	}
-	for _, key := range keys {
-		moduleImportPath := Config.StringDefault(key, "")
-		if moduleImportPath == "" {
-			continue
-		}
-
-		modulePath, err := ResolveImportPath(moduleImportPath)
-		if err != nil {
-			log.Fatalln("Failed to load module.  Import of", moduleImportPath, "failed:", err)
-		}
-		// Drop anything between module.???.<name of module>
-		subKey := key[len("module."):]
-		if index := strings.Index(subKey, "."); index > -1 {
-			subKey = subKey[index+1:]
-		}
-
-		addModule(subKey, moduleImportPath, modulePath)
-	}
-}
 
 // ResolveImportPath returns the filesystem path for the given import path.
 // Returns an error if the import path could not be found.
@@ -412,39 +381,6 @@ func ResolveImportPath(importPath string) (string, error) {
 		return "", err
 	}
 	return modPkg.Dir, nil
-}
-
-func addModule(name, importPath, modulePath string) {
-	Modules = append(Modules, Module{Name: name, ImportPath: importPath, Path: modulePath})
-	if codePath := filepath.Join(modulePath, "app"); DirExists(codePath) {
-		CodePaths = append(CodePaths, codePath)
-		if viewsPath := filepath.Join(modulePath, "app", "views"); DirExists(viewsPath) {
-			TemplatePaths = append(TemplatePaths, viewsPath)
-		}
-	}
-
-	INFO.Print("Loaded module ", filepath.Base(modulePath))
-
-	// Hack: There is presently no way for the testrunner module to add the
-	// "test" subdirectory to the CodePaths.  So this does it instead.
-	if importPath == Config.StringDefault("module.testrunner", "github.com/revel/modules/testrunner") {
-		INFO.Print("Found testrunner module, adding `tests` path ", filepath.Join(BasePath, "tests"))
-		CodePaths = append(CodePaths, filepath.Join(BasePath, "tests"))
-	}
-	if testsPath := filepath.Join(modulePath, "tests"); DirExists(testsPath) {
-		INFO.Print("Found tests path ", testsPath)
-		CodePaths = append(CodePaths, testsPath)
-	}
-}
-
-// ModuleByName returns the module of the given name, if loaded.
-func ModuleByName(name string) (m Module, found bool) {
-	for _, module := range Modules {
-		if module.Name == name {
-			return module, true
-		}
-	}
-	return Module{}, false
 }
 
 // CheckInit method checks `revel.Initialized` if not initialized it panics

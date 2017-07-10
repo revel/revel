@@ -40,6 +40,9 @@ type Controller struct {
 	Validation *Validation            // Data validation helpers
 }
 
+// The map of controllers, controllers are mapped by using the namespace|controller_name as the key
+var controllers = make(map[string]*ControllerType)
+
 // NewController returns new controller instance for Request and Response
 func NewControllerEmpty() (*Controller) {
 	return &Controller{Request: NewRequest(nil), Response: NewResponse(nil)}
@@ -139,10 +142,19 @@ func (c *Controller) setStatusIfNil(status int) {
 //
 // This action will render views/Users/ShowUser.html, passing in an extra
 // key-value "user": (User).
+//
+// This is the slower magical version which uses the runtime
+// to determine
+// 1) Set c.ViewArgs to the arguments passed into this function
+// 2) How to call the RenderTemplate by building the following line
+// c.RenderTemplate(c.Name + "/" + c.MethodType.Name + "." + c.Request.Format)
+//
+// If you want your code to run faster it is recommended you add the template values directly
+// to the c.ViewArgs and call c.RenderTemplate directly
 func (c *Controller) Render(extraViewArgs ...interface{}) Result {
 	c.setStatusIfNil(http.StatusOK)
 
-	// Get the calling function name.
+	// Get the calling function line number.
 	_, _, line, ok := runtime.Caller(1)
 	if !ok {
 		ERROR.Println("Failed to get Caller information")
@@ -335,11 +347,21 @@ func (c *Controller) Message(message string, args ...interface{}) string {
 // It sets the following properties: Name, Action, Type, MethodType
 func (c *Controller) SetAction(controllerName, methodName string) error {
 
+	return c.SetTypeAction(controllerName, methodName, nil)
+}
+// SetAction sets the assigns the Controller type, sets the action and initializes the controller
+func (c *Controller) SetTypeAction(controllerName, methodName string, typeOfController *ControllerType) error {
+
 	// Look up the controller and method types.
-	var ok bool
-	if c.Type, ok = controllers[strings.ToLower(controllerName)]; !ok {
-		return errors.New("revel/controller: failed to find controller " + controllerName)
+	if typeOfController== nil {
+		if c.Type = ControllerTypeByName(controllerName, anyModule); c.Type == nil {
+			return errors.New("revel/controller: failed to find controller " + controllerName)
+		}
+	} else {
+		c.Type = typeOfController
 	}
+
+	// Note method name is case insensitive search
 	if c.MethodType = c.Type.Method(methodName); c.MethodType == nil {
 		return errors.New("revel/controller: failed to find action " + methodName)
 	}
@@ -361,6 +383,27 @@ func (c *Controller) SetAction(controllerName, methodName string) error {
 	c.setAppControllerFields()
 
 	return nil
+}
+
+func ControllerTypeByName(controllerName string, moduleSource *Module) (c *ControllerType) {
+	var found bool
+	if c, found = controllers[controllerName]; !found {
+		// Backup, passed in controllerName should be in lower case, but may not be
+		if c, found = controllers[strings.ToLower(controllerName)]; !found {
+			INFO.Printf("Cannot find controller name '%s' in controllers map ", controllerName)
+			// Search for the controller by name
+			for _, cType := range controllers {
+				testControllerName := strings.ToLower(cType.Type.Name())
+				if testControllerName == strings.ToLower(controllerName) && (cType.ModuleSource == moduleSource || moduleSource == anyModule)  {
+					WARN.Printf("Matched empty namespace controller for %s to this %s", controllerName, cType.ModuleSource.Name)
+					c = cType
+					found = true
+					break
+				}
+			}
+		}
+	}
+	return
 }
 
 // Injects this instance (c) into the AppController instance
@@ -436,6 +479,8 @@ func findControllers(appControllerType reflect.Type) (indexes [][]int) {
 // Controller registry and types.
 
 type ControllerType struct {
+	Namespace         string  // The namespace of the controller
+	ModuleSource      *Module // The module for the controller
 	Type              reflect.Type
 	Methods           []*MethodType
 	ControllerIndexes [][]int // FieldByIndex to all embedded *Controllers
@@ -453,6 +498,32 @@ type MethodArg struct {
 	Type reflect.Type
 }
 
+// Adds the controller to the controllers map using its namespace, also adds it to the module list of controllers.
+// If the controller is in the main application it is added without its namespace as well.
+func AddControllerType(moduleSource *Module,controllerType reflect.Type,methods []*MethodType) (newControllerType *ControllerType) {
+	if moduleSource==nil {
+		moduleSource = appModule
+	}
+
+	newControllerType = &ControllerType{ModuleSource:moduleSource,Type:controllerType,Methods:methods,ControllerIndexes:findControllers(controllerType)}
+	newControllerType.Namespace = moduleSource.Namespace()
+	controllerName := newControllerType.Name()
+
+	// Store the first controller only in the controllers map with the unmapped namespace.
+	if _, found := controllers[controllerName]; !found {
+		controllers[controllerName] = newControllerType
+		newControllerType.ModuleSource.AddController(newControllerType)
+		if newControllerType.ModuleSource == appModule {
+			// Add the controller mapping into the global namespace
+			controllers[newControllerType.ShortName()] = newControllerType
+		}
+	} else {
+		ERROR.Printf("Error, attempt to register duplicate controller as %s",controllerName)
+	}
+	TRACE.Printf("Registered controller: %s", controllerName)
+
+	return
+}
 // Method searches for a given exported method (case insensitive)
 func (ct *ControllerType) Method(name string) *MethodType {
 	lowerName := strings.ToLower(name)
@@ -464,14 +535,21 @@ func (ct *ControllerType) Method(name string) *MethodType {
 	return nil
 }
 
-var controllers = make(map[string]*ControllerType)
+// The controller name with the namespace
+func (ct *ControllerType) Name() (string) {
+	return ct.Namespace + ct.ShortName()
+}
+
+// The controller name without the namespace
+func (ct *ControllerType) ShortName() (string) {
+	return strings.ToLower(ct.Type.Name())
+}
 
 // RegisterController registers a Controller and its Methods with Revel.
 func RegisterController(c interface{}, methods []*MethodType) {
 	// De-star the controller type
 	// (e.g. given TypeOf((*Application)(nil)), want TypeOf(Application))
-	t := reflect.TypeOf(c)
-	elem := t.Elem()
+	elem := reflect.TypeOf(c).Elem()
 
 	// De-star all of the method arg types too.
 	for _, m := range methods {
@@ -481,10 +559,10 @@ func RegisterController(c interface{}, methods []*MethodType) {
 		}
 	}
 
-	controllers[strings.ToLower(elem.Name())] = &ControllerType{
-		Type:              elem,
-		Methods:           methods,
-		ControllerIndexes: findControllers(elem),
-	}
-	TRACE.Printf("Registered controller: %s", elem.Name())
+	// Fetch module for controller, if none found controller must be part of the app
+	controllerModule := ModuleFromPath(elem.PkgPath(), true)
+
+	controllerType := AddControllerType(controllerModule,elem,methods)
+
+	TRACE.Printf("Registered controller: %s", controllerType.Name())
 }

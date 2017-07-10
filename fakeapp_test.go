@@ -28,9 +28,18 @@ type Static struct {
 	*Controller
 }
 
+type Implicit struct {
+	*Controller
+}
+
+type Application struct {
+	*Controller
+}
+
 func (c Hotels) Show(id int) Result {
 	title := "View Hotel"
 	hotel := &Hotel{id, "A Hotel", "300 Main St.", "New York", "NY", "10010", "USA", 300}
+	// The line number below must match the one with the code : RenderArgNames: map[int][]string{43: {"title", "hotel"}},
 	return c.Render(title, hotel)
 }
 
@@ -61,20 +70,10 @@ func (c Static) Serve(prefix, path string) Result {
 	return c.RenderFile(file, "")
 }
 
-func startFakeBookingApp() {
-	Init("prod", "github.com/revel/revel/testdata", "")
-
-	// Disable logging.
-	TRACE = log.New(ioutil.Discard, "", 0)
-	INFO = TRACE
-	WARN = TRACE
-	ERROR = TRACE
-
-	MainTemplateLoader = NewTemplateLoader([]string{ViewsPath, filepath.Join(RevelPath, "templates")})
-	if err := MainTemplateLoader.Refresh(); err != nil {
-		ERROR.Fatal(err)
-	}
-
+// Register controllers is in its own function so the route test can use it as well
+func registerControllers() {
+	controllers = make(map[string]*ControllerType)
+	fireEvent(ROUTE_REFRESH_REQUESTED, nil)
 	RegisterController((*Hotels)(nil),
 		[]*MethodType{
 			{
@@ -85,7 +84,7 @@ func startFakeBookingApp() {
 				Args: []*MethodArg{
 					{"id", reflect.TypeOf((*int)(nil))},
 				},
-				RenderArgNames: map[int][]string{34: {"title", "hotel"}},
+				RenderArgNames: map[int][]string{43: {"title", "hotel"}},
 			},
 			{
 				Name: "Book",
@@ -106,6 +105,53 @@ func startFakeBookingApp() {
 				RenderArgNames: map[int][]string{},
 			},
 		})
+	RegisterController((*Implicit)(nil),
+		[]*MethodType{
+			{
+				Name: "Implicit",
+				Args: []*MethodArg{
+					{Name: "prefix", Type: reflect.TypeOf((*string)(nil))},
+					{Name: "filepath", Type: reflect.TypeOf((*string)(nil))},
+				},
+				RenderArgNames: map[int][]string{},
+			},
+		})
+	RegisterController((*Application)(nil),
+		[]*MethodType{
+			{
+				Name: "Application",
+				Args: []*MethodArg{
+					{Name: "prefix", Type: reflect.TypeOf((*string)(nil))},
+					{Name: "filepath", Type: reflect.TypeOf((*string)(nil))},
+				},
+				RenderArgNames: map[int][]string{},
+			},
+			{
+				Name: "Index",
+				Args: []*MethodArg{
+					{Name: "foo", Type: reflect.TypeOf((*string)(nil))},
+					{Name: "bar", Type: reflect.TypeOf((*string)(nil))},
+				},
+				RenderArgNames: map[int][]string{},
+			},
+		})
+}
+func startFakeBookingApp() {
+	Init("prod", "github.com/revel/revel/testdata", "")
+
+	// Disable logging.
+	TRACE = log.New(ioutil.Discard, "", 0)
+	INFO = TRACE
+	WARN = TRACE
+	ERROR = TRACE
+
+	MainTemplateLoader = NewTemplateLoader([]string{ViewsPath, filepath.Join(RevelPath, "templates")})
+	if err := MainTemplateLoader.Refresh(); err != nil {
+		ERROR.Fatal(err)
+	}
+
+	registerControllers()
+
 	InitServerEngine(9000, GO_NATIVE_SERVER_ENGINE)
 	initControllerStack()
 	runStartupHooks()
