@@ -1,5 +1,69 @@
 # CHANGELOG
 
+## v0.17
+
+[[revel/revel](https://github.com/revel/revel)]
+
+* add-validation
+* i18-lang-by-param
+* Added namespace to routes, controllers
+* Added go 1.6 to testing
+* Adds the ability to set the language by a url parameter. The route file will need to specify the parameter so that it will be picked up
+* Changed url validation logic to regex
+* Added new validation mehtods (IPAddr,MacAddr,Domain,URL,PureText)
+
+[[revel/cmd](https://github.com/revel/cmd)]
+
+* no changes
+
+[[revel/config](https://github.com/revel/config)]
+
+* no changes
+
+[[revel/modules](https://github.com/revel/modules)]
+
+* Added Gorm module
+
+[[revel/cron](https://github.com/revel/cron)]
+
+* Updated cron task manager
+* Added ability to run a specific job, reschedules job if cron is running.
+
+[[revel/examples](https://github.com/revel/examples)]
+
+* Gorm module (Example)
+
+# v0.16.0
+
+Deprecating support for golang versions prior to 1.6
+### Breaking Changes
+
+* `CurrentLocaleRenderArg` to `CurrentLocaleViewArg` for consistency
+* JSON requests are now parsed by Revel, if the content type is `text/json` or `application/json`. The raw data is available in `Revel.Controller.Params.JSON`. But you can also use the automatic controller operation to load the data like you would any structure or map. See [here](http://revel.github.io/manual/parameters.html) for more details
+
+### Features
+
+* Modular Template Engine #1170 
+* Pongo2 engine driver added revel/modules#39
+* Ace engine driver added revel/modules#40
+* Added i18n template support #746 
+
+### Enhancements
+
+* JSON request binding #1161 
+* revel.SetSecretKey function added #1127 
+* ResolveFormat now looks at the extension as well (this sets the content type) #936 
+* Updated command to run tests using the configuration revel/cmd#61
+
+### Bug fixes
+
+* Updated documentation typos revel/modules#37
+* Updated order of parameter map assignment #1155 
+* Updated cookie lifetime for firefox #1174 
+* Added test path for modules, so modules will run tests as well #1162 
+* Fixed go profiler module revel/modules#20
+
+
 # v0.15.0
 @shawncatz released this on 2017-05-11
 
