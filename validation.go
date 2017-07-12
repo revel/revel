@@ -139,6 +139,30 @@ func (v *Validation) Email(str string) *ValidationResult {
 	return v.apply(Email{Match{emailPattern}}, str)
 }
 
+func (v *Validation) IPAddr(str string, cktype ...int) *ValidationResult {
+	return v.apply(IPAddr{cktype}, str)
+}
+
+func (v *Validation) MacAddr(str string) *ValidationResult {
+	return v.apply(IPAddr{}, str)
+}
+
+func (v *Validation) Domain(str string) *ValidationResult {
+	return v.apply(Domain{}, str)
+}
+
+func (v *Validation) URL(str string) *ValidationResult {
+	return v.apply(URL{}, str)
+}
+
+func (v *Validation) PureText(str string, m int) *ValidationResult {
+	return v.apply(PureText{m}, str)
+}
+
+func (v *Validation) FilePath(str string, m int) *ValidationResult {
+	return v.apply(FilePath{m}, str)
+}
+
 func (v *Validation) apply(chk Validator, obj interface{}) *ValidationResult {
 	if chk.IsSatisfied(obj) {
 		return &ValidationResult{Ok: true}
