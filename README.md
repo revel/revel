@@ -4,20 +4,24 @@
 
 A high productivity, full-stack web framework for the [Go language](http://www.golang.org).
 
-Current Version: 0.17 (2017-07-11)
+Current Version: 0.17.0 (2017-07-11)
 
 **As of Revel 0.15.0, Go 1.7+ is required.**
 
 ## Quick Start
 
-Install revel framework:
+Enter Go's path (format varies based on OS):
+
+	cd $GOPATH
+
+Install Revel:
 
 	go get -u github.com/revel/cmd/revel
 
-Create a new app and run it:
+Create & Run your app:
 
-	revel new github.com/myaccount/my-app
-	revel run github.com/myaccount/my-app
+	revel new my-app
+	revel run my-app
 
 Open http://localhost:9000 in your browser and you should see "It works!"
 
@@ -37,19 +41,3 @@ Open http://localhost:9000 in your browser and you should see "It works!"
 
 * [Contributing Code Guidelines](https://github.com/revel/revel/blob/master/CONTRIBUTING.md)
 * [Revel Contributors](https://github.com/revel/revel/graphs/contributors)
-
-
-## Gratitude
-
-First and foremost, we'd like to thank the growing community of developers who enjoy using and contributing to Revel. Your patience, feedback, and moral support are vital to the ongoing development of Revel!
-
-Finally, we'd like to thank the professional organizations that have supported the development of Revel:
-* [Looking Glass](https://www.lookingglasscyber.com/)
-
-
-## Announcements
-
-View the [v0.15.0 release notes](https://github.com/revel/revel/releases/tag/v0.15.0)
-for all of the relevant changes.
-
-We are working on increasing the speed and quality of our releases. Your feedback has never been so valuable, please share your thoughts with us and help shape Revel!
