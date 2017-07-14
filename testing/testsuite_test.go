@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/revel/revel"
+	"github.com/revel/revel/session"
 )
 
 func TestMisc(t *testing.T) {
@@ -190,7 +191,7 @@ func TestPostFileUpload(t *testing.T) {
 func createNewTestSuite(t *testing.T) *TestSuite {
 	suite := NewTestSuite()
 
-	if suite.Client == nil || suite.Session == nil {
+	if suite.Client == nil || suite.cse == nil {
 		t.Error("Unable to create a testsuite")
 	}
 
@@ -208,7 +209,7 @@ func testHandle(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "POST" {
 		if r.URL.Path == "/login" {
 			http.SetCookie(w, &http.Cookie{
-				Name:     "_SESSION",
+				Name:     session.SessionCookieSuffix,
 				Value:    "This is simple session value",
 				Path:     "/",
 				HttpOnly: true,

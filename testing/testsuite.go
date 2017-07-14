@@ -22,14 +22,17 @@ import (
 
 	"github.com/revel/revel"
 
+	"github.com/revel/revel/session"
 	"golang.org/x/net/websocket"
+	"net/http/httptest"
 )
 
 type TestSuite struct {
-	Client       *http.Client
-	Response     *http.Response
-	ResponseBody []byte
-	Session      revel.Session
+	Client        *http.Client
+	Response      *http.Response
+	ResponseBody  []byte
+	Session       session.Session
+	SessionEngine revel.SessionEngine
 }
 
 type TestRequest struct {
@@ -42,11 +45,19 @@ var TestSuites []interface{} // Array of structs that embed TestSuite
 // NewTestSuite returns an initialized TestSuite ready for use. It is invoked
 // by the test harness to initialize the embedded field in application tests.
 func NewTestSuite() TestSuite {
+	return NewTestSuiteEngine(revel.NewSessionCookieEngine())
+}
+
+// Define a new test suite with a custom session engine
+func NewTestSuiteEngine(engine revel.SessionEngine) TestSuite {
 	jar, _ := cookiejar.New(nil)
-	return TestSuite{
-		Client:  &http.Client{Jar: jar},
-		Session: make(revel.Session),
+	ts := TestSuite{
+		Client:        &http.Client{Jar: jar},
+		Session:       session.NewSession(),
+		SessionEngine: engine,
 	}
+
+	return ts
 }
 
 // NewTestRequest returns an initialized *TestRequest. It is used for extending
@@ -61,10 +72,11 @@ func NewTestSuite() TestSuite {
 //		return t.NewTestRequest(req)
 //	}
 func (t *TestSuite) NewTestRequest(req *http.Request) *TestRequest {
-	return &TestRequest{
+	request := &TestRequest{
 		Request:   req,
 		testSuite: t,
 	}
+	return request
 }
 
 // Host returns the address and port of the server, e.g. "127.0.0.1:8557"
@@ -228,9 +240,21 @@ func (t *TestSuite) PostFileCustom(uri string, params url.Values, filePaths url.
 
 // Send issues any request and reads the response. If successful, the caller may
 // examine the Response and ResponseBody properties. Session data will be
-// added to the request cookies for you.
+// added.
 func (r *TestRequest) Send() {
-	r.AddCookie(r.testSuite.Session.Cookie())
+	writer := httptest.NewRecorder()
+	context := revel.NewGoContext(nil)
+	context.Request.SetRequest(r.Request)
+	context.Response.SetResponse(writer)
+	controller := revel.NewController(context)
+	controller.Session = r.testSuite.Session
+
+	r.testSuite.SessionEngine.Encode(controller)
+	response := http.Response{Header: writer.Header()}
+	cookies := response.Cookies()
+	for _, c := range cookies {
+		r.AddCookie(c)
+	}
 	r.MakeRequest()
 }
 
@@ -246,21 +270,27 @@ func (r *TestRequest) MakeRequest() {
 		panic(err)
 	}
 
-	// Look for a session cookie in the response and parse it.
-	sessionCookieName := r.testSuite.Session.Cookie().Name
+	// Create the controller again to receive the response for processing.
+	context := revel.NewGoContext(nil)
+	// Set the request with the header from the response..
+	newRequest := &http.Request{URL: r.URL, Header: r.testSuite.Response.Header}
 	for _, cookie := range r.testSuite.Client.Jar.Cookies(r.Request.URL) {
-		if cookie.Name == sessionCookieName {
-			r.testSuite.Session = revel.GetSessionFromCookie(revel.GoCookie(*cookie))
-			break
-		}
+		newRequest.AddCookie(cookie)
 	}
+	context.Request.SetRequest(newRequest)
+	context.Response.SetResponse(httptest.NewRecorder())
+	controller := revel.NewController(context)
+
+	// Decode the session data from the controller and assign it to the session
+	r.testSuite.SessionEngine.Decode(controller)
+	r.testSuite.Session = controller.Session
 }
 
 // WebSocket creates a websocket connection to the given path and returns it
 func (t *TestSuite) WebSocket(path string) *websocket.Conn {
 	origin := t.BaseUrl() + "/"
-	url := t.WebSocketUrl() + path
-	ws, err := websocket.Dial(url, "", origin)
+	urlPath := t.WebSocketUrl() + path
+	ws, err := websocket.Dial(urlPath, "", origin)
 	if err != nil {
 		panic(err)
 	}

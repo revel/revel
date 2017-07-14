@@ -144,6 +144,23 @@ var (
 		"datetime": func(date time.Time) string {
 			return date.Format(DateTimeFormat)
 		},
+		// Fetch an object from the session.
+		"session": func(key string, viewArgs map[string]interface{}) template.HTML {
+			if viewArgs!=nil {
+				if c,found := viewArgs["_controller"];found {
+					var f interface{}
+					if v,err := c.(*Controller).Session.Get(key,f);err==nil {
+						return template.HTML(html.EscapeString(fmt.Sprintf("%v",v)))
+					} else {
+						ERROR.Printf("template.session, key %s error %v",key,err)
+					}
+				} else {
+					WARN.Printf("template.session, key %s requested without controller",key)
+				}
+			}
+			return template.HTML("")
+		},
+
 		"slug": Slug,
 		"even": func(a int) bool { return (a % 2) == 0 },
 
