@@ -29,7 +29,8 @@ const (
 
 var (
 	// All currently loaded message configs.
-	messages map[string]*config.Config
+	messages            map[string]*config.Config
+	localeParameterName string
 )
 
 // MessageFunc allows you to override the translation interface.
@@ -181,19 +182,31 @@ func parseLocaleFromFileName(file string) string {
 func init() {
 	OnAppStart(func() {
 		loadMessages(filepath.Join(BasePath, messageFilesDirectory))
-	})
+		localeParameterName = Config.StringDefault("i18n.locale.parameter", "")
+	}, 0)
 }
 
 func I18nFilter(c *Controller, fc []Filter) {
-	if foundCookie, cookieValue := hasLocaleCookie(c.Request); foundCookie {
-		TRACE.Printf("Found locale cookie value: %s", cookieValue)
-		setCurrentLocaleControllerArguments(c, cookieValue)
-	} else if foundHeader, headerValue := hasAcceptLanguageHeader(c.Request); foundHeader {
-		TRACE.Printf("Found Accept-Language header value: %s", headerValue)
-		setCurrentLocaleControllerArguments(c, headerValue)
-	} else {
-		TRACE.Println("Unable to find locale in cookie or header, using empty string")
-		setCurrentLocaleControllerArguments(c, "")
+	foundLocale := false
+	// Search for a parameter first
+	if localeParameterName != "" {
+		if locale, found := c.Params.Values[localeParameterName]; found && len(locale[0]) > 0 {
+			setCurrentLocaleControllerArguments(c, locale[0])
+			foundLocale = true
+			TRACE.Printf("Found locale parameter value: %s", locale[0])
+		}
+	}
+	if !foundLocale {
+		if foundCookie, cookieValue := hasLocaleCookie(c.Request); foundCookie {
+			TRACE.Printf("Found locale cookie value: %s", cookieValue)
+			setCurrentLocaleControllerArguments(c, cookieValue)
+		} else if foundHeader, headerValue := hasAcceptLanguageHeader(c.Request); foundHeader {
+			TRACE.Printf("Found Accept-Language header value: %s", headerValue)
+			setCurrentLocaleControllerArguments(c, headerValue)
+		} else {
+			TRACE.Println("Unable to find locale in cookie or header, using empty string")
+			setCurrentLocaleControllerArguments(c, "")
+		}
 	}
 	fc[0](c, fc[1:])
 }
