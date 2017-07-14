@@ -44,7 +44,7 @@ func (m *Module) ControllerByName(name, action string) (ctype *ControllerType) {
 		comparision = m.Namespace() + name
 	}
 	for _, c := range m.ControllerTypeList {
-		if strings.Index(c.Name(), comparision) > -1 {
+		if c.Name() == comparision {
 			ctype = c
 			break
 		}
