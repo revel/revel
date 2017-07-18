@@ -386,6 +386,11 @@ func (r *GoHeader) Del(key string) {
 func (r *GoHeader) Get(key string) (value []string) {
 	if !r.isResponse {
 		value = r.Source.(*GoRequest).Original.Header[key]
+		if len(value) == 0 {
+			if ihead := r.Source.(*GoRequest).Original.Header.Get(key); ihead != "" {
+				value = append(value, ihead)
+			}
+		}
 	} else {
 		value = r.Source.(*GoResponse).Original.Header()[key]
 	}
@@ -399,10 +404,10 @@ func (r *GoHeader) SetStatus(statusCode int) {
 func (r GoCookie) GetValue() string {
 	return r.Value
 }
-func (f *GoMultipartForm) GetFile() map[string][]*multipart.FileHeader {
+func (f *GoMultipartForm) GetFiles() map[string][]*multipart.FileHeader {
 	return f.Form.File
 }
-func (f *GoMultipartForm) GetValue() url.Values {
+func (f *GoMultipartForm) GetValues() url.Values {
 	return url.Values(f.Form.Value)
 }
 func (f *GoMultipartForm) RemoveAll() error {

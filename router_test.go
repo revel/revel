@@ -281,6 +281,7 @@ func TestRouteMatches(t *testing.T) {
 		} else {
 			eq(t, "ControllerName", actual.ControllerName, expected.ControllerName)
 		}
+
 		eq(t, "MethodName", actual.MethodName, strings.ToLower(expected.MethodName))
 		eq(t, "len(Params)", len(actual.Params), len(expected.Params))
 		for key, actualValue := range actual.Params {

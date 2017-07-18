@@ -172,7 +172,9 @@ func TestJsonBinder(t *testing.T) {
 		d, _ := json.Marshal(map[string]int{"a": 1})
 		params := &Params{JSON: d}
 		foo := struct{ A int }{}
-		ParseParams(params, NewRequest(getMultipartRequest()))
+		c := NewTestController(nil, getMultipartRequest())
+
+		ParseParams(params, NewRequest(c.Request.In))
 		actual := Bind(params, "test", reflect.TypeOf(foo))
 		valEq(t, "TestJsonBinder", reflect.ValueOf(actual.Interface().(struct{ A int }).A), reflect.ValueOf(1))
 	}
@@ -196,7 +198,8 @@ func TestJsonBinder(t *testing.T) {
 func TestBinder(t *testing.T) {
 	// Reuse the mvc_test.go multipart request to test the binder.
 	params := &Params{}
-	ParseParams(params, NewRequest(getMultipartRequest()))
+	c := NewTestController(nil, getMultipartRequest())
+	ParseParams(params, NewRequest(c.Request.In))
 	params.Values = ParamTestValues
 
 	// Values
