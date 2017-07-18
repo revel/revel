@@ -9,7 +9,7 @@ const (
 	Version = "0.18-dev"
 
 	// BuildDate latest commit/release date
-	BuildDate = "2017-07-11"
+	BuildDate = "2017-07-14"
 
 	// MinimumGoVersion minimum required Go version for Revel
 	MinimumGoVersion = ">= go1.6"
