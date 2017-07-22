@@ -1,14 +1,15 @@
 package revel
 
 import (
+	"bytes"
+	"errors"
 	"fmt"
+	"github.com/xeonx/timeago"
 	"html"
 	"html/template"
 	"reflect"
 	"strings"
 	"time"
-	"bytes"
-	"errors"
 )
 
 var (
@@ -145,6 +146,35 @@ var (
 		},
 		"slug": Slug,
 		"even": func(a int) bool { return (a % 2) == 0 },
+
+		// Using https://github.com/xeonx/timeago
+		"timeago": func(viewArgs map[string]interface{}, datetime time.Time) string {
+
+			localeStr, ok := viewArgs[CurrentLocaleViewArg].(string)
+			if !ok || strings.Contains(localeStr, "en") {
+				return timeago.English.Format(datetime)
+			}
+			// internalization by current locale
+			var customLanguage = timeago.Config{
+				PastPrefix:   "",
+				PastSuffix:   " " + MessageFunc(localeStr, "ago"),
+				FuturePrefix: MessageFunc(localeStr, "in") + " ",
+				FutureSuffix: "",
+				Periods: []timeago.FormatPeriod{
+					timeago.FormatPeriod{time.Second, MessageFunc(localeStr, "about a second"), MessageFunc(localeStr, "%d seconds")},
+					timeago.FormatPeriod{time.Minute, MessageFunc(localeStr, "about a minute"), MessageFunc(localeStr, "%d minutes")},
+					timeago.FormatPeriod{time.Hour, MessageFunc(localeStr, "about an hour"), MessageFunc(localeStr, "%d hours")},
+					timeago.FormatPeriod{timeago.Day, MessageFunc(localeStr, "one day"), MessageFunc(localeStr, "%d days")},
+					timeago.FormatPeriod{timeago.Month, MessageFunc(localeStr, "one month"), MessageFunc(localeStr, "%d months")},
+					timeago.FormatPeriod{timeago.Year, MessageFunc(localeStr, "one year"), MessageFunc(localeStr, "%d years")},
+				},
+
+				Zero:          MessageFunc(localeStr, "about a second"),
+				Max:           73 * time.Hour,
+				DefaultLayout: "2006-01-02",
+			}
+			return customLanguage.Format(datetime)
+		},
 		"i18ntemplate": func(args ...interface{}) (template.HTML, error) {
 			templateName, lang := "", ""
 			var viewArgs interface{}
@@ -159,16 +189,16 @@ var (
 				templateName = args[0].(string)
 				viewArgs = args[1]
 				// Try to extract language from the view args
-				if viewargsmap,ok := viewArgs.(map[string]interface{});ok {
-					lang,_ = viewargsmap[CurrentLocaleViewArg].(string)
+				if viewargsmap, ok := viewArgs.(map[string]interface{}); ok {
+					lang, _ = viewargsmap[CurrentLocaleViewArg].(string)
 				}
 			default:
 				// Assume third argument is the region
 				templateName = args[0].(string)
 				viewArgs = args[1]
 				lang, _ = args[2].(string)
-				if len(args)>3 {
-					ERROR.Printf("Received more parameters then needed for %s",templateName)
+				if len(args) > 3 {
+					ERROR.Printf("Received more parameters then needed for %s", templateName)
 				}
 			}
 
@@ -178,12 +208,13 @@ var (
 			if err == nil {
 				err = tmpl.Render(&buf, viewArgs)
 			} else {
-				ERROR.Printf("Failed to render i18ntemplate %s %v",templateName,err)
+				ERROR.Printf("Failed to render i18ntemplate %s %v", templateName, err)
 			}
 			return template.HTML(buf.String()), err
 		},
 	}
 )
+
 /////////////////////
 // Template functions
 /////////////////////
@@ -208,13 +239,13 @@ func ReverseURL(args ...interface{}) (template.URL, error) {
 
 	// Look up the types.
 
-	if pathData.TypeOfController==nil {
+	if pathData.TypeOfController == nil {
 		return "", fmt.Errorf("Failed reversing %s: controller not found %#v", action, pathData)
 	}
 
 	// Note method name is case insensitive search
 	methodType := pathData.TypeOfController.Method(pathData.MethodName)
-	if  methodType == nil {
+	if methodType == nil {
 		return "", errors.New("revel/controller: In " + action + " failed to find function " + pathData.MethodName)
 	}
 
@@ -228,7 +259,7 @@ func ReverseURL(args ...interface{}) (template.URL, error) {
 	fixedParams := len(pathData.FixedParamsByName)
 
 	for i, argValue := range args[1:] {
-		Unbind(argsByName, methodType.Args[i + fixedParams].Name, argValue)
+		Unbind(argsByName, methodType.Args[i+fixedParams].Name, argValue)
 	}
 
 	return template.URL(MainRouter.Reverse(args[0].(string), argsByName).URL), nil
