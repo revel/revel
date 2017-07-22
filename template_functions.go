@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	//"github.com/revel/config"
 	"github.com/xeonx/timeago"
 	"html"
 	"html/template"
@@ -148,33 +149,7 @@ var (
 		"even": func(a int) bool { return (a % 2) == 0 },
 
 		// Using https://github.com/xeonx/timeago
-		"timeago": func(viewArgs map[string]interface{}, datetime time.Time) string {
-
-			localeStr, ok := viewArgs[CurrentLocaleViewArg].(string)
-			if !ok || strings.Contains(localeStr, "en") {
-				return timeago.English.Format(datetime)
-			}
-			// internalization by current locale
-			var customLanguage = timeago.Config{
-				PastPrefix:   "",
-				PastSuffix:   " " + MessageFunc(localeStr, "ago"),
-				FuturePrefix: MessageFunc(localeStr, "in") + " ",
-				FutureSuffix: "",
-				Periods: []timeago.FormatPeriod{
-					timeago.FormatPeriod{time.Second, MessageFunc(localeStr, "about a second"), MessageFunc(localeStr, "%d seconds")},
-					timeago.FormatPeriod{time.Minute, MessageFunc(localeStr, "about a minute"), MessageFunc(localeStr, "%d minutes")},
-					timeago.FormatPeriod{time.Hour, MessageFunc(localeStr, "about an hour"), MessageFunc(localeStr, "%d hours")},
-					timeago.FormatPeriod{timeago.Day, MessageFunc(localeStr, "one day"), MessageFunc(localeStr, "%d days")},
-					timeago.FormatPeriod{timeago.Month, MessageFunc(localeStr, "one month"), MessageFunc(localeStr, "%d months")},
-					timeago.FormatPeriod{timeago.Year, MessageFunc(localeStr, "one year"), MessageFunc(localeStr, "%d years")},
-				},
-
-				Zero:          MessageFunc(localeStr, "about a second"),
-				Max:           73 * time.Hour,
-				DefaultLayout: "2006-01-02",
-			}
-			return customLanguage.Format(datetime)
-		},
+		"timeago": TimeAgo,
 		"i18ntemplate": func(args ...interface{}) (template.HTML, error) {
 			templateName, lang := "", ""
 			var viewArgs interface{}
@@ -272,4 +247,78 @@ func Slug(text string) string {
 	text = whiteSpacePattern.ReplaceAllString(text, separator)
 	text = strings.Trim(text, separator)
 	return text
+}
+
+var timeAgoLangs = map[string]timeago.Config{}
+
+func TimeAgo(args ...interface{}) string {
+
+	datetime := time.Now()
+	lang := ""
+	var viewArgs interface{}
+	switch len(args) {
+	case 0:
+		ERROR.Printf("No arguements passed to timeago")
+	case 1:
+		// only the time is passed in
+		datetime = args[0].(time.Time)
+	case 2:
+		// time and region is passed in
+		datetime = args[0].(time.Time)
+		switch v := reflect.ValueOf(args[1]); v.Kind() {
+		case reflect.String:
+			// second params type string equals region
+			lang, _ = args[1].(string)
+		case reflect.Map:
+			// second params type map equals viewArgs
+			viewArgs = args[1]
+			if viewargsmap, ok := viewArgs.(map[string]interface{}); ok {
+				lang, _ = viewargsmap[CurrentLocaleViewArg].(string)
+			}
+		default:
+			ERROR.Println("pluralize: unexpected type: ", v)
+		}
+	default:
+		// Assume third argument is the region
+		datetime = args[0].(time.Time)
+		if reflect.ValueOf(args[1]).Kind() != reflect.Map {
+			ERROR.Println("pluralize: unexpected type: ", args[1])
+		}
+		if reflect.ValueOf(args[2]).Kind() != reflect.String {
+			ERROR.Println("unexpected type: ", args[2])
+		}
+		viewArgs = args[1]
+		lang, _ = args[2].(string)
+		if len(args) > 3 {
+			ERROR.Printf("Received more parameters then needed for timeago")
+		}
+	}
+	if lang == "" {
+		lang, _ = Config.String(defaultLanguageOption)
+		if lang == "en" {
+			timeAgoLangs[lang] = timeago.English
+		}
+	}
+	_, ok := timeAgoLangs[lang]
+	if !ok {
+		timeAgoLangs[lang] = timeago.Config{
+			PastPrefix:   "",
+			PastSuffix:   " " + MessageFunc(lang, "ago"),
+			FuturePrefix: MessageFunc(lang, "in") + " ",
+			FutureSuffix: "",
+			Periods: []timeago.FormatPeriod{
+				timeago.FormatPeriod{time.Second, MessageFunc(lang, "about a second"), MessageFunc(lang, "%d seconds")},
+				timeago.FormatPeriod{time.Minute, MessageFunc(lang, "about a minute"), MessageFunc(lang, "%d minutes")},
+				timeago.FormatPeriod{time.Hour, MessageFunc(lang, "about an hour"), MessageFunc(lang, "%d hours")},
+				timeago.FormatPeriod{timeago.Day, MessageFunc(lang, "one day"), MessageFunc(lang, "%d days")},
+				timeago.FormatPeriod{timeago.Month, MessageFunc(lang, "one month"), MessageFunc(lang, "%d months")},
+				timeago.FormatPeriod{timeago.Year, MessageFunc(lang, "one year"), MessageFunc(lang, "%d years")},
+			},
+			Zero:          MessageFunc(lang, "about a second"),
+			Max:           73 * time.Hour,
+			DefaultLayout: "2006-01-02",
+		}
+
+	}
+	return timeAgoLangs[lang].Format(datetime)
 }
