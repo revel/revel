@@ -19,7 +19,7 @@ import (
 	"path/filepath"
 )
 
-// Request Revel's HTTP request object structure
+// Request is Revel's HTTP request object structure
 type Request struct {
 	In              ServerRequest
 	ServerHeader    *RevelHeader
@@ -42,7 +42,7 @@ type Request struct {
 
 var FORM_NOT_FOUND = errors.New("Form Not Found")
 
-// Response Revel's HTTP response object structure
+// Response is Revel's HTTP response object structure
 type Response struct {
 	Status      int
 	ContentType string
