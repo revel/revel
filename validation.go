@@ -108,14 +108,26 @@ func (v *Validation) Required(obj interface{}) *ValidationResult {
 }
 
 func (v *Validation) Min(n int, min int) *ValidationResult {
+	return v.MinFloat(float64(n), float64(min))
+}
+
+func (v *Validation) MinFloat(n float64, min float64) *ValidationResult {
 	return v.apply(Min{min}, n)
 }
 
 func (v *Validation) Max(n int, max int) *ValidationResult {
+	return v.MaxFloat(float64(n), float64(max))
+}
+
+func (v *Validation) MaxFloat(n float64, max float64) *ValidationResult {
 	return v.apply(Max{max}, n)
 }
 
 func (v *Validation) Range(n, min, max int) *ValidationResult {
+	return v.RangeFloat(float64(n), float64(min), float64(max))
+}
+
+func (v *Validation) RangeFloat(n, min, max float64) *ValidationResult {
 	return v.apply(Range{Min{min}, Max{max}}, n)
 }
 
