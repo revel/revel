@@ -366,8 +366,11 @@ func (r *BinaryResult) Apply(req *Request, resp *Response) {
 	}
 	if content, ok := r.Reader.(io.ReadSeeker); ok && r.Length < 0 {
 		// get the size from the stream
-		if size, err := content.Seek(0, io.SeekEnd); err == nil {
-			if _, err = content.Seek(0, io.SeekStart); err == nil {
+		// go1.6 compatibility change, go1.6 does not define constants io.SeekStart
+		//if size, err := content.Seek(0, io.SeekEnd); err == nil {
+		//	if _, err = content.Seek(0, io.SeekStart); err == nil {
+		if size, err := content.Seek(0, 2); err == nil {
+			if _, err = content.Seek(0, 0); err == nil {
 				r.Length = size
 			}
 		}
