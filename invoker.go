@@ -7,14 +7,11 @@ package revel
 import (
 	"io"
 	"reflect"
-
-	"golang.org/x/net/websocket"
 )
 
 var (
-	controllerType    = reflect.TypeOf(Controller{})
 	controllerPtrType = reflect.TypeOf(&Controller{})
-	websocketType     = reflect.TypeOf((*websocket.Conn)(nil))
+	websocketType     = reflect.TypeOf((*ServerWebSocket)(nil)).Elem()
 )
 
 func ActionInvoker(c *Controller, _ []Filter) {
@@ -26,8 +23,8 @@ func ActionInvoker(c *Controller, _ []Filter) {
 	for _, arg := range c.MethodType.Args {
 		// If they accept a websocket connection, treat that arg specially.
 		var boundArg reflect.Value
-		if arg.Type == websocketType {
-			boundArg = reflect.ValueOf(c.Request.Websocket)
+		if arg.Type.Implements(websocketType) {
+			boundArg = reflect.ValueOf(c.Request.WebSocket)
 		} else {
 			boundArg = Bind(c.Params, arg.Name, arg.Type)
 			// #756 - If the argument is a closer, defer a Close call,

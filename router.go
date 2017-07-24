@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"net/http"
 	"net/url"
 	"path/filepath"
 	"regexp"
@@ -161,13 +160,13 @@ type Router struct {
 	path   string // path to the routes file
 }
 
-func (router *Router) Route(req *http.Request) (routeMatch *RouteMatch) {
+func (router *Router) Route(req *Request) (routeMatch *RouteMatch) {
 	// Override method if set in header
-	if method := req.Header.Get("X-HTTP-Method-Override"); method != "" && req.Method == "POST" {
+	if method := req.GetHttpHeader("X-HTTP-Method-Override"); method != "" && req.Method == "POST" {
 		req.Method = method
 	}
 
-	leaf, expansions := router.Tree.Find(treePath(req.Method, req.URL.Path))
+	leaf, expansions := router.Tree.Find(treePath(req.Method, req.GetPath()))
 	if leaf == nil {
 		return nil
 	}
@@ -713,9 +712,9 @@ func (router *Router) Reverse(action string, argValues map[string]string) (ad *A
 
 func RouterFilter(c *Controller, fc []Filter) {
 	// Figure out the Controller/Action
-	route := MainRouter.Route(c.Request.Request)
+	route := MainRouter.Route(c.Request)
 	if route == nil {
-		c.Result = c.NotFound("No matching route found: " + c.Request.RequestURI)
+		c.Result = c.NotFound("No matching route found: " + c.Request.GetRequestURI())
 		return
 	}
 
@@ -757,10 +756,13 @@ func HTTPMethodOverride(c *Controller, fc []Filter) {
 	// An array of HTTP verbs allowed.
 	verbs := []string{"POST", "PUT", "PATCH", "DELETE"}
 
-	method := strings.ToUpper(c.Request.Request.Method)
+	method := strings.ToUpper(c.Request.Method)
 
 	if method == "POST" {
-		param := strings.ToUpper(c.Request.Request.PostFormValue("_method"))
+		param := ""
+		if f, err := c.Request.GetForm(); err == nil {
+			param = strings.ToUpper(f.Get("_method"))
+		}
 
 		if len(param) > 0 {
 			override := false
@@ -773,7 +775,7 @@ func HTTPMethodOverride(c *Controller, fc []Filter) {
 			}
 
 			if override {
-				c.Request.Request.Method = param
+				c.Request.Method = param
 			} else {
 				c.Response.Status = 405
 				c.Result = c.RenderError(&Error{

@@ -24,7 +24,8 @@ func getRecordedCookie(recorder *httptest.ResponseRecorder, name string) (*http.
 
 func validationTester(req *Request, fn func(c *Controller)) *httptest.ResponseRecorder {
 	recorder := httptest.NewRecorder()
-	c := NewController(req, NewResponse(recorder))
+	c := NewTestController(recorder,req.In.GetRaw().(*http.Request))
+
 	ValidationFilter(c, []Filter{func(c *Controller, _ []Filter) {
 		fn(c)
 	}})
@@ -33,7 +34,7 @@ func validationTester(req *Request, fn func(c *Controller)) *httptest.ResponseRe
 
 // Test that errors are encoded into the _ERRORS cookie.
 func TestValidationWithError(t *testing.T) {
-	recorder := validationTester(buildEmptyRequest(), func(c *Controller) {
+	recorder := validationTester(buildEmptyRequest().Request, func(c *Controller) {
 		c.Validation.Required("")
 		if !c.Validation.HasErrors() {
 			t.Fatal("errors should be present")
@@ -50,7 +51,7 @@ func TestValidationWithError(t *testing.T) {
 
 // Test that no cookie is sent if errors are found, but Keep() is not called.
 func TestValidationNoKeep(t *testing.T) {
-	recorder := validationTester(buildEmptyRequest(), func(c *Controller) {
+	recorder := validationTester(buildEmptyRequest().Request, func(c *Controller) {
 		c.Validation.Required("")
 		if !c.Validation.HasErrors() {
 			t.Fatal("errors should not be present")
@@ -64,7 +65,7 @@ func TestValidationNoKeep(t *testing.T) {
 
 // Test that a previously set _ERRORS cookie is deleted if no errors are found.
 func TestValidationNoKeepCookiePreviouslySet(t *testing.T) {
-	req := buildRequestWithCookie("REVEL_ERRORS", "invalid")
+	req := buildRequestWithCookie("REVEL_ERRORS", "invalid").Request
 	recorder := validationTester(req, func(c *Controller) {
 		c.Validation.Required("success")
 		if c.Validation.HasErrors() {

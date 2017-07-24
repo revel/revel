@@ -138,7 +138,7 @@ func findRelevantStackFrame(stack string) (int, string) {
 			return sumFrame + frame, SourcePath
 		} else {
 			// Need to at least trim off the first character so this frame isn't caught again.
-			partialStack = partialStack[frame + 1:]
+			partialStack = partialStack[frame+1:]
 			sumFrame += frame + 1
 		}
 	}

@@ -23,15 +23,23 @@ const (
 	RevelImportPath = "github.com/revel/revel"
 )
 const (
-	// Called when templates are going to be refreshed (receivers are registered template engines added to the template.engine conf option)
+	// Event type when templates are going to be refreshed (receivers are registered template engines added to the template.engine conf option)
 	TEMPLATE_REFRESH_REQUESTED = iota
-	// Called when templates are refreshed (receivers are registered template engines added to the template.engine conf option)
+	// Event type when templates are refreshed (receivers are registered template engines added to the template.engine conf option)
 	TEMPLATE_REFRESH_COMPLETED
+	// Event type before all module loads, events thrown to handlers added to AddInitEventHandler
 
 	// Event type before all module loads, events thrown to handlers added to AddInitEventHandler
 	REVEL_BEFORE_MODULES_LOADED
 	// Event type after all module loads, events thrown to handlers added to AddInitEventHandler
 	REVEL_AFTER_MODULES_LOADED
+
+	// Event type before server engine is initialized, receivers are active server engine and handlers added to AddInitEventHandler
+	ENGINE_BEFORE_INITIALIZED
+	// Event type before server engine is started, receivers are active server engine and handlers added to AddInitEventHandler
+	ENGINE_STARTED
+	// Event type after server engine is stopped, receivers are active server engine and handlers added to AddInitEventHandler
+	ENGINE_SHUTDOWN
 
 	// Called before routes are refreshed
 	ROUTE_REFRESH_REQUESTED
@@ -39,6 +47,7 @@ const (
 	ROUTE_REFRESH_COMPLETED
 
 )
+
 type revelLogs struct {
 	c gocolorize.Colorize
 	w io.Writer
@@ -69,8 +78,8 @@ var (
 
 	// Where to look for templates
 	// Ordered by priority. (Earlier paths take precedence over later paths.)
-	CodePaths     []string
-	TemplatePaths []string
+	CodePaths     []string // Code base directories, for modules and app
+	TemplatePaths []string // Template path directories manually added
 
 	// ConfPaths where to look for configurations
 	// Config load order
@@ -122,6 +131,7 @@ var (
 	requestLog           = log.New(ioutil.Discard, "", 0)
 	requestLogTimeFormat = "2006/01/02 15:04:05.000"
 
+	// True when revel engine has been initialized (Init has returned)
 	Initialized bool
 
 	// Private
@@ -347,7 +357,7 @@ func findSrcPaths(importPath string) (revelSourcePath, appSourcePath string) {
 
 	appPkg, err := build.Import(importPath, "", build.FindOnly)
 	if err != nil {
-		ERROR.Fatalln("Failed to import", importPath, "with error:", err)
+		ERROR.Panicf("Failed to import", importPath, "with error:", err)
 	}
 
 	revelPkg, err := build.Import(RevelImportPath, "", build.FindOnly)

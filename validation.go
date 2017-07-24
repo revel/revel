@@ -215,7 +215,7 @@ func ValidationFilter(c *Controller, fc []Filter) {
 		c.Validation = &Validation{}
 		fc[0](c, fc[1:])
 	} else {
-		errors, err := restoreValidationErrors(c.Request.Request)
+		errors, err := restoreValidationErrors(c.Request)
 		c.Validation = &Validation{
 			Errors: errors,
 			keep:   false,
@@ -263,14 +263,14 @@ func ValidationFilter(c *Controller, fc []Filter) {
 }
 
 // Restore Validation.Errors from a request.
-func restoreValidationErrors(req *http.Request) ([]*ValidationError, error) {
+func restoreValidationErrors(req *Request) ([]*ValidationError, error) {
 	var (
 		err    error
-		cookie *http.Cookie
+		cookie ServerCookie
 		errors = make([]*ValidationError, 0, 5)
 	)
 	if cookie, err = req.Cookie(CookiePrefix + "_ERRORS"); err == nil {
-		ParseKeyValueCookie(cookie.Value, func(key, val string) {
+		ParseKeyValueCookie(cookie.GetValue(), func(key, val string) {
 			errors = append(errors, &ValidationError{
 				Key:     key,
 				Message: val,

@@ -147,8 +147,7 @@ func loadMessageFile(path string, info os.FileInfo, osError error) error {
 	}
 
 	if matched, _ := regexp.MatchString(messageFilePattern, info.Name()); matched {
-		var config *config.Config
-		config, err := parseMessagesFile(path)
+		messageConfig, err := parseMessagesFile(path)
 		if err != nil {
 			return err
 		}
@@ -156,10 +155,10 @@ func loadMessageFile(path string, info os.FileInfo, osError error) error {
 
 		// If we have already parsed a message file for this locale, merge both
 		if _, exists := messages[locale]; exists {
-			messages[locale].Merge(config)
+			messages[locale].Merge(messageConfig)
 			TRACE.Printf("Successfully merged messages for locale '%s'", locale)
 		} else {
-			messages[locale] = config
+			messages[locale] = messageConfig
 		}
 
 		TRACE.Println("Successfully loaded messages from file", info.Name())
@@ -232,11 +231,11 @@ func hasAcceptLanguageHeader(request *Request) (bool, string) {
 
 // Determine whether the given request has a valid language cookie value.
 func hasLocaleCookie(request *Request) (bool, string) {
-	if request != nil && request.Cookies() != nil {
+	if request != nil {
 		name := Config.StringDefault(localeCookieConfigKey, CookiePrefix+"_LANG")
 		cookie, err := request.Cookie(name)
 		if err == nil {
-			return true, cookie.Value
+			return true, cookie.GetValue()
 		}
 		TRACE.Printf("Unable to read locale cookie with name '%s': %s", name, err.Error())
 	}
