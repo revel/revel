@@ -5,8 +5,6 @@
 package revel
 
 import (
-	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -84,7 +82,7 @@ func registerControllers() {
 				Args: []*MethodArg{
 					{"id", reflect.TypeOf((*int)(nil))},
 				},
-				RenderArgNames: map[int][]string{43: {"title", "hotel"}},
+				RenderArgNames: map[int][]string{41: {"title", "hotel"}},
 			},
 			{
 				Name: "Book",

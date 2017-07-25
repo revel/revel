@@ -42,7 +42,6 @@ type Controller struct {
 	Validation *Validation            // Data validation helpers
 	Log        logger.MultiLogger     // Context Logger
 }
-
 // The map of controllers, controllers are mapped by using the namespace|controller_name as the key
 var controllers = make(map[string]*ControllerType)
 var controllerLog = RevelLog.New("section", "controller")
@@ -488,75 +487,8 @@ func findControllers(appControllerType reflect.Type) (indexes [][]int) {
 	return
 }
 
-// Controller registry and types.
 
-type ControllerType struct {
-	Namespace         string  // The namespace of the controller
-	ModuleSource      *Module // The module for the controller
-	Type              reflect.Type
-	Methods           []*MethodType
-	ControllerIndexes [][]int // FieldByIndex to all embedded *Controllers
-}
 
-type MethodType struct {
-	Name           string
-	Args           []*MethodArg
-	RenderArgNames map[int][]string
-	lowerName      string
-}
-
-type MethodArg struct {
-	Name string
-	Type reflect.Type
-}
-
-// Adds the controller to the controllers map using its namespace, also adds it to the module list of controllers.
-// If the controller is in the main application it is added without its namespace as well.
-func AddControllerType(moduleSource *Module, controllerType reflect.Type, methods []*MethodType) (newControllerType *ControllerType) {
-	if moduleSource == nil {
-		moduleSource = appModule
-	}
-
-	newControllerType = &ControllerType{ModuleSource: moduleSource, Type: controllerType, Methods: methods, ControllerIndexes: findControllers(controllerType)}
-	newControllerType.Namespace = moduleSource.Namespace()
-	controllerName := newControllerType.Name()
-
-	// Store the first controller only in the controllers map with the unmapped namespace.
-	if _, found := controllers[controllerName]; !found {
-		controllers[controllerName] = newControllerType
-		newControllerType.ModuleSource.AddController(newControllerType)
-		if newControllerType.ModuleSource == appModule {
-			// Add the controller mapping into the global namespace
-			controllers[newControllerType.ShortName()] = newControllerType
-		}
-	} else {
-		controllerLog.Error("AddControllerType: Attempt to register duplicate controller as ", "controller", controllerName)
-	}
-	controllerLog.Info("AddControllerType: Registered controller", "controller", controllerName)
-
-	return
-}
-
-// Method searches for a given exported method (case insensitive)
-func (ct *ControllerType) Method(name string) *MethodType {
-	lowerName := strings.ToLower(name)
-	for _, method := range ct.Methods {
-		if method.lowerName == lowerName {
-			return method
-		}
-	}
-	return nil
-}
-
-// The controller name with the namespace
-func (ct *ControllerType) Name() string {
-	return ct.Namespace + ct.ShortName()
-}
-
-// The controller name without the namespace
-func (ct *ControllerType) ShortName() string {
-	return strings.ToLower(ct.Type.Name())
-}
 
 // RegisterController registers a Controller and its Methods with Revel.
 func RegisterController(c interface{}, methods []*MethodType) {
