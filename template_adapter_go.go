@@ -44,7 +44,7 @@ func (i *GoEngine) Handles(templateView *TemplateView) bool{
 
 func (engine *GoEngine) ParseAndAdd(baseTemplate *TemplateView) error {
 	// If alternate delimiters set for the project, change them for this set
-	if engine.splitDelims != nil && baseTemplate.Location() == ViewsPath {
+	if engine.splitDelims != nil && strings.Index(baseTemplate.Location(), ViewsPath)>-1 {
 		engine.templateSet.Delims(engine.splitDelims[0], engine.splitDelims[1])
 	} else {
 		// Reset to default otherwise
