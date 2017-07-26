@@ -139,7 +139,9 @@ func handleInternal(ctx ServerContext) {
 	}()
 
 	c.ClientIP = clientIP
-
+	c.Log = AppLog.New("ip", clientIP,
+		"path",req.GetPath(),"method",req.Method)
+	// Call the first filter, this will process the request
 	Filters[0](c, Filters[1:])
 	if c.Result != nil {
 		c.Result.Apply(req, resp)
@@ -155,13 +157,10 @@ func handleInternal(ctx ServerContext) {
 	// RequestStartTime ClientIP ResponseStatus RequestLatency HTTPMethod URLPath
 	// Sample format:
 	// 2016/05/25 17:46:37.112 127.0.0.1 200  270.157µs GET /
-	requestLog.Printf("%v %v %v %10v %v %v",
-		start.Format(requestLogTimeFormat),
-		clientIP,
-		c.Response.Status,
-		time.Since(start),
-		req.Method,
-		req.GetPath(),
+	c.Log.Info("Request Stats",
+		"start",start,
+		"status", c.Response.Status,
+		"duration", time.Since(start),
 	)
 }
 
