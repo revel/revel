@@ -136,7 +136,7 @@ func NewRoute(moduleSource *Module, method, path, action, fixedArgs, routesPath 
 
 			// The same action path could be used for multiple routes (like the Static.Serve)
 		} else {
-			ERROR.Panicf("Failed to find controller for route path action %s \n%#v\n", path+"?"+r.Action,actionPathCacheMap)
+			ERROR.Panicf("Failed to find controller for route path action %s \n%#v\n", path+"?"+r.Action, actionPathCacheMap)
 		}
 	}
 	return
@@ -290,7 +290,7 @@ func splitActionPath(actionPathData *ActionPathData, actionPath string, useCache
 		typeOfController                                        *ControllerType
 	)
 	actionSplit := strings.Split(actionPath, ".")
-	if actionPathData!=nil {
+	if actionPathData != nil {
 		foundModuleSource = actionPathData.ModuleSource
 	}
 	if len(actionSplit) == 2 {
@@ -309,13 +309,13 @@ func splitActionPath(actionPathData *ActionPathData, actionPath string, useCache
 			}
 			controllerName = controllerName[i+1:]
 			// Check for the type of controller
-			typeOfController = foundModuleSource.ControllerByName(controllerName,methodName)
+			typeOfController = foundModuleSource.ControllerByName(controllerName, methodName)
 			found = typeOfController != nil
 		} else if controllerName[0] != ':' {
 			// First attempt to find the controller in the module source
-			if foundModuleSource!=nil {
-				typeOfController = foundModuleSource.ControllerByName(controllerName,methodName)
-				if typeOfController!=nil {
+			if foundModuleSource != nil {
+				typeOfController = foundModuleSource.ControllerByName(controllerName, methodName)
+				if typeOfController != nil {
 					controllerNamespace = typeOfController.Namespace
 				}
 			}
@@ -379,7 +379,7 @@ func splitActionPath(actionPathData *ActionPathData, actionPath string, useCache
 			}
 		}
 		actionPathData.TypeOfController = foundModuleSource.ControllerByName(controllerName, "")
-		if actionPathData.TypeOfController == nil && actionPathData.ControllerName[0]!=':' {
+		if actionPathData.TypeOfController == nil && actionPathData.ControllerName[0] != ':' {
 			WARN.Printf("Router: No controller found for %s %#v", foundModuleSource.Namespace()+controllerName, controllers)
 		}
 
@@ -605,18 +605,20 @@ func (router *Router) Reverse(action string, argValues map[string]string) (ad *A
 					// Wildcard match in same module space
 					pathData.Route = route
 					break
-				} else if route.ActionPath() == pathData.ModuleSource.Namespace()+pathData.ControllerName {
+				} else if route.ActionPath() == pathData.ModuleSource.Namespace()+pathData.ControllerName &&
+					(route.Method[0] == ':' || route.Method == pathData.MethodName) {
 					// Action path match
 					pathData.Route = route
 					break
-				} else if route.ControllerName == pathData.ControllerName {
+				} else if route.ControllerName == pathData.ControllerName &&
+					(route.Method[0] == ':' || route.Method == pathData.MethodName) {
 					// Controller name match
 					possibleRoute = route
 				}
 			}
 			if pathData.Route == nil && possibleRoute != nil {
 				pathData.Route = possibleRoute
-				WARN.Printf("For reverse action %s matched path route %#v", action, possibleRoute)
+				WARN.Printf("For a url reverse a match was based on  %s matched path to route %#v ", action, possibleRoute)
 			}
 			if pathData.Route != nil {
 				TRACE.Printf("Reverse Storing recognized action path %s for route %#v\n", action, pathData.Route)

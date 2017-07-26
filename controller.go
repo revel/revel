@@ -363,7 +363,7 @@ func (c *Controller) SetTypeAction(controllerName, methodName string, typeOfCont
 
 	// Note method name is case insensitive search
 	if c.MethodType = c.Type.Method(methodName); c.MethodType == nil {
-		return errors.New("revel/controller: failed to find action " + methodName)
+		return errors.New("revel/controller: failed to find action " + controllerName + "." + methodName)
 	}
 
 	c.Name, c.MethodName = c.Type.Type.Name(), c.MethodType.Name
