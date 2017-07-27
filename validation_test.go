@@ -21,12 +21,13 @@ func getRecordedCookie(recorder *httptest.ResponseRecorder, name string) (*http.
 	}
 	return nil, http.ErrNoCookie
 }
-
+// r.Original.URL.String()
 func validationTester(req *Request, fn func(c *Controller)) *httptest.ResponseRecorder {
 	recorder := httptest.NewRecorder()
 	c := NewTestController(recorder,req.In.GetRaw().(*http.Request))
+	c.Request = req
 
-	ValidationFilter(c, []Filter{func(c *Controller, _ []Filter) {
+	ValidationFilter(c, []Filter{I18nFilter, func(c *Controller, _ []Filter) {
 		fn(c)
 	}})
 	return recorder
@@ -78,4 +79,27 @@ func TestValidationNoKeepCookiePreviouslySet(t *testing.T) {
 	} else if cookie.MaxAge >= 0 {
 		t.Fatalf("cookie should be deleted")
 	}
+}
+
+func TestValidateMessageKey(t *testing.T) {
+	Init("prod", "github.com/revel/revel/testdata", "")
+	loadMessages(testDataPath)
+
+	// Assert that we have the expected number of languages
+	if len(MessageLanguages()) != 2 {
+		t.Fatalf("Expected messages to contain no more or less than 2 languages, instead there are %d languages", len(MessageLanguages()))
+	}
+	req := buildRequestWithAcceptLanguages("nl").Request
+
+	validationTester(req, func(c *Controller) {
+		c.Validation.Required("").MessageKey("greeting")
+		if msg:=c.Validation.Errors[0].Message; msg!="Hallo" {
+			t.Errorf("Failed expected message Hallo got %s", msg)
+		}
+
+		if !c.Validation.HasErrors() {
+			t.Fatal("errors should not be present")
+		}
+	})
+
 }
