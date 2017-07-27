@@ -31,7 +31,7 @@ type Request struct {
 	Method          string
 	RemoteAddr      string
 	Host            string
-	// DEPRECATED use request methods
+	// URL request path from the server (built)
 	URL             *url.URL
 	// DEPRECATED use GetForm()
 	Form url.Values
@@ -80,7 +80,7 @@ func (req *Request) SetRequest(r ServerRequest) {
 		req.ServerHeader.Server = h.(ServerHeader)
 	}
 
-	req.URL, _ = url.Parse(req.GetRequestURI())
+	req.URL,_ = req.GetValue(HTTP_URL).(*url.URL)
 	req.ContentType = ResolveContentType(req)
 	req.Format = ResolveFormat(req)
 	req.AcceptLanguages = ResolveAcceptLanguage(req)

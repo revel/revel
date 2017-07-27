@@ -211,6 +211,8 @@ func (r *GoRequest) Get(key int) (value interface{}, err error) {
 		value = r.Original.URL.Path
 	case HTTP_HOST:
 		value = r.Original.Host
+	case HTTP_URL:
+		value = r.Original.URL
 	case HTTP_BODY:
 		value = r.Original.Body
 	default:

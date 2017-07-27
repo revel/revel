@@ -353,7 +353,11 @@ func splitActionPath(actionPathData *ActionPathData, actionPath string, useCache
 		}
 		action = actionSplit[1]
 	} else {
-		WARN.Printf("Invalid action path %s ", actionPath)
+		foundPaths := ""
+		for path:=range actionPathCacheMap {
+			foundPaths += path +","
+		}
+		WARN.Printf("Invalid action path %s found paths %s", actionPath, foundPaths)
 		found = false
 	}
 
@@ -665,8 +669,10 @@ func (router *Router) Reverse(action string, argValues map[string]string) (ad *A
 				if el == "" || (el[0] != ':' && el[0] != '*') {
 					continue
 				}
-
-				val, ok := argValues[el[1:]]
+				val, ok := pathData.FixedParamsByName[el[1:]]
+				if !ok {
+					val, ok = argValues[el[1:]]
+				}
 				if !ok {
 					val = "<nil>"
 					ERROR.Print("revel/router: reverse route missing route arg ", el[1:])
