@@ -1,3 +1,7 @@
+// Copyright (c) 2012-2016 The Revel Framework Authors, All rights reserved.
+// Revel Framework source code and usage is governed by a MIT style
+// license that can be found in the LICENSE file.
+
 package revel
 
 import (
@@ -8,7 +12,7 @@ import (
 	"runtime"
 )
 
-// Simple struct to store the Message & Key of a validation error
+// ValidationError simple struct to store the Message & Key of a validation error
 type ValidationError struct {
 	Message, Key string
 }
@@ -21,7 +25,7 @@ func (e *ValidationError) String() string {
 	return e.Message
 }
 
-// A Validation context manages data validation and error messages.
+// Validation context manages data validation and error messages.
 type Validation struct {
 	Errors []*ValidationError
 	keep   bool
@@ -70,7 +74,7 @@ func (v *Validation) Error(message string, args ...interface{}) *ValidationResul
 	return result
 }
 
-// A ValidationResult is returned from every validation method.
+// ValidationResult is returned from every validation method.
 // It provides an indication of success, and a pointer to the Error (if any).
 type ValidationResult struct {
 	Error *ValidationError
@@ -135,6 +139,30 @@ func (v *Validation) Email(str string) *ValidationResult {
 	return v.apply(Email{Match{emailPattern}}, str)
 }
 
+func (v *Validation) IPAddr(str string, cktype ...int) *ValidationResult {
+	return v.apply(IPAddr{cktype}, str)
+}
+
+func (v *Validation) MacAddr(str string) *ValidationResult {
+	return v.apply(IPAddr{}, str)
+}
+
+func (v *Validation) Domain(str string) *ValidationResult {
+	return v.apply(Domain{}, str)
+}
+
+func (v *Validation) URL(str string) *ValidationResult {
+	return v.apply(URL{}, str)
+}
+
+func (v *Validation) PureText(str string, m int) *ValidationResult {
+	return v.apply(PureText{m}, str)
+}
+
+func (v *Validation) FilePath(str string, m int) *ValidationResult {
+	return v.apply(FilePath{m}, str)
+}
+
 func (v *Validation) apply(chk Validator, obj interface{}) *ValidationResult {
 	if chk.IsSatisfied(obj) {
 		return &ValidationResult{Ok: true}
@@ -165,7 +193,7 @@ func (v *Validation) apply(chk Validator, obj interface{}) *ValidationResult {
 	}
 }
 
-// Apply a group of validators to a field, in order, and return the
+// Check applies a group of validators to a field, in order, and return the
 // ValidationResult from the first one that fails, or the last one that
 // succeeds.
 func (v *Validation) Check(obj interface{}, checks ...Validator) *ValidationResult {
@@ -179,49 +207,58 @@ func (v *Validation) Check(obj interface{}, checks ...Validator) *ValidationResu
 	return result
 }
 
-// Revel Filter function to be hooked into the filter chain.
+// ValidationFilter revel Filter function to be hooked into the filter chain.
 func ValidationFilter(c *Controller, fc []Filter) {
-	errors, err := restoreValidationErrors(c.Request.Request)
-	c.Validation = &Validation{
-		Errors: errors,
-		keep:   false,
-	}
-	hasCookie := (err != http.ErrNoCookie)
+	// If json request, we shall assume json response is intended,
+	// as such no validation cookies should be tied response
+	if c.Params != nil && c.Params.JSON != nil {
+		c.Validation = &Validation{}
+		fc[0](c, fc[1:])
+	} else {
+		errors, err := restoreValidationErrors(c.Request.Request)
+		c.Validation = &Validation{
+			Errors: errors,
+			keep:   false,
+		}
+		hasCookie := (err != http.ErrNoCookie)
 
-	fc[0](c, fc[1:])
+		fc[0](c, fc[1:])
 
-	// Add Validation errors to RenderArgs.
-	c.RenderArgs["errors"] = c.Validation.ErrorMap()
+		// Add Validation errors to ViewArgs.
+		c.ViewArgs["errors"] = c.Validation.ErrorMap()
 
-	// Store the Validation errors
-	var errorsValue string
-	if c.Validation.keep {
-		for _, error := range c.Validation.Errors {
-			if error.Message != "" {
-				errorsValue += "\x00" + error.Key + ":" + error.Message + "\x00"
+		// Store the Validation errors
+		var errorsValue string
+		if c.Validation.keep {
+			for _, err := range c.Validation.Errors {
+				if err.Message != "" {
+					errorsValue += "\x00" + err.Key + ":" + err.Message + "\x00"
+				}
 			}
 		}
-	}
 
-	// When there are errors from Validation and Keep() has been called, store the
-	// values in a cookie. If there previously was a cookie but no errors, remove
-	// the cookie.
-	if errorsValue != "" {
-		c.SetCookie(&http.Cookie{
-			Name:     CookiePrefix + "_ERRORS",
-			Value:    url.QueryEscape(errorsValue),
-			Path:     "/",
-			HttpOnly: CookieHttpOnly,
-			Secure:   CookieSecure,
-		})
-	} else if hasCookie {
-		c.SetCookie(&http.Cookie{
-			Name:     CookiePrefix + "_ERRORS",
-			MaxAge:   -1,
-			Path:     "/",
-			HttpOnly: CookieHttpOnly,
-			Secure:   CookieSecure,
-		})
+		// When there are errors from Validation and Keep() has been called, store the
+		// values in a cookie. If there previously was a cookie but no errors, remove
+		// the cookie.
+		if errorsValue != "" {
+			c.SetCookie(&http.Cookie{
+				Name:     CookiePrefix + "_ERRORS",
+				Value:    url.QueryEscape(errorsValue),
+				Domain:   CookieDomain,
+				Path:     "/",
+				HttpOnly: true,
+				Secure:   CookieSecure,
+			})
+		} else if hasCookie {
+			c.SetCookie(&http.Cookie{
+				Name:     CookiePrefix + "_ERRORS",
+				MaxAge:   -1,
+				Domain:   CookieDomain,
+				Path:     "/",
+				HttpOnly: true,
+				Secure:   CookieSecure,
+			})
+		}
 	}
 }
 
@@ -243,7 +280,7 @@ func restoreValidationErrors(req *http.Request) ([]*ValidationError, error) {
 	return errors, err
 }
 
-// Register default validation keys for all calls to Controller.Validation.Func().
+// DefaultValidationKeys register default validation keys for all calls to Controller.Validation.Func().
 // Map from (package).func => (line => name of first arg to Validation func)
 // E.g. "myapp/controllers.helper" or "myapp/controllers.(*Application).Action"
 // This is set on initialization in the generated main.go file.

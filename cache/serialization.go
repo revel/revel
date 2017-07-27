@@ -1,11 +1,16 @@
+// Copyright (c) 2012-2016 The Revel Framework Authors, All rights reserved.
+// Revel Framework source code and usage is governed by a MIT style
+// license that can be found in the LICENSE file.
+
 package cache
 
 import (
 	"bytes"
 	"encoding/gob"
-	"github.com/revel/revel"
 	"reflect"
 	"strconv"
+
+	"github.com/revel/revel"
 )
 
 // Serialize transforms the given value into bytes following these rules:

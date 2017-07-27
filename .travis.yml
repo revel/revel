@@ -1,44 +1,69 @@
 language: go
-go: 1.2
+
+go:
+  - 1.6
+  - 1.7
+  - 1.8
+  - tip
+
+os:
+  - linux
+  - osx
+
+sudo: false
+
+branches:
+  only:
+    - master
+    - develop
+
 services:
-  - memcache # github.com/revel/revel/cache
+  # github.com/revel/revel/cache
+  - memcache
   - redis-server
+
+before_install:
+  # TRAVIS_OS_NAME - linux and osx
+  - echo $TRAVIS_OS_NAME
+  - |
+    if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+      brew update && brew install memcached redis && brew services start redis && brew services start memcached
+    fi
+  - redis-server --daemonize yes
+  - redis-cli info
+
 install:
+  # Setting environments variables
   - export PATH=$PATH:$HOME/gopath/bin
-  # Annoyingly, we can not use go get revel/... because references to app/routes package fail
+  - export REVEL_BRANCH="develop"
+  - 'if [[ "$TRAVIS_BRANCH" == "master" ]]; then export REVEL_BRANCH="master"; fi'
+  - 'echo "Travis branch: $TRAVIS_BRANCH, Revel dependency branch: $REVEL_BRANCH"'
+  - git clone -b $REVEL_BRANCH git://github.com/revel/modules ../modules/
+  - git clone -b $REVEL_BRANCH git://github.com/revel/cmd ../cmd/
+  - git clone -b $REVEL_BRANCH git://github.com/revel/config ../config/
+  - git clone -b $REVEL_BRANCH git://github.com/revel/cron ../cron/
+  - git clone -b $REVEL_BRANCH git://github.com/revel/examples ../examples/
+  - go get -v github.com/revel/revel/...
   - go get -v github.com/revel/cmd/revel
-  - go get -v github.com/revel/revel/cache
-  - go get -v github.com/revel/revel/harness
-  - go get -v github.com/coopernurse/gorp
-  - go get -v code.google.com/p/go.crypto/bcrypt
-  - go get -v github.com/mattn/go-sqlite3
-  - go get -v github.com/robfig/cron
-  - go get -v code.google.com/p/goauth2/oauth
-  - go get -v github.com/mrjones/oauth
+
 script:
-  - go test github.com/revel/revel
-  - go test github.com/revel/revel/cache
-  - go test github.com/revel/revel/harness
+  - go test -v github.com/revel/revel/...
 
   # Ensure the new-app flow works (plus the other commands).
+  - revel version
   - revel new     my/testapp
   - revel test    my/testapp
   - revel clean   my/testapp
   - revel build   my/testapp build/testapp
+  - revel build   my/testapp build/testapp prod
   - revel package my/testapp
+  - revel package my/testapp prod
 
-  # Build & run the sample apps
-  # Sleep between tests to avoid spurious "address already in use" failures.
-  - revel test github.com/revel/revel/samples/booking
-  - sleep 30
-  - revel test github.com/revel/revel/samples/chat
-  - sleep 30
-  - revel test github.com/revel/revel/samples/facebook-oauth2
-  - sleep 30
-  - revel test github.com/revel/revel/samples/twitter-oauth
-  - sleep 30
-  - revel test github.com/revel/revel/samples/validation
-  - sleep 30
-  - revel test github.com/revel/revel/samples/persona
-  - sleep 30
-  - revel test github.com/revel/revel/samples/upload
+  # Commented out persona test sample, since persona.org gonna be shutdown.
+  # Also http://personatestuser.org becomes non-responsive most of the time.
+  # https://wiki.mozilla.org/Identity/Persona_Shutdown_Guidelines_for_Reliers
+  # - revel test github.com/revel/examples/persona
+
+matrix:
+  allow_failures:
+    - go: tip

@@ -1,11 +1,16 @@
+// Copyright (c) 2012-2016 The Revel Framework Authors, All rights reserved.
+// Revel Framework source code and usage is governed by a MIT style
+// license that can be found in the LICENSE file.
+
 package cache
 
 import (
 	"fmt"
-	"github.com/revel/revel"
-	"github.com/robfig/go-cache"
 	"reflect"
 	"time"
+
+	"github.com/revel/revel"
+	"github.com/robfig/go-cache"
 )
 
 type InMemoryCache struct {
@@ -38,7 +43,7 @@ func (c InMemoryCache) GetMulti(keys ...string) (Getter, error) {
 }
 
 func (c InMemoryCache) Set(key string, value interface{}, expires time.Duration) error {
-	// NOTE: go-cache understands the values of DEFAULT and FOREVER
+	// NOTE: go-cache understands the values of DefaultExpiryTime and ForEverNeverExpiry
 	c.Cache.Set(key, value, expires)
 	return nil
 }

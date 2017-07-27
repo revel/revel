@@ -1,3 +1,7 @@
+// Copyright (c) 2012-2016 The Revel Framework Authors, All rights reserved.
+// Revel Framework source code and usage is governed by a MIT style
+// license that can be found in the LICENSE file.
+
 package revel
 
 import (
@@ -12,6 +16,7 @@ import (
 // E.g. the Post/Redirect/Get pattern:
 // http://en.wikipedia.org/wiki/Post/Redirect/Get
 type Flash struct {
+	// `Data` is the input which is read in `restoreFlash`, `Out` is the output which is set in a FLASH cookie at the end of the `FlashFilter()`
 	Data, Out map[string]string
 }
 
@@ -40,7 +45,7 @@ func (f Flash) Success(msg string, args ...interface{}) {
 // The name of the Flash cookie is set as CookiePrefix + "_FLASH".
 func FlashFilter(c *Controller, fc []Filter) {
 	c.Flash = restoreFlash(c.Request.Request)
-	c.RenderArgs["flash"] = c.Flash.Data
+	c.ViewArgs["flash"] = c.Flash.Data
 
 	fc[0](c, fc[1:])
 
@@ -52,7 +57,7 @@ func FlashFilter(c *Controller, fc []Filter) {
 	c.SetCookie(&http.Cookie{
 		Name:     CookiePrefix + "_FLASH",
 		Value:    url.QueryEscape(flashValue),
-		HttpOnly: CookieHttpOnly,
+		HttpOnly: true,
 		Secure:   CookieSecure,
 		Path:     "/",
 	})

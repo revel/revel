@@ -1,17 +1,23 @@
+// Copyright (c) 2012-2016 The Revel Framework Authors, All rights reserved.
+// Revel Framework source code and usage is governed by a MIT style
+// license that can be found in the LICENSE file.
+
 package cache
 
 import (
+	"time"
+
 	"github.com/garyburd/redigo/redis"
 	"github.com/revel/revel"
-	"time"
 )
 
-// Wraps the Redis client to meet the Cache interface.
+// RedisCache wraps the Redis client to meet the Cache interface.
 type RedisCache struct {
 	pool              *redis.Pool
 	defaultExpiration time.Duration
 }
 
+// NewRedisCache returns a new RedisCache with given parameters
 // until redigo supports sharding/clustering, only one host will be in hostList
 func NewRedisCache(host string, password string, defaultExpiration time.Duration) RedisCache {
 	var pool = &redis.Pool{
@@ -28,14 +34,14 @@ func NewRedisCache(host string, password string, defaultExpiration time.Duration
 				return nil, err
 			}
 			if len(password) > 0 {
-				if _, err := c.Do("AUTH", password); err != nil {
-					c.Close()
+				if _, err = c.Do("AUTH", password); err != nil {
+					_ = c.Close()
 					return nil, err
 				}
 			} else {
 				// check with PING
-				if _, err := c.Do("PING"); err != nil {
-					c.Close()
+				if _, err = c.Do("PING"); err != nil {
+					_ = c.Close()
 					return nil, err
 				}
 			}
@@ -43,10 +49,8 @@ func NewRedisCache(host string, password string, defaultExpiration time.Duration
 		},
 		// custom connection test method
 		TestOnBorrow: func(c redis.Conn, t time.Time) error {
-			if _, err := c.Do("PING"); err != nil {
-				return err
-			}
-			return nil
+			_, err := c.Do("PING")
+			return err
 		},
 	}
 	return RedisCache{pool, defaultExpiration}
@@ -54,13 +58,18 @@ func NewRedisCache(host string, password string, defaultExpiration time.Duration
 
 func (c RedisCache) Set(key string, value interface{}, expires time.Duration) error {
 	conn := c.pool.Get()
-	defer conn.Close()
+	defer func() {
+		_ = conn.Close()
+	}()
 	return c.invoke(conn.Do, key, value, expires)
 }
 
 func (c RedisCache) Add(key string, value interface{}, expires time.Duration) error {
 	conn := c.pool.Get()
-	defer conn.Close()
+	defer func() {
+		_ = conn.Close()
+	}()
+
 	existed, err := exists(conn, key)
 	if err != nil {
 		return err
@@ -72,24 +81,29 @@ func (c RedisCache) Add(key string, value interface{}, expires time.Duration) er
 
 func (c RedisCache) Replace(key string, value interface{}, expires time.Duration) error {
 	conn := c.pool.Get()
-	defer conn.Close()
+	defer func() {
+		_ = conn.Close()
+	}()
+
 	existed, err := exists(conn, key)
 	if err != nil {
 		return err
 	} else if !existed {
 		return ErrNotStored
 	}
+
 	err = c.invoke(conn.Do, key, value, expires)
 	if value == nil {
 		return ErrNotStored
-	} else {
-		return err
 	}
+	return err
 }
 
 func (c RedisCache) Get(key string, ptrValue interface{}) error {
 	conn := c.pool.Get()
-	defer conn.Close()
+	defer func() {
+		_ = conn.Close()
+	}()
 	raw, err := conn.Do("GET", key)
 	if err != nil {
 		return err
@@ -113,7 +127,9 @@ func generalizeStringSlice(strs []string) []interface{} {
 
 func (c RedisCache) GetMulti(keys ...string) (Getter, error) {
 	conn := c.pool.Get()
-	defer conn.Close()
+	defer func() {
+		_ = conn.Close()
+	}()
 
 	items, err := redis.Values(conn.Do("MGET", generalizeStringSlice(keys)...))
 	if err != nil {
@@ -141,7 +157,9 @@ func exists(conn redis.Conn, key string) (bool, error) {
 
 func (c RedisCache) Delete(key string) error {
 	conn := c.pool.Get()
-	defer conn.Close()
+	defer func() {
+		_ = conn.Close()
+	}()
 	existed, err := redis.Bool(conn.Do("DEL", key))
 	if err == nil && !existed {
 		err = ErrCacheMiss
@@ -151,7 +169,9 @@ func (c RedisCache) Delete(key string) error {
 
 func (c RedisCache) Increment(key string, delta uint64) (uint64, error) {
 	conn := c.pool.Get()
-	defer conn.Close()
+	defer func() {
+		_ = conn.Close()
+	}()
 	// Check for existance *before* increment as per the cache contract.
 	// redis will auto create the key, and we don't want that. Since we need to do increment
 	// ourselves instead of natively via INCRBY (redis doesn't support wrapping), we get the value
@@ -166,7 +186,7 @@ func (c RedisCache) Increment(key string, delta uint64) (uint64, error) {
 	if err != nil {
 		return 0, err
 	}
-	var sum int64 = currentVal + int64(delta)
+	sum := currentVal + int64(delta)
 	_, err = conn.Do("SET", key, sum)
 	if err != nil {
 		return 0, err
@@ -176,7 +196,9 @@ func (c RedisCache) Increment(key string, delta uint64) (uint64, error) {
 
 func (c RedisCache) Decrement(key string, delta uint64) (newValue uint64, err error) {
 	conn := c.pool.Get()
-	defer conn.Close()
+	defer func() {
+		_ = conn.Close()
+	}()
 	// Check for existance *before* increment as per the cache contract.
 	// redis will auto create the key, and we don't want that, hence the exists call
 	existed, err := exists(conn, key)
@@ -193,7 +215,8 @@ func (c RedisCache) Decrement(key string, delta uint64) (newValue uint64, err er
 		return 0, err
 	}
 	if delta > uint64(currentVal) {
-		tempint, err := redis.Int64(conn.Do("DECRBY", key, currentVal))
+		var tempint int64
+		tempint, err = redis.Int64(conn.Do("DECRBY", key, currentVal))
 		return uint64(tempint), err
 	}
 	tempint, err := redis.Int64(conn.Do("DECRBY", key, delta))
@@ -202,7 +225,9 @@ func (c RedisCache) Decrement(key string, delta uint64) (newValue uint64, err er
 
 func (c RedisCache) Flush() error {
 	conn := c.pool.Get()
-	defer conn.Close()
+	defer func() {
+		_ = conn.Close()
+	}()
 	_, err := conn.Do("FLUSHALL")
 	return err
 }
@@ -211,9 +236,9 @@ func (c RedisCache) invoke(f func(string, ...interface{}) (interface{}, error),
 	key string, value interface{}, expires time.Duration) error {
 
 	switch expires {
-	case DEFAULT:
+	case DefaultExpiryTime:
 		expires = c.defaultExpiration
-	case FOREVER:
+	case ForEverNeverExpiry:
 		expires = time.Duration(0)
 	}
 
@@ -222,17 +247,18 @@ func (c RedisCache) invoke(f func(string, ...interface{}) (interface{}, error),
 		return err
 	}
 	conn := c.pool.Get()
-	defer conn.Close()
+	defer func() {
+		_ = conn.Close()
+	}()
 	if expires > 0 {
-		_, err := f("SETEX", key, int32(expires/time.Second), b)
-		return err
-	} else {
-		_, err := f("SET", key, b)
+		_, err = f("SETEX", key, int32(expires/time.Second), b)
 		return err
 	}
+	_, err = f("SET", key, b)
+	return err
 }
 
-// Implement a Getter on top of the returned item map.
+// RedisItemMapGetter implements a Getter on top of the returned item map.
 type RedisItemMapGetter map[string][]byte
 
 func (g RedisItemMapGetter) Get(key string, ptrValue interface{}) error {

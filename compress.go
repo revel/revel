@@ -1,12 +1,17 @@
+// Copyright (c) 2012-2016 The Revel Framework Authors, All rights reserved.
+// Revel Framework source code and usage is governed by a MIT style
+// license that can be found in the LICENSE file.
+
 package revel
 
 import (
-	"compress/gzip"
-	"compress/zlib"
 	"io"
 	"net/http"
 	"strconv"
 	"strings"
+
+	"github.com/klauspost/compress/gzip"
+	"github.com/klauspost/compress/zlib"
 )
 
 var compressionTypes = [...]string{
@@ -27,6 +32,7 @@ var compressableMimes = [...]string{
 	"application/x-javascript",
 }
 
+// WriteFlusher interface for compress writer
 type WriteFlusher interface {
 	io.Writer
 	io.Closer
@@ -43,17 +49,23 @@ type CompressResponseWriter struct {
 	closed          bool
 }
 
+// CompressFilter does compresssion of response body in gzip/deflate if
+// `results.compressed=true` in the app.conf
 func CompressFilter(c *Controller, fc []Filter) {
-	if Config.BoolDefault("results.compressed", false) {
-		writer := CompressResponseWriter{c.Response.Out, nil, "", false, make(chan bool, 1), nil, false}
-		writer.DetectCompressionType(c.Request, c.Response)
-		w, ok := c.Response.Out.(http.CloseNotifier)
-		if ok {
-			writer.parentNotify = w.CloseNotify()
-		}
-		c.Response.Out = &writer
-	}
 	fc[0](c, fc[1:])
+	if Config.BoolDefault("results.compressed", false) {
+		if c.Response.Status != http.StatusNoContent && c.Response.Status != http.StatusNotModified {
+			writer := CompressResponseWriter{c.Response.Out, nil, "", false, make(chan bool, 1), nil, false}
+			writer.DetectCompressionType(c.Request, c.Response)
+			w, ok := c.Response.Out.(http.CloseNotifier)
+			if ok {
+				writer.parentNotify = w.CloseNotify()
+			}
+			c.Response.Out = &writer
+		} else {
+			TRACE.Printf("Compression disabled for response status (%d)", c.Response.Status)
+		}
+	}
 }
 
 func (c CompressResponseWriter) CloseNotify() <-chan bool {
@@ -95,10 +107,10 @@ func (c *CompressResponseWriter) WriteHeader(status int) {
 
 func (c *CompressResponseWriter) Close() error {
 	if c.compressionType != "" {
-		c.compressWriter.Close()
+		_ = c.compressWriter.Close()
 	}
 	if w, ok := c.ResponseWriter.(io.Closer); ok {
-		w.Close()
+		_ = w.Close()
 	}
 	// Non-blocking write to the closenotifier, if we for some reason should
 	// get called multiple times
@@ -130,11 +142,13 @@ func (c *CompressResponseWriter) Write(b []byte) (int, error) {
 
 	if c.compressionType != "" {
 		return c.compressWriter.Write(b)
-	} else {
-		return c.ResponseWriter.Write(b)
 	}
+
+	return c.ResponseWriter.Write(b)
 }
 
+// DetectCompressionType method detects the comperssion type
+// from header "Accept-Encoding"
 func (c *CompressResponseWriter) DetectCompressionType(req *Request, resp *Response) {
 	if Config.BoolDefault("results.compressed", false) {
 		acceptedEncodings := strings.Split(req.Request.Header.Get("Accept-Encoding"), ",")
@@ -142,14 +156,22 @@ func (c *CompressResponseWriter) DetectCompressionType(req *Request, resp *Respo
 		largestQ := 0.0
 		chosenEncoding := len(compressionTypes)
 
+		// I have fixed one edge case for issue #914
+		// But it's better to cover all possible edge cases or
+		// Adapt to https://github.com/golang/gddo/blob/master/httputil/header/header.go#L172
 		for _, encoding := range acceptedEncodings {
 			encoding = strings.TrimSpace(encoding)
 			encodingParts := strings.SplitN(encoding, ";", 2)
 
 			// If we are the format "gzip;q=0.8"
 			if len(encodingParts) > 1 {
+				q := strings.TrimSpace(encodingParts[1])
+				if len(q) == 0 || !strings.HasPrefix(q, "q=") {
+					continue
+				}
+
 				// Strip off the q=
-				num, err := strconv.ParseFloat(strings.TrimSpace(encodingParts[1])[2:], 32)
+				num, err := strconv.ParseFloat(q[2:], 32)
 				if err != nil {
 					continue
 				}

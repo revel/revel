@@ -2,3 +2,10 @@ tmp/
 routes/
 test-results/
 revel/revel
+
+# editor
+*.swp
+
+.idea/
+*.iml
+

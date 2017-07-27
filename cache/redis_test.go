@@ -1,24 +1,35 @@
+// Copyright (c) 2012-2016 The Revel Framework Authors, All rights reserved.
+// Revel Framework source code and usage is governed by a MIT style
+// license that can be found in the LICENSE file.
+
 package cache
 
 import (
-	"github.com/revel/revel"
 	"net"
 	"testing"
 	"time"
+
+	"github.com/revel/config"
+	"github.com/revel/revel"
 )
 
 // These tests require redis server running on localhost:6379 (the default)
 const redisTestServer = "localhost:6379"
 
 var newRedisCache = func(t *testing.T, defaultExpiration time.Duration) Cache {
-	revel.Config = revel.NewEmptyConfig()
+	revel.Config = config.NewContext()
 
 	c, err := net.Dial("tcp", redisTestServer)
 	if err == nil {
-		c.Write([]byte("flush_all\r\n"))
-		c.Close()
+		if _, err = c.Write([]byte("flush_all\r\n")); err != nil {
+			t.Errorf("Write failed: %s", err)
+		}
+		_ = c.Close()
+
 		redisCache := NewRedisCache(redisTestServer, "", defaultExpiration)
-		redisCache.Flush()
+		if err = redisCache.Flush(); err != nil {
+			t.Errorf("Flush failed: %s", err)
+		}
 		return redisCache
 	}
 	t.Errorf("couldn't connect to redis on %s", redisTestServer)

@@ -1,3 +1,7 @@
+// Copyright (c) 2012-2016 The Revel Framework Authors, All rights reserved.
+// Revel Framework source code and usage is governed by a MIT style
+// license that can be found in the LICENSE file.
+
 package revel
 
 import (
@@ -62,7 +66,7 @@ func newFilterConfigurator(controllerName, methodName string) FilterConfigurator
 
 // FilterController returns a configurator for the filters applied to all
 // actions on the given controller instance.  For example:
-//   FilterAction(MyController{})
+//   FilterController(MyController{})
 func FilterController(controllerInstance interface{}) FilterConfigurator {
 	t := reflect.TypeOf(controllerInstance)
 	for t.Kind() == reflect.Ptr {
@@ -147,9 +151,8 @@ func (conf FilterConfigurator) insertFilter(insert Filter, where When, target Fi
 		if FilterEq(f, target) {
 			if where == BEFORE {
 				return append(fc[:i], append([]Filter{insert}, fc[i:]...)...)
-			} else {
-				return append(fc[:i+1], append([]Filter{insert}, fc[i+1:]...)...)
 			}
+			return append(fc[:i+1], append([]Filter{insert}, fc[i+1:]...)...)
 		}
 	}
 	return fc

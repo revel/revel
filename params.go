@@ -1,10 +1,17 @@
+// Copyright (c) 2012-2017 The Revel Framework Authors, All rights reserved.
+// Revel Framework source code and usage is governed by a MIT style
+// license that can be found in the LICENSE file.
+
 package revel
 
 import (
+	"encoding/json"
+	"io/ioutil"
 	"mime/multipart"
 	"net/url"
 	"os"
 	"reflect"
+	"errors"
 )
 
 // Params provides a unified view of the request params.
@@ -27,8 +34,10 @@ type Params struct {
 
 	Files    map[string][]*multipart.FileHeader // Files uploaded in a multipart form
 	tmpFiles []*os.File                         // Temp files used during the request.
+	JSON     []byte                             // JSON data from request body
 }
 
+// ParseParams parses the `http.Request` params into `revel.Controller.Params`
 func ParseParams(params *Params, req *Request) {
 	params.Query = req.URL.Query()
 
@@ -51,6 +60,19 @@ func ParseParams(params *Params, req *Request) {
 			params.Form = req.MultipartForm.Value
 			params.Files = req.MultipartForm.File
 		}
+	case "application/json":
+		fallthrough
+	case "text/json":
+		if req.Body != nil {
+			if content, err := ioutil.ReadAll(req.Body); err == nil {
+				// We wont bind it until we determine what we are binding too
+				params.JSON = content
+			} else {
+				ERROR.Println("Failed to ready request body bytes", err)
+			}
+		} else {
+			INFO.Println("Json post received with empty body")
+		}
 	}
 
 	params.Values = params.calcValues()
@@ -68,7 +90,29 @@ func (p *Params) Bind(dest interface{}, name string) {
 	if !value.CanSet() {
 		panic("revel/params: non-settable variable passed to Bind: " + name)
 	}
+
+	// Remove the json from the Params, this will stop the binder from attempting
+	// to use the json data to populate the destination interface. We do not want
+	// to do this on a named bind directly against the param, it is ok to happen when
+	// the action is invoked.
+	jsonData := p.JSON
+	p.JSON = nil
 	value.Set(Bind(p, name, value.Type()))
+	p.JSON = jsonData
+}
+
+// Bind binds the JSON data to the dest.
+func (p *Params) BindJSON(dest interface{}) error {
+	value := reflect.ValueOf(dest)
+	if value.Kind() != reflect.Ptr {
+		WARN.Println("BindJSON not a pointer")
+		return errors.New("BindJSON not a pointer")
+	}
+	if err := json.Unmarshal(p.JSON, dest); err != nil {
+		WARN.Println("W: bindMap: Unable to unmarshal request:", err)
+		return err
+	}
+	return nil
 }
 
 // calcValues returns a unified view of the component param maps.
@@ -92,20 +136,27 @@ func (p *Params) calcValues() url.Values {
 		return p.Form
 	}
 
-	// Copy everything into the same map.
+	// Copy everything into a param map,
+	// order of priority is least to most trusted
 	values := make(url.Values, numParams)
-	for k, v := range p.Fixed {
-		values[k] = append(values[k], v...)
-	}
+
+	// ?query vars first
 	for k, v := range p.Query {
 		values[k] = append(values[k], v...)
 	}
-	for k, v := range p.Route {
-		values[k] = append(values[k], v...)
-	}
+	// form vars overwrite
 	for k, v := range p.Form {
 		values[k] = append(values[k], v...)
 	}
+	// :/path vars overwrite
+	for k, v := range p.Route {
+		values[k] = append(values[k], v...)
+	}
+	// fixed vars overwrite
+	for k, v := range p.Fixed {
+		values[k] = append(values[k], v...)
+	}
+
 	return values
 }
 

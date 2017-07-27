@@ -1,3 +1,7 @@
+// Copyright (c) 2012-2016 The Revel Framework Authors, All rights reserved.
+// Revel Framework source code and usage is governed by a MIT style
+// license that can be found in the LICENSE file.
+
 package revel
 
 import (
@@ -13,6 +17,8 @@ import (
 	"time"
 )
 
+// Controller Revel's controller structure that gets embedded in user defined
+// controllers
 type Controller struct {
 	Name          string          // The controller name, e.g. "Application"
 	Type          *ControllerType // A description of the controller type.
@@ -20,6 +26,7 @@ type Controller struct {
 	MethodType    *MethodType     // A description of the invoked action type.
 	AppController interface{}     // The controller that was instantiated.
 	Action        string          // The fully qualified action name, e.g. "App.Index"
+	ClientIP      string          // holds IP address of request came from
 
 	Request  *Request
 	Response *Response
@@ -29,17 +36,21 @@ type Controller struct {
 	Session    Session                // Session, stored in cookie, signed.
 	Params     *Params                // Parameters from URL and form (including multipart).
 	Args       map[string]interface{} // Per-request scratch space.
-	RenderArgs map[string]interface{} // Args passed to the template.
+	ViewArgs   map[string]interface{} // Variables passed to the template.
 	Validation *Validation            // Data validation helpers
 }
 
+// The map of controllers, controllers are mapped by using the namespace|controller_name as the key
+var controllers = make(map[string]*ControllerType)
+
+// NewController returns new controller instance for Request and Response
 func NewController(req *Request, resp *Response) *Controller {
 	return &Controller{
 		Request:  req,
 		Response: resp,
 		Params:   new(Params),
 		Args:     map[string]interface{}{},
-		RenderArgs: map[string]interface{}{
+		ViewArgs: map[string]interface{}{
 			"RunMode": RunMode,
 			"DevMode": DevMode,
 		},
@@ -59,11 +70,19 @@ func (c *Controller) SetCookie(cookie *http.Cookie) {
 }
 
 func (c *Controller) RenderError(err error) Result {
-	return ErrorResult{c.RenderArgs, err}
+	c.setStatusIfNil(http.StatusInternalServerError)
+
+	return ErrorResult{c.ViewArgs, err}
+}
+
+func (c *Controller) setStatusIfNil(status int) {
+	if c.Response.Status == 0 {
+		c.Response.Status = status
+	}
 }
 
 // Render a template corresponding to the calling Controller method.
-// Arguments will be added to c.RenderArgs prior to rendering the template.
+// Arguments will be added to c.ViewArgs prior to rendering the template.
 // They are keyed on their local identifier.
 //
 // For example:
@@ -75,22 +94,33 @@ func (c *Controller) RenderError(err error) Result {
 //
 // This action will render views/Users/ShowUser.html, passing in an extra
 // key-value "user": (User).
-func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
-	// Get the calling function name.
+//
+// This is the slower magical version which uses the runtime
+// to determine
+// 1) Set c.ViewArgs to the arguments passed into this function
+// 2) How to call the RenderTemplate by building the following line
+// c.RenderTemplate(c.Name + "/" + c.MethodType.Name + "." + c.Request.Format)
+//
+// If you want your code to run faster it is recommended you add the template values directly
+// to the c.ViewArgs and call c.RenderTemplate directly
+func (c *Controller) Render(extraViewArgs ...interface{}) Result {
+	c.setStatusIfNil(http.StatusOK)
+
+	// Get the calling function line number.
 	_, _, line, ok := runtime.Caller(1)
 	if !ok {
 		ERROR.Println("Failed to get Caller information")
 	}
 
-	// Get the extra RenderArgs passed in.
+	// Get the extra ViewArgs passed in.
 	if renderArgNames, ok := c.MethodType.RenderArgNames[line]; ok {
-		if len(renderArgNames) == len(extraRenderArgs) {
-			for i, extraRenderArg := range extraRenderArgs {
-				c.RenderArgs[renderArgNames[i]] = extraRenderArg
+		if len(renderArgNames) == len(extraViewArgs) {
+			for i, extraRenderArg := range extraViewArgs {
+				c.ViewArgs[renderArgNames[i]] = extraRenderArg
 			}
 		} else {
 			ERROR.Println(len(renderArgNames), "RenderArg names found for",
-				len(extraRenderArgs), "extra RenderArgs")
+				len(extraViewArgs), "extra ViewArgs")
 		}
 	} else {
 		ERROR.Println("No RenderArg names found for Render call on line", line,
@@ -100,39 +130,49 @@ func (c *Controller) Render(extraRenderArgs ...interface{}) Result {
 	return c.RenderTemplate(c.Name + "/" + c.MethodType.Name + "." + c.Request.Format)
 }
 
-// A less magical way to render a template.
-// Renders the given template, using the current RenderArgs.
+// RenderTemplate method does less magical way to render a template.
+// Renders the given template, using the current ViewArgs.
 func (c *Controller) RenderTemplate(templatePath string) Result {
+	c.setStatusIfNil(http.StatusOK)
 
 	// Get the Template.
-	template, err := MainTemplateLoader.Template(templatePath)
+	lang, _ := c.ViewArgs[CurrentLocaleViewArg].(string)
+	template, err := MainTemplateLoader.TemplateLang(templatePath, lang)
 	if err != nil {
 		return c.RenderError(err)
 	}
 
 	return &RenderTemplateResult{
-		Template:   template,
-		RenderArgs: c.RenderArgs,
+		Template: template,
+		ViewArgs: c.ViewArgs,
 	}
 }
 
-// Uses encoding/json.Marshal to return JSON to the client.
-func (c *Controller) RenderJson(o interface{}) Result {
-	return RenderJsonResult{o, ""}
+// RenderJSON uses encoding/json.Marshal to return JSON to the client.
+func (c *Controller) RenderJSON(o interface{}) Result {
+	c.setStatusIfNil(http.StatusOK)
+
+	return RenderJSONResult{o, ""}
 }
 
-// Renders a JSONP result using encoding/json.Marshal
-func (c *Controller) RenderJsonP(callback string, o interface{}) Result {
-	return RenderJsonResult{o, callback}
+// RenderJSONP renders JSONP result using encoding/json.Marshal
+func (c *Controller) RenderJSONP(callback string, o interface{}) Result {
+	c.setStatusIfNil(http.StatusOK)
+
+	return RenderJSONResult{o, callback}
 }
 
-// Uses encoding/xml.Marshal to return XML to the client.
-func (c *Controller) RenderXml(o interface{}) Result {
-	return RenderXmlResult{o}
+// RenderXML uses encoding/xml.Marshal to return XML to the client.
+func (c *Controller) RenderXML(o interface{}) Result {
+	c.setStatusIfNil(http.StatusOK)
+
+	return RenderXMLResult{o}
 }
 
-// Render plaintext in response, printf style.
+// RenderText renders plaintext in response, printf style.
 func (c *Controller) RenderText(text string, objs ...interface{}) Result {
+	c.setStatusIfNil(http.StatusOK)
+
 	finalText := text
 	if len(objs) > 0 {
 		finalText = fmt.Sprintf(text, objs...)
@@ -140,9 +180,11 @@ func (c *Controller) RenderText(text string, objs ...interface{}) Result {
 	return &RenderTextResult{finalText}
 }
 
-// Render html in response
-func (c *Controller) RenderHtml(html string) Result {
-	return &RenderHtmlResult{html}
+// RenderHTML renders html in response
+func (c *Controller) RenderHTML(html string) Result {
+	c.setStatusIfNil(http.StatusOK)
+
+	return &RenderHTMLResult{html}
 }
 
 // Todo returns an HTTP 501 Not Implemented "todo" indicating that the
@@ -186,6 +228,8 @@ func (c *Controller) Forbidden(msg string, objs ...interface{}) Result {
 // RenderFile returns a file, either displayed inline or downloaded
 // as an attachment. The name and size are taken from the file info.
 func (c *Controller) RenderFile(file *os.File, delivery ContentDisposition) Result {
+	c.setStatusIfNil(http.StatusOK)
+
 	var (
 		modtime       = time.Now()
 		fileInfo, err = file.Stat()
@@ -205,6 +249,8 @@ func (c *Controller) RenderFile(file *os.File, delivery ContentDisposition) Resu
 // it implements io.Reader).  When called directly on something generated or
 // streamed, modtime should mostly likely be time.Now().
 func (c *Controller) RenderBinary(memfile io.Reader, filename string, delivery ContentDisposition, modtime time.Time) Result {
+	c.setStatusIfNil(http.StatusOK)
+
 	return &BinaryResult{
 		Reader:   memfile,
 		Name:     filename,
@@ -219,32 +265,44 @@ func (c *Controller) RenderBinary(memfile io.Reader, filename string, delivery C
 //   c.Redirect("/controller/action")
 //   c.Redirect("/controller/%d/action", id)
 func (c *Controller) Redirect(val interface{}, args ...interface{}) Result {
+	c.setStatusIfNil(http.StatusFound)
+
 	if url, ok := val.(string); ok {
 		if len(args) == 0 {
-			return &RedirectToUrlResult{url}
+			return &RedirectToURLResult{url}
 		}
-		return &RedirectToUrlResult{fmt.Sprintf(url, args...)}
+		return &RedirectToURLResult{fmt.Sprintf(url, args...)}
 	}
 	return &RedirectToActionResult{val}
 }
 
-// Perform a message lookup for the given message name using the given arguments
-// using the current language defined for this controller.
+// Message performs a lookup for the given message name using the given
+// arguments using the current language defined for this controller.
 //
 // The current language is set by the i18n plugin.
 func (c *Controller) Message(message string, args ...interface{}) (value string) {
-	return Message(c.Request.Locale, message, args...)
+	return MessageFunc(c.Request.Locale, message, args...)
 }
 
 // SetAction sets the action that is being invoked in the current request.
 // It sets the following properties: Name, Action, Type, MethodType
 func (c *Controller) SetAction(controllerName, methodName string) error {
 
+	return c.SetTypeAction(controllerName, methodName, nil)
+}
+// SetAction sets the assigns the Controller type, sets the action and initializes the controller
+func (c *Controller) SetTypeAction(controllerName, methodName string, typeOfController *ControllerType) error {
+
 	// Look up the controller and method types.
-	var ok bool
-	if c.Type, ok = controllers[strings.ToLower(controllerName)]; !ok {
-		return errors.New("revel/controller: failed to find controller " + controllerName)
+	if typeOfController== nil {
+		if c.Type = ControllerTypeByName(controllerName, anyModule); c.Type == nil {
+			return errors.New("revel/controller: failed to find controller " + controllerName)
+		}
+	} else {
+		c.Type = typeOfController
 	}
+
+	// Note method name is case insensitive search
 	if c.MethodType = c.Type.Method(methodName); c.MethodType == nil {
 		return errors.New("revel/controller: failed to find action " + methodName)
 	}
@@ -256,6 +314,27 @@ func (c *Controller) SetAction(controllerName, methodName string) error {
 	c.AppController = initNewAppController(c.Type, c).Interface()
 
 	return nil
+}
+
+func ControllerTypeByName(controllerName string, moduleSource *Module) (c *ControllerType) {
+	var found bool
+	if c, found = controllers[controllerName]; !found {
+		// Backup, passed in controllerName should be in lower case, but may not be
+		if c, found = controllers[strings.ToLower(controllerName)]; !found {
+			INFO.Printf("Cannot find controller name '%s' in controllers map ", controllerName)
+			// Search for the controller by name
+			for _, cType := range controllers {
+				testControllerName := strings.ToLower(cType.Type.Name())
+				if testControllerName == strings.ToLower(controllerName) && (cType.ModuleSource == moduleSource || moduleSource == anyModule)  {
+					WARN.Printf("Matched empty namespace controller for %s to this %s", controllerName, cType.ModuleSource.Name)
+					c = cType
+					found = true
+					break
+				}
+			}
+		}
+	}
+	return
 }
 
 // This is a helper that initializes (zeros) a new app controller value.
@@ -295,6 +374,12 @@ func findControllers(appControllerType reflect.Type) (indexes [][]int) {
 		}
 		queue = queue[1:]
 
+		// #944 if the type's Kind is not `Struct` move on,
+		// otherwise `elem.NumField()` will panic
+		if elemType.Kind() != reflect.Struct {
+			continue
+		}
+
 		// Look at all the struct fields.
 		for i := 0; i < elem.NumField(); i++ {
 			// If this is not an anonymous field, skip it.
@@ -322,6 +407,8 @@ func findControllers(appControllerType reflect.Type) (indexes [][]int) {
 // Controller registry and types.
 
 type ControllerType struct {
+	Namespace         string  // The namespace of the controller
+	ModuleSource      *Module // The module for the controller
 	Type              reflect.Type
 	Methods           []*MethodType
 	ControllerIndexes [][]int // FieldByIndex to all embedded *Controllers
@@ -339,6 +426,32 @@ type MethodArg struct {
 	Type reflect.Type
 }
 
+// Adds the controller to the controllers map using its namespace, also adds it to the module list of controllers.
+// If the controller is in the main application it is added without its namespace as well.
+func AddControllerType(moduleSource *Module,controllerType reflect.Type,methods []*MethodType) (newControllerType *ControllerType) {
+	if moduleSource==nil {
+		moduleSource = appModule
+	}
+
+	newControllerType = &ControllerType{ModuleSource:moduleSource,Type:controllerType,Methods:methods,ControllerIndexes:findControllers(controllerType)}
+	newControllerType.Namespace = moduleSource.Namespace()
+	controllerName := newControllerType.Name()
+
+	// Store the first controller only in the controllers map with the unmapped namespace.
+	if _, found := controllers[controllerName]; !found {
+		controllers[controllerName] = newControllerType
+		newControllerType.ModuleSource.AddController(newControllerType)
+		if newControllerType.ModuleSource == appModule {
+			// Add the controller mapping into the global namespace
+			controllers[newControllerType.ShortName()] = newControllerType
+		}
+	} else {
+		ERROR.Printf("Error, attempt to register duplicate controller as %s",controllerName)
+	}
+	TRACE.Printf("Registered controller: %s", controllerName)
+
+	return
+}
 // Method searches for a given exported method (case insensitive)
 func (ct *ControllerType) Method(name string) *MethodType {
 	lowerName := strings.ToLower(name)
@@ -350,14 +463,21 @@ func (ct *ControllerType) Method(name string) *MethodType {
 	return nil
 }
 
-var controllers = make(map[string]*ControllerType)
+// The controller name with the namespace
+func (ct *ControllerType) Name() (string) {
+	return ct.Namespace + ct.ShortName()
+}
 
-// Register a Controller and its Methods with Revel.
+// The controller name without the namespace
+func (ct *ControllerType) ShortName() (string) {
+	return strings.ToLower(ct.Type.Name())
+}
+
+// RegisterController registers a Controller and its Methods with Revel.
 func RegisterController(c interface{}, methods []*MethodType) {
 	// De-star the controller type
 	// (e.g. given TypeOf((*Application)(nil)), want TypeOf(Application))
-	var t reflect.Type = reflect.TypeOf(c)
-	var elem reflect.Type = t.Elem()
+	elem := reflect.TypeOf(c).Elem()
 
 	// De-star all of the method arg types too.
 	for _, m := range methods {
@@ -367,10 +487,10 @@ func RegisterController(c interface{}, methods []*MethodType) {
 		}
 	}
 
-	controllers[strings.ToLower(elem.Name())] = &ControllerType{
-		Type:              elem,
-		Methods:           methods,
-		ControllerIndexes: findControllers(elem),
-	}
-	TRACE.Printf("Registered controller: %s", elem.Name())
+	// Fetch module for controller, if none found controller must be part of the app
+	controllerModule := ModuleFromPath(elem.PkgPath(), true)
+
+	controllerType := AddControllerType(controllerModule,elem,methods)
+
+	TRACE.Printf("Registered controller: %s", controllerType.Name())
 }
