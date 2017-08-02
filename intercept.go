@@ -66,14 +66,15 @@ type Interception struct {
 	interceptAll bool
 }
 
+type interceptionEntry struct {
+	intc   *Interception
+	target reflect.Value
+}
+
 // Invoke performs the given interception.
 // val is a pointer to the App Controller.
-func (i Interception) Invoke(val reflect.Value) reflect.Value {
-	var arg reflect.Value
-	if i.function == nil {
-		// If it's an InterceptorMethod, then we have to pass in the target type.
-		arg = findTarget(val, i.target)
-	} else {
+func (i Interception) Invoke(val, target reflect.Value) reflect.Value {
+	if i.function != nil {
 		// If it's an InterceptorFunc, then the type must be *Controller.
 		// We can find that by following the embedded types up the chain.
 		for val.Type() != controllerPtrType {
@@ -82,10 +83,10 @@ func (i Interception) Invoke(val reflect.Value) reflect.Value {
 			}
 			val = val.Field(0)
 		}
-		arg = val
+		target = val
 	}
 
-	vals := i.callable.Call([]reflect.Value{arg})
+	vals := i.callable.Call([]reflect.Value{target})
 	return vals[0]
 }
 
@@ -113,8 +114,8 @@ func invokeInterceptors(when When, c *Controller) {
 		app    = reflect.ValueOf(c.AppController)
 		result Result
 	)
-	for _, intc := range getInterceptors(when, app) {
-		resultValue := intc.Invoke(app)
+	for _, interceptionEntry := range getInterceptorEntries(when, app) {
+		resultValue := interceptionEntry.intc.Invoke(app, interceptionEntry.target)
 		if !resultValue.IsNil() {
 			result = resultValue.Interface().(Result)
 		}
@@ -161,15 +162,16 @@ func InterceptMethod(intc InterceptorMethod, when When) {
 	})
 }
 
-func getInterceptors(when When, val reflect.Value) []*Interception {
-	result := []*Interception{}
+func getInterceptorEntries(when When, val reflect.Value) []*interceptionEntry {
+	result := []*interceptionEntry{}
 	for _, intc := range interceptors {
 		if intc.When != when {
 			continue
 		}
 
-		if intc.interceptAll || findTarget(val, intc.target).IsValid() {
-			result = append(result, intc)
+		v := findTarget(val, intc.target)
+		if intc.interceptAll || v.IsValid() {
+			result = append(result, &interceptionEntry{intc, v})
 		}
 	}
 	return result
