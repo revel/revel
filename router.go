@@ -16,6 +16,7 @@ import (
 
 	"github.com/revel/pathtree"
 	"sync"
+	"os"
 )
 
 const (
@@ -540,7 +541,10 @@ func getModuleRoutes(moduleName, joinedPath string, validate bool) (routes []*Ro
 		INFO.Println("Skipping routes for inactive module", moduleName)
 		return nil, nil
 	}
-	routes, err = parseRoutesFile(module, filepath.Join(module.Path, "conf", "routes"), joinedPath, validate)
+	routePath :=  filepath.Join(module.Path, "conf", "routes")
+	if _,e:=os.Stat(routePath);e == nil {
+		routes, err = parseRoutesFile(module, routePath, joinedPath, validate)
+	}
 	if err == nil {
 		for _, route := range routes {
 			route.ModuleSource = module
