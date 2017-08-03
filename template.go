@@ -63,9 +63,6 @@ func NewTemplateLoader(paths []string) *TemplateLoader {
 // Refresh method scans the views directory and parses all templates as Go Templates.
 // If a template fails to parse, the error is set on the loader.
 // (It's awkward to refresh a single Go Template)
-// Refresh method scans the views directory and parses all templates as Go Templates.
-// If a template fails to parse, the error is set on the loader.
-// (It's awkward to refresh a single Go Template)
 func (loader *TemplateLoader) Refresh() (err *Error) {
 	TRACE.Printf("Refreshing templates from %s", loader.paths)
 	if len(loader.templatesAndEngineList) == 0 {
