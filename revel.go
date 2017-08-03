@@ -123,8 +123,6 @@ func Init(mode, importPath, srcPath string) {
 	SourcePath = srcPath
 	RunMode = mode
 
-	InitLogger()
-
 	// If the SourcePath is not specified, find it using build.Import.
 	var revelSourcePath string // may be different from the app source path
 	if SourcePath == "" {

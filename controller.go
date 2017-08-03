@@ -15,6 +15,7 @@ import (
 	"runtime"
 	"strings"
 	"time"
+	"github.com/revel/revel/logger"
 )
 
 // Controller Revel's controller structure that gets embedded in user defined
@@ -38,7 +39,7 @@ type Controller struct {
 	Args       map[string]interface{} // Per-request scratch space.
 	ViewArgs   map[string]interface{} // Variables passed to the template.
 	Validation *Validation            // Data validation helpers
-	Log        MultiLogger            // Context Logger
+	Log        logger.MultiLogger            // Context Logger
 }
 
 // The map of controllers, controllers are mapped by using the namespace|controller_name as the key
@@ -373,7 +374,7 @@ func (c *Controller) SetTypeAction(controllerName, methodName string, typeOfCont
 
 	// Update Logger with controller and namespace
 	if c.Log != nil {
-		c.Log = c.Log.New("controller", c.Action, "namespace", c.Type.Namespace)
+		c.Log = c.Log.New("action", c.Action, "namespace", c.Type.Namespace)
 	}
 
 	if _, ok := cachedControllerMap[c.Name]; !ok {
@@ -389,9 +390,6 @@ func (c *Controller) SetTypeAction(controllerName, methodName string, typeOfCont
 	// Instantiate the controller.
 	c.AppController = cachedControllerMap[c.Name].Pop()
 	c.setAppControllerFields()
-
-	// Assign the controller in the viewargs
-	c.ViewArgs["_controller"] = c.AppController
 
 	return nil
 }

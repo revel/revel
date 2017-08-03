@@ -174,7 +174,7 @@ func (loader *TemplateLoader) Refresh() (err *Error) {
 
 		// If there was an error with the Funcs, set it and return immediately.
 		if funcErr != nil {
-			loader.compileError = funcErr.(*Error)
+			loader.compileError = NewErrorFromPanic(funcErr)
 			return loader.compileError
 		}
 	}

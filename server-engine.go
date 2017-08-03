@@ -155,12 +155,17 @@ func handleInternal(ctx ServerContext) {
 
 	// Revel request access log format
 	// RequestStartTime ClientIP ResponseStatus RequestLatency HTTPMethod URLPath
-	// Sample format:
-	// 2016/05/25 17:46:37.112 127.0.0.1 200  270.157µs GET /
+	// Sample format: terminal format
+	// INFO 2017/08/02 22:31:41 server-engine.go:168: Request Stats                            ip=::1 path=/public/img/favicon.png method=GET action=Static.Serve namespace=static\\ start=2017/08/02 22:31:41 status=200 duration_seconds=0.0007656
+	// Recommended storing format to json code which looks like
+	// {"action":"Static.Serve","caller":"server-engine.go:168","duration_seconds":0.00058336,"ip":"::1","lvl":3,
+	// "method":"GET","msg":"Request Stats","namespace":"static\\","path":"/public/img/favicon.png",
+	// "start":"2017-08-02T22:34:08-0700","status":200,"t":"2017-08-02T22:34:08.303112145-07:00"}
+
 	c.Log.Info("Request Stats",
 		"start",start,
 		"status", c.Response.Status,
-		"duration", time.Since(start),
+		"duration_seconds", time.Since(start).Seconds(),"type","request",
 	)
 }
 
