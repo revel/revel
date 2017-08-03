@@ -33,6 +33,7 @@ const (
 	HTTP_REQUEST_URI    = iota + 1000
 	HTTP_REMOTE_ADDR    = iota + 1000
 	HTTP_HOST           = iota + 1000
+	HTTP_URL            = iota + 1000
 	HTTP_SERVER_HEADER  = iota + 1000
 	HTTP_STREAM_WRITER  = iota + 1000
 	HTTP_WRITER         = ENGINE_WRITER
