@@ -58,15 +58,33 @@ func (r Required) DefaultMessage() string {
 }
 
 type Min struct {
-	Min int
+	Min float64
 }
 
 func ValidMin(min int) Min {
+	return ValidMinFloat(float64(min))
+}
+
+func ValidMinFloat(min float64) Min {
 	return Min{min}
 }
 
 func (m Min) IsSatisfied(obj interface{}) bool {
-	num, ok := obj.(int)
+	var (
+		num float64
+		ok  bool
+	)
+	switch reflect.TypeOf(obj).Kind() {
+	case reflect.Float64:
+		num, ok = obj.(float64)
+	case reflect.Float32:
+		ok = true
+		num = float64(obj.(float32))
+	case reflect.Int:
+		ok = true
+		num = float64(obj.(int))
+	}
+
 	if ok {
 		return num >= m.Min
 	}
@@ -78,15 +96,33 @@ func (m Min) DefaultMessage() string {
 }
 
 type Max struct {
-	Max int
+	Max float64
 }
 
 func ValidMax(max int) Max {
+	return ValidMaxFloat(float64(max))
+}
+
+func ValidMaxFloat(max float64) Max {
 	return Max{max}
 }
 
 func (m Max) IsSatisfied(obj interface{}) bool {
-	num, ok := obj.(int)
+	var (
+		num float64
+		ok  bool
+	)
+	switch reflect.TypeOf(obj).Kind() {
+	case reflect.Float64:
+		num, ok = obj.(float64)
+	case reflect.Float32:
+		ok = true
+		num = float64(obj.(float32))
+	case reflect.Int:
+		ok = true
+		num = float64(obj.(int))
+	}
+
 	if ok {
 		return num <= m.Max
 	}
@@ -104,6 +140,10 @@ type Range struct {
 }
 
 func ValidRange(min, max int) Range {
+	return ValidRangeFloat(float64(min), float64(max))
+}
+
+func ValidRangeFloat(min, max float64) Range {
 	return Range{Min{min}, Max{max}}
 }
 
@@ -232,7 +272,7 @@ const (
 
 // Requires a string(IP Address) to be within IP Pattern type inclusive.
 type IPAddr struct {
-	vaildtypes []int
+	Vaildtypes []int
 }
 
 // Requires an IP Address string to be exactly a given  validation type (IPv4, IPv6, IPv4MappedIPv6, IPv4CIDR, IPv6CIDR, IPv4MappedIPv6CIDR OR IPAny)
@@ -241,11 +281,11 @@ func ValidIPAddr(cktypes ...int) IPAddr {
 	for _, cktype := range cktypes {
 
 		if cktype != IPAny && cktype != IPv4 && cktype != IPv6 && cktype != IPv4MappedIPv6 && cktype != IPv4CIDR && cktype != IPv6CIDR && cktype != IPv4MappedIPv6CIDR {
-			return IPAddr{vaildtypes: []int{None}}
+			return IPAddr{Vaildtypes: []int{None}}
 		}
 	}
 
-	return IPAddr{vaildtypes: cktypes}
+	return IPAddr{Vaildtypes: cktypes}
 }
 
 func isWithCIDR(str string, l int) bool {
@@ -306,7 +346,7 @@ func (i IPAddr) IsSatisfied(obj interface{}) bool {
 		l := len(str)
 		ret := getIPType(str, l)
 
-		for _, ck := range i.vaildtypes {
+		for _, ck := range i.Vaildtypes {
 
 			if ret != None && (ck == ret || ck == IPAny) {
 
@@ -430,7 +470,7 @@ const (
 
 // Requires a string to be without invisible characters
 type PureText struct {
-	mode int
+	Mode int
 }
 
 func ValidPureText(m int) PureText {
@@ -535,7 +575,7 @@ func (p PureText) IsSatisfied(obj interface{}) bool {
 	if str, ok := obj.(string); ok {
 
 		var ret bool
-		switch p.mode {
+		switch p.Mode {
 		case STRICT:
 			ret, _ = isPureTextStrict(str)
 		case NORMAL:
@@ -564,7 +604,7 @@ var checkDenyRelativePath = regexp.MustCompile(`(?m)(` + regexDenyFileNameCharLi
 
 // Requires an string to be sanitary file path
 type FilePath struct {
-	mode int
+	Mode int
 }
 
 func ValidFilePath(m int) FilePath {
@@ -580,7 +620,7 @@ func (f FilePath) IsSatisfied(obj interface{}) bool {
 	if str, ok := obj.(string); ok {
 
 		var ret bool
-		switch f.mode {
+		switch f.Mode {
 
 		case ALLOW_RELATIVE_PATH:
 			ret = checkAllowRelativePath.MatchString(str)
