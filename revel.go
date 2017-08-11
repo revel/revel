@@ -40,12 +40,9 @@ const (
 	ROUTE_REFRESH_REQUESTED
 	// Called after routes have been refreshed
 	ROUTE_REFRESH_COMPLETED
-
 )
 
-
 type EventHandler func(typeOf int, value interface{}) (responseOf int)
-
 
 // App details
 var (
@@ -105,8 +102,8 @@ var (
 	Initialized bool
 
 	// Private
-	secretKey []byte // Key used to sign cookies. An empty key disables signing.
-	packaged  bool   // If true, this is running from a pre-built package.
+	secretKey     []byte             // Key used to sign cookies. An empty key disables signing.
+	packaged      bool               // If true, this is running from a pre-built package.
 	initEventList = []EventHandler{} // Event handler list for receiving events
 )
 
@@ -165,7 +162,7 @@ func Init(mode, importPath, srcPath string) {
 	var err error
 	Config, err = config.LoadContext("app.conf", ConfPaths)
 	if err != nil || Config == nil {
-		log.Fatalln("Failed to load app.conf:", err)
+		RevelLog.Fatal("Failed to load app.conf:", "error", err)
 	}
 	// Ensure that the selected runmode appears in app.conf.
 	// If empty string is passed as the mode, treat it as "DEFAULT"
@@ -186,10 +183,10 @@ func Init(mode, importPath, srcPath string) {
 	HTTPSslKey = Config.StringDefault("http.sslkey", "")
 	if HTTPSsl {
 		if HTTPSslCert == "" {
-			log.Fatalln("No http.sslcert provided.")
+			RevelLog.Fatal("No http.sslcert provided.")
 		}
 		if HTTPSslKey == "" {
-			log.Fatalln("No http.sslkey provided.")
+			RevelLog.Fatal("No http.sslkey provided.")
 		}
 	}
 
@@ -200,7 +197,7 @@ func Init(mode, importPath, srcPath string) {
 	CookieSecure = Config.BoolDefault("cookie.secure", HTTPSsl)
 	TemplateDelims = Config.StringDefault("template.delimiters", "")
 	if secretStr := Config.StringDefault("app.secret", ""); secretStr != "" {
-		secretKey = []byte(secretStr)
+		SetSecretKey([]byte(secretStr))
 	}
 
 	fireEvent(REVEL_BEFORE_MODULES_LOADED, nil)
@@ -208,7 +205,7 @@ func Init(mode, importPath, srcPath string) {
 	fireEvent(REVEL_AFTER_MODULES_LOADED, nil)
 
 	Initialized = true
-	INFO.Printf("Initialized Revel v%s (%s) for %s", Version, BuildDate, MinimumGoVersion)
+	RevelLog.Info("Initialized Revel", "Version", Version, "BuildDate", BuildDate, "MinimumGoVersion", MinimumGoVersion)
 }
 
 // Fires system events from revel
@@ -225,11 +222,11 @@ func AddInitEventHandler(handler EventHandler) {
 	return
 }
 
+// Set the secret key
 func SetSecretKey(newKey []byte) error {
 	secretKey = newKey
 	return nil
 }
-
 
 // ResolveImportPath returns the filesystem path for the given import path.
 // Returns an error if the import path could not be found.
@@ -248,10 +245,9 @@ func ResolveImportPath(importPath string) (string, error) {
 // CheckInit method checks `revel.Initialized` if not initialized it panics
 func CheckInit() {
 	if !Initialized {
-		panic("Revel has not been initialized!")
+		RevelLog.Panic("CheckInit: Revel has not been initialized!")
 	}
 }
-
 
 // findSrcPaths uses the "go/build" package to find the source root for Revel
 // and the app.
@@ -262,24 +258,24 @@ func findSrcPaths(importPath string) (revelSourcePath, appSourcePath string) {
 	)
 
 	if len(gopaths) == 0 {
-		ERROR.Fatalln("GOPATH environment variable is not set. ",
+		RevelLog.Fatal("GOPATH environment variable is not set. " +
 			"Please refer to http://golang.org/doc/code.html to configure your Go environment.")
 	}
 
 	if ContainsString(gopaths, goroot) {
-		ERROR.Fatalf("GOPATH (%s) must not include your GOROOT (%s). "+
+		RevelLog.Fatalf("GOPATH (%s) must not include your GOROOT (%s). "+
 			"Please refer to http://golang.org/doc/code.html to configure your Go environment.",
 			gopaths, goroot)
 	}
 
 	appPkg, err := build.Import(importPath, "", build.FindOnly)
 	if err != nil {
-		ERROR.Panicf("Failed to import", importPath, "with error:", err)
+		RevelLog.Panic("Failed to import"+importPath+"with error:", "error", err)
 	}
 
 	revelPkg, err := build.Import(RevelImportPath, "", build.FindOnly)
 	if err != nil {
-		ERROR.Fatalln("Failed to find Revel with error:", err)
+		RevelLog.Fatal("Failed to find Revel with error:", "error", err)
 	}
 
 	return revelPkg.SrcRoot, appPkg.SrcRoot

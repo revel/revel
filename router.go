@@ -15,8 +15,8 @@ import (
 	"strings"
 
 	"github.com/revel/pathtree"
-	"sync"
 	"os"
+	"sync"
 )
 
 const (
@@ -46,6 +46,7 @@ type RouteMatch struct {
 	FixedParams      []string
 	Params           map[string][]string // e.g. {id: 123}
 	TypeOfController *ControllerType     // The controller type
+	ModuleSource     *Module             // The module
 }
 
 type ActionPathData struct {
@@ -69,6 +70,8 @@ var (
 	notFound = &RouteMatch{Action: "404"}
 )
 
+var routerLog = RevelLog.New("section", "router")
+
 func init() {
 	AddInitEventHandler(func(typeOf int, value interface{}) (responseOf int) {
 		// Add in an
@@ -86,11 +89,11 @@ func init() {
 func NewRoute(moduleSource *Module, method, path, action, fixedArgs, routesPath string, line int) (r *Route) {
 	// Handle fixed arguments
 	argsReader := strings.NewReader(string(namespaceReplace([]byte(fixedArgs), moduleSource)))
-	csv := csv.NewReader(argsReader)
-	csv.TrimLeadingSpace = true
-	fargs, err := csv.Read()
+	csvReader := csv.NewReader(argsReader)
+	csvReader.TrimLeadingSpace = true
+	fargs, err := csvReader.Read()
 	if err != nil && err != io.EOF {
-		ERROR.Printf("Invalid fixed parameters (%v): for string '%v'", err.Error(), fixedArgs)
+		routerLog.Error("NewRoute: Invalid fixed parameters for string ", "error", err, "fixedargs", fixedArgs)
 	}
 
 	r = &Route{
@@ -106,12 +109,13 @@ func NewRoute(moduleSource *Module, method, path, action, fixedArgs, routesPath 
 
 	// URL pattern
 	if !strings.HasPrefix(r.Path, "/") {
-		ERROR.Print("Absolute URL required.")
+		routerLog.Error("NewRoute: Absolute URL required.")
 		return
 	}
 
 	// Ignore the not found status code
 	if action != httpStatusCode {
+		routerLog.Debugf("NewRoute: New splitActionPath path:%s action:%s", path, action)
 		pathData, found := splitActionPath(&ActionPathData{ModuleSource: moduleSource, Route: r}, r.Action, false)
 		if found {
 			if pathData.TypeOfController != nil {
@@ -126,7 +130,7 @@ func NewRoute(moduleSource *Module, method, path, action, fixedArgs, routesPath 
 							Unbind(pathData.FixedParamsByName, methodType.Args[i].Name, argValue)
 						}
 					} else {
-						ERROR.Panicf("Method %s not found for controller %s", pathData.MethodName, pathData.ControllerName)
+						routerLog.Panicf("NewRoute: Method %s not found for controller %s", pathData.MethodName, pathData.ControllerName)
 					}
 				}
 			}
@@ -137,7 +141,7 @@ func NewRoute(moduleSource *Module, method, path, action, fixedArgs, routesPath 
 
 			// The same action path could be used for multiple routes (like the Static.Serve)
 		} else {
-			ERROR.Panicf("Failed to find controller for route path action %s \n%#v\n", path+"?"+r.Action, actionPathCacheMap)
+			routerLog.Panicf("NewRoute: Failed to find controller for route path action %s \n%#v\n", path+"?"+r.Action, actionPathCacheMap)
 		}
 	}
 	return
@@ -227,6 +231,7 @@ func (router *Router) Route(req *Request) (routeMatch *RouteMatch) {
 			Params:           params,
 			FixedParams:      route.FixedParams,
 			TypeOfController: typeOfController,
+			ModuleSource:     route.ModuleSource,
 		}
 	}
 
@@ -306,7 +311,7 @@ func splitActionPath(actionPathData *ActionPathData, actionPath string, useCache
 				foundModuleSource = moduleSource
 				controllerNamespace = moduleSource.Namespace()
 			} else {
-				WARN.Printf("Unable to find module %s for action: %s", controllerNamespace[:len(controllerNamespace)-1], actionPath)
+				routerLog.Warnf("splitActionPath: Unable to find module %s for action: %s", controllerNamespace[:len(controllerNamespace)-1], actionPath)
 			}
 			controllerName = controllerName[i+1:]
 			// Check for the type of controller
@@ -355,10 +360,10 @@ func splitActionPath(actionPathData *ActionPathData, actionPath string, useCache
 		action = actionSplit[1]
 	} else {
 		foundPaths := ""
-		for path:=range actionPathCacheMap {
-			foundPaths += path +","
+		for path := range actionPathCacheMap {
+			foundPaths += path + ","
 		}
-		WARN.Printf("Invalid action path %s found paths %s", actionPath, foundPaths)
+		routerLog.Warnf("splitActionPath: Invalid action path %s found paths %s", actionPath, foundPaths)
 		found = false
 	}
 
@@ -385,7 +390,7 @@ func splitActionPath(actionPathData *ActionPathData, actionPath string, useCache
 		}
 		actionPathData.TypeOfController = foundModuleSource.ControllerByName(controllerName, "")
 		if actionPathData.TypeOfController == nil && actionPathData.ControllerName[0] != ':' {
-			WARN.Printf("Router: No controller found for %s %#v", foundModuleSource.Namespace()+controllerName, controllers)
+			routerLog.Warnf("splitActionPath: No controller found for %s %#v", foundModuleSource.Namespace()+controllerName, controllers)
 		}
 
 		pathData = actionPathData
@@ -399,7 +404,7 @@ func splitActionPath(actionPathData *ActionPathData, actionPath string, useCache
 			actionPath = actionPath + "(" + strings.ToLower(strings.Join(pathData.Route.FixedParams, ",")) + ")"
 		}
 		if actionPathData.Route != nil {
-			TRACE.Printf("Split Storing recognized action path %s for route  %#v ", actionPath, actionPathData.Route)
+			routerLog.Debugf("splitActionPath: Split Storing recognized action path %s for route  %#v ", actionPath, actionPathData.Route)
 		}
 		pathData.Key = actionPath
 		actionPathCacheMap[actionPath] = pathData
@@ -502,7 +507,7 @@ func validateRoute(route *Route) error {
 			controllerName := strings.ToLower(c.Type.Name())
 			if controllerName == route.ControllerName {
 				route.ControllerNamespace = c.ModuleSource.Name + namespaceSeperator
-				WARN.Printf("Matched empty namespace route for %s to this namespace %s for the route %s", controllerName, c.ModuleSource.Name, route.Path)
+				routerLog.Warn("validateRoute: Matched empty namespace route for %s to this namespace %s for the route %s", controllerName, c.ModuleSource.Name, route.Path)
 			}
 		}
 	}
@@ -521,7 +526,7 @@ func routeError(err error, routesPath, content string, n int) *Error {
 	// Load the route file content if necessary
 	if content == "" {
 		if contentBytes, er := ioutil.ReadFile(routesPath); er != nil {
-			ERROR.Printf("Failed to read route file %s: %s\n", routesPath, er)
+			routerLog.Error("routeError: Failed to read route file ", "file", routesPath, "error", er)
 		} else {
 			content = string(contentBytes)
 		}
@@ -542,11 +547,11 @@ func getModuleRoutes(moduleName, joinedPath string, validate bool) (routes []*Ro
 	// testrunner module being active only in dev mode.
 	module, found := ModuleByName(moduleName)
 	if !found {
-		INFO.Println("Skipping routes for inactive module", moduleName)
+		routerLog.Debug("getModuleRoutes: Skipping routes for inactive module", "module", moduleName)
 		return nil, nil
 	}
-	routePath :=  filepath.Join(module.Path, "conf", "routes")
-	if _,e:=os.Stat(routePath);e == nil {
+	routePath := filepath.Join(module.Path, "conf", "routes")
+	if _, e := os.Stat(routePath); e == nil {
 		routes, err = parseRoutesFile(module, routePath, joinedPath, validate)
 	}
 	if err == nil {
@@ -626,10 +631,10 @@ func (router *Router) Reverse(action string, argValues map[string]string) (ad *A
 			}
 			if pathData.Route == nil && possibleRoute != nil {
 				pathData.Route = possibleRoute
-				WARN.Printf("For a url reverse a match was based on  %s matched path to route %#v ", action, possibleRoute)
+				routerLog.Warnf("Reverse: For a url reverse a match was based on  %s matched path to route %#v ", action, possibleRoute)
 			}
 			if pathData.Route != nil {
-				TRACE.Printf("Reverse Storing recognized action path %s for route %#v\n", action, pathData.Route)
+				routerLog.Debugf("Reverse: Reverse Storing recognized action path %s for route %#v\n", action, pathData.Route)
 			}
 		}
 
@@ -657,14 +662,14 @@ func (router *Router) Reverse(action string, argValues map[string]string) (ad *A
 						pathData.TypeOfController = controller
 						// See if the path exists in the module based
 					} else {
-						ERROR.Printf("Controller %s not found in reverse lookup", pathData.ControllerNamespace+pathData.ControllerName)
+						routerLog.Errorf("Reverse: Controller %s not found in reverse lookup", pathData.ControllerNamespace+pathData.ControllerName)
 						return
 					}
 				}
 			}
 
 			if pathData.TypeOfController == nil {
-				ERROR.Printf("Controller %s not found in reverse lookup", pathData.ControllerNamespace+pathData.ControllerName)
+				routerLog.Errorf("Reverse: Controller %s not found in reverse lookup", pathData.ControllerNamespace+pathData.ControllerName)
 				return
 			}
 			var (
@@ -681,7 +686,7 @@ func (router *Router) Reverse(action string, argValues map[string]string) (ad *A
 				}
 				if !ok {
 					val = "<nil>"
-					ERROR.Print("revel/router: reverse route missing route arg ", el[1:])
+					routerLog.Error("Reverse: reverse route missing route argument ", "argument", el[1:])
 				}
 				pathElements[i] = val
 				delete(argValues, el[1:])
@@ -694,9 +699,9 @@ func (router *Router) Reverse(action string, argValues map[string]string) (ad *A
 			}
 
 			// Calculate the final URL and Method
-			url := strings.Join(pathElements, "/")
+			urlPath := strings.Join(pathElements, "/")
 			if len(queryValues) > 0 {
-				url += "?" + queryValues.Encode()
+				urlPath += "?" + queryValues.Encode()
 			}
 
 			method := route.Method
@@ -709,7 +714,7 @@ func (router *Router) Reverse(action string, argValues map[string]string) (ad *A
 			//INFO.Printf("Reversing action %s to %s Using Route %#v",action,url,pathData.Route)
 
 			return &ActionDefinition{
-				URL:    url,
+				URL:    urlPath,
 				Method: method,
 				Star:   star,
 				Action: action,
@@ -718,7 +723,7 @@ func (router *Router) Reverse(action string, argValues map[string]string) (ad *A
 			}
 		}
 	}
-	ERROR.Println("Failed to find reverse route:", action, argValues)
+	routerLog.Error("Reverse: Failed to find reverse route", "action", action, "arguments", argValues)
 	return nil
 }
 
@@ -755,7 +760,7 @@ func RouterFilter(c *Controller, fc []Filter) {
 			arg := c.MethodType.Args[i]
 			c.Params.Fixed.Set(arg.Name, value)
 		} else {
-			WARN.Println("Too many parameters to", route.Action, "trying to add", value)
+			routerLog.Warn("RouterFilter: Too many parameters to action", "action", route.Action, "value", value)
 			break
 		}
 	}
@@ -811,7 +816,7 @@ func init() {
 			MainWatcher.Listen(MainRouter, MainRouter.path)
 		} else if err != nil {
 			// Not in dev mode and Route loading failed, we should crash.
-			ERROR.Panicln(err.Error())
+			routerLog.Panic("init: router initialize error", "error", err)
 		}
 	})
 }

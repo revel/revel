@@ -3,7 +3,7 @@ package logger
 import (
 	"bytes"
 	"fmt"
-	"gopkg.in/inconshreveable/log15.v2"
+	"github.com/revel/log15"
 	"reflect"
 	"strconv"
 	"strings"
@@ -18,8 +18,15 @@ const (
 	floatFormat    = 'f'
 	errorKey       = "REVEL_ERROR"
 )
+var (
+	// Name the log level
+	toRevel = map[log15.Lvl]string{log15.LvlDebug: "DEBUG",
+		log15.LvlInfo: "INFO", log15.LvlWarn: "WARN", log15.LvlError: "ERROR", log15.LvlCrit: "CRIT"}
 
-// INFO  2017/07/25 14:53:40 db.go:768: [gorp] begin; [] (138.433µs)
+)
+
+// Outputs to the terminal in a format like below
+// INFO  09:11:32 server-engine.go:169: Request Stats
 func TerminalFormatHandler(noColor bool, smallDate bool) LogFormat {
 	dateFormat := termTimeFormat
 	if smallDate {

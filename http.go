@@ -41,6 +41,7 @@ type Request struct {
 }
 
 var FORM_NOT_FOUND = errors.New("Form Not Found")
+var httpLog = RevelLog.New("section","http")
 
 // Response is Revel's HTTP response object structure
 type Response struct {
@@ -152,7 +153,7 @@ type MultipartForm struct {
 	origin ServerMultipartForm
 }
 
-func (r *Request) MultipartReader() (*multipart.Reader, error) {
+func (req *Request) MultipartReader() (*multipart.Reader, error) {
 
 	return nil, errors.New("MultipartReader not supported, use controller.Param")
 }
@@ -224,11 +225,11 @@ func (r *Request) UserAgent() string {
 }
 
 // Referer returns the client's Referer header string.
-func (r *Request) Referer() string {
-	return r.ServerHeader.Get("Referer")
+func (req *Request) Referer() string {
+	return req.ServerHeader.Get("Referer")
 }
-func (r *Request) GetHttpHeader(key string) string {
-	return r.ServerHeader.Get(key)
+func (req *Request) GetHttpHeader(key string) string {
+	return req.ServerHeader.Get(key)
 }
 
 func (r *Request) GetValue(key int) (value interface{}) {
@@ -390,11 +391,11 @@ func (al AcceptLanguages) String() string {
 	output := bytes.NewBufferString("")
 	for i, language := range al {
 		if _, err := output.WriteString(fmt.Sprintf("%s (%1.1f)", language.Language, language.Quality)); err != nil {
-			ERROR.Println("WriteString failed:", err)
+			httpLog.Error("String: WriteString failed:", "error", err)
 		}
 		if i != len(al)-1 {
 			if _, err := output.WriteString(", "); err != nil {
-				ERROR.Println("WriteString failed:", err)
+				httpLog.Error("String: WriteString failed:","error", err)
 			}
 		}
 	}
@@ -423,7 +424,7 @@ func ResolveAcceptLanguage(req *Request) AcceptLanguages {
 		if qualifiedRange := strings.Split(languageRange, ";q="); len(qualifiedRange) == 2 {
 			quality, err := strconv.ParseFloat(qualifiedRange[1], 32)
 			if err != nil {
-				WARN.Printf("Detected malformed Accept-Language header quality in '%s', assuming quality is 1", languageRange)
+				httpLog.Warn("Detected malformed Accept-Language header quality in  assuming quality is 1","languageRange", languageRange)
 				acceptLanguages[i] = AcceptLanguage{qualifiedRange[0], 1}
 			} else {
 				acceptLanguages[i] = AcceptLanguage{qualifiedRange[0], float32(quality)}

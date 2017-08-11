@@ -7,6 +7,7 @@ package revel
 import (
 	"errors"
 	"fmt"
+	"github.com/revel/revel/logger"
 	"io"
 	"net/http"
 	"os"
@@ -15,7 +16,6 @@ import (
 	"runtime"
 	"strings"
 	"time"
-	"github.com/revel/revel/logger"
 )
 
 // Controller Revel's controller structure that gets embedded in user defined
@@ -28,6 +28,7 @@ type Controller struct {
 	AppController interface{}     // The controller that was instantiated. embeds revel.Controller
 	Action        string          // The fully qualified action name, e.g. "App.Index"
 	ClientIP      string          // holds IP address of request came from
+	module        *Module         // The module for the parent controller (if available)
 
 	Request  *Request
 	Response *Response
@@ -39,11 +40,12 @@ type Controller struct {
 	Args       map[string]interface{} // Per-request scratch space.
 	ViewArgs   map[string]interface{} // Variables passed to the template.
 	Validation *Validation            // Data validation helpers
-	Log        logger.MultiLogger            // Context Logger
+	Log        logger.MultiLogger     // Context Logger
 }
 
 // The map of controllers, controllers are mapped by using the namespace|controller_name as the key
 var controllers = make(map[string]*ControllerType)
+var controllerLog = RevelLog.New("section", "controller")
 
 // NewController returns new controller instance for Request and Response
 func NewControllerEmpty() *Controller {
@@ -159,7 +161,7 @@ func (c *Controller) Render(extraViewArgs ...interface{}) Result {
 	// Get the calling function line number.
 	_, _, line, ok := runtime.Caller(1)
 	if !ok {
-		ERROR.Println("Failed to get Caller information")
+		controllerLog.Error("Render: Failed to get Caller information")
 	}
 
 	// Get the extra ViewArgs passed in.
@@ -169,12 +171,12 @@ func (c *Controller) Render(extraViewArgs ...interface{}) Result {
 				c.ViewArgs[renderArgNames[i]] = extraRenderArg
 			}
 		} else {
-			ERROR.Println(len(renderArgNames), "RenderArg names found for",
-				len(extraViewArgs), "extra ViewArgs")
+			controllerLog.Error(fmt.Sprint(len(renderArgNames), "RenderArg names found for",
+				len(extraViewArgs), "extra ViewArgs"))
 		}
 	} else {
-		ERROR.Println("No RenderArg names found for Render call on line", line,
-			"(Action", c.Action, ")")
+		controllerLog.Error(fmt.Sprint("No RenderArg names found for Render call on line", line,
+			"(Action", c.Action, ")"))
 	}
 
 	return c.RenderTemplate(c.Name + "/" + c.MethodType.Name + "." + c.Request.Format)
@@ -241,6 +243,7 @@ func (c *Controller) RenderHTML(html string) Result {
 // action isn't done yet.
 func (c *Controller) Todo() Result {
 	c.Response.Status = http.StatusNotImplemented
+	controllerLog.Debug("Todo: Not implemented function", "action", c.Action)
 	return c.RenderError(&Error{
 		Title:       "TODO",
 		Description: "This action is not implemented",
@@ -285,7 +288,7 @@ func (c *Controller) RenderFile(file *os.File, delivery ContentDisposition) Resu
 		fileInfo, err = file.Stat()
 	)
 	if err != nil {
-		WARN.Println("RenderFile error:", err)
+		controllerLog.Error("RenderFile: error", "error", err)
 	}
 	if fileInfo != nil {
 		modtime = fileInfo.ModTime()
@@ -399,12 +402,12 @@ func ControllerTypeByName(controllerName string, moduleSource *Module) (c *Contr
 	if c, found = controllers[controllerName]; !found {
 		// Backup, passed in controllerName should be in lower case, but may not be
 		if c, found = controllers[strings.ToLower(controllerName)]; !found {
-			INFO.Printf("Cannot find controller name '%s' in controllers map ", controllerName)
+			controllerLog.Debug("ControllerTypeByName: Cannot find controller in controllers map ", "controller", controllerName)
 			// Search for the controller by name
 			for _, cType := range controllers {
 				testControllerName := strings.ToLower(cType.Type.Name())
 				if testControllerName == strings.ToLower(controllerName) && (cType.ModuleSource == moduleSource || moduleSource == anyModule) {
-					WARN.Printf("Matched empty namespace controller for %s to this %s", controllerName, cType.ModuleSource.Name)
+					controllerLog.Warn("ControllerTypeByName: Matched empty namespace controller ", "controller", controllerName, "namespace", cType.ModuleSource.Name)
 					c = cType
 					found = true
 					break
@@ -527,9 +530,9 @@ func AddControllerType(moduleSource *Module, controllerType reflect.Type, method
 			controllers[newControllerType.ShortName()] = newControllerType
 		}
 	} else {
-		ERROR.Printf("Error, attempt to register duplicate controller as %s", controllerName)
+		controllerLog.Error("AddControllerType: Attempt to register duplicate controller as ", "controller", controllerName)
 	}
-	TRACE.Printf("Registered controller: %s", controllerName)
+	controllerLog.Info("AddControllerType: Registered controller", "controller", controllerName)
 
 	return
 }
@@ -574,5 +577,5 @@ func RegisterController(c interface{}, methods []*MethodType) {
 
 	controllerType := AddControllerType(controllerModule, elem, methods)
 
-	TRACE.Printf("Registered controller: %s", controllerType.Name())
+	controllerLog.Debug("RegisterController:Registered controller", "controller", controllerType.Name())
 }

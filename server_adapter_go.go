@@ -1,7 +1,6 @@
 package revel
 
 import (
-	"fmt"
 	"net"
 	"net/http"
 	"time"
@@ -54,22 +53,22 @@ func (g *GoHttpServer) Init(init *EngineInit) {
 func (g *GoHttpServer) Start() {
 	go func() {
 		time.Sleep(100 * time.Millisecond)
-		fmt.Printf("Listening on %s...\n", g.Server.Addr)
+		serverLogger.Debugf("Start: Listening on %s...", g.Server.Addr)
 	}()
 	if HTTPSsl {
 		if g.ServerInit.Network != "tcp" {
 			// This limitation is just to reduce complexity, since it is standard
 			// to terminate SSL upstream when using unix domain sockets.
-			ERROR.Fatalln("SSL is only supported for TCP sockets. Specify a port to listen on.")
+			serverLogger.Fatal("SSL is only supported for TCP sockets. Specify a port to listen on.")
 		}
-		ERROR.Fatalln("Failed to listen:",
+		serverLogger.Fatal("Failed to listen:", "error",
 			g.Server.ListenAndServeTLS(HTTPSslCert, HTTPSslKey))
 	} else {
 		listener, err := net.Listen(g.ServerInit.Network, g.Server.Addr)
 		if err != nil {
-			ERROR.Fatalln("Failed to listen:", err)
+			serverLogger.Fatal("Failed to listen:", "error", err)
 		}
-		ERROR.Fatalln("Failed to serve:", g.Server.Serve(listener))
+		serverLogger.Fatal("Failed to serve:", "error", g.Server.Serve(listener))
 	}
 
 }
@@ -91,7 +90,7 @@ func (g *GoHttpServer) Handle(w http.ResponseWriter, r *http.Request) {
 		websocket.Handler(func(ws *websocket.Conn) {
 			//Override default Read/Write timeout with sane value for a web socket request
 			if err := ws.SetDeadline(time.Now().Add(time.Hour * 24)); err != nil {
-				ERROR.Println("SetDeadLine failed:", err)
+				serverLogger.Error("SetDeadLine failed:", err)
 			}
 			r.Method = "WS"
 			context.Request.WebSocket = ws

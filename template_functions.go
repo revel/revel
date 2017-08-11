@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	//"github.com/revel/config"
 	"github.com/xeonx/timeago"
 	"html"
 	"html/template"
@@ -82,7 +81,7 @@ var (
 		"errorClass": func(name string, viewArgs map[string]interface{}) template.HTML {
 			errorMap, ok := viewArgs["errors"].(map[string]*ValidationError)
 			if !ok || errorMap == nil {
-				WARN.Println("Called 'errorClass' without 'errors' in the view args.")
+				templateLog.Warn("errorClass: Called 'errorClass' without 'errors' in the view args.")
 				return template.HTML("")
 			}
 			valError, ok := errorMap[name]
@@ -133,7 +132,7 @@ var (
 					return plural
 				}
 			default:
-				ERROR.Println("pluralize: unexpected type: ", v)
+				templateLog.Error("pluralize: unexpected type: ", "value", v)
 			}
 			return singular
 		},
@@ -155,7 +154,7 @@ var (
 			var viewArgs interface{}
 			switch len(args) {
 			case 0:
-				ERROR.Printf("No arguements passed to template call")
+				templateLog.Error("i18ntemplate: No arguments passed to template call")
 			case 1:
 				// Assume only the template name is passed in
 				templateName = args[0].(string)
@@ -173,7 +172,7 @@ var (
 				viewArgs = args[1]
 				lang, _ = args[2].(string)
 				if len(args) > 3 {
-					ERROR.Printf("Received more parameters then needed for %s", templateName)
+					templateLog.Error("i18ntemplate: Received more parameters then needed for", "template", templateName)
 				}
 			}
 
@@ -183,7 +182,7 @@ var (
 			if err == nil {
 				err = tmpl.Render(&buf, viewArgs)
 			} else {
-				ERROR.Printf("Failed to render i18ntemplate %s %v", templateName, err)
+				templateLog.Error("i18ntemplate: Failed to render i18ntemplate ", "name", templateName, "error", err)
 			}
 			return template.HTML(buf.String()), err
 		},
@@ -258,7 +257,7 @@ func TimeAgo(args ...interface{}) string {
 	var viewArgs interface{}
 	switch len(args) {
 	case 0:
-		ERROR.Printf("No arguements passed to timeago")
+		templateLog.Error("TimeAgo: No arguements passed to timeago")
 	case 1:
 		// only the time is passed in
 		datetime = args[0].(time.Time)
@@ -276,21 +275,21 @@ func TimeAgo(args ...interface{}) string {
 				lang, _ = viewargsmap[CurrentLocaleViewArg].(string)
 			}
 		default:
-			ERROR.Println("pluralize: unexpected type: ", v)
+			templateLog.Error("TimeAgo: unexpected type: ", "value", v)
 		}
 	default:
 		// Assume third argument is the region
 		datetime = args[0].(time.Time)
 		if reflect.ValueOf(args[1]).Kind() != reflect.Map {
-			ERROR.Println("pluralize: unexpected type: ", args[1])
+			templateLog.Error("TimeAgo: unexpected type", "value", args[1])
 		}
 		if reflect.ValueOf(args[2]).Kind() != reflect.String {
-			ERROR.Println("unexpected type: ", args[2])
+			templateLog.Error("TimeAgo: unexpected type: ", "value", args[2])
 		}
 		viewArgs = args[1]
 		lang, _ = args[2].(string)
 		if len(args) > 3 {
-			ERROR.Printf("Received more parameters then needed for timeago")
+			templateLog.Error("TimeAgo: Received more parameters then needed for timeago")
 		}
 	}
 	if lang == "" {
@@ -307,12 +306,12 @@ func TimeAgo(args ...interface{}) string {
 			FuturePrefix: MessageFunc(lang, "in") + " ",
 			FutureSuffix: "",
 			Periods: []timeago.FormatPeriod{
-				timeago.FormatPeriod{time.Second, MessageFunc(lang, "about a second"), MessageFunc(lang, "%d seconds")},
-				timeago.FormatPeriod{time.Minute, MessageFunc(lang, "about a minute"), MessageFunc(lang, "%d minutes")},
-				timeago.FormatPeriod{time.Hour, MessageFunc(lang, "about an hour"), MessageFunc(lang, "%d hours")},
-				timeago.FormatPeriod{timeago.Day, MessageFunc(lang, "one day"), MessageFunc(lang, "%d days")},
-				timeago.FormatPeriod{timeago.Month, MessageFunc(lang, "one month"), MessageFunc(lang, "%d months")},
-				timeago.FormatPeriod{timeago.Year, MessageFunc(lang, "one year"), MessageFunc(lang, "%d years")},
+				{time.Second, MessageFunc(lang, "about a second"), MessageFunc(lang, "%d seconds")},
+				{time.Minute, MessageFunc(lang, "about a minute"), MessageFunc(lang, "%d minutes")},
+				{time.Hour, MessageFunc(lang, "about an hour"), MessageFunc(lang, "%d hours")},
+				{timeago.Day, MessageFunc(lang, "one day"), MessageFunc(lang, "%d days")},
+				{timeago.Month, MessageFunc(lang, "one month"), MessageFunc(lang, "%d months")},
+				{timeago.Year, MessageFunc(lang, "one year"), MessageFunc(lang, "%d years")},
 			},
 			Zero:          MessageFunc(lang, "about a second"),
 			Max:           73 * time.Hour,

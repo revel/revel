@@ -139,8 +139,12 @@ func handleInternal(ctx ServerContext) {
 	}()
 
 	c.ClientIP = clientIP
-	c.Log = AppLog.New("ip", clientIP,
-		"path",req.GetPath(),"method",req.Method)
+	controllerLog := AppLog
+	if c.module!=nil {
+		controllerLog = c.module.Log
+	}
+	c.Log = controllerLog.New("ip", clientIP,
+		"path", req.GetPath(), "method", req.Method)
 	// Call the first filter, this will process the request
 	Filters[0](c, Filters[1:])
 	if c.Result != nil {
@@ -163,9 +167,9 @@ func handleInternal(ctx ServerContext) {
 	// "start":"2017-08-02T22:34:08-0700","status":200,"t":"2017-08-02T22:34:08.303112145-07:00"}
 
 	c.Log.Info("Request Stats",
-		"start",start,
+		"start", start,
 		"status", c.Response.Status,
-		"duration_seconds", time.Since(start).Seconds(),"type","request",
+		"duration_seconds", time.Since(start).Seconds(), "section", "requestlog",
 	)
 }
 

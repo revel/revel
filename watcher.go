@@ -49,7 +49,7 @@ func NewWatcher() *Watcher {
 func (w *Watcher) Listen(listener Listener, roots ...string) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		ERROR.Fatal(err)
+		utilLog.Fatal("Watcher: Failed to create watcher","error",err)
 	}
 
 	// Replace the unbuffered Event channel with a buffered one.
@@ -75,7 +75,7 @@ func (w *Watcher) Listen(listener Listener, roots ...string) {
 
 		fi, err := os.Stat(p)
 		if err != nil {
-			ERROR.Println("Failed to stat watched path", p, ":", err)
+			utilLog.Fatal("Watcher: Failed to stat watched path","path", p, "error", err)
 			continue
 		}
 
@@ -83,7 +83,7 @@ func (w *Watcher) Listen(listener Listener, roots ...string) {
 		if !fi.IsDir() {
 			err = watcher.Add(p)
 			if err != nil {
-				ERROR.Println("Failed to watch", p, ":", err)
+				utilLog.Fatal("Watcher: Failed to watch","path", p, "error", err)
 			}
 			continue
 		}
@@ -92,7 +92,7 @@ func (w *Watcher) Listen(listener Listener, roots ...string) {
 
 		watcherWalker = func(path string, info os.FileInfo, err error) error {
 			if err != nil {
-				ERROR.Println("Error walking path:", err)
+				utilLog.Fatal("Watcher: Error walking path:", "error", err)
 				return nil
 			}
 
@@ -105,7 +105,7 @@ func (w *Watcher) Listen(listener Listener, roots ...string) {
 
 				err = watcher.Add(path)
 				if err != nil {
-					ERROR.Println("Failed to watch", path, ":", err)
+					utilLog.Fatal("Watcher: Failed to watch","path", path, "error", err)
 				}
 			}
 			return nil
@@ -114,7 +114,7 @@ func (w *Watcher) Listen(listener Listener, roots ...string) {
 		// Else, walk the directory tree.
 		err = Walk(p, watcherWalker)
 		if err != nil {
-			ERROR.Println("Failed to walk directory", p, ":", err)
+			utilLog.Fatal("Watcher: Failed to walk directory","path", p, "error", err)
 		}
 	}
 
@@ -129,6 +129,7 @@ func (w *Watcher) Listen(listener Listener, roots ...string) {
 
 // NotifyWhenUpdated notifies the watcher when a file event is received.
 func (w *Watcher) NotifyWhenUpdated(listener Listener, watcher *fsnotify.Watcher) {
+
 	for {
 		select {
 		case ev := <-watcher.Events:
@@ -136,7 +137,7 @@ func (w *Watcher) NotifyWhenUpdated(listener Listener, watcher *fsnotify.Watcher
 				// Serialize listener.Refresh() calls.
 				w.notifyMutex.Lock()
 				if err := listener.Refresh(); err != nil {
-					ERROR.Println("Failed when listener refresh:", err)
+					utilLog.Fatal("Watcher: Failed when listener refresh:","error", err)
 				}
 				w.notifyMutex.Unlock()
 			}

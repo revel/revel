@@ -2,86 +2,96 @@ package revel
 
 import (
 	"github.com/revel/revel/logger"
-	"gopkg.in/inconshreveable/log15.v2"
+	"github.com/revel/log15"
 	"log"
 	"os"
 )
 
 //Logger
 var (
+	// The root log is what all other logs are branched from, meaning if you set the handler for the root
+	// it will adjust all children
+	RootLog = logger.New()
 	// This logger is the application logger, use this for your application log messages - ie jobs and startup,
-	// Use Controller.oldLog for Controller logging
-	// The requests are logged to this logger with the context of `type:request`
-	AppLog = log15.New().(logger.MultiLogger)
+	// Use Controller.Log for Controller logging
+	// The requests are logged to this logger with the context of `section:requestlog`
+	AppLog = RootLog.New("module","app")
 	// This is the logger revel writes to, added log messages will have a context of module:revel in them
-	// It is based off of `AppLog`
-	RevelLog = AppLog.New("module", "Revel")
+	// It is based off of `RootLog`
+	RevelLog = RootLog.New("module", "revel")
 
 	// This is the handler for the AppLog, it is stored so that if the AppLog is changed it can be assigned to the
 	// new AppLog
-	appLogHandler logger.LogHandler
+	appLogHandler *logger.CompositeMultiHandler
 
 	// This oldLog is the revel logger, historical for revel, The application should use the AppLog or the Controller.oldLog
 	// DEPRECATED
-	oldLog = log15.New().(logger.MultiLogger)
+	oldLog = AppLog.New("section", "deprecated")
+	// System logger
+	sysLog = AppLog.New("section", "system")
 	// DEPRECATED Use AppLog
-	TRACE = log.New(os.Stdout, "TRACE ", log.Ldate|log.Ltime|log.Lshortfile)
+	TRACE = log.New(os.Stderr, "TRACE ", log.Ldate|log.Ltime|log.Lshortfile)
 	// DEPRECATED Use AppLog
-	INFO = log.New(os.Stdout, "INFO ", log.Ldate|log.Ltime|log.Lshortfile)
+	INFO = log.New(os.Stderr, "INFO ", log.Ldate|log.Ltime|log.Lshortfile)
 	// DEPRECATED Use AppLog
-	WARN = log.New(os.Stdout, "WARN ", log.Ldate|log.Ltime|log.Lshortfile)
+	WARN = log.New(os.Stderr, "WARN ", log.Ldate|log.Ltime|log.Lshortfile)
 	// DEPRECATED Use AppLog
 	ERROR = log.New(os.Stderr, "ERROR ", log.Ldate|log.Ltime|log.Lshortfile)
 )
 
 func init() {
-	oldLog.SetHandler(logger.LevelHandler(log15.LvlDebug, logger.StreamHandler(os.Stdout, logger.TerminalFormatHandler(false, true))))
-	AppLog.SetHandler(logger.LevelHandler(log15.LvlDebug, logger.StreamHandler(os.Stdout, logger.TerminalFormatHandler(false, true))))
+
+	RootLog.SetHandler(logger.LevelHandler(logger.LogLevel(log15.LvlDebug), logger.StreamHandler(os.Stdout, logger.TerminalFormatHandler(false, true))))
 	initLoggers()
 	OnAppStart(initLoggers, -1)
+
 }
 func initLoggers() {
-	trace, info, warn, err, app := logger.GetHandlers(BasePath, Config)
+	appHandle := logger.InitializeFromConfig(BasePath, Config)
+	appHandle.Log(&log15.Record{Msg:"test",Lvl:log15.LvlInfo})
+
 	// Set all the log handlers
-	SetLog(oldLog, logger.MultiHandler(trace , info, warn, err))
-	SetAppLog(AppLog, app)
+	setLog(oldLog, appHandle)
+	setAppLog(AppLog, appHandle)
 }
 
-// Set revel log
+// Set handlers for the old logs, ERROR,TRACE,WARN,INFO
 // DEPRECATED
-func SetLog(mainLogger logger.MultiLogger, handler logger.LogHandler) {
+func setLog(mainLogger logger.MultiLogger, handler logger.LogHandler) {
 	oldLog = mainLogger
 	TRACE = logger.GetLogger("trace", oldLog)
 	INFO = logger.GetLogger("info", oldLog)
 	WARN = logger.GetLogger("warn", oldLog)
 	ERROR = logger.GetLogger("error", oldLog)
 
-	// Set log handlers
-	SetLogHandlers(handler)
-}
-
-// Set handlers for all the TRACE, WARN, INFO, ERROR loggers, allows you to set custom handlers for all the loggers
-// implement revel.LogHandler to set
-// DEPRECATED
-func SetLogHandlers(handler logger.LogHandler) {
-	oldLog.SetHandler(logger.CallerFileHandler(handler))
+	// This code sets the caller context for the old package
+	// since the skip level is different
+	oldLog.SetStackDepth(5)
+	oldLog.SetHandler(handler)
 }
 
 // Set the application log and handler, if handler is nil it will
 // use the same handler used to configure the application log before
-func SetAppLog(appLog logger.MultiLogger, appHandler logger.LogHandler) {
-	AppLog = appLog
-	if appHandler==nil {
-		SetAppLogHandlers(appLogHandler)
-	} else {
-		SetAppLogHandlers(appHandler)
+func setAppLog(appLog logger.MultiLogger, appHandler *logger.CompositeMultiHandler) {
+	if appLog != nil {
+		AppLog = appLog
 	}
-	// Set the handler for the default log output which may be the
-	logger.SetDefaultLog(appLog)
+	if appHandler != nil {
+		appLogHandler = appHandler
+		// Set the app log and the handler for all forked loggers
+		RootLog.SetHandler(appLogHandler)
+		//AppLog.SetHandler(appLogHandler)
+		//RevelLog.SetHandler(appLogHandler)
+
+		// Set the system log handler - this sets golang writer stream to the
+		// sysLog router
+		logger.SetDefaultLog(sysLog)
+		sysLog.SetStackDepth(5)
+		sysLog.SetHandler(appLogHandler)
+	}
 }
 
-// Set the handler for the application log
-func SetAppLogHandlers(app logger.LogHandler) {
-	appLogHandler = app
-	AppLog.SetHandler(logger.CallerFileHandler(app))
+// Return the application log handler
+func GetAppLogHandler() *logger.CompositeMultiHandler {
+	return appLogHandler
 }

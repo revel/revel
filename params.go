@@ -6,12 +6,12 @@ package revel
 
 import (
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"mime/multipart"
 	"net/url"
 	"os"
 	"reflect"
-	"errors"
 )
 
 // Params provides a unified view of the request params.
@@ -37,6 +37,8 @@ type Params struct {
 	JSON     []byte                             // JSON data from request body
 }
 
+var paramsLogger = RevelLog.New("section", "params")
+
 // ParseParams parses the `http.Request` params into `revel.Controller.Params`
 func ParseParams(params *Params, req *Request) {
 	params.Query = req.GetQuery()
@@ -47,13 +49,13 @@ func ParseParams(params *Params, req *Request) {
 		// Typical form.
 		var err error
 		if params.Form, err = req.GetForm(); err != nil {
-			WARN.Println("Error parsing request body:", err)
+			paramsLogger.Warn("ParseParams: Error parsing request body", "error", err)
 		}
 
 	case "multipart/form-data":
 		// Multipart form.
 		if mp, err := req.GetMultipartForm(); err != nil {
-			WARN.Println("Error parsing request body:", err)
+			paramsLogger.Warn("ParseParams: parsing request body:", "error", err)
 		} else {
 			params.Form = mp.GetValues()
 			params.Files = mp.GetFiles()
@@ -66,10 +68,10 @@ func ParseParams(params *Params, req *Request) {
 				// We wont bind it until we determine what we are binding too
 				params.JSON = content
 			} else {
-				ERROR.Println("Failed to ready request body bytes", err)
+				paramsLogger.Error("ParseParams: Failed to ready request body bytes", "error", err)
 			}
 		} else {
-			INFO.Println("Json post received with empty body")
+			paramsLogger.Info("ParseParams: Json post received with empty body")
 		}
 	}
 
@@ -82,11 +84,11 @@ func ParseParams(params *Params, req *Request) {
 func (p *Params) Bind(dest interface{}, name string) {
 	value := reflect.ValueOf(dest)
 	if value.Kind() != reflect.Ptr {
-		panic("revel/params: non-pointer passed to Bind: " + name)
+		paramsLogger.Panic("Bind: revel/params: non-pointer passed to Bind: " + name)
 	}
 	value = value.Elem()
 	if !value.CanSet() {
-		panic("revel/params: non-settable variable passed to Bind: " + name)
+		paramsLogger.Panic("Bind: revel/params: non-settable variable passed to Bind: " + name)
 	}
 
 	// Remove the json from the Params, this will stop the binder from attempting
@@ -103,11 +105,11 @@ func (p *Params) Bind(dest interface{}, name string) {
 func (p *Params) BindJSON(dest interface{}) error {
 	value := reflect.ValueOf(dest)
 	if value.Kind() != reflect.Ptr {
-		WARN.Println("BindJSON not a pointer")
+		paramsLogger.Warn("BindJSON: Not a pointer")
 		return errors.New("BindJSON not a pointer")
 	}
 	if err := json.Unmarshal(p.JSON, dest); err != nil {
-		WARN.Println("W: bindMap: Unable to unmarshal request:", err)
+		paramsLogger.Warn("BindJSON: Unable to unmarshal request:", "error", err)
 		return err
 	}
 	return nil
@@ -169,7 +171,7 @@ func ParamsFilter(c *Controller, fc []Filter) {
 		for _, tmpFile := range c.Params.tmpFiles {
 			err := os.Remove(tmpFile.Name())
 			if err != nil {
-				WARN.Println("Could not remove upload temp file:", err)
+				paramsLogger.Warn("ParamsFilter: Could not remove upload temp file:", err)
 			}
 		}
 	}()

@@ -31,6 +31,8 @@ type ErrorResult struct {
 	Error    error
 }
 
+var resultsLog = RevelLog.New("section", "results")
+
 func (r ErrorResult) Apply(req *Request, resp *Response) {
 	format := req.Format
 	status := resp.Status
@@ -101,12 +103,12 @@ func (r ErrorResult) Apply(req *Request, resp *Response) {
 	// net/http panics if we write to a hijacked connection
 	if req.Method == "WS" {
 		if err := req.WebSocket.MessageSendJSON(fmt.Sprint(revelError)); err != nil {
-			ERROR.Println("Send failed:", err)
+			resultsLog.Error("Apply: Send failed", "error", err)
 		}
 	} else {
 		resp.WriteHeader(status, contentType)
 		if _, err := b.WriteTo(resp.GetWriter()); err != nil {
-			ERROR.Println("Response WriteTo failed:", err)
+			resultsLog.Error("Apply: Response WriteTo failed:", "error", err)
 		}
 	}
 
@@ -120,7 +122,7 @@ type PlaintextErrorResult struct {
 func (r PlaintextErrorResult) Apply(req *Request, resp *Response) {
 	resp.WriteHeader(http.StatusInternalServerError, "text/plain; charset=utf-8")
 	if _, err := resp.GetWriter().Write([]byte(r.Error.Error())); err != nil {
-		ERROR.Println("Write error:", err)
+		resultsLog.Error("Apply: Write error:", "error", err)
 	}
 }
 
@@ -135,7 +137,7 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
 	// Handle panics when rendering templates.
 	defer func() {
 		if err := recover(); err != nil {
-			ERROR.Println(err)
+			resultsLog.Error("Apply: panic recovery", "error", err)
 			PlaintextErrorResult{fmt.Errorf("Template Execution Panic in %s:\n%s",
 				r.Template.Name(), err)}.Apply(req, resp)
 		}
@@ -190,15 +192,15 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
 				text = strings.Trim(text, " \t\r\n")
 				if len(text) > 0 {
 					if _, err = b2.WriteString(text); err != nil {
-						ERROR.Println(err)
+						resultsLog.Error("Apply: ", "error", err)
 					}
 					if _, err = b2.WriteString("\n"); err != nil {
-						ERROR.Println(err)
+						resultsLog.Error("Apply: ", "error", err)
 					}
 				}
 			} else {
 				if _, err = b2.WriteString(text); err != nil {
-					ERROR.Println(err)
+					resultsLog.Error("Apply: ", "error", err)
 				}
 			}
 			if strings.Contains(tl, "</pre>") {
@@ -218,7 +220,7 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
 	}
 	resp.WriteHeader(http.StatusOK, "text/html; charset=utf-8")
 	if _, err := b.WriteTo(out); err != nil {
-		ERROR.Println("Response write failed:", err)
+		resultsLog.Error("Apply: Response write failed", "error", err)
 	}
 }
 
@@ -247,7 +249,7 @@ func (r *RenderTemplateResult) render(req *Request, resp *Response, wr io.Writer
 		SourceLines: templateContent,
 	}
 	resp.Status = 500
-	ERROR.Printf("Template Execution Error (in %s): %s", compileError.Path, compileError.Description)
+	resultsLog.Errorf("render: Template Execution Error (in %s): %s", compileError.Path, compileError.Description)
 	ErrorResult{r.ViewArgs, compileError}.Apply(req, resp)
 }
 
@@ -258,7 +260,7 @@ type RenderHTMLResult struct {
 func (r RenderHTMLResult) Apply(req *Request, resp *Response) {
 	resp.WriteHeader(http.StatusOK, "text/html; charset=utf-8")
 	if _, err := resp.GetWriter().Write([]byte(r.html)); err != nil {
-		ERROR.Println("Response write failed:", err)
+		resultsLog.Error("Apply: Response write failed", "error", err)
 	}
 }
 
@@ -284,20 +286,20 @@ func (r RenderJSONResult) Apply(req *Request, resp *Response) {
 	if r.callback == "" {
 		resp.WriteHeader(http.StatusOK, "application/json; charset=utf-8")
 		if _, err = resp.GetWriter().Write(b); err != nil {
-			ERROR.Println("Response write failed:", err)
+			resultsLog.Error("Apply: Response write failed:", "error", err)
 		}
 		return
 	}
 
 	resp.WriteHeader(http.StatusOK, "application/javascript; charset=utf-8")
 	if _, err = resp.GetWriter().Write([]byte(r.callback + "(")); err != nil {
-		ERROR.Println("Response write failed:", err)
+		resultsLog.Error("Apply: Response write failed", "error", err)
 	}
 	if _, err = resp.GetWriter().Write(b); err != nil {
-		ERROR.Println("Response write failed:", err)
+		resultsLog.Error("Apply: Response write failed", "error", err)
 	}
 	if _, err = resp.GetWriter().Write([]byte(");")); err != nil {
-		ERROR.Println("Response write failed:", err)
+		resultsLog.Error("Apply: Response write failed", "error", err)
 	}
 }
 
@@ -321,7 +323,7 @@ func (r RenderXMLResult) Apply(req *Request, resp *Response) {
 
 	resp.WriteHeader(http.StatusOK, "application/xml; charset=utf-8")
 	if _, err = resp.GetWriter().Write(b); err != nil {
-		ERROR.Println("Response write failed:", err)
+		resultsLog.Error("Apply: Response write failed", "error", err)
 	}
 }
 
@@ -332,7 +334,7 @@ type RenderTextResult struct {
 func (r RenderTextResult) Apply(req *Request, resp *Response) {
 	resp.WriteHeader(http.StatusOK, "text/plain; charset=utf-8")
 	if _, err := resp.GetWriter().Write([]byte(r.text)); err != nil {
-		ERROR.Println("Response write failed:", err)
+		resultsLog.Error("Apply: Response write failed", "error", err)
 	}
 }
 
@@ -379,7 +381,7 @@ func (r *BinaryResult) Apply(req *Request, resp *Response) {
 	// Write stream writes the status code to the header as well
 	if ws := resp.GetStreamWriter(); ws != nil {
 		if err := ws.WriteStream(r.Name, r.Length, r.ModTime, r.Reader); err != nil {
-			ERROR.Println("Response write failed:", err)
+			resultsLog.Error("Apply: Response write failed", "error", err)
 		}
 	}
 
@@ -405,7 +407,7 @@ type RedirectToActionResult struct {
 func (r *RedirectToActionResult) Apply(req *Request, resp *Response) {
 	url, err := getRedirectURL(r.val)
 	if err != nil {
-		ERROR.Println("Couldn't resolve redirect:", err.Error())
+		resultsLog.Error("Apply: Couldn't resolve redirect", "error", err)
 		ErrorResult{Error: err}.Apply(req, resp)
 		return
 	}

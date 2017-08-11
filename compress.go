@@ -32,6 +32,9 @@ var compressableMimes = [...]string{
 	"application/x-javascript",
 }
 
+// Local log instance for this class
+var compressLog = RevelLog.New("section", "compress")
+
 // WriteFlusher interface for compress writer
 type WriteFlusher interface {
 	io.Writer
@@ -75,7 +78,7 @@ func CompressFilter(c *Controller, fc []Filter) {
 				c.Response.SetWriter(&writer)
 			}
 		} else {
-			TRACE.Printf("Compression disabled for response status (%d)", c.Response.Status)
+			compressLog.Debug("CompressFilter: Compression disabled for response ", "status", c.Response.Status)
 		}
 	}
 	fc[0](c, fc[1:])
@@ -130,7 +133,7 @@ func (c *CompressResponseWriter) Close() error {
 		c.Header.Del("Content-Length")
 		if err := c.compressWriter.Close(); err != nil {
 			// TODO When writing directly to stream, an error will be generated
-			ERROR.Println("Error closing compress writer", c.compressionType, err)
+			compressLog.Error("Close: Error closing compress writer", "type", c.compressionType, "error", err)
 		}
 
 	}
