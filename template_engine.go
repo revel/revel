@@ -67,25 +67,25 @@ func (loader *TemplateLoader) CreateTemplateEngine(templateEngineName string) (T
 }
 
 // Passing in a comma delimited list of engine names to be used with this loader to parse the template files
-func (loader *TemplateLoader) InitializeEngines(templateEngineNameList string) (err *Error) {
+func (loader *TemplateLoader) initializeEngines(runtimeLoader *templateRuntime, templateEngineNameList string) (err *Error) {
 	// Walk through the template loader's paths and build up a template set.
 	if templateEngineNameList == "" {
 		templateEngineNameList = GO_TEMPLATE
 
 	}
-	loader.templatesAndEngineList = []TemplateEngine{}
+	runtimeLoader.templatesAndEngineList = []TemplateEngine{}
 	for _, engine := range strings.Split(templateEngineNameList, ",") {
 		engine := strings.TrimSpace(strings.ToLower(engine))
 
 		if templateLoader, err := loader.CreateTemplateEngine(engine); err != nil {
-			loader.compileError = &Error{
+			runtimeLoader.compileError = &Error{
 				Title:       "Panic (Template Loader)",
 				Description: err.Error(),
 			}
-			return loader.compileError
+			return runtimeLoader.compileError
 		} else {
 			// Always assign a default engine, switch it if it is specified in the config
-			loader.templatesAndEngineList = append(loader.templatesAndEngineList, templateLoader)
+			runtimeLoader.templatesAndEngineList = append(runtimeLoader.templatesAndEngineList, templateLoader)
 		}
 	}
 	return
