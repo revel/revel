@@ -5,15 +5,19 @@
 package revel
 
 import (
+	"crypto/tls"
 	"fmt"
 	"io"
-	"net"
 	"net/http"
+	"os"
+	"os/signal"
 	"sort"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
+	"github.com/facebookgo/grace/gracehttp"
 	"golang.org/x/net/websocket"
 )
 
@@ -150,6 +154,17 @@ func Run(port int) {
 
 	InitServer()
 
+	signalChan := make(chan os.Signal, 1)
+	signal.Notify(signalChan, syscall.SIGKILL, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		switch <-signalChan {
+		case syscall.SIGKILL, syscall.SIGINT, syscall.SIGTERM:
+			INFO.Println("receive INT|TERM singal...")
+			runShutdownHooks()
+			return
+		}
+	}()
+
 	go func() {
 		time.Sleep(100 * time.Millisecond)
 		fmt.Printf("Listening on %s...\n", Server.Addr)
@@ -161,14 +176,16 @@ func Run(port int) {
 			// to terminate SSL upstream when using unix domain sockets.
 			ERROR.Fatalln("SSL is only supported for TCP sockets. Specify a port to listen on.")
 		}
-		ERROR.Fatalln("Failed to listen:",
-			Server.ListenAndServeTLS(HTTPSslCert, HTTPSslKey))
-	} else {
-		listener, err := net.Listen(network, Server.Addr)
+		var err error
+		Server.TLSConfig.Certificates = make([]tls.Certificate, 1)
+		Server.TLSConfig.Certificates[0], err = tls.LoadX509KeyPair(HTTPSslCert, HTTPSslKey)
 		if err != nil {
 			ERROR.Fatalln("Failed to listen:", err)
 		}
-		ERROR.Fatalln("Failed to serve:", Server.Serve(listener))
+	}
+	err := gracehttp.Serve(Server)
+	if err != nil {
+		ERROR.Fatalln("Failed to serve:", err)
 	}
 }
 
@@ -242,4 +259,40 @@ func OnAppStart(f func(), order ...int) {
 		o = order[0]
 	}
 	startupHooks = append(startupHooks, StartupHook{order: o, f: f})
+}
+
+func runShutdownHooks() {
+	sort.Sort(shutdownHooks)
+	for _, hook := range shutdownHooks {
+		hook.f()
+	}
+}
+
+type ShutdownHook struct {
+	order int
+	f     func()
+}
+
+type ShutdownHooks []ShutdownHook
+
+var shutdownHooks ShutdownHooks
+
+func (slice ShutdownHooks) Len() int {
+	return len(slice)
+}
+
+func (slice ShutdownHooks) Less(i, j int) bool {
+	return slice[i].order < slice[j].order
+}
+
+func (slice ShutdownHooks) Swap(i, j int) {
+	slice[i], slice[j] = slice[j], slice[i]
+}
+
+func OnAppShut(f func(), order ...int) {
+	o := 1
+	if len(order) > 0 {
+		o = order[0]
+	}
+	shutdownHooks = append(shutdownHooks, ShutdownHook{order: o, f: f})
 }

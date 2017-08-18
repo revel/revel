@@ -116,6 +116,29 @@ func TestOnAppStart(t *testing.T) {
 	}
 }
 
+func TestOnAppShut(t *testing.T) {
+	startFakeBookingApp()
+	i := 1
+	OnAppShut(func() {
+		i += 2
+		INFO.Printf("i: %v \n", i)
+	})
+	OnAppShut(func() {
+		i *= 3
+		INFO.Printf("i: %v \n", i)
+	})
+	//Run(0)
+
+	//// kill self
+	//p, _ := os.FindProcess(os.Getpid())
+	//p.Kill()
+	//if i != 9 {
+	//	t.Errorf("Failed to fired and order OnAppShutdown: %v \n", i)
+	//	t.FailNow()
+	//}
+
+}
+
 var (
 	showRequest, _      = http.NewRequest("GET", "/hotels/3", nil)
 	staticRequest, _    = http.NewRequest("GET", "/public/js/sessvars.js", nil)
