@@ -62,7 +62,7 @@ func (loader *TemplateLoader) CreateTemplateEngine(templateEngineName string) (T
 		return nil, errors.New("Failed to init template engine (" + templateEngineName + "), " + err.Error())
 	}
 
-	INFO.Println("init templates:", templateEngineName)
+	templateLog.Debug("CreateTemplateEngine: init templates", "name", templateEngineName)
 	return templateEngine, nil
 }
 

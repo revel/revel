@@ -8,6 +8,8 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"fmt"
+	"os"
 )
 
 // Revel's variables server, router, etc
@@ -18,10 +20,11 @@ var (
 	serverEngineMap    = map[string]func() ServerEngine{}
 	CurrentEngine      ServerEngine
 	ServerEngineInit   *EngineInit
+	serverLogger       = RevelLog.New("section", "server")
 )
 
 func RegisterServerEngine(name string, loader func() ServerEngine) {
-	INFO.Printf("Registered engine %s", name)
+	serverLogger.Debug("RegisterServerEngine: Registered engine ", "name", name)
 	serverEngineMap[name] = loader
 }
 
@@ -36,7 +39,7 @@ func InitServer() {
 	// Load templates
 	MainTemplateLoader = NewTemplateLoader(TemplatePaths)
 	if err := MainTemplateLoader.Refresh(); err != nil {
-		ERROR.Println(err)
+		serverLogger.Debug("InitServer: Main template loader failed to refresh", "error", err)
 	}
 
 	// The "watch" config variable can turn on and off all watching.
@@ -52,7 +55,6 @@ func InitServer() {
 		MainWatcher.Listen(MainTemplateLoader, MainTemplateLoader.paths...)
 	}
 
-	// return http.HandlerFunc(handle)
 }
 
 // Run the server.
@@ -67,12 +69,18 @@ func Run(port int) {
 	InitServer()
 	fireEvent(ENGINE_STARTED, nil)
 	CurrentEngine.Event(ENGINE_STARTED, nil)
+	// This is needed for the harness to recognize that the server is started, it looks for the word
+	// "Listening" in the stdout stream
+	fmt.Fprintf(os.Stdout,"Listening on.. %s\n", ServerEngineInit.Address)
 	CurrentEngine.Start()
 	CurrentEngine.Event(ENGINE_SHUTDOWN, nil)
 }
 
 func InitServerEngine(port int, serverEngine string) {
 	address := HTTPAddr
+	if address == "" {
+		address = "localhost"
+	}
 	if port == 0 {
 		port = HTTPPort
 	}
@@ -95,7 +103,7 @@ func InitServerEngine(port int, serverEngine string) {
 		panic("Server Engine " + serverEngine + " Not found")
 	} else {
 		CurrentEngine = engineLoader()
-		TRACE.Println("Found server engine and invoking", CurrentEngine.Name())
+		serverLogger.Debug("InitServerEngine: Found server engine and invoking", "name", CurrentEngine.Name())
 		ServerEngineInit = &EngineInit{
 			Address:  localAddress,
 			Network:  network,

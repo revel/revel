@@ -5,21 +5,24 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"github.com/revel/revel/logger"
 )
 
 // Module specific functions
 type Module struct {
 	Name, ImportPath, Path string
 	ControllerTypeList     []*ControllerType
+	Log logger.MultiLogger
 }
 
 // The namespace separator constant
 const namespaceSeperator = `\` // (note cannot be . or : as this is already used for routes)
 
 var (
-	Modules   []*Module              // The list of modules in use
-	anyModule = &Module{}            // Wildcard search for controllers for a module (for backward compatible lookups)
-	appModule = &Module{Name: "App"} // The app module
+	Modules      []*Module              // The list of modules in use
+	anyModule    = &Module{}            // Wildcard search for controllers for a module (for backward compatible lookups)
+	appModule    = &Module{Name: "App"} // The app module
+	moduleLogger = RevelLog.New("section", "module")
 )
 
 func init() {
@@ -114,7 +117,7 @@ func loadModules() {
 	// Reorder module order by key name, a poor mans sort but at least it is consistent
 	sort.Strings(keys)
 	for _, key := range keys {
-		INFO.Println("Sorted keys", key)
+		moduleLogger.Debug("Sorted keys", "keys", key)
 
 	}
 	for _, key := range keys {
@@ -125,7 +128,7 @@ func loadModules() {
 
 		modulePath, err := ResolveImportPath(moduleImportPath)
 		if err != nil {
-			ERROR.Fatalln("Failed to load module.  Import of", moduleImportPath, "failed:", err)
+			moduleLogger.Error("Failed to load module.  Import of path failed", "modulePath", moduleImportPath, "error", err)
 		}
 		// Drop anything between module.???.<name of module>
 		subKey := key[len("module."):]
@@ -139,9 +142,9 @@ func loadModules() {
 //
 func addModule(name, importPath, modulePath string) {
 	if _, found := ModuleByName(name); found {
-		ERROR.Panicf("Attempt to import duplicate module %s path %s aborting startup", name, modulePath)
+		moduleLogger.Panic("Attempt to import duplicate module %s path %s aborting startup", "name", name, "path", modulePath)
 	}
-	Modules = append(Modules, &Module{Name: name, ImportPath: importPath, Path: modulePath})
+	Modules = append(Modules, &Module{Name: name, ImportPath: importPath, Path: modulePath, Log:AppLog.New("module", name)})
 	if codePath := filepath.Join(modulePath, "app"); DirExists(codePath) {
 		CodePaths = append(CodePaths, codePath)
 		if viewsPath := filepath.Join(modulePath, "app", "views"); DirExists(viewsPath) {
@@ -149,16 +152,17 @@ func addModule(name, importPath, modulePath string) {
 		}
 	}
 
-	INFO.Print("Loaded module ", filepath.Base(modulePath))
+	moduleLogger.Debug("Loaded module ", "module", filepath.Base(modulePath))
 
 	// Hack: There is presently no way for the testrunner module to add the
 	// "test" subdirectory to the CodePaths.  So this does it instead.
 	if importPath == Config.StringDefault("module.testrunner", "github.com/revel/modules/testrunner") {
-		INFO.Print("Found testrunner module, adding `tests` path ", filepath.Join(BasePath, "tests"))
-		CodePaths = append(CodePaths, filepath.Join(BasePath, "tests"))
+		joinedPath := filepath.Join(BasePath, "tests")
+		moduleLogger.Debug("Found testrunner module, adding `tests` path ", "path", joinedPath)
+		CodePaths = append(CodePaths, joinedPath)
 	}
 	if testsPath := filepath.Join(modulePath, "tests"); DirExists(testsPath) {
-		INFO.Print("Found tests path ", testsPath)
+		moduleLogger.Debug("Found tests path ", "path", testsPath)
 		CodePaths = append(CodePaths, testsPath)
 	}
 }

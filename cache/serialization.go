@@ -9,8 +9,6 @@ import (
 	"encoding/gob"
 	"reflect"
 	"strconv"
-
-	"github.com/revel/revel"
 )
 
 // Serialize transforms the given value into bytes following these rules:
@@ -18,8 +16,8 @@ import (
 //   - If value is an int or uint type, it is returned as the ASCII representation
 //   - Else, encoding/gob is used to serialize
 func Serialize(value interface{}) ([]byte, error) {
-	if bytes, ok := value.([]byte); ok {
-		return bytes, nil
+	if data, ok := value.([]byte); ok {
+		return data, nil
 	}
 
 	switch v := reflect.ValueOf(value); v.Kind() {
@@ -32,7 +30,7 @@ func Serialize(value interface{}) ([]byte, error) {
 	var b bytes.Buffer
 	encoder := gob.NewEncoder(&b)
 	if err := encoder.Encode(value); err != nil {
-		revel.ERROR.Printf("revel/cache: gob encoding '%s' failed: %s", value, err)
+		cacheLog.Error("Serialize: gob encoding failed","value", value, "error", err)
 		return nil, err
 	}
 	return b.Bytes(), nil
@@ -41,8 +39,8 @@ func Serialize(value interface{}) ([]byte, error) {
 // Deserialize transforms bytes produced by Serialize back into a Go object,
 // storing it into "ptr", which must be a pointer to the value type.
 func Deserialize(byt []byte, ptr interface{}) (err error) {
-	if bytes, ok := ptr.(*[]byte); ok {
-		*bytes = byt
+	if data, ok := ptr.(*[]byte); ok {
+		*data = byt
 		return
 	}
 
@@ -52,7 +50,7 @@ func Deserialize(byt []byte, ptr interface{}) (err error) {
 			var i int64
 			i, err = strconv.ParseInt(string(byt), 10, 64)
 			if err != nil {
-				revel.ERROR.Printf("revel/cache: failed to parse int '%s': %s", string(byt), err)
+				cacheLog.Error("Deserialize: failed to parse int","value", string(byt), "error", err)
 			} else {
 				p.SetInt(i)
 			}
@@ -62,7 +60,7 @@ func Deserialize(byt []byte, ptr interface{}) (err error) {
 			var i uint64
 			i, err = strconv.ParseUint(string(byt), 10, 64)
 			if err != nil {
-				revel.ERROR.Printf("revel/cache: failed to parse uint '%s': %s", string(byt), err)
+				cacheLog.Error("Deserialize: failed to parse uint","value", string(byt), "error", err)
 			} else {
 				p.SetUint(i)
 			}
@@ -73,7 +71,7 @@ func Deserialize(byt []byte, ptr interface{}) (err error) {
 	b := bytes.NewBuffer(byt)
 	decoder := gob.NewDecoder(b)
 	if err = decoder.Decode(ptr); err != nil {
-		revel.ERROR.Printf("revel/cache: gob decoding failed: %s", err)
+		cacheLog.Error("Deserialize: glob decoding failed","error", err)
 		return
 	}
 	return

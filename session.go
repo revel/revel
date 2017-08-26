@@ -130,7 +130,7 @@ func GetSessionFromCookie(cookie ServerCookie) Session {
 
 	// Verify the signature.
 	if !Verify(data, sig) {
-		WARN.Println("Session cookie signature failed")
+		utilLog.Warn("Session cookie signature failed")
 		return session
 	}
 

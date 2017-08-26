@@ -188,7 +188,7 @@ func (v *Validation) apply(chk Validator, obj interface{}) *ValidationResult {
 			key = defaultKeys[line]
 		}
 	} else {
-		INFO.Println("Failed to get Caller information to look up Validation key")
+		utilLog.Error("Validation: Failed to get Caller information to look up Validation key")
 	}
 
 	// Add the error to the validation context.
