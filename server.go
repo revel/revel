@@ -71,13 +71,16 @@ func Run(port int) {
 	CurrentEngine.Event(ENGINE_STARTED, nil)
 	// This is needed for the harness to recognize that the server is started, it looks for the word
 	// "Listening" in the stdout stream
-	fmt.Fprintf(os.Stdout,"Listening on.. %s:%d\n",ServerEngineInit.Address,ServerEngineInit.Port)
+	fmt.Fprintf(os.Stdout,"Listening on.. %s\n", ServerEngineInit.Address)
 	CurrentEngine.Start()
 	CurrentEngine.Event(ENGINE_SHUTDOWN, nil)
 }
 
 func InitServerEngine(port int, serverEngine string) {
 	address := HTTPAddr
+	if address == "" {
+		address = "localhost"
+	}
 	if port == 0 {
 		port = HTTPPort
 	}

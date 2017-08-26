@@ -251,8 +251,8 @@ func (h *CompositeMultiHandler) SetHandlers(handler LogHandler, options *LogOpti
 }
 func (h *CompositeMultiHandler) SetJson(writer io.Writer, options *LogOptions) {
 	handler := CallerFileHandler(StreamHandler(writer, log15.JsonFormatEx(
-		options.GetBoolDefault("pretty",false),
-		options.GetBoolDefault("lineSeparated",true),
+		options.GetBoolDefault("pretty", false),
+		options.GetBoolDefault("lineSeparated", true),
 	)))
 	if options.HandlerWrap != nil {
 		handler = options.HandlerWrap.SetChild(handler)
@@ -293,4 +293,24 @@ func (h *CompositeMultiHandler) SetTerminalFile(filePath string, options *LogOpt
 		Compress:   options.GetBoolDefault("compress", true),
 	}
 	h.SetTerminal(writer, options)
+}
+
+func (h *CompositeMultiHandler) Disable(levels ...LogLevel) {
+	if len(levels) == 0 {
+		levels = LvlAllList
+	}
+	for _, level := range levels {
+		switch level {
+		case LvlDebug:
+			h.DebugHandler = nil
+		case LvlInfo:
+			h.InfoHandler = nil
+		case LvlWarn:
+			h.WarnHandler = nil
+		case LvlError:
+			h.ErrorHandler = nil
+		case LvlCrit:
+			h.CriticalHandler = nil
+		}
+	}
 }

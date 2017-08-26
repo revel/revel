@@ -164,7 +164,7 @@ func loadMessageFile(path string, info os.FileInfo, osError error) error {
 
 		i18nLog.Debug("Successfully loaded messages from file", "file", info.Name())
 	} else {
-		i18nLog.Warn("Ignoring file %s because it did not have a valid extension", "file", info.Name())
+		i18nLog.Warn("Ignoring file because it did not have a valid extension", "file", info.Name())
 	}
 
 	return nil

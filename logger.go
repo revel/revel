@@ -48,7 +48,6 @@ func init() {
 }
 func initLoggers() {
 	appHandle := logger.InitializeFromConfig(BasePath, Config)
-	appHandle.Log(&log15.Record{Msg:"test",Lvl:log15.LvlInfo})
 
 	// Set all the log handlers
 	setLog(oldLog, appHandle)
@@ -80,8 +79,6 @@ func setAppLog(appLog logger.MultiLogger, appHandler *logger.CompositeMultiHandl
 		appLogHandler = appHandler
 		// Set the app log and the handler for all forked loggers
 		RootLog.SetHandler(appLogHandler)
-		//AppLog.SetHandler(appLogHandler)
-		//RevelLog.SetHandler(appLogHandler)
 
 		// Set the system log handler - this sets golang writer stream to the
 		// sysLog router
@@ -91,7 +88,7 @@ func setAppLog(appLog logger.MultiLogger, appHandler *logger.CompositeMultiHandl
 	}
 }
 
-// Return the application log handler
-func GetAppLogHandler() *logger.CompositeMultiHandler {
+// Return the root log handler
+func GetRootLogHandler() *logger.CompositeMultiHandler {
 	return appLogHandler
 }

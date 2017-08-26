@@ -12,17 +12,17 @@ import (
 )
 
 const (
-	timeFormat     = "2006-01-02T15:04:05-0700"
-	termTimeFormat = "2006/01/02 15:04:05"
+	timeFormat          = "2006-01-02T15:04:05-0700"
+	termTimeFormat      = "2006/01/02 15:04:05"
 	termSmallTimeFormat = "15:04:05"
-	floatFormat    = 'f'
-	errorKey       = "REVEL_ERROR"
+	floatFormat         = 'f'
+	errorKey            = "REVEL_ERROR"
 )
+
 var (
 	// Name the log level
 	toRevel = map[log15.Lvl]string{log15.LvlDebug: "DEBUG",
 		log15.LvlInfo: "INFO", log15.LvlWarn: "WARN", log15.LvlError: "ERROR", log15.LvlCrit: "CRIT"}
-
 )
 
 // Outputs to the terminal in a format like below
@@ -55,17 +55,15 @@ func TerminalFormatHandler(noColor bool, smallDate bool) LogFormat {
 
 		b := &bytes.Buffer{}
 		lvl := strings.ToUpper(r.Lvl.String())
+		caller := findInContext("caller", r.Ctx)
+		module := findInContext("module", r.Ctx)
 		if noColor == false && color > 0 {
-			caller := findInContext("caller", r.Ctx)
-			module := findInContext("module", r.Ctx)
-			if len(module)>0 {
+			if len(module) > 0 {
 				fmt.Fprintf(b, "\x1b[%dm%-5s\x1b[0m %s %6s %13s: %-40s ", color, toRevel[r.Lvl], r.Time.Format(dateFormat), module, caller, r.Msg)
 			} else {
 				fmt.Fprintf(b, "\x1b[%dm%-5s\x1b[0m %s %13s: %-40s ", color, toRevel[r.Lvl], r.Time.Format(dateFormat), caller, r.Msg)
 			}
 		} else {
-			caller := findInContext("caller", r.Ctx)
-			module := findInContext("module", r.Ctx)
 			fmt.Fprintf(b, "%-5s %s %6s %13s: %-40s", toRevel[r.Lvl], r.Time.Format(dateFormat), module, caller, r.Msg)
 			fmt.Fprintf(b, "[%s] [%s] %s ", lvl, r.Time.Format(dateFormat), r.Msg)
 		}
@@ -76,7 +74,7 @@ func TerminalFormatHandler(noColor bool, smallDate bool) LogFormat {
 			}
 
 			k, ok := r.Ctx[i].(string)
-			if k == "caller" || k == "fn" {
+			if k == "caller" || k == "fn" || k == "module" {
 				continue
 			}
 			v := formatLogfmtValue(r.Ctx[i+1])

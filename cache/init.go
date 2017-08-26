@@ -11,6 +11,8 @@ import (
 	"github.com/revel/revel"
 )
 
+var cacheLog = revel.RevelLog.New("section","cache")
+
 func init() {
 	revel.OnAppStart(func() {
 		// Set the default expiration time.
@@ -18,20 +20,20 @@ func init() {
 		if expireStr, found := revel.Config.String("cache.expires"); found {
 			var err error
 			if defaultExpiration, err = time.ParseDuration(expireStr); err != nil {
-				panic("Could not parse default cache expiration duration " + expireStr + ": " + err.Error())
+				cacheLog.Panic("Could not parse default cache expiration duration " + expireStr + ": " + err.Error())
 			}
 		}
 
 		// make sure you aren't trying to use both memcached and redis
 		if revel.Config.BoolDefault("cache.memcached", false) && revel.Config.BoolDefault("cache.redis", false) {
-			panic("You've configured both memcached and redis, please only include configuration for one cache!")
+			cacheLog.Panic("You've configured both memcached and redis, please only include configuration for one cache!")
 		}
 
 		// Use memcached?
 		if revel.Config.BoolDefault("cache.memcached", false) {
 			hosts := strings.Split(revel.Config.StringDefault("cache.hosts", ""), ",")
 			if len(hosts) == 0 {
-				panic("Memcache enabled but no memcached hosts specified!")
+				cacheLog.Panic("Memcache enabled but no memcached hosts specified!")
 			}
 
 			Instance = NewMemcachedCache(hosts, defaultExpiration)
@@ -42,10 +44,10 @@ func init() {
 		if revel.Config.BoolDefault("cache.redis", false) {
 			hosts := strings.Split(revel.Config.StringDefault("cache.hosts", ""), ",")
 			if len(hosts) == 0 {
-				panic("Redis enabled but no Redis hosts specified!")
+				cacheLog.Panic("Redis enabled but no Redis hosts specified!")
 			}
 			if len(hosts) > 1 {
-				panic("Redis currently only supports one host!")
+				cacheLog.Panic("Redis currently only supports one host!")
 			}
 			password := revel.Config.StringDefault("cache.redis.password", "")
 			Instance = NewRedisCache(hosts[0], password, defaultExpiration)

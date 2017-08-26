@@ -29,7 +29,10 @@ func NewRedisCache(host string, password string, defaultExpiration time.Duration
 			toc := time.Millisecond * time.Duration(revel.Config.IntDefault("cache.redis.timeout.connect", 10000))
 			tor := time.Millisecond * time.Duration(revel.Config.IntDefault("cache.redis.timeout.read", 5000))
 			tow := time.Millisecond * time.Duration(revel.Config.IntDefault("cache.redis.timeout.write", 5000))
-			c, err := redis.DialTimeout(protocol, host, toc, tor, tow)
+			c, err := redis.Dial(protocol, host,
+				redis.DialConnectTimeout(toc),
+				redis.DialReadTimeout(tor),
+				redis.DialWriteTimeout(tow))
 			if err != nil {
 				return nil, err
 			}

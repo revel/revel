@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/bradfitz/gomemcache/memcache"
-	"github.com/revel/revel"
+	"github.com/revel/revel/logger"
 )
 
 // MemcachedCache wraps the Memcached client to meet the Cache interface.
@@ -65,8 +65,8 @@ func (c MemcachedCache) Decrement(key string, delta uint64) (newValue uint64, er
 }
 
 func (c MemcachedCache) Flush() error {
-	err := errors.New("revel/cache: can not flush memcached")
-	revel.ERROR.Println(err)
+	err := errors.New("Flush: can not flush memcached")
+	cacheLog.Error(err.Error())
 	return err
 }
 
@@ -113,6 +113,6 @@ func convertMemcacheError(err error) error {
 		return ErrNotStored
 	}
 
-	revel.ERROR.Println("revel/cache:", err)
+	cacheLog.Error("convertMemcacheError:","error", err,"trace",logger.NewCallStack())
 	return err
 }
