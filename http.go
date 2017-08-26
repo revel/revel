@@ -414,7 +414,7 @@ func (al AcceptLanguages) String() string {
 func ResolveAcceptLanguage(req *Request) AcceptLanguages {
 	header := req.ServerHeader.Get("Accept-Language")
 	if header == "" {
-		return nil
+		return req.AcceptLanguages
 	}
 
 	acceptLanguageHeaderValues := strings.Split(header, ",")
