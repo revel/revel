@@ -92,9 +92,6 @@ var (
 	// Cookie flags
 	CookieSecure bool
 
-	// Delimiters to use when rendering templates
-	TemplateDelims string
-
 	// Revel request access log, not exposed from package.
 	// However output settings can be controlled from app.conf
 
@@ -195,7 +192,6 @@ func Init(mode, importPath, srcPath string) {
 	CookiePrefix = Config.StringDefault("cookie.prefix", "REVEL")
 	CookieDomain = Config.StringDefault("cookie.domain", "")
 	CookieSecure = Config.BoolDefault("cookie.secure", HTTPSsl)
-	TemplateDelims = Config.StringDefault("template.delimiters", "")
 	if secretStr := Config.StringDefault("app.secret", ""); secretStr != "" {
 		SetSecretKey([]byte(secretStr))
 	}
@@ -270,7 +266,7 @@ func findSrcPaths(importPath string) (revelSourcePath, appSourcePath string) {
 
 	appPkg, err := build.Import(importPath, "", build.FindOnly)
 	if err != nil {
-		RevelLog.Panic("Failed to import"+importPath+"with error:", "error", err)
+		RevelLog.Panic("Failed to import "+importPath+" with error:", "error", err)
 	}
 
 	revelPkg, err := build.Import(RevelImportPath, "", build.FindOnly)
