@@ -28,7 +28,6 @@ type Controller struct {
 	AppController interface{}     // The controller that was instantiated. embeds revel.Controller
 	Action        string          // The fully qualified action name, e.g. "App.Index"
 	ClientIP      string          // holds IP address of request came from
-	module        *Module         // The module for the parent controller (if available)
 
 	Request  *Request
 	Response *Response

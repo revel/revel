@@ -749,6 +749,12 @@ func RouterFilter(c *Controller, fc []Filter) {
 
 	// Add the route and fixed params to the Request Params.
 	c.Params.Route = route.Params
+	// Assign logger if from module
+	if c.Type.ModuleSource!=nil && c.Type.ModuleSource!=appModule {
+		c.Log = c.Type.ModuleSource.Log.New("ip", c.ClientIP,
+			"path", c.Request.URL.Path, "method", c.Request.Method)
+	}
+
 
 	// Add the fixed parameters mapped by name.
 	// TODO: Pre-calculate this mapping.
