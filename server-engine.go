@@ -139,11 +139,7 @@ func handleInternal(ctx ServerContext) {
 	}()
 
 	c.ClientIP = clientIP
-	controllerLog := AppLog
-	if c.module!=nil {
-		controllerLog = c.module.Log
-	}
-	c.Log = controllerLog.New("ip", clientIP,
+	c.Log = AppLog.New("ip", clientIP,
 		"path", req.GetPath(), "method", req.Method)
 	// Call the first filter, this will process the request
 	Filters[0](c, Filters[1:])
