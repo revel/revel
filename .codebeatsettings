@@ -1,0 +1,8 @@
+{
+  "GOLANG": {
+    "TOO_MANY_IVARS": [15, 18, 20, 25],
+    "TOO_MANY_FUNCTIONS": [20, 30, 40, 50],
+    "TOTAL_COMPLEXITY": [150, 250, 400, 500],
+    "LOC": [50, 75, 90, 120]
+  }
+}
