@@ -3,7 +3,7 @@
 <h1>View hotel</h1>
 
 {{with .hotel}}
-<form action="{{url "Hotels.Book" .HotelID}}">
+<form method="get" action="{{url "Hotels.Book" .HotelID}}">
 
   <p>
     <strong>Name:</strong> {{.Name}}
@@ -27,10 +27,10 @@
     <strong>Nightly rate:</strong> {{.Price}}
   </p>
 
-  <p class="buttons">
+  <button class="buttons">
     <input type="submit" value="Book Hotel">
     <a href="{{url "Hotels.Index"}}">Back to search</a>
-  </p>
+  </button>
 </form>
 {{end}}
 
