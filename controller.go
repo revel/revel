@@ -7,7 +7,6 @@ package revel
 import (
 	"errors"
 	"fmt"
-	"github.com/revel/revel/logger"
 	"io"
 	"net/http"
 	"os"
@@ -16,6 +15,8 @@ import (
 	"runtime"
 	"strings"
 	"time"
+
+	"github.com/revel/revel/logger"
 )
 
 // Controller Revel's controller structure that gets embedded in user defined
@@ -41,6 +42,7 @@ type Controller struct {
 	Validation *Validation            // Data validation helpers
 	Log        logger.MultiLogger     // Context Logger
 }
+
 // The map of controllers, controllers are mapped by using the namespace|controller_name as the key
 var controllers = make(map[string]*ControllerType)
 var controllerLog = RevelLog.New("section", "controller")
@@ -119,8 +121,16 @@ func (c *Controller) SetCookie(cookie *http.Cookie) {
 	c.Response.Out.internalHeader.SetCookie(cookie.String())
 }
 
+type ErrorCoder interface {
+	HTTPCode() int
+}
+
 func (c *Controller) RenderError(err error) Result {
-	c.setStatusIfNil(http.StatusInternalServerError)
+	if coder, ok := err.(ErrorCoder); ok {
+		c.setStatusIfNil(coder.HTTPCode())
+	} else {
+		c.setStatusIfNil(http.StatusInternalServerError)
+	}
 
 	return ErrorResult{c.ViewArgs, err}
 }
@@ -485,9 +495,6 @@ func findControllers(appControllerType reflect.Type) (indexes [][]int) {
 	}
 	return
 }
-
-
-
 
 // RegisterController registers a Controller and its Methods with Revel.
 func RegisterController(c interface{}, methods []*MethodType) {
