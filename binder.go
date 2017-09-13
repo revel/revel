@@ -298,7 +298,7 @@ func bindStruct(params *Params, name string, typ reflect.Type) reflect.Value {
 	if params.JSON != nil {
 		// Try to inject the response as a json into the created result
 		if err := json.Unmarshal(params.JSON, resultPointer.Interface()); err != nil {
-			binderLog.Warn("bindStruct Unable to unmarshal request", "name", name, "error", err)
+			binderLog.Error("bindStruct Unable to unmarshal request", "name", name, "error", err,"data", string(params.JSON))
 		}
 		return result
 	}
