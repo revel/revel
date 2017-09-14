@@ -88,7 +88,7 @@ func ModuleFromPath(path string, addGopathToPath bool) (module *Module) {
 	for i := range Modules {
 		if addGopathToPath {
 			for _, gopath := range gopathList {
-				if strings.HasPrefix(gopath+"/src/"+path, Modules[i].Path) {
+				if strings.HasPrefix(filepath.ToSlash(filepath.Clean(filepath.Join(gopath,"src",path))), Modules[i].Path) {
 					module = Modules[i]
 					break
 				}
@@ -164,6 +164,8 @@ func loadModules() {
 			if strings.HasPrefix(key, m.ImportPath) {
 				moduleLog.Debug("Module called callback", "moduleKey", m.ImportPath, "callbackKey", key)
 				callback(m)
+				found = true
+				break
 			}
 		}
 		if !found {

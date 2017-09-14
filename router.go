@@ -211,7 +211,7 @@ func (router *Router) Route(req *Request) (routeMatch *RouteMatch) {
 		controllerName = route.ControllerName
 		if controllerName[0] == ':' {
 			controllerName = strings.ToLower(params[controllerName[1:]][0])
-			if route.ModuleSource.ControllerByName(controllerName, methodName) != nil {
+			if typeOfController = route.ModuleSource.ControllerByName(controllerName, methodName); typeOfController != nil {
 				break
 			}
 		} else {
