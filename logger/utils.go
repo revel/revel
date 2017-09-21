@@ -44,13 +44,19 @@ func GetLogger(name string, logger MultiLogger) (l *log.Logger) {
 func InitializeFromConfig(basePath string, config *config.Context) (c *CompositeMultiHandler) {
 	// If the configuration has an all option we can skip some
 	c, _ = NewCompositeMultiHandler()
+
+	// Filters are assigned first, non filtered items override filters
 	initAllLog(c, basePath, config)
 	initLogLevels(c, basePath, config)
-	initRequestLog(c, basePath, config)
-	// Check to see if critical handler needs to be assigned to the error handler
 	if c.CriticalHandler == nil && c.ErrorHandler != nil {
 		c.CriticalHandler = c.ErrorHandler
 	}
+	initFilterLog(c, basePath, config)
+	if c.CriticalHandler == nil && c.ErrorHandler != nil {
+		c.CriticalHandler = c.ErrorHandler
+	}
+	initRequestLog(c, basePath, config)
+
 	return c
 }
 
@@ -62,19 +68,57 @@ func initAllLog(c *CompositeMultiHandler, basePath string, config *config.Contex
 			log.Printf("Adding standard handler for levels to >%s< ", output)
 			initHandlerFor(c, output, basePath, NewLogOptions(config, true, nil, LvlAllList...))
 		}
-		optionList := config.Options("log.all.filter")
-		for _, option := range optionList {
-			splitOptions := strings.Split(option, ".")
-			keyMap := map[string]interface{}{}
-			for x := 3; x < len(splitOptions); x += 2 {
-				keyMap[splitOptions[x]] = splitOptions[x+1]
-			}
+	}
+}
 
-			log.Printf("Adding key map handler to all %s output %s", option, config.StringDefault(option, ""))
-			phandler := NewParentLogHandler(func(child LogHandler) LogHandler {
-				return MatchMapHandler(keyMap, child)
-			})
-			initHandlerFor(c, config.StringDefault(option, ""), basePath, NewLogOptions(config, false, phandler))
+// Init the filter options
+// log.all.filter ....
+// log.error.filter ....
+func initFilterLog(c *CompositeMultiHandler, basePath string, config *config.Context) {
+	if config != nil {
+		// The commands to use
+		logFilterList := []struct {
+			LogPrefix, LogSuffix string
+			parentHandler        func(map[string]interface{}) ParentLogHandler
+		}{{
+			"log.", ".filter",
+			func(keyMap map[string]interface{}) ParentLogHandler {
+				return NewParentLogHandler(func(child LogHandler) LogHandler {
+					return MatchMapHandler(keyMap, child)
+				})
+
+			},
+		}, {
+			"log.", ".nfilter",
+			func(keyMap map[string]interface{}) ParentLogHandler {
+				return NewParentLogHandler(func(child LogHandler) LogHandler {
+					return NotMatchMapHandler(keyMap, child)
+				})
+			},
+		}}
+
+		for _, logFilter := range logFilterList {
+			// Init for all filters
+			for _, name := range []string{"all", "debug", "info", "warn", "error", "crit",
+				"trace", // TODO trace is deprecated
+			} {
+				optionList := config.Options(logFilter.LogPrefix + name + logFilter.LogSuffix)
+				for _, option := range optionList {
+					splitOptions := strings.Split(option, ".")
+					keyMap := map[string]interface{}{}
+					for x := 3; x < len(splitOptions); x += 2 {
+						keyMap[splitOptions[x]] = splitOptions[x+1]
+					}
+					phandler := logFilter.parentHandler(keyMap)
+					log.Printf("Adding key map handler %s %s output %s", option, name, config.StringDefault(option, ""))
+
+					if name == "all" {
+						initHandlerFor(c, config.StringDefault(option, ""), basePath, NewLogOptions(config, false, phandler))
+					} else {
+						initHandlerFor(c, config.StringDefault(option, ""), basePath, NewLogOptions(config, false, phandler, toLevel[name]))
+					}
+				}
+			}
 		}
 	}
 }
@@ -90,23 +134,6 @@ func initLogLevels(c *CompositeMultiHandler, basePath string, config *config.Con
 				log.Printf("Adding standard handler %s output %s", name, output)
 				initHandlerFor(c, output, basePath, NewLogOptions(config, true, nil, toLevel[name]))
 			}
-			// Now check to see if we have any module specific loggers
-			// Names should be module.name or module.name.context.name
-			optionList := config.Options("log." + name + ".filter")
-			for _, option := range optionList {
-				splitOptions := strings.Split(option, ".")
-				keyMap := map[string]interface{}{}
-				for x := 3; x < len(splitOptions); x += 2 {
-					keyMap[splitOptions[x]] = splitOptions[x+1]
-				}
-
-				phandler := NewParentLogHandler(func(child LogHandler) LogHandler {
-					return MatchMapHandler(keyMap, child)
-				})
-				log.Printf("Adding key map handler %s %s output %s", option, name, config.StringDefault(option, ""))
-				initHandlerFor(c, config.StringDefault(option, ""), basePath, NewLogOptions(config, false, phandler, toLevel[name]))
-			}
-
 			// Gets the list of options with said prefix
 		} else {
 			initHandlerFor(c, "stderr", basePath, NewLogOptions(config, true, nil, toLevel[name]))
