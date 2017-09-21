@@ -156,7 +156,9 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
 	// error pages distorted by HTML already written)
 	if chunked && !DevMode {
 		resp.WriteHeader(http.StatusOK, "text/html; charset=utf-8")
-		r.render(req, resp, out)
+		if err := r.renderOutput(out); err !=nil {
+			r.renderError(err,req,resp)
+		}
 		return
 	}
 
@@ -164,55 +166,10 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
 	// rendering the template.  If not, then copy it into the response buffer.
 	// Otherwise, template render errors may result in unpredictable HTML (and
 	// would carry a 200 status code)
-	var b bytes.Buffer
-	r.render(req, resp, &b)
-
-	// Trimming the HTML will do the following:
-	// * Remove all leading & trailing whitespace on every line
-	// * Remove all empty lines
-	// * Attempt to keep formatting inside <pre></pre> tags
-	//
-	// This is safe unless white-space: pre; is used in css for formatting.
-	// Since there is no way to detect that, you will have to keep trimming off in these cases.
-	if Config.BoolDefault("results.trim.html", false) {
-		var b2 bytes.Buffer
-		// Allocate length of original buffer, so we can write everything without allocating again
-		b2.Grow(b.Len())
-		insidePre := false
-		for {
-			text, err := b.ReadString('\n')
-			// Convert to lower case for finding <pre> tags.
-			tl := strings.ToLower(text)
-			if strings.Contains(tl, "<pre>") {
-				insidePre = true
-			}
-			// Trim if not inside a <pre> statement
-			if !insidePre {
-				// Cut trailing/leading whitespace
-				text = strings.Trim(text, " \t\r\n")
-				if len(text) > 0 {
-					if _, err = b2.WriteString(text); err != nil {
-						resultsLog.Error("Apply: ", "error", err)
-					}
-					if _, err = b2.WriteString("\n"); err != nil {
-						resultsLog.Error("Apply: ", "error", err)
-					}
-				}
-			} else {
-				if _, err = b2.WriteString(text); err != nil {
-					resultsLog.Error("Apply: ", "error", err)
-				}
-			}
-			if strings.Contains(tl, "</pre>") {
-				insidePre = false
-			}
-			// We are finished
-			if err != nil {
-				break
-			}
-		}
-		// Replace the buffer
-		b = b2
+	b, err := r.ToBytes()
+	if err!=nil {
+		r.renderError(err,req,resp)
+		return
 	}
 
 	if !chunked {
@@ -224,12 +181,85 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
 	}
 }
 
-func (r *RenderTemplateResult) render(req *Request, resp *Response, wr io.Writer) {
-	err := r.Template.Render(wr, r.ViewArgs)
-	if err == nil {
-		return
+// Return a byte array and or an error object if the template failed to render
+func (r *RenderTemplateResult) ToBytes() (b *bytes.Buffer,err error) {
+	defer func() {
+		if rerr := recover(); rerr != nil {
+			resultsLog.Error("ApplyBytes: panic recovery", "recover-error", rerr)
+			err = fmt.Errorf("Template Execution Panic in %s:\n%s", r.Template.Name(), rerr)
+		}
+	}()
+	b = &bytes.Buffer{}
+	if err = r.renderOutput(b); err==nil {
+		if Config.BoolDefault("results.trim.html", false) {
+			b = r.compressHtml(b)
+		}
+	}
+	return
+}
+
+// Output the template to the writer, catch any panics and return as an error
+func (r *RenderTemplateResult) renderOutput(wr io.Writer) (err error) {
+	defer func() {
+		if rerr := recover(); rerr != nil {
+			resultsLog.Error("ApplyBytes: panic recovery", "recover-error", rerr)
+			err = fmt.Errorf("Template Execution Panic in %s:\n%s", r.Template.Name(), rerr)
+		}
+	}()
+	err = r.Template.Render(wr, r.ViewArgs)
+	return
+}
+
+// Trimming the HTML will do the following:
+// * Remove all leading & trailing whitespace on every line
+// * Remove all empty lines
+// * Attempt to keep formatting inside <pre></pre> tags
+//
+// This is safe unless white-space: pre; is used in css for formatting.
+// Since there is no way to detect that, you will have to keep trimming off in these cases.
+func (r *RenderTemplateResult) compressHtml(b *bytes.Buffer) (b2 *bytes.Buffer) {
+
+	// Allocate length of original buffer, so we can write everything without allocating again
+	b2.Grow(b.Len())
+	insidePre := false
+	for {
+		text, err := b.ReadString('\n')
+		// Convert to lower case for finding <pre> tags.
+		tl := strings.ToLower(text)
+		if strings.Contains(tl, "<pre>") {
+			insidePre = true
+		}
+		// Trim if not inside a <pre> statement
+		if !insidePre {
+			// Cut trailing/leading whitespace
+			text = strings.Trim(text, " \t\r\n")
+			if len(text) > 0 {
+				if _, err = b2.WriteString(text); err != nil {
+					resultsLog.Error("Apply: ", "error", err)
+				}
+				if _, err = b2.WriteString("\n"); err != nil {
+					resultsLog.Error("Apply: ", "error", err)
+				}
+			}
+		} else {
+			if _, err = b2.WriteString(text); err != nil {
+				resultsLog.Error("Apply: ", "error", err)
+			}
+		}
+		if strings.Contains(tl, "</pre>") {
+			insidePre = false
+		}
+		// We are finished
+		if err != nil {
+			break
+		}
 	}
 
+	return
+}
+
+// Render the error in the response
+func (r *RenderTemplateResult) renderError(err error,req *Request, resp *Response) {
 	var templateContent []string
 	templateName, line, description := ParseTemplateError(err)
 	if templateName == "" {

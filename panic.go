@@ -5,7 +5,6 @@
 package revel
 
 import (
-	"github.com/revel/revel/logger"
 	"net/http"
 	"runtime/debug"
 )
@@ -25,7 +24,7 @@ func PanicFilter(c *Controller, fc []Filter) {
 // It cleans up the stack trace, logs it, and displays an error page.
 func handleInvocationPanic(c *Controller, err interface{}) {
 	error := NewErrorFromPanic(err)
-	utilLog.Error("PanicFilter: Caught panic", "error", err, "trace", logger.NewCallStack())
+	utilLog.Error("PanicFilter: Caught panic", "error", err, "stack", error.Stack)
 	if error == nil && DevMode {
 		// Only show the sensitive information in the debug stack trace in development mode, not production
 		c.Response.SetStatus(http.StatusInternalServerError)

@@ -78,8 +78,18 @@ func NilHandler() LogHandler {
 	})
 }
 
-// Rather then chaining multiple filter handlers, process all here
+// Match all values in map to log
 func MatchMapHandler(matchMap map[string]interface{}, a LogHandler) LogHandler {
+	return matchMapHandler(matchMap, false, a)
+}
+
+// Match !(Match all values in map to log) The inverse of MatchMapHandler
+func NotMatchMapHandler(matchMap map[string]interface{}, a LogHandler) LogHandler {
+	return matchMapHandler(matchMap, true, a)
+}
+
+// Rather then chaining multiple filter handlers, process all here
+func matchMapHandler(matchMap map[string]interface{}, inverse bool, a LogHandler) LogHandler {
 	return log15.FuncHandler(func(r *log15.Record) error {
 		checkMap := map[string]bool{}
 		// Copy the map to a bool
@@ -89,6 +99,10 @@ func MatchMapHandler(matchMap map[string]interface{}, a LogHandler) LogHandler {
 			}
 		}
 		if len(checkMap) == len(matchMap) {
+			if !inverse {
+				return a.Log(r)
+			}
+		} else if inverse {
 			return a.Log(r)
 		}
 		return nil
@@ -232,7 +246,7 @@ func (h *CompositeMultiHandler) SetHandler(handler LogHandler, replace bool, lev
 		if ll, found := (*source).(*ListLogHandler); found {
 			ll.Add(handler)
 		} else {
-			*source = NewListLogHandler(h.CriticalHandler, handler)
+			*source = NewListLogHandler(*source, handler)
 		}
 	} else {
 		*source = handler

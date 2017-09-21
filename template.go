@@ -50,6 +50,25 @@ var invalidSlugPattern = regexp.MustCompile(`[^a-z0-9 _-]`)
 var whiteSpacePattern = regexp.MustCompile(`\s+`)
 var templateLog = RevelLog.New("section", "template")
 
+// TemplateOutputArgs returns the result of the template rendered using the passed in arguments.
+func TemplateOutputArgs(templatePath string, args map[string]interface{}) (data []byte,err error)  {
+	// Get the Template.
+	lang, _ := args[CurrentLocaleViewArg].(string)
+	template, err := MainTemplateLoader.TemplateLang(templatePath, lang)
+	if err != nil {
+		return nil, err
+	}
+	tr :=  &RenderTemplateResult{
+		Template: template,
+		ViewArgs: args,
+	}
+	b,err := tr.ToBytes()
+	if err!=nil {
+		return nil,err
+	}
+	return b.Bytes(), nil
+}
+
 func NewTemplateLoader(paths []string) *TemplateLoader {
 	loader := &TemplateLoader{
 		paths:         paths,
