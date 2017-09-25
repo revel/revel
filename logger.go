@@ -28,7 +28,7 @@ var (
 	// DEPRECATED
 	oldLog = AppLog.New("section", "deprecated")
 	// System logger
-	sysLog = AppLog.New("section", "system")
+	SysLog = AppLog.New("section", "system")
 	// DEPRECATED Use AppLog
 	TRACE = log.New(os.Stderr, "TRACE ", log.Ldate|log.Ltime|log.Lshortfile)
 	// DEPRECATED Use AppLog
@@ -82,9 +82,9 @@ func setAppLog(appLog logger.MultiLogger, appHandler *logger.CompositeMultiHandl
 
 		// Set the system log handler - this sets golang writer stream to the
 		// sysLog router
-		logger.SetDefaultLog(sysLog)
-		sysLog.SetStackDepth(5)
-		sysLog.SetHandler(appLogHandler)
+		logger.SetDefaultLog(SysLog)
+		SysLog.SetStackDepth(5)
+		SysLog.SetHandler(appLogHandler)
 	}
 }
 

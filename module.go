@@ -83,18 +83,22 @@ func (m *Module) AddController(ct *ControllerType) {
 // Only to be used on initialization
 func ModuleFromPath(path string, addGopathToPath bool) (module *Module) {
 	gopathList := filepath.SplitList(build.Default.GOPATH)
+	// ignore the vendor folder
+	if i := strings.Index(path, "/vendor/"); i > 0 {
+		path = path[i+len("vendor/"):]
+	}
 
 	// See if the path exists in the module based
 	for i := range Modules {
 		if addGopathToPath {
 			for _, gopath := range gopathList {
-				if strings.HasPrefix(filepath.ToSlash(filepath.Clean(filepath.Join(gopath,"src",path))), Modules[i].Path) {
+				if strings.Contains(filepath.ToSlash(filepath.Clean(filepath.Join(gopath, "src", path))), Modules[i].Path) {
 					module = Modules[i]
 					break
 				}
 			}
 		} else {
-			if strings.HasPrefix(path, Modules[i].Path) {
+			if strings.Contains(path, Modules[i].ImportPath) {
 				module = Modules[i]
 				break
 			}
@@ -159,17 +163,10 @@ func loadModules() {
 
 	// Modules loaded, now show module path
 	for key, callback := range appModule.initializedModules {
-		found := false
-		for _, m := range Modules {
-			if strings.HasPrefix(key, m.ImportPath) {
-				moduleLog.Debug("Module called callback", "moduleKey", m.ImportPath, "callbackKey", key)
-				callback(m)
-				found = true
-				break
-			}
-		}
-		if !found {
-			RevelLog.Error("Callback for non registered module initializing with application module","modulePath",key)
+		if m := ModuleFromPath(key, false); m != nil {
+			callback(m)
+		} else {
+			RevelLog.Error("Callback for non registered module initializing with application module", "modulePath", key)
 			callback(appModule)
 		}
 	}

@@ -231,7 +231,7 @@ func ResolveImportPath(importPath string) (string, error) {
 		return filepath.Join(SourcePath, importPath), nil
 	}
 
-	modPkg, err := build.Import(importPath, "", build.FindOnly)
+	modPkg, err := build.Import(importPath, RevelPath, build.FindOnly)
 	if err != nil {
 		return "", err
 	}
@@ -269,10 +269,10 @@ func findSrcPaths(importPath string) (revelSourcePath, appSourcePath string) {
 		RevelLog.Panic("Failed to import "+importPath+" with error:", "error", err)
 	}
 
-	revelPkg, err := build.Import(RevelImportPath, "", build.FindOnly)
+	revelPkg, err := build.Import(RevelImportPath, appPkg.Dir, build.FindOnly)
 	if err != nil {
 		RevelLog.Fatal("Failed to find Revel with error:", "error", err)
 	}
 
-	return revelPkg.SrcRoot, appPkg.SrcRoot
+	return revelPkg.Dir[:len(revelPkg.Dir)-len(RevelImportPath)], appPkg.SrcRoot
 }
