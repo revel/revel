@@ -212,10 +212,7 @@ func (c *CompressResponseWriter) DetectCompressionType(req *Request, resp *Respo
 			}
 		}
 
-		if largestQ == 0 {
-			return
-		}
-
+		
 		c.compressionType = compressionTypes[chosenEncoding]
 
 		switch c.compressionType {
