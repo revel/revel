@@ -243,3 +243,6 @@ func OnAppStart(f func(), order ...int) {
 	}
 	startupHooks = append(startupHooks, StartupHook{order: o, f: f})
 }
++type ErrorCoder interface {
+ + 	HTTPCode() int
+ + }
