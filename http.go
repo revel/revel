@@ -22,7 +22,7 @@ import (
 // Request is Revel's HTTP request object structure
 type Request struct {
 	In              ServerRequest
-	ServerHeader    *RevelHeader
+	Header          *RevelHeader
 	ContentType     string
 	Format          string // "html", "xml", "json", or "txt"
 	AcceptLanguages AcceptLanguages
@@ -69,7 +69,7 @@ func NewResponse(w ServerResponse) (r *Response) {
 
 // NewRequest returns a Revel's HTTP request instance with given HTTP instance
 func NewRequest(r ServerRequest) *Request {
-	req := &Request{ServerHeader: &RevelHeader{}}
+	req := &Request{Header: &RevelHeader{}}
 	if r != nil {
 		req.SetRequest(r)
 	}
@@ -78,7 +78,7 @@ func NewRequest(r ServerRequest) *Request {
 func (req *Request) SetRequest(r ServerRequest) {
 	req.In = r
 	if h, e := req.In.Get(HTTP_SERVER_HEADER); e == nil {
-		req.ServerHeader.Server = h.(ServerHeader)
+		req.Header.Server = h.(ServerHeader)
 	}
 
 	req.URL,_ = req.GetValue(HTTP_URL).(*url.URL)
@@ -91,8 +91,8 @@ func (req *Request) SetRequest(r ServerRequest) {
 
 }
 func (req *Request) Cookie(key string) (ServerCookie, error) {
-	if req.ServerHeader.Server != nil {
-		return req.ServerHeader.Server.GetCookie(key)
+	if req.Header.Server != nil {
+		return req.Header.Server.GetCookie(key)
 	}
 	return nil, http.ErrNoCookie
 }
@@ -193,7 +193,7 @@ func (req *Request) Destroy() {
 	req.Method = ""
 	req.RemoteAddr = ""
 	req.Host = ""
-	req.ServerHeader.Destroy()
+	req.Header.Destroy()
 	req.URL = nil
 	req.Form = nil
 	req.MultipartForm = nil
@@ -221,15 +221,15 @@ func (resp *Response) Destroy() {
 
 // UserAgent returns the client's User-Agent header string.
 func (r *Request) UserAgent() string {
-	return r.ServerHeader.Get("User-Agent")
+	return r.Header.Get("User-Agent")
 }
 
 // Referer returns the client's Referer header string.
 func (req *Request) Referer() string {
-	return req.ServerHeader.Get("Referer")
+	return req.Header.Get("Referer")
 }
 func (req *Request) GetHttpHeader(key string) string {
-	return req.ServerHeader.Get(key)
+	return req.Header.Get(key)
 }
 
 func (r *Request) GetValue(key int) (value interface{}) {
@@ -329,7 +329,7 @@ func (h *RevelHeader) GetAll(key string) (values []string) {
 // If none is specified, returns "text/html" by default.
 func ResolveContentType(req *Request) string {
 
-	contentType := req.ServerHeader.Get("Content-Type")
+	contentType := req.Header.Get("Content-Type")
 	if contentType == "" {
 		return "text/html"
 	}
@@ -412,7 +412,7 @@ func (al AcceptLanguages) String() string {
 // See the HTTP header fields specification
 // (http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.4) for more details.
 func ResolveAcceptLanguage(req *Request) AcceptLanguages {
-	header := req.ServerHeader.Get("Accept-Language")
+	header := req.Header.Get("Accept-Language")
 	if header == "" {
 		return req.AcceptLanguages
 	}

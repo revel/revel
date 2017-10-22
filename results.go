@@ -432,10 +432,11 @@ func (r *RedirectToURLResult) Apply(req *Request, resp *Response) {
 
 type RedirectToActionResult struct {
 	val interface{}
+	args []interface{}
 }
 
 func (r *RedirectToActionResult) Apply(req *Request, resp *Response) {
-	url, err := getRedirectURL(r.val)
+	url, err := getRedirectURL(r.val, r.args)
 	if err != nil {
 		resultsLog.Error("Apply: Couldn't resolve redirect", "error", err)
 		ErrorResult{Error: err}.Apply(req, resp)
@@ -445,7 +446,7 @@ func (r *RedirectToActionResult) Apply(req *Request, resp *Response) {
 	resp.WriteHeader(http.StatusFound, "")
 }
 
-func getRedirectURL(item interface{}) (string, error) {
+func getRedirectURL(item interface{}, args []interface{}) (string, error) {
 	// Handle strings
 	if url, ok := item.(string); ok {
 		return url, nil
@@ -466,8 +467,28 @@ func getRedirectURL(item interface{}) (string, error) {
 		if recvType.Kind() == reflect.Ptr {
 			recvType = recvType.Elem()
 		}
-		action := recvType.Name() + "." + method.Name
-		actionDef := MainRouter.Reverse(action, make(map[string]string))
+		module := ModuleFromPath(recvType.PkgPath(),true)
+		println("Returned ", module)
+		action := module.Namespace() + recvType.Name() + "." + method.Name
+		// Fetch the action path to get the defaults
+		pathData, found := splitActionPath(nil, action, true)
+		if !found {
+			return "", fmt.Errorf("Unable to redirect '%s', expected 'Controller.Action'", action)
+		}
+
+		// Build the map for the router to reverse
+		// Unbind the arguments.
+		argsByName := make(map[string]string)
+		// Bind any static args first
+		fixedParams := len(pathData.FixedParamsByName)
+		methodType := pathData.TypeOfController.Method(pathData.MethodName)
+
+		for i, argValue := range args {
+			Unbind(argsByName, methodType.Args[i+fixedParams].Name, argValue)
+		}
+
+
+		actionDef := MainRouter.Reverse(action, argsByName)
 		if actionDef == nil {
 			return "", errors.New("no route for action " + action)
 		}

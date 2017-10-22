@@ -329,7 +329,7 @@ func (c *Controller) Redirect(val interface{}, args ...interface{}) Result {
 		}
 		return &RedirectToURLResult{fmt.Sprintf(url, args...)}
 	}
-	return &RedirectToActionResult{val}
+	return &RedirectToActionResult{val, args}
 }
 
 // This stats returns some interesting stats based on what is cached in memory
