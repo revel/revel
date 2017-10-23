@@ -47,8 +47,10 @@ func RegisterModuleInit(callback ModuleCallbackInterface) {
 func init() {
 	AddInitEventHandler(func(typeOf int, value interface{}) (responseOf int) {
 		if typeOf == REVEL_BEFORE_MODULES_LOADED {
-			Modules = []*Module{}
+			Modules = []*Module{appModule}
+			appModule.Path = AppPath
 		}
+
 		return
 	})
 }
@@ -83,7 +85,7 @@ func (m *Module) AddController(ct *ControllerType) {
 // Only to be used on initialization
 func ModuleFromPath(path string, addGopathToPath bool) (module *Module) {
 	gopathList := filepath.SplitList(build.Default.GOPATH)
-	// ignore the vendor folder
+	// Strip away the vendor folder
 	if i := strings.Index(path, "/vendor/"); i > 0 {
 		path = path[i+len("vendor/"):]
 	}

@@ -114,7 +114,7 @@ func (loader *TemplateLoader) Refresh() (err *Error) {
 		templateMap: map[string]Template{}}
 
 	templateLog.Debug("Refresh: Refreshing templates from ", "path", loader.paths)
-	if err = loader.initializeEngines(runtimeLoader, GO_TEMPLATE); err != nil {
+	if err = loader.initializeEngines(runtimeLoader, Config.StringDefault("template.engines", GO_TEMPLATE)); err != nil {
 		return
 	}
 	for _, engine := range runtimeLoader.templatesAndEngineList {

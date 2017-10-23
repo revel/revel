@@ -77,8 +77,8 @@ func testInterceptorController(t *testing.T, appControllerPtr reflect.Value, met
 	}
 }
 
-func testInterception(t *testing.T, intc *Interception, arg reflect.Value) {
-	val := intc.Invoke(arg)
+func testInterception(t *testing.T, intc *interceptorItem, arg reflect.Value) {
+	val := intc.Interceptor.Invoke(arg, &intc.Target)
 	if !val.IsNil() {
 		t.Errorf("Failed (%v): Expected nil got %v", intc, val)
 	}
