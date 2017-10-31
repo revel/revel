@@ -1,5 +1,138 @@
 # CHANGELOG
 
+## v0.18
+# Release 0.18
+
+## Upgrade path
+The main breaking change is the removal of `http.Request` from the `revel.Request` object.
+Everything else should just work....
+
+## New items
+* Server Engine revel/revel#998
+The server engine implementation is described in the [docs](http://revel.github.io/manual/server-engine.html)
+* Allow binding to a structured map. revel/revel#998 
+Have a structure inside a map object which will be realized properly from params
+* Gorm module revel/modules/#51
+Added transaction controller
+* Gorp module revel/modules/#52
+* Autorun on startup in develop mode revel/cmd#95
+Start the application without doing a request first using revel run ....
+* Logger update revel/revel#1213
+Configurable logger and added context logging on controller via controller.Log
+* Before after finally panic controller method detection revel/revel#1211 
+Controller methods will be automatically detected and called - similar to interceptors but without the extra code
+* Float validation revel/revel#1209
+Added validation for floats
+* Timeago template function revel/revel#1207
+Added timeago function to Revel template functions
+* Authorization to jobs module revel/module#44
+Added ability to specify authorization to access the jobs module routes
+* Add MessageKey, ErrorKey methods to ValidationResult object revel/revel#1215
+This allows the message translator to translate the keys added. So model objects can send out validation codes
+* Vendor friendlier - Revel recognizes and uses `deps` (to checkout go libraries) if a vendor folder exists in the project root. 
+* Updated examples to use Gorp modules and new loggers
+
+
+### Breaking Changes
+
+* `http.Request` is no longer contained in `revel.Request` revel.Request remains functionally the same but 
+you cannot extract the `http.Request` from it. You can get the `http.Request` from `revel.Controller.Request.In.GetRaw().(*http.Request)`
+* `http.Response.Out` Is not the http.Response and is deprecated, you can get the output writer by doing `http.Response.GetWriter()`. You can get the `http.Response` from revel.Controller.Response.Out.Server.GetRaw().(*http.Response)`
+
+* `Websocket` changes. `revel.ServerWebsocket` is the new type of object you need to declare for controllers 
+which should need to attach to websockets. Implementation of these objects have been simplified
+
+Old
+```
+
+func (c WebSocket) RoomSocket(user string, ws *websocket.Conn) revel.Result {
+	// Join the room.
+	subscription := chatroom.Subscribe()
+	defer subscription.Cancel()
+
+	chatroom.Join(user)
+	defer chatroom.Leave(user)
+
+	// Send down the archive.
+	for _, event := range subscription.Archive {
+		if websocket.JSON.Send(ws, &event) != nil {
+			// They disconnected
+			return nil
+		}
+	}
+
+	// In order to select between websocket messages and subscription events, we
+	// need to stuff websocket events into a channel.
+	newMessages := make(chan string)
+	go func() {
+		var msg string
+		for {
+			err := websocket.Message.Receive(ws, &msg)
+			if err != nil {
+				close(newMessages)
+				return
+			}
+			newMessages <- msg
+		}
+	}()
+```
+New
+```
+func (c WebSocket) RoomSocket(user string, ws revel.ServerWebSocket) revel.Result {
+	// Join the room.
+	subscription := chatroom.Subscribe()
+	defer subscription.Cancel()
+
+	chatroom.Join(user)
+	defer chatroom.Leave(user)
+
+	// Send down the archive.
+	for _, event := range subscription.Archive {
+		if ws.MessageSendJSON(&event) != nil {
+			// They disconnected
+			return nil
+		}
+	}
+
+	// In order to select between websocket messages and subscription events, we
+	// need to stuff websocket events into a channel.
+	newMessages := make(chan string)
+	go func() {
+		var msg string
+		for {
+			err := ws.MessageReceiveJSON(&msg)
+			if err != nil {
+				close(newMessages)
+				return
+			}
+			newMessages <- msg
+		}
+	}()
+```
+* GORM module has been refactored into modules/orm/gorm 
+
+
+### Deprecated methods
+* `revel.Request.FormValue()` Is deprecated, you should use methods in the controller.Params to access this data
+* `revel.Request.PostFormValue()` Is deprecated, you should use methods in the controller.Params.Form to access this data
+* `revel.Request.ParseForm()` Is deprecated - not needed
+* `revel.Request.ParseMultipartForm()` Is deprecated - not needed
+* `revel.Request.Form` Is deprecated, you should use the controller.Params.Form to access this data
+* `revel.Request.MultipartForm` Is deprecated, you should use the controller.Params.Form to access this data
+* `revel.TRACE`, `revel.INFO` `revel.WARN` `revel.ERROR` are deprecated. Use new application logger `revel.AppLog` and the controller logger `controller.Log`. See [logging](http://revel.github.io/manual/logging.html) for more details.
+
+### Features
+
+* Pluggable server engine support. You can now implement **your own server engine**. This means if you need to listen to more then 1 IP address or port you can implement a custom server engine to do this. By default Revel uses GO http server, but also available is fasthttp server in the revel/modules repository. See the docs for more information on how to implement your own engine.
+
+### Enhancements
+* Controller instances are cached for reuse. This speeds up the request response time and prevents unnecessary garbage collection cycles.  
+
+### Bug fixes
+
+
+
+
 ## v0.17
 
 [[revel/revel](https://github.com/revel/revel)]
