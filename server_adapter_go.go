@@ -302,11 +302,14 @@ func (r *GoResponse) WriteStream(name string, contentlen int64, modtime time.Tim
 
 	// Check to see if the output stream is modified, if not send it using the
 	// Native writer
+	written := false
 	if _, ok := r.Writer.(http.ResponseWriter); ok {
 		if rs, ok := reader.(io.ReadSeeker); ok {
 			http.ServeContent(r.Original, r.Request.Original, name, modtime, rs)
+			written = true
 		}
-	} else {
+	}
+	if !written {
 		// Else, do a simple io.Copy.
 		ius := r.Request.Original.Header.Get("If-Unmodified-Since")
 		if t, err := http.ParseTime(ius); err == nil && !modtime.IsZero() {
