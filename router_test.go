@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -480,7 +481,7 @@ func TestOverrideMethodFilter(t *testing.T) {
 // Helpers
 
 func eq(t *testing.T, name string, a, b interface{}) bool {
-	if a != b {
+	if !reflect.DeepEqual(a, b) {
 		t.Error(name, ": (actual)", a, " != ", b, "(expected)")
 		return false
 	}

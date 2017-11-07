@@ -96,6 +96,12 @@ var (
 		"invalidArr":      {"xyz"},
 		"int8-overflow":   {"1024"},
 		"uint8-overflow":  {"1024"},
+
+		"rule.Name":                         {"sdfsdf"},
+		"rule.Attributes[corp_id]":          {"wx"},
+		"rule.Attributes[target_type]":      {"department"},
+		"rule.Attributes[userList][]":       {"15102171566"},
+		"rule.Attributes[departmentList][]": {"3"},
 	}
 
 	testDate     = time.Date(1982, time.July, 9, 0, 0, 0, 0, time.UTC)
@@ -162,6 +168,19 @@ var binderTestCases = map[string]interface{}{
 	"priv":           A{},
 	"int8-overflow":  int8(0),
 	"uint8-overflow": uint8(0),
+
+	"rule": Rule{Name: "sdfsdf",
+		Attributes: map[string]interface{}{
+			"corp_id":        "wx",
+			"target_type":    "department",
+			"userList":       []string{"15102171566"},
+			"departmentList": []string{"3"},
+		}},
+}
+
+type Rule struct {
+	Name       string
+	Attributes map[string]interface{}
 }
 
 // Types that files may be bound to, and a func that can read the content from

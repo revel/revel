@@ -85,7 +85,12 @@ func (f *Field) Value() interface{} {
 		kind := rVal.Kind()
 		if kind == reflect.Map {
 			rFieldName := reflect.ValueOf(fieldName)
-			val = rVal.MapIndex(rFieldName).Interface()
+			rVal = rVal.MapIndex(rFieldName)
+			if !rVal.IsValid() {
+				return nil
+			}
+
+			val = rVal.Interface()
 			if val == nil {
 				return nil
 			}
@@ -100,6 +105,9 @@ func (f *Field) Value() interface{} {
 			return nil
 		}
 		val = rVal.Interface()
+		if val == nil {
+			return nil
+		}
 	}
 
 	return val

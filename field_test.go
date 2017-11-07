@@ -14,7 +14,7 @@ type H map[string]interface{}
 func TestField(t *testing.T) {
 
 	for _, test := range []struct {
-		excepted   string
+		excepted   interface{}
 		name       string
 		renderArgs map[string]interface{}
 	}{
@@ -26,6 +26,11 @@ func TestField(t *testing.T) {
 		{
 			excepted:   "b",
 			name:       "f1[a].b",
+			renderArgs: map[string]interface{}{"f1": H{"a": H{"b": "b"}}},
+		},
+		{
+			excepted:   nil,
+			name:       "f1[key_not_exists].b",
 			renderArgs: map[string]interface{}{"f1": H{"a": H{"b": "b"}}},
 		},
 	} {
