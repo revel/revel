@@ -55,12 +55,16 @@ func NewErrorFromPanic(err interface{}) *Error {
 	if err != nil {
 		description = fmt.Sprint(err)
 	}
+	lines, readErr := ReadLines(filename)
+	if readErr != nil {
+		utilLog.Error("Unable to read file", "file", filename, "error", readErr)
+	}
 	return &Error{
 		Title:       "Runtime Panic",
 		Path:        filename[len(basePath):],
 		Line:        line,
 		Description: description,
-		SourceLines: MustReadLines(filename),
+		SourceLines: lines,
 		Stack:       stack,
 	}
 }

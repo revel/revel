@@ -188,6 +188,7 @@ func (c *GoContext) Destroy() {
 	c.Request.Destroy()
 	if c.WebSocket != nil {
 		c.WebSocket.Destroy()
+		c.WebSocket = nil
 	}
 }
 func (r *GoRequest) Get(key int) (value interface{}, err error) {
