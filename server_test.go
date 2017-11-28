@@ -121,11 +121,11 @@ func TestOnAppShut(t *testing.T) {
 	i := 1
 	OnAppShut(func() {
 		i += 2
-		INFO.Printf("i: %v \n", i)
+		t.Logf("i: %v \n", i)
 	})
 	OnAppShut(func() {
 		i *= 3
-		INFO.Printf("i: %v \n", i)
+		t.Logf("i: %v \n", i)
 	})
 	//Run(0)
 

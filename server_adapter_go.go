@@ -5,15 +5,20 @@ import (
 	"net/http"
 	"time"
 
+	"context"
 	"golang.org/x/net/websocket"
 	"io"
 	"mime/multipart"
 	"net/url"
+	"os"
+	"os/signal"
 	"strconv"
+	"syscall"
 )
 
-// Register the GoHttpServer engine
+var signalChan = make(chan os.Signal)
 
+// Register the GoHttpServer engine
 func init() {
 	RegisterServerEngine(GO_NATIVE_SERVER_ENGINE, func() ServerEngine { return &GoHttpServer{} })
 }
@@ -120,7 +125,19 @@ func (g *GoHttpServer) Engine() interface{} {
 }
 
 func (g *GoHttpServer) Event(event int, args interface{}) {
+	switch event {
+	case ENGINE_STARTED:
+		signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL, syscall.SIGUSR2)
+	case ENGINE_SHUTDOWN:
+		s := <-signalChan
+		serverLogger.Debugf("Recived quit singal %s, Please wait ... \n", s)
+		runShutdownHooks()
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(Config.IntDefault("app.cancel.timeout", 60)))
+		defer cancel()
+		g.Server.Shutdown(ctx)
+	default:
 
+	}
 }
 
 type (
