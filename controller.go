@@ -15,6 +15,8 @@ import (
 	"runtime"
 	"strings"
 	"time"
+
+	"github.com/revel/revel/logger"
 )
 
 // Controller Revel's controller structure that gets embedded in user defined
@@ -24,7 +26,7 @@ type Controller struct {
 	Type          *ControllerType // A description of the controller type.
 	MethodName    string          // The method name, e.g. "Index"
 	MethodType    *MethodType     // A description of the invoked action type.
-	AppController interface{}     // The controller that was instantiated.
+	AppController interface{}     // The controller that was instantiated. embeds revel.Controller
 	Action        string          // The fully qualified action name, e.g. "App.Index"
 	ClientIP      string          // holds IP address of request came from
 
@@ -38,23 +40,73 @@ type Controller struct {
 	Args       map[string]interface{} // Per-request scratch space.
 	ViewArgs   map[string]interface{} // Variables passed to the template.
 	Validation *Validation            // Data validation helpers
+	Log        logger.MultiLogger     // Context Logger
 }
 
 // The map of controllers, controllers are mapped by using the namespace|controller_name as the key
 var controllers = make(map[string]*ControllerType)
+var controllerLog = RevelLog.New("section", "controller")
 
 // NewController returns new controller instance for Request and Response
-func NewController(req *Request, resp *Response) *Controller {
-	return &Controller{
-		Request:  req,
-		Response: resp,
-		Params:   new(Params),
-		Args:     map[string]interface{}{},
-		ViewArgs: map[string]interface{}{
-			"RunMode": RunMode,
-			"DevMode": DevMode,
-		},
+func NewControllerEmpty() *Controller {
+	return &Controller{Request: NewRequest(nil), Response: NewResponse(nil)}
+}
+
+// New controller, creates a new instance wrapping the request and response in it
+func NewController(context ServerContext) *Controller {
+	c := NewControllerEmpty()
+	c.SetController(context)
+	return c
+}
+
+// Sets the request and the response for the controller
+func (c *Controller) SetController(context ServerContext) {
+
+	c.Request.SetRequest(context.GetRequest())
+	c.Response.SetResponse(context.GetResponse())
+	c.Request.controller = c
+	c.Params = new(Params)
+	c.Args = map[string]interface{}{}
+	c.ViewArgs = map[string]interface{}{
+		"RunMode": RunMode,
+		"DevMode": DevMode,
 	}
+
+}
+func (c *Controller) Destroy() {
+	// When the instantiated controller gets injected
+	// It inherits this method, so we need to
+	// check to see if the controller is nil before performing
+	// any actions
+	if c == nil {
+		return
+	}
+	if c.AppController != nil {
+		c.resetAppControllerFields()
+		// Return this instance to the pool
+		appController := c.AppController
+		c.AppController = nil
+		cachedControllerMap[c.Name].Push(appController)
+		c.AppController = nil
+	}
+
+	c.Request.Destroy()
+	c.Response.Destroy()
+	c.Params = nil
+	c.Args = nil
+	c.ViewArgs = nil
+	c.Name = ""
+	c.Type = nil
+	c.MethodName = ""
+	c.MethodType = nil
+	c.Action = ""
+	c.ClientIP = ""
+	c.Result = nil
+	c.Flash = Flash{}
+	c.Session = Session{}
+	c.Params = nil
+	c.Validation = nil
+	c.Log = nil
 }
 
 // FlashParams serializes the contents of Controller.Params to the Flash
@@ -66,11 +118,19 @@ func (c *Controller) FlashParams() {
 }
 
 func (c *Controller) SetCookie(cookie *http.Cookie) {
-	http.SetCookie(c.Response.Out, cookie)
+	c.Response.Out.internalHeader.SetCookie(cookie.String())
+}
+
+type ErrorCoder interface {
+	HTTPCode() int
 }
 
 func (c *Controller) RenderError(err error) Result {
-	c.setStatusIfNil(http.StatusInternalServerError)
+	if coder, ok := err.(ErrorCoder); ok {
+		c.setStatusIfNil(coder.HTTPCode())
+	} else {
+		c.setStatusIfNil(http.StatusInternalServerError)
+	}
 
 	return ErrorResult{c.ViewArgs, err}
 }
@@ -109,7 +169,7 @@ func (c *Controller) Render(extraViewArgs ...interface{}) Result {
 	// Get the calling function line number.
 	_, _, line, ok := runtime.Caller(1)
 	if !ok {
-		ERROR.Println("Failed to get Caller information")
+		controllerLog.Error("Render: Failed to get Caller information")
 	}
 
 	// Get the extra ViewArgs passed in.
@@ -119,12 +179,12 @@ func (c *Controller) Render(extraViewArgs ...interface{}) Result {
 				c.ViewArgs[renderArgNames[i]] = extraRenderArg
 			}
 		} else {
-			ERROR.Println(len(renderArgNames), "RenderArg names found for",
-				len(extraViewArgs), "extra ViewArgs")
+			controllerLog.Error(fmt.Sprint(len(renderArgNames), "RenderArg names found for",
+				len(extraViewArgs), "extra ViewArgs"))
 		}
 	} else {
-		ERROR.Println("No RenderArg names found for Render call on line", line,
-			"(Action", c.Action, ")")
+		controllerLog.Error(fmt.Sprint("No RenderArg names found for Render call on line", line,
+			"(Action", c.Action, ")"))
 	}
 
 	return c.RenderTemplate(c.Name + "/" + c.MethodType.Name + "." + c.Request.Format)
@@ -146,6 +206,11 @@ func (c *Controller) RenderTemplate(templatePath string) Result {
 		Template: template,
 		ViewArgs: c.ViewArgs,
 	}
+}
+
+// TemplateOutput returns the result of the template rendered using the controllers ViewArgs.
+func (c *Controller) TemplateOutput(templatePath string) (data []byte,err error)  {
+	return TemplateOutputArgs(templatePath,c.ViewArgs)
 }
 
 // RenderJSON uses encoding/json.Marshal to return JSON to the client.
@@ -191,6 +256,7 @@ func (c *Controller) RenderHTML(html string) Result {
 // action isn't done yet.
 func (c *Controller) Todo() Result {
 	c.Response.Status = http.StatusNotImplemented
+	controllerLog.Debug("Todo: Not implemented function", "action", c.Action)
 	return c.RenderError(&Error{
 		Title:       "TODO",
 		Description: "This action is not implemented",
@@ -235,7 +301,7 @@ func (c *Controller) RenderFile(file *os.File, delivery ContentDisposition) Resu
 		fileInfo, err = file.Stat()
 	)
 	if err != nil {
-		WARN.Println("RenderFile error:", err)
+		controllerLog.Error("RenderFile: error", "error", err)
 	}
 	if fileInfo != nil {
 		modtime = fileInfo.ModTime()
@@ -273,14 +339,25 @@ func (c *Controller) Redirect(val interface{}, args ...interface{}) Result {
 		}
 		return &RedirectToURLResult{fmt.Sprintf(url, args...)}
 	}
-	return &RedirectToActionResult{val}
+	return &RedirectToActionResult{val, args}
+}
+
+// This stats returns some interesting stats based on what is cached in memory
+// and what is available directly
+func (c *Controller) Stats() map[string]interface{} {
+	result := CurrentEngine.Stats()
+	result["revel-controllers"] = controllerStack.String()
+	for key, appStack := range cachedControllerMap {
+		result["app-"+key] = appStack.String()
+	}
+	return result
 }
 
 // Message performs a lookup for the given message name using the given
 // arguments using the current language defined for this controller.
 //
 // The current language is set by the i18n plugin.
-func (c *Controller) Message(message string, args ...interface{}) (value string) {
+func (c *Controller) Message(message string, args ...interface{}) string {
 	return MessageFunc(c.Request.Locale, message, args...)
 }
 
@@ -290,11 +367,12 @@ func (c *Controller) SetAction(controllerName, methodName string) error {
 
 	return c.SetTypeAction(controllerName, methodName, nil)
 }
+
 // SetAction sets the assigns the Controller type, sets the action and initializes the controller
 func (c *Controller) SetTypeAction(controllerName, methodName string, typeOfController *ControllerType) error {
 
 	// Look up the controller and method types.
-	if typeOfController== nil {
+	if typeOfController == nil {
 		if c.Type = ControllerTypeByName(controllerName, anyModule); c.Type == nil {
 			return errors.New("revel/controller: failed to find controller " + controllerName)
 		}
@@ -304,14 +382,30 @@ func (c *Controller) SetTypeAction(controllerName, methodName string, typeOfCont
 
 	// Note method name is case insensitive search
 	if c.MethodType = c.Type.Method(methodName); c.MethodType == nil {
-		return errors.New("revel/controller: failed to find action " + methodName)
+		return errors.New("revel/controller: failed to find action " + controllerName + "." + methodName)
 	}
 
 	c.Name, c.MethodName = c.Type.Type.Name(), c.MethodType.Name
 	c.Action = c.Name + "." + c.MethodName
 
+	// Update Logger with controller and namespace
+	if c.Log != nil {
+		c.Log = c.Log.New("action", c.Action, "namespace", c.Type.Namespace)
+	}
+
+	if _, ok := cachedControllerMap[c.Name]; !ok {
+		// Create a new stack for this controller
+		localType := c.Type.Type
+		cachedControllerMap[c.Name] = NewStackLock(
+			cachedControllerStackSize,
+			cachedControllerStackMaxSize,
+			func() interface{} {
+				return reflect.New(localType).Interface()
+			})
+	}
 	// Instantiate the controller.
-	c.AppController = initNewAppController(c.Type, c).Interface()
+	c.AppController = cachedControllerMap[c.Name].Pop()
+	c.setAppControllerFields()
 
 	return nil
 }
@@ -321,12 +415,12 @@ func ControllerTypeByName(controllerName string, moduleSource *Module) (c *Contr
 	if c, found = controllers[controllerName]; !found {
 		// Backup, passed in controllerName should be in lower case, but may not be
 		if c, found = controllers[strings.ToLower(controllerName)]; !found {
-			INFO.Printf("Cannot find controller name '%s' in controllers map ", controllerName)
+			controllerLog.Debug("ControllerTypeByName: Cannot find controller in controllers map ", "controller", controllerName)
 			// Search for the controller by name
 			for _, cType := range controllers {
 				testControllerName := strings.ToLower(cType.Type.Name())
-				if testControllerName == strings.ToLower(controllerName) && (cType.ModuleSource == moduleSource || moduleSource == anyModule)  {
-					WARN.Printf("Matched empty namespace controller for %s to this %s", controllerName, cType.ModuleSource.Name)
+				if testControllerName == strings.ToLower(controllerName) && (cType.ModuleSource == moduleSource || moduleSource == anyModule) {
+					controllerLog.Warn("ControllerTypeByName: Matched empty namespace controller ", "controller", controllerName, "namespace", cType.ModuleSource.Name)
 					c = cType
 					found = true
 					break
@@ -337,19 +431,22 @@ func ControllerTypeByName(controllerName string, moduleSource *Module) (c *Contr
 	return
 }
 
-// This is a helper that initializes (zeros) a new app controller value.
-// Specifically, it sets all *revel.Controller embedded types to the provided controller.
-// Returns a value representing a pointer to the new app controller.
-func initNewAppController(appControllerType *ControllerType, c *Controller) reflect.Value {
-	var (
-		appControllerPtr = reflect.New(appControllerType.Type)
-		appController    = appControllerPtr.Elem()
-		cValue           = reflect.ValueOf(c)
-	)
-	for _, index := range appControllerType.ControllerIndexes {
+// Injects this instance (c) into the AppController instance
+func (c *Controller) setAppControllerFields() {
+	appController := reflect.ValueOf(c.AppController).Elem()
+	cValue := reflect.ValueOf(c)
+	for _, index := range c.Type.ControllerIndexes {
 		appController.FieldByIndex(index).Set(cValue)
 	}
-	return appControllerPtr
+}
+
+// Removes this instance (c) from the AppController instance
+func (c *Controller) resetAppControllerFields() {
+	appController := reflect.ValueOf(c.AppController).Elem()
+	// Zero out controller
+	for _, index := range c.Type.ControllerIndexes {
+		appController.FieldByIndex(index).Set(reflect.Zero(reflect.TypeOf(c.AppController).Elem().FieldByIndex(index).Type))
+	}
 }
 
 func findControllers(appControllerType reflect.Type) (indexes [][]int) {
@@ -404,75 +501,6 @@ func findControllers(appControllerType reflect.Type) (indexes [][]int) {
 	return
 }
 
-// Controller registry and types.
-
-type ControllerType struct {
-	Namespace         string  // The namespace of the controller
-	ModuleSource      *Module // The module for the controller
-	Type              reflect.Type
-	Methods           []*MethodType
-	ControllerIndexes [][]int // FieldByIndex to all embedded *Controllers
-}
-
-type MethodType struct {
-	Name           string
-	Args           []*MethodArg
-	RenderArgNames map[int][]string
-	lowerName      string
-}
-
-type MethodArg struct {
-	Name string
-	Type reflect.Type
-}
-
-// Adds the controller to the controllers map using its namespace, also adds it to the module list of controllers.
-// If the controller is in the main application it is added without its namespace as well.
-func AddControllerType(moduleSource *Module,controllerType reflect.Type,methods []*MethodType) (newControllerType *ControllerType) {
-	if moduleSource==nil {
-		moduleSource = appModule
-	}
-
-	newControllerType = &ControllerType{ModuleSource:moduleSource,Type:controllerType,Methods:methods,ControllerIndexes:findControllers(controllerType)}
-	newControllerType.Namespace = moduleSource.Namespace()
-	controllerName := newControllerType.Name()
-
-	// Store the first controller only in the controllers map with the unmapped namespace.
-	if _, found := controllers[controllerName]; !found {
-		controllers[controllerName] = newControllerType
-		newControllerType.ModuleSource.AddController(newControllerType)
-		if newControllerType.ModuleSource == appModule {
-			// Add the controller mapping into the global namespace
-			controllers[newControllerType.ShortName()] = newControllerType
-		}
-	} else {
-		ERROR.Printf("Error, attempt to register duplicate controller as %s",controllerName)
-	}
-	TRACE.Printf("Registered controller: %s", controllerName)
-
-	return
-}
-// Method searches for a given exported method (case insensitive)
-func (ct *ControllerType) Method(name string) *MethodType {
-	lowerName := strings.ToLower(name)
-	for _, method := range ct.Methods {
-		if method.lowerName == lowerName {
-			return method
-		}
-	}
-	return nil
-}
-
-// The controller name with the namespace
-func (ct *ControllerType) Name() (string) {
-	return ct.Namespace + ct.ShortName()
-}
-
-// The controller name without the namespace
-func (ct *ControllerType) ShortName() (string) {
-	return strings.ToLower(ct.Type.Name())
-}
-
 // RegisterController registers a Controller and its Methods with Revel.
 func RegisterController(c interface{}, methods []*MethodType) {
 	// De-star the controller type
@@ -490,7 +518,7 @@ func RegisterController(c interface{}, methods []*MethodType) {
 	// Fetch module for controller, if none found controller must be part of the app
 	controllerModule := ModuleFromPath(elem.PkgPath(), true)
 
-	controllerType := AddControllerType(controllerModule,elem,methods)
+	controllerType := AddControllerType(controllerModule, elem, methods)
 
-	TRACE.Printf("Registered controller: %s", controllerType.Name())
+	controllerLog.Debug("RegisterController:Registered controller", "controller", controllerType.Name())
 }

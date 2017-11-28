@@ -44,6 +44,8 @@ type Binder struct {
 	Unbind func(output map[string]string, name string, val interface{})
 }
 
+var binderLog = RevelLog.New("section", "binder")
+
 // ValueBinder is adapter for easily making one-key-value binders.
 func ValueBinder(f func(value string, typ reflect.Type) reflect.Value) func(*Params, string, reflect.Type) reflect.Value {
 	return func(params *Params, name string, typ reflect.Type) reflect.Value {
@@ -82,7 +84,7 @@ var (
 			}
 			intValue, err := strconv.ParseInt(val, 10, 64)
 			if err != nil {
-				WARN.Println(err)
+				binderLog.Warn("IntBinder Conversion Error", "error", err)
 				return reflect.Zero(typ)
 			}
 			pValue := reflect.New(typ)
@@ -101,7 +103,7 @@ var (
 			}
 			uintValue, err := strconv.ParseUint(val, 10, 64)
 			if err != nil {
-				WARN.Println(err)
+				binderLog.Warn("UintBinder Conversion Error", "error", err)
 				return reflect.Zero(typ)
 			}
 			pValue := reflect.New(typ)
@@ -120,7 +122,7 @@ var (
 			}
 			floatValue, err := strconv.ParseFloat(val, 64)
 			if err != nil {
-				WARN.Println(err)
+				binderLog.Warn("FloatBinder Conversion Error", "error", err)
 				return reflect.Zero(typ)
 			}
 			pValue := reflect.New(typ)
@@ -296,7 +298,7 @@ func bindStruct(params *Params, name string, typ reflect.Type) reflect.Value {
 	if params.JSON != nil {
 		// Try to inject the response as a json into the created result
 		if err := json.Unmarshal(params.JSON, resultPointer.Interface()); err != nil {
-			WARN.Println("W: bindStruct: Unable to unmarshal request:", name, err)
+			binderLog.Error("bindStruct Unable to unmarshal request", "name", name, "error", err,"data", string(params.JSON))
 		}
 		return result
 	}
@@ -316,11 +318,11 @@ func bindStruct(params *Params, name string, typ reflect.Type) reflect.Value {
 			// Time to bind this field.  Get it and make sure we can set it.
 			fieldValue := result.FieldByName(fieldName)
 			if !fieldValue.IsValid() {
-				WARN.Println("W: bindStruct: Field not found:", fieldName)
+				binderLog.Warn("bindStruct Field not found", "name", fieldName)
 				continue
 			}
 			if !fieldValue.CanSet() {
-				WARN.Println("W: bindStruct: Field not settable:", fieldName)
+				binderLog.Warn("bindStruct Field not settable", "name", fieldName)
 				continue
 			}
 			boundVal := Bind(params, key[:len(name)+1+fieldLen], fieldValue.Type())
@@ -353,7 +355,7 @@ func getMultipartFile(params *Params, name string) multipart.File {
 		if err == nil {
 			return file
 		}
-		WARN.Println("Failed to open uploaded file", name, ":", err)
+		binderLog.Warn("getMultipartFile: Failed to open uploaded file", "name", name, "error", err)
 	}
 	return nil
 }
@@ -372,7 +374,7 @@ func bindFile(params *Params, name string, typ reflect.Type) reflect.Value {
 	// Otherwise, have to store it.
 	tmpFile, err := ioutil.TempFile("", "revel-upload")
 	if err != nil {
-		WARN.Println("Failed to create a temp file to store upload:", err)
+		binderLog.Warn("bindFile: Failed to create a temp file to store upload", "name", name, "error", err)
 		return reflect.Zero(typ)
 	}
 
@@ -381,13 +383,13 @@ func bindFile(params *Params, name string, typ reflect.Type) reflect.Value {
 
 	_, err = io.Copy(tmpFile, reader)
 	if err != nil {
-		WARN.Println("Failed to copy upload to temp file:", err)
+		binderLog.Warn("bindFile: Failed to copy upload to temp file", "name", name, "error", err)
 		return reflect.Zero(typ)
 	}
 
 	_, err = tmpFile.Seek(0, 0)
 	if err != nil {
-		WARN.Println("Failed to seek to beginning of temp file:", err)
+		binderLog.Warn("bindFile: Failed to seek to beginning of temp file", "name", name, "error", err)
 		return reflect.Zero(typ)
 	}
 
@@ -400,7 +402,7 @@ func bindByteArray(params *Params, name string, typ reflect.Type) reflect.Value 
 		if err == nil {
 			return reflect.ValueOf(b)
 		}
-		WARN.Println("Error reading uploaded file contents:", err)
+		binderLog.Warn("bindByteArray: Error reading uploaded file contents", "name", name, "error", err)
 	}
 	return reflect.Zero(typ)
 }
@@ -425,18 +427,22 @@ func bindMap(params *Params, name string, typ reflect.Type) reflect.Value {
 	if params.JSON != nil {
 		// Try to inject the response as a json into the created result
 		if err := json.Unmarshal(params.JSON, resultPtr.Interface()); err != nil {
-			WARN.Println("W: bindMap: Unable to unmarshal request:", name, err)
+			binderLog.Warn("bindMap: Unable to unmarshal request", "name", name, "error", err)
 		}
 		return result
 	}
 
-	for paramName, values := range params.Values {
-		if !strings.HasPrefix(paramName, name+"[") || paramName[len(paramName)-1] != ']' {
+	for paramName, _ := range params.Values {
+		suffix := paramName[len(name)+1:]
+		fieldName := nextKey(suffix)
+		if fieldName != "" {
+			fieldName = fieldName[:len(fieldName)-1]
+		}
+		if !strings.HasPrefix(paramName, name+"["+fieldName+"]") {
 			continue
 		}
 
-		key := paramName[len(name)+1 : len(paramName)-1]
-		result.SetMapIndex(BindValue(key, keyType), BindValue(values[0], valueType))
+		result.SetMapIndex(BindValue(fieldName, keyType), Bind(params, name+"["+fieldName+"]", valueType))
 	}
 	return result
 }
@@ -472,7 +478,7 @@ func Unbind(output map[string]string, name string, val interface{}) {
 		if binder.Unbind != nil {
 			binder.Unbind(output, name, val)
 		} else {
-			ERROR.Printf("revel/binder: can not unbind %s=%s", name, val)
+			binderLog.Error("Unbind: Unable to unmarshal request", "name", name, "value", val)
 		}
 	}
 }
@@ -482,7 +488,7 @@ func binderForType(typ reflect.Type) (Binder, bool) {
 	if !ok {
 		binder, ok = KindBinders[typ.Kind()]
 		if !ok {
-			WARN.Println("revel/binder: no binder for type:", typ)
+			binderLog.Error("binderForType: no binder for type", "type", typ)
 			return Binder{}, false
 		}
 	}

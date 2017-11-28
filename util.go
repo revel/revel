@@ -30,8 +30,8 @@ var (
 	cookieKeyValueParser = regexp.MustCompile("\x00([^:]*):([^\x00]*)\x00")
 	hdrForwardedFor      = http.CanonicalHeaderKey("X-Forwarded-For")
 	hdrRealIP            = http.CanonicalHeaderKey("X-Real-Ip")
-
-	mimeConfig *config.Context
+	utilLog              = RevelLog.New("section", "util")
+	mimeConfig           *config.Context
 )
 
 // ExecutableTemplate adds some more methods to the default Template.
@@ -43,7 +43,7 @@ type ExecutableTemplate interface {
 func ExecuteTemplate(tmpl ExecutableTemplate, data interface{}) string {
 	var b bytes.Buffer
 	if err := tmpl.Execute(&b, data); err != nil {
-		ERROR.Println("Execute failed:", err)
+		utilLog.Error("ExecuteTemplate: Execute failed", "error", err)
 	}
 	return b.String()
 }
@@ -59,11 +59,11 @@ func MustReadLines(filename string) []string {
 
 // ReadLines reads the lines of the given file.  Panics in the case of error.
 func ReadLines(filename string) ([]string, error) {
-	bytes, err := ioutil.ReadFile(filename)
+	dataBytes, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}
-	return strings.Split(string(bytes), "\n"), nil
+	return strings.Split(string(dataBytes), "\n"), nil
 }
 
 func ContainsString(list []string, target string) bool {
@@ -103,7 +103,7 @@ func LoadMimeConfig() {
 	var err error
 	mimeConfig, err = config.LoadContext("mime-types.conf", ConfPaths)
 	if err != nil {
-		ERROR.Fatalln("Failed to load mime type config:", err)
+		utilLog.Fatal("Failed to load mime type config:", "error", err)
 	}
 }
 
@@ -192,10 +192,10 @@ func Equal(a, b interface{}) bool {
 // IP address in the order of X-Forwarded-For, X-Real-IP.
 //
 // By default revel will get http.Request's RemoteAddr
-func ClientIP(r *http.Request) string {
+func ClientIP(r *Request) string {
 	if Config.BoolDefault("app.behind.proxy", false) {
 		// Header X-Forwarded-For
-		if fwdFor := strings.TrimSpace(r.Header.Get(hdrForwardedFor)); fwdFor != "" {
+		if fwdFor := strings.TrimSpace(r.GetHttpHeader(hdrForwardedFor)); fwdFor != "" {
 			index := strings.Index(fwdFor, ",")
 			if index == -1 {
 				return fwdFor
@@ -204,7 +204,7 @@ func ClientIP(r *http.Request) string {
 		}
 
 		// Header X-Real-Ip
-		if realIP := strings.TrimSpace(r.Header.Get(hdrRealIP)); realIP != "" {
+		if realIP := strings.TrimSpace(r.GetHttpHeader(hdrRealIP)); realIP != "" {
 			return realIP
 		}
 	}
@@ -259,6 +259,7 @@ func fsWalk(fname string, linkName string, walkFn filepath.WalkFunc) error {
 
 			// https://github.com/golang/go/blob/master/src/path/filepath/path.go#L392
 			info, err = os.Lstat(symlinkPath)
+
 			if err != nil {
 				return walkFn(path, info, err)
 			}
@@ -270,8 +271,8 @@ func fsWalk(fname string, linkName string, walkFn filepath.WalkFunc) error {
 
 		return walkFn(path, info, err)
 	}
-
-	return filepath.Walk(fname, fsWalkFunc)
+	err := filepath.Walk(fname, fsWalkFunc)
+	return err
 }
 
 func init() {

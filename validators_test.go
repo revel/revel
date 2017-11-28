@@ -2,7 +2,7 @@
 // Revel Framework source code and usage is governed by a MIT style
 // license that can be found in the LICENSE file.
 
-package revel
+package revel_test
 
 import (
 	"fmt"
@@ -11,6 +11,7 @@ import (
 	"strings"
 	"testing"
 	"time"
+	"github.com/revel/revel"
 )
 
 const (
@@ -24,7 +25,7 @@ type Expect struct {
 	errorMessage   string
 }
 
-func performTests(validator Validator, tests []Expect, t *testing.T) {
+func performTests(validator revel.Validator, tests []Expect, t *testing.T) {
 	for _, test := range tests {
 		if validator.IsSatisfied(test.input) != test.expectedResult {
 			if test.expectedResult {
@@ -53,7 +54,7 @@ func TestRequired(t *testing.T) {
 	}
 
 	// testing both the struct and the helper method
-	for _, required := range []Required{{}, ValidRequired()} {
+	for _, required := range []revel.Required{{}, revel.ValidRequired()} {
 		performTests(required, tests, t)
 	}
 }
@@ -65,7 +66,7 @@ func TestMin(t *testing.T) {
 		{9, false, "val < min"},
 		{true, false, "TypeOf(val) != int"},
 	}
-	for _, min := range []Min{{10}, ValidMin(10)} {
+	for _, min := range []revel.Min{{10}, revel.ValidMin(10)} {
 		performTests(min, tests, t)
 	}
 }
@@ -77,7 +78,7 @@ func TestMax(t *testing.T) {
 		{11, false, "val > max"},
 		{true, false, "TypeOf(val) != int"},
 	}
-	for _, max := range []Max{{10}, ValidMax(10)} {
+	for _, max := range []revel.Max{{10}, revel.ValidMax(10)} {
 		performTests(max, tests, t)
 	}
 }
@@ -91,12 +92,27 @@ func TestRange(t *testing.T) {
 		{101, false, "val > max"},
 	}
 
-	goodValidators := []Range{
-		{Min{10}, Max{100}},
-		ValidRange(10, 100),
+	goodValidators := []revel.Range{
+		{revel.Min{10}, revel.Max{100}},
+		revel.ValidRange(10, 100),
 	}
 	for _, rangeValidator := range goodValidators {
 		performTests(rangeValidator, tests, t)
+	}
+
+	testsFloat := []Expect{
+		{50, true, "min <= val <= max"},
+		{10.25, true, "val == min"},
+		{100, true, "val == max"},
+		{9, false, "val < min"},
+		{101, false, "val > max"},
+	}
+	goodValidatorsFloat := []revel.Range{
+		{revel.Min{10.25}, revel.Max{100.5}},
+		revel.ValidRangeFloat(10.25, 100.5),
+	}
+	for _, rangeValidator := range goodValidatorsFloat {
+		performTests(rangeValidator, testsFloat, t)
 	}
 
 	tests = []Expect{
@@ -105,9 +121,9 @@ func TestRange(t *testing.T) {
 		{11, false, "val > min && val > max && min == max"},
 	}
 
-	goodValidators = []Range{
-		{Min{10}, Max{10}},
-		ValidRange(10, 10),
+	goodValidators = []revel.Range{
+		{revel.Min{10}, revel.Max{10}},
+		revel.ValidRange(10, 10),
 	}
 	for _, rangeValidator := range goodValidators {
 		performTests(rangeValidator, tests, t)
@@ -125,11 +141,19 @@ func TestRange(t *testing.T) {
 	// and max is the low. rangeValidator.IsSatisfied() should ALWAYS
 	// result in false since val can never be greater than min and less
 	// than max when min > max
-	badValidators := []Range{
-		{Min{100}, Max{10}},
-		ValidRange(100, 10),
+	badValidators := []revel.Range{
+		{revel.Min{100}, revel.Max{10}},
+		revel.ValidRange(100, 10),
 	}
 	for _, rangeValidator := range badValidators {
+		performTests(rangeValidator, tests, t)
+	}
+
+	badValidatorsFloat := []revel.Range{
+		{revel.Min{100}, revel.Max{10}},
+		revel.ValidRangeFloat(100, 10),
+	}
+	for _, rangeValidator := range badValidatorsFloat {
 		performTests(rangeValidator, tests, t)
 	}
 }
@@ -147,7 +171,7 @@ func TestMinSize(t *testing.T) {
 		{nil, false, "TypeOf(val) != string && TypeOf(val) != slice"},
 	}
 
-	for _, minSize := range []MinSize{{2}, ValidMinSize(2)} {
+	for _, minSize := range []revel.MinSize{{2}, revel.ValidMinSize(2)} {
 		performTests(minSize, tests, t)
 	}
 }
@@ -164,7 +188,7 @@ func TestMaxSize(t *testing.T) {
 		{"1234", false, "len(val) >= max"},
 		{[]int{1, 2, 3, 4}, false, "len(val) >= max"},
 	}
-	for _, maxSize := range []MaxSize{{3}, ValidMaxSize(3)} {
+	for _, maxSize := range []revel.MaxSize{{3}, revel.ValidMaxSize(3)} {
 		performTests(maxSize, tests, t)
 	}
 }
@@ -180,7 +204,7 @@ func TestLength(t *testing.T) {
 		{[]int{1}, false, "len(val) < length"},
 		{nil, false, "TypeOf(val) != string && TypeOf(val) != slice"},
 	}
-	for _, length := range []Length{{2}, ValidLength(2)} {
+	for _, length := range []revel.Length{{2}, revel.ValidLength(2)} {
 		performTests(length, tests, t)
 	}
 }
@@ -192,7 +216,7 @@ func TestMatch(t *testing.T) {
 		{"", false, `"[abc]{3}\d*" does not match ""`},
 	}
 	regex := regexp.MustCompile(`[abc]{3}\d*`)
-	for _, match := range []Match{{regex}, ValidMatch(regex)} {
+	for _, match := range []revel.Match{{regex}, revel.ValidMatch(regex)} {
 		performTests(match, tests, t)
 	}
 }
@@ -214,7 +238,9 @@ func TestEmail(t *testing.T) {
 		"aå.com",            // domain containing unicode (however, unicode domains do exist in the state of xn--<POINT>.com e.g. å.com = xn--5ca.com)
 	}
 
-	for _, email := range []Email{{Match{emailPattern}}, ValidEmail()} {
+	// Email pattern is not exposed
+	emailPattern := regexp.MustCompile("^[\\w!#$%&'*+/=?^_`{|}~-]+(?:\\.[\\w!#$%&'*+/=?^_`{|}~-]+)*@(?:[\\w](?:[\\w-]*[\\w])?\\.)+[a-zA-Z0-9](?:[\\w-]*[\\w])?$")
+	for _, email := range []revel.Email{{revel.Match{emailPattern}}, revel.ValidEmail()} {
 		var currentEmail string
 
 		// test invalid starting chars
@@ -270,7 +296,7 @@ func runIPAddrTestfunc(t *testing.T, test_type int, ipaddr_list map[string]bool,
 		test_ipaddr_list = append(test_ipaddr_list, Expect{input: ipaddr, expectedResult: expected, errorMessage: fmt.Sprintf(msg_fmt, ipaddr)})
 	}
 
-	for _, ip_test_list := range []IPAddr{IPAddr{[]int{test_type}}, ValidIPAddr(test_type)} {
+	for _, ip_test_list := range []revel.IPAddr{revel.IPAddr{[]int{test_type}}, revel.ValidIPAddr(test_type)} {
 		performTests(ip_test_list, test_ipaddr_list, t)
 	}
 }
@@ -347,12 +373,12 @@ func TestIPAddr(t *testing.T) {
 		"12.12/12":                                     false,
 	}
 
-	runIPAddrTestfunc(t, IPv4, test_ipv4_ipaddrs, "invalid (%s) IPv4 address")
-	runIPAddrTestfunc(t, IPv4CIDR, test_ipv4_with_cidr_ipaddrs, "invalid (%s) IPv4 with CIDR address")
+	runIPAddrTestfunc(t, revel.IPv4, test_ipv4_ipaddrs, "invalid (%s) IPv4 address")
+	runIPAddrTestfunc(t, revel.IPv4CIDR, test_ipv4_with_cidr_ipaddrs, "invalid (%s) IPv4 with CIDR address")
 
-	runIPAddrTestfunc(t, IPv6, test_ipv6_ipaddrs, "invalid (%s) IPv6 address")
-	runIPAddrTestfunc(t, IPv6CIDR, test_ipv6_with_cidr_ipaddrs, "invalid (%s) IPv6 with CIDR address")
-	runIPAddrTestfunc(t, IPv4MappedIPv6, test_ipv4_mapped_ipv6_ipaddrs, "invalid (%s) IPv4-Mapped Embedded IPv6 address")
+	runIPAddrTestfunc(t, revel.IPv6, test_ipv6_ipaddrs, "invalid (%s) IPv6 address")
+	runIPAddrTestfunc(t, revel.IPv6CIDR, test_ipv6_with_cidr_ipaddrs, "invalid (%s) IPv6 with CIDR address")
+	runIPAddrTestfunc(t, revel.IPv4MappedIPv6, test_ipv4_mapped_ipv6_ipaddrs, "invalid (%s) IPv4-Mapped Embedded IPv6 address")
 }
 
 func TestMacAddr(t *testing.T) {
@@ -377,7 +403,7 @@ func TestMacAddr(t *testing.T) {
 		test_macaddr_list = append(test_macaddr_list, Expect{input: macaddr, expectedResult: expected, errorMessage: fmt.Sprintf("invalid (%s) MAC address", macaddr)})
 	}
 
-	for _, mac_test_list := range []MacAddr{MacAddr{}, ValidMacAddr()} {
+	for _, mac_test_list := range []revel.MacAddr{revel.MacAddr{}, revel.ValidMacAddr()} {
 		performTests(mac_test_list, test_macaddr_list, t)
 	}
 }
@@ -443,7 +469,7 @@ func TestDomain(t *testing.T) {
 		tests = append(tests, Expect{input: domain, expectedResult: expected, errorMessage: fmt.Sprintf("invalid (%s) domain", domain)})
 	}
 
-	for _, domain := range []Domain{Domain{}, ValidDomain()} {
+	for _, domain := range []revel.Domain{revel.Domain{}, revel.ValidDomain()} {
 		performTests(domain, tests, t)
 	}
 }
@@ -467,7 +493,7 @@ func TestURL(t *testing.T) {
 		tests = append(tests, Expect{input: url, expectedResult: expected, errorMessage: fmt.Sprintf("invalid (%s) url", url)})
 	}
 
-	for _, url := range []URL{URL{}, ValidURL()} {
+	for _, url := range []revel.URL{revel.URL{}, revel.ValidURL()} {
 		performTests(url, tests, t)
 	}
 
@@ -507,7 +533,7 @@ func TestPureTextNormal(t *testing.T) {
 	}
 
 	// normal
-	for _, txt := range []PureText{PureText{NORMAL}, ValidPureText(NORMAL)} {
+	for _, txt := range []revel.PureText{revel.PureText{revel.NORMAL}, revel.ValidPureText(revel.NORMAL)} {
 		performTests(txt, tests, t)
 	}
 }
@@ -546,7 +572,7 @@ func TestPureTextStrict(t *testing.T) {
 	}
 
 	// strict
-	for _, txt := range []PureText{PureText{STRICT}, ValidPureText(STRICT)} {
+	for _, txt := range []revel.PureText{revel.PureText{revel.STRICT}, revel.ValidPureText(revel.STRICT)} {
 		performTests(txt, tests, t)
 	}
 }
@@ -576,7 +602,7 @@ func TestFilePathOnlyFilePath(t *testing.T) {
 	}
 
 	// filename without relative path
-	for _, filepath := range []FilePath{FilePath{ONLY_FILENAME}, ValidFilePath(ONLY_FILENAME)} {
+	for _, filepath := range []revel.FilePath{revel.FilePath{revel.ONLY_FILENAME}, revel.ValidFilePath(revel.ONLY_FILENAME)} {
 		performTests(filepath, tests, t)
 	}
 }
@@ -607,7 +633,7 @@ func TestFilePathAllowRelativePath(t *testing.T) {
 	}
 
 	// filename with relative path
-	for _, filepath := range []FilePath{FilePath{ALLOW_RELATIVE_PATH}, ValidFilePath(ALLOW_RELATIVE_PATH)} {
+	for _, filepath := range []revel.FilePath{revel.FilePath{revel.ALLOW_RELATIVE_PATH}, revel.ValidFilePath(revel.ALLOW_RELATIVE_PATH)} {
 		performTests(filepath, tests, t)
 	}
 }

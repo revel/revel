@@ -281,14 +281,16 @@ func handleFileUpload(w http.ResponseWriter, r *http.Request) {
 
 func createTestServer(fn func(w http.ResponseWriter, r *http.Request)) *httptest.Server {
 	testServer := httptest.NewServer(http.HandlerFunc(fn))
-	revel.Server.Addr = testServer.URL[7:]
+	revel.ServerEngineInit.Address = testServer.URL[7:]
 	return testServer
 }
 
 func init() {
-	if revel.Server == nil {
-		revel.Server = &http.Server{
-			Addr: ":9001",
+	if revel.ServerEngineInit == nil {
+		revel.ServerEngineInit = &revel.EngineInit{
+			Address:  ":9001",
+			Network:  "http",
+			Port:     9001,
 		}
 	}
 }

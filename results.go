@@ -17,8 +17,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"golang.org/x/net/websocket"
 )
 
 type Result interface {
@@ -30,8 +28,10 @@ type Result interface {
 // If RunMode is "dev", this results in a friendly error page.
 type ErrorResult struct {
 	ViewArgs map[string]interface{}
-	Error      error
+	Error    error
 }
+
+var resultsLog = RevelLog.New("section", "results")
 
 func (r ErrorResult) Apply(req *Request, resp *Response) {
 	format := req.Format
@@ -102,13 +102,13 @@ func (r ErrorResult) Apply(req *Request, resp *Response) {
 	// need to check if we are on a websocket here
 	// net/http panics if we write to a hijacked connection
 	if req.Method == "WS" {
-		if err := websocket.Message.Send(req.Websocket, fmt.Sprint(revelError)); err != nil {
-			ERROR.Println("Send failed:", err)
+		if err := req.WebSocket.MessageSendJSON(fmt.Sprint(revelError)); err != nil {
+			resultsLog.Error("Apply: Send failed", "error", err)
 		}
 	} else {
 		resp.WriteHeader(status, contentType)
-		if _, err := b.WriteTo(resp.Out); err != nil {
-			ERROR.Println("Response WriteTo failed:", err)
+		if _, err := b.WriteTo(resp.GetWriter()); err != nil {
+			resultsLog.Error("Apply: Response WriteTo failed:", "error", err)
 		}
 	}
 
@@ -121,15 +121,15 @@ type PlaintextErrorResult struct {
 // Apply method is used when the template loader or error template is not available.
 func (r PlaintextErrorResult) Apply(req *Request, resp *Response) {
 	resp.WriteHeader(http.StatusInternalServerError, "text/plain; charset=utf-8")
-	if _, err := resp.Out.Write([]byte(r.Error.Error())); err != nil {
-		ERROR.Println("Write error:", err)
+	if _, err := resp.GetWriter().Write([]byte(r.Error.Error())); err != nil {
+		resultsLog.Error("Apply: Write error:", "error", err)
 	}
 }
 
 // RenderTemplateResult action methods returns this result to request
 // a template be rendered.
 type RenderTemplateResult struct {
-	Template   Template
+	Template Template
 	ViewArgs map[string]interface{}
 }
 
@@ -137,7 +137,7 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
 	// Handle panics when rendering templates.
 	defer func() {
 		if err := recover(); err != nil {
-			ERROR.Println(err)
+			resultsLog.Error("Apply: panic recovery", "error", err)
 			PlaintextErrorResult{fmt.Errorf("Template Execution Panic in %s:\n%s",
 				r.Template.Name(), err)}.Apply(req, resp)
 		}
@@ -146,7 +146,7 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
 	chunked := Config.BoolDefault("results.chunked", false)
 
 	// If it's a HEAD request, throw away the bytes.
-	out := io.Writer(resp.Out)
+	out := io.Writer(resp.GetWriter())
 	if req.Method == "HEAD" {
 		out = ioutil.Discard
 	}
@@ -156,7 +156,9 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
 	// error pages distorted by HTML already written)
 	if chunked && !DevMode {
 		resp.WriteHeader(http.StatusOK, "text/html; charset=utf-8")
-		r.render(req, resp, out)
+		if err := r.renderOutput(out); err !=nil {
+			r.renderError(err,req,resp)
+		}
 		return
 	}
 
@@ -164,55 +166,10 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
 	// rendering the template.  If not, then copy it into the response buffer.
 	// Otherwise, template render errors may result in unpredictable HTML (and
 	// would carry a 200 status code)
-	var b bytes.Buffer
-	r.render(req, resp, &b)
-
-	// Trimming the HTML will do the following:
-	// * Remove all leading & trailing whitespace on every line
-	// * Remove all empty lines
-	// * Attempt to keep formatting inside <pre></pre> tags
-	//
-	// This is safe unless white-space: pre; is used in css for formatting.
-	// Since there is no way to detect that, you will have to keep trimming off in these cases.
-	if Config.BoolDefault("results.trim.html", false) {
-		var b2 bytes.Buffer
-		// Allocate length of original buffer, so we can write everything without allocating again
-		b2.Grow(b.Len())
-		insidePre := false
-		for {
-			text, err := b.ReadString('\n')
-			// Convert to lower case for finding <pre> tags.
-			tl := strings.ToLower(text)
-			if strings.Contains(tl, "<pre>") {
-				insidePre = true
-			}
-			// Trim if not inside a <pre> statement
-			if !insidePre {
-				// Cut trailing/leading whitespace
-				text = strings.Trim(text, " \t\r\n")
-				if len(text) > 0 {
-					if _, err = b2.WriteString(text); err != nil {
-						ERROR.Println(err)
-					}
-					if _, err = b2.WriteString("\n"); err != nil {
-						ERROR.Println(err)
-					}
-				}
-			} else {
-				if _, err = b2.WriteString(text); err != nil {
-					ERROR.Println(err)
-				}
-			}
-			if strings.Contains(tl, "</pre>") {
-				insidePre = false
-			}
-			// We are finished
-			if err != nil {
-				break
-			}
-		}
-		// Replace the buffer
-		b = b2
+	b, err := r.ToBytes()
+	if err!=nil {
+		r.renderError(err,req,resp)
+		return
 	}
 
 	if !chunked {
@@ -220,16 +177,89 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
 	}
 	resp.WriteHeader(http.StatusOK, "text/html; charset=utf-8")
 	if _, err := b.WriteTo(out); err != nil {
-		ERROR.Println("Response write failed:", err)
+		resultsLog.Error("Apply: Response write failed", "error", err)
 	}
 }
 
-func (r *RenderTemplateResult) render(req *Request, resp *Response, wr io.Writer) {
-	err := r.Template.Render(wr, r.ViewArgs)
-	if err == nil {
-		return
+// Return a byte array and or an error object if the template failed to render
+func (r *RenderTemplateResult) ToBytes() (b *bytes.Buffer,err error) {
+	defer func() {
+		if rerr := recover(); rerr != nil {
+			resultsLog.Error("ApplyBytes: panic recovery", "recover-error", rerr)
+			err = fmt.Errorf("Template Execution Panic in %s:\n%s", r.Template.Name(), rerr)
+		}
+	}()
+	b = &bytes.Buffer{}
+	if err = r.renderOutput(b); err==nil {
+		if Config.BoolDefault("results.trim.html", false) {
+			b = r.compressHtml(b)
+		}
+	}
+	return
+}
+
+// Output the template to the writer, catch any panics and return as an error
+func (r *RenderTemplateResult) renderOutput(wr io.Writer) (err error) {
+	defer func() {
+		if rerr := recover(); rerr != nil {
+			resultsLog.Error("ApplyBytes: panic recovery", "recover-error", rerr)
+			err = fmt.Errorf("Template Execution Panic in %s:\n%s", r.Template.Name(), rerr)
+		}
+	}()
+	err = r.Template.Render(wr, r.ViewArgs)
+	return
+}
+
+// Trimming the HTML will do the following:
+// * Remove all leading & trailing whitespace on every line
+// * Remove all empty lines
+// * Attempt to keep formatting inside <pre></pre> tags
+//
+// This is safe unless white-space: pre; is used in css for formatting.
+// Since there is no way to detect that, you will have to keep trimming off in these cases.
+func (r *RenderTemplateResult) compressHtml(b *bytes.Buffer) (b2 *bytes.Buffer) {
+
+	// Allocate length of original buffer, so we can write everything without allocating again
+	b2.Grow(b.Len())
+	insidePre := false
+	for {
+		text, err := b.ReadString('\n')
+		// Convert to lower case for finding <pre> tags.
+		tl := strings.ToLower(text)
+		if strings.Contains(tl, "<pre>") {
+			insidePre = true
+		}
+		// Trim if not inside a <pre> statement
+		if !insidePre {
+			// Cut trailing/leading whitespace
+			text = strings.Trim(text, " \t\r\n")
+			if len(text) > 0 {
+				if _, err = b2.WriteString(text); err != nil {
+					resultsLog.Error("Apply: ", "error", err)
+				}
+				if _, err = b2.WriteString("\n"); err != nil {
+					resultsLog.Error("Apply: ", "error", err)
+				}
+			}
+		} else {
+			if _, err = b2.WriteString(text); err != nil {
+				resultsLog.Error("Apply: ", "error", err)
+			}
+		}
+		if strings.Contains(tl, "</pre>") {
+			insidePre = false
+		}
+		// We are finished
+		if err != nil {
+			break
+		}
 	}
 
+	return
+}
+
+// Render the error in the response
+func (r *RenderTemplateResult) renderError(err error,req *Request, resp *Response) {
 	var templateContent []string
 	templateName, line, description := ParseTemplateError(err)
 	if templateName == "" {
@@ -249,7 +279,7 @@ func (r *RenderTemplateResult) render(req *Request, resp *Response, wr io.Writer
 		SourceLines: templateContent,
 	}
 	resp.Status = 500
-	ERROR.Printf("Template Execution Error (in %s): %s", templateName, description)
+	resultsLog.Errorf("render: Template Execution Error (in %s): %s", compileError.Path, compileError.Description)
 	ErrorResult{r.ViewArgs, compileError}.Apply(req, resp)
 }
 
@@ -259,8 +289,8 @@ type RenderHTMLResult struct {
 
 func (r RenderHTMLResult) Apply(req *Request, resp *Response) {
 	resp.WriteHeader(http.StatusOK, "text/html; charset=utf-8")
-	if _, err := resp.Out.Write([]byte(r.html)); err != nil {
-		ERROR.Println("Response write failed:", err)
+	if _, err := resp.GetWriter().Write([]byte(r.html)); err != nil {
+		resultsLog.Error("Apply: Response write failed", "error", err)
 	}
 }
 
@@ -285,21 +315,21 @@ func (r RenderJSONResult) Apply(req *Request, resp *Response) {
 
 	if r.callback == "" {
 		resp.WriteHeader(http.StatusOK, "application/json; charset=utf-8")
-		if _, err = resp.Out.Write(b); err != nil {
-			ERROR.Println("Response write failed:", err)
+		if _, err = resp.GetWriter().Write(b); err != nil {
+			resultsLog.Error("Apply: Response write failed:", "error", err)
 		}
 		return
 	}
 
 	resp.WriteHeader(http.StatusOK, "application/javascript; charset=utf-8")
-	if _, err = resp.Out.Write([]byte(r.callback + "(")); err != nil {
-		ERROR.Println("Response write failed:", err)
+	if _, err = resp.GetWriter().Write([]byte(r.callback + "(")); err != nil {
+		resultsLog.Error("Apply: Response write failed", "error", err)
 	}
-	if _, err = resp.Out.Write(b); err != nil {
-		ERROR.Println("Response write failed:", err)
+	if _, err = resp.GetWriter().Write(b); err != nil {
+		resultsLog.Error("Apply: Response write failed", "error", err)
 	}
-	if _, err = resp.Out.Write([]byte(");")); err != nil {
-		ERROR.Println("Response write failed:", err)
+	if _, err = resp.GetWriter().Write([]byte(");")); err != nil {
+		resultsLog.Error("Apply: Response write failed", "error", err)
 	}
 }
 
@@ -322,8 +352,8 @@ func (r RenderXMLResult) Apply(req *Request, resp *Response) {
 	}
 
 	resp.WriteHeader(http.StatusOK, "application/xml; charset=utf-8")
-	if _, err = resp.Out.Write(b); err != nil {
-		ERROR.Println("Response write failed:", err)
+	if _, err = resp.GetWriter().Write(b); err != nil {
+		resultsLog.Error("Apply: Response write failed", "error", err)
 	}
 }
 
@@ -333,8 +363,8 @@ type RenderTextResult struct {
 
 func (r RenderTextResult) Apply(req *Request, resp *Response) {
 	resp.WriteHeader(http.StatusOK, "text/plain; charset=utf-8")
-	if _, err := resp.Out.Write([]byte(r.text)); err != nil {
-		ERROR.Println("Response write failed:", err)
+	if _, err := resp.GetWriter().Write([]byte(r.text)); err != nil {
+		resultsLog.Error("Apply: Response write failed", "error", err)
 	}
 }
 
@@ -358,26 +388,30 @@ func (r *BinaryResult) Apply(req *Request, resp *Response) {
 	if r.Name != "" {
 		disposition += fmt.Sprintf(`; filename="%s"`, r.Name)
 	}
-	resp.Out.Header().Set("Content-Disposition", disposition)
 
-	// If we have a ReadSeeker, delegate to http.ServeContent
-	if rs, ok := r.Reader.(io.ReadSeeker); ok {
-		// http.ServeContent doesn't know about response.ContentType, so we set the respective header.
-		if resp.ContentType != "" {
-			resp.Out.Header().Set("Content-Type", resp.ContentType)
-		} else {
-			contentType := ContentTypeByFilename(r.Name)
-			resp.Out.Header().Set("Content-Type", contentType)
-		}
-		http.ServeContent(resp.Out, req.Request, r.Name, r.ModTime, rs)
+	resp.Out.internalHeader.Set("Content-Disposition", disposition)
+	if resp.ContentType != "" {
+		resp.Out.internalHeader.Set("Content-Type", resp.ContentType)
 	} else {
-		// Else, do a simple io.Copy.
-		if r.Length != -1 {
-			resp.Out.Header().Set("Content-Length", strconv.FormatInt(r.Length, 10))
+		contentType := ContentTypeByFilename(r.Name)
+		resp.Out.internalHeader.Set("Content-Type", contentType)
+	}
+	if content, ok := r.Reader.(io.ReadSeeker); ok && r.Length < 0 {
+		// get the size from the stream
+		// go1.6 compatibility change, go1.6 does not define constants io.SeekStart
+		//if size, err := content.Seek(0, io.SeekEnd); err == nil {
+		//	if _, err = content.Seek(0, io.SeekStart); err == nil {
+		if size, err := content.Seek(0, 2); err == nil {
+			if _, err = content.Seek(0, 0); err == nil {
+				r.Length = size
+			}
 		}
-		resp.WriteHeader(http.StatusOK, ContentTypeByFilename(r.Name))
-		if _, err := io.Copy(resp.Out, r.Reader); err != nil {
-			ERROR.Println("Response write failed:", err)
+	}
+
+	// Write stream writes the status code to the header as well
+	if ws := resp.GetStreamWriter(); ws != nil {
+		if err := ws.WriteStream(r.Name, r.Length, r.ModTime, r.Reader); err != nil {
+			resultsLog.Error("Apply: Response write failed", "error", err)
 		}
 	}
 
@@ -392,26 +426,27 @@ type RedirectToURLResult struct {
 }
 
 func (r *RedirectToURLResult) Apply(req *Request, resp *Response) {
-	resp.Out.Header().Set("Location", r.url)
+	resp.Out.internalHeader.Set("Location", r.url)
 	resp.WriteHeader(http.StatusFound, "")
 }
 
 type RedirectToActionResult struct {
 	val interface{}
+	args []interface{}
 }
 
 func (r *RedirectToActionResult) Apply(req *Request, resp *Response) {
-	url, err := getRedirectURL(r.val)
+	url, err := getRedirectURL(r.val, r.args)
 	if err != nil {
-		ERROR.Println("Couldn't resolve redirect:", err.Error())
+		resultsLog.Error("Apply: Couldn't resolve redirect", "error", err)
 		ErrorResult{Error: err}.Apply(req, resp)
 		return
 	}
-	resp.Out.Header().Set("Location", url)
+	resp.Out.internalHeader.Set("Location", url)
 	resp.WriteHeader(http.StatusFound, "")
 }
 
-func getRedirectURL(item interface{}) (string, error) {
+func getRedirectURL(item interface{}, args []interface{}) (string, error) {
 	// Handle strings
 	if url, ok := item.(string); ok {
 		return url, nil
@@ -432,8 +467,28 @@ func getRedirectURL(item interface{}) (string, error) {
 		if recvType.Kind() == reflect.Ptr {
 			recvType = recvType.Elem()
 		}
-		action := recvType.Name() + "." + method.Name
-		actionDef := MainRouter.Reverse(action, make(map[string]string))
+		module := ModuleFromPath(recvType.PkgPath(),true)
+		println("Returned ", module)
+		action := module.Namespace() + recvType.Name() + "." + method.Name
+		// Fetch the action path to get the defaults
+		pathData, found := splitActionPath(nil, action, true)
+		if !found {
+			return "", fmt.Errorf("Unable to redirect '%s', expected 'Controller.Action'", action)
+		}
+
+		// Build the map for the router to reverse
+		// Unbind the arguments.
+		argsByName := make(map[string]string)
+		// Bind any static args first
+		fixedParams := len(pathData.FixedParamsByName)
+		methodType := pathData.TypeOfController.Method(pathData.MethodName)
+
+		for i, argValue := range args {
+			Unbind(argsByName, methodType.Args[i+fixedParams].Name, argValue)
+		}
+
+
+		actionDef := MainRouter.Reverse(action, argsByName)
 		if actionDef == nil {
 			return "", errors.New("no route for action " + action)
 		}

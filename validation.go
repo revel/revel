@@ -28,6 +28,8 @@ func (e *ValidationError) String() string {
 // Validation context manages data validation and error messages.
 type Validation struct {
 	Errors []*ValidationError
+	Request *Request
+	Translator func(locale, message string, args ...interface{}) string
 	keep   bool
 }
 
@@ -66,19 +68,31 @@ func (v *Validation) ErrorMap() map[string]*ValidationError {
 
 // Error adds an error to the validation context.
 func (v *Validation) Error(message string, args ...interface{}) *ValidationResult {
-	result := (&ValidationResult{
-		Ok:    false,
-		Error: &ValidationError{},
-	}).Message(message, args...)
+	result := v.ValidationResult(false).Message(message,args...)
 	v.Errors = append(v.Errors, result.Error)
 	return result
 }
-
+// Error adds an error to the validation context.
+func (v *Validation) ErrorKey(message string, args ...interface{}) *ValidationResult {
+	result := v.ValidationResult(false).MessageKey(message,args...)
+	v.Errors = append(v.Errors, result.Error)
+	return result
+}
+// Error adds an error to the validation context.
+func (v *Validation) ValidationResult(ok bool) *ValidationResult {
+	if ok {
+		return &ValidationResult{Ok:ok}
+	} else {
+		return &ValidationResult{Ok:ok, Error: &ValidationError{}, Locale:v.Request.Locale, Translator:v.Translator}
+	}
+}
 // ValidationResult is returned from every validation method.
 // It provides an indication of success, and a pointer to the Error (if any).
 type ValidationResult struct {
 	Error *ValidationError
 	Ok    bool
+	Locale string
+	Translator func(locale, message string, args ...interface{}) string
 }
 
 // Key sets the ValidationResult's Error "key" and returns itself for chaining
@@ -102,20 +116,49 @@ func (r *ValidationResult) Message(message string, args ...interface{}) *Validat
 	return r
 }
 
+// Allow a message key to be passed into the validation result. The Validation has already
+// setup the translator to translate the message key
+func (r *ValidationResult) MessageKey(message string, args ...interface{}) *ValidationResult {
+	if r.Error == nil {
+		return r
+	}
+
+	// If translator found, use that to create the message, otherwise call Message method
+	if r.Translator!=nil {
+		r.Error.Message = r.Translator(r.Locale, message, args...)
+	} else {
+		r.Message(message, args...)
+	}
+
+	return r
+}
+
 // Required tests that the argument is non-nil and non-empty (if string or list)
 func (v *Validation) Required(obj interface{}) *ValidationResult {
 	return v.apply(Required{}, obj)
 }
 
 func (v *Validation) Min(n int, min int) *ValidationResult {
+	return v.MinFloat(float64(n), float64(min))
+}
+
+func (v *Validation) MinFloat(n float64, min float64) *ValidationResult {
 	return v.apply(Min{min}, n)
 }
 
 func (v *Validation) Max(n int, max int) *ValidationResult {
+	return v.MaxFloat(float64(n), float64(max))
+}
+
+func (v *Validation) MaxFloat(n float64, max float64) *ValidationResult {
 	return v.apply(Max{max}, n)
 }
 
 func (v *Validation) Range(n, min, max int) *ValidationResult {
+	return v.RangeFloat(float64(n), float64(min), float64(max))
+}
+
+func (v *Validation) RangeFloat(n, min, max float64) *ValidationResult {
 	return v.apply(Range{Min{min}, Max{max}}, n)
 }
 
@@ -165,7 +208,7 @@ func (v *Validation) FilePath(str string, m int) *ValidationResult {
 
 func (v *Validation) apply(chk Validator, obj interface{}) *ValidationResult {
 	if chk.IsSatisfied(obj) {
-		return &ValidationResult{Ok: true}
+		return v.ValidationResult(true)
 	}
 
 	// Get the default key.
@@ -176,7 +219,7 @@ func (v *Validation) apply(chk Validator, obj interface{}) *ValidationResult {
 			key = defaultKeys[line]
 		}
 	} else {
-		INFO.Println("Failed to get Caller information to look up Validation key")
+		utilLog.Error("Validation: Failed to get Caller information to look up Validation key")
 	}
 
 	// Add the error to the validation context.
@@ -187,10 +230,9 @@ func (v *Validation) apply(chk Validator, obj interface{}) *ValidationResult {
 	v.Errors = append(v.Errors, err)
 
 	// Also return it in the result.
-	return &ValidationResult{
-		Ok:    false,
-		Error: err,
-	}
+	vr := v.ValidationResult(false)
+	vr.Error = err
+	return vr
 }
 
 // Check applies a group of validators to a field, in order, and return the
@@ -212,13 +254,15 @@ func ValidationFilter(c *Controller, fc []Filter) {
 	// If json request, we shall assume json response is intended,
 	// as such no validation cookies should be tied response
 	if c.Params != nil && c.Params.JSON != nil {
-		c.Validation = &Validation{}
+		c.Validation = &Validation{Request:c.Request, Translator:MessageFunc}
 		fc[0](c, fc[1:])
 	} else {
-		errors, err := restoreValidationErrors(c.Request.Request)
+		errors, err := restoreValidationErrors(c.Request)
 		c.Validation = &Validation{
 			Errors: errors,
 			keep:   false,
+			Request:c.Request,
+			Translator:MessageFunc,
 		}
 		hasCookie := (err != http.ErrNoCookie)
 
@@ -263,14 +307,14 @@ func ValidationFilter(c *Controller, fc []Filter) {
 }
 
 // Restore Validation.Errors from a request.
-func restoreValidationErrors(req *http.Request) ([]*ValidationError, error) {
+func restoreValidationErrors(req *Request) ([]*ValidationError, error) {
 	var (
 		err    error
-		cookie *http.Cookie
+		cookie ServerCookie
 		errors = make([]*ValidationError, 0, 5)
 	)
 	if cookie, err = req.Cookie(CookiePrefix + "_ERRORS"); err == nil {
-		ParseKeyValueCookie(cookie.Value, func(key, val string) {
+		ParseKeyValueCookie(cookie.GetValue(), func(key, val string) {
 			errors = append(errors, &ValidationError{
 				Key:     key,
 				Message: val,

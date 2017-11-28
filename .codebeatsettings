@@ -1,0 +1,11 @@
+{
+  "GOLANG": {
+  "ABC":[15, 25, 50, 70],
+  "BLOCK_NESTING":[5, 6, 7, 8],
+  "CYCLO":[20, 30, 45, 60],
+    "TOO_MANY_IVARS": [15, 18, 20, 25],
+    "TOO_MANY_FUNCTIONS": [20, 30, 40, 50],
+    "TOTAL_COMPLEXITY": [150, 250, 400, 500],
+    "LOC": [50, 75, 90, 120]
+  }
+}

@@ -9,7 +9,6 @@ import (
 
 const GO_TEMPLATE = "go"
 
-
 // Adapter for Go Templates.
 type GoTemplate struct {
 	*template.Template
@@ -23,35 +22,34 @@ func (gotmpl GoTemplate) Render(wr io.Writer, arg interface{}) error {
 }
 
 type GoEngine struct {
-	loader      *TemplateLoader
-	templateSet *template.Template
-	// TemplatesBylowerName is a map from lower case template name to the real template.
-	templatesBylowerName map[string]*GoTemplate
-	splitDelims          []string
-	CaseInsensitiveMode bool
+	loader          *TemplateLoader
+	templateSet     *template.Template
+	templatesByName map[string]*GoTemplate
+	splitDelims     []string
+	CaseInsensitive bool
 }
 
 func (i *GoEngine) ConvertPath(path string) string {
-	if i.CaseInsensitiveMode {
+	if i.CaseInsensitive {
 		return strings.ToLower(path)
 	}
 	return path
 }
 
-func (i *GoEngine) Handles(templateView *TemplateView) bool{
+func (i *GoEngine) Handles(templateView *TemplateView) bool {
 	return EngineHandles(i, templateView)
 }
 
 func (engine *GoEngine) ParseAndAdd(baseTemplate *TemplateView) error {
 	// If alternate delimiters set for the project, change them for this set
-	if engine.splitDelims != nil && baseTemplate.Location() == ViewsPath {
+	if engine.splitDelims != nil && strings.Index(baseTemplate.Location(), ViewsPath) > -1 {
 		engine.templateSet.Delims(engine.splitDelims[0], engine.splitDelims[1])
 	} else {
 		// Reset to default otherwise
 		engine.templateSet.Delims("", "")
 	}
 	templateSource := string(baseTemplate.FileBytes)
-	lowerTemplateName := engine.ConvertPath(baseTemplate.TemplateName)
+	templateName := engine.ConvertPath(baseTemplate.TemplateName)
 	tpl, err := engine.templateSet.New(baseTemplate.TemplateName).Parse(templateSource)
 	if nil != err {
 		_, line, description := ParseTemplateError(err)
@@ -63,13 +61,13 @@ func (engine *GoEngine) ParseAndAdd(baseTemplate *TemplateView) error {
 			SourceLines: strings.Split(templateSource, "\n"),
 		}
 	}
-	engine.templatesBylowerName[lowerTemplateName] = &GoTemplate{Template: tpl, engine: engine, TemplateView: baseTemplate}
+	engine.templatesByName[templateName] = &GoTemplate{Template: tpl, engine: engine, TemplateView: baseTemplate}
 	return nil
 }
 
 func (engine *GoEngine) Lookup(templateName string) Template {
 	// Case-insensitive matching of template file name
-	if tpl, found := engine.templatesBylowerName[engine.ConvertPath(templateName)]; found {
+	if tpl, found := engine.templatesByName[engine.ConvertPath(templateName)]; found {
 		return tpl
 	}
 	return nil
@@ -80,10 +78,10 @@ func (engine *GoEngine) Name() string {
 func (engine *GoEngine) Event(action int, i interface{}) {
 	if action == TEMPLATE_REFRESH_REQUESTED {
 		// At this point all the templates have been passed into the
-		engine.templatesBylowerName = map[string]*GoTemplate{}
+		engine.templatesByName = map[string]*GoTemplate{}
 		engine.templateSet = template.New("__root__").Funcs(TemplateFuncs)
 		// Check to see what should be used for case sensitivity
-		engine.CaseInsensitiveMode = Config.StringDefault("go.template.path", "lower") != "case"
+		engine.CaseInsensitive = Config.BoolDefault("go.template.caseinsensitive", true)
 	}
 }
 func init() {
@@ -101,10 +99,10 @@ func init() {
 		}
 
 		return &GoEngine{
-			loader:               loader,
-			templateSet:          template.New("__root__").Funcs(TemplateFuncs),
-			templatesBylowerName: map[string]*GoTemplate{},
-			splitDelims:          splitDelims,
+			loader:          loader,
+			templateSet:     template.New("__root__").Funcs(TemplateFuncs),
+			templatesByName: map[string]*GoTemplate{},
+			splitDelims:     splitDelims,
 		}, nil
 	})
 }

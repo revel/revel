@@ -1,14 +1,15 @@
 package revel
 
 import (
+	"bytes"
+	"errors"
 	"fmt"
+	"github.com/xeonx/timeago"
 	"html"
 	"html/template"
 	"reflect"
 	"strings"
 	"time"
-	"bytes"
-	"errors"
 )
 
 var (
@@ -80,7 +81,7 @@ var (
 		"errorClass": func(name string, viewArgs map[string]interface{}) template.HTML {
 			errorMap, ok := viewArgs["errors"].(map[string]*ValidationError)
 			if !ok || errorMap == nil {
-				WARN.Println("Called 'errorClass' without 'errors' in the view args.")
+				templateLog.Warn("errorClass: Called 'errorClass' without 'errors' in the view args.")
 				return template.HTML("")
 			}
 			valError, ok := errorMap[name]
@@ -131,7 +132,7 @@ var (
 					return plural
 				}
 			default:
-				ERROR.Println("pluralize: unexpected type: ", v)
+				templateLog.Error("pluralize: unexpected type: ", "value", v)
 			}
 			return singular
 		},
@@ -145,12 +146,15 @@ var (
 		},
 		"slug": Slug,
 		"even": func(a int) bool { return (a % 2) == 0 },
+
+		// Using https://github.com/xeonx/timeago
+		"timeago": TimeAgo,
 		"i18ntemplate": func(args ...interface{}) (template.HTML, error) {
 			templateName, lang := "", ""
 			var viewArgs interface{}
 			switch len(args) {
 			case 0:
-				ERROR.Printf("No arguements passed to template call")
+				templateLog.Error("i18ntemplate: No arguments passed to template call")
 			case 1:
 				// Assume only the template name is passed in
 				templateName = args[0].(string)
@@ -159,16 +163,16 @@ var (
 				templateName = args[0].(string)
 				viewArgs = args[1]
 				// Try to extract language from the view args
-				if viewargsmap,ok := viewArgs.(map[string]interface{});ok {
-					lang,_ = viewargsmap[CurrentLocaleViewArg].(string)
+				if viewargsmap, ok := viewArgs.(map[string]interface{}); ok {
+					lang, _ = viewargsmap[CurrentLocaleViewArg].(string)
 				}
 			default:
 				// Assume third argument is the region
 				templateName = args[0].(string)
 				viewArgs = args[1]
 				lang, _ = args[2].(string)
-				if len(args)>3 {
-					ERROR.Printf("Received more parameters then needed for %s",templateName)
+				if len(args) > 3 {
+					templateLog.Error("i18ntemplate: Received more parameters then needed for", "template", templateName)
 				}
 			}
 
@@ -178,12 +182,13 @@ var (
 			if err == nil {
 				err = tmpl.Render(&buf, viewArgs)
 			} else {
-				ERROR.Printf("Failed to render i18ntemplate %s %v",templateName,err)
+				templateLog.Error("i18ntemplate: Failed to render i18ntemplate ", "name", templateName, "error", err)
 			}
 			return template.HTML(buf.String()), err
 		},
 	}
 )
+
 /////////////////////
 // Template functions
 /////////////////////
@@ -208,13 +213,13 @@ func ReverseURL(args ...interface{}) (template.URL, error) {
 
 	// Look up the types.
 
-	if pathData.TypeOfController==nil {
+	if pathData.TypeOfController == nil {
 		return "", fmt.Errorf("Failed reversing %s: controller not found %#v", action, pathData)
 	}
 
 	// Note method name is case insensitive search
 	methodType := pathData.TypeOfController.Method(pathData.MethodName)
-	if  methodType == nil {
+	if methodType == nil {
 		return "", errors.New("revel/controller: In " + action + " failed to find function " + pathData.MethodName)
 	}
 
@@ -228,7 +233,7 @@ func ReverseURL(args ...interface{}) (template.URL, error) {
 	fixedParams := len(pathData.FixedParamsByName)
 
 	for i, argValue := range args[1:] {
-		Unbind(argsByName, methodType.Args[i + fixedParams].Name, argValue)
+		Unbind(argsByName, methodType.Args[i+fixedParams].Name, argValue)
 	}
 
 	return template.URL(MainRouter.Reverse(args[0].(string), argsByName).URL), nil
@@ -241,4 +246,78 @@ func Slug(text string) string {
 	text = whiteSpacePattern.ReplaceAllString(text, separator)
 	text = strings.Trim(text, separator)
 	return text
+}
+
+var timeAgoLangs = map[string]timeago.Config{}
+
+func TimeAgo(args ...interface{}) string {
+
+	datetime := time.Now()
+	lang := ""
+	var viewArgs interface{}
+	switch len(args) {
+	case 0:
+		templateLog.Error("TimeAgo: No arguements passed to timeago")
+	case 1:
+		// only the time is passed in
+		datetime = args[0].(time.Time)
+	case 2:
+		// time and region is passed in
+		datetime = args[0].(time.Time)
+		switch v := reflect.ValueOf(args[1]); v.Kind() {
+		case reflect.String:
+			// second params type string equals region
+			lang, _ = args[1].(string)
+		case reflect.Map:
+			// second params type map equals viewArgs
+			viewArgs = args[1]
+			if viewargsmap, ok := viewArgs.(map[string]interface{}); ok {
+				lang, _ = viewargsmap[CurrentLocaleViewArg].(string)
+			}
+		default:
+			templateLog.Error("TimeAgo: unexpected type: ", "value", v)
+		}
+	default:
+		// Assume third argument is the region
+		datetime = args[0].(time.Time)
+		if reflect.ValueOf(args[1]).Kind() != reflect.Map {
+			templateLog.Error("TimeAgo: unexpected type", "value", args[1])
+		}
+		if reflect.ValueOf(args[2]).Kind() != reflect.String {
+			templateLog.Error("TimeAgo: unexpected type: ", "value", args[2])
+		}
+		viewArgs = args[1]
+		lang, _ = args[2].(string)
+		if len(args) > 3 {
+			templateLog.Error("TimeAgo: Received more parameters then needed for timeago")
+		}
+	}
+	if lang == "" {
+		lang, _ = Config.String(defaultLanguageOption)
+		if lang == "en" {
+			timeAgoLangs[lang] = timeago.English
+		}
+	}
+	_, ok := timeAgoLangs[lang]
+	if !ok {
+		timeAgoLangs[lang] = timeago.Config{
+			PastPrefix:   "",
+			PastSuffix:   " " + MessageFunc(lang, "ago"),
+			FuturePrefix: MessageFunc(lang, "in") + " ",
+			FutureSuffix: "",
+			Periods: []timeago.FormatPeriod{
+				{time.Second, MessageFunc(lang, "about a second"), MessageFunc(lang, "%d seconds")},
+				{time.Minute, MessageFunc(lang, "about a minute"), MessageFunc(lang, "%d minutes")},
+				{time.Hour, MessageFunc(lang, "about an hour"), MessageFunc(lang, "%d hours")},
+				{timeago.Day, MessageFunc(lang, "one day"), MessageFunc(lang, "%d days")},
+				{timeago.Month, MessageFunc(lang, "one month"), MessageFunc(lang, "%d months")},
+				{timeago.Year, MessageFunc(lang, "one year"), MessageFunc(lang, "%d years")},
+			},
+			Zero:          MessageFunc(lang, "about a second"),
+			Max:           73 * time.Hour,
+			DefaultLayout: "2006-01-02",
+		}
+
+	}
+	return timeAgoLangs[lang].Format(datetime)
 }

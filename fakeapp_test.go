@@ -5,8 +5,6 @@
 package revel
 
 import (
-	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -84,7 +82,7 @@ func registerControllers() {
 				Args: []*MethodArg{
 					{"id", reflect.TypeOf((*int)(nil))},
 				},
-				RenderArgNames: map[int][]string{43: {"title", "hotel"}},
+				RenderArgNames: map[int][]string{41: {"title", "hotel"}},
 			},
 			{
 				Name: "Book",
@@ -140,10 +138,7 @@ func startFakeBookingApp() {
 	Init("prod", "github.com/revel/revel/testdata", "")
 
 	// Disable logging.
-	TRACE = log.New(ioutil.Discard, "", 0)
-	INFO = TRACE
-	WARN = TRACE
-	ERROR = TRACE
+	GetRootLogHandler().Disable()
 
 	MainTemplateLoader = NewTemplateLoader([]string{ViewsPath, filepath.Join(RevelPath, "templates")})
 	if err := MainTemplateLoader.Refresh(); err != nil {
@@ -152,5 +147,7 @@ func startFakeBookingApp() {
 
 	registerControllers()
 
+	InitServerEngine(9000, GO_NATIVE_SERVER_ENGINE)
+	initControllerStack()
 	runStartupHooks()
 }

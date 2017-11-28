@@ -1,10 +1,12 @@
 # Revel Framework
 
-[![Build Status](https://secure.travis-ci.org/revel/revel.svg?branch=master)](http://travis-ci.org/revel/revel)  [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Build Status](https://secure.travis-ci.org/revel/revel.svg?branch=master)](http://travis-ci.org/revel/revel) 
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Go Report Card](https://goreportcard.com/badge/github.com/revel/revel)](https://goreportcard.com/report/github.com/revel/revel)
 
 A high productivity, full-stack web framework for the [Go language](http://www.golang.org).
 
-Current Version: 0.17.1 (2017-07-14)
+Current Version: 0.18.0 (2017-10-30)
 
 **As of Revel 0.15.0, Go 1.6+ is required.**
 
