@@ -51,6 +51,7 @@ type Response struct {
 	writer      io.Writer
 }
 type OutResponse struct {
+	// internalHeader.Server Set by ServerResponse.Get(HTTP_SERVER_HEADER), saves calling the get every time the header needs to be written to
 	internalHeader *RevelHeader
 	Server         ServerResponse
 	response       *Response
@@ -251,7 +252,7 @@ func (resp *Response) WriteHeader(defaultStatusCode int, defaultContentType stri
 	resp.SetStatus(resp.Status)
 }
 func (resp *Response) SetStatus(statusCode int) {
-	if resp.Out.internalHeader.Server == nil {
+	if resp.Out.internalHeader.Server != nil {
 		resp.Out.internalHeader.Server.SetStatus(statusCode)
 	} else {
 		resp.Out.Server.Set(ENGINE_RESPONSE_STATUS, statusCode)
@@ -274,6 +275,8 @@ func (resp *Response) SetWriter(writer io.Writer) bool {
 	// Leave it up to the engine to flush and close the writer
 	return resp.Out.Server.Set(ENGINE_WRITER, writer)
 }
+
+// Passes full control to the response to the caller - terminates any initial writes
 func (resp *Response) GetStreamWriter() (writer StreamWriter) {
 	if w, e := resp.Out.Server.Get(HTTP_STREAM_WRITER); e == nil {
 		writer = w.(StreamWriter)

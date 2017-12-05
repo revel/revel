@@ -300,7 +300,6 @@ func (r *GoResponse) SetWriter(writer io.Writer) {
 	r.Writer = writer
 }
 func (r *GoResponse) WriteStream(name string, contentlen int64, modtime time.Time, reader io.Reader) error {
-
 	// Check to see if the output stream is modified, if not send it using the
 	// Native writer
 	written := false
@@ -329,7 +328,11 @@ func (r *GoResponse) WriteStream(name string, contentlen int64, modtime time.Tim
 		}
 
 		if contentlen != -1 {
-			r.Original.Header().Set("Content-Length", strconv.FormatInt(contentlen, 10))
+			header := ServerHeader(r.Goheader)
+			if writer,found := r.Writer.(*CompressResponseWriter);found {
+				header = ServerHeader(writer.Header)
+			}
+			header.Set("Content-Length", strconv.FormatInt(contentlen, 10))
 		}
 		if _, err := io.Copy(r.Writer, reader); err != nil {
 			r.Original.WriteHeader(http.StatusInternalServerError)
