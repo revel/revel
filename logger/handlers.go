@@ -1,9 +1,12 @@
 package logger
 
 import (
+	"io"
+	"os"
+
+	colorable "github.com/mattn/go-colorable"
 	"github.com/revel/log15"
 	"gopkg.in/natefinch/lumberjack.v2"
-	"io"
 )
 
 // Filters out records which do not match the level
