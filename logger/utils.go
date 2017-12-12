@@ -1,7 +1,7 @@
 package logger
 
 import (
-	"github.com/go-stack/stack"
+	"gopkg.in/stack.v0"
 	"github.com/revel/config"
 	"github.com/revel/log15"
 	"log"

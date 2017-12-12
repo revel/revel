@@ -2,7 +2,7 @@ package revel
 
 import (
 	"fmt"
-	"github.com/go-stack/stack"
+	"gopkg.in/stack.v0"
 	"github.com/revel/revel/logger"
 	"go/build"
 	"path/filepath"
