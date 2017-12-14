@@ -6,7 +6,6 @@ import (
 	"github.com/revel/log15"
 	"reflect"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 )
@@ -54,7 +53,6 @@ func TerminalFormatHandler(noColor bool, smallDate bool) LogFormat {
 		}
 
 		b := &bytes.Buffer{}
-		lvl := strings.ToUpper(r.Lvl.String())
 		caller := findInContext("caller", r.Ctx)
 		module := findInContext("module", r.Ctx)
 		if noColor == false && color > 0 {
@@ -65,7 +63,6 @@ func TerminalFormatHandler(noColor bool, smallDate bool) LogFormat {
 			}
 		} else {
 			fmt.Fprintf(b, "%-5s %s %6s %13s: %-40s", toRevel[r.Lvl], r.Time.Format(dateFormat), module, caller, r.Msg)
-			fmt.Fprintf(b, "[%s] [%s] %s ", lvl, r.Time.Format(dateFormat), r.Msg)
 		}
 
 		for i := 0; i < len(r.Ctx); i += 2 {
@@ -83,7 +80,7 @@ func TerminalFormatHandler(noColor bool, smallDate bool) LogFormat {
 			}
 
 			// TODO: we should probably check that all of your key bytes aren't invalid
-			if color > 0 {
+			if noColor == false && color > 0 {
 				fmt.Fprintf(b, "\x1b[%dm%s\x1b[0m=%s", color, k, v)
 			} else {
 				b.WriteString(k)
