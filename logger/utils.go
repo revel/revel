@@ -7,18 +7,19 @@ import (
 	"strings"
 
 	"go.uber.org/zap"
-
 	"github.com/revel/config"
-	"github.com/revel/log15"
 )
 
 // Utility package to make existing logging backwards compatible
 var (
 	// Convert the string to LogLevel
-	toLevel = map[string]LogLevel{"debug": LogLevel(log15.LvlDebug),
-		"info": LogLevel(log15.LvlInfo), "request": LogLevel(log15.LvlInfo), "warn": LogLevel(log15.LvlWarn),
-		"error": LogLevel(log15.LvlError), "crit": LogLevel(log15.LvlCrit),
-		"trace": LogLevel(log15.LvlDebug), // TODO trace is deprecated, replaced by debug
+	toLevel = map[string]LogLevel{"debug": LvlDebug,
+		"info":    LvlInfo,
+		"request": LvlInfo,
+		"warn":    LvlWarn,
+		"error":   ErrorLevel,
+		"crit":    LvlCrit,
+		"trace":   LvlTrace, // TODO trace is deprecated, replaced by debug
 	}
 )
 
@@ -62,12 +63,13 @@ func InitializeFromConfig(basePath string, config *config.Context) (c *Composite
 
 // Init the log.all configuration options
 func initAllLog(c *CompositeMultiHandler, basePath string, config *config.Context) {
-	if config != nil {
-		if output, found := config.String("log.all.output"); found {
-			// Set all output for the specified handler
-			log.Printf("Adding standard handler for levels to >%s< ", output)
-			initHandlerFor(c, output, basePath, NewLogOptions(config, true, nil, LvlAllList...))
-		}
+	if config == nil {
+		return
+	}
+	if output, found := config.String("log.all.output"); found {
+		// Set all output for the specified handler
+		log.Printf("Adding standard handler for levels to >%s< ", output)
+		initHandlerFor(c, output, basePath, NewLogOptions(config, true, nil, LvlAllList...))
 	}
 }
 
@@ -75,48 +77,50 @@ func initAllLog(c *CompositeMultiHandler, basePath string, config *config.Contex
 // log.all.filter ....
 // log.error.filter ....
 func initFilterLog(c *CompositeMultiHandler, basePath string, config *config.Context) {
-	if config != nil {
-		// The commands to use
-		logFilterList := []struct {
-			LogPrefix, LogSuffix string
-			parentHandler        func(map[string]interface{}) ParentLogHandler
-		}{{
-			"log.", ".filter",
-			func(keyMap map[string]interface{}) ParentLogHandler {
-				return NewParentLogHandler(func(child LogHandler) LogHandler {
-					return MatchMapHandler(keyMap, child)
-				})
+	if config == nil {
+		return
+	}
 
-			},
-		}, {
-			"log.", ".nfilter",
-			func(keyMap map[string]interface{}) ParentLogHandler {
-				return NewParentLogHandler(func(child LogHandler) LogHandler {
-					return NotMatchMapHandler(keyMap, child)
-				})
-			},
-		}}
+	// The commands to use
+	logFilterList := []struct {
+		LogPrefix, LogSuffix string
+		parentHandler        func(map[string]interface{}) ParentLogHandler
+	}{{
+		"log.", ".filter",
+		func(keyMap map[string]interface{}) ParentLogHandler {
+			return NewParentLogHandler(func(child LogHandler) LogHandler {
+				return MatchMapHandler(keyMap, child)
+			})
 
-		for _, logFilter := range logFilterList {
-			// Init for all filters
-			for _, name := range []string{"all", "debug", "info", "warn", "error", "crit",
-				"trace", // TODO trace is deprecated
-			} {
-				optionList := config.Options(logFilter.LogPrefix + name + logFilter.LogSuffix)
-				for _, option := range optionList {
-					splitOptions := strings.Split(option, ".")
-					keyMap := map[string]interface{}{}
-					for x := 3; x < len(splitOptions); x += 2 {
-						keyMap[splitOptions[x]] = splitOptions[x+1]
-					}
-					phandler := logFilter.parentHandler(keyMap)
-					log.Printf("Adding key map handler %s %s output %s", option, name, config.StringDefault(option, ""))
+		},
+	}, {
+		"log.", ".nfilter",
+		func(keyMap map[string]interface{}) ParentLogHandler {
+			return NewParentLogHandler(func(child LogHandler) LogHandler {
+				return NotMatchMapHandler(keyMap, child)
+			})
+		},
+	}}
 
-					if name == "all" {
-						initHandlerFor(c, config.StringDefault(option, ""), basePath, NewLogOptions(config, false, phandler))
-					} else {
-						initHandlerFor(c, config.StringDefault(option, ""), basePath, NewLogOptions(config, false, phandler, toLevel[name]))
-					}
+	for _, logFilter := range logFilterList {
+		// Init for all filters
+		for _, name := range []string{"all", "debug", "info", "warn", "error", "crit",
+			"trace", // TODO trace is deprecated
+		} {
+			optionList := config.Options(logFilter.LogPrefix + name + logFilter.LogSuffix)
+			for _, option := range optionList {
+				splitOptions := strings.Split(option, ".")
+				keyMap := map[string]interface{}{}
+				for x := 3; x < len(splitOptions); x += 2 {
+					keyMap[splitOptions[x]] = splitOptions[x+1]
+				}
+				phandler := logFilter.parentHandler(keyMap)
+				log.Printf("Adding key map handler %s %s output %s", option, name, config.StringDefault(option, ""))
+
+				if name == "all" {
+					initHandlerFor(c, config.StringDefault(option, ""), basePath, NewLogOptions(config, false, phandler))
+				} else {
+					initHandlerFor(c, config.StringDefault(option, ""), basePath, NewLogOptions(config, false, phandler, toLevel[name]))
 				}
 			}
 		}
@@ -166,6 +170,35 @@ func initRequestLog(c *CompositeMultiHandler, basePath string, config *config.Co
 	}
 }
 
+// The log function map can be added to, so that you can specify your own logging mechanism
+var LogFunctionMap = map[string]func(*CompositeMultiHandler, *LogOptions){
+	// Do nothing - set the logger off
+	"off": func(c *CompositeMultiHandler, logOptions *LogOptions) {
+		// Only drop the results if there is a parent handler defined
+		if logOptions.HandlerWrap != nil {
+			for _, l := range logOptions.Levels {
+				c.SetHandler(logOptions.HandlerWrap.SetChild(NilHandler()), logOptions.ReplaceExistingHandler, l)
+			}
+		}
+	},
+	// Do nothing - set the logger off
+	"": func(*CompositeMultiHandler, *LogOptions) {},
+	// Set the levels to stdout, replace existing
+	"stdout": func(c *CompositeMultiHandler, logOptions *LogOptions) {
+		if logOptions.Ctx != nil {
+			logOptions.SetExtendedOptions(
+				"noColor", !logOptions.Ctx.BoolDefault("log.colorize", true),
+				"smallDate", logOptions.Ctx.BoolDefault("log.smallDate", true))
+		}
+
+		c.SetTerminal(os.Stdout, logOptions)
+	},
+	// Set the levels to stderr output to terminal
+	"stderr": func(c *CompositeMultiHandler, logOptions *LogOptions) {
+		c.SetTerminal(os.Stderr, logOptions)
+	},
+}
+
 // Returns a handler for the level using the output string
 // Accept formats for output string are
 // LogFunctionMap[value] callback function
@@ -187,6 +220,7 @@ func initHandlerFor(c *CompositeMultiHandler, output, basePath string, options *
 	if funcHandler, found := LogFunctionMap[output]; found {
 		funcHandler(c, options)
 	} else {
+<<<<<<< HEAD
 		switch output {
 		case "":
 			fallthrough
@@ -206,49 +240,25 @@ func initHandlerFor(c *CompositeMultiHandler, output, basePath string, options *
 			} else {
 				c.SetTerminalFile(output, options)
 			}
+=======
+		// Write to file specified
+		if !filepath.IsAbs(output) {
+			output = filepath.Join(basePath, output)
+>>>>>>> 13b169d... stash
+		}
+
+		if err := os.MkdirAll(filepath.Dir(output), 0755); err != nil {
+			log.Panic(err)
+		}
+
+		if strings.HasSuffix(output, "json") {
+			c.SetJsonFile(output, options)
+		} else {
+			// Override defaults for a terminal file
+			options.SetExtendedOptions("noColor", true)
+			options.SetExtendedOptions("smallDate", false)
+			c.SetTerminalFile(output, options)
 		}
 	}
 	return
-}
-
-// This structure and method will handle the old output format and log it to the new format
-type loggerRewrite struct {
-	Logger         MultiLogger
-	Level          log15.Lvl
-	hideDeprecated bool
-}
-
-var log_deprecated = []byte("* LOG DEPRECATED * ")
-
-func (lr loggerRewrite) Write(p []byte) (n int, err error) {
-	if !lr.hideDeprecated {
-		p = append(log_deprecated, p...)
-	}
-	n = len(p)
-	if len(p) > 0 && p[n-1] == '\n' {
-		p = p[:n-1]
-		n--
-	}
-
-	switch lr.Level {
-	case log15.LvlInfo:
-		lr.Logger.Info(string(p))
-	case log15.LvlDebug:
-		lr.Logger.Debug(string(p))
-	case log15.LvlWarn:
-		lr.Logger.Warn(string(p))
-	case log15.LvlError:
-		lr.Logger.Error(string(p))
-	case log15.LvlCrit:
-		lr.Logger.Crit(string(p))
-	}
-
-	return
-}
-
-// For logging purposes the call stack can be used to record the stack trace of a bad error
-// simply pass it as a context field in your log statement like
-// `controller.Log.Critc("This should not occur","stack",revel.NewCallStack())`
-func NewCallStack() interface{} {
-	return stack.Trace()
 }

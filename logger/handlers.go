@@ -1,10 +1,6 @@
 package logger
 
-import (
-	"github.com/revel/log15"
-	"gopkg.in/natefinch/lumberjack.v2"
-	"io"
-)
+/**
 
 // Filters out records which do not match the level
 // Uses the `log15.FilterHandler` to perform this task
@@ -154,6 +150,7 @@ func StreamHandler(wr io.Writer, fmtr LogFormat) LogHandler {
 func FilterHandler(fn func(r *log15.Record) bool, h LogHandler) LogHandler {
 	return log15.FilterHandler(fn, h)
 }
+<<<<<<< HEAD
 
 type ListLogHandler struct {
 	handlers []LogHandler
@@ -328,3 +325,4 @@ func (h *CompositeMultiHandler) Disable(levels ...LogLevel) {
 		}
 	}
 }
+**/
