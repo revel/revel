@@ -1,11 +1,15 @@
 package logger
 
 import (
+	"errors"
 	"fmt"
-	"github.com/revel/config"
-	"github.com/revel/log15"
 	"log"
 	"os"
+
+	"github.com/revel/config"
+	"github.com/revel/log15"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 // The LogHandler defines the interface to handle the log records
@@ -19,7 +23,7 @@ type (
 		//
 		//// SetHandler updates the logger to write records to the specified handler.
 		SetHandler(h LogHandler)
-		SetStackDepth(int) MultiLogger
+
 		//
 		//// Log a message at the given level with context key/value pairs
 		Debug(msg string, ctx ...interface{})
@@ -40,41 +44,30 @@ type (
 		Panic(msg string, ctx ...interface{})
 		Panicf(msg string, params ...interface{})
 	}
-	LogHandler interface {
-		log15.Handler
-	}
-	LogStackHandler interface {
-		LogHandler
-		GetStack() int
-	}
-	ParentLogHandler interface {
-		SetChild(handler LogHandler) LogHandler
-	}
-	LogFormat interface {
-		log15.Format
-	}
 
-	LogLevel    log15.Lvl
+	LogLevel zapcore.Level
+
 	RevelLogger struct {
-		log15.Logger
+		l *zap.Logger
+		s *zap.SugaredLogger
 	}
 
 	// Used for the callback to LogFunctionMap
 	LogOptions struct {
 		Ctx                    *config.Context
 		ReplaceExistingHandler bool
-		HandlerWrap            ParentLogHandler
+		HandlerWrap            LogHandler
 		Levels                 []LogLevel
 		ExtendedOptions        map[string]interface{}
 	}
 )
 
 const (
-	LvlDebug = LogLevel(log15.LvlDebug)
-	LvlInfo  = LogLevel(log15.LvlInfo)
-	LvlWarn  = LogLevel(log15.LvlWarn)
-	LvlError = LogLevel(log15.LvlError)
-	LvlCrit  = LogLevel(log15.LvlCrit)
+	LvlDebug = zap.DebugLevel
+	LvlInfo  = zap.InfoLevel
+	LvlWarn  = zap.WarnLevel
+	LvlError = zap.ErrorLevel
+	LvlCrit  = zap.InfoLevel
 )
 
 // A list of all the log levels
@@ -118,30 +111,29 @@ func SetDefaultLog(fromLog MultiLogger) {
 }
 
 func (rl *RevelLogger) Debugf(msg string, param ...interface{}) {
-	rl.Debug(fmt.Sprintf(msg, param...))
+	rl.s.Debugf(msg, args...)
 }
 func (rl *RevelLogger) Infof(msg string, param ...interface{}) {
-	rl.Info(fmt.Sprintf(msg, param...))
+	rl.s.Infof(msg, args...)
 }
 func (rl *RevelLogger) Warnf(msg string, param ...interface{}) {
-	rl.Warn(fmt.Sprintf(msg, param...))
+	rl.s.Warnf(msg, args...)
 }
 func (rl *RevelLogger) Errorf(msg string, param ...interface{}) {
-	rl.Error(fmt.Sprintf(msg, param...))
+	rl.s.Errorf(msg, args...)
 }
 func (rl *RevelLogger) Critf(msg string, param ...interface{}) {
-	rl.Crit(fmt.Sprintf(msg, param...))
+	rl.s.Infof(msg, args...)
 }
 func (rl *RevelLogger) Fatalf(msg string, param ...interface{}) {
-	rl.Fatal(fmt.Sprintf(msg, param...))
+	rl.s.Fatalf(msg, args...)
 }
 func (rl *RevelLogger) Panicf(msg string, param ...interface{}) {
-	rl.Panic(fmt.Sprintf(msg, param...))
+	rl.s.Panicf(msg, args...)
 }
 
 func (rl *RevelLogger) Fatal(msg string, ctx ...interface{}) {
-	rl.Crit(msg, ctx...)
-	os.Exit(1)
+	rl.s.Fatalw(msg, ctx...)
 }
 
 func (rl *RevelLogger) Panic(msg string, ctx ...interface{}) {
@@ -149,10 +141,21 @@ func (rl *RevelLogger) Panic(msg string, ctx ...interface{}) {
 	panic(msg)
 }
 
+func ctxToFields(ctx ...interface{}) []zapcore.Field {
+	if len(ctx)%2 != 0 {
+		panic(errors.New("ctx is invalid"))
+	}
+	fields := make([]zapcore.Field, 0, len(ctx)/2)
+	for i := 0; i < len(ctx); i += 2 {
+		fields = append(fields, zap.Any(fmt.Sprint(ctx[i]), ctx[i+1]))
+	}
+	return fields
+}
+
 // Override log15 method
 func (rl *RevelLogger) New(ctx ...interface{}) MultiLogger {
-	old := &RevelLogger{Logger: rl.Logger.New(ctx...)}
-	return old
+	logger := rl.l.With(ctxToFields(ctx)...)
+	return &RevelLogger{l: logger, s: logger.Sugar()}
 }
 
 // Set the stack level to check for the caller
@@ -163,9 +166,7 @@ func (rl *RevelLogger) SetStackDepth(amount int) MultiLogger {
 
 // Create a new logger
 func New(ctx ...interface{}) MultiLogger {
-	r := &RevelLogger{Logger: log15.New(ctx...)}
-	r.SetStackDepth(1)
-	return r
+	return zap.L().With(ctxToFields(ctx)).WithOptions(zap.AddCallerSkip(1))
 }
 
 // Set the handler in the Logger
@@ -173,28 +174,15 @@ func (rl *RevelLogger) SetHandler(h LogHandler) {
 	rl.Logger.SetHandler(h)
 }
 
-type parentLogHandler struct {
-	setChild func(handler LogHandler) LogHandler
-}
-
-func NewParentLogHandler(callBack func(child LogHandler) LogHandler) ParentLogHandler {
-	return &parentLogHandler{callBack}
-}
-
-func (p *parentLogHandler) SetChild(child LogHandler) LogHandler {
-	return p.setChild(child)
-}
-
 // Create a new log options
-func NewLogOptions(cfg *config.Context, replaceHandler bool, phandler ParentLogHandler, lvl ...LogLevel) (logOptions *LogOptions) {
-	logOptions = &LogOptions{
+func NewLogOptions(cfg *config.Context, replaceHandler bool, phandler ParentLogHandler, lvl ...LogLevel) *LogOptions {
+	return &LogOptions{
 		Ctx: cfg,
 		ReplaceExistingHandler: replaceHandler,
 		HandlerWrap:            phandler,
 		Levels:                 lvl,
 		ExtendedOptions:        map[string]interface{}{},
 	}
-	return
 }
 
 // Assumes options will be an even number and have a string, value syntax

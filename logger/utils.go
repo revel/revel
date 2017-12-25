@@ -1,13 +1,15 @@
 package logger
 
 import (
-	"github.com/go-stack/stack"
-	"github.com/revel/config"
-	"github.com/revel/log15"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"go.uber.org/zap"
+
+	"github.com/revel/config"
+	"github.com/revel/log15"
 )
 
 // Utility package to make existing logging backwards compatible
@@ -23,21 +25,19 @@ var (
 func GetLogger(name string, logger MultiLogger) (l *log.Logger) {
 	switch name {
 	case "trace": // TODO trace is deprecated, replaced by debug
-		l = log.New(loggerRewrite{Logger: logger, Level: log15.LvlDebug}, "", 0)
+		l = logger.ToStdLogger(zap.DebugLevel)
 	case "debug":
-		l = log.New(loggerRewrite{Logger: logger, Level: log15.LvlDebug}, "", 0)
+		l = logger.ToStdLogger(zap.DebugLevel)
 	case "info":
-		l = log.New(loggerRewrite{Logger: logger, Level: log15.LvlInfo}, "", 0)
+		l = logger.ToStdLogger(zap.InfoLevel)
 	case "warn":
-		l = log.New(loggerRewrite{Logger: logger, Level: log15.LvlWarn}, "", 0)
+		l = logger.ToStdLogger(zap.WarnLevel)
 	case "error":
-		l = log.New(loggerRewrite{Logger: logger, Level: log15.LvlError}, "", 0)
+		l = logger.ToStdLogger(zap.ErrorLevel)
 	case "request":
-		l = log.New(loggerRewrite{Logger: logger, Level: log15.LvlInfo}, "", 0)
+		l = logger.ToStdLogger(zap.InfoLevel)
 	}
-
 	return l
-
 }
 
 // Get all handlers based on the Config (if available)
