@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"go.uber.org/zap"
 	"github.com/revel/config"
+	"go.uber.org/zap"
 )
 
 // Utility package to make existing logging backwards compatible
@@ -42,7 +42,7 @@ func GetLogger(name string, logger MultiLogger) (l *log.Logger) {
 }
 
 // Get all handlers based on the Config (if available)
-func InitializeFromConfig(basePath string, config *config.Context) (c *CompositeMultiHandler) {
+func InitializeFromConfig(basePath string, config *config.Context) (c *Builder) {
 	// If the configuration has an all option we can skip some
 	c, _ = NewCompositeMultiHandler()
 
@@ -62,7 +62,7 @@ func InitializeFromConfig(basePath string, config *config.Context) (c *Composite
 }
 
 // Init the log.all configuration options
-func initAllLog(c *CompositeMultiHandler, basePath string, config *config.Context) {
+func initAllLog(c *Builder, basePath string, config *config.Context) {
 	if config == nil {
 		return
 	}
@@ -76,7 +76,7 @@ func initAllLog(c *CompositeMultiHandler, basePath string, config *config.Contex
 // Init the filter options
 // log.all.filter ....
 // log.error.filter ....
-func initFilterLog(c *CompositeMultiHandler, basePath string, config *config.Context) {
+func initFilterLog(c *Builder, basePath string, config *config.Context) {
 	if config == nil {
 		return
 	}
@@ -128,7 +128,7 @@ func initFilterLog(c *CompositeMultiHandler, basePath string, config *config.Con
 }
 
 // Init the log.error, log.warn etc configuration options
-func initLogLevels(c *CompositeMultiHandler, basePath string, config *config.Context) {
+func initLogLevels(c *Builder, basePath string, config *config.Context) {
 	for _, name := range []string{"debug", "info", "warn", "error", "crit",
 		"trace", // TODO trace is deprecated
 	} {
@@ -146,7 +146,7 @@ func initLogLevels(c *CompositeMultiHandler, basePath string, config *config.Con
 }
 
 // Init the request log options
-func initRequestLog(c *CompositeMultiHandler, basePath string, config *config.Context) {
+func initRequestLog(c *Builder, basePath string, config *config.Context) {
 	// Request logging to a separate output handler
 	// This takes the InfoHandlers and adds a MatchAbHandler handler to it to direct
 	// context with the word "section=requestlog" to that handler.
@@ -171,9 +171,9 @@ func initRequestLog(c *CompositeMultiHandler, basePath string, config *config.Co
 }
 
 // The log function map can be added to, so that you can specify your own logging mechanism
-var LogFunctionMap = map[string]func(*CompositeMultiHandler, *LogOptions){
+var LogFunctionMap = map[string]func(*Builder, *LogOptions){
 	// Do nothing - set the logger off
-	"off": func(c *CompositeMultiHandler, logOptions *LogOptions) {
+	"off": func(c *Builder, logOptions *LogOptions) {
 		// Only drop the results if there is a parent handler defined
 		if logOptions.HandlerWrap != nil {
 			for _, l := range logOptions.Levels {
@@ -182,28 +182,48 @@ var LogFunctionMap = map[string]func(*CompositeMultiHandler, *LogOptions){
 		}
 	},
 	// Do nothing - set the logger off
-	"": func(*CompositeMultiHandler, *LogOptions) {},
+	"": func(*Builder, *LogOptions) {},
 	// Set the levels to stdout, replace existing
-	"stdout": func(c *CompositeMultiHandler, logOptions *LogOptions) {
+	"stdout": func(c *Builder, logOptions *LogOptions) {
 		if logOptions.Ctx != nil {
 			logOptions.SetExtendedOptions(
 				"noColor", !logOptions.Ctx.BoolDefault("log.colorize", true),
 				"smallDate", logOptions.Ctx.BoolDefault("log.smallDate", true))
 		}
 
-		c.SetTerminal(os.Stdout, logOptions)
+		c.SetTerminalFile("stdout", logOptions)
 	},
 	// Set the levels to stderr output to terminal
-	"stderr": func(c *CompositeMultiHandler, logOptions *LogOptions) {
-		c.SetTerminal(os.Stderr, logOptions)
+	"stderr": func(c *Builder, logOptions *LogOptions) {
+		c.SetTerminalFile("stderr", logOptions)
 	},
+}
+
+func defaultInitHandlerFor(output string, c *Builder, logOptions *LogOptions) {
+	// Write to file specified
+	if !filepath.IsAbs(output) {
+		output = filepath.Join(basePath, output)
+	}
+
+	if err := os.MkdirAll(filepath.Dir(output), 0755); err != nil {
+		log.Panic(err)
+	}
+
+	if strings.HasSuffix(output, "json") {
+		c.SetJsonFile(output, options)
+	} else {
+		// Override defaults for a terminal file
+		options.SetExtendedOptions("noColor", true)
+		options.SetExtendedOptions("smallDate", false)
+		c.SetTerminalFile(output, options)
+	}
 }
 
 // Returns a handler for the level using the output string
 // Accept formats for output string are
 // LogFunctionMap[value] callback function
 // `stdout` `stderr` `full/file/path/to/location/app.log` `full/file/path/to/location/app.json`
-func initHandlerFor(c *CompositeMultiHandler, output, basePath string, options *LogOptions) {
+func initHandlerFor(c *Builder, output, basePath string, options *LogOptions) {
 	if options.Ctx != nil {
 		options.SetExtendedOptions(
 			"noColor", !options.Ctx.BoolDefault("log.colorize", true),
@@ -213,52 +233,12 @@ func initHandlerFor(c *CompositeMultiHandler, output, basePath string, options *
 			"maxBackups", options.Ctx.IntDefault("log.maxbackups", 14),
 			"compressBackups", !options.Ctx.BoolDefault("log.compressBackups", true),
 		)
-
 	}
 
 	output = strings.TrimSpace(output)
 	if funcHandler, found := LogFunctionMap[output]; found {
 		funcHandler(c, options)
 	} else {
-<<<<<<< HEAD
-		switch output {
-		case "":
-			fallthrough
-		case "off":
-			// No handler, discard data
-		default:
-			// Write to file specified
-			if !filepath.IsAbs(output) {
-				output = filepath.Join(basePath, output)
-			}
-
-			if err := os.MkdirAll(filepath.Dir(output), 0755); err != nil {
-				log.Panic(err)
-			}
-			if strings.HasSuffix(output, "json") {
-				c.SetJsonFile(output, options)
-			} else {
-				c.SetTerminalFile(output, options)
-			}
-=======
-		// Write to file specified
-		if !filepath.IsAbs(output) {
-			output = filepath.Join(basePath, output)
->>>>>>> 13b169d... stash
-		}
-
-		if err := os.MkdirAll(filepath.Dir(output), 0755); err != nil {
-			log.Panic(err)
-		}
-
-		if strings.HasSuffix(output, "json") {
-			c.SetJsonFile(output, options)
-		} else {
-			// Override defaults for a terminal file
-			options.SetExtendedOptions("noColor", true)
-			options.SetExtendedOptions("smallDate", false)
-			c.SetTerminalFile(output, options)
-		}
+		defaultHandler(output, c, options)
 	}
-	return
 }

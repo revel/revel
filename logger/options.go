@@ -1,5 +1,9 @@
 package logger
 
+import (
+	"io"
+	"os"
+)
 
 // Used for the callback to LogFunctionMap
 type LogOptions struct {
@@ -46,18 +50,15 @@ func (l *LogOptions) GetBoolDefault(option string, value bool) bool {
 	return value
 }
 
-
-
 type Builder struct {
 	Debug    []zap.Config
 	Info     []zap.Config
 	Warn     []zap.Config
 	Error    []zap.Config
 	Critical []zap.Config
-
 }
 
-func NewBuilder() (*Builder) {
+func NewBuilder() *Builder {
 	return &Builder{}
 }
 func (h *Builder) SetHandler(handler zap.Config, replace bool, level LogLevel) {
@@ -96,19 +97,27 @@ func (h *Builder) SetHandlers(handler LogHandler, options *LogOptions) {
 		h.SetHandler(handler, options.ReplaceExistingHandler, lvl)
 	}
 }
-func (h *Builder) SetJson(writer io.Writer, options *LogOptions) {
-	handler := CallerFileHandler(StreamHandler(writer, log15.JsonFormatEx(
-		options.GetBoolDefault("pretty", false),
-		options.GetBoolDefault("lineSeparated", true),
-	)))
-	if options.HandlerWrap != nil {
-		handler = options.HandlerWrap.SetChild(handler)
-	}
-	h.SetHandlers(handler, options)
-}
+
+//func (h *Builder) SetJson(writer io.Writer, options *LogOptions) {
+//cfg := zap.NewProductionConfig()
+//cfg.Encoding  = "json"
+
+//handler := CallerFileHandler(StreamHandler(writer, log15.JsonFormatEx(
+//	options.GetBoolDefault("pretty", false),
+//	options.GetBoolDefault("lineSeparated", true),
+//)))
+//if options.HandlerWrap != nil {
+//	handler = options.HandlerWrap.SetChild(handler)
+//}
+//h.SetHandlers(handler, options)
+//}
 
 // Use built in rolling function
 func (h *Builder) SetJsonFile(filePath string, options *LogOptions) {
+
+	cfg := zap.NewProductionConfig()
+	cfg.Encoding = "json"
+
 	writer := &lumberjack.Logger{
 		Filename:   filePath,
 		MaxSize:    options.GetIntDefault("maxSizeMB", 1024), // megabytes
@@ -178,4 +187,3 @@ func (h *Builder) Disable(levels ...LogLevel) {
 		}
 	}
 }
-
