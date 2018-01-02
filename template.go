@@ -51,27 +51,27 @@ var whiteSpacePattern = regexp.MustCompile(`\s+`)
 var templateLog = RevelLog.New("section", "template")
 
 // TemplateOutputArgs returns the result of the template rendered using the passed in arguments.
-func TemplateOutputArgs(templatePath string, args map[string]interface{}) (data []byte,err error)  {
+func TemplateOutputArgs(templatePath string, args map[string]interface{}) (data []byte, err error) {
 	// Get the Template.
 	lang, _ := args[CurrentLocaleViewArg].(string)
 	template, err := MainTemplateLoader.TemplateLang(templatePath, lang)
 	if err != nil {
 		return nil, err
 	}
-	tr :=  &RenderTemplateResult{
+	tr := &RenderTemplateResult{
 		Template: template,
 		ViewArgs: args,
 	}
-	b,err := tr.ToBytes()
-	if err!=nil {
-		return nil,err
+	b, err := tr.ToBytes()
+	if err != nil {
+		return nil, err
 	}
 	return b.Bytes(), nil
 }
 
 func NewTemplateLoader(paths []string) *TemplateLoader {
 	loader := &TemplateLoader{
-		paths:         paths,
+		paths: paths,
 	}
 	return loader
 }
@@ -358,7 +358,6 @@ func ParseTemplateError(err error) (templateName string, line int, description s
 	}
 	return templateName, line, description
 }
-
 
 // Template returns the Template with the given name.  The name is the template's path
 // relative to a template loader root.

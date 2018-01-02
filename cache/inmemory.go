@@ -15,7 +15,7 @@ import (
 
 type InMemoryCache struct {
 	cache cache.Cache  // Only expose the methods we want to make available
-	mu sync.RWMutex		 // For increment / decrement prevent reads and writes
+	mu    sync.RWMutex // For increment / decrement prevent reads and writes
 }
 
 func NewInMemoryCache(defaultExpiration time.Duration) InMemoryCache {
@@ -99,12 +99,12 @@ func (c InMemoryCache) Increment(key string, n uint64) (newValue uint64, err err
 func (c InMemoryCache) Decrement(key string, n uint64) (newValue uint64, err error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	if nv,err := c.convertTypeToUint64(key);err !=nil {
+	if nv, err := c.convertTypeToUint64(key); err != nil {
 		return 0, err
 	} else {
 		// Stop from going below zero
-		if n>nv {
-			n=nv
+		if n > nv {
+			n = nv
 		}
 	}
 	if err = c.cache.Decrement(key, int64(n)); err != nil {
@@ -161,4 +161,3 @@ func (c InMemoryCache) convertTypeToUint64(key string) (newValue uint64, err err
 	}
 	return
 }
-

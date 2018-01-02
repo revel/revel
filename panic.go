@@ -5,9 +5,9 @@
 package revel
 
 import (
+	"fmt"
 	"net/http"
 	"runtime/debug"
-	"fmt"
 )
 
 // PanicFilter wraps the action invocation in a protective defer blanket that

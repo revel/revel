@@ -1,8 +1,8 @@
 package revel
 
 import (
-	"github.com/revel/revel/logger"
 	"github.com/revel/log15"
+	"github.com/revel/revel/logger"
 	"log"
 	"os"
 )
@@ -15,7 +15,7 @@ var (
 	// This logger is the application logger, use this for your application log messages - ie jobs and startup,
 	// Use Controller.Log for Controller logging
 	// The requests are logged to this logger with the context of `section:requestlog`
-	AppLog = RootLog.New("module","app")
+	AppLog = RootLog.New("module", "app")
 	// This is the logger revel writes to, added log messages will have a context of module:revel in them
 	// It is based off of `RootLog`
 	RevelLog = RootLog.New("module", "revel")
