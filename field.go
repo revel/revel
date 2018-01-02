@@ -13,17 +13,17 @@ import (
 type Field struct {
 	Name       string
 	Error      *ValidationError
-	viewArgs map[string]interface{}
+	viewArgs   map[string]interface{}
 	controller *Controller
 }
 
 func NewField(name string, viewArgs map[string]interface{}) *Field {
 	err, _ := viewArgs["errors"].(map[string]*ValidationError)[name]
-	controller,_ := viewArgs["_controller"].(*Controller)
+	controller, _ := viewArgs["_controller"].(*Controller)
 	return &Field{
 		Name:       name,
 		Error:      err,
-		viewArgs: viewArgs,
+		viewArgs:   viewArgs,
 		controller: controller,
 	}
 }
@@ -84,15 +84,16 @@ func (f *Field) ErrorClass() string {
 // Get the short name and translate it
 func (f *Field) ShortName() string {
 	name := f.Name
-	if i:=strings.LastIndex(name,"."); i>0 {
+	if i := strings.LastIndex(name, "."); i > 0 {
 		name = name[i+1:]
 	}
 	return f.Translate(name)
 }
+
 // Translate the text
-func (f *Field) Translate(text string, args...interface{}) string {
-	if f.controller!=nil {
-		text = f.controller.Message(text,args...)
+func (f *Field) Translate(text string, args ...interface{}) string {
+	if f.controller != nil {
+		text = f.controller.Message(text, args...)
 	}
 	return text
 }

@@ -6,12 +6,12 @@ package revel_test
 
 import (
 	"fmt"
+	"github.com/revel/revel"
 	"reflect"
 	"regexp"
 	"strings"
 	"testing"
 	"time"
-	"github.com/revel/revel"
 )
 
 const (
@@ -296,7 +296,7 @@ func runIPAddrTestfunc(t *testing.T, test_type int, ipaddr_list map[string]bool,
 		test_ipaddr_list = append(test_ipaddr_list, Expect{input: ipaddr, expectedResult: expected, errorMessage: fmt.Sprintf(msg_fmt, ipaddr)})
 	}
 
-	for _, ip_test_list := range []revel.IPAddr{revel.IPAddr{[]int{test_type}}, revel.ValidIPAddr(test_type)} {
+	for _, ip_test_list := range []revel.IPAddr{{[]int{test_type}}, revel.ValidIPAddr(test_type)} {
 		performTests(ip_test_list, test_ipaddr_list, t)
 	}
 }
@@ -403,7 +403,7 @@ func TestMacAddr(t *testing.T) {
 		test_macaddr_list = append(test_macaddr_list, Expect{input: macaddr, expectedResult: expected, errorMessage: fmt.Sprintf("invalid (%s) MAC address", macaddr)})
 	}
 
-	for _, mac_test_list := range []revel.MacAddr{revel.MacAddr{}, revel.ValidMacAddr()} {
+	for _, mac_test_list := range []revel.MacAddr{{}, revel.ValidMacAddr()} {
 		performTests(mac_test_list, test_macaddr_list, t)
 	}
 }
@@ -469,7 +469,7 @@ func TestDomain(t *testing.T) {
 		tests = append(tests, Expect{input: domain, expectedResult: expected, errorMessage: fmt.Sprintf("invalid (%s) domain", domain)})
 	}
 
-	for _, domain := range []revel.Domain{revel.Domain{}, revel.ValidDomain()} {
+	for _, domain := range []revel.Domain{{}, revel.ValidDomain()} {
 		performTests(domain, tests, t)
 	}
 }
@@ -493,7 +493,7 @@ func TestURL(t *testing.T) {
 		tests = append(tests, Expect{input: url, expectedResult: expected, errorMessage: fmt.Sprintf("invalid (%s) url", url)})
 	}
 
-	for _, url := range []revel.URL{revel.URL{}, revel.ValidURL()} {
+	for _, url := range []revel.URL{{}, revel.ValidURL()} {
 		performTests(url, tests, t)
 	}
 
@@ -533,7 +533,7 @@ func TestPureTextNormal(t *testing.T) {
 	}
 
 	// normal
-	for _, txt := range []revel.PureText{revel.PureText{revel.NORMAL}, revel.ValidPureText(revel.NORMAL)} {
+	for _, txt := range []revel.PureText{{revel.NORMAL}, revel.ValidPureText(revel.NORMAL)} {
 		performTests(txt, tests, t)
 	}
 }
@@ -572,7 +572,7 @@ func TestPureTextStrict(t *testing.T) {
 	}
 
 	// strict
-	for _, txt := range []revel.PureText{revel.PureText{revel.STRICT}, revel.ValidPureText(revel.STRICT)} {
+	for _, txt := range []revel.PureText{{revel.STRICT}, revel.ValidPureText(revel.STRICT)} {
 		performTests(txt, tests, t)
 	}
 }
@@ -602,7 +602,7 @@ func TestFilePathOnlyFilePath(t *testing.T) {
 	}
 
 	// filename without relative path
-	for _, filepath := range []revel.FilePath{revel.FilePath{revel.ONLY_FILENAME}, revel.ValidFilePath(revel.ONLY_FILENAME)} {
+	for _, filepath := range []revel.FilePath{{revel.ONLY_FILENAME}, revel.ValidFilePath(revel.ONLY_FILENAME)} {
 		performTests(filepath, tests, t)
 	}
 }
@@ -633,7 +633,7 @@ func TestFilePathAllowRelativePath(t *testing.T) {
 	}
 
 	// filename with relative path
-	for _, filepath := range []revel.FilePath{revel.FilePath{revel.ALLOW_RELATIVE_PATH}, revel.ValidFilePath(revel.ALLOW_RELATIVE_PATH)} {
+	for _, filepath := range []revel.FilePath{{revel.ALLOW_RELATIVE_PATH}, revel.ValidFilePath(revel.ALLOW_RELATIVE_PATH)} {
 		performTests(filepath, tests, t)
 	}
 }

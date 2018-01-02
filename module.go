@@ -2,9 +2,9 @@ package revel
 
 import (
 	"fmt"
-	"gopkg.in/stack.v0"
 	"github.com/revel/revel/logger"
 	"go/build"
+	"gopkg.in/stack.v0"
 	"path/filepath"
 	"sort"
 	"strings"
