@@ -2,26 +2,30 @@ package logger
 
 import (
 	"io"
-	"os"
+
+	"github.com/revel/config"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 // Used for the callback to LogFunctionMap
 type LogOptions struct {
 	Ctx                    *config.Context
 	ReplaceExistingHandler bool
-	HandlerWrap            LogHandler
-	Levels                 []LogLevel
-	ExtendedOptions        map[string]interface{}
+	// HandlerWrap            ParentHandler,
+	Levels          []LogLevel
+	ExtendedOptions map[string]interface{}
 }
 
 // Create a new log options
-func NewLogOptions(cfg *config.Context, replaceHandler bool, phandler ParentLogHandler, lvl ...LogLevel) *LogOptions {
+func NewLogOptions(cfg *config.Context, replaceHandler bool, lvl ...LogLevel) *LogOptions {
 	return &LogOptions{
 		Ctx: cfg,
 		ReplaceExistingHandler: replaceHandler,
-		HandlerWrap:            phandler,
-		Levels:                 lvl,
-		ExtendedOptions:        map[string]interface{}{},
+		// HandlerWrap:            phandler,
+		Levels:          lvl,
+		ExtendedOptions: map[string]interface{}{},
 	}
 }
 
@@ -51,17 +55,17 @@ func (l *LogOptions) GetBoolDefault(option string, value bool) bool {
 }
 
 type Builder struct {
-	Debug    []zap.Config
-	Info     []zap.Config
-	Warn     []zap.Config
-	Error    []zap.Config
-	Critical []zap.Config
+	Debug    []*zap.Logger
+	Info     []*zap.Logger
+	Warn     []*zap.Logger
+	Error    []*zap.Logger
+	Critical []*zap.Logger
 }
 
 func NewBuilder() *Builder {
 	return &Builder{}
 }
-func (h *Builder) SetHandler(handler zap.Config, replace bool, level LogLevel) {
+func (h *Builder) SetHandler(handler *zap.Logger, replace bool, level LogLevel) {
 	if handler == nil {
 		// Ignore empty handler
 		return
@@ -77,47 +81,39 @@ func (h *Builder) SetHandler(handler zap.Config, replace bool, level LogLevel) {
 		source = &h.Warn
 	case LvlError:
 		source = &h.Error
-	case LvlCrit:
-		source = &h.Critical
+		//case LvlCrit:
+		//	source = &h.Critical
 	}
 
 	if !replace && *source != nil {
 		*source = append(*source, handler)
 	} else {
-		*source = []zap.Config{handler}
+		*source = []*zap.Logger{handler}
 	}
 }
 
-func (h *Builder) SetHandlers(handler LogHandler, options *LogOptions) {
+func (h *Builder) SetHandlers(encoder zapcore.Encoder, writer io.Writer, options *LogOptions) {
 	if len(options.Levels) == 0 {
 		options.Levels = LvlAllList
 	}
 	// Set all levels
 	for _, lvl := range options.Levels {
-		h.SetHandler(handler, options.ReplaceExistingHandler, lvl)
+		core := zapcore.NewCore(
+			encoder,
+			zapcore.AddSync(writer),
+			zap.InfoLevel,
+		)
+		h.SetHandler(zap.New(core), options.ReplaceExistingHandler, lvl)
 	}
 }
 
-//func (h *Builder) SetJson(writer io.Writer, options *LogOptions) {
-//cfg := zap.NewProductionConfig()
-//cfg.Encoding  = "json"
-
-//handler := CallerFileHandler(StreamHandler(writer, log15.JsonFormatEx(
-//	options.GetBoolDefault("pretty", false),
-//	options.GetBoolDefault("lineSeparated", true),
-//)))
-//if options.HandlerWrap != nil {
-//	handler = options.HandlerWrap.SetChild(handler)
-//}
-//h.SetHandlers(handler, options)
-//}
+func (h *Builder) SetJson(writer io.Writer, options *LogOptions) {
+	encoder := zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig())
+	h.SetHandlers(encoder, writer, options)
+}
 
 // Use built in rolling function
 func (h *Builder) SetJsonFile(filePath string, options *LogOptions) {
-
-	cfg := zap.NewProductionConfig()
-	cfg.Encoding = "json"
-
 	writer := &lumberjack.Logger{
 		Filename:   filePath,
 		MaxSize:    options.GetIntDefault("maxSizeMB", 1024), // megabytes
@@ -129,31 +125,8 @@ func (h *Builder) SetJsonFile(filePath string, options *LogOptions) {
 }
 
 func (h *Builder) SetTerminal(writer io.Writer, options *LogOptions) {
-	streamHandler := StreamHandler(
-		writer,
-		TerminalFormatHandler(
-			options.GetBoolDefault("noColor", false),
-			options.GetBoolDefault("smallDate", true)))
-
-	if os.Stdout == writer {
-		streamHandler = StreamHandler(
-			colorable.NewColorableStdout(),
-			TerminalFormatHandler(
-				options.GetBoolDefault("noColor", false),
-				options.GetBoolDefault("smallDate", true)))
-	} else if os.Stderr == writer {
-		streamHandler = StreamHandler(
-			colorable.NewColorableStderr(),
-			TerminalFormatHandler(
-				options.GetBoolDefault("noColor", false),
-				options.GetBoolDefault("smallDate", true)))
-	}
-
-	handler := CallerFileHandler(streamHandler)
-	if options.HandlerWrap != nil {
-		handler = options.HandlerWrap.SetChild(handler)
-	}
-	h.SetHandlers(handler, options)
+	encoder := zapcore.NewConsoleEncoder(zap.NewProductionEncoderConfig())
+	h.SetHandlers(encoder, writer, options)
 }
 
 // Use built in rolling function

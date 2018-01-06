@@ -17,7 +17,7 @@ var (
 		"info":    LvlInfo,
 		"request": LvlInfo,
 		"warn":    LvlWarn,
-		"error":   ErrorLevel,
+		"error":   LvlError,
 		"crit":    LvlCrit,
 		"trace":   LvlTrace, // TODO trace is deprecated, replaced by debug
 	}
@@ -44,17 +44,17 @@ func GetLogger(name string, logger MultiLogger) (l *log.Logger) {
 // Get all handlers based on the Config (if available)
 func InitializeFromConfig(basePath string, config *config.Context) (c *Builder) {
 	// If the configuration has an all option we can skip some
-	c, _ = NewCompositeMultiHandler()
+	c = NewBuilder()
 
 	// Filters are assigned first, non filtered items override filters
 	initAllLog(c, basePath, config)
 	initLogLevels(c, basePath, config)
-	if c.CriticalHandler == nil && c.ErrorHandler != nil {
-		c.CriticalHandler = c.ErrorHandler
+	if len(c.Critical) == 0 && len(c.Error) != 0 {
+		c.Critical = c.Error
 	}
 	initFilterLog(c, basePath, config)
-	if c.CriticalHandler == nil && c.ErrorHandler != nil {
-		c.CriticalHandler = c.ErrorHandler
+	if len(c.Critical) == 0 && len(c.Error) != 0 {
+		c.Critical = c.Error
 	}
 	initRequestLog(c, basePath, config)
 
