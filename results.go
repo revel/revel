@@ -469,7 +469,13 @@ func getRedirectURL(item interface{}, args []interface{}) (string, error) {
 		}
 		module := ModuleFromPath(recvType.PkgPath(),true)
 		println("Returned ", module)
-		action := module.Namespace() + recvType.Name() + "." + method.Name
+		var moduleNamespace string
+		if module != nil {
+			moduleNamespace = module.Namespace()
+		} else {
+			moduleNamespace = recvType.Name()
+		}
+		action := moduleNamespace + recvType.Name() + "." + method.Name
 		// Fetch the action path to get the defaults
 		pathData, found := splitActionPath(nil, action, true)
 		if !found {
