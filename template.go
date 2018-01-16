@@ -266,8 +266,8 @@ func (runtimeLoader *templateRuntime) findAndAddTemplate(path, fullSrcDir, baseP
 		templateLog.Error("findAndAddTemplate: Failed reading file:", "path", path, "error", err)
 		return
 	}
-	// Parse template file and replace the "_RNS_|" in the template with the module name
-	// allow for namespaces to be renamed "_RNS_(.*?)|"
+	// Parse template file and replace the "_LOCAL_|" in the template with the module name
+	// allow for namespaces to be renamed "_LOCAL_(.*?)|"
 	if module := ModuleFromPath(path, false); module != nil {
 		fileBytes = namespaceReplace(fileBytes, module)
 	}

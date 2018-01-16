@@ -24,7 +24,7 @@ func namespaceReplace(fileBytes []byte, module *Module) ([]byte){
 			// This match includes the module name as imported by the module
 			// We could transform the module name if it is different..
 			// For now leave it the same
-			// so _RNS_.static| becomes static|
+			// so _LOCAL_.static| becomes static|
 			lastIndex ++
 		} else {
 			// Inject the module name
