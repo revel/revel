@@ -8,6 +8,7 @@ import (
 
 	"github.com/revel/config"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 // Utility package to make existing logging backwards compatible
@@ -84,21 +85,28 @@ func initFilterLog(c *Builder, basePath string, config *config.Context) {
 	// The commands to use
 	logFilterList := []struct {
 		LogPrefix, LogSuffix string
-		parentHandler        func(map[string]interface{}) ParentLogHandler
+		parentHandler        func(keyMap map[string]string) func(core zapcore.Core, opt *LogOptions) zapcore.Core
 	}{{
 		"log.", ".filter",
-		func(keyMap map[string]interface{}) ParentLogHandler {
-			return NewParentLogHandler(func(child LogHandler) LogHandler {
-				return MatchMapHandler(keyMap, child)
-			})
-
+		func(keyMap map[string]string) func(core zapcore.Core, opt *LogOptions) zapcore.Core {
+			return func(core zapcore.Core, opt *LogOptions) zapcore.Core {
+				return proxyCore{
+					impl:        core,
+					matchValues: keyMap,
+					inverse:     true,
+				}
+			}
 		},
 	}, {
 		"log.", ".nfilter",
-		func(keyMap map[string]interface{}) ParentLogHandler {
-			return NewParentLogHandler(func(child LogHandler) LogHandler {
-				return NotMatchMapHandler(keyMap, child)
-			})
+		func(keyMap map[string]string) func(core zapcore.Core, opt *LogOptions) zapcore.Core {
+			return func(core zapcore.Core, opt *LogOptions) zapcore.Core {
+				return proxyCore{
+					impl:        core,
+					matchValues: keyMap,
+					inverse:     false,
+				}
+			}
 		},
 	}}
 
@@ -110,17 +118,17 @@ func initFilterLog(c *Builder, basePath string, config *config.Context) {
 			optionList := config.Options(logFilter.LogPrefix + name + logFilter.LogSuffix)
 			for _, option := range optionList {
 				splitOptions := strings.Split(option, ".")
-				keyMap := map[string]interface{}{}
+				keyMap := map[string]string{}
 				for x := 3; x < len(splitOptions); x += 2 {
 					keyMap[splitOptions[x]] = splitOptions[x+1]
 				}
-				phandler := logFilter.parentHandler(keyMap)
+				wrapper := logFilter.parentHandler(keyMap)
 				log.Printf("Adding key map handler %s %s output %s", option, name, config.StringDefault(option, ""))
 
 				if name == "all" {
-					initHandlerFor(c, config.StringDefault(option, ""), basePath, NewLogOptions(config, false, phandler))
+					initHandlerFor(c, config.StringDefault(option, ""), basePath, NewLogOptions(config, false, wrapper))
 				} else {
-					initHandlerFor(c, config.StringDefault(option, ""), basePath, NewLogOptions(config, false, phandler, toLevel[name]))
+					initHandlerFor(c, config.StringDefault(option, ""), basePath, NewLogOptions(config, false, wrapper, toLevel[name]))
 				}
 			}
 		}
@@ -156,16 +164,16 @@ func initRequestLog(c *Builder, basePath string, config *config.Context) {
 	if config != nil {
 		outputRequest = config.StringDefault("log.request.output", "")
 	}
-	oldInfo := c.InfoHandler
-	c.InfoHandler = nil
+	oldInfo := c.Info
+	c.Info = nil
 	if outputRequest != "" {
 		initHandlerFor(c, outputRequest, basePath, NewLogOptions(config, false, nil, LvlInfo))
 	}
-	if c.InfoHandler != nil || oldInfo != nil {
-		if c.InfoHandler == nil {
-			c.InfoHandler = oldInfo
+	if c.Info != nil || oldInfo != nil {
+		if c.Info == nil {
+			c.Info = oldInfo
 		} else {
-			c.InfoHandler = MatchAbHandler("section", "requestlog", c.InfoHandler, oldInfo)
+			c.Info = MatchAbHandler("section", "requestlog", c.Info, oldInfo)
 		}
 	}
 }
@@ -174,11 +182,9 @@ func initRequestLog(c *Builder, basePath string, config *config.Context) {
 var LogFunctionMap = map[string]func(*Builder, *LogOptions){
 	// Do nothing - set the logger off
 	"off": func(c *Builder, logOptions *LogOptions) {
-		// Only drop the results if there is a parent handler defined
-		if logOptions.HandlerWrap != nil {
-			for _, l := range logOptions.Levels {
-				c.SetHandler(logOptions.HandlerWrap.SetChild(NilHandler()), logOptions.ReplaceExistingHandler, l)
-			}
+		for _, l := range logOptions.Levels {
+			core := zapcore.NewNopCore()
+			c.SetHandler(zap.New(core), logOptions.ReplaceExistingHandler, l)
 		}
 	},
 	// Do nothing - set the logger off
@@ -199,7 +205,7 @@ var LogFunctionMap = map[string]func(*Builder, *LogOptions){
 	},
 }
 
-func defaultInitHandlerFor(output string, c *Builder, logOptions *LogOptions) {
+func defaultHandlerFor(basePath string, output string, c *Builder, options *LogOptions) {
 	// Write to file specified
 	if !filepath.IsAbs(output) {
 		output = filepath.Join(basePath, output)
@@ -239,6 +245,6 @@ func initHandlerFor(c *Builder, output, basePath string, options *LogOptions) {
 	if funcHandler, found := LogFunctionMap[output]; found {
 		funcHandler(c, options)
 	} else {
-		defaultHandler(output, c, options)
+		defaultHandlerFor(basePath, output, c, options)
 	}
 }

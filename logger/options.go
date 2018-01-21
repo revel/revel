@@ -9,25 +9,28 @@ import (
 	"github.com/revel/config"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	lumberjack "gopkg.in/natefinch/lumberjack.v2"
 )
+
+type HandlerWrapper func(core zapcore.Core, options *LogOptions) zapcore.Core
 
 // Used for the callback to LogFunctionMap
 type LogOptions struct {
 	Ctx                    *config.Context
 	ReplaceExistingHandler bool
-	HandlerWrap            func(, options *LogOptions),
-	Levels          []LogLevel
-	ExtendedOptions map[string]interface{}
+	HandlerWrap            HandlerWrapper
+	Levels                 []LogLevel
+	ExtendedOptions        map[string]interface{}
 }
 
 // Create a new log options
-func NewLogOptions(cfg *config.Context, replaceHandler bool, lvl ...LogLevel) *LogOptions {
+func NewLogOptions(cfg *config.Context, replaceHandler bool, wrapper HandlerWrapper, lvl ...LogLevel) *LogOptions {
 	return &LogOptions{
 		Ctx: cfg,
 		ReplaceExistingHandler: replaceHandler,
-		// HandlerWrap:            phandler,
-		Levels:          lvl,
-		ExtendedOptions: map[string]interface{}{},
+		HandlerWrap:            wrapper,
+		Levels:                 lvl,
+		ExtendedOptions:        map[string]interface{}{},
 	}
 }
 
@@ -99,18 +102,17 @@ func (h *Builder) SetHandlers(encoder zapcore.Encoder, writer io.Writer, options
 		options.Levels = LvlAllList
 	}
 
-	
-	if options.HandlerWrap != nil {
-		handler = options.HandlerWrap(handler, options)
-	}
-	
 	// Set all levels
 	for _, lvl := range options.Levels {
 		core := zapcore.NewCore(
 			encoder,
 			zapcore.AddSync(writer),
-			zap.InfoLevel,
+			zapcore.Level(lvl),
 		)
+
+		if options.HandlerWrap != nil {
+			core = options.HandlerWrap(core, options)
+		}
 		h.SetHandler(zap.New(core), options.ReplaceExistingHandler, lvl)
 	}
 }
@@ -215,7 +217,7 @@ func matchString(s string, value string) bool {
 }
 
 func matchField(f zapcore.Field, value string) int {
-	var matchResult bool 
+	var matchResult bool
 	switch f.Type {
 	// case ArrayMarshalerType:
 	// 	err = enc.AddArray(f.Key, f.Interface.(ArrayMarshaler))
@@ -252,7 +254,7 @@ func matchField(f zapcore.Field, value string) int {
 			matchResult = matchTime(time.Unix(0, f.Integer).In(f.Interface.(*time.Location)), value)
 		} else {
 			// Fall back to UTC if location is nil.
-			matchResult = matchTime( time.Unix(0, f.Integer), value)
+			matchResult = matchTime(time.Unix(0, f.Integer), value)
 		}
 	case zapcore.Uint64Type:
 		matchResult = matchUint64(uint64(f.Integer), value)
@@ -286,7 +288,7 @@ func matchField(f zapcore.Field, value string) int {
 type proxyCore struct {
 	impl        zapcore.Core
 	matchValues map[string]string
-	inverse bool
+	inverse     bool
 }
 
 func (p proxyCore) Enabled(l zapcore.Level) bool {
@@ -298,14 +300,14 @@ func (p proxyCore) With(fields []zapcore.Field) zapcore.Core {
 		excepted, ok := p.matchValues[f.Key]
 		if ok {
 			mr := matchField(f, excepted)
-			if  mr == MatchTrue {
+			if mr == MatchTrue {
 				matchedKeys = append(matchedKeys, f.Key)
 			} else if mr == MatchFalse {
 				enabled := false
 				if p.inverse {
 					enabled = true
 				}
-				return enableCore{impl: p.impl.With(fields), 
+				return enableCore{impl: p.impl.With(fields),
 					enabled: enabled}
 			}
 		}
@@ -316,7 +318,7 @@ func (p proxyCore) With(fields []zapcore.Field) zapcore.Core {
 		if p.inverse {
 			enabled = false
 		}
-		return enableCore{impl: p.impl.With(fields), 
+		return enableCore{impl: p.impl.With(fields),
 			enabled: enabled}
 	}
 
@@ -328,14 +330,14 @@ func (p proxyCore) With(fields []zapcore.Field) zapcore.Core {
 		for _, key := range matchedKeys {
 			delete(matchValues, key)
 		}
-		return proxyCore{impl:  p.impl.With(fields), 
+		return proxyCore{impl: p.impl.With(fields),
 			matchValues: matchValues,
-			inverse: p.inverse}
+			inverse:     p.inverse}
 	}
 
-	return proxyCore{impl:  p.impl.With(fields), 
+	return proxyCore{impl: p.impl.With(fields),
 		matchValues: p.matchValues,
-		inverse: p.inverse}
+		inverse:     p.inverse}
 }
 func (p proxyCore) Check(entry zapcore.Entry, ce *zapcore.CheckedEntry) *zapcore.CheckedEntry {
 	return p.impl.Check(entry, ce)
@@ -346,7 +348,7 @@ func (p proxyCore) Write(entry zapcore.Entry, fields []zapcore.Field) error {
 		excepted, ok := p.matchValues[f.Key]
 		if ok {
 			mr := matchField(f, excepted)
-			if  mr == MatchTrue {
+			if mr == MatchTrue {
 				matchedKeys = append(matchedKeys, f.Key)
 			} else if mr == MatchFalse {
 				goto notmatch
@@ -374,6 +376,7 @@ type enableCore struct {
 	impl    zapcore.Core
 	enabled bool
 }
+
 func (p enableCore) Enabled(l zapcore.Level) bool {
 	return p.Enabled(l) && p.enabled
 }
