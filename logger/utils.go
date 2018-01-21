@@ -23,23 +23,23 @@ var (
 	}
 )
 
-func GetLogger(name string, logger MultiLogger) (l *log.Logger) {
-	switch name {
-	case "trace": // TODO trace is deprecated, replaced by debug
-		l = logger.ToStdLogger(zap.DebugLevel)
-	case "debug":
-		l = logger.ToStdLogger(zap.DebugLevel)
-	case "info":
-		l = logger.ToStdLogger(zap.InfoLevel)
-	case "warn":
-		l = logger.ToStdLogger(zap.WarnLevel)
-	case "error":
-		l = logger.ToStdLogger(zap.ErrorLevel)
-	case "request":
-		l = logger.ToStdLogger(zap.InfoLevel)
-	}
-	return l
-}
+// func GetLogger(name string, logger MultiLogger) (l *log.Logger) {
+// 	switch name {
+// 	case "trace": // TODO trace is deprecated, replaced by debug
+// 		l = logger.ToStdLogger(zap.DebugLevel)
+// 	case "debug":
+// 		l = logger.ToStdLogger(zap.DebugLevel)
+// 	case "info":
+// 		l = logger.ToStdLogger(zap.InfoLevel)
+// 	case "warn":
+// 		l = logger.ToStdLogger(zap.WarnLevel)
+// 	case "error":
+// 		l = logger.ToStdLogger(zap.ErrorLevel)
+// 	case "request":
+// 		l = logger.ToStdLogger(zap.InfoLevel)
+// 	}
+// 	return l
+// }
 
 // Get all handlers based on the Config (if available)
 func InitializeFromConfig(basePath string, config *config.Context) (c *Builder) {
