@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"strconv"
@@ -122,6 +123,17 @@ func (h *Builder) Disable(levels ...LogLevel) {
 			// 	h.Critical = nil
 		}
 	}
+}
+
+func (h *Builder) Build() MultiLogger {
+	logger := zap.New(cores{
+		debug: zapcore.NewTee(h.Debug...),
+		info:  zapcore.NewTee(h.Info...),
+		warn:  zapcore.NewTee(h.Warn...),
+		err:   zapcore.NewTee(h.Error...),
+	}).WithOptions(zap.AddCallerSkip(1))
+
+	return &RevelLogger{l: logger, s: logger.Sugar()}
 }
 
 const (
@@ -381,4 +393,76 @@ func (ab abCore) Sync() error {
 	err1 := ab.a.Sync()
 	err2 := ab.b.Sync()
 	return multierr.Append(err1, err2)
+}
+
+type cores struct {
+	debug zapcore.Core
+	info  zapcore.Core
+	warn  zapcore.Core
+	err   zapcore.Core
+}
+
+func (c cores) Enabled(l zapcore.Level) bool {
+	switch l {
+	case zapcore.DebugLevel:
+		return c.debug.Enabled(l)
+	case zapcore.InfoLevel:
+		return c.info.Enabled(l)
+	case zapcore.WarnLevel:
+		return c.warn.Enabled(l)
+	case zapcore.ErrorLevel:
+		return c.err.Enabled(l)
+	default:
+		return c.err.Enabled(l)
+	}
+}
+
+func (c cores) With(fields []zapcore.Field) zapcore.Core {
+	return cores{
+		debug: c.debug.With(fields),
+		info:  c.info.With(fields),
+		warn:  c.warn.With(fields),
+		err:   c.err.With(fields)}
+}
+
+func (c cores) Check(entry zapcore.Entry, ce *zapcore.CheckedEntry) *zapcore.CheckedEntry {
+	switch entry.Level {
+	case zapcore.DebugLevel:
+		return c.debug.Check(entry, ce)
+	case zapcore.InfoLevel:
+		return c.info.Check(entry, ce)
+	case zapcore.WarnLevel:
+		return c.warn.Check(entry, ce)
+	case zapcore.ErrorLevel:
+		return c.err.Check(entry, ce)
+	default:
+		return c.err.Check(entry, ce)
+	}
+}
+
+func (c cores) Write(entry zapcore.Entry, fields []zapcore.Field) error {
+	// this method will not invoke.
+
+	// switch entry.Level {
+	// case zapcore.DebugLevel:
+	// 	return c.debug.Write(entry, fields)
+	// case zapcore.InfoLevel:
+	// 	return c.info.Write(entry, fields)
+	// case zapcore.WarnLevel:
+	// 	return c.warn.Write(entry, fields)
+	// case zapcore.ErrorLevel:
+	// 	return c.err.Write(entry, fields)
+	// default:
+	// 	return c.err.Write(entry, fields)
+	// }
+	panic(errors.New("cores.Write() will not invoke"))
+}
+func (c cores) Sync() error {
+	// this method will not invoke.
+	panic(errors.New("cores.Sync() will not invoke"))
+
+	// err := c.debug.Sync()
+	// err = multierr.Append(err, c.info.Sync())
+	// err = multierr.Append(err, c.warn.Sync())
+	// return multierr.Append(err, c.err.Sync())
 }
