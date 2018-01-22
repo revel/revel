@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/revel/config"
-	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
@@ -173,7 +172,10 @@ func initRequestLog(c *Builder, basePath string, config *config.Context) {
 		if c.Info == nil {
 			c.Info = oldInfo
 		} else {
-			c.Info = MatchAbHandler("section", "requestlog", c.Info, oldInfo)
+			c.Info = []zapcore.Core{abCore{a: zapcore.NewTee(c.Info...),
+				b:     zapcore.NewTee(oldInfo...),
+				key:   "section",
+				value: "requestlog"}}
 		}
 	}
 }
@@ -184,7 +186,7 @@ var LogFunctionMap = map[string]func(*Builder, *LogOptions){
 	"off": func(c *Builder, logOptions *LogOptions) {
 		for _, l := range logOptions.Levels {
 			core := zapcore.NewNopCore()
-			c.SetHandler(zap.New(core), logOptions.ReplaceExistingHandler, l)
+			c.SetHandler(core, logOptions.ReplaceExistingHandler, l)
 		}
 	},
 	// Do nothing - set the logger off

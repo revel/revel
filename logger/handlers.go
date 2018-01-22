@@ -6,23 +6,24 @@ import (
 	"strconv"
 	"time"
 
+	"go.uber.org/multierr"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	lumberjack "gopkg.in/natefinch/lumberjack.v2"
 )
 
 type Builder struct {
-	Debug    []*zap.Logger
-	Info     []*zap.Logger
-	Warn     []*zap.Logger
-	Error    []*zap.Logger
-	Critical []*zap.Logger
+	Debug    []zapcore.Core
+	Info     []zapcore.Core
+	Warn     []zapcore.Core
+	Error    []zapcore.Core
+	Critical []zapcore.Core
 }
 
 func NewBuilder() *Builder {
 	return &Builder{}
 }
-func (h *Builder) SetHandler(handler *zap.Logger, replace bool, level LogLevel) {
+func (h *Builder) SetHandler(handler zapcore.Core, replace bool, level LogLevel) {
 	if handler == nil {
 		// Ignore empty handler
 		return
@@ -45,7 +46,7 @@ func (h *Builder) SetHandler(handler *zap.Logger, replace bool, level LogLevel) 
 	if !replace && *source != nil {
 		*source = append(*source, handler)
 	} else {
-		*source = []*zap.Logger{handler}
+		*source = []zapcore.Core{handler}
 	}
 }
 
@@ -65,7 +66,7 @@ func (h *Builder) SetHandlers(encoder zapcore.Encoder, writer io.Writer, options
 		if options.HandlerWrap != nil {
 			core = options.HandlerWrap(core, options)
 		}
-		h.SetHandler(zap.New(core), options.ReplaceExistingHandler, lvl)
+		h.SetHandler(core, options.ReplaceExistingHandler, lvl)
 	}
 }
 
@@ -124,9 +125,9 @@ func (h *Builder) Disable(levels ...LogLevel) {
 }
 
 const (
-	MatchSkip = iota
-	MatchTrue
-	MatchFalse
+	matchSkip = iota
+	matchTrue
+	matchFalse
 )
 
 func matchBinary(bs []byte, value string) bool {
@@ -227,14 +228,14 @@ func matchField(f zapcore.Field, value string) int {
 	// case ErrorType:
 	// 	encodeError(f.Key, f.Interface.(error), enc)
 	case zapcore.SkipType:
-		return MatchSkip
+		return matchSkip
 	default:
-		return MatchSkip
+		return matchSkip
 	}
 	if matchResult {
-		return MatchTrue
+		return matchTrue
 	}
-	return MatchFalse
+	return matchFalse
 }
 
 type proxyCore struct {
@@ -246,53 +247,58 @@ type proxyCore struct {
 func (p proxyCore) Enabled(l zapcore.Level) bool {
 	return p.Enabled(l)
 }
+
 func (p proxyCore) With(fields []zapcore.Field) zapcore.Core {
 	var matchedKeys []string
 	for _, f := range fields {
 		excepted, ok := p.matchValues[f.Key]
 		if ok {
 			mr := matchField(f, excepted)
-			if mr == MatchTrue {
+			if mr == matchTrue {
 				matchedKeys = append(matchedKeys, f.Key)
-			} else if mr == MatchFalse {
-				enabled := false
+			} else if mr == matchFalse {
 				if p.inverse {
-					enabled = true
+					return p.impl.With(fields)
 				}
-				return enableCore{impl: p.impl.With(fields),
-					enabled: enabled}
+				return zapcore.NewNopCore()
 			}
 		}
 	}
 
 	if len(matchedKeys) == len(p.matchValues) {
-		enabled := true
 		if p.inverse {
-			enabled = false
+			return zapcore.NewNopCore()
 		}
-		return enableCore{impl: p.impl.With(fields),
-			enabled: enabled}
+		return p.impl.With(fields)
 	}
 
+	matchValues := p.matchValues
 	if len(matchedKeys) > 0 {
-		matchValues := make(map[string]string, len(p.matchValues))
+		matchValues = make(map[string]string, len(p.matchValues))
 		for k, v := range p.matchValues {
-			matchValues[k] = v
+			found := false
+			for _, key := range matchedKeys {
+				if key == k {
+					found = true
+					break
+				}
+			}
+
+			if !found {
+				matchValues[k] = v
+			}
 		}
-		for _, key := range matchedKeys {
-			delete(matchValues, key)
-		}
-		return proxyCore{impl: p.impl.With(fields),
-			matchValues: matchValues,
-			inverse:     p.inverse}
 	}
 
 	return proxyCore{impl: p.impl.With(fields),
-		matchValues: p.matchValues,
+		matchValues: matchValues,
 		inverse:     p.inverse}
 }
 func (p proxyCore) Check(entry zapcore.Entry, ce *zapcore.CheckedEntry) *zapcore.CheckedEntry {
-	return p.impl.Check(entry, ce)
+	if p.Enabled(entry.Level) {
+		return ce.AddCore(entry, p)
+	}
+	return ce
 }
 func (p proxyCore) Write(entry zapcore.Entry, fields []zapcore.Field) error {
 	var matchedKeys []string
@@ -300,9 +306,9 @@ func (p proxyCore) Write(entry zapcore.Entry, fields []zapcore.Field) error {
 		excepted, ok := p.matchValues[f.Key]
 		if ok {
 			mr := matchField(f, excepted)
-			if mr == MatchTrue {
+			if mr == matchTrue {
 				matchedKeys = append(matchedKeys, f.Key)
-			} else if mr == MatchFalse {
+			} else if mr == matchFalse {
 				goto notmatch
 			}
 		}
@@ -324,23 +330,55 @@ func (p proxyCore) Sync() error {
 	return p.impl.Sync()
 }
 
-type enableCore struct {
-	impl    zapcore.Core
-	enabled bool
+type abCore struct {
+	a, b       zapcore.Core
+	key, value string
 }
 
-func (p enableCore) Enabled(l zapcore.Level) bool {
-	return p.Enabled(l) && p.enabled
+func (ab abCore) Enabled(l zapcore.Level) bool {
+	return ab.Enabled(l)
 }
-func (p enableCore) With(fields []zapcore.Field) zapcore.Core {
-	return enableCore{impl: p.impl.With(fields), enabled: p.enabled}
+
+func (ab abCore) With(fields []zapcore.Field) zapcore.Core {
+	for _, f := range fields {
+		if f.Key == ab.key {
+			mr := matchField(f, ab.value)
+			if mr == matchTrue {
+				return ab.a.With(fields)
+			} else if mr == matchFalse {
+				return ab.b.With(fields)
+			}
+		}
+	}
+
+	return abCore{a: ab.a.With(fields),
+		b:     ab.b.With(fields),
+		key:   ab.key,
+		value: ab.value}
 }
-func (p enableCore) Check(entry zapcore.Entry, ce *zapcore.CheckedEntry) *zapcore.CheckedEntry {
-	return p.impl.Check(entry, ce)
+
+func (ab abCore) Check(entry zapcore.Entry, ce *zapcore.CheckedEntry) *zapcore.CheckedEntry {
+	if ab.a.Enabled(entry.Level) || ab.b.Enabled(entry.Level) {
+		return ce.AddCore(entry, ab)
+	}
+	return ce
 }
-func (p enableCore) Write(entry zapcore.Entry, fields []zapcore.Field) error {
-	return p.impl.Write(entry, fields)
+
+func (ab abCore) Write(entry zapcore.Entry, fields []zapcore.Field) error {
+	for _, f := range fields {
+		if f.Key == ab.key {
+			mr := matchField(f, ab.value)
+			if mr == matchTrue {
+				return ab.a.Write(entry, fields)
+			} else if mr == matchFalse {
+				return ab.b.Write(entry, fields)
+			}
+		}
+	}
+	return ab.b.Write(entry, fields)
 }
-func (p enableCore) Sync() error {
-	return p.impl.Sync()
+func (ab abCore) Sync() error {
+	err1 := ab.a.Sync()
+	err2 := ab.b.Sync()
+	return multierr.Append(err1, err2)
 }
