@@ -1,278 +1,81 @@
 package logger
 
-/**
+import (
+	"fmt"
+	"io"
+	"strconv"
+	"time"
 
-// Filters out records which do not match the level
-// Uses the `log15.FilterHandler` to perform this task
-func LevelHandler(lvl LogLevel, h LogHandler) LogHandler {
-	l15Lvl := log15.Lvl(lvl)
-	return log15.FilterHandler(func(r *log15.Record) (pass bool) {
-		return r.Lvl == l15Lvl
-	}, h)
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+	lumberjack "gopkg.in/natefinch/lumberjack.v2"
+)
+
+type Builder struct {
+	Debug    []*zap.Logger
+	Info     []*zap.Logger
+	Warn     []*zap.Logger
+	Error    []*zap.Logger
+	Critical []*zap.Logger
 }
 
-// Filters out records which do not match the level
-// Uses the `log15.FilterHandler` to perform this task
-func MinLevelHandler(lvl LogLevel, h LogHandler) LogHandler {
-	l15Lvl := log15.Lvl(lvl)
-	return log15.FilterHandler(func(r *log15.Record) (pass bool) {
-		return r.Lvl <= l15Lvl
-	}, h)
+func NewBuilder() *Builder {
+	return &Builder{}
 }
-
-// Filters out records which match the level
-// Uses the `log15.FilterHandler` to perform this task
-func NotLevelHandler(lvl LogLevel, h LogHandler) LogHandler {
-	l15Lvl := log15.Lvl(lvl)
-	return log15.FilterHandler(func(r *log15.Record) (pass bool) {
-		return r.Lvl != l15Lvl
-	}, h)
-}
-
-// Adds in a context called `caller` to the record (contains file name and line number like `foo.go:12`)
-// Uses the `log15.CallerFileHandler` to perform this task
-func CallerFileHandler(h LogHandler) LogHandler {
-	return log15.CallerFileHandler(h)
-}
-
-// Adds in a context called `caller` to the record (contains file name and line number like `foo.go:12`)
-// Uses the `log15.CallerFuncHandler` to perform this task
-func CallerFuncHandler(h LogHandler) LogHandler {
-	return log15.CallerFuncHandler(h)
-}
-
-// Filters out records which match the key value pair
-// Uses the `log15.MatchFilterHandler` to perform this task
-func MatchHandler(key string, value interface{}, h LogHandler) LogHandler {
-	return log15.MatchFilterHandler(key, value, h)
-}
-
-// If match then A handler is called otherwise B handler is called
-func MatchAbHandler(key string, value interface{}, a, b LogHandler) LogHandler {
-	return log15.FuncHandler(func(r *log15.Record) error {
-		for i := 0; i < len(r.Ctx); i += 2 {
-			if r.Ctx[i] == key {
-				if r.Ctx[i+1] == value {
-					if a != nil {
-						return a.Log(r)
-					}
-					return nil
-				}
-			}
-		}
-		if b != nil {
-			return b.Log(r)
-		}
-		return nil
-	})
-}
-
-// The nil handler is used if logging for a specific request needs to be turned off
-func NilHandler() LogHandler {
-	return log15.FuncHandler(func(r *log15.Record) error {
-		return nil
-	})
-}
-
-// Match all values in map to log
-func MatchMapHandler(matchMap map[string]interface{}, a LogHandler) LogHandler {
-	return matchMapHandler(matchMap, false, a)
-}
-
-// Match !(Match all values in map to log) The inverse of MatchMapHandler
-func NotMatchMapHandler(matchMap map[string]interface{}, a LogHandler) LogHandler {
-	return matchMapHandler(matchMap, true, a)
-}
-
-// Rather then chaining multiple filter handlers, process all here
-func matchMapHandler(matchMap map[string]interface{}, inverse bool, a LogHandler) LogHandler {
-	return log15.FuncHandler(func(r *log15.Record) error {
-		checkMap := map[string]bool{}
-		// Copy the map to a bool
-		for i := 0; i < len(r.Ctx); i += 2 {
-			if value, found := matchMap[r.Ctx[i].(string)]; found && value == r.Ctx[i+1] {
-				checkMap[r.Ctx[i].(string)] = true
-			}
-		}
-		if len(checkMap) == len(matchMap) {
-			if !inverse {
-				return a.Log(r)
-			}
-		} else if inverse {
-			return a.Log(r)
-		}
-		return nil
-	})
-}
-
-// Filters out records which do not match the key value pair
-// Uses the `log15.FilterHandler` to perform this task
-func NotMatchHandler(key string, value interface{}, h LogHandler) LogHandler {
-	return log15.FilterHandler(func(r *log15.Record) (pass bool) {
-		switch key {
-		case r.KeyNames.Lvl:
-			return r.Lvl != value
-		case r.KeyNames.Time:
-			return r.Time != value
-		case r.KeyNames.Msg:
-			return r.Msg != value
-		}
-
-		for i := 0; i < len(r.Ctx); i += 2 {
-			if r.Ctx[i] == key {
-				return r.Ctx[i+1] == value
-			}
-		}
-		return true
-	}, h)
-}
-
-func MultiHandler(hs ...LogHandler) LogHandler {
-	// Convert the log handlers to log15.Handlers
-	handlers := []log15.Handler{}
-	for _, h := range hs {
-		if h != nil {
-			handlers = append(handlers, h)
-		}
-	}
-
-	return log15.MultiHandler(handlers...)
-}
-
-// Outputs the records to the passed in stream
-// Uses the `log15.StreamHandler` to perform this task
-func StreamHandler(wr io.Writer, fmtr LogFormat) LogHandler {
-	return log15.StreamHandler(wr, fmtr)
-}
-
-// Filter handler, this is the only
-// Uses the `log15.FilterHandler` to perform this task
-func FilterHandler(fn func(r *log15.Record) bool, h LogHandler) LogHandler {
-	return log15.FilterHandler(fn, h)
-}
-<<<<<<< HEAD
-
-type ListLogHandler struct {
-	handlers []LogHandler
-}
-
-func NewListLogHandler(h1, h2 LogHandler) *ListLogHandler {
-	ll := &ListLogHandler{handlers: []LogHandler{h1, h2}}
-	return ll
-}
-func (ll *ListLogHandler) Log(r *log15.Record) (err error) {
-	for _, handler := range ll.handlers {
-		if err == nil {
-			err = handler.Log(r)
-		} else {
-			handler.Log(r)
-		}
-	}
-	return
-}
-func (ll *ListLogHandler) Add(h LogHandler) {
-	if h != nil {
-		ll.handlers = append(ll.handlers, h)
-	}
-}
-func (ll *ListLogHandler) Del(h LogHandler) {
-	if h != nil {
-		for i, handler := range ll.handlers {
-			if handler == h {
-				ll.handlers = append(ll.handlers[:i], ll.handlers[i+1:]...)
-			}
-		}
-	}
-}
-
-type CompositeMultiHandler struct {
-	DebugHandler    LogHandler
-	InfoHandler     LogHandler
-	WarnHandler     LogHandler
-	ErrorHandler    LogHandler
-	CriticalHandler LogHandler
-}
-
-func NewCompositeMultiHandler() (*CompositeMultiHandler, LogHandler) {
-	cw := &CompositeMultiHandler{}
-	return cw, cw
-}
-func (h *CompositeMultiHandler) Log(r *log15.Record) (err error) {
-
-	var handler LogHandler
-	switch r.Lvl {
-	case log15.LvlInfo:
-		handler = h.InfoHandler
-	case log15.LvlDebug:
-		handler = h.DebugHandler
-	case log15.LvlWarn:
-		handler = h.WarnHandler
-	case log15.LvlError:
-		handler = h.ErrorHandler
-	case log15.LvlCrit:
-		handler = h.CriticalHandler
-	}
-
-	// Embed the caller function in the context
-	if handler != nil {
-		handler.Log(r)
-	}
-	return
-}
-func (h *CompositeMultiHandler) SetHandler(handler LogHandler, replace bool, level LogLevel) {
+func (h *Builder) SetHandler(handler *zap.Logger, replace bool, level LogLevel) {
 	if handler == nil {
 		// Ignore empty handler
 		return
 	}
-	source := &h.DebugHandler
+
+	source := &h.Debug
 	switch level {
 	case LvlDebug:
-		source = &h.DebugHandler
+		source = &h.Debug
 	case LvlInfo:
-		source = &h.InfoHandler
+		source = &h.Info
 	case LvlWarn:
-		source = &h.WarnHandler
+		source = &h.Warn
 	case LvlError:
-		source = &h.ErrorHandler
-	case LvlCrit:
-		source = &h.CriticalHandler
+		source = &h.Error
+		//case LvlCrit:
+		//	source = &h.Critical
 	}
 
 	if !replace && *source != nil {
-		// If this already was a list add a new logger to it
-		if ll, found := (*source).(*ListLogHandler); found {
-			ll.Add(handler)
-		} else {
-			*source = NewListLogHandler(*source, handler)
-		}
+		*source = append(*source, handler)
 	} else {
-		*source = handler
+		*source = []*zap.Logger{handler}
 	}
 }
 
-func (h *CompositeMultiHandler) SetHandlers(handler LogHandler, options *LogOptions) {
+func (h *Builder) SetHandlers(encoder zapcore.Encoder, writer io.Writer, options *LogOptions) {
 	if len(options.Levels) == 0 {
 		options.Levels = LvlAllList
 	}
+
 	// Set all levels
 	for _, lvl := range options.Levels {
-		h.SetHandler(handler, options.ReplaceExistingHandler, lvl)
-	}
+		core := zapcore.NewCore(
+			encoder,
+			zapcore.AddSync(writer),
+			zapcore.Level(lvl),
+		)
 
-}
-func (h *CompositeMultiHandler) SetJson(writer io.Writer, options *LogOptions) {
-	handler := CallerFileHandler(StreamHandler(writer, log15.JsonFormatEx(
-		options.GetBoolDefault("pretty", false),
-		options.GetBoolDefault("lineSeparated", true),
-	)))
-	if options.HandlerWrap != nil {
-		handler = options.HandlerWrap.SetChild(handler)
+		if options.HandlerWrap != nil {
+			core = options.HandlerWrap(core, options)
+		}
+		h.SetHandler(zap.New(core), options.ReplaceExistingHandler, lvl)
 	}
-	h.SetHandlers(handler, options)
+}
+
+func (h *Builder) SetJson(writer io.Writer, options *LogOptions) {
+	encoder := zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig())
+	h.SetHandlers(encoder, writer, options)
 }
 
 // Use built in rolling function
-func (h *CompositeMultiHandler) SetJsonFile(filePath string, options *LogOptions) {
+func (h *Builder) SetJsonFile(filePath string, options *LogOptions) {
 	writer := &lumberjack.Logger{
 		Filename:   filePath,
 		MaxSize:    options.GetIntDefault("maxSizeMB", 1024), // megabytes
@@ -282,20 +85,14 @@ func (h *CompositeMultiHandler) SetJsonFile(filePath string, options *LogOptions
 	}
 	h.SetJson(writer, options)
 }
-func (h *CompositeMultiHandler) SetTerminal(writer io.Writer, options *LogOptions) {
-	handler := CallerFileHandler(StreamHandler(
-		writer,
-		TerminalFormatHandler(
-			options.GetBoolDefault("noColor", false),
-			options.GetBoolDefault("smallDate", true))))
-	if options.HandlerWrap != nil {
-		handler = options.HandlerWrap.SetChild(handler)
-	}
-	h.SetHandlers(handler, options)
+
+func (h *Builder) SetTerminal(writer io.Writer, options *LogOptions) {
+	encoder := zapcore.NewConsoleEncoder(zap.NewProductionEncoderConfig())
+	h.SetHandlers(encoder, writer, options)
 }
 
 // Use built in rolling function
-func (h *CompositeMultiHandler) SetTerminalFile(filePath string, options *LogOptions) {
+func (h *Builder) SetTerminalFile(filePath string, options *LogOptions) {
 	writer := &lumberjack.Logger{
 		Filename:   filePath,
 		MaxSize:    options.GetIntDefault("maxSizeMB", 1024), // megabytes
@@ -306,23 +103,244 @@ func (h *CompositeMultiHandler) SetTerminalFile(filePath string, options *LogOpt
 	h.SetTerminal(writer, options)
 }
 
-func (h *CompositeMultiHandler) Disable(levels ...LogLevel) {
+func (h *Builder) Disable(levels ...LogLevel) {
 	if len(levels) == 0 {
 		levels = LvlAllList
 	}
 	for _, level := range levels {
 		switch level {
 		case LvlDebug:
-			h.DebugHandler = nil
+			h.Debug = nil
 		case LvlInfo:
-			h.InfoHandler = nil
+			h.Info = nil
 		case LvlWarn:
-			h.WarnHandler = nil
+			h.Warn = nil
 		case LvlError:
-			h.ErrorHandler = nil
-		case LvlCrit:
-			h.CriticalHandler = nil
+			h.Error = nil
+			// case LvlCrit:
+			// 	h.Critical = nil
 		}
 	}
 }
-**/
+
+const (
+	MatchSkip = iota
+	MatchTrue
+	MatchFalse
+)
+
+func matchBinary(bs []byte, value string) bool {
+	return string(bs) == value
+}
+
+func matchBoolean(b bool, value string) bool {
+	if b {
+		return "true" == value
+	}
+	return "true" != value
+}
+
+func matchDuration(duration time.Duration, value string) bool {
+	d, err := time.ParseDuration(value)
+	if err != nil {
+		return false
+	}
+	return duration == d
+}
+
+func matchTime(t time.Time, value string) bool {
+	tv, err := time.Parse(time.RFC3339, value)
+	if err != nil {
+		return false
+	}
+	return t == tv
+}
+
+func matchInt64(i int64, value string) bool {
+	return strconv.FormatInt(i, 10) == value
+}
+
+func matchUint64(i uint64, value string) bool {
+	return strconv.FormatUint(i, 10) == value
+}
+
+func matchString(s string, value string) bool {
+	return s == value
+}
+
+func matchField(f zapcore.Field, value string) int {
+	var matchResult bool
+	switch f.Type {
+	// case ArrayMarshalerType:
+	// 	err = enc.AddArray(f.Key, f.Interface.(ArrayMarshaler))
+	// case ObjectMarshalerType:
+	// 	err = enc.AddObject(f.Key, f.Interface.(ObjectMarshaler))
+	case zapcore.BinaryType:
+		matchResult = matchBinary(f.Interface.([]byte), value)
+	case zapcore.BoolType:
+		matchResult = matchBoolean(f.Integer == 1, value)
+	case zapcore.ByteStringType:
+		matchResult = matchBinary(f.Interface.([]byte), value)
+	// case Complex128Type:
+	// 	enc.AddComplex128(f.Key, f.Interface.(complex128))
+	// case Complex64Type:
+	// 	enc.AddComplex64(f.Key, f.Interface.(complex64))
+	case zapcore.DurationType:
+		matchResult = matchDuration(time.Duration(f.Integer), value)
+	// case Float64Type:
+	// 	enc.AddFloat64(f.Key, math.Float64frombits(uint64(f.Integer)))
+	// case Float32Type:
+	// 	enc.AddFloat32(f.Key, math.Float32frombits(uint32(f.Integer)))
+	case zapcore.Int64Type:
+		matchResult = matchInt64(f.Integer, value)
+	case zapcore.Int32Type:
+		matchResult = matchInt64(f.Integer, value)
+	case zapcore.Int16Type:
+		matchResult = matchInt64(f.Integer, value)
+	case zapcore.Int8Type:
+		matchResult = matchInt64(f.Integer, value)
+	case zapcore.StringType:
+		matchResult = matchString(f.String, value)
+	case zapcore.TimeType:
+		if f.Interface != nil {
+			matchResult = matchTime(time.Unix(0, f.Integer).In(f.Interface.(*time.Location)), value)
+		} else {
+			// Fall back to UTC if location is nil.
+			matchResult = matchTime(time.Unix(0, f.Integer), value)
+		}
+	case zapcore.Uint64Type:
+		matchResult = matchUint64(uint64(f.Integer), value)
+	case zapcore.Uint32Type:
+		matchResult = matchUint64(uint64(f.Integer), value)
+	case zapcore.Uint16Type:
+		matchResult = matchUint64(uint64(f.Integer), value)
+	case zapcore.Uint8Type:
+		matchResult = matchUint64(uint64(f.Integer), value)
+	// case UintptrType:
+	// 	return matchUint64(uint64(f.Integer), value)
+	// case ReflectType:
+	// 	err = enc.AddReflected(f.Key, f.Interface)
+	// case NamespaceType:
+	// 	enc.OpenNamespace(f.Key)
+	case zapcore.StringerType:
+		matchResult = matchString(f.Interface.(fmt.Stringer).String(), value)
+	// case ErrorType:
+	// 	encodeError(f.Key, f.Interface.(error), enc)
+	case zapcore.SkipType:
+		return MatchSkip
+	default:
+		return MatchSkip
+	}
+	if matchResult {
+		return MatchTrue
+	}
+	return MatchFalse
+}
+
+type proxyCore struct {
+	impl        zapcore.Core
+	matchValues map[string]string
+	inverse     bool
+}
+
+func (p proxyCore) Enabled(l zapcore.Level) bool {
+	return p.Enabled(l)
+}
+func (p proxyCore) With(fields []zapcore.Field) zapcore.Core {
+	var matchedKeys []string
+	for _, f := range fields {
+		excepted, ok := p.matchValues[f.Key]
+		if ok {
+			mr := matchField(f, excepted)
+			if mr == MatchTrue {
+				matchedKeys = append(matchedKeys, f.Key)
+			} else if mr == MatchFalse {
+				enabled := false
+				if p.inverse {
+					enabled = true
+				}
+				return enableCore{impl: p.impl.With(fields),
+					enabled: enabled}
+			}
+		}
+	}
+
+	if len(matchedKeys) == len(p.matchValues) {
+		enabled := true
+		if p.inverse {
+			enabled = false
+		}
+		return enableCore{impl: p.impl.With(fields),
+			enabled: enabled}
+	}
+
+	if len(matchedKeys) > 0 {
+		matchValues := make(map[string]string, len(p.matchValues))
+		for k, v := range p.matchValues {
+			matchValues[k] = v
+		}
+		for _, key := range matchedKeys {
+			delete(matchValues, key)
+		}
+		return proxyCore{impl: p.impl.With(fields),
+			matchValues: matchValues,
+			inverse:     p.inverse}
+	}
+
+	return proxyCore{impl: p.impl.With(fields),
+		matchValues: p.matchValues,
+		inverse:     p.inverse}
+}
+func (p proxyCore) Check(entry zapcore.Entry, ce *zapcore.CheckedEntry) *zapcore.CheckedEntry {
+	return p.impl.Check(entry, ce)
+}
+func (p proxyCore) Write(entry zapcore.Entry, fields []zapcore.Field) error {
+	var matchedKeys []string
+	for _, f := range fields {
+		excepted, ok := p.matchValues[f.Key]
+		if ok {
+			mr := matchField(f, excepted)
+			if mr == MatchTrue {
+				matchedKeys = append(matchedKeys, f.Key)
+			} else if mr == MatchFalse {
+				goto notmatch
+			}
+		}
+	}
+	if len(matchedKeys) == len(p.matchValues) {
+		if p.inverse {
+			return nil
+		}
+		return p.impl.Write(entry, fields)
+	}
+
+notmatch:
+	if p.inverse {
+		return p.impl.Write(entry, fields)
+	}
+	return nil
+}
+func (p proxyCore) Sync() error {
+	return p.impl.Sync()
+}
+
+type enableCore struct {
+	impl    zapcore.Core
+	enabled bool
+}
+
+func (p enableCore) Enabled(l zapcore.Level) bool {
+	return p.Enabled(l) && p.enabled
+}
+func (p enableCore) With(fields []zapcore.Field) zapcore.Core {
+	return enableCore{impl: p.impl.With(fields), enabled: p.enabled}
+}
+func (p enableCore) Check(entry zapcore.Entry, ce *zapcore.CheckedEntry) *zapcore.CheckedEntry {
+	return p.impl.Check(entry, ce)
+}
+func (p enableCore) Write(entry zapcore.Entry, fields []zapcore.Field) error {
+	return p.impl.Write(entry, fields)
+}
+func (p enableCore) Sync() error {
+	return p.impl.Sync()
+}
