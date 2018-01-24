@@ -291,6 +291,18 @@ func (c *Controller) Forbidden(msg string, objs ...interface{}) Result {
 	})
 }
 
+// RenderFileName returns a file indicated by the path as provided via the filename.
+// It can be either displayed inline or downloaded as an attachment.
+// The name and size are taken from the file info.
+func (c *Controller) RenderFileName(filename string, delivery ContentDisposition) Result {
+	f, err := os.Open(filename)
+	if err != nil {
+		c.Log.Errorf("Cant open file: %v", err)
+		return c.RenderError(err)
+	}
+	return c.RenderFile(f, delivery)
+}
+
 // RenderFile returns a file, either displayed inline or downloaded
 // as an attachment. The name and size are taken from the file info.
 func (c *Controller) RenderFile(file *os.File, delivery ContentDisposition) Result {
