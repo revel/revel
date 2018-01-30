@@ -2,9 +2,9 @@ package revel
 
 import (
 	"fmt"
-	"gopkg.in/stack.v0"
 	"github.com/revel/revel/logger"
 	"go/build"
+	"gopkg.in/stack.v0"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -42,13 +42,15 @@ func RegisterModuleInit(callback ModuleCallbackInterface) {
 		RevelLog.Error("Application already initialized, initializing using app module", "key", key)
 		callback(appModule)
 	}
-
 }
+
+// Called on startup to make a callback so that modules can be initialized through the `RegisterModuleInit` function
 func init() {
 	AddInitEventHandler(func(typeOf int, value interface{}) (responseOf int) {
 		if typeOf == REVEL_BEFORE_MODULES_LOADED {
 			Modules = []*Module{appModule}
-			appModule.Path = AppPath
+			appModule.Path = filepath.ToSlash(AppPath)
+			appModule.ImportPath = filepath.ToSlash(AppPath)
 		}
 
 		return
@@ -84,6 +86,7 @@ func (m *Module) AddController(ct *ControllerType) {
 // Based on the full path given return the relevant module
 // Only to be used on initialization
 func ModuleFromPath(path string, addGopathToPath bool) (module *Module) {
+	path = filepath.ToSlash(path)
 	gopathList := filepath.SplitList(build.Default.GOPATH)
 	// Strip away the vendor folder
 	if i := strings.Index(path, "/vendor/"); i > 0 {
@@ -111,11 +114,15 @@ func ModuleFromPath(path string, addGopathToPath bool) (module *Module) {
 			break
 		}
 	}
+	// Default to the app module if not found
+	if module == nil {
+		module = appModule
+	}
 	return
 }
 
 // ModuleByName returns the module of the given name, if loaded, case insensitive.
-func ModuleByName(name string) (m *Module, found bool) {
+func ModuleByName(name string) (*Module, bool) {
 	// If the name ends with the namespace separator remove it
 	if name[len(name)-1] == []byte(namespaceSeperator)[0] {
 		name = name[:len(name)-1]
@@ -174,12 +181,15 @@ func loadModules() {
 	}
 }
 
-//
+// called by `loadModules`, creates a new `Module` instance and appends it to the `Modules` list
 func addModule(name, importPath, modulePath string) {
 	if _, found := ModuleByName(name); found {
 		moduleLog.Panic("Attempt to import duplicate module %s path %s aborting startup", "name", name, "path", modulePath)
 	}
-	Modules = append(Modules, &Module{Name: name, ImportPath: importPath, Path: modulePath, Log: RootLog.New("module", name)})
+	Modules = append(Modules, &Module{Name: name,
+		ImportPath: filepath.ToSlash(importPath),
+		Path:       filepath.ToSlash(modulePath),
+		Log:        RootLog.New("module", name)})
 	if codePath := filepath.Join(modulePath, "app"); DirExists(codePath) {
 		CodePaths = append(CodePaths, codePath)
 		if viewsPath := filepath.Join(modulePath, "app", "views"); DirExists(viewsPath) {

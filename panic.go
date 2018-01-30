@@ -5,9 +5,9 @@
 package revel
 
 import (
+	"fmt"
 	"net/http"
 	"runtime/debug"
-	"fmt"
 )
 
 // PanicFilter wraps the action invocation in a protective defer blanket that
@@ -25,11 +25,20 @@ func PanicFilter(c *Controller, fc []Filter) {
 // It cleans up the stack trace, logs it, and displays an error page.
 func handleInvocationPanic(c *Controller, err interface{}) {
 	error := NewErrorFromPanic(err)
-	utilLog.Error("PanicFilter: Caught panic", "error", err, "stack", error.Stack)
-	if DevMode {
-		fmt.Println(err)
-		fmt.Println(error.Stack)
+	if error != nil {
+		utilLog.Error("PanicFilter: Caught panic", "error", err, "stack", error.Stack)
+		if DevMode {
+			fmt.Println(err)
+			fmt.Println(error.Stack)
+		}
+	} else {
+		utilLog.Error("PanicFilter: Caught panic, unable to determine stack location", "error", err, "stack", string(debug.Stack()))
+		if DevMode {
+			fmt.Println(err)
+			fmt.Println("stack", string(debug.Stack()))
+		}
 	}
+
 	if error == nil && DevMode {
 		// Only show the sensitive information in the debug stack trace in development mode, not production
 		c.Response.SetStatus(http.StatusInternalServerError)

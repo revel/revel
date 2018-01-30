@@ -86,6 +86,7 @@ func (r ErrorResult) Apply(req *Request, resp *Response) {
 		r.ViewArgs = make(map[string]interface{})
 	}
 	r.ViewArgs["RunMode"] = RunMode
+	r.ViewArgs["DevMode"] = DevMode
 	r.ViewArgs["Error"] = revelError
 	r.ViewArgs["Router"] = MainRouter
 

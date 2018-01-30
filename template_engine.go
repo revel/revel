@@ -42,6 +42,7 @@ func RegisterTemplateLoader(key string, loader func(loader *TemplateLoader) (Tem
 	if _, found := templateLoaderMap[key]; found {
 		err = fmt.Errorf("Template loader %s already exists", key)
 	}
+	templateLog.Debug("Registered template engine loaded", key)
 	templateLoaderMap[key] = loader
 	return
 }
