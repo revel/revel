@@ -139,7 +139,7 @@ func (req *Request) ParseForm() (e error) {
 
 func (req *Request) GetForm() (url.Values, error) {
 	if form, err := req.In.Get(HTTP_FORM); err != nil {
-		return nil, nil
+		return nil, err
 	} else if values, found := form.(url.Values); found {
 		req.Form = values
 		return values, nil
@@ -180,7 +180,7 @@ func (req *Request) Context() map[string]interface{} {
 
 func (req *Request) GetMultipartForm() (ServerMultipartForm, error) {
 	if form, err := req.In.Get(HTTP_MULTIPART_FORM); err != nil {
-		return nil, nil
+		return nil, err
 	} else if values, found := form.(ServerMultipartForm); found {
 		return values, nil
 	}
