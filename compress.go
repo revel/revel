@@ -91,6 +91,9 @@ func (c CompressResponseWriter) CloseNotify() <-chan bool {
 	return c.closeNotify
 }
 
+func (c *CompressResponseWriter) cancel() {
+	c.closed = true
+}
 func (c *CompressResponseWriter) prepareHeaders() {
 	if c.compressionType != "" {
 		responseMime := ""
@@ -120,12 +123,18 @@ func (c *CompressResponseWriter) prepareHeaders() {
 }
 
 func (c *CompressResponseWriter) WriteHeader(status int) {
+	if c.closed {
+		return
+	}
 	c.headersWritten = true
 	c.prepareHeaders()
 	c.Header.SetStatus(status)
 }
 
 func (c *CompressResponseWriter) Close() error {
+	if c.closed {
+		return nil
+	}
 	if !c.headersWritten {
 		c.prepareHeaders()
 	}
@@ -148,6 +157,9 @@ func (c *CompressResponseWriter) Close() error {
 }
 
 func (c *CompressResponseWriter) Write(b []byte) (int, error) {
+	if c.closed {
+		return 0, io.ErrClosedPipe
+	}
 	// Abort if parent has been closed
 	if c.parentNotify != nil {
 		select {
@@ -274,7 +286,7 @@ func (bsh *BufferedServerHeader) SetCookie(cookie string) {
 		bsh.cookieList = append(bsh.cookieList, cookie)
 	}
 }
-func (bsh *BufferedServerHeader) GetCookie(key string) (value ServerCookie, err error) {
+func (bsh *BufferedServerHeader) GetCookie(key string) (ServerCookie, error) {
 	return bsh.original.GetCookie(key)
 }
 func (bsh *BufferedServerHeader) Set(key string, value string) {
@@ -325,7 +337,6 @@ func (bsh *BufferedServerHeader) SetStatus(statusCode int) {
 }
 func (bsh *BufferedServerHeader) Release() {
 	bsh.released = true
-	bsh.original.SetStatus(bsh.status)
 	for k, v := range bsh.headerMap {
 		for _, r := range v {
 			bsh.original.Set(k, r)
@@ -333,5 +344,8 @@ func (bsh *BufferedServerHeader) Release() {
 	}
 	for _, c := range bsh.cookieList {
 		bsh.original.SetCookie(c)
+	}
+	if bsh.status>0 {
+		bsh.original.SetStatus(bsh.status)
 	}
 }

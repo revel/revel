@@ -1,7 +1,7 @@
 package logger
 
 import (
-	"github.com/go-stack/stack"
+	"gopkg.in/stack.v0"
 	"github.com/revel/config"
 	"github.com/revel/log15"
 	"log"
@@ -180,7 +180,6 @@ func initHandlerFor(c *CompositeMultiHandler, output, basePath string, options *
 			"maxBackups", options.Ctx.IntDefault("log.maxbackups", 14),
 			"compressBackups", !options.Ctx.BoolDefault("log.compressBackups", true),
 		)
-
 	}
 
 	output = strings.TrimSpace(output)
@@ -201,9 +200,13 @@ func initHandlerFor(c *CompositeMultiHandler, output, basePath string, options *
 			if err := os.MkdirAll(filepath.Dir(output), 0755); err != nil {
 				log.Panic(err)
 			}
+
 			if strings.HasSuffix(output, "json") {
 				c.SetJsonFile(output, options)
 			} else {
+				// Override defaults for a terminal file
+				options.SetExtendedOptions("noColor", true)
+				options.SetExtendedOptions("smallDate", false)
 				c.SetTerminalFile(output, options)
 			}
 		}
