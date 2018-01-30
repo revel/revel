@@ -425,5 +425,5 @@ func (g *GoWebSocket) MessageSendJSON(v interface{}) error {
 	return websocket.JSON.Send(g.Conn, v)
 }
 func (g *GoWebSocket) MessageReceiveJSON(v interface{}) error {
-	return websocket.Message.Receive(g.Conn, v)
+	return websocket.JSON.Receive(g.Conn, v)
 }
