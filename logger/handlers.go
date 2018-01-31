@@ -1,9 +1,12 @@
 package logger
 
 import (
+	"io"
+	"os"
+
+	colorable "github.com/mattn/go-colorable"
 	"github.com/revel/log15"
 	"gopkg.in/natefinch/lumberjack.v2"
-	"io"
 )
 
 // Filters out records which do not match the level
@@ -285,12 +288,29 @@ func (h *CompositeMultiHandler) SetJsonFile(filePath string, options *LogOptions
 	}
 	h.SetJson(writer, options)
 }
+
 func (h *CompositeMultiHandler) SetTerminal(writer io.Writer, options *LogOptions) {
-	handler := CallerFileHandler(StreamHandler(
+	streamHandler := StreamHandler(
 		writer,
 		TerminalFormatHandler(
 			options.GetBoolDefault("noColor", false),
-			options.GetBoolDefault("smallDate", true))))
+			options.GetBoolDefault("smallDate", true)))
+
+	if os.Stdout == writer {
+		streamHandler = StreamHandler(
+			colorable.NewColorableStdout(),
+			TerminalFormatHandler(
+				options.GetBoolDefault("noColor", false),
+				options.GetBoolDefault("smallDate", true)))
+	} else if os.Stderr == writer {
+		streamHandler = StreamHandler(
+			colorable.NewColorableStderr(),
+			TerminalFormatHandler(
+				options.GetBoolDefault("noColor", false),
+				options.GetBoolDefault("smallDate", true)))
+	}
+
+	handler := CallerFileHandler(streamHandler)
 	if options.HandlerWrap != nil {
 		handler = options.HandlerWrap.SetChild(handler)
 	}
