@@ -157,8 +157,8 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
 	// error pages distorted by HTML already written)
 	if chunked && !DevMode {
 		resp.WriteHeader(http.StatusOK, "text/html; charset=utf-8")
-		if err := r.renderOutput(out); err !=nil {
-			r.renderError(err,req,resp)
+		if err := r.renderOutput(out); err != nil {
+			r.renderError(err, req, resp)
 		}
 		return
 	}
@@ -168,8 +168,8 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
 	// Otherwise, template render errors may result in unpredictable HTML (and
 	// would carry a 200 status code)
 	b, err := r.ToBytes()
-	if err!=nil {
-		r.renderError(err,req,resp)
+	if err != nil {
+		r.renderError(err, req, resp)
 		return
 	}
 
@@ -183,7 +183,7 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
 }
 
 // Return a byte array and or an error object if the template failed to render
-func (r *RenderTemplateResult) ToBytes() (b *bytes.Buffer,err error) {
+func (r *RenderTemplateResult) ToBytes() (b *bytes.Buffer, err error) {
 	defer func() {
 		if rerr := recover(); rerr != nil {
 			resultsLog.Error("ApplyBytes: panic recovery", "recover-error", rerr)
@@ -191,7 +191,7 @@ func (r *RenderTemplateResult) ToBytes() (b *bytes.Buffer,err error) {
 		}
 	}()
 	b = &bytes.Buffer{}
-	if err = r.renderOutput(b); err==nil {
+	if err = r.renderOutput(b); err == nil {
 		if Config.BoolDefault("results.trim.html", false) {
 			b = r.compressHtml(b)
 		}
@@ -260,7 +260,7 @@ func (r *RenderTemplateResult) compressHtml(b *bytes.Buffer) (b2 *bytes.Buffer) 
 }
 
 // Render the error in the response
-func (r *RenderTemplateResult) renderError(err error,req *Request, resp *Response) {
+func (r *RenderTemplateResult) renderError(err error, req *Request, resp *Response) {
 	var templateContent []string
 	templateName, line, description := ParseTemplateError(err)
 	if templateName == "" {
@@ -372,8 +372,9 @@ func (r RenderTextResult) Apply(req *Request, resp *Response) {
 type ContentDisposition string
 
 var (
-	Attachment ContentDisposition = "attachment"
-	Inline     ContentDisposition = "inline"
+	NoDisposition ContentDisposition = ""
+	Attachment    ContentDisposition = "attachment"
+	Inline        ContentDisposition = "inline"
 )
 
 type BinaryResult struct {
@@ -385,12 +386,13 @@ type BinaryResult struct {
 }
 
 func (r *BinaryResult) Apply(req *Request, resp *Response) {
-	disposition := string(r.Delivery)
-	if r.Name != "" {
-		disposition += fmt.Sprintf(`; filename="%s"`, r.Name)
+	if r.Delivery != NoDisposition {
+		disposition := string(r.Delivery)
+		if r.Name != "" {
+			disposition += fmt.Sprintf(`; filename="%s"`, r.Name)
+		}
+		resp.Out.internalHeader.Set("Content-Disposition", disposition)
 	}
-
-	resp.Out.internalHeader.Set("Content-Disposition", disposition)
 	if resp.ContentType != "" {
 		resp.Out.internalHeader.Set("Content-Type", resp.ContentType)
 	} else {
@@ -432,7 +434,7 @@ func (r *RedirectToURLResult) Apply(req *Request, resp *Response) {
 }
 
 type RedirectToActionResult struct {
-	val interface{}
+	val  interface{}
 	args []interface{}
 }
 
@@ -468,7 +470,7 @@ func getRedirectURL(item interface{}, args []interface{}) (string, error) {
 		if recvType.Kind() == reflect.Ptr {
 			recvType = recvType.Elem()
 		}
-		module := ModuleFromPath(recvType.PkgPath(),true)
+		module := ModuleFromPath(recvType.PkgPath(), true)
 		println("Returned ", module)
 		action := module.Namespace() + recvType.Name() + "." + method.Name
 		// Fetch the action path to get the defaults
@@ -487,7 +489,6 @@ func getRedirectURL(item interface{}, args []interface{}) (string, error) {
 		for i, argValue := range args {
 			Unbind(argsByName, methodType.Args[i+fixedParams].Name, argValue)
 		}
-
 
 		actionDef := MainRouter.Reverse(action, argsByName)
 		if actionDef == nil {
