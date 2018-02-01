@@ -225,7 +225,7 @@ func testGetMulti(t *testing.T, newCache cacheFactory) {
 	var keys []string
 	for key, value := range m {
 		keys = append(keys, key)
-		if err := cache.Set(key, value, time.Second*10); err != nil {
+		if err := cache.Set(key, value, time.Second*30); err != nil {
 			t.Errorf("Error setting a value: %s", err)
 		}
 	}
