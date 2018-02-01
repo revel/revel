@@ -14,9 +14,10 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/revel/pathtree"
 	"os"
 	"sync"
+
+	"github.com/revel/pathtree"
 )
 
 const (
@@ -298,7 +299,7 @@ func splitActionPath(actionPathData *ActionPathData, actionPath string, useCache
 		controllerNamespace, controllerName, methodName, action string
 		foundModuleSource                                       *Module
 		typeOfController                                        *ControllerType
-		log = routerLog.New("actionPath",actionPath)
+		log                                                     = routerLog.New("actionPath", actionPath)
 	)
 	actionSplit := strings.Split(actionPath, ".")
 	if actionPathData != nil {
@@ -309,8 +310,8 @@ func splitActionPath(actionPathData *ActionPathData, actionPath string, useCache
 		if i := strings.Index(methodName, "("); i > 0 {
 			methodName = methodName[:i]
 		}
-		log = log.New("controller", controllerName, "method",methodName)
-		log.Debug("splitActionPath: Check for namespace",)
+		log = log.New("controller", controllerName, "method", methodName)
+		log.Debug("splitActionPath: Check for namespace")
 		if i := strings.Index(controllerName, namespaceSeperator); i > -1 {
 			controllerNamespace = controllerName[:i+1]
 			if moduleSource, found := ModuleByName(controllerNamespace[:len(controllerNamespace)-1]); found {
@@ -415,9 +416,9 @@ func splitActionPath(actionPathData *ActionPathData, actionPath string, useCache
 		}
 		pathData.Key = actionPath
 		actionPathCacheMap[actionPath] = pathData
-		if !strings.Contains(actionPath,namespaceSeperator) && pathData.TypeOfController!=nil {
-			actionPathCacheMap[strings.ToLower(pathData.TypeOfController.Namespace) + actionPath] = pathData
-			log.Debugf("splitActionPath: Split Storing recognized action path %s for route  %#v ", strings.ToLower(pathData.TypeOfController.Namespace) + actionPath, actionPathData.Route)
+		if !strings.Contains(actionPath, namespaceSeperator) && pathData.TypeOfController != nil {
+			actionPathCacheMap[strings.ToLower(pathData.TypeOfController.Namespace)+actionPath] = pathData
+			log.Debugf("splitActionPath: Split Storing recognized action path %s for route  %#v ", strings.ToLower(pathData.TypeOfController.Namespace)+actionPath, actionPathData.Route)
 		}
 	}
 	return
@@ -580,7 +581,7 @@ func getModuleRoutes(moduleName, joinedPath string, validate bool) (routes []*Ro
 // 5: action
 // 6: fixedargs
 var routePattern = regexp.MustCompile(
-	"(?i)^(GET|POST|PUT|DELETE|PATCH|OPTIONS|HEAD|WS|\\*)" +
+	"(?i)^(GET|POST|PUT|DELETE|PATCH|OPTIONS|HEAD|WS|PROPFIND|MKCOL|COPY|MOVE|PROPPATCH|LOCK|UNLOCK|TRACE|PURGE|\\*)" +
 		"[(]?([^)]*)(\\))?[ \t]+" +
 		"(.*/[^ \t]*)[ \t]+([^ \t(]+)" +
 		`\(?([^)]*)\)?[ \t]*$`)
@@ -613,14 +614,14 @@ func (a *ActionDefinition) String() string {
 }
 
 func (router *Router) Reverse(action string, argValues map[string]string) (ad *ActionDefinition) {
-	log := routerLog.New("action",action)
+	log := routerLog.New("action", action)
 	pathData, found := splitActionPath(nil, action, true)
 	if !found {
 		routerLog.Error("splitActionPath: Failed to find reverse route", "action", action, "arguments", argValues)
 		return nil
 	}
 
-	log.Debug("Checking for route","pathdataRoute",pathData.Route)
+	log.Debug("Checking for route", "pathdataRoute", pathData.Route)
 	if pathData.Route == nil {
 		var possibleRoute *Route
 		// If the route is nil then we need to go through the routes to find the first matching route

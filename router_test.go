@@ -115,12 +115,21 @@ func TestComputeRoute(t *testing.T) {
 
 const TestRoutes = `
 # This is a comment
-GET   /                          Application.Index
-GET   /test/                     Application.Index("Test", "Test2")
-GET   /app/:id/                  Application.Show
-GET   /app-wild/*id/             Application.WildShow
-POST  /app/:id                   Application.Save
-PATCH /app/:id/                  Application.Update
+GET   		/                   Application.Index
+GET   		/test/              Application.Index("Test", "Test2")
+GET   		/app/:id/           Application.Show
+GET   		/app-wild/*id/		Application.WildShow
+POST  		/app/:id            Application.Save
+PATCH 		/app/:id/           Application.Update
+PROPFIND	/app/:id			Application.WebDevMethodPropFind
+MKCOL		/app/:id			Application.WebDevMethodMkCol
+COPY		/app/:id			Application.WebDevMethodCopy
+MOVE		/app/:id			Application.WebDevMethodMove
+PROPPATCH	/app/:id			Application.WebDevMethodPropPatch
+LOCK		/app/:id			Application.WebDevMethodLock
+UNLOCK		/app/:id			Application.WebDevMethodUnLock
+TRACE		/app/:id			Application.WebDevMethodTrace
+PURGE		/app/:id			Application.CacheMethodPurge
 GET   /javascript/:filepath      App\Static.Serve("public/js")
 GET   /public/*filepath          Static.Serve("public")
 *     /:controller/:action       :controller.:action
@@ -255,6 +264,105 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 		FixedParams:    []string{},
 		Params:         map[string][]string{"id": {"123"}},
 	},
+
+	&http.Request{
+		Method: "PATCH",
+		URL:    &url.URL{Path: "/app/123"},
+	}: {
+		ControllerName: "application",
+		MethodName:     "Update",
+		FixedParams:    []string{},
+		Params:         map[string][]string{"id": {"123"}},
+	},
+
+	&http.Request{
+		Method: "PROPFIND",
+		URL:    &url.URL{Path: "/app/123"},
+	}: {
+		ControllerName: "application",
+		MethodName:     "WebDevMethodPropFind",
+		FixedParams:    []string{},
+		Params:         map[string][]string{"id": {"123"}},
+	},
+
+	&http.Request{
+		Method: "MKCOL",
+		URL:    &url.URL{Path: "/app/123"},
+	}: {
+		ControllerName: "application",
+		MethodName:     "WebDevMethodMkCol",
+		FixedParams:    []string{},
+		Params:         map[string][]string{"id": {"123"}},
+	},
+
+	&http.Request{
+		Method: "COPY",
+		URL:    &url.URL{Path: "/app/123"},
+	}: {
+		ControllerName: "application",
+		MethodName:     "WebDevMethodCopy",
+		FixedParams:    []string{},
+		Params:         map[string][]string{"id": {"123"}},
+	},
+
+	&http.Request{
+		Method: "MOVE",
+		URL:    &url.URL{Path: "/app/123"},
+	}: {
+		ControllerName: "application",
+		MethodName:     "WebDevMethodMove",
+		FixedParams:    []string{},
+		Params:         map[string][]string{"id": {"123"}},
+	},
+
+	&http.Request{
+		Method: "PROPPATCH",
+		URL:    &url.URL{Path: "/app/123"},
+	}: {
+		ControllerName: "application",
+		MethodName:     "WebDevMethodPropPatch",
+		FixedParams:    []string{},
+		Params:         map[string][]string{"id": {"123"}},
+	},
+	&http.Request{
+		Method: "LOCK",
+		URL:    &url.URL{Path: "/app/123"},
+	}: {
+		ControllerName: "application",
+		MethodName:     "WebDevMethodLock",
+		FixedParams:    []string{},
+		Params:         map[string][]string{"id": {"123"}},
+	},
+
+	&http.Request{
+		Method: "UNLOCK",
+		URL:    &url.URL{Path: "/app/123"},
+	}: {
+		ControllerName: "application",
+		MethodName:     "WebDevMethodUnLock",
+		FixedParams:    []string{},
+		Params:         map[string][]string{"id": {"123"}},
+	},
+
+	&http.Request{
+		Method: "TRACE",
+		URL:    &url.URL{Path: "/app/123"},
+	}: {
+		ControllerName: "application",
+		MethodName:     "WebDevMethodTrace",
+		FixedParams:    []string{},
+		Params:         map[string][]string{"id": {"123"}},
+	},
+
+	&http.Request{
+		Method: "PURGE",
+		URL:    &url.URL{Path: "/app/123"},
+	}: {
+		ControllerName: "application",
+		MethodName:     "CacheMethodPurge",
+		FixedParams:    []string{},
+		Params:         map[string][]string{"id": {"123"}},
+	},
 }
 
 func TestRouteMatches(t *testing.T) {
@@ -350,6 +458,88 @@ var reverseRoutingTestCases = map[*ReverseRouteArgs]*ActionDefinition{
 		Method: "GET",
 		Star:   false,
 		Action: "Application.WildShow",
+	},
+
+	&ReverseRouteArgs{
+		action: "Application.WebDevMethodPropFind",
+		args:   map[string]string{"id": "123"},
+	}: {
+		URL:    "/app/123",
+		Method: "PROPFIND",
+		Star:   false,
+		Action: "Application.WebDevMethodPropFind",
+	},
+	&ReverseRouteArgs{
+		action: "Application.WebDevMethodMkCol",
+		args:   map[string]string{"id": "123"},
+	}: {
+		URL:    "/app/123",
+		Method: "MKCOL",
+		Star:   false,
+		Action: "Application.WebDevMethodMkCol",
+	},
+	&ReverseRouteArgs{
+		action: "Application.WebDevMethodCopy",
+		args:   map[string]string{"id": "123"},
+	}: {
+		URL:    "/app/123",
+		Method: "COPY",
+		Star:   false,
+		Action: "Application.WebDevMethodCopy",
+	},
+	&ReverseRouteArgs{
+		action: "Application.WebDevMethodMove",
+		args:   map[string]string{"id": "123"},
+	}: {
+		URL:    "/app/123",
+		Method: "MOVE",
+		Star:   false,
+		Action: "Application.WebDevMethodMove",
+	},
+	&ReverseRouteArgs{
+		action: "Application.WebDevMethodPropPatch",
+		args:   map[string]string{"id": "123"},
+	}: {
+		URL:    "/app/123",
+		Method: "PROPPATCH",
+		Star:   false,
+		Action: "Application.WebDevMethodPropPatch",
+	},
+	&ReverseRouteArgs{
+		action: "Application.WebDevMethodLock",
+		args:   map[string]string{"id": "123"},
+	}: {
+		URL:    "/app/123",
+		Method: "LOCK",
+		Star:   false,
+		Action: "Application.WebDevMethodLock",
+	},
+	&ReverseRouteArgs{
+		action: "Application.WebDevMethodUnLock",
+		args:   map[string]string{"id": "123"},
+	}: {
+		URL:    "/app/123",
+		Method: "UNLOCK",
+		Star:   false,
+		Action: "Application.WebDevMethodUnLock",
+	},
+	&ReverseRouteArgs{
+		action: "Application.WebDevMethodTrace",
+		args:   map[string]string{"id": "123"},
+	}: {
+		URL:    "/app/123",
+		Method: "TRACE",
+		Star:   false,
+		Action: "Application.WebDevMethodTrace",
+	},
+	&ReverseRouteArgs{
+		action: "Application.CacheMethodPurge",
+		args:   map[string]string{"id": "123"},
+	}: {
+		URL:    "/app/123",
+		Method: "PURGE",
+		Star:   false,
+		Action: "Application.CacheMethodPurge",
 	},
 }
 
