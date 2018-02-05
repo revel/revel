@@ -43,6 +43,7 @@ func incrDecr(t *testing.T, newCache cacheFactory) {
 	if err = cache.Set("int", 10, ForEverNeverExpiry); err != nil {
 		t.Errorf("Error setting int: %s", err)
 	}
+	time.Sleep(time.Second)
 	newValue, err := cache.Increment("int", 50)
 	if err != nil {
 		t.Errorf("Error incrementing int: %s", err)

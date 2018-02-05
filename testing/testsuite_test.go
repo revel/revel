@@ -135,7 +135,6 @@ func TestPost(t *testing.T) {
 	defer ts.Close()
 
 	testSuite := createNewTestSuite(t)
-	fmt.Println(testSuite.Session.Cookie().Name)
 
 	testSuite.Post("/login",
 		"application/json",
