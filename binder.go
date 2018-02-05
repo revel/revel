@@ -76,6 +76,7 @@ var (
 
 	DateFormat     string
 	DateTimeFormat string
+	TimeZone       = time.UTC
 
 	IntBinder = Binder{
 		Bind: ValueBinder(func(val string, typ reflect.Type) reflect.Value {
@@ -171,7 +172,7 @@ var (
 	TimeBinder = Binder{
 		Bind: ValueBinder(func(val string, typ reflect.Type) reflect.Value {
 			for _, f := range TimeFormats {
-				if r, err := time.Parse(f, val); err == nil {
+				if r, err := time.ParseInLocation(f, val, TimeZone); err == nil {
 					return reflect.ValueOf(r)
 				}
 			}
@@ -298,7 +299,7 @@ func bindStruct(params *Params, name string, typ reflect.Type) reflect.Value {
 	if params.JSON != nil {
 		// Try to inject the response as a json into the created result
 		if err := json.Unmarshal(params.JSON, resultPointer.Interface()); err != nil {
-			binderLog.Error("bindStruct Unable to unmarshal request", "name", name, "error", err,"data", string(params.JSON))
+			binderLog.Error("bindStruct Unable to unmarshal request", "name", name, "error", err, "data", string(params.JSON))
 		}
 		return result
 	}
