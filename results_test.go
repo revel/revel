@@ -8,7 +8,20 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"fmt"
 )
+
+// Added test case for redirection testing for strings
+func TestRedirect(t *testing.T) {
+	startFakeBookingApp()
+	redirect:= RedirectToURLResult{fmt.Sprintf("/hotels/index/foo")}
+	resp := httptest.NewRecorder()
+	c := NewTestController(resp,showRequest)
+	redirect.Apply(c.Request,c.Response)
+	if resp.Header().Get("Location") != "/hotels/index/foo" {
+		t.Error("Failed to set redirect header correctly. : %s", resp.Header().Get("Location"))
+	}
+}
 
 // Test that the render response is as expected.
 func TestBenchmarkRender(t *testing.T) {
