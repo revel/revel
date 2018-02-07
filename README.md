@@ -6,7 +6,7 @@
 
 A high productivity, full-stack web framework for the [Go language](http://www.golang.org).
 
-Current Version: 0.19.0 (2018-02-06)
+Current Version: 0.20.0-dev (2018-02-06)
 
 **As of Revel 0.15.0, Go 1.6+ is required.**
 
