@@ -1,5 +1,28 @@
 # CHANGELOG
 
+## v0.19.0
+# Release 0.19.0
+
+# Maintenance Release
+
+This release is focused on improving the security and resolving some issues. 
+
+**There are no breaking changes from version 0.18**
+
+[[revel/cmd](https://github.com/revel/cmd)]
+* Improved vendor folder detection revel/cmd#117
+* Added ordering of controllers so order remains consistent in main.go revel/cmd#112
+* Generate same value of `AppVersion` regardless of where Revel is run revel/cmd#108
+* Added referrer policy security header revel/cmd#114
+
+[[revel/modules](https://github.com/revel/modules)]
+* Added directory representation to static module revel/modules#46
+* Gorp enhancements (added abstraction layer for transactions and database connection so both can be used), Added security fix for CSRF module revel/modules#68
+* Added authorization configuration options to job page revel/modules#44
+
+[[revel/examples](https://github.com/revel/examples)]
+* General improvements and examples added revel/examples#39  revel/examples#40
+
 ## v0.18
 # Release 0.18
 
