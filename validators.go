@@ -30,27 +30,7 @@ func ValidRequired() Required {
 }
 
 func (r Required) IsSatisfied(obj interface{}) bool {
-	if obj == nil {
-		return false
-	}
-
-	if str, ok := obj.(string); ok {
-		return utf8.RuneCountInString(str) > 0
-	}
-	if b, ok := obj.(bool); ok {
-		return b
-	}
-	if i, ok := obj.(int); ok {
-		return i != 0
-	}
-	if t, ok := obj.(time.Time); ok {
-		return !t.IsZero()
-	}
-	v := reflect.ValueOf(obj)
-	if v.Kind() == reflect.Slice {
-		return v.Len() > 0
-	}
-	return true
+	return obj != nil && obj != reflect.Zero(reflect.TypeOf(obj)).Interface();
 }
 
 func (r Required) DefaultMessage() string {
