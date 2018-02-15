@@ -29,7 +29,7 @@ func ValidRequired() Required {
 }
 
 func (r Required) IsSatisfied(obj interface{}) bool {
-	return obj != nil && obj != reflect.Zero(reflect.TypeOf(obj)).Interface();
+	return obj != nil && !reflect.DeepEqual(obj, reflect.Zero(reflect.TypeOf(obj)).Interface());
 }
 
 func (r Required) DefaultMessage() string {
