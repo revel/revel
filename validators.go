@@ -34,7 +34,7 @@ func (r Required) IsSatisfied(obj interface{}) bool {
 }
 
 func (r Required) DefaultMessage() string {
-	return "Required"
+	return fmt.Sprintln("Required")
 }
 
 type Min struct {
