@@ -471,7 +471,6 @@ func getRedirectURL(item interface{}, args []interface{}) (string, error) {
 			recvType = recvType.Elem()
 		}
 		module := ModuleFromPath(recvType.PkgPath(), true)
-		println("Returned ", module)
 		action := module.Namespace() + recvType.Name() + "." + method.Name
 		// Fetch the action path to get the defaults
 		pathData, found := splitActionPath(nil, action, true)
