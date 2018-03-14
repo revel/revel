@@ -13,48 +13,82 @@ type (
 	// The Multilogger reduces the number of exposed defined logging variables,
 	// and allows the output to be easily refined
 	MultiLogger interface {
-		//log15.Logger
-		//// New returns a new Logger that has this logger's context plus the given context
+		// New returns a new Logger that has this logger's context plus the given context
 		New(ctx ...interface{}) MultiLogger
-		//
-		//// SetHandler updates the logger to write records to the specified handler.
+
+		// SetHandler updates the logger to write records to the specified handler.
 		SetHandler(h LogHandler)
+		// Set the stack depth for the logger
 		SetStackDepth(int) MultiLogger
-		//
-		//// Log a message at the given level with context key/value pairs
+
+		// Log a message at the given level with context key/value pairs
 		Debug(msg string, ctx ...interface{})
+
+		// Log a message at the given level formatting message with the parameters
 		Debugf(msg string, params ...interface{})
+
+		// Log a message at the given level with context key/value pairs
 		Info(msg string, ctx ...interface{})
+
+		// Log a message at the given level formatting message with the parameters
 		Infof(msg string, params ...interface{})
+
+		// Log a message at the given level with context key/value pairs
 		Warn(msg string, ctx ...interface{})
+
+		// Log a message at the given level formatting message with the parameters
 		Warnf(msg string, params ...interface{})
+
+		// Log a message at the given level with context key/value pairs
 		Error(msg string, ctx ...interface{})
+
+		// Log a message at the given level formatting message with the parameters
 		Errorf(msg string, params ...interface{})
+
+		// Log a message at the given level with context key/value pairs
 		Crit(msg string, ctx ...interface{})
+
+		// Log a message at the given level formatting message with the parameters
 		Critf(msg string, params ...interface{})
 
-		//// Logs a message as an Crit and exits
+		// Log a message at the given level with context key/value pairs and exits
 		Fatal(msg string, ctx ...interface{})
+
+		// Log a message at the given level formatting message with the parameters and exits
 		Fatalf(msg string, params ...interface{})
-		//// Logs a message as an Crit and panics
+
+		// Log a message at the given level with context key/value pairs and panics
 		Panic(msg string, ctx ...interface{})
+
+		// Log a message at the given level formatting message with the parameters and panics
 		Panicf(msg string, params ...interface{})
 	}
+
+	// The log handler interface
 	LogHandler interface {
 		log15.Handler
 	}
+
+	// The log stack handler interface
 	LogStackHandler interface {
 		LogHandler
 		GetStack() int
 	}
+
+	// The log handler interface which has child logs
 	ParentLogHandler interface {
 		SetChild(handler LogHandler) LogHandler
 	}
+
+	// The log format interface
 	LogFormat interface {
 		log15.Format
 	}
 
+	// The log level type
 	LogLevel    log15.Lvl
+
+	// This type implements the MultiLogger
 	RevelLogger struct {
 		log15.Logger
 	}
@@ -70,10 +104,19 @@ type (
 )
 
 const (
+	// Debug level
 	LvlDebug = LogLevel(log15.LvlDebug)
+
+	// Info level
 	LvlInfo  = LogLevel(log15.LvlInfo)
+
+	// Warn level
 	LvlWarn  = LogLevel(log15.LvlWarn)
+
+	// Error level
 	LvlError = LogLevel(log15.LvlError)
+
+	// Critical level
 	LvlCrit  = LogLevel(log15.LvlCrit)
 )
 
@@ -117,33 +160,48 @@ func SetDefaultLog(fromLog MultiLogger) {
 	log.SetFlags(0)
 }
 
+// Print a formatted debug message
 func (rl *RevelLogger) Debugf(msg string, param ...interface{}) {
 	rl.Debug(fmt.Sprintf(msg, param...))
 }
+
+// Print a formatted info message
 func (rl *RevelLogger) Infof(msg string, param ...interface{}) {
 	rl.Info(fmt.Sprintf(msg, param...))
 }
+
+// Print a formatted warn message
 func (rl *RevelLogger) Warnf(msg string, param ...interface{}) {
 	rl.Warn(fmt.Sprintf(msg, param...))
 }
+
+// Print a formatted error message
 func (rl *RevelLogger) Errorf(msg string, param ...interface{}) {
 	rl.Error(fmt.Sprintf(msg, param...))
 }
+
+// Print a formatted critical message
 func (rl *RevelLogger) Critf(msg string, param ...interface{}) {
 	rl.Crit(fmt.Sprintf(msg, param...))
 }
+
+// Print a formatted fatal message
 func (rl *RevelLogger) Fatalf(msg string, param ...interface{}) {
 	rl.Fatal(fmt.Sprintf(msg, param...))
 }
+
+// Print a formatted panic message
 func (rl *RevelLogger) Panicf(msg string, param ...interface{}) {
 	rl.Panic(fmt.Sprintf(msg, param...))
 }
 
+// Print a critical message and call os.Exit(1)
 func (rl *RevelLogger) Fatal(msg string, ctx ...interface{}) {
 	rl.Crit(msg, ctx...)
 	os.Exit(1)
 }
 
+// Print a critical message and panic
 func (rl *RevelLogger) Panic(msg string, ctx ...interface{}) {
 	rl.Crit(msg, ctx...)
 	panic(msg)
@@ -173,14 +231,17 @@ func (rl *RevelLogger) SetHandler(h LogHandler) {
 	rl.Logger.SetHandler(h)
 }
 
+// Implements the ParentLogHandler
 type parentLogHandler struct {
 	setChild func(handler LogHandler) LogHandler
 }
 
+// Create a new parent log handler
 func NewParentLogHandler(callBack func(child LogHandler) LogHandler) ParentLogHandler {
 	return &parentLogHandler{callBack}
 }
 
+// Sets the child of the log handler
 func (p *parentLogHandler) SetChild(child LogHandler) LogHandler {
 	return p.setChild(child)
 }
@@ -203,18 +264,24 @@ func (l *LogOptions) SetExtendedOptions(options ...interface{}) {
 		l.ExtendedOptions[options[x].(string)] = options[x+1]
 	}
 }
+
+// Gets a string option with default
 func (l *LogOptions) GetStringDefault(option, value string) string {
 	if v, found := l.ExtendedOptions[option]; found {
 		return v.(string)
 	}
 	return value
 }
+
+// Gets an int option with default
 func (l *LogOptions) GetIntDefault(option string, value int) int {
 	if v, found := l.ExtendedOptions[option]; found {
 		return v.(int)
 	}
 	return value
 }
+
+// Gets a boolean option with default
 func (l *LogOptions) GetBoolDefault(option string, value bool) bool {
 	if v, found := l.ExtendedOptions[option]; found {
 		return v.(bool)
