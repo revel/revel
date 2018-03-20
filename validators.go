@@ -29,7 +29,18 @@ func ValidRequired() Required {
 }
 
 func (r Required) IsSatisfied(obj interface{}) bool {
-	return obj != nil && !reflect.DeepEqual(obj, reflect.Zero(reflect.TypeOf(obj)).Interface());
+	if obj == nil {
+		return true
+	}
+	switch v := reflect.ValueOf(obj); v.Kind() {
+	case reflect.Array, reflect.Slice, reflect.Map, reflect.String, reflect.Chan:
+		if v.Len() == 0 {
+			return true
+		}
+	case reflect.Ptr:
+		return isEmpty(reflect.Indirect(v).Interface())
+	}
+	return reflect.DeepEqual(reflect.Zero(reflect.TypeOf(obj)).Interface(), obj)
 }
 
 func (r Required) DefaultMessage() string {

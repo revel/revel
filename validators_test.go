@@ -6,6 +6,7 @@ package revel_test
 
 import (
 	"fmt"
+	"net"
 	"reflect"
 	"regexp"
 	"strings"
@@ -51,6 +52,7 @@ func TestRequired(t *testing.T) {
 		{time.Now(), true, "current time"},
 		{time.Time{}, false, "a zero time"},
 		{func() {}, true, "other non-nil data types"},
+		{net.IP(""), false, "empty IP address"},
 	}
 
 	// testing both the struct and the helper method
