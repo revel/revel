@@ -39,7 +39,6 @@ func performTests(validator revel.Validator, tests []Expect, t *testing.T) {
 }
 
 func TestRequired(t *testing.T) {
-
 	tests := []Expect{
 		{nil, false, "nil data"},
 		{"Testing", true, "non-empty string"},

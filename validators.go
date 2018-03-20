@@ -30,17 +30,17 @@ func ValidRequired() Required {
 
 func (r Required) IsSatisfied(obj interface{}) bool {
 	if obj == nil {
-		return true
+		return false
 	}
 	switch v := reflect.ValueOf(obj); v.Kind() {
 	case reflect.Array, reflect.Slice, reflect.Map, reflect.String, reflect.Chan:
 		if v.Len() == 0 {
-			return true
+			return false
 		}
 	case reflect.Ptr:
-		return isEmpty(reflect.Indirect(v).Interface())
+		return r.IsSatisfied(reflect.Indirect(v).Interface())
 	}
-	return reflect.DeepEqual(reflect.Zero(reflect.TypeOf(obj)).Interface(), obj)
+	return !reflect.DeepEqual(obj, reflect.Zero(reflect.TypeOf(obj)).Interface())
 }
 
 func (r Required) DefaultMessage() string {
