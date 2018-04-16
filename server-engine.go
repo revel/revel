@@ -60,6 +60,8 @@ type (
 		ServerResponse
 		MessageSendJSON(v interface{}) error
 		MessageReceiveJSON(v interface{}) error
+		MessageSend(v interface{}) error
+		MessageReceive(v interface{}) error
 	}
 
 	// Expected response for HTTP_SERVER_HEADER type (if implemented)
