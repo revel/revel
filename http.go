@@ -32,7 +32,7 @@ type Request struct {
 	RemoteAddr      string
 	Host            string
 	// URL request path from the server (built)
-	URL             *url.URL
+	URL *url.URL
 	// DEPRECATED use GetForm()
 	Form url.Values
 	// DEPRECATED use GetMultipartForm()
@@ -41,7 +41,7 @@ type Request struct {
 }
 
 var FORM_NOT_FOUND = errors.New("Form Not Found")
-var httpLog = RevelLog.New("section","http")
+var httpLog = RevelLog.New("section", "http")
 
 // Response is Revel's HTTP response object structure
 type Response struct {
@@ -82,7 +82,7 @@ func (req *Request) SetRequest(r ServerRequest) {
 		req.Header.Server = h.(ServerHeader)
 	}
 
-	req.URL,_ = req.GetValue(HTTP_URL).(*url.URL)
+	req.URL, _ = req.GetValue(HTTP_URL).(*url.URL)
 	req.ContentType = ResolveContentType(req)
 	req.Format = ResolveFormat(req)
 	req.AcceptLanguages = ResolveAcceptLanguage(req)
@@ -123,15 +123,15 @@ func (req *Request) FormValue(key string) (value string) {
 // Deprecated use controller.Params.Form[Key]
 func (req *Request) PostFormValue(key string) (value string) {
 	valueList := req.controller.Params.Form[key]
-	if len(valueList)>0 {
+	if len(valueList) > 0 {
 		value = valueList[0]
 	}
-	return 
+	return
 }
 
 // Deprecated use GetForm() instead
 func (req *Request) ParseForm() (e error) {
-	if req.Form==nil {
+	if req.Form == nil {
 		req.Form, e = req.GetForm()
 	}
 	return
@@ -398,7 +398,7 @@ func (al AcceptLanguages) String() string {
 		}
 		if i != len(al)-1 {
 			if _, err := output.WriteString(", "); err != nil {
-				httpLog.Error("String: WriteString failed:","error", err)
+				httpLog.Error("String: WriteString failed:", "error", err)
 			}
 		}
 	}
@@ -427,7 +427,7 @@ func ResolveAcceptLanguage(req *Request) AcceptLanguages {
 		if qualifiedRange := strings.Split(languageRange, ";q="); len(qualifiedRange) == 2 {
 			quality, err := strconv.ParseFloat(qualifiedRange[1], 32)
 			if err != nil {
-				httpLog.Warn("Detected malformed Accept-Language header quality in  assuming quality is 1","languageRange", languageRange)
+				httpLog.Warn("Detected malformed Accept-Language header quality in  assuming quality is 1", "languageRange", languageRange)
 				acceptLanguages[i] = AcceptLanguage{qualifiedRange[0], 1}
 			} else {
 				acceptLanguages[i] = AcceptLanguage{qualifiedRange[0], float32(quality)}

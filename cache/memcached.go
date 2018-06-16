@@ -113,6 +113,6 @@ func convertMemcacheError(err error) error {
 		return ErrNotStored
 	}
 
-	cacheLog.Error("convertMemcacheError:","error", err,"trace",logger.NewCallStack())
+	cacheLog.Error("convertMemcacheError:", "error", err, "trace", logger.NewCallStack())
 	return err
 }

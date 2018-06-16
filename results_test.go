@@ -5,19 +5,19 @@
 package revel
 
 import (
+	"fmt"
 	"net/http/httptest"
 	"strings"
 	"testing"
-	"fmt"
 )
 
 // Added test case for redirection testing for strings
 func TestRedirect(t *testing.T) {
 	startFakeBookingApp()
-	redirect:= RedirectToURLResult{fmt.Sprintf("/hotels/index/foo")}
+	redirect := RedirectToURLResult{fmt.Sprintf("/hotels/index/foo")}
 	resp := httptest.NewRecorder()
-	c := NewTestController(resp,showRequest)
-	redirect.Apply(c.Request,c.Response)
+	c := NewTestController(resp, showRequest)
+	redirect.Apply(c.Request, c.Response)
 	if resp.Header().Get("Location") != "/hotels/index/foo" {
 		t.Error("Failed to set redirect header correctly. : %s", resp.Header().Get("Location"))
 	}
@@ -27,7 +27,7 @@ func TestRedirect(t *testing.T) {
 func TestBenchmarkRender(t *testing.T) {
 	startFakeBookingApp()
 	resp := httptest.NewRecorder()
-	c := NewTestController(resp,showRequest)
+	c := NewTestController(resp, showRequest)
 	if err := c.SetAction("Hotels", "Show"); err != nil {
 		t.Errorf("SetAction failed: %s", err)
 	}
@@ -42,7 +42,7 @@ func BenchmarkRenderChunked(b *testing.B) {
 	startFakeBookingApp()
 	resp := httptest.NewRecorder()
 	resp.Body = nil
-	c := NewTestController(resp,showRequest)
+	c := NewTestController(resp, showRequest)
 	if err := c.SetAction("Hotels", "Show"); err != nil {
 		b.Errorf("SetAction failed: %s", err)
 	}
@@ -59,7 +59,7 @@ func BenchmarkRenderNotChunked(b *testing.B) {
 	startFakeBookingApp()
 	resp := httptest.NewRecorder()
 	resp.Body = nil
-	c := NewTestController(resp,showRequest)
+	c := NewTestController(resp, showRequest)
 	if err := c.SetAction("Hotels", "Show"); err != nil {
 		b.Errorf("SetAction failed: %s", err)
 	}

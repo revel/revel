@@ -209,8 +209,8 @@ func (c *Controller) RenderTemplate(templatePath string) Result {
 }
 
 // TemplateOutput returns the result of the template rendered using the controllers ViewArgs.
-func (c *Controller) TemplateOutput(templatePath string) (data []byte,err error)  {
-	return TemplateOutputArgs(templatePath,c.ViewArgs)
+func (c *Controller) TemplateOutput(templatePath string) (data []byte, err error) {
+	return TemplateOutputArgs(templatePath, c.ViewArgs)
 }
 
 // RenderJSON uses encoding/json.Marshal to return JSON to the client.

@@ -6,12 +6,12 @@ package revel_test
 
 import (
 	"fmt"
+	"github.com/revel/revel"
 	"reflect"
 	"regexp"
 	"strings"
 	"testing"
 	"time"
-	"github.com/revel/revel"
 )
 
 const (

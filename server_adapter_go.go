@@ -329,7 +329,7 @@ func (r *GoResponse) WriteStream(name string, contentlen int64, modtime time.Tim
 
 		if contentlen != -1 {
 			header := ServerHeader(r.Goheader)
-			if writer,found := r.Writer.(*CompressResponseWriter);found {
+			if writer, found := r.Writer.(*CompressResponseWriter); found {
 				header = ServerHeader(writer.Header)
 			}
 			header.Set("Content-Length", strconv.FormatInt(contentlen, 10))
