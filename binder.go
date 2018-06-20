@@ -434,6 +434,12 @@ func bindMap(params *Params, name string, typ reflect.Type) reflect.Value {
 	}
 
 	for paramName, _ := range params.Values {
+		// The paramName string must start with the value in the "name" parameter,
+		// otherwise there is no way the parameter is part of the map
+		if !strings.HasPrefix(paramName, name) {
+			continue
+		}
+
 		suffix := paramName[len(name)+1:]
 		fieldName := nextKey(suffix)
 		if fieldName != "" {
