@@ -21,10 +21,11 @@ func getRecordedCookie(recorder *httptest.ResponseRecorder, name string) (*http.
 	}
 	return nil, http.ErrNoCookie
 }
+
 // r.Original.URL.String()
 func validationTester(req *Request, fn func(c *Controller)) *httptest.ResponseRecorder {
 	recorder := httptest.NewRecorder()
-	c := NewTestController(recorder,req.In.GetRaw().(*http.Request))
+	c := NewTestController(recorder, req.In.GetRaw().(*http.Request))
 	c.Request = req
 
 	ValidationFilter(c, []Filter{I18nFilter, func(c *Controller, _ []Filter) {
@@ -93,7 +94,7 @@ func TestValidateMessageKey(t *testing.T) {
 
 	validationTester(req, func(c *Controller) {
 		c.Validation.Required("").MessageKey("greeting")
-		if msg:=c.Validation.Errors[0].Message; msg!="Hallo" {
+		if msg := c.Validation.Errors[0].Message; msg != "Hallo" {
 			t.Errorf("Failed expected message Hallo got %s", msg)
 		}
 

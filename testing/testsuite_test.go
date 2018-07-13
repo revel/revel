@@ -287,9 +287,9 @@ func createTestServer(fn func(w http.ResponseWriter, r *http.Request)) *httptest
 func init() {
 	if revel.ServerEngineInit == nil {
 		revel.ServerEngineInit = &revel.EngineInit{
-			Address:  ":9001",
-			Network:  "http",
-			Port:     9001,
+			Address: ":9001",
+			Network: "http",
+			Port:    9001,
 		}
 	}
 }

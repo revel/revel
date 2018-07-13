@@ -11,7 +11,7 @@ import (
 	"github.com/revel/revel"
 )
 
-var cacheLog = revel.RevelLog.New("section","cache")
+var cacheLog = revel.RevelLog.New("section", "cache")
 
 func init() {
 	revel.OnAppStart(func() {
