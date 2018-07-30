@@ -40,11 +40,11 @@ func (f *Field) Flash() string {
 }
 
 // Options returns the option list of this Field.
-func (f *Field) Options() []string {
+func (f *Field) Options() [][]string {
 	if f.viewArgs["options"] == nil {
 		return nil
 	}
-	v, _ := f.viewArgs["options"].(map[string][]string)[f.Name]
+	v, _ := f.viewArgs["options"].(map[string][][]string)[f.Name]
 	return v
 }
 
