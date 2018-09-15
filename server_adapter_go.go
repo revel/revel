@@ -329,7 +329,7 @@ func (r *GoResponse) WriteStream(name string, contentlen int64, modtime time.Tim
 
 		if contentlen != -1 {
 			header := ServerHeader(r.Goheader)
-			if writer,found := r.Writer.(*CompressResponseWriter);found {
+			if writer, found := r.Writer.(*CompressResponseWriter); found {
 				header = ServerHeader(writer.Header)
 			}
 			header.Set("Content-Length", strconv.FormatInt(contentlen, 10))
@@ -421,9 +421,31 @@ func (f *GoMultipartForm) GetValues() url.Values {
 func (f *GoMultipartForm) RemoveAll() error {
 	return f.Form.RemoveAll()
 }
+
+/**
+ * Message send JSON
+ */
 func (g *GoWebSocket) MessageSendJSON(v interface{}) error {
 	return websocket.JSON.Send(g.Conn, v)
 }
+
+/**
+ * Message receive JSON
+ */
 func (g *GoWebSocket) MessageReceiveJSON(v interface{}) error {
 	return websocket.JSON.Receive(g.Conn, v)
+}
+
+/**
+ * Message Send
+ */
+func (g *GoWebSocket) MessageSend(v interface{}) error {
+	return websocket.Message.Send(g.Conn, v)
+}
+
+/**
+ * Message receive
+ */
+func (g *GoWebSocket) MessageReceive(v interface{}) error {
+	return websocket.Message.Receive(g.Conn, v)
 }
