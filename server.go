@@ -5,11 +5,11 @@
 package revel
 
 import (
+	"fmt"
+	"os"
 	"sort"
 	"strconv"
 	"strings"
-	"fmt"
-	"os"
 )
 
 // Revel's variables server, router, etc
@@ -71,7 +71,7 @@ func Run(port int) {
 	CurrentEngine.Event(ENGINE_STARTED, nil)
 	// This is needed for the harness to recognize that the server is started, it looks for the word
 	// "Listening" in the stdout stream
-	fmt.Fprintf(os.Stdout,"Listening on.. %s\n", ServerEngineInit.Address)
+	fmt.Fprintf(os.Stdout, "Listening on.. %s\n", ServerEngineInit.Address)
 	CurrentEngine.Start()
 	CurrentEngine.Event(ENGINE_SHUTDOWN, nil)
 }
@@ -190,4 +190,42 @@ func OnAppStart(f func(), order ...int) {
 		o = order[0]
 	}
 	startupHooks = append(startupHooks, StartupHook{order: o, f: f})
+}
+
+func runShutdownHooks() {
+	fmt.Printf("There is %d shutdown hooks need to run ...\n", len(shutdownHooks))
+	sort.Sort(shutdownHooks)
+	for i, hook := range shutdownHooks {
+		fmt.Printf("Run the %d shutdown hook ...\n", i+1)
+		hook.f()
+	}
+}
+
+type ShutdownHook struct {
+	order int
+	f     func()
+}
+
+type ShutdownHooks []ShutdownHook
+
+var shutdownHooks ShutdownHooks
+
+func (slice ShutdownHooks) Len() int {
+	return len(slice)
+}
+
+func (slice ShutdownHooks) Less(i, j int) bool {
+	return slice[i].order < slice[j].order
+}
+
+func (slice ShutdownHooks) Swap(i, j int) {
+	slice[i], slice[j] = slice[j], slice[i]
+}
+
+func OnAppShut(f func(), order ...int) {
+	o := 1
+	if len(order) > 0 {
+		o = order[0]
+	}
+	shutdownHooks = append(shutdownHooks, ShutdownHook{order: o, f: f})
 }
