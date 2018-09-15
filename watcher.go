@@ -10,7 +10,8 @@ import (
 	"strings"
 	"sync"
 
-	"gopkg.in/fsnotify/fsnotify.v1"
+	"gopkg.in/fsnotify.v1"
+	"time"
 )
 
 // Listener is an interface for receivers of filesystem events.
@@ -30,18 +31,27 @@ type DiscerningListener interface {
 // Watcher allows listeners to register to be notified of changes under a given
 // directory.
 type Watcher struct {
-	// Parallel arrays of watcher/listener pairs.
-	watchers     []*fsnotify.Watcher
-	listeners    []Listener
-	forceRefresh bool
-	lastError    int
-	notifyMutex  sync.Mutex
+	serial              bool                // true to process events in serial
+	watchers            []*fsnotify.Watcher // Parallel arrays of watcher/listener pairs.
+	listeners           []Listener          // List of listeners for watcher
+	forceRefresh        bool                // True to force the refresh
+	lastError           int                 // The last error found
+	notifyMutex         sync.Mutex          // The mutext to serialize watches
+	refreshTimer        *time.Timer         // The timer to countdown the next refresh
+	timerMutex          *sync.Mutex         // A mutex to prevent concurrent updates
+	refreshChannel      chan *Error         // The error channel to listen to when waiting for a refresh
+	refreshChannelCount int                 // The number of clients listening on the channel
+	refreshTimerMS      time.Duration       // The number of milliseconds between refreshing builds
 }
 
 func NewWatcher() *Watcher {
 	return &Watcher{
-		forceRefresh: true,
-		lastError:    -1,
+		forceRefresh:        true,
+		lastError:           -1,
+		refreshTimerMS:      time.Duration(Config.IntDefault("watch.rebuild.delay", 10)),
+		timerMutex:          &sync.Mutex{},
+		refreshChannel:      make(chan *Error, 10),
+		refreshChannelCount: 0,
 	}
 }
 
@@ -49,7 +59,7 @@ func NewWatcher() *Watcher {
 func (w *Watcher) Listen(listener Listener, roots ...string) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		utilLog.Fatal("Watcher: Failed to create watcher","error",err)
+		utilLog.Fatal("Watcher: Failed to create watcher", "error", err)
 	}
 
 	// Replace the unbuffered Event channel with a buffered one.
@@ -75,7 +85,7 @@ func (w *Watcher) Listen(listener Listener, roots ...string) {
 
 		fi, err := os.Stat(p)
 		if err != nil {
-			utilLog.Fatal("Watcher: Failed to stat watched path","path", p, "error", err)
+			utilLog.Fatal("Watcher: Failed to stat watched path", "path", p, "error", err)
 			continue
 		}
 
@@ -83,7 +93,7 @@ func (w *Watcher) Listen(listener Listener, roots ...string) {
 		if !fi.IsDir() {
 			err = watcher.Add(p)
 			if err != nil {
-				utilLog.Fatal("Watcher: Failed to watch","path", p, "error", err)
+				utilLog.Fatal("Watcher: Failed to watch", "path", p, "error", err)
 			}
 			continue
 		}
@@ -105,7 +115,7 @@ func (w *Watcher) Listen(listener Listener, roots ...string) {
 
 				err = watcher.Add(path)
 				if err != nil {
-					utilLog.Fatal("Watcher: Failed to watch","path", path, "error", err)
+					utilLog.Fatal("Watcher: Failed to watch", "path", path, "error", err)
 				}
 			}
 			return nil
@@ -114,7 +124,7 @@ func (w *Watcher) Listen(listener Listener, roots ...string) {
 		// Else, walk the directory tree.
 		err = Walk(p, watcherWalker)
 		if err != nil {
-			utilLog.Fatal("Watcher: Failed to walk directory","path", p, "error", err)
+			utilLog.Fatal("Watcher: Failed to walk directory", "path", p, "error", err)
 		}
 	}
 
@@ -135,11 +145,20 @@ func (w *Watcher) NotifyWhenUpdated(listener Listener, watcher *fsnotify.Watcher
 		case ev := <-watcher.Events:
 			if w.rebuildRequired(ev, listener) {
 				// Serialize listener.Refresh() calls.
-				w.notifyMutex.Lock()
-				if err := listener.Refresh(); err != nil {
-					utilLog.Fatal("Watcher: Failed when listener refresh:","error", err)
+				if w.serial {
+					// Serialize listener.Refresh() calls.
+					w.notifyMutex.Lock()
+
+					if err := listener.Refresh(); err != nil {
+						utilLog.Error("Watcher: Listener refresh reported error:", "error", err)
+					}
+					w.notifyMutex.Unlock()
+				} else {
+					// Run refresh in parallel
+					go func() {
+						w.notifyInProcess(listener)
+					}()
 				}
-				w.notifyMutex.Unlock()
 			}
 		case <-watcher.Errors:
 			continue
@@ -175,7 +194,13 @@ func (w *Watcher) Notify() *Error {
 		}
 
 		if w.forceRefresh || refresh || w.lastError == i {
-			err := listener.Refresh()
+			var err *Error
+			if w.serial {
+				err = listener.Refresh()
+			} else {
+				err = w.notifyInProcess(listener)
+			}
+
 			if err != nil {
 				w.lastError = i
 				return err
@@ -186,6 +211,57 @@ func (w *Watcher) Notify() *Error {
 	w.forceRefresh = false
 	w.lastError = -1
 	return nil
+}
+
+// Build a queue for refresh notifications
+// this will not return until one of the queue completes
+func (w *Watcher) notifyInProcess(listener Listener) (err *Error) {
+	shouldReturn := false
+	// This code block ensures that either a timer is created
+	// or that a process would be added the the h.refreshChannel
+	func() {
+		w.timerMutex.Lock()
+		defer w.timerMutex.Unlock()
+		// If we are in the process of a rebuild, forceRefresh will always be true
+		w.forceRefresh = true
+		if w.refreshTimer != nil {
+			utilLog.Info("Found existing timer running, resetting")
+			w.refreshTimer.Reset(time.Millisecond * w.refreshTimerMS)
+			shouldReturn = true
+			w.refreshChannelCount++
+		} else {
+			w.refreshTimer = time.NewTimer(time.Millisecond * w.refreshTimerMS)
+		}
+	}()
+
+	// If another process is already waiting for the timer this one
+	// only needs to return the output from the channel
+	if shouldReturn {
+		return <-w.refreshChannel
+	}
+	utilLog.Info("Waiting for refresh timer to expire")
+	<-w.refreshTimer.C
+	w.timerMutex.Lock()
+
+	// Ensure the queue is properly dispatched even if a panic occurs
+	defer func() {
+		for x := 0; x < w.refreshChannelCount; x++ {
+			w.refreshChannel <- err
+		}
+		w.refreshChannelCount = 0
+		w.refreshTimer = nil
+		w.timerMutex.Unlock()
+	}()
+
+	err = listener.Refresh()
+	if err != nil {
+		utilLog.Info("Watcher: Recording error last build, setting rebuild on", "error", err)
+	} else {
+		w.lastError = -1
+		w.forceRefresh = false
+	}
+	utilLog.Info("Rebuilt, result", "error", err)
+	return
 }
 
 // If watch.mode is set to eager, the application is rebuilt immediately

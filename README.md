@@ -22,8 +22,7 @@ Install Revel:
 
 Create & Run your app:
 
-	revel new my-app
-	revel run my-app
+	revel new -a my-app -r
 
 Open http://localhost:9000 in your browser and you should see "It works!"
 
