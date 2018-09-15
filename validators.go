@@ -14,7 +14,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"time"
 	"unicode/utf8"
 )
 
@@ -33,28 +32,19 @@ func (r Required) IsSatisfied(obj interface{}) bool {
 	if obj == nil {
 		return false
 	}
-
-	if str, ok := obj.(string); ok {
-		return utf8.RuneCountInString(str) > 0
+	switch v := reflect.ValueOf(obj); v.Kind() {
+	case reflect.Array, reflect.Slice, reflect.Map, reflect.String, reflect.Chan:
+		if v.Len() == 0 {
+			return false
+		}
+	case reflect.Ptr:
+		return r.IsSatisfied(reflect.Indirect(v).Interface())
 	}
-	if b, ok := obj.(bool); ok {
-		return b
-	}
-	if i, ok := obj.(int); ok {
-		return i != 0
-	}
-	if t, ok := obj.(time.Time); ok {
-		return !t.IsZero()
-	}
-	v := reflect.ValueOf(obj)
-	if v.Kind() == reflect.Slice {
-		return v.Len() > 0
-	}
-	return true
+	return !reflect.DeepEqual(obj, reflect.Zero(reflect.TypeOf(obj)).Interface())
 }
 
 func (r Required) DefaultMessage() string {
-	return "Required"
+	return fmt.Sprintln("Required")
 }
 
 type Min struct {

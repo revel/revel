@@ -6,6 +6,7 @@ package revel_test
 
 import (
 	"fmt"
+	"net"
 	"reflect"
 	"regexp"
 	"strings"
@@ -38,7 +39,6 @@ func performTests(validator revel.Validator, tests []Expect, t *testing.T) {
 }
 
 func TestRequired(t *testing.T) {
-
 	tests := []Expect{
 		{nil, false, "nil data"},
 		{"Testing", true, "non-empty string"},
@@ -51,6 +51,7 @@ func TestRequired(t *testing.T) {
 		{time.Now(), true, "current time"},
 		{time.Time{}, false, "a zero time"},
 		{func() {}, true, "other non-nil data types"},
+		{net.IP(""), false, "empty IP address"},
 	}
 
 	// testing both the struct and the helper method
