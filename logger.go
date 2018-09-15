@@ -43,7 +43,7 @@ func init() {
 
 	RootLog.SetHandler(logger.LevelHandler(logger.LogLevel(log15.LvlDebug), logger.StreamHandler(os.Stdout, logger.TerminalFormatHandler(false, true))))
 	initLoggers()
-	OnAppStart(initLoggers, -1)
+	OnAppStart(initLoggers, -5)
 
 }
 func initLoggers() {

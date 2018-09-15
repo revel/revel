@@ -163,6 +163,7 @@ func (loader *TemplateLoader) Refresh() (err *Error) {
 		}
 
 		var templateWalker filepath.WalkFunc
+
 		templateWalker = func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				templateLog.Error("Refresh: error walking templates:", "error", err)
@@ -183,12 +184,17 @@ func (loader *TemplateLoader) Refresh() (err *Error) {
 			}
 
 			fileBytes, err := runtimeLoader.findAndAddTemplate(path, fullSrcDir, basePath)
-
+			if err!=nil {
+				// Add in this template name to the list of templates unable to be compiled
+				runtimeLoader.compileErrorNameList = append(runtimeLoader.compileErrorNameList,filepath.ToSlash(path[len(fullSrcDir)+1:]))
+			}
 			// Store / report the first error encountered.
 			if err != nil && runtimeLoader.compileError == nil {
 				runtimeLoader.compileError, _ = err.(*Error)
+
 				if nil == runtimeLoader.compileError {
 					_, line, description := ParseTemplateError(err)
+
 					runtimeLoader.compileError = &Error{
 						Title:       "Template Compilation Error",
 						Path:        path,
@@ -239,6 +245,8 @@ type templateRuntime struct {
 	templatesAndEngineList []TemplateEngine
 	// If an error was encountered parsing the templates, it is stored here.
 	compileError *Error
+	// A list of the names of the templates with errors
+	compileErrorNameList []string
 	// Map from template name to the path from whence it was loaded.
 	TemplatePaths map[string]string
 	// A map of looked up template results
@@ -300,8 +308,8 @@ func (runtimeLoader *templateRuntime) findAndAddTemplate(path, fullSrcDir, baseP
 	err = defaultError
 
 	// No engines could be found return the err
-	if err != nil {
-		err = fmt.Errorf("Failed to parse template file using engines %s %s", path, err)
+	if err == nil {
+		err = fmt.Errorf("Failed to parse template file using engines %s", path)
 	}
 
 	return
@@ -310,7 +318,7 @@ func (runtimeLoader *templateRuntime) findAndAddTemplate(path, fullSrcDir, baseP
 func (runtimeLoader *templateRuntime) loadIntoEngine(engine TemplateEngine, baseTemplate *TemplateView) (loaded bool, err error) {
 	if loadedTemplate, found := runtimeLoader.templateMap[baseTemplate.TemplateName]; found {
 		// Duplicate template found in map
-		TRACE.Println("template already exists in map: ", baseTemplate.TemplateName, " in engine ", engine.Name(), "\r\n\told file:",
+		templateLog.Debug("template already exists in map: ", baseTemplate.TemplateName, " in engine ", engine.Name(), "\r\n\told file:",
 			loadedTemplate.Location(), "\r\n\tnew file:", baseTemplate.FilePath)
 		return
 	}
@@ -347,7 +355,7 @@ func ParseTemplateError(err error) (templateName string, line int, description s
 	if i != nil {
 		line, err = strconv.Atoi(description[i[0]+1 : i[1]-1])
 		if err != nil {
-			templateLog.Debug("ParseTemplateError: Failed to parse line number from error message:", "error", err)
+			templateLog.Error("ParseTemplateError: Failed to parse line number from error message:", "error", err)
 		}
 		templateName = description[:i[0]]
 		if colon := strings.Index(templateName, ":"); colon != -1 {
@@ -366,8 +374,12 @@ func ParseTemplateError(err error) (templateName string, line int, description s
 // An Error is returned if there was any problem with any of the templates.  (In
 // this case, if a template is returned, it may still be usable.)
 func (runtimeLoader *templateRuntime) TemplateLang(name, lang string) (tmpl Template, err error) {
-	if runtimeLoader.compileError != nil {
-		return nil, runtimeLoader.compileError
+	if runtimeLoader.compileError != nil  {
+		for _,errName:=range runtimeLoader.compileErrorNameList {
+			if name == errName {
+				return nil, runtimeLoader.compileError
+			}
+		}
 	}
 
 	// Fetch the template from the map

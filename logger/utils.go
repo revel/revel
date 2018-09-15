@@ -21,8 +21,15 @@ var (
 		"trace": LogLevel(log15.LvlDebug), // TODO trace is deprecated, replaced by debug
 	}
 )
+const (
+	// The test mode flag overrides the default log level and shows only errors
+	TEST_MODE_FLAG = "testModeFlag"
+	// The special use flag enables showing messages when the logger is setup
+	SPECIAL_USE_FLAG = "specialUseFlag"
 
 // Returns the logger for the name
+)
+
 func GetLogger(name string, logger MultiLogger) (l *log.Logger) {
 	switch name {
 	case "trace": // TODO trace is deprecated, replaced by debug
@@ -45,20 +52,35 @@ func GetLogger(name string, logger MultiLogger) (l *log.Logger) {
 
 // Get all handlers based on the Config (if available)
 func InitializeFromConfig(basePath string, config *config.Context) (c *CompositeMultiHandler) {
+	// If running in test mode suppress anything that is not an error
+	if  config!=nil && config.BoolDefault(TEST_MODE_FLAG,false) {
+		// Preconfigure all the options
+		config.SetOption("log.info.output","none")
+		config.SetOption("log.debug.output","none")
+		config.SetOption("log.warn.output","none")
+		config.SetOption("log.error.output","stderr")
+		config.SetOption("log.crit.output","stderr")
+	}
+
+
 	// If the configuration has an all option we can skip some
 	c, _ = NewCompositeMultiHandler()
 
 	// Filters are assigned first, non filtered items override filters
-	initAllLog(c, basePath, config)
+	if config!=nil && !config.BoolDefault(TEST_MODE_FLAG,false) {
+		initAllLog(c, basePath, config)
+	}
 	initLogLevels(c, basePath, config)
 	if c.CriticalHandler == nil && c.ErrorHandler != nil {
 		c.CriticalHandler = c.ErrorHandler
 	}
-	initFilterLog(c, basePath, config)
-	if c.CriticalHandler == nil && c.ErrorHandler != nil {
-		c.CriticalHandler = c.ErrorHandler
+	if config!=nil && !config.BoolDefault(TEST_MODE_FLAG,false) {
+		initFilterLog(c, basePath, config)
+		if c.CriticalHandler == nil && c.ErrorHandler != nil {
+			c.CriticalHandler = c.ErrorHandler
+		}
+		initRequestLog(c, basePath, config)
 	}
-	initRequestLog(c, basePath, config)
 
 	return c
 }
@@ -66,9 +88,12 @@ func InitializeFromConfig(basePath string, config *config.Context) (c *Composite
 // Init the log.all configuration options
 func initAllLog(c *CompositeMultiHandler, basePath string, config *config.Context) {
 	if config != nil {
+		extraLogFlag := config.BoolDefault(SPECIAL_USE_FLAG, false)
 		if output, found := config.String("log.all.output"); found {
 			// Set all output for the specified handler
-			log.Printf("Adding standard handler for levels to >%s< ", output)
+			if extraLogFlag {
+				log.Printf("Adding standard handler for levels to >%s< ", output)
+			}
 			initHandlerFor(c, output, basePath, NewLogOptions(config, true, nil, LvlAllList...))
 		}
 	}
@@ -99,29 +124,53 @@ var logFilterList = []struct {
 // log.all.filter ....
 // log.error.filter ....
 func initFilterLog(c *CompositeMultiHandler, basePath string, config *config.Context) {
-	if config == nil {
-		return
-	}
 
-	for _, logFilter := range logFilterList {
-		// Init for all filters
-		for _, name := range []string{"all", "debug", "info", "warn", "error", "crit",
-			"trace", // TODO trace is deprecated
-		} {
-			optionList := config.Options(logFilter.LogPrefix + name + logFilter.LogSuffix)
-			for _, option := range optionList {
-				splitOptions := strings.Split(option, ".")
-				keyMap := map[string]interface{}{}
-				for x := 3; x < len(splitOptions); x += 2 {
-					keyMap[splitOptions[x]] = splitOptions[x+1]
-				}
-				phandler := logFilter.parentHandler(keyMap)
-				log.Printf("Adding key map handler %s %s output %s", option, name, config.StringDefault(option, ""))
+	if config != nil {
+		extraLogFlag := config.BoolDefault(SPECIAL_USE_FLAG, false)
 
-				if name == "all" {
-					initHandlerFor(c, config.StringDefault(option, ""), basePath, NewLogOptions(config, false, phandler))
-				} else {
-					initHandlerFor(c, config.StringDefault(option, ""), basePath, NewLogOptions(config, false, phandler, toLevel[name]))
+		// The commands to use
+		logFilterList := []struct {
+			LogPrefix, LogSuffix string
+			parentHandler        func(map[string]interface{}) ParentLogHandler
+		}{{
+			"log.", ".filter",
+			func(keyMap map[string]interface{}) ParentLogHandler {
+				return NewParentLogHandler(func(child LogHandler) LogHandler {
+					return MatchMapHandler(keyMap, child)
+				})
+
+			},
+		}, {
+			"log.", ".nfilter",
+			func(keyMap map[string]interface{}) ParentLogHandler {
+				return NewParentLogHandler(func(child LogHandler) LogHandler {
+					return NotMatchMapHandler(keyMap, child)
+				})
+			},
+		}}
+
+		for _, logFilter := range logFilterList {
+			// Init for all filters
+			for _, name := range []string{"all", "debug", "info", "warn", "error", "crit",
+				"trace", // TODO trace is deprecated
+			} {
+				optionList := config.Options(logFilter.LogPrefix + name + logFilter.LogSuffix)
+				for _, option := range optionList {
+					splitOptions := strings.Split(option, ".")
+					keyMap := map[string]interface{}{}
+					for x := 3; x < len(splitOptions); x += 2 {
+						keyMap[splitOptions[x]] = splitOptions[x+1]
+					}
+					phandler := logFilter.parentHandler(keyMap)
+					if extraLogFlag {
+						log.Printf("Adding key map handler %s %s output %s", option, name, config.StringDefault(option, ""))
+					}
+
+					if name == "all" {
+						initHandlerFor(c, config.StringDefault(option, ""), basePath, NewLogOptions(config, false, phandler))
+					} else {
+						initHandlerFor(c, config.StringDefault(option, ""), basePath, NewLogOptions(config, false, phandler, toLevel[name]))
+					}
 				}
 			}
 		}
@@ -134,9 +183,12 @@ func initLogLevels(c *CompositeMultiHandler, basePath string, config *config.Con
 		"trace", // TODO trace is deprecated
 	} {
 		if config != nil {
+			extraLogFlag := config.BoolDefault(SPECIAL_USE_FLAG, false)
 			output, found := config.String("log." + name + ".output")
 			if found {
-				log.Printf("Adding standard handler %s output %s", name, output)
+				if extraLogFlag {
+					log.Printf("Adding standard handler %s output %s", name, output)
+				}
 				initHandlerFor(c, output, basePath, NewLogOptions(config, true, nil, toLevel[name]))
 			}
 			// Gets the list of options with said prefix
