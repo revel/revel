@@ -57,26 +57,69 @@ func (f *Field) FlashArray() []string {
 	return strings.Split(v, ",")
 }
 
+func readNext(nextKey string) (string, string) {
+	switch nextKey[0] {
+	case '[':
+		idx := strings.IndexRune(nextKey, ']')
+		if idx < 0 {
+			return nextKey[1:], ""
+		} else {
+			return nextKey[1:idx], nextKey[idx+1:]
+		}
+	case '.':
+		nextKey = nextKey[1:]
+		fallthrough
+	default:
+		idx := strings.IndexAny(nextKey, ".[")
+		if idx < 0 {
+			return nextKey, ""
+		} else if nextKey[idx] == '.' {
+			return nextKey[:idx], nextKey[idx+1:]
+		} else {
+			return nextKey[:idx], nextKey[idx:]
+		}
+	}
+}
+
 // Value returns the current value of this Field.
 func (f *Field) Value() interface{} {
-	pieces := strings.Split(f.Name, ".")
-	answer, ok := f.viewArgs[pieces[0]]
-	if !ok {
-		return ""
+	var fieldName string
+
+	var nextKey = f.Name
+	var val interface{} = f.viewArgs
+	for nextKey != "" {
+		fieldName, nextKey = readNext(nextKey)
+
+		rVal := reflect.ValueOf(val)
+		kind := rVal.Kind()
+		if kind == reflect.Map {
+			rFieldName := reflect.ValueOf(fieldName)
+			rVal = rVal.MapIndex(rFieldName)
+			if !rVal.IsValid() {
+				return nil
+			}
+
+			val = rVal.Interface()
+			if val == nil {
+				return nil
+			}
+			continue
+		}
+
+		if kind == reflect.Ptr {
+			rVal = rVal.Elem()
+		}
+		rVal = rVal.FieldByName(fieldName)
+		if !rVal.IsValid() {
+			return nil
+		}
+		val = rVal.Interface()
+		if val == nil {
+			return nil
+		}
 	}
 
-	val := reflect.ValueOf(answer)
-	for i := 1; i < len(pieces); i++ {
-		if val.Kind() == reflect.Ptr {
-			val = val.Elem()
-		}
-		val = val.FieldByName(pieces[i])
-		if !val.IsValid() {
-			return ""
-		}
-	}
-
-	return val.Interface()
+	return val
 }
 
 // ErrorClass returns ErrorCSSClass if this field has a validation error, else empty string.
