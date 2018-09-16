@@ -11,6 +11,9 @@ import (
 	"strings"
 
 	"github.com/revel/config"
+	"encoding/json"
+	"github.com/revel/revel/logger"
+	"fmt"
 )
 
 const (
@@ -40,6 +43,10 @@ const (
 	ROUTE_REFRESH_REQUESTED
 	// Called after routes have been refreshed
 	ROUTE_REFRESH_COMPLETED
+)
+const (
+	TEST_MODE_FLAG = "testModeFlag"
+	SPECIAL_USE_FLAG = "specialUseFlag"
 )
 
 type EventHandler func(typeOf int, value interface{}) (responseOf int)
@@ -111,11 +118,12 @@ var (
 //   importPath - the Go import path of the application.
 //   srcPath - the path to the source directory, containing Revel and the app.
 //     If not specified (""), then a functioning Go installation is required.
-func Init(mode, importPath, srcPath string) {
+func Init(inputmode, importPath, srcPath string) {
 	// Ignore trailing slashes.
 	ImportPath = strings.TrimRight(importPath, "/")
 	SourcePath = srcPath
-	RunMode = mode
+
+	RunMode = updateLog(inputmode)
 
 	// If the SourcePath is not specified, find it using build.Import.
 	var revelSourcePath string // may be different from the app source path
@@ -134,6 +142,7 @@ func Init(mode, importPath, srcPath string) {
 	ViewsPath = filepath.Join(AppPath, "views")
 
 	CodePaths = []string{AppPath}
+
 
 	if ConfPaths == nil {
 		ConfPaths = []string{}
@@ -161,15 +170,9 @@ func Init(mode, importPath, srcPath string) {
 	if err != nil || Config == nil {
 		RevelLog.Fatal("Failed to load app.conf:", "error", err)
 	}
-	// Ensure that the selected runmode appears in app.conf.
-	// If empty string is passed as the mode, treat it as "DEFAULT"
-	if mode == "" {
-		mode = config.DefaultSection
-	}
-	if !Config.HasSection(mode) {
-		log.Fatalln("app.conf: No mode found:", mode)
-	}
-	Config.SetSection(mode)
+
+	// After application config is loaded update the logger
+	updateLog(inputmode)
 
 	// Configure properties from app.conf
 	DevMode = Config.BoolDefault("mode.dev", false)
@@ -202,6 +205,64 @@ func Init(mode, importPath, srcPath string) {
 
 	Initialized = true
 	RevelLog.Info("Initialized Revel", "Version", Version, "BuildDate", BuildDate, "MinimumGoVersion", MinimumGoVersion)
+}
+
+// The input mode can be as simple as "prod" or it can be a JSON string like
+// {"mode":"%s","testModeFlag":true}
+// When this function is called it returns the true "inputmode" extracted from the parameter
+// and it sets the log context appropriately
+func updateLog(inputmode string) (returnMode string) {
+	if inputmode == "" {
+		returnMode = config.DefaultSection
+		return
+	} else {
+		returnMode=inputmode
+	}
+
+	// Check to see if the mode is a json object
+	modemap := map[string]interface{}{}
+
+	var testModeFlag, specialUseFlag  bool
+	if err := json.Unmarshal([]byte(inputmode), &modemap); err==nil {
+		returnMode = modemap["mode"].(string)
+		if testmode, found := modemap[TEST_MODE_FLAG]; found {
+			testModeFlag,_ = testmode.(bool)
+		}
+		if specialUse, found := modemap[SPECIAL_USE_FLAG]; found {
+			specialUseFlag,_ = specialUse.(bool)
+		}
+	}
+
+	var newContext *config.Context
+	// If the Config is nil, set the logger to minimal log messages by adding the option
+	if Config == nil {
+		newContext = config.NewContext()
+		newContext.SetOption(TEST_MODE_FLAG, fmt.Sprint(true))
+	} else {
+		// Ensure that the selected runmode appears in app.conf.
+		// If empty string is passed as the mode, treat it as "DEFAULT"
+		if !Config.HasSection(returnMode) {
+			log.Fatalln("app.conf: No mode found:", returnMode)
+		}
+		Config.SetSection(returnMode)
+		newContext = Config
+	}
+
+	// Only set the testmode flag if it doesnt exist
+	if _,found := newContext.Bool(TEST_MODE_FLAG); !found {
+		newContext.SetOption(TEST_MODE_FLAG, fmt.Sprint(testModeFlag))
+	}
+	if _,found := newContext.Bool(SPECIAL_USE_FLAG); !found {
+		newContext.SetOption(SPECIAL_USE_FLAG, fmt.Sprint(specialUseFlag))
+	}
+
+	appHandle := logger.InitializeFromConfig(BasePath, newContext)
+
+	// Set all the log handlers
+	setLog(oldLog, appHandle)
+	setAppLog(AppLog, appHandle)
+
+	return
 }
 
 // Fires system events from revel

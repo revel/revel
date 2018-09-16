@@ -108,7 +108,7 @@ func (cte *ControllerTypeEvents) check(theType reflect.Type, fieldPath []int)  {
 				if checkType.Kind() == reflect.Ptr {
 					controllerLog.Debug("Found controller type event method pointer","name", checkType.Elem().Name(),"methodname", m.Name)
 				} else {
-					controllerLog.Debug("Found controller type event method","name", checkType.Elem().Name(),"methodname", m.Name)
+					controllerLog.Debug("Found controller type event method","name", checkType.Name(),"methodname", m.Name)
 				}
 				controllerFieldPath := newFieldPath(checkType.Kind() == reflect.Ptr, m.Func, fieldPath)
 				switch strings.ToLower(m.Name) {

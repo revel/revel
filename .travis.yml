@@ -1,10 +1,10 @@
 language: go
 
 go:
-  - 1.6
-  - 1.7
   - 1.8
   - 1.9
+  - 1.10
+  - 1.11
   - tip
 
 os:
@@ -50,16 +50,6 @@ install:
 
 script:
   - go test -v github.com/revel/revel/...
-
-  # Ensure the new-app flow works (plus the other commands).
-  - revel version
-  - revel new     my/testapp
-  - revel test    my/testapp
-  - revel clean   my/testapp
-  - revel build   my/testapp build/testapp
-  - revel build   my/testapp build/testapp prod
-  - revel package my/testapp
-  - revel package my/testapp prod
 
   # Commented out persona test sample, since persona.org gonna be shutdown.
   # Also http://personatestuser.org becomes non-responsive most of the time.

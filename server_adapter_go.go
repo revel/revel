@@ -20,7 +20,12 @@ var signalChan = make(chan os.Signal)
 
 // Register the GoHttpServer engine
 func init() {
-	RegisterServerEngine(GO_NATIVE_SERVER_ENGINE, func() ServerEngine { return &GoHttpServer{} })
+	AddInitEventHandler(func(typeOf int, value interface{}) (responseOf int){
+		if typeOf == REVEL_BEFORE_MODULES_LOADED {
+			RegisterServerEngine(GO_NATIVE_SERVER_ENGINE, func() ServerEngine { return &GoHttpServer{} })
+		}
+		return
+	})
 }
 
 type GoHttpServer struct {
