@@ -38,7 +38,7 @@ func TestSessionExpire(t *testing.T) {
 		time.Sleep(time.Second)
 		session = GetSessionFromCookie(GoCookie(*cookie))
 	}
-	expectExpire := time.Now().Add(expireAfterDuration)
+	expectExpire := time.Now().UTC().Add(expireAfterDuration)
 	if cookie.Expires.Unix() < expectExpire.Add(-time.Second).Unix() {
 		t.Error("expect expires", cookie.Expires, "after", expectExpire.Add(-time.Second))
 	}
@@ -58,7 +58,7 @@ func TestSessionExpire(t *testing.T) {
 
 	session.SetDefaultExpiration()
 	cookie = session.Cookie()
-	expectExpire = time.Now().Add(expireAfterDuration)
+	expectExpire = time.Now().UTC().Add(expireAfterDuration)
 	if cookie.Expires.Unix() < expectExpire.Add(-time.Second).Unix() {
 		t.Error("expect expires", cookie.Expires, "after", expectExpire.Add(-time.Second))
 	}

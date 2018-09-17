@@ -70,9 +70,16 @@ func TestGetNotFound(t *testing.T) {
 	// testSuite.AssertNotContains("not exists")
 }
 
+// This test is known to fail
 func TestGetCustom(t *testing.T) {
 	testSuite := createNewTestSuite(t)
-	testSuite.GetCustom("http://httpbin.org/get").Send()
+	for x:=0;x<5;x++ {
+		testSuite.GetCustom("http://httpbin.org/get").Send()
+		if testSuite.Response.StatusCode==http.StatusOK {
+			break
+		}
+		println("Failed request from http://httpbin.org/get", testSuite.Response.StatusCode)
+	}
 
 	testSuite.AssertOk()
 	testSuite.AssertContentType("application/json")
