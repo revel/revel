@@ -43,6 +43,9 @@ const (
 	ROUTE_REFRESH_REQUESTED
 	// Called after routes have been refreshed
 	ROUTE_REFRESH_COMPLETED
+
+	// Fired when a panic is caught during the startup process
+	REVEL_FAILURE
 )
 const (
 	TEST_MODE_FLAG = "testModeFlag"

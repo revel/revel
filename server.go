@@ -61,8 +61,13 @@ func InitServer() {
 // This is called from the generated main file.
 // If port is non-zero, use that.  Else, read the port from app.conf.
 func Run(port int) {
-
-	// Create the CurrentEngine instance from the application config
+	defer func() {
+		if r := recover(); r != nil {
+			RevelLog.Crit("Recovered error in startup", "error", r)
+			fireEvent(REVEL_FAILURE, r)
+			panic("Fatal error in startup")
+		}
+	}()	// Create the CurrentEngine instance from the application config
 	InitServerEngine(port, Config.StringDefault("server.engine", GO_NATIVE_SERVER_ENGINE))
 	CurrentEngine.Event(ENGINE_BEFORE_INITIALIZED, nil)
 	fireEvent(ENGINE_BEFORE_INITIALIZED, nil)

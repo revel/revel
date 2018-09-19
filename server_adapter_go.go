@@ -213,6 +213,8 @@ func (c *GoContext) Destroy() {
 		c.WebSocket = nil
 	}
 }
+
+// Communicate with the server engine to exchange data
 func (r *GoRequest) Get(key int) (value interface{}, err error) {
 	switch key {
 	case HTTP_SERVER_HEADER:
@@ -225,6 +227,8 @@ func (r *GoRequest) Get(key int) (value interface{}, err error) {
 		value, err = r.GetForm()
 	case HTTP_REQUEST_URI:
 		value = r.Original.URL.String()
+	case HTTP_REQUEST_CONTEXT:
+		value = r.Original.Context()
 	case HTTP_REMOTE_ADDR:
 		value = r.Original.RemoteAddr
 	case HTTP_METHOD:
