@@ -17,27 +17,28 @@ import (
 
 	"mime/multipart"
 	"path/filepath"
+	"context"
 )
 
 // Request is Revel's HTTP request object structure
 type Request struct {
-	In              ServerRequest
-	Header          *RevelHeader
-	ContentType     string
-	Format          string // "html", "xml", "json", or "txt"
-	AcceptLanguages AcceptLanguages
-	Locale          string
-	WebSocket       ServerWebSocket
-	Method          string
-	RemoteAddr      string
-	Host            string
+	In              ServerRequest // The server request
+	Header          *RevelHeader // The revel header
+	ContentType     string // The content type
+	Format          string // The output format "html", "xml", "json", or "txt"
+	AcceptLanguages AcceptLanguages // The languages to accept
+	Locale          string // THe locale
+	WebSocket       ServerWebSocket // The websocket
+	Method          string // The method
+	RemoteAddr      string // The remote address
+	Host            string // The host
 	// URL request path from the server (built)
-	URL             *url.URL
+	URL             *url.URL // The url
 	// DEPRECATED use GetForm()
-	Form url.Values
+	Form url.Values // The Form
 	// DEPRECATED use GetMultipartForm()
-	MultipartForm *MultipartForm
-	controller    *Controller
+	MultipartForm *MultipartForm // The multipart form
+	controller    *Controller // The controller, so some of this data can be fetched
 }
 
 var FORM_NOT_FOUND = errors.New("Form Not Found")
@@ -50,15 +51,18 @@ type Response struct {
 	Out         OutResponse
 	writer      io.Writer
 }
+
+// The output response
 type OutResponse struct {
 	// internalHeader.Server Set by ServerResponse.Get(HTTP_SERVER_HEADER), saves calling the get every time the header needs to be written to
-	internalHeader *RevelHeader
-	Server         ServerResponse
-	response       *Response
+	internalHeader *RevelHeader // The internal header
+	Server         ServerResponse // The server response
+	response       *Response // The response
 }
 
+// The header defined in Revel
 type RevelHeader struct {
-	Server ServerHeader
+	Server ServerHeader // The server
 }
 
 // NewResponse wraps ServerResponse inside a Revel's Response and returns it
@@ -91,6 +95,8 @@ func (req *Request) SetRequest(r ServerRequest) {
 	req.Host, _ = req.GetValue(HTTP_HOST).(string)
 
 }
+
+// Returns a cookie
 func (req *Request) Cookie(key string) (ServerCookie, error) {
 	if req.Header.Server != nil {
 		return req.Header.Server.GetCookie(key)
@@ -98,20 +104,33 @@ func (req *Request) Cookie(key string) (ServerCookie, error) {
 	return nil, http.ErrNoCookie
 }
 
+// Fetch the requested URI
 func (req *Request) GetRequestURI() string {
 	uri, _ := req.GetValue(HTTP_REQUEST_URI).(string)
 	return uri
 }
+
+// Fetch the query
 func (req *Request) GetQuery() (v url.Values) {
 	v, _ = req.GetValue(ENGINE_PARAMETERS).(url.Values)
 	return
 }
+
+// Fetch the path
 func (req *Request) GetPath() (path string) {
 	path, _ = req.GetValue(ENGINE_PATH).(string)
 	return
 }
+
+// Fetch the body
 func (req *Request) GetBody() (body io.Reader) {
 	body, _ = req.GetValue(HTTP_BODY).(io.Reader)
+	return
+}
+
+// Fetch the context
+func (req *Request) Context() (c context.Context) {
+	c, _ = req.GetValue(HTTP_REQUEST_CONTEXT).(context.Context)
 	return
 }
 
@@ -173,11 +192,12 @@ func (req *Request) ParseMultipartForm(_ int64) (e error) {
 	return
 }
 
-// Return the args for the context
-func (req *Request) Context() map[string]interface{} {
+// Return the args for the controller
+func (req *Request) Args() map[string]interface{} {
 	return req.controller.Args
 }
 
+// Return a multipart form
 func (req *Request) GetMultipartForm() (ServerMultipartForm, error) {
 	if form, err := req.In.Get(HTTP_MULTIPART_FORM); err != nil {
 		return nil, err
@@ -186,6 +206,8 @@ func (req *Request) GetMultipartForm() (ServerMultipartForm, error) {
 	}
 	return nil, FORM_NOT_FOUND
 }
+
+// Destroy the request
 func (req *Request) Destroy() {
 	req.In = nil
 	req.ContentType = ""
@@ -200,19 +222,26 @@ func (req *Request) Destroy() {
 	req.MultipartForm = nil
 }
 
+// Set the server response
 func (resp *Response) SetResponse(r ServerResponse) {
 	resp.Out.Server = r
 	if h, e := r.Get(HTTP_SERVER_HEADER); e == nil {
 		resp.Out.internalHeader.Server, _ = h.(ServerHeader)
 	}
 }
+
+// Destroy the output response
 func (o *OutResponse) Destroy() {
 	o.response = nil
 	o.internalHeader.Destroy()
 }
+
+// Destroy the RevelHeader
 func (h *RevelHeader) Destroy() {
 	h.Server = nil
 }
+
+// Destroy the Response
 func (resp *Response) Destroy() {
 	resp.Out.Destroy()
 	resp.Status = 0
@@ -229,10 +258,13 @@ func (r *Request) UserAgent() string {
 func (req *Request) Referer() string {
 	return req.Header.Get("Referer")
 }
+
+// Return the httpheader for the key
 func (req *Request) GetHttpHeader(key string) string {
 	return req.Header.Get(key)
 }
 
+// Return the value from the server
 func (r *Request) GetValue(key int) (value interface{}) {
 	value, _ = r.In.Get(key)
 	return
@@ -260,6 +292,7 @@ func (resp *Response) SetStatus(statusCode int) {
 
 }
 
+// Return the writer
 func (resp *Response) GetWriter() (writer io.Writer) {
 	writer = resp.writer
 	if writer == nil {
@@ -270,6 +303,8 @@ func (resp *Response) GetWriter() (writer io.Writer) {
 
 	return
 }
+
+// Replace the writer
 func (resp *Response) SetWriter(writer io.Writer) bool {
 	resp.writer = writer
 	// Leave it up to the engine to flush and close the writer
@@ -283,34 +318,46 @@ func (resp *Response) GetStreamWriter() (writer StreamWriter) {
 	}
 	return
 }
+
+// Return the header
 func (o *OutResponse) Header() *RevelHeader {
 	return o.internalHeader
 }
+
+// Write the header out
 func (o *OutResponse) Write(data []byte) (int, error) {
 	return o.response.GetWriter().Write(data)
 }
+
+// Set a value in the header
 func (h *RevelHeader) Set(key, value string) {
 	if h.Server != nil {
 		h.Server.Set(key, value)
 	}
 }
+
+// Add a key to the header
 func (h *RevelHeader) Add(key, value string) {
 	if h.Server != nil {
 		h.Server.Add(key, value)
 	}
 }
+
+// Set a cookie in the header
 func (h *RevelHeader) SetCookie(cookie string) {
 	if h.Server != nil {
 		h.Server.SetCookie(cookie)
 	}
 }
+
+// Set the status for the header
 func (h *RevelHeader) SetStatus(status int) {
 	if h.Server != nil {
 		h.Server.SetStatus(status)
 	}
 }
 
-//
+// Get a key from the header
 func (h *RevelHeader) Get(key string) (value string) {
 	values := h.GetAll(key)
 	if len(values) > 0 {

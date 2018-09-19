@@ -37,6 +37,7 @@ type TestRequest struct {
 	testSuite *TestSuite
 }
 
+// This is populated by the generated code in the run/run/go file
 var TestSuites []interface{} // Array of structs that embed TestSuite
 
 // NewTestSuite returns an initialized TestSuite ready for use. It is invoked
