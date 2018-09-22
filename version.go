@@ -12,5 +12,5 @@ const (
 	BuildDate = "2018-02-06"
 
 	// MinimumGoVersion minimum required Go version for Revel
-	MinimumGoVersion = ">= go1.6"
+	MinimumGoVersion = ">= go1.8"
 )

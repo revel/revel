@@ -10,7 +10,7 @@ import (
 	"strings"
 	"sync"
 
-	"gopkg.in/fsnotify.v1"
+	"gopkg.in/fsnotify/fsnotify.v1"
 	"time"
 )
 
@@ -85,7 +85,7 @@ func (w *Watcher) Listen(listener Listener, roots ...string) {
 
 		fi, err := os.Stat(p)
 		if err != nil {
-			utilLog.Fatal("Watcher: Failed to stat watched path", "path", p, "error", err)
+			utilLog.Error("Watcher: Failed to stat watched path, code will continue but auto updates will not work", "path", p, "error", err)
 			continue
 		}
 
@@ -93,7 +93,7 @@ func (w *Watcher) Listen(listener Listener, roots ...string) {
 		if !fi.IsDir() {
 			err = watcher.Add(p)
 			if err != nil {
-				utilLog.Fatal("Watcher: Failed to watch", "path", p, "error", err)
+				utilLog.Error("Watcher: Failed to watch, code will continue but auto updates will not work", "path", p, "error", err)
 			}
 			continue
 		}
@@ -102,7 +102,7 @@ func (w *Watcher) Listen(listener Listener, roots ...string) {
 
 		watcherWalker = func(path string, info os.FileInfo, err error) error {
 			if err != nil {
-				utilLog.Fatal("Watcher: Error walking path:", "error", err)
+				utilLog.Error("Watcher: Error walking path:", "error", err)
 				return nil
 			}
 
@@ -113,9 +113,9 @@ func (w *Watcher) Listen(listener Listener, roots ...string) {
 					}
 				}
 
-				err = watcher.Add(path)
+				err := watcher.Add(path)
 				if err != nil {
-					utilLog.Fatal("Watcher: Failed to watch", "path", path, "error", err)
+					utilLog.Error("Watcher: Failed to watch this path, code will continue but auto updates will not work", "path", path, "error", err)
 				}
 			}
 			return nil
@@ -124,7 +124,7 @@ func (w *Watcher) Listen(listener Listener, roots ...string) {
 		// Else, walk the directory tree.
 		err = Walk(p, watcherWalker)
 		if err != nil {
-			utilLog.Fatal("Watcher: Failed to walk directory", "path", p, "error", err)
+			utilLog.Error("Watcher: Failed to walk directory, code will continue but auto updates will not work", "path", p, "error", err)
 		}
 	}
 
