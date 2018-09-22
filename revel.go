@@ -20,39 +20,11 @@ const (
 	// RevelImportPath Revel framework import path
 	RevelImportPath = "github.com/revel/revel"
 )
-const (
-	// Event type when templates are going to be refreshed (receivers are registered template engines added to the template.engine conf option)
-	TEMPLATE_REFRESH_REQUESTED = iota
-	// Event type when templates are refreshed (receivers are registered template engines added to the template.engine conf option)
-	TEMPLATE_REFRESH_COMPLETED
-	// Event type before all module loads, events thrown to handlers added to AddInitEventHandler
 
-	// Event type before all module loads, events thrown to handlers added to AddInitEventHandler
-	REVEL_BEFORE_MODULES_LOADED
-	// Event type after all module loads, events thrown to handlers added to AddInitEventHandler
-	REVEL_AFTER_MODULES_LOADED
-
-	// Event type before server engine is initialized, receivers are active server engine and handlers added to AddInitEventHandler
-	ENGINE_BEFORE_INITIALIZED
-	// Event type before server engine is started, receivers are active server engine and handlers added to AddInitEventHandler
-	ENGINE_STARTED
-	// Event type after server engine is stopped, receivers are active server engine and handlers added to AddInitEventHandler
-	ENGINE_SHUTDOWN
-
-	// Called before routes are refreshed
-	ROUTE_REFRESH_REQUESTED
-	// Called after routes have been refreshed
-	ROUTE_REFRESH_COMPLETED
-
-	// Fired when a panic is caught during the startup process
-	REVEL_FAILURE
-)
 const (
 	TEST_MODE_FLAG = "testModeFlag"
 	SPECIAL_USE_FLAG = "specialUseFlag"
 )
-
-type EventHandler func(typeOf int, value interface{}) (responseOf int)
 
 // App details
 var (
@@ -202,9 +174,9 @@ func Init(inputmode, importPath, srcPath string) {
 		SetSecretKey([]byte(secretStr))
 	}
 
-	fireEvent(REVEL_BEFORE_MODULES_LOADED, nil)
+	RaiseEvent(REVEL_BEFORE_MODULES_LOADED, nil)
 	loadModules()
-	fireEvent(REVEL_AFTER_MODULES_LOADED, nil)
+	RaiseEvent(REVEL_AFTER_MODULES_LOADED, nil)
 
 	Initialized = true
 	RevelLog.Info("Initialized Revel", "Version", Version, "BuildDate", BuildDate, "MinimumGoVersion", MinimumGoVersion)
@@ -265,20 +237,6 @@ func updateLog(inputmode string) (returnMode string) {
 	setLog(oldLog, appHandle)
 	setAppLog(AppLog, appHandle)
 
-	return
-}
-
-// Fires system events from revel
-func fireEvent(key int, value interface{}) (response int) {
-	for _, handler := range initEventList {
-		response |= handler(key, value)
-	}
-	return
-}
-
-// Add event handler to listen for all system events
-func AddInitEventHandler(handler EventHandler) {
-	initEventList = append(initEventList, handler)
 	return
 }
 

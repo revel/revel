@@ -11,7 +11,7 @@ const GO_TEMPLATE = "go"
 
 // Called on startup, initialized when the REVEL_BEFORE_MODULES_LOADED is called
 func init() {
-	AddInitEventHandler(func(typeOf int, value interface{}) (responseOf int){
+	AddInitEventHandler(func(typeOf Event, value interface{}) (responseOf EventResponse){
 		if typeOf == REVEL_BEFORE_MODULES_LOADED {
 			RegisterTemplateLoader(GO_TEMPLATE, func(loader *TemplateLoader) (TemplateEngine, error) {
 				// Set the template delimiters for the project if present, then split into left
@@ -119,7 +119,7 @@ func (engine *GoEngine) Name() string {
 }
 
 // An event listener to listen for Revel INIT events
-func (engine *GoEngine) Event(action int, i interface{}) {
+func (engine *GoEngine) Event(action Event, i interface{}) {
 	if action == TEMPLATE_REFRESH_REQUESTED {
 		// At this point all the templates have been passed into the
 		engine.templatesByName = map[string]*GoTemplate{}

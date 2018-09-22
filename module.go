@@ -46,7 +46,7 @@ func RegisterModuleInit(callback ModuleCallbackInterface) {
 
 // Called on startup to make a callback so that modules can be initialized through the `RegisterModuleInit` function
 func init() {
-	AddInitEventHandler(func(typeOf int, value interface{}) (responseOf int) {
+	AddInitEventHandler(func(typeOf Event, value interface{}) (responseOf EventResponse) {
 		if typeOf == REVEL_BEFORE_MODULES_LOADED {
 			Modules = []*Module{appModule}
 			appModule.Path = filepath.ToSlash(AppPath)

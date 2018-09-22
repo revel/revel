@@ -98,7 +98,7 @@ type ServerEngine interface {
 	// Starts the server. This will block until server is stopped
 	Start()
 	// Fires a new event to the server
-	Event(event int, args interface{})
+	Event(event Event, args interface{})
 	// Returns the engine instance for specific calls
 	Engine() interface{}
 	// Returns the engine Name

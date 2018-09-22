@@ -20,6 +20,7 @@ var Filters = []Filter{
 	I18nFilter,              // Resolve the requested language.
 	InterceptorFilter,       // Run interceptors around the action.
 	CompressFilter,          // Compress the result.
+	BeforeAfterFilter,
 	ActionInvoker,           // Invoke the action.
 }
 
