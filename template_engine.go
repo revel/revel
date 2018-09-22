@@ -17,7 +17,7 @@ type TemplateEngine interface {
 	Lookup(templateName string) Template
 
 	// Fired by the template loader when events occur
-	Event(event int, arg interface{})
+	Event(event Event, arg interface{})
 
 	// returns true if this engine should be used to parse the file specified in baseTemplate
 	Handles(templateView *TemplateView) bool

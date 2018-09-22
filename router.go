@@ -74,7 +74,7 @@ var (
 var routerLog = RevelLog.New("section", "router")
 
 func init() {
-	AddInitEventHandler(func(typeOf int, value interface{}) (responseOf int) {
+	AddInitEventHandler(func(typeOf Event, value interface{}) (responseOf EventResponse) {
 		// Add in an
 		if typeOf == ROUTE_REFRESH_REQUESTED {
 			// Clear the actionPathCacheMap cache
@@ -246,9 +246,9 @@ func (router *Router) Route(req *Request) (routeMatch *RouteMatch) {
 // Refresh re-reads the routes file and re-calculates the routing table.
 // Returns an error if a specified action could not be found.
 func (router *Router) Refresh() (err *Error) {
-	fireEvent(ROUTE_REFRESH_REQUESTED, nil)
+	RaiseEvent(ROUTE_REFRESH_REQUESTED, nil)
 	router.Routes, err = parseRoutesFile(appModule, router.path, "", true)
-	fireEvent(ROUTE_REFRESH_COMPLETED, nil)
+	RaiseEvent(ROUTE_REFRESH_COMPLETED, nil)
 	if err != nil {
 		return
 	}

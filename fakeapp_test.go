@@ -71,7 +71,7 @@ func (c Static) Serve(prefix, path string) Result {
 // Register controllers is in its own function so the route test can use it as well
 func registerControllers() {
 	controllers = make(map[string]*ControllerType)
-	fireEvent(ROUTE_REFRESH_REQUESTED, nil)
+	RaiseEvent(ROUTE_REFRESH_REQUESTED, nil)
 	RegisterController((*Hotels)(nil),
 		[]*MethodType{
 			{

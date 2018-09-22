@@ -64,15 +64,15 @@ func Run(port int) {
 	defer func() {
 		if r := recover(); r != nil {
 			RevelLog.Crit("Recovered error in startup", "error", r)
-			fireEvent(REVEL_FAILURE, r)
+			RaiseEvent(REVEL_FAILURE, r)
 			panic("Fatal error in startup")
 		}
 	}()	// Create the CurrentEngine instance from the application config
 	InitServerEngine(port, Config.StringDefault("server.engine", GO_NATIVE_SERVER_ENGINE))
 	CurrentEngine.Event(ENGINE_BEFORE_INITIALIZED, nil)
-	fireEvent(ENGINE_BEFORE_INITIALIZED, nil)
+	RaiseEvent(ENGINE_BEFORE_INITIALIZED, nil)
 	InitServer()
-	fireEvent(ENGINE_STARTED, nil)
+	RaiseEvent(ENGINE_STARTED, nil)
 	CurrentEngine.Event(ENGINE_STARTED, nil)
 	// This is needed for the harness to recognize that the server is started, it looks for the word
 	// "Listening" in the stdout stream

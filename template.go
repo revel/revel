@@ -120,12 +120,12 @@ func (loader *TemplateLoader) Refresh() (err *Error) {
 	for _, engine := range runtimeLoader.templatesAndEngineList {
 		engine.Event(TEMPLATE_REFRESH_REQUESTED, nil)
 	}
-	fireEvent(TEMPLATE_REFRESH_REQUESTED, nil)
+	RaiseEvent(TEMPLATE_REFRESH_REQUESTED, nil)
 	defer func() {
 		for _, engine := range runtimeLoader.templatesAndEngineList {
 			engine.Event(TEMPLATE_REFRESH_COMPLETED, nil)
 		}
-		fireEvent(TEMPLATE_REFRESH_COMPLETED, nil)
+		RaiseEvent(TEMPLATE_REFRESH_COMPLETED, nil)
 
 		// Reset the runtimeLoader
 		loader.runtimeLoader.Store(runtimeLoader)
