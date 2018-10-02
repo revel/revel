@@ -18,6 +18,10 @@ Enter Go's path (format varies based on OS):
 
 Install Revel:
 
+	go get -u github.com/revel/revel
+
+Install the Revel command line tool:
+
 	go get -u github.com/revel/cmd/revel
 
 Create & Run your app:
