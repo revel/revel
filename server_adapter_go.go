@@ -132,10 +132,10 @@ func (g *GoHttpServer) Engine() interface{} {
 func (g *GoHttpServer) Event(event Event, args interface{}) {
 	switch event {
 	case ENGINE_STARTED:
-		signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL, syscall.SIGUSR2)
+		signal.Notify(signalChan, os.Interrupt, os.Kill)
 	case ENGINE_SHUTDOWN:
 		s := <-signalChan
-		serverLogger.Debugf("Recived quit singal %s, Please wait ... \n", s)
+		serverLogger.Debugf("Recived quit signal %s, Please wait ... \n", s)
 		runShutdownHooks()
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(Config.IntDefault("app.cancel.timeout", 60)))
 		defer cancel()
