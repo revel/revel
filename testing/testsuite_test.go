@@ -74,9 +74,9 @@ func TestGetNotFound(t *testing.T) {
 // This test is known to fail
 func TestGetCustom(t *testing.T) {
 	testSuite := createNewTestSuite(t)
-	for x:=0;x<5;x++ {
+	for x := 0; x < 5; x++ {
 		testSuite.GetCustom("http://httpbin.org/get").Send()
-		if testSuite.Response.StatusCode==http.StatusOK {
+		if testSuite.Response.StatusCode == http.StatusOK {
 			break
 		}
 		println("Failed request from http://httpbin.org/get", testSuite.Response.StatusCode)
@@ -295,9 +295,9 @@ func createTestServer(fn func(w http.ResponseWriter, r *http.Request)) *httptest
 func init() {
 	if revel.ServerEngineInit == nil {
 		revel.ServerEngineInit = &revel.EngineInit{
-			Address:  ":9001",
-			Network:  "http",
-			Port:     9001,
+			Address: ":9001",
+			Network: "http",
+			Port:    9001,
 		}
 	}
 }

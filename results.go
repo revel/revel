@@ -62,7 +62,7 @@ func (r ErrorResult) Apply(req *Request, resp *Response) {
 		if err == nil {
 			err = fmt.Errorf("Couldn't find template %s", templatePath)
 		}
-		templateLog.Warn("Got an error rendering template","error",err,"template",templatePath,"lang", lang)
+		templateLog.Warn("Got an error rendering template", "error", err, "template", templatePath, "lang", lang)
 		showPlaintext(err)
 		return
 	}
@@ -91,7 +91,7 @@ func (r ErrorResult) Apply(req *Request, resp *Response) {
 	r.ViewArgs["Error"] = revelError
 	r.ViewArgs["Router"] = MainRouter
 
-	resultsLog.Info("Rendering error template","template",templatePath,"error",revelError)
+	resultsLog.Info("Rendering error template", "template", templatePath, "error", revelError)
 
 	// Render it.
 	var b bytes.Buffer
@@ -99,7 +99,7 @@ func (r ErrorResult) Apply(req *Request, resp *Response) {
 
 	// If there was an error, print it in plain text.
 	if err != nil {
-		templateLog.Warn("Got an error rendering template","error",err,"template",templatePath,"lang", lang)
+		templateLog.Warn("Got an error rendering template", "error", err, "template", templatePath, "lang", lang)
 		showPlaintext(err)
 		return
 	}

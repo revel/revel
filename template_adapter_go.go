@@ -11,7 +11,7 @@ const GO_TEMPLATE = "go"
 
 // Called on startup, initialized when the REVEL_BEFORE_MODULES_LOADED is called
 func init() {
-	AddInitEventHandler(func(typeOf Event, value interface{}) (responseOf EventResponse){
+	AddInitEventHandler(func(typeOf Event, value interface{}) (responseOf EventResponse) {
 		if typeOf == REVEL_BEFORE_MODULES_LOADED {
 			RegisterTemplateLoader(GO_TEMPLATE, func(loader *TemplateLoader) (TemplateEngine, error) {
 				// Set the template delimiters for the project if present, then split into left
@@ -53,13 +53,13 @@ func (gotmpl GoTemplate) Render(wr io.Writer, arg interface{}) error {
 // The main template engine for Go
 type GoEngine struct {
 	// The template loader
-	loader          *TemplateLoader
+	loader *TemplateLoader
 	// THe current template set
-	templateSet     *template.Template
+	templateSet *template.Template
 	// A map of templates by name
 	templatesByName map[string]*GoTemplate
 	// The delimiter that is used to indicate template code, defaults to {{
-	splitDelims     []string
+	splitDelims []string
 	// True if map is case insensitive
 	CaseInsensitive bool
 }
@@ -127,4 +127,3 @@ func (engine *GoEngine) Event(action Event, i interface{}) {
 		engine.CaseInsensitive = Config.BoolDefault("go.template.caseinsensitive", true)
 	}
 }
-

@@ -7,11 +7,11 @@ package session_test
 import (
 	"testing"
 
-	"github.com/revel/revel/session"
 	"github.com/revel/revel"
-	"time"
-	"net/http"
+	"github.com/revel/revel/session"
 	"github.com/stretchr/testify/assert"
+	"net/http"
+	"time"
 )
 
 func TestCookieRestore(t *testing.T) {
@@ -28,16 +28,16 @@ func TestCookieRestore(t *testing.T) {
 	}
 
 	restoredSession := session.NewSession()
-	cse.DecodeCookie(revel.GoCookie(*cookie),restoredSession)
+	cse.DecodeCookie(revel.GoCookie(*cookie), restoredSession)
 	for k, v := range originSession {
-		if k==session.SessionObjectKeyName {
+		if k == session.SessionObjectKeyName {
 			continue
 		}
 		if restoredSession[k] != v {
 			t.Errorf("session restore failed session[%s] != %s", k, v)
 		}
 	}
-	testSharedData(originSession,restoredSession,t,a)
+	testSharedData(originSession, restoredSession, t, a)
 }
 
 func TestCookieSessionExpire(t *testing.T) {
@@ -50,7 +50,7 @@ func TestCookieSessionExpire(t *testing.T) {
 		cookie = cse.GetCookie(session)
 		time.Sleep(time.Second)
 
-		cse.DecodeCookie(revel.GoCookie(*cookie),session)
+		cse.DecodeCookie(revel.GoCookie(*cookie), session)
 	}
 	expectExpire := time.Now().Add(cse.ExpireAfterDuration)
 	if cookie.Expires.Unix() < expectExpire.Add(-time.Second).Unix() {

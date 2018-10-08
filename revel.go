@@ -10,10 +10,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/revel/config"
 	"encoding/json"
-	"github.com/revel/revel/logger"
 	"fmt"
+	"github.com/revel/config"
+	"github.com/revel/revel/logger"
 )
 
 const (
@@ -22,7 +22,7 @@ const (
 )
 
 const (
-	TEST_MODE_FLAG = "testModeFlag"
+	TEST_MODE_FLAG   = "testModeFlag"
 	SPECIAL_USE_FLAG = "specialUseFlag"
 )
 
@@ -118,7 +118,6 @@ func Init(inputmode, importPath, srcPath string) {
 
 	CodePaths = []string{AppPath}
 
-
 	if ConfPaths == nil {
 		ConfPaths = []string{}
 	}
@@ -191,20 +190,20 @@ func updateLog(inputmode string) (returnMode string) {
 		returnMode = config.DefaultSection
 		return
 	} else {
-		returnMode=inputmode
+		returnMode = inputmode
 	}
 
 	// Check to see if the mode is a json object
 	modemap := map[string]interface{}{}
 
-	var testModeFlag, specialUseFlag  bool
-	if err := json.Unmarshal([]byte(inputmode), &modemap); err==nil {
+	var testModeFlag, specialUseFlag bool
+	if err := json.Unmarshal([]byte(inputmode), &modemap); err == nil {
 		returnMode = modemap["mode"].(string)
 		if testmode, found := modemap[TEST_MODE_FLAG]; found {
-			testModeFlag,_ = testmode.(bool)
+			testModeFlag, _ = testmode.(bool)
 		}
 		if specialUse, found := modemap[SPECIAL_USE_FLAG]; found {
-			specialUseFlag,_ = specialUse.(bool)
+			specialUseFlag, _ = specialUse.(bool)
 		}
 	}
 
@@ -224,10 +223,10 @@ func updateLog(inputmode string) (returnMode string) {
 	}
 
 	// Only set the testmode flag if it doesnt exist
-	if _,found := newContext.Bool(TEST_MODE_FLAG); !found {
+	if _, found := newContext.Bool(TEST_MODE_FLAG); !found {
 		newContext.SetOption(TEST_MODE_FLAG, fmt.Sprint(testModeFlag))
 	}
-	if _,found := newContext.Bool(SPECIAL_USE_FLAG); !found {
+	if _, found := newContext.Bool(SPECIAL_USE_FLAG); !found {
 		newContext.SetOption(SPECIAL_USE_FLAG, fmt.Sprint(specialUseFlag))
 	}
 

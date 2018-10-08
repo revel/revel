@@ -17,12 +17,13 @@ type ControllerType struct {
 type ControllerTypeEvents struct {
 	Before, After, Finally, Panic []*ControllerFieldPath
 }
+
 // The controller field path provides the caller the ability to invoke the call
 // directly
 type ControllerFieldPath struct {
-	IsPointer bool
-	FieldIndexPath[]int
-	FunctionCall reflect.Value
+	IsPointer      bool
+	FieldIndexPath []int
+	FunctionCall   reflect.Value
 }
 
 type MethodType struct {
@@ -40,12 +41,12 @@ type MethodArg struct {
 
 // Adds the controller to the controllers map using its namespace, also adds it to the module list of controllers.
 // If the controller is in the main application it is added without its namespace as well.
-func AddControllerType(moduleSource *Module,controllerType reflect.Type,methods []*MethodType) (newControllerType *ControllerType) {
-	if moduleSource==nil {
+func AddControllerType(moduleSource *Module, controllerType reflect.Type, methods []*MethodType) (newControllerType *ControllerType) {
+	if moduleSource == nil {
 		moduleSource = appModule
 	}
 
-	newControllerType = &ControllerType{ModuleSource:moduleSource,Type:controllerType,Methods:methods,ControllerIndexes:findControllers(controllerType)}
+	newControllerType = &ControllerType{ModuleSource: moduleSource, Type: controllerType, Methods: methods, ControllerIndexes: findControllers(controllerType)}
 	newControllerType.ControllerEvents = NewControllerTypeEvents(newControllerType)
 	newControllerType.Namespace = moduleSource.Namespace()
 	controllerName := newControllerType.Name()
@@ -59,12 +60,13 @@ func AddControllerType(moduleSource *Module,controllerType reflect.Type,methods 
 			controllers[newControllerType.ShortName()] = newControllerType
 		}
 	} else {
-		controllerLog.Errorf("Error, attempt to register duplicate controller as %s",controllerName)
+		controllerLog.Errorf("Error, attempt to register duplicate controller as %s", controllerName)
 	}
 	controllerLog.Debugf("Registered controller: %s", controllerName)
 
 	return
 }
+
 // Method searches for a given exported method (case insensitive)
 func (ct *ControllerType) Method(name string) *MethodType {
 	lowerName := strings.ToLower(name)
@@ -77,12 +79,12 @@ func (ct *ControllerType) Method(name string) *MethodType {
 }
 
 // The controller name with the namespace
-func (ct *ControllerType) Name() (string) {
+func (ct *ControllerType) Name() string {
 	return ct.Namespace + ct.ShortName()
 }
 
 // The controller name without the namespace
-func (ct *ControllerType) ShortName() (string) {
+func (ct *ControllerType) ShortName() string {
 	return strings.ToLower(ct.Type.Name())
 }
 
@@ -96,7 +98,7 @@ func NewControllerTypeEvents(c *ControllerType) (ce *ControllerTypeEvents) {
 
 // Add in before after panic and finally, recursive call
 // Befores are ordered in revers, everything else is in order of first encountered
-func (cte *ControllerTypeEvents) check(theType reflect.Type, fieldPath []int)  {
+func (cte *ControllerTypeEvents) check(theType reflect.Type, fieldPath []int) {
 	typeChecker := func(checkType reflect.Type) {
 		for index := 0; index < checkType.NumMethod(); index++ {
 			m := checkType.Method(index)
@@ -106,9 +108,9 @@ func (cte *ControllerTypeEvents) check(theType reflect.Type, fieldPath []int)  {
 			// https://github.com/golang/go/issues/21162
 			if m.Type.NumOut() == 2 && m.Type.Out(1) == checkType {
 				if checkType.Kind() == reflect.Ptr {
-					controllerLog.Debug("Found controller type event method pointer","name", checkType.Elem().Name(),"methodname", m.Name)
+					controllerLog.Debug("Found controller type event method pointer", "name", checkType.Elem().Name(), "methodname", m.Name)
 				} else {
-					controllerLog.Debug("Found controller type event method","name", checkType.Name(),"methodname", m.Name)
+					controllerLog.Debug("Found controller type event method", "name", checkType.Name(), "methodname", m.Name)
 				}
 				controllerFieldPath := newFieldPath(checkType.Kind() == reflect.Ptr, m.Func, fieldPath)
 				switch strings.ToLower(m.Name) {
@@ -135,16 +137,16 @@ func (cte *ControllerTypeEvents) check(theType reflect.Type, fieldPath []int)  {
 
 		switch v.Type.Kind() {
 		case reflect.Struct:
-			cte.check(v.Type,append(fieldPath, i))
+			cte.check(v.Type, append(fieldPath, i))
 		}
 	}
 }
-func newFieldPath(isPointer bool, value reflect.Value, fieldPath []int) *ControllerFieldPath{
-	return &ControllerFieldPath{IsPointer:isPointer,FunctionCall:value,FieldIndexPath:fieldPath}
+func newFieldPath(isPointer bool, value reflect.Value, fieldPath []int) *ControllerFieldPath {
+	return &ControllerFieldPath{IsPointer: isPointer, FunctionCall: value, FieldIndexPath: fieldPath}
 }
 
 func (fieldPath *ControllerFieldPath) Invoke(value reflect.Value, input []reflect.Value) (result []reflect.Value) {
-	for _,index := range fieldPath.FieldIndexPath {
+	for _, index := range fieldPath.FieldIndexPath {
 		// You can only fetch fields from non pointers
 		if value.Type().Kind() == reflect.Ptr {
 			value = value.Elem().Field(index)

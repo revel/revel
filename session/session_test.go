@@ -6,11 +6,11 @@ package session_test
 
 import (
 	"fmt"
+	"github.com/revel/revel"
 	"github.com/revel/revel/session"
 	"github.com/stretchr/testify/assert"
-	"testing"
-	"github.com/revel/revel"
 	"golang.org/x/tools/go/gcimporter15/testdata"
+	"testing"
 )
 
 // test the commands
@@ -32,16 +32,15 @@ func TestSessionStruct(t *testing.T) {
 	stringMap := s.Serialize()
 	s1 := session.NewSession()
 	s1.Load(stringMap)
-	testSharedData(s,s1,t,a)
-
+	testSharedData(s, s1, t, a)
 
 }
 
 func setSharedDataTest(s session.Session) {
 	data := struct {
 		A struct {
-				Aa string
-			}
+			Aa string
+		}
 		B int
 		C string
 		D float32
@@ -53,7 +52,7 @@ func setSharedDataTest(s session.Session) {
 		D: -325.25}
 	s.Set("happy", data)
 }
-func testSharedData(s, s1 session.Session, t *testing.T,a *assert.Assertions) {
+func testSharedData(s, s1 session.Session, t *testing.T, a *assert.Assertions) {
 	// Compress the session to a string
 	t.Logf("Original session %#v\n", s)
 	t.Logf("New built session %#v\n", s1)

@@ -21,7 +21,7 @@ var Filters = []Filter{
 	InterceptorFilter,       // Run interceptors around the action.
 	CompressFilter,          // Compress the result.
 	BeforeAfterFilter,
-	ActionInvoker,           // Invoke the action.
+	ActionInvoker, // Invoke the action.
 }
 
 // NilFilter and NilChain are helpful in writing filter tests.

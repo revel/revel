@@ -150,12 +150,12 @@ var binderTestCases = map[string]interface{}{
 	"m":  map[string]string{"a": "foo", "b": "bar"},
 	"m2": map[int]string{1: "foo", 2: "bar"},
 	"m3": map[string]int{"a": 1, "b": 2},
-	"m4": map[string]A{"a": A{ID: 1, Name: "foo"}, "b": A{ID: 2, Name: "bar"}},
+	"m4": map[string]A{"a": {ID: 1, Name: "foo"}, "b": {ID: 2, Name: "bar"}},
 
 	// NOTE: We also include a map with a longer name than the others since this has caused problems
 	// described in github issue #1285, resolved in pull request #1344. This test case should
 	// prevent regression.
-	"mapWithAMuchLongerName": map[string]A{"a": A{ID: 1, Name: "foo"}, "b": A{ID: 2, Name: "bar"}},
+	"mapWithAMuchLongerName": map[string]A{"a": {ID: 1, Name: "foo"}, "b": {ID: 2, Name: "bar"}},
 
 	// TODO: Tests that use TypeBinders
 

@@ -6,10 +6,10 @@ package revel
 
 import (
 	"fmt"
+	"github.com/revel/revel/session"
 	"os"
 	"strconv"
 	"strings"
-	"github.com/revel/revel/session"
 )
 
 // Revel's variables server, router, etc
@@ -68,7 +68,7 @@ func Run(port int) {
 			RaiseEvent(REVEL_FAILURE, r)
 			panic("Fatal error in startup")
 		}
-	}()	// Create the CurrentEngine instance from the application config
+	}() // Create the CurrentEngine instance from the application config
 	session.InitSession(RevelLog)
 	InitServerEngine(port, Config.StringDefault("server.engine", GO_NATIVE_SERVER_ENGINE))
 	RaiseEvent(ENGINE_BEFORE_INITIALIZED, nil)
@@ -77,10 +77,10 @@ func Run(port int) {
 	// This is needed for the harness to recognize that the server is started, it looks for the word
 	// "Listening" in the stdout stream
 
-	fmt.Fprintf(os.Stdout,"Revel engine is listening on.. %s\n", ServerEngineInit.Address)
+	fmt.Fprintf(os.Stdout, "Revel engine is listening on.. %s\n", ServerEngineInit.Address)
 	// Start never returns,
 	CurrentEngine.Start()
-	fmt.Fprintf(os.Stdout,"Revel engine is NOT listening on.. %s\n", ServerEngineInit.Address)
+	fmt.Fprintf(os.Stdout, "Revel engine is NOT listening on.. %s\n", ServerEngineInit.Address)
 	RaiseEvent(ENGINE_SHUTDOWN, nil)
 	shutdownHooks.Run()
 	println("\nRevel existed normally\n")

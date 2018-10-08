@@ -7,11 +7,11 @@ import (
 )
 
 // Test that the event handler can be attached and it dispatches the event received
-func TestEventHandler(t *testing.T){
+func TestEventHandler(t *testing.T) {
 	counter := 0
 	newListener := func(typeOf revel.Event, value interface{}) (responseOf revel.EventResponse) {
-		if typeOf==revel.REVEL_FAILURE {
-			counter ++
+		if typeOf == revel.REVEL_FAILURE {
+			counter++
 		}
 		return
 	}
@@ -20,5 +20,5 @@ func TestEventHandler(t *testing.T){
 	revel.AddInitEventHandler(newListener)
 	revel.RaiseEvent(revel.REVEL_AFTER_MODULES_LOADED, nil)
 	revel.RaiseEvent(revel.REVEL_FAILURE, nil)
-	assert.Equal(t, counter,2,"Expected event handler to have been called")
+	assert.Equal(t, counter, 2, "Expected event handler to have been called")
 }

@@ -51,27 +51,27 @@ var whiteSpacePattern = regexp.MustCompile(`\s+`)
 var templateLog = RevelLog.New("section", "template")
 
 // TemplateOutputArgs returns the result of the template rendered using the passed in arguments.
-func TemplateOutputArgs(templatePath string, args map[string]interface{}) (data []byte,err error)  {
+func TemplateOutputArgs(templatePath string, args map[string]interface{}) (data []byte, err error) {
 	// Get the Template.
 	lang, _ := args[CurrentLocaleViewArg].(string)
 	template, err := MainTemplateLoader.TemplateLang(templatePath, lang)
 	if err != nil {
 		return nil, err
 	}
-	tr :=  &RenderTemplateResult{
+	tr := &RenderTemplateResult{
 		Template: template,
 		ViewArgs: args,
 	}
-	b,err := tr.ToBytes()
-	if err!=nil {
-		return nil,err
+	b, err := tr.ToBytes()
+	if err != nil {
+		return nil, err
 	}
 	return b.Bytes(), nil
 }
 
 func NewTemplateLoader(paths []string) *TemplateLoader {
 	loader := &TemplateLoader{
-		paths:         paths,
+		paths: paths,
 	}
 	return loader
 }
@@ -184,9 +184,9 @@ func (loader *TemplateLoader) Refresh() (err *Error) {
 			}
 
 			fileBytes, err := runtimeLoader.findAndAddTemplate(path, fullSrcDir, basePath)
-			if err!=nil {
+			if err != nil {
 				// Add in this template name to the list of templates unable to be compiled
-				runtimeLoader.compileErrorNameList = append(runtimeLoader.compileErrorNameList,filepath.ToSlash(path[len(fullSrcDir)+1:]))
+				runtimeLoader.compileErrorNameList = append(runtimeLoader.compileErrorNameList, filepath.ToSlash(path[len(fullSrcDir)+1:]))
 			}
 			// Store / report the first error encountered.
 			if err != nil && runtimeLoader.compileError == nil {
@@ -367,15 +367,14 @@ func ParseTemplateError(err error) (templateName string, line int, description s
 	return templateName, line, description
 }
 
-
 // Template returns the Template with the given name.  The name is the template's path
 // relative to a template loader root.
 //
 // An Error is returned if there was any problem with any of the templates.  (In
 // this case, if a template is returned, it may still be usable.)
 func (runtimeLoader *templateRuntime) TemplateLang(name, lang string) (tmpl Template, err error) {
-	if runtimeLoader.compileError != nil  {
-		for _,errName:=range runtimeLoader.compileErrorNameList {
+	if runtimeLoader.compileError != nil {
+		for _, errName := range runtimeLoader.compileErrorNameList {
 			if name == errName {
 				return nil, runtimeLoader.compileError
 			}

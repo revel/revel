@@ -16,8 +16,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/revel/revel/session"
 	"github.com/revel/revel/logger"
+	"github.com/revel/revel/session"
 )
 
 // Controller Revel's controller structure that gets embedded in user defined
@@ -35,13 +35,13 @@ type Controller struct {
 	Response *Response
 	Result   Result
 
-	Flash          Flash                  // User cookie, cleared after 1 request.
-	Session        session.Session        // Session, stored using the session engine specified
-	Params         *Params                // Parameters from URL and form (including multipart).
-	Args           map[string]interface{} // Per-request scratch space.
-	ViewArgs       map[string]interface{} // Variables passed to the template.
-	Validation     *Validation            // Data validation helpers
-	Log            logger.MultiLogger     // Context Logger
+	Flash      Flash                  // User cookie, cleared after 1 request.
+	Session    session.Session        // Session, stored using the session engine specified
+	Params     *Params                // Parameters from URL and form (including multipart).
+	Args       map[string]interface{} // Per-request scratch space.
+	ViewArgs   map[string]interface{} // Variables passed to the template.
+	Validation *Validation            // Data validation helpers
+	Log        logger.MultiLogger     // Context Logger
 }
 
 // The map of controllers, controllers are mapped by using the namespace|controller_name as the key

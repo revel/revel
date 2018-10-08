@@ -2,7 +2,6 @@ package revel
 
 import (
 	"github.com/revel/revel/logger"
-	"github.com/revel/log15"
 	"log"
 	"os"
 )
@@ -15,7 +14,7 @@ var (
 	// This logger is the application logger, use this for your application log messages - ie jobs and startup,
 	// Use Controller.Log for Controller logging
 	// The requests are logged to this logger with the context of `section:requestlog`
-	AppLog = RootLog.New("module","app")
+	AppLog = RootLog.New("module", "app")
 	// This is the logger revel writes to, added log messages will have a context of module:revel in them
 	// It is based off of `RootLog`
 	RevelLog = RootLog.New("module", "revel")
@@ -39,9 +38,12 @@ var (
 	ERROR = log.New(os.Stderr, "ERROR ", log.Ldate|log.Ltime|log.Lshortfile)
 )
 
+// Initialize the loggers first
 func init() {
 
-	RootLog.SetHandler(logger.LevelHandler(logger.LogLevel(log15.LvlDebug), logger.StreamHandler(os.Stdout, logger.TerminalFormatHandler(false, true))))
+	//RootLog.SetHandler(
+	//	logger.LevelHandler(logger.LogLevel(log15.LvlDebug),
+	//		logger.StreamHandler(os.Stdout, logger.TerminalFormatHandler(false, true))))
 	initLoggers()
 	OnAppStart(initLoggers, -5)
 
@@ -86,9 +88,4 @@ func setAppLog(appLog logger.MultiLogger, appHandler *logger.CompositeMultiHandl
 		SysLog.SetStackDepth(5)
 		SysLog.SetHandler(appLogHandler)
 	}
-}
-
-// Return the root log handler
-func GetRootLogHandler() *logger.CompositeMultiHandler {
-	return appLogHandler
 }

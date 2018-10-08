@@ -138,7 +138,7 @@ GET   /favicon.ico               404
 `
 
 var routeMatchTestCases = map[*http.Request]*RouteMatch{
-	&http.Request{
+	{
 		Method: "GET",
 		URL:    &url.URL{Path: "/"},
 	}: {
@@ -148,7 +148,7 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 		Params:         map[string][]string{},
 	},
 
-	&http.Request{
+	{
 		Method: "GET",
 		URL:    &url.URL{Path: "/test/"},
 	}: {
@@ -158,7 +158,7 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 		Params:         map[string][]string{},
 	},
 
-	&http.Request{
+	{
 		Method: "GET",
 		URL:    &url.URL{Path: "/app/123"},
 	}: {
@@ -168,7 +168,7 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 		Params:         map[string][]string{"id": {"123"}},
 	},
 
-	&http.Request{
+	{
 		Method: "PATCH",
 		URL:    &url.URL{Path: "/app/123"},
 	}: {
@@ -178,7 +178,7 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 		Params:         map[string][]string{"id": {"123"}},
 	},
 
-	&http.Request{
+	{
 		Method: "POST",
 		URL:    &url.URL{Path: "/app/123"},
 	}: {
@@ -188,7 +188,7 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 		Params:         map[string][]string{"id": {"123"}},
 	},
 
-	&http.Request{
+	{
 		Method: "GET",
 		URL:    &url.URL{Path: "/app/123/"},
 	}: {
@@ -198,7 +198,7 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 		Params:         map[string][]string{"id": {"123"}},
 	},
 
-	&http.Request{
+	{
 		Method: "GET",
 		URL:    &url.URL{Path: "/public/css/style.css"},
 	}: {
@@ -208,7 +208,7 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 		Params:         map[string][]string{"filepath": {"css/style.css"}},
 	},
 
-	&http.Request{
+	{
 		Method: "GET",
 		URL:    &url.URL{Path: "/javascript/sessvars.js"},
 	}: {
@@ -218,7 +218,7 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 		Params:         map[string][]string{"filepath": {"sessvars.js"}},
 	},
 
-	&http.Request{
+	{
 		Method: "GET",
 		URL:    &url.URL{Path: "/Implicit/Route"},
 	}: {
@@ -232,7 +232,7 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 		},
 	},
 
-	&http.Request{
+	{
 		Method: "GET",
 		URL:    &url.URL{Path: "/favicon.ico"},
 	}: {
@@ -243,7 +243,7 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 		Params:         map[string][]string{},
 	},
 
-	&http.Request{
+	{
 		Method: "POST",
 		URL:    &url.URL{Path: "/app/123"},
 		Header: http.Header{"X-Http-Method-Override": []string{"PATCH"}},
@@ -254,7 +254,7 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 		Params:         map[string][]string{"id": {"123"}},
 	},
 
-	&http.Request{
+	{
 		Method: "GET",
 		URL:    &url.URL{Path: "/app/123"},
 		Header: http.Header{"X-Http-Method-Override": []string{"PATCH"}},
@@ -265,7 +265,7 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 		Params:         map[string][]string{"id": {"123"}},
 	},
 
-	&http.Request{
+	{
 		Method: "PATCH",
 		URL:    &url.URL{Path: "/app/123"},
 	}: {
@@ -275,7 +275,7 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 		Params:         map[string][]string{"id": {"123"}},
 	},
 
-	&http.Request{
+	{
 		Method: "PROPFIND",
 		URL:    &url.URL{Path: "/app/123"},
 	}: {
@@ -285,7 +285,7 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 		Params:         map[string][]string{"id": {"123"}},
 	},
 
-	&http.Request{
+	{
 		Method: "MKCOL",
 		URL:    &url.URL{Path: "/app/123"},
 	}: {
@@ -295,7 +295,7 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 		Params:         map[string][]string{"id": {"123"}},
 	},
 
-	&http.Request{
+	{
 		Method: "COPY",
 		URL:    &url.URL{Path: "/app/123"},
 	}: {
@@ -305,7 +305,7 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 		Params:         map[string][]string{"id": {"123"}},
 	},
 
-	&http.Request{
+	{
 		Method: "MOVE",
 		URL:    &url.URL{Path: "/app/123"},
 	}: {
@@ -315,7 +315,7 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 		Params:         map[string][]string{"id": {"123"}},
 	},
 
-	&http.Request{
+	{
 		Method: "PROPPATCH",
 		URL:    &url.URL{Path: "/app/123"},
 	}: {
@@ -324,7 +324,7 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 		FixedParams:    []string{},
 		Params:         map[string][]string{"id": {"123"}},
 	},
-	&http.Request{
+	{
 		Method: "LOCK",
 		URL:    &url.URL{Path: "/app/123"},
 	}: {
@@ -334,7 +334,7 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 		Params:         map[string][]string{"id": {"123"}},
 	},
 
-	&http.Request{
+	{
 		Method: "UNLOCK",
 		URL:    &url.URL{Path: "/app/123"},
 	}: {
@@ -344,7 +344,7 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 		Params:         map[string][]string{"id": {"123"}},
 	},
 
-	&http.Request{
+	{
 		Method: "TRACE",
 		URL:    &url.URL{Path: "/app/123"},
 	}: {
@@ -354,7 +354,7 @@ var routeMatchTestCases = map[*http.Request]*RouteMatch{
 		Params:         map[string][]string{"id": {"123"}},
 	},
 
-	&http.Request{
+	{
 		Method: "PURGE",
 		URL:    &url.URL{Path: "/app/123"},
 	}: {
@@ -410,7 +410,7 @@ type ReverseRouteArgs struct {
 }
 
 var reverseRoutingTestCases = map[*ReverseRouteArgs]*ActionDefinition{
-	&ReverseRouteArgs{
+	{
 		action: "Application.Index",
 		args:   map[string]string{},
 	}: {
@@ -420,7 +420,7 @@ var reverseRoutingTestCases = map[*ReverseRouteArgs]*ActionDefinition{
 		Action: "Application.Index",
 	},
 
-	&ReverseRouteArgs{
+	{
 		action: "Application.Show",
 		args:   map[string]string{"id": "123"},
 	}: {
@@ -430,7 +430,7 @@ var reverseRoutingTestCases = map[*ReverseRouteArgs]*ActionDefinition{
 		Action: "Application.Show",
 	},
 
-	&ReverseRouteArgs{
+	{
 		action: "Implicit.Route",
 		args:   map[string]string{},
 	}: {
@@ -440,7 +440,7 @@ var reverseRoutingTestCases = map[*ReverseRouteArgs]*ActionDefinition{
 		Action: "Implicit.Route",
 	},
 
-	&ReverseRouteArgs{
+	{
 		action: "Application.Save",
 		args:   map[string]string{"id": "123", "c": "http://continue"},
 	}: {
@@ -450,7 +450,7 @@ var reverseRoutingTestCases = map[*ReverseRouteArgs]*ActionDefinition{
 		Action: "Application.Save",
 	},
 
-	&ReverseRouteArgs{
+	{
 		action: "Application.WildShow",
 		args:   map[string]string{"id": "123"},
 	}: {
@@ -460,7 +460,7 @@ var reverseRoutingTestCases = map[*ReverseRouteArgs]*ActionDefinition{
 		Action: "Application.WildShow",
 	},
 
-	&ReverseRouteArgs{
+	{
 		action: "Application.WebDevMethodPropFind",
 		args:   map[string]string{"id": "123"},
 	}: {
@@ -469,7 +469,7 @@ var reverseRoutingTestCases = map[*ReverseRouteArgs]*ActionDefinition{
 		Star:   false,
 		Action: "Application.WebDevMethodPropFind",
 	},
-	&ReverseRouteArgs{
+	{
 		action: "Application.WebDevMethodMkCol",
 		args:   map[string]string{"id": "123"},
 	}: {
@@ -478,7 +478,7 @@ var reverseRoutingTestCases = map[*ReverseRouteArgs]*ActionDefinition{
 		Star:   false,
 		Action: "Application.WebDevMethodMkCol",
 	},
-	&ReverseRouteArgs{
+	{
 		action: "Application.WebDevMethodCopy",
 		args:   map[string]string{"id": "123"},
 	}: {
@@ -487,7 +487,7 @@ var reverseRoutingTestCases = map[*ReverseRouteArgs]*ActionDefinition{
 		Star:   false,
 		Action: "Application.WebDevMethodCopy",
 	},
-	&ReverseRouteArgs{
+	{
 		action: "Application.WebDevMethodMove",
 		args:   map[string]string{"id": "123"},
 	}: {
@@ -496,7 +496,7 @@ var reverseRoutingTestCases = map[*ReverseRouteArgs]*ActionDefinition{
 		Star:   false,
 		Action: "Application.WebDevMethodMove",
 	},
-	&ReverseRouteArgs{
+	{
 		action: "Application.WebDevMethodPropPatch",
 		args:   map[string]string{"id": "123"},
 	}: {
@@ -505,7 +505,7 @@ var reverseRoutingTestCases = map[*ReverseRouteArgs]*ActionDefinition{
 		Star:   false,
 		Action: "Application.WebDevMethodPropPatch",
 	},
-	&ReverseRouteArgs{
+	{
 		action: "Application.WebDevMethodLock",
 		args:   map[string]string{"id": "123"},
 	}: {
@@ -514,7 +514,7 @@ var reverseRoutingTestCases = map[*ReverseRouteArgs]*ActionDefinition{
 		Star:   false,
 		Action: "Application.WebDevMethodLock",
 	},
-	&ReverseRouteArgs{
+	{
 		action: "Application.WebDevMethodUnLock",
 		args:   map[string]string{"id": "123"},
 	}: {
@@ -523,7 +523,7 @@ var reverseRoutingTestCases = map[*ReverseRouteArgs]*ActionDefinition{
 		Star:   false,
 		Action: "Application.WebDevMethodUnLock",
 	},
-	&ReverseRouteArgs{
+	{
 		action: "Application.WebDevMethodTrace",
 		args:   map[string]string{"id": "123"},
 	}: {
@@ -532,7 +532,7 @@ var reverseRoutingTestCases = map[*ReverseRouteArgs]*ActionDefinition{
 		Star:   false,
 		Action: "Application.WebDevMethodTrace",
 	},
-	&ReverseRouteArgs{
+	{
 		action: "Application.CacheMethodPurge",
 		args:   map[string]string{"id": "123"},
 	}: {

@@ -168,14 +168,17 @@ func InterceptMethod(intc InterceptorMethod, when When) {
 //
 type interceptorItem struct {
 	Interceptor *Interception
-	Target reflect.Value
-	Level int
+	Target      reflect.Value
+	Level       int
 }
 type interceptorItemList []*interceptorItem
+
 func (a interceptorItemList) Len() int           { return len(a) }
 func (a interceptorItemList) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a interceptorItemList) Less(i, j int) bool { return a[i].Level < a[j].Level }
+
 type reverseInterceptorItemList []*interceptorItem
+
 func (a reverseInterceptorItemList) Len() int           { return len(a) }
 func (a reverseInterceptorItemList) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a reverseInterceptorItemList) Less(i, j int) bool { return a[i].Level > a[j].Level }
@@ -186,14 +189,14 @@ func getInterceptors(when When, val reflect.Value) interceptorItemList {
 			continue
 		}
 
-		level,target := findTarget(val, intc.target)
+		level, target := findTarget(val, intc.target)
 		if intc.interceptAll || target.IsValid() {
 			result = append(result, &interceptorItem{intc, target, level})
 		}
 	}
 
 	// Before is deepest to highest
-	if when ==BEFORE {
+	if when == BEFORE {
 		sort.Sort(result)
 	} else {
 		// Everything else is highest to deepest
@@ -214,13 +217,13 @@ func findTarget(val reflect.Value, target reflect.Type) (int, reflect.Value) {
 
 		// Check if val is of a similar type to the target type.
 		if val.Type() == target {
-			return level,val
+			return level, val
 		}
 		if val.Kind() == reflect.Ptr && val.Elem().Type() == target {
-			return level,val.Elem()
+			return level, val.Elem()
 		}
 		if target.Kind() == reflect.Ptr && target.Elem() == val.Type() {
-			return level,val.Addr()
+			return level, val.Addr()
 		}
 
 		// If we reached the *revel.Controller and still didn't find what we were
@@ -239,7 +242,7 @@ func findTarget(val reflect.Value, target reflect.Type) (int, reflect.Value) {
 				valueQueue = append(valueQueue, val.Field(i))
 			}
 		}
-		level --
+		level--
 	}
 
 	return level, reflect.Value{}

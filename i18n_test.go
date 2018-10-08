@@ -224,7 +224,7 @@ func loadTestI18nConfigWithUnknowFormatOption(t *testing.T) {
 
 func buildRequestWithCookie(name, value string) *Controller {
 	httpRequest, _ := http.NewRequest("GET", "/", nil)
-	controller := NewTestController(nil,httpRequest)
+	controller := NewTestController(nil, httpRequest)
 
 	httpRequest.AddCookie(&http.Cookie{
 		Name:       name,
@@ -244,7 +244,7 @@ func buildRequestWithCookie(name, value string) *Controller {
 
 func buildRequestWithAcceptLanguages(acceptLanguages ...string) *Controller {
 	httpRequest, _ := http.NewRequest("GET", "/", nil)
-	controller := NewTestController(nil,httpRequest)
+	controller := NewTestController(nil, httpRequest)
 
 	request := controller.Request
 	for _, acceptLanguage := range acceptLanguages {
@@ -255,6 +255,6 @@ func buildRequestWithAcceptLanguages(acceptLanguages ...string) *Controller {
 
 func buildEmptyRequest() *Controller {
 	httpRequest, _ := http.NewRequest("GET", "/", nil)
-	controller := NewTestController(nil,httpRequest)
+	controller := NewTestController(nil, httpRequest)
 	return controller
 }
