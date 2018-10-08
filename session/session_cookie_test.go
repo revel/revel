@@ -16,6 +16,7 @@ import (
 
 func TestCookieRestore(t *testing.T) {
 	a := assert.New(t)
+	session.InitSession(revel.RevelLog)
 
 	cse := revel.NewSessionCookieEngine()
 	originSession := session.NewSession()
@@ -29,18 +30,13 @@ func TestCookieRestore(t *testing.T) {
 
 	restoredSession := session.NewSession()
 	cse.DecodeCookie(revel.GoCookie(*cookie), restoredSession)
-	for k, v := range originSession {
-		if k == session.SessionObjectKeyName {
-			continue
-		}
-		if restoredSession[k] != v {
-			t.Errorf("session restore failed session[%s] != %s", k, v)
-		}
-	}
+	a.Equal("foo",restoredSession["foo"])
+	a.Equal("bar",restoredSession["bar"])
 	testSharedData(originSession, restoredSession, t, a)
 }
 
 func TestCookieSessionExpire(t *testing.T) {
+	session.InitSession(revel.RevelLog)
 	cse := revel.NewSessionCookieEngine()
 	cse.ExpireAfterDuration = time.Hour
 	session := session.NewSession()

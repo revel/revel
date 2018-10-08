@@ -68,8 +68,13 @@ func Run(port int) {
 			RaiseEvent(REVEL_FAILURE, r)
 			panic("Fatal error in startup")
 		}
-	}() // Create the CurrentEngine instance from the application config
+	}()
+
+	// Initialize the session logger, must be initiated from this app to avoid
+	// circular references
 	session.InitSession(RevelLog)
+
+	// Create the CurrentEngine instance from the application config
 	InitServerEngine(port, Config.StringDefault("server.engine", GO_NATIVE_SERVER_ENGINE))
 	RaiseEvent(ENGINE_BEFORE_INITIALIZED, nil)
 	InitServer()
