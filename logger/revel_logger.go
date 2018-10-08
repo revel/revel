@@ -115,6 +115,8 @@ func (c callHandler) Log(log *log15.Record) error {
 			}
 			ctxMap[key] = value
 		}
+	} else {
+		ctxMap = make(ContextMap, 0)
 	}
 	r := &Record{Message: log.Msg, Context: ctxMap, Time: log.Time, Level: LogLevel(log.Lvl), Call: CallStack(log.Call)}
 	return c(r)
