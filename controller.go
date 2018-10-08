@@ -16,6 +16,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/revel/revel/session"
 	"github.com/revel/revel/logger"
 )
 
@@ -34,13 +35,13 @@ type Controller struct {
 	Response *Response
 	Result   Result
 
-	Flash      Flash                  // User cookie, cleared after 1 request.
-	Session    Session                // Session, stored in cookie, signed.
-	Params     *Params                // Parameters from URL and form (including multipart).
-	Args       map[string]interface{} // Per-request scratch space.
-	ViewArgs   map[string]interface{} // Variables passed to the template.
-	Validation *Validation            // Data validation helpers
-	Log        logger.MultiLogger     // Context Logger
+	Flash          Flash                  // User cookie, cleared after 1 request.
+	Session        session.Session        // Session, stored using the session engine specified
+	Params         *Params                // Parameters from URL and form (including multipart).
+	Args           map[string]interface{} // Per-request scratch space.
+	ViewArgs       map[string]interface{} // Variables passed to the template.
+	Validation     *Validation            // Data validation helpers
+	Log            logger.MultiLogger     // Context Logger
 }
 
 // The map of controllers, controllers are mapped by using the namespace|controller_name as the key
@@ -103,7 +104,7 @@ func (c *Controller) Destroy() {
 	c.ClientIP = ""
 	c.Result = nil
 	c.Flash = Flash{}
-	c.Session = Session{}
+	c.Session = session.NewSession()
 	c.Params = nil
 	c.Validation = nil
 	c.Log = nil
@@ -209,8 +210,8 @@ func (c *Controller) RenderTemplate(templatePath string) Result {
 }
 
 // TemplateOutput returns the result of the template rendered using the controllers ViewArgs.
-func (c *Controller) TemplateOutput(templatePath string) (data []byte,err error)  {
-	return TemplateOutputArgs(templatePath,c.ViewArgs)
+func (c *Controller) TemplateOutput(templatePath string) (data []byte, err error) {
+	return TemplateOutputArgs(templatePath, c.ViewArgs)
 }
 
 // RenderJSON uses encoding/json.Marshal to return JSON to the client.

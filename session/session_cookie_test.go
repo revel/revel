@@ -2,43 +2,57 @@
 // Revel Framework source code and usage is governed by a MIT style
 // license that can be found in the LICENSE file.
 
-package revel
+package session_test
 
 import (
-	"net/http"
 	"testing"
+
+	"github.com/revel/revel/session"
+	"github.com/revel/revel"
 	"time"
+	"net/http"
+	"github.com/stretchr/testify/assert"
 )
 
-func TestSessionRestore(t *testing.T) {
-	expireAfterDuration = 0
-	originSession := make(Session)
+func TestCookieRestore(t *testing.T) {
+	a := assert.New(t)
+
+	cse := revel.NewSessionCookieEngine()
+	originSession := session.NewSession()
+	setSharedDataTest(originSession)
 	originSession["foo"] = "foo"
 	originSession["bar"] = "bar"
-	cookie := originSession.Cookie()
+	cookie := cse.GetCookie(originSession)
 	if !cookie.Expires.IsZero() {
 		t.Error("incorrect cookie expire", cookie.Expires)
 	}
 
-	restoredSession := GetSessionFromCookie(GoCookie(*cookie))
+	restoredSession := session.NewSession()
+	cse.DecodeCookie(revel.GoCookie(*cookie),restoredSession)
 	for k, v := range originSession {
+		if k==session.SessionObjectKeyName {
+			continue
+		}
 		if restoredSession[k] != v {
 			t.Errorf("session restore failed session[%s] != %s", k, v)
 		}
 	}
+	testSharedData(originSession,restoredSession,t,a)
 }
 
-func TestSessionExpire(t *testing.T) {
-	expireAfterDuration = time.Hour
-	session := make(Session)
+func TestCookieSessionExpire(t *testing.T) {
+	cse := revel.NewSessionCookieEngine()
+	cse.ExpireAfterDuration = time.Hour
+	session := session.NewSession()
 	session["user"] = "Tom"
 	var cookie *http.Cookie
 	for i := 0; i < 3; i++ {
-		cookie = session.Cookie()
+		cookie = cse.GetCookie(session)
 		time.Sleep(time.Second)
-		session = GetSessionFromCookie(GoCookie(*cookie))
+
+		cse.DecodeCookie(revel.GoCookie(*cookie),session)
 	}
-	expectExpire := time.Now().UTC().Add(expireAfterDuration)
+	expectExpire := time.Now().Add(cse.ExpireAfterDuration)
 	if cookie.Expires.Unix() < expectExpire.Add(-time.Second).Unix() {
 		t.Error("expect expires", cookie.Expires, "after", expectExpire.Add(-time.Second))
 	}
@@ -46,19 +60,17 @@ func TestSessionExpire(t *testing.T) {
 		t.Error("expect expires", cookie.Expires, "before", expectExpire)
 	}
 
+	// Test that the expiration time is zero for a "browser" session
 	session.SetNoExpiration()
-	for i := 0; i < 3; i++ {
-		cookie = session.Cookie()
-		session = GetSessionFromCookie(GoCookie(*cookie))
-	}
-	cookie = session.Cookie()
+	cookie = cse.GetCookie(session)
 	if !cookie.Expires.IsZero() {
 		t.Error("expect cookie expires is zero")
 	}
 
+	// Check the default session is set
 	session.SetDefaultExpiration()
-	cookie = session.Cookie()
-	expectExpire = time.Now().UTC().Add(expireAfterDuration)
+	cookie = cse.GetCookie(session)
+	expectExpire = time.Now().Add(cse.ExpireAfterDuration)
 	if cookie.Expires.Unix() < expectExpire.Add(-time.Second).Unix() {
 		t.Error("expect expires", cookie.Expires, "after", expectExpire.Add(-time.Second))
 	}
