@@ -198,7 +198,7 @@ func TestPostFileUpload(t *testing.T) {
 func createNewTestSuite(t *testing.T) *TestSuite {
 	suite := NewTestSuite()
 
-	if suite.Client == nil || suite.cse == nil {
+	if suite.Client == nil || suite.SessionEngine == nil {
 		t.Error("Unable to create a testsuite")
 	}
 

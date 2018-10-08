@@ -147,5 +147,6 @@ func startFakeBookingApp() {
 	InitServerEngine(9000, GO_NATIVE_SERVER_ENGINE)
 	RaiseEvent(ENGINE_BEFORE_INITIALIZED, nil)
 	InitServer()
+
 	RaiseEvent(ENGINE_STARTED, nil)
 }

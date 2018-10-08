@@ -131,10 +131,10 @@ func (s Session) GetInto(key string, target interface{}, force bool) (result int
 		if target == nil {
 			// Try to fetch it from the session
 
-			if v, err = s.sessionDataFromMap(key); err != nil {
+			if v, err = s.sessionDataFromMap(rootKey); err != nil {
 				return
 			}
-		} else if v, err = s.sessionDataFromObject(key, target); err != nil {
+		} else if v, err = s.sessionDataFromObject(rootKey, target); err != nil {
 			return
 		}
 	}
