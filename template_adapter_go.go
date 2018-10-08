@@ -91,7 +91,6 @@ func (engine *GoEngine) ParseAndAdd(baseTemplate *TemplateView) error {
 	tpl, err := engine.templateSet.New(baseTemplate.TemplateName).Parse(templateSource)
 	if nil != err {
 		_, line, description := ParseTemplateError(err)
-		println("*** Returned *Error type")
 		return &Error{
 			Title:       "Template Compilation Error",
 			Path:        baseTemplate.TemplateName,

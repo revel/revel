@@ -469,7 +469,8 @@ func (i *TemplateView) Content() (content []string) {
 			content = append(content, string(reader.Bytes()))
 		}
 	}
-	return nil
+
+	return content
 }
 
 func NewBaseTemplate(templateName, filePath, basePath string, fileBytes []byte) *TemplateView {

@@ -62,6 +62,7 @@ func (r ErrorResult) Apply(req *Request, resp *Response) {
 		if err == nil {
 			err = fmt.Errorf("Couldn't find template %s", templatePath)
 		}
+		templateLog.Warn("Got an error rendering template","error",err,"template",templatePath,"lang", lang)
 		showPlaintext(err)
 		return
 	}
@@ -90,12 +91,15 @@ func (r ErrorResult) Apply(req *Request, resp *Response) {
 	r.ViewArgs["Error"] = revelError
 	r.ViewArgs["Router"] = MainRouter
 
+	resultsLog.Info("Rendering error template","template",templatePath,"error",revelError)
+
 	// Render it.
 	var b bytes.Buffer
 	err = tmpl.Render(&b, r.ViewArgs)
 
 	// If there was an error, print it in plain text.
 	if err != nil {
+		templateLog.Warn("Got an error rendering template","error",err,"template",templatePath,"lang", lang)
 		showPlaintext(err)
 		return
 	}
@@ -261,23 +265,30 @@ func (r *RenderTemplateResult) compressHtml(b *bytes.Buffer) (b2 *bytes.Buffer) 
 
 // Render the error in the response
 func (r *RenderTemplateResult) renderError(err error, req *Request, resp *Response) {
-	var templateContent []string
-	templateName, line, description := ParseTemplateError(err)
-	if templateName == "" {
-		templateName = r.Template.Name()
-		templateContent = r.Template.Content()
-	} else {
-		lang, _ := r.ViewArgs[CurrentLocaleViewArg].(string)
-		if tmpl, err := MainTemplateLoader.TemplateLang(templateName, lang); err == nil {
-			templateContent = tmpl.Content()
+	compileError, found := err.(*Error)
+	if !found {
+		var templateContent []string
+		templateName, line, description := ParseTemplateError(err)
+		if templateName == "" {
+			templateLog.Info("Cannot determine template name to render error", "error", err)
+			templateName = r.Template.Name()
+			templateContent = r.Template.Content()
+
+		} else {
+			lang, _ := r.ViewArgs[CurrentLocaleViewArg].(string)
+			if tmpl, err := MainTemplateLoader.TemplateLang(templateName, lang); err == nil {
+				templateContent = tmpl.Content()
+			} else {
+				templateLog.Info("Unable to retreive template ", "error", err)
+			}
 		}
-	}
-	compileError := &Error{
-		Title:       "Template Execution Error",
-		Path:        templateName,
-		Description: description,
-		Line:        line,
-		SourceLines: templateContent,
+		compileError = &Error{
+			Title:       "Template Execution Error",
+			Path:        templateName,
+			Description: description,
+			Line:        line,
+			SourceLines: templateContent,
+		}
 	}
 	resp.Status = 500
 	resultsLog.Errorf("render: Template Execution Error (in %s): %s", compileError.Path, compileError.Description)
