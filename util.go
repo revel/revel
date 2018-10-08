@@ -28,8 +28,8 @@ const (
 
 var (
 	cookieKeyValueParser = regexp.MustCompile("\x00([^:]*):([^\x00]*)\x00")
-	hdrForwardedFor      = http.CanonicalHeaderKey("X-Forwarded-For")
-	hdrRealIP            = http.CanonicalHeaderKey("X-Real-Ip")
+	HdrForwardedFor      = http.CanonicalHeaderKey("X-Forwarded-For")
+	HdrRealIP            = http.CanonicalHeaderKey("X-Real-Ip")
 	utilLog              = RevelLog.New("section", "util")
 	mimeConfig           *config.Context
 )
@@ -195,7 +195,7 @@ func Equal(a, b interface{}) bool {
 func ClientIP(r *Request) string {
 	if Config.BoolDefault("app.behind.proxy", false) {
 		// Header X-Forwarded-For
-		if fwdFor := strings.TrimSpace(r.GetHttpHeader(hdrForwardedFor)); fwdFor != "" {
+		if fwdFor := strings.TrimSpace(r.GetHttpHeader(HdrForwardedFor)); fwdFor != "" {
 			index := strings.Index(fwdFor, ",")
 			if index == -1 {
 				return fwdFor
@@ -204,7 +204,7 @@ func ClientIP(r *Request) string {
 		}
 
 		// Header X-Real-Ip
-		if realIP := strings.TrimSpace(r.GetHttpHeader(hdrRealIP)); realIP != "" {
+		if realIP := strings.TrimSpace(r.GetHttpHeader(HdrRealIP)); realIP != "" {
 			return realIP
 		}
 	}

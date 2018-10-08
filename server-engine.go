@@ -10,6 +10,7 @@ import (
 	"mime/multipart"
 	"net/url"
 	"time"
+	"strings"
 )
 
 const (
@@ -90,30 +91,44 @@ type (
 	StreamWriter interface {
 		WriteStream(name string, contentlen int64, modtime time.Time, reader io.Reader) error
 	}
-)
 
-type ServerEngine interface {
-	// Initialize the server (non blocking)
-	Init(init *EngineInit)
-	// Starts the server. This will block until server is stopped
-	Start()
-	// Fires a new event to the server
-	Event(event Event, args interface{})
-	// Returns the engine instance for specific calls
-	Engine() interface{}
-	// Returns the engine Name
-	Name() string
-	// Returns any stats
-	Stats() map[string]interface{}
-}
-type EngineInit struct {
-	Address,
-	Network string
-	Port     int
-	Callback func(ServerContext)
-}
-type ServerEngineEmpty struct {
-}
+	ServerEngine interface {
+		// Initialize the server (non blocking)
+		Init(init *EngineInit)
+		// Starts the server. This will block until server is stopped
+		Start()
+		// Fires a new event to the server
+		Event(event Event, args interface{}) EventResponse
+		// Returns the engine instance for specific calls
+		Engine() interface{}
+		// Returns the engine Name
+		Name() string
+		// Returns any stats
+		Stats() map[string]interface{}
+	}
+
+	// The initialization structure passed into the engine
+	EngineInit struct {
+		Address, // The address
+		Network     string        // The network
+		Port        int           // The port
+		HTTPMuxList ServerMuxList // The HTTPMux
+		Callback    func(ServerContext) // The ServerContext callback endpoint
+	}
+
+	// An empty server engine
+	ServerEngineEmpty struct {
+	}
+
+	// The route handler structure
+	ServerMux struct {
+		PathPrefix string      // The path prefix
+		Callback   interface{} // The callback interface as appropriate to the server
+	}
+
+	// A list of handlers used for adding special route functions
+	ServerMuxList []ServerMux
+)
 
 var (
 	// The simple stacks for response and controllers are a linked list
@@ -124,6 +139,38 @@ var (
 	cachedControllerStackMaxSize = 10
 )
 
+// Sorting function
+func (r ServerMuxList) Len() int {
+	return len(r)
+}
+
+// Sorting function
+func (r ServerMuxList) Less(i, j int) bool {
+	return len(r[i].PathPrefix) > len(r[j].PathPrefix)
+}
+
+// Sorting function
+func (r ServerMuxList) Swap(i, j int) {
+	r[i], r[j] = r[j], r[i]
+}
+
+// Search function, returns the largest path matching this
+func (r ServerMuxList) Find(path string) (interface{}, bool) {
+	for _,p := range r {
+		if p.PathPrefix==path || strings.HasPrefix(path,p.PathPrefix) {
+			return p.Callback, true
+		}
+	}
+	return nil, false
+}
+
+// Adds this routehandler to the route table. It will be called (if the path prefix matches)
+// before the Revel mux, this can only be called after the ENGINE_BEFORE_INITIALIZED event
+func AddHTTPMux(path string, callback interface{}) {
+	ServerEngineInit.HTTPMuxList = append(ServerEngineInit.HTTPMuxList, ServerMux{PathPrefix:path, Callback:callback})
+}
+
+// Callback point for the server to handle the
 func handleInternal(ctx ServerContext) {
 	start := time.Now()
 

@@ -12,15 +12,17 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"path"
+	"sort"
 	"strconv"
-	"syscall"
+	"strings"
 )
 
 var signalChan = make(chan os.Signal)
 
 // Register the GoHttpServer engine
 func init() {
-	AddInitEventHandler(func(typeOf Event, value interface{}) (responseOf EventResponse){
+	AddInitEventHandler(func(typeOf Event, value interface{}) (responseOf EventResponse) {
 		if typeOf == REVEL_BEFORE_MODULES_LOADED {
 			RegisterServerEngine(GO_NATIVE_SERVER_ENGINE, func() ServerEngine { return &GoHttpServer{} })
 		}
@@ -28,14 +30,19 @@ func init() {
 	})
 }
 
+// The Go HTTP server
 type GoHttpServer struct {
-	Server               *http.Server
-	ServerInit           *EngineInit
-	MaxMultipartSize     int64
-	goContextStack       *SimpleLockStack
-	goMultipartFormStack *SimpleLockStack
+	Server               *http.Server     // The server instance
+	ServerInit           *EngineInit      // The server engine initialization
+	MaxMultipartSize     int64            // The largest size of file to accept
+	goContextStack       *SimpleLockStack // The context stack
+	goMultipartFormStack *SimpleLockStack // The multipart form stack
+	HttpMuxList          ServerMuxList
+	HasAppMux            bool
+	signalChan           chan os.Signal
 }
 
+// Called to initialize the server with this EngineInit
 func (g *GoHttpServer) Init(init *EngineInit) {
 	g.MaxMultipartSize = int64(Config.IntDefault("server.request.max.multipart.filesize", 32)) << 20 /* 32 MB */
 	g.goContextStack = NewStackLock(Config.IntDefault("server.context.stack", 100),
@@ -47,15 +54,23 @@ func (g *GoHttpServer) Init(init *EngineInit) {
 		Config.IntDefault("server.form.maxstack", 200),
 		func() interface{} { return &GoMultipartForm{} })
 	g.ServerInit = init
+
+	revelHandler := http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		g.Handle(writer, request)
+	})
+
+	// Adds the mux list
+	g.HttpMuxList = init.HTTPMuxList
+	sort.Sort(g.HttpMuxList)
+	g.HasAppMux = len(g.HttpMuxList) > 0
+	g.signalChan = make(chan os.Signal)
+
 	g.Server = &http.Server{
-		Addr: init.Address,
-		Handler: http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-			g.Handle(writer, request)
-		}),
+		Addr:         init.Address,
+		Handler:      revelHandler,
 		ReadTimeout:  time.Duration(Config.IntDefault("http.timeout.read", 0)) * time.Second,
 		WriteTimeout: time.Duration(Config.IntDefault("http.timeout.write", 0)) * time.Second,
 	}
-	// Server already initialized
 
 }
 
@@ -78,12 +93,46 @@ func (g *GoHttpServer) Start() {
 		if err != nil {
 			serverLogger.Fatal("Failed to listen:", "error", err)
 		}
-		serverLogger.Fatal("Failed to serve:", "error", g.Server.Serve(listener))
+		serverLogger.Warn("Server exiting:", "error", g.Server.Serve(listener))
 	}
-
 }
 
+// Handle the request and response for the server
 func (g *GoHttpServer) Handle(w http.ResponseWriter, r *http.Request) {
+	// This section is called if the developer has added custom mux to the app
+	if g.HasAppMux && g.handleAppMux(w, r) {
+		return
+	}
+	g.handleMux(w, r)
+}
+
+// Handle the request and response for the servers mux
+func (g *GoHttpServer) handleAppMux(w http.ResponseWriter, r *http.Request) bool {
+	// Check the prefix and split them
+	requestPath := path.Clean(r.URL.Path)
+	if handler, hasHandler := g.HttpMuxList.Find(requestPath); hasHandler {
+		clientIP := HttpClientIP(r)
+		localLog := AppLog.New("ip", clientIP,
+			"path", r.URL.Path, "method", r.Method)
+		defer func() {
+			if err := recover(); err != nil {
+				localLog.Error("An error was caught using the handler", "path", requestPath, "error", err)
+				w.WriteHeader(http.StatusInternalServerError)
+			}
+		}()
+		start := time.Now()
+		handler.(http.HandlerFunc)(w, r)
+		localLog.Info("Request Stats",
+			"start", start,
+			"duration_seconds", time.Since(start).Seconds(), "section", "requestlog",
+		)
+		return true
+	}
+	return false
+}
+
+// Passes the server request to Revel
+func (g *GoHttpServer) handleMux(w http.ResponseWriter, r *http.Request) {
 	if maxRequestSize := int64(Config.IntDefault("http.maxrequestsize", 0)); maxRequestSize > 0 {
 		r.Body = http.MaxBytesReader(w, r.Body, maxRequestSize)
 	}
@@ -112,12 +161,47 @@ func (g *GoHttpServer) Handle(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// ClientIP method returns client IP address from HTTP request.
+//
+// Note: Set property "app.behind.proxy" to true only if Revel is running
+// behind proxy like nginx, haproxy, apache, etc. Otherwise
+// you may get inaccurate Client IP address. Revel parses the
+// IP address in the order of X-Forwarded-For, X-Real-IP.
+//
+// By default revel will get http.Request's RemoteAddr
+func HttpClientIP(r *http.Request) string {
+	if Config.BoolDefault("app.behind.proxy", false) {
+		// Header X-Forwarded-For
+		if fwdFor := strings.TrimSpace(r.Header.Get(HdrForwardedFor)); fwdFor != "" {
+			index := strings.Index(fwdFor, ",")
+			if index == -1 {
+				return fwdFor
+			}
+			return fwdFor[:index]
+		}
+
+		// Header X-Real-Ip
+		if realIP := strings.TrimSpace(r.Header.Get(HdrRealIP)); realIP != "" {
+			return realIP
+		}
+	}
+
+	if remoteAddr, _, err := net.SplitHostPort(r.RemoteAddr); err == nil {
+		return remoteAddr
+	}
+
+	return ""
+}
+
+// The server key name
 const GO_NATIVE_SERVER_ENGINE = "go"
 
+// Returns the name of this engine
 func (g *GoHttpServer) Name() string {
 	return GO_NATIVE_SERVER_ENGINE
 }
 
+// Returns stats for this engine
 func (g *GoHttpServer) Stats() map[string]interface{} {
 	return map[string]interface{}{
 		"Go Engine Context": g.goContextStack.String(),
@@ -125,24 +209,30 @@ func (g *GoHttpServer) Stats() map[string]interface{} {
 	}
 }
 
+// Return the engine instance
 func (g *GoHttpServer) Engine() interface{} {
 	return g.Server
 }
 
-func (g *GoHttpServer) Event(event Event, args interface{}) {
+// Handles an event from Revel
+func (g *GoHttpServer) Event(event Event, args interface{}) (r EventResponse) {
 	switch event {
 	case ENGINE_STARTED:
-		signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL, syscall.SIGUSR2)
-	case ENGINE_SHUTDOWN:
-		s := <-signalChan
-		serverLogger.Debugf("Recived quit singal %s, Please wait ... \n", s)
-		runShutdownHooks()
+		signal.Notify(signalChan, os.Interrupt, os.Kill)
+		go func() {
+			_ = <-signalChan
+			serverLogger.Info("Received quit singal Please wait ... ")
+			RaiseEvent(ENGINE_SHUTDOWN_REQUEST, nil)
+		}()
+	case ENGINE_SHUTDOWN_REQUEST:
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(Config.IntDefault("app.cancel.timeout", 60)))
 		defer cancel()
 		g.Server.Shutdown(ctx)
 	default:
 
 	}
+
+	return
 }
 
 type (
