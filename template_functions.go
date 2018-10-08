@@ -146,18 +146,18 @@ var (
 		},
 		// Fetch an object from the session.
 		"session": func(key string, viewArgs map[string]interface{}) interface{} {
-			if viewArgs!=nil {
-				if c,found := viewArgs["_controller"];found {
-					if v,err := c.(*Controller).Session.Get(key);err==nil {
+			if viewArgs != nil {
+				if c, found := viewArgs["_controller"]; found {
+					if v, err := c.(*Controller).Session.Get(key); err == nil {
 						return v
 					} else {
-						templateLog.Errorf("template.session, key %s error %v",key,err)
+						templateLog.Errorf("template.session, key %s error %v", key, err)
 					}
 				} else {
-					templateLog.Warnf("template.session, key %s requested without controller",key)
+					templateLog.Warnf("template.session, key %s requested without controller", key)
 				}
 			} else {
-				templateLog.Warnf("template.session, key %s requested passing in view args",key)
+				templateLog.Warnf("template.session, key %s requested passing in view args", key)
 			}
 			return ""
 		},

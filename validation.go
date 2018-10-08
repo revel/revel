@@ -27,10 +27,10 @@ func (e *ValidationError) String() string {
 
 // Validation context manages data validation and error messages.
 type Validation struct {
-	Errors []*ValidationError
-	Request *Request
+	Errors     []*ValidationError
+	Request    *Request
 	Translator func(locale, message string, args ...interface{}) string
-	keep   bool
+	keep       bool
 }
 
 // Keep tells revel to set a flash cookie on the client to make the validation
@@ -68,30 +68,33 @@ func (v *Validation) ErrorMap() map[string]*ValidationError {
 
 // Error adds an error to the validation context.
 func (v *Validation) Error(message string, args ...interface{}) *ValidationResult {
-	result := v.ValidationResult(false).Message(message,args...)
+	result := v.ValidationResult(false).Message(message, args...)
 	v.Errors = append(v.Errors, result.Error)
 	return result
 }
+
 // Error adds an error to the validation context.
 func (v *Validation) ErrorKey(message string, args ...interface{}) *ValidationResult {
-	result := v.ValidationResult(false).MessageKey(message,args...)
+	result := v.ValidationResult(false).MessageKey(message, args...)
 	v.Errors = append(v.Errors, result.Error)
 	return result
 }
+
 // Error adds an error to the validation context.
 func (v *Validation) ValidationResult(ok bool) *ValidationResult {
 	if ok {
-		return &ValidationResult{Ok:ok}
+		return &ValidationResult{Ok: ok}
 	} else {
-		return &ValidationResult{Ok:ok, Error: &ValidationError{}, Locale:v.Request.Locale, Translator:v.Translator}
+		return &ValidationResult{Ok: ok, Error: &ValidationError{}, Locale: v.Request.Locale, Translator: v.Translator}
 	}
 }
+
 // ValidationResult is returned from every validation method.
 // It provides an indication of success, and a pointer to the Error (if any).
 type ValidationResult struct {
-	Error *ValidationError
-	Ok    bool
-	Locale string
+	Error      *ValidationError
+	Ok         bool
+	Locale     string
 	Translator func(locale, message string, args ...interface{}) string
 }
 
@@ -124,7 +127,7 @@ func (r *ValidationResult) MessageKey(message string, args ...interface{}) *Vali
 	}
 
 	// If translator found, use that to create the message, otherwise call Message method
-	if r.Translator!=nil {
+	if r.Translator != nil {
 		r.Error.Message = r.Translator(r.Locale, message, args...)
 	} else {
 		r.Message(message, args...)
@@ -254,15 +257,15 @@ func ValidationFilter(c *Controller, fc []Filter) {
 	// If json request, we shall assume json response is intended,
 	// as such no validation cookies should be tied response
 	if c.Params != nil && c.Params.JSON != nil {
-		c.Validation = &Validation{Request:c.Request, Translator:MessageFunc}
+		c.Validation = &Validation{Request: c.Request, Translator: MessageFunc}
 		fc[0](c, fc[1:])
 	} else {
 		errors, err := restoreValidationErrors(c.Request)
 		c.Validation = &Validation{
-			Errors: errors,
-			keep:   false,
-			Request:c.Request,
-			Translator:MessageFunc,
+			Errors:     errors,
+			keep:       false,
+			Request:    c.Request,
+			Translator: MessageFunc,
 		}
 		hasCookie := (err != http.ErrNoCookie)
 

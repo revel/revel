@@ -9,8 +9,8 @@ import (
 	"io"
 	"mime/multipart"
 	"net/url"
-	"time"
 	"strings"
+	"time"
 )
 
 const (
@@ -110,9 +110,9 @@ type (
 	// The initialization structure passed into the engine
 	EngineInit struct {
 		Address, // The address
-		Network     string        // The network
-		Port        int           // The port
-		HTTPMuxList ServerMuxList // The HTTPMux
+		Network string // The network
+		Port        int                 // The port
+		HTTPMuxList ServerMuxList       // The HTTPMux
 		Callback    func(ServerContext) // The ServerContext callback endpoint
 	}
 
@@ -156,8 +156,8 @@ func (r ServerMuxList) Swap(i, j int) {
 
 // Search function, returns the largest path matching this
 func (r ServerMuxList) Find(path string) (interface{}, bool) {
-	for _,p := range r {
-		if p.PathPrefix==path || strings.HasPrefix(path,p.PathPrefix) {
+	for _, p := range r {
+		if p.PathPrefix == path || strings.HasPrefix(path, p.PathPrefix) {
 			return p.Callback, true
 		}
 	}
@@ -167,7 +167,7 @@ func (r ServerMuxList) Find(path string) (interface{}, bool) {
 // Adds this routehandler to the route table. It will be called (if the path prefix matches)
 // before the Revel mux, this can only be called after the ENGINE_BEFORE_INITIALIZED event
 func AddHTTPMux(path string, callback interface{}) {
-	ServerEngineInit.HTTPMuxList = append(ServerEngineInit.HTTPMuxList, ServerMux{PathPrefix:path, Callback:callback})
+	ServerEngineInit.HTTPMuxList = append(ServerEngineInit.HTTPMuxList, ServerMux{PathPrefix: path, Callback: callback})
 }
 
 // Callback point for the server to handle the

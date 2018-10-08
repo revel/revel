@@ -8,6 +8,7 @@ type (
 	// The handler signature
 	EventHandler func(typeOf Event, value interface{}) (responseOf EventResponse)
 )
+
 const (
 	// Event type when templates are going to be refreshed (receivers are registered template engines added to the template.engine conf option)
 	TEMPLATE_REFRESH_REQUESTED Event = iota
@@ -42,7 +43,7 @@ const (
 
 // Fires system events from revel
 func RaiseEvent(key Event, value interface{}) (response EventResponse) {
-	utilLog.Info("Raising event","len",len(initEventList))
+	utilLog.Info("Raising event", "len", len(initEventList))
 	for _, handler := range initEventList {
 		response |= handler(key, value)
 	}

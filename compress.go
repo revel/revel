@@ -5,12 +5,12 @@
 package revel
 
 import (
+	"compress/gzip"
+	"compress/zlib"
 	"io"
 	"net/http"
 	"strconv"
 	"strings"
-	"compress/gzip"
-	"compress/zlib"
 )
 
 var compressionTypes = [...]string{
@@ -344,7 +344,7 @@ func (bsh *BufferedServerHeader) Release() {
 	for _, c := range bsh.cookieList {
 		bsh.original.SetCookie(c)
 	}
-	if bsh.status>0 {
+	if bsh.status > 0 {
 		bsh.original.SetStatus(bsh.status)
 	}
 }

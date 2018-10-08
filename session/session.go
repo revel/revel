@@ -182,7 +182,6 @@ func (s Session) GetProperty(key string, value interface{}) (interface{}, error)
 	return field.Interface(), nil
 }
 
-
 // Places the object into the session, a nil value will cause remove the key from the session
 // (or you can use the Session.Del(key) function
 func (s Session) Set(key string, value interface{}) error {
@@ -284,7 +283,6 @@ func (s Session) Empty() bool {
 	return i == 0
 }
 
-
 func (s *Session) reflectValue(obj interface{}) reflect.Value {
 	var val reflect.Value
 
@@ -296,7 +294,6 @@ func (s *Session) reflectValue(obj interface{}) reflect.Value {
 
 	return val
 }
-
 
 // Starting at position 1 drill into the object
 func (s Session) getNestedProperty(keys []string, newValue interface{}) (result interface{}, err error) {

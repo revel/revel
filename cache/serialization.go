@@ -30,7 +30,7 @@ func Serialize(value interface{}) ([]byte, error) {
 	var b bytes.Buffer
 	encoder := gob.NewEncoder(&b)
 	if err := encoder.Encode(value); err != nil {
-		cacheLog.Error("Serialize: gob encoding failed","value", value, "error", err)
+		cacheLog.Error("Serialize: gob encoding failed", "value", value, "error", err)
 		return nil, err
 	}
 	return b.Bytes(), nil
@@ -50,7 +50,7 @@ func Deserialize(byt []byte, ptr interface{}) (err error) {
 			var i int64
 			i, err = strconv.ParseInt(string(byt), 10, 64)
 			if err != nil {
-				cacheLog.Error("Deserialize: failed to parse int","value", string(byt), "error", err)
+				cacheLog.Error("Deserialize: failed to parse int", "value", string(byt), "error", err)
 			} else {
 				p.SetInt(i)
 			}
@@ -60,7 +60,7 @@ func Deserialize(byt []byte, ptr interface{}) (err error) {
 			var i uint64
 			i, err = strconv.ParseUint(string(byt), 10, 64)
 			if err != nil {
-				cacheLog.Error("Deserialize: failed to parse uint","value", string(byt), "error", err)
+				cacheLog.Error("Deserialize: failed to parse uint", "value", string(byt), "error", err)
 			} else {
 				p.SetUint(i)
 			}
@@ -71,7 +71,7 @@ func Deserialize(byt []byte, ptr interface{}) (err error) {
 	b := bytes.NewBuffer(byt)
 	decoder := gob.NewDecoder(b)
 	if err = decoder.Decode(ptr); err != nil {
-		cacheLog.Error("Deserialize: glob decoding failed","error", err)
+		cacheLog.Error("Deserialize: glob decoding failed", "error", err)
 		return
 	}
 	return
