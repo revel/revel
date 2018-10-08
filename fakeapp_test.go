@@ -137,9 +137,6 @@ func registerControllers() {
 func startFakeBookingApp() {
 	Init("prod", "github.com/revel/revel/testdata", "")
 
-	// Disable logging.
-	GetRootLogHandler().Disable()
-
 	MainTemplateLoader = NewTemplateLoader([]string{ViewsPath, filepath.Join(RevelPath, "templates")})
 	if err := MainTemplateLoader.Refresh(); err != nil {
 		ERROR.Fatal(err)
@@ -148,6 +145,7 @@ func startFakeBookingApp() {
 	registerControllers()
 
 	InitServerEngine(9000, GO_NATIVE_SERVER_ENGINE)
-	initControllerStack()
-	runStartupHooks()
+	RaiseEvent(ENGINE_BEFORE_INITIALIZED, nil)
+	InitServer()
+	RaiseEvent(ENGINE_STARTED, nil)
 }

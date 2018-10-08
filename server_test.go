@@ -11,6 +11,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
+	"github.com/stretchr/testify/assert"
 )
 
 // This tries to benchmark the usual request-serving pipeline to get an overall
@@ -99,8 +101,10 @@ func getFileSize(t *testing.T, name string) int64 {
 	return fi.Size()
 }
 
+// Ensure on app start runs in order
 func TestOnAppStart(t *testing.T) {
 	str := ""
+	a := assert.New(t)
 	OnAppStart(func() {
 		str += " World"
 	}, 2)
@@ -110,32 +114,29 @@ func TestOnAppStart(t *testing.T) {
 	}, 1)
 
 	startFakeBookingApp()
-	if str != "Hello World" {
-		t.Errorf("Failed to order OnAppStart:\n%s", str)
-		t.FailNow()
-	}
+
+	a.Equal("Hello World", str,"Failed to order OnAppStart")
 }
 
-func TestOnAppShut(t *testing.T) {
+// Ensure on app stop runs in order
+func TestOnAppStop(t *testing.T) {
+	a := assert.New(t)
 	startFakeBookingApp()
-	i := 1
-	OnAppShut(func() {
-		i += 2
+	i := ""
+	OnAppStop(func() {
+		i += "cruel world"
 		t.Logf("i: %v \n", i)
-	})
-	OnAppShut(func() {
-		i *= 3
+	},2)
+	OnAppStop(func() {
+		i += "goodbye "
 		t.Logf("i: %v \n", i)
-	})
-	//Run(0)
-
-	//// kill self
-	//p, _ := os.FindProcess(os.Getpid())
-	//p.Kill()
-	//if i != 9 {
-	//	t.Errorf("Failed to fired and order OnAppShutdown: %v \n", i)
-	//	t.FailNow()
-	//}
+	},1)
+	go func() {
+		time.Sleep(2 * time.Second)
+		RaiseEvent(ENGINE_SHUTDOWN_REQUEST, nil)
+	}()
+	Run(0)
+	a.Equal("goodbye cruel world",i,"Did not get shutdown events")
 
 }
 

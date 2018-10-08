@@ -24,6 +24,10 @@ const (
 	ENGINE_BEFORE_INITIALIZED
 	// Event type before server engine is started, receivers are active server engine and handlers added to AddInitEventHandler
 	ENGINE_STARTED
+
+	// Event raised when the engine is told to shutdown
+	ENGINE_SHUTDOWN_REQUEST
+
 	// Event type after server engine is stopped, receivers are active server engine and handlers added to AddInitEventHandler
 	ENGINE_SHUTDOWN
 
@@ -38,6 +42,7 @@ const (
 
 // Fires system events from revel
 func RaiseEvent(key Event, value interface{}) (response EventResponse) {
+	utilLog.Info("Raising event","len",len(initEventList))
 	for _, handler := range initEventList {
 		response |= handler(key, value)
 	}

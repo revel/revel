@@ -7,9 +7,9 @@ package revel
 import (
 	"fmt"
 	"os"
-	"sort"
 	"strconv"
 	"strings"
+	"github.com/revel/revel/session"
 )
 
 // Revel's variables server, router, etc
@@ -33,8 +33,9 @@ func RegisterServerEngine(name string, loader func() ServerEngine) {
 // to be exposed. E.g. to run on multiple addresses and ports or to set custom
 // TLS options.
 func InitServer() {
+	CurrentEngine.Init(ServerEngineInit)
 	initControllerStack()
-	runStartupHooks()
+	startupHooks.Run()
 
 	// Load templates
 	MainTemplateLoader = NewTemplateLoader(TemplatePaths)
@@ -68,19 +69,24 @@ func Run(port int) {
 			panic("Fatal error in startup")
 		}
 	}()	// Create the CurrentEngine instance from the application config
+	session.InitSession(RevelLog)
 	InitServerEngine(port, Config.StringDefault("server.engine", GO_NATIVE_SERVER_ENGINE))
-	CurrentEngine.Event(ENGINE_BEFORE_INITIALIZED, nil)
 	RaiseEvent(ENGINE_BEFORE_INITIALIZED, nil)
 	InitServer()
 	RaiseEvent(ENGINE_STARTED, nil)
-	CurrentEngine.Event(ENGINE_STARTED, nil)
 	// This is needed for the harness to recognize that the server is started, it looks for the word
 	// "Listening" in the stdout stream
+
 	fmt.Fprintf(os.Stdout,"Revel engine is listening on.. %s\n", ServerEngineInit.Address)
+	// Start never returns,
 	CurrentEngine.Start()
-	CurrentEngine.Event(ENGINE_SHUTDOWN, nil)
+	fmt.Fprintf(os.Stdout,"Revel engine is NOT listening on.. %s\n", ServerEngineInit.Address)
+	RaiseEvent(ENGINE_SHUTDOWN, nil)
+	shutdownHooks.Run()
+	println("\nRevel existed normally\n")
 }
 
+// Build an engine initialization object and start the engine
 func InitServerEngine(port int, serverEngine string) {
 	address := HTTPAddr
 	if address == "" {
@@ -115,122 +121,15 @@ func InitServerEngine(port int, serverEngine string) {
 			Port:     port,
 			Callback: handleInternal,
 		}
-		CurrentEngine.Init(ServerEngineInit)
 	}
+	AddInitEventHandler(CurrentEngine.Event)
 }
+
+// Initialize the controller stack for the application
 func initControllerStack() {
 	controllerStack = NewStackLock(
 		Config.IntDefault("revel.controller.stack", 10),
 		Config.IntDefault("revel.controller.maxstack", 200), func() interface{} { return NewControllerEmpty() })
 	cachedControllerStackSize = Config.IntDefault("revel.cache.controller.stack", 10)
 	cachedControllerStackMaxSize = Config.IntDefault("revel.cache.controller.maxstack", 100)
-}
-func runStartupHooks() {
-	sort.Sort(startupHooks)
-	for _, hook := range startupHooks {
-		hook.f()
-	}
-}
-
-type StartupHook struct {
-	order int
-	f     func()
-}
-
-type StartupHooks []StartupHook
-
-var startupHooks StartupHooks
-
-func (slice StartupHooks) Len() int {
-	return len(slice)
-}
-
-func (slice StartupHooks) Less(i, j int) bool {
-	return slice[i].order < slice[j].order
-}
-
-func (slice StartupHooks) Swap(i, j int) {
-	slice[i], slice[j] = slice[j], slice[i]
-}
-
-// OnAppStart registers a function to be run at app startup.
-//
-// The order you register the functions will be the order they are run.
-// You can think of it as a FIFO queue.
-// This process will happen after the config file is read
-// and before the server is listening for connections.
-//
-// Ideally, your application should have only one call to init() in the file init.go.
-// The reason being that the call order of multiple init() functions in
-// the same package is undefined.
-// Inside of init() call revel.OnAppStart() for each function you wish to register.
-//
-// Example:
-//
-//      // from: yourapp/app/controllers/somefile.go
-//      func InitDB() {
-//          // do DB connection stuff here
-//      }
-//
-//      func FillCache() {
-//          // fill a cache from DB
-//          // this depends on InitDB having been run
-//      }
-//
-//      // from: yourapp/app/init.go
-//      func init() {
-//          // set up filters...
-//
-//          // register startup functions
-//          revel.OnAppStart(InitDB)
-//          revel.OnAppStart(FillCache)
-//      }
-//
-// This can be useful when you need to establish connections to databases or third-party services,
-// setup app components, compile assets, or any thing you need to do between starting Revel and accepting connections.
-//
-func OnAppStart(f func(), order ...int) {
-	o := 1
-	if len(order) > 0 {
-		o = order[0]
-	}
-	startupHooks = append(startupHooks, StartupHook{order: o, f: f})
-}
-
-func runShutdownHooks() {
-	fmt.Printf("There is %d shutdown hooks need to run ...\n", len(shutdownHooks))
-	sort.Sort(shutdownHooks)
-	for i, hook := range shutdownHooks {
-		fmt.Printf("Run the %d shutdown hook ...\n", i+1)
-		hook.f()
-	}
-}
-
-type ShutdownHook struct {
-	order int
-	f     func()
-}
-
-type ShutdownHooks []ShutdownHook
-
-var shutdownHooks ShutdownHooks
-
-func (slice ShutdownHooks) Len() int {
-	return len(slice)
-}
-
-func (slice ShutdownHooks) Less(i, j int) bool {
-	return slice[i].order < slice[j].order
-}
-
-func (slice ShutdownHooks) Swap(i, j int) {
-	slice[i], slice[j] = slice[j], slice[i]
-}
-
-func OnAppShut(f func(), order ...int) {
-	o := 1
-	if len(order) > 0 {
-		o = order[0]
-	}
-	shutdownHooks = append(shutdownHooks, ShutdownHook{order: o, f: f})
 }
