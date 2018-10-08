@@ -2,8 +2,8 @@ package logger
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
-	"github.com/revel/log15"
 	"reflect"
 	"strconv"
 	"sync"
@@ -19,9 +19,8 @@ const (
 )
 
 var (
-	// Name the log level
-	toRevel = map[log15.Lvl]string{log15.LvlDebug: "DEBUG",
-		log15.LvlInfo: "INFO", log15.LvlWarn: "WARN", log15.LvlError: "ERROR", log15.LvlCrit: "CRIT"}
+	levelString = map[LogLevel]string{LvlDebug: "DEBUG",
+		LvlInfo: "INFO", LvlWarn: "WARN", LvlError: "ERROR", LvlCrit: "CRIT"}
 )
 
 // Outputs to the terminal in a format like below
@@ -31,53 +30,51 @@ func TerminalFormatHandler(noColor bool, smallDate bool) LogFormat {
 	if smallDate {
 		dateFormat = termSmallTimeFormat
 	}
-	return log15.FormatFunc(func(r *log15.Record) []byte {
+	return FormatFunc(func(r *Record) []byte {
 		// Bash coloring http://misc.flogisoft.com/bash/tip_colors_and_formatting
 		var color = 0
-		switch r.Lvl {
-		case log15.LvlCrit:
+		switch r.Level {
+		case LvlCrit:
 			// Magenta
 			color = 35
-		case log15.LvlError:
+		case LvlError:
 			// Red
 			color = 31
-		case log15.LvlWarn:
+		case LvlWarn:
 			// Yellow
 			color = 33
-		case log15.LvlInfo:
+		case LvlInfo:
 			// Green
 			color = 32
-		case log15.LvlDebug:
+		case LvlDebug:
 			// Cyan
 			color = 36
 		}
 
 		b := &bytes.Buffer{}
-		caller := findInContext("caller", r.Ctx)
-		module := findInContext("module", r.Ctx)
+		caller, _ := r.Context["caller"].(string)
+		module, _ := r.Context["module"].(string)
 		if noColor == false && color > 0 {
 			if len(module) > 0 {
-				fmt.Fprintf(b, "\x1b[%dm%-5s\x1b[0m %s %6s %13s: %-40s ", color, toRevel[r.Lvl], r.Time.Format(dateFormat), module, caller, r.Msg)
+				fmt.Fprintf(b, "\x1b[%dm%-5s\x1b[0m %s %6s %13s: %-40s ", color, levelString[r.Level], r.Time.Format(dateFormat), module, caller, r.Message)
 			} else {
-				fmt.Fprintf(b, "\x1b[%dm%-5s\x1b[0m %s %13s: %-40s ", color, toRevel[r.Lvl], r.Time.Format(dateFormat), caller, r.Msg)
+				fmt.Fprintf(b, "\x1b[%dm%-5s\x1b[0m %s %13s: %-40s ", color, levelString[r.Level], r.Time.Format(dateFormat), caller, r.Message)
 			}
 		} else {
-			fmt.Fprintf(b, "%-5s %s %6s %13s: %-40s", toRevel[r.Lvl], r.Time.Format(dateFormat), module, caller, r.Msg)
+			fmt.Fprintf(b, "%-5s %s %6s %13s: %-40s", levelString[r.Level], r.Time.Format(dateFormat), module, caller, r.Message)
 		}
 
-		for i := 0; i < len(r.Ctx); i += 2 {
+		i := 0
+		for k, v := range r.Context {
 			if i != 0 {
 				b.WriteByte(' ')
 			}
-
-			k, ok := r.Ctx[i].(string)
-			if k == "caller" || k == "fn" || k == "module" {
+			i++
+			if k == "module" || k == "caller" {
 				continue
 			}
-			v := formatLogfmtValue(r.Ctx[i+1])
-			if !ok {
-				k, v = errorKey, formatLogfmtValue(k)
-			}
+
+			v := formatLogfmtValue(v)
 
 			// TODO: we should probably check that all of your key bytes aren't invalid
 			if noColor == false && color > 0 {
@@ -93,15 +90,6 @@ func TerminalFormatHandler(noColor bool, smallDate bool) LogFormat {
 
 		return b.Bytes()
 	})
-}
-func findInContext(key string, ctx []interface{}) string {
-	for i := 0; i < len(ctx); i += 2 {
-		k := ctx[i].(string)
-		if key == k {
-			return formatLogfmtValue(ctx[i+1])
-		}
-	}
-	return ""
 }
 
 // formatValue formats a value for serialization
@@ -132,6 +120,8 @@ func formatLogfmtValue(value interface{}) string {
 		return escapeString(fmt.Sprintf("%+v", value))
 	}
 }
+
+// Format the value in json format
 func formatShared(value interface{}) (result interface{}) {
 	defer func() {
 		if err := recover(); err != nil {
@@ -158,10 +148,12 @@ func formatShared(value interface{}) (result interface{}) {
 	}
 }
 
+// A reusuable buffer for outputting data
 var stringBufPool = sync.Pool{
 	New: func() interface{} { return new(bytes.Buffer) },
 }
 
+// Escape the string when needed
 func escapeString(s string) string {
 	needsQuotes := false
 	needsEscape := false
@@ -203,4 +195,51 @@ func escapeString(s string) string {
 	e.Reset()
 	stringBufPool.Put(e)
 	return ret
+}
+
+// JsonFormatEx formats log records as JSON objects. If pretty is true,
+// records will be pretty-printed. If lineSeparated is true, records
+// will be logged with a new line between each record.
+func JsonFormatEx(pretty, lineSeparated bool) LogFormat {
+	jsonMarshal := json.Marshal
+	if pretty {
+		jsonMarshal = func(v interface{}) ([]byte, error) {
+			return json.MarshalIndent(v, "", "    ")
+		}
+	}
+
+	return FormatFunc(func(r *Record) []byte {
+		props := make(map[string]interface{})
+
+		props["t"] = r.Time
+		props["lvl"] = levelString[r.Level]
+		props["msg"] = r.Message
+		for k, v := range r.Context {
+			props[k] = formatJsonValue(v)
+		}
+
+		b, err := jsonMarshal(props)
+		if err != nil {
+			b, _ = jsonMarshal(map[string]string{
+				errorKey: err.Error(),
+			})
+			return b
+		}
+
+		if lineSeparated {
+			b = append(b, '\n')
+		}
+
+		return b
+	})
+}
+
+func formatJsonValue(value interface{}) interface{} {
+	value = formatShared(value)
+	switch value.(type) {
+	case int, int8, int16, int32, int64, float32, float64, uint, uint8, uint16, uint32, uint64, string:
+		return value
+	default:
+		return fmt.Sprintf("%+v", value)
+	}
 }

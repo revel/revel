@@ -1,82 +1,93 @@
 package logger
 
 import (
+	"fmt"
 	"io"
-	"os"
-
-	colorable "github.com/mattn/go-colorable"
-	"github.com/revel/log15"
-	"gopkg.in/natefinch/lumberjack.v2"
 )
+
+type LevelFilterHandler struct {
+	Level LogLevel
+	h     LogHandler
+}
 
 // Filters out records which do not match the level
 // Uses the `log15.FilterHandler` to perform this task
 func LevelHandler(lvl LogLevel, h LogHandler) LogHandler {
-	l15Lvl := log15.Lvl(lvl)
-	return log15.FilterHandler(func(r *log15.Record) (pass bool) {
-		return r.Lvl == l15Lvl
-	}, h)
+	return &LevelFilterHandler{lvl, h}
+}
+
+// The implementation of the Log
+func (h LevelFilterHandler) Log(r *Record) error {
+	if r.Level == h.Level {
+		return h.h.Log(r)
+	}
+	return nil
 }
 
 // Filters out records which do not match the level
 // Uses the `log15.FilterHandler` to perform this task
 func MinLevelHandler(lvl LogLevel, h LogHandler) LogHandler {
-	l15Lvl := log15.Lvl(lvl)
-	return log15.FilterHandler(func(r *log15.Record) (pass bool) {
-		return r.Lvl <= l15Lvl
+	return FilterHandler(func(r *Record) (pass bool) {
+		return r.Level <= lvl
 	}, h)
 }
 
 // Filters out records which match the level
 // Uses the `log15.FilterHandler` to perform this task
 func NotLevelHandler(lvl LogLevel, h LogHandler) LogHandler {
-	l15Lvl := log15.Lvl(lvl)
-	return log15.FilterHandler(func(r *log15.Record) (pass bool) {
-		return r.Lvl != l15Lvl
+	return FilterHandler(func(r *Record) (pass bool) {
+		return r.Level != lvl
 	}, h)
 }
 
-// Adds in a context called `caller` to the record (contains file name and line number like `foo.go:12`)
-// Uses the `log15.CallerFileHandler` to perform this task
 func CallerFileHandler(h LogHandler) LogHandler {
-	return log15.CallerFileHandler(h)
+	return FuncHandler(func(r *Record) error {
+		r.Context.Add("caller", fmt.Sprint(r.Call))
+		return h.Log(r)
+	})
 }
 
 // Adds in a context called `caller` to the record (contains file name and line number like `foo.go:12`)
 // Uses the `log15.CallerFuncHandler` to perform this task
 func CallerFuncHandler(h LogHandler) LogHandler {
-	return log15.CallerFuncHandler(h)
+	return CallerFuncHandler(h)
 }
 
 // Filters out records which match the key value pair
 // Uses the `log15.MatchFilterHandler` to perform this task
 func MatchHandler(key string, value interface{}, h LogHandler) LogHandler {
-	return log15.MatchFilterHandler(key, value, h)
+	return MatchFilterHandler(key, value, h)
+}
+
+// MatchFilterHandler returns a Handler that only writes records
+// to the wrapped Handler if the given key in the logged
+// context matches the value. For example, to only log records
+// from your ui package:
+//
+//    log.MatchFilterHandler("pkg", "app/ui", log.StdoutHandler)
+//
+func MatchFilterHandler(key string, value interface{}, h LogHandler) LogHandler {
+	return FilterHandler(func(r *Record) (pass bool) {
+		return r.Context[key] == value
+	}, h)
 }
 
 // If match then A handler is called otherwise B handler is called
 func MatchAbHandler(key string, value interface{}, a, b LogHandler) LogHandler {
-	return log15.FuncHandler(func(r *log15.Record) error {
-		for i := 0; i < len(r.Ctx); i += 2 {
-			if r.Ctx[i] == key {
-				if r.Ctx[i+1] == value {
-					if a != nil {
-						return a.Log(r)
-					}
-					return nil
-				}
-			}
-		}
-		if b != nil {
+	return FuncHandler(func(r *Record) error {
+		if r.Context[key] == value {
+			return a.Log(r)
+		} else if b != nil {
 			return b.Log(r)
 		}
+
 		return nil
 	})
 }
 
 // The nil handler is used if logging for a specific request needs to be turned off
 func NilHandler() LogHandler {
-	return log15.FuncHandler(func(r *log15.Record) error {
+	return FuncHandler(func(r *Record) error {
 		return nil
 	})
 }
@@ -93,80 +104,83 @@ func NotMatchMapHandler(matchMap map[string]interface{}, a LogHandler) LogHandle
 
 // Rather then chaining multiple filter handlers, process all here
 func matchMapHandler(matchMap map[string]interface{}, inverse bool, a LogHandler) LogHandler {
-	return log15.FuncHandler(func(r *log15.Record) error {
-		checkMap := map[string]bool{}
-		// Copy the map to a bool
-		for i := 0; i < len(r.Ctx); i += 2 {
-			if value, found := matchMap[r.Ctx[i].(string)]; found && value == r.Ctx[i+1] {
-				checkMap[r.Ctx[i].(string)] = true
+	return FuncHandler(func(r *Record) error {
+		matchCount := 0
+		for k, v := range matchMap {
+			value, found := r.Context[k]
+			if !found {
+				return nil
+			}
+			// Test for two failure cases
+			if value == v && inverse || value != v && !inverse {
+				return nil
+			} else {
+				matchCount++
 			}
 		}
-		if len(checkMap) == len(matchMap) {
-			if !inverse {
-				return a.Log(r)
-			}
-		} else if inverse {
-			return a.Log(r)
+		if matchCount != len(matchMap) {
+			return nil
 		}
-		return nil
+		return a.Log(r)
 	})
 }
 
 // Filters out records which do not match the key value pair
 // Uses the `log15.FilterHandler` to perform this task
 func NotMatchHandler(key string, value interface{}, h LogHandler) LogHandler {
-	return log15.FilterHandler(func(r *log15.Record) (pass bool) {
-		switch key {
-		case r.KeyNames.Lvl:
-			return r.Lvl != value
-		case r.KeyNames.Time:
-			return r.Time != value
-		case r.KeyNames.Msg:
-			return r.Msg != value
-		}
-
-		for i := 0; i < len(r.Ctx); i += 2 {
-			if r.Ctx[i] == key {
-				return r.Ctx[i+1] == value
-			}
-		}
-		return true
+	return FilterHandler(func(r *Record) (pass bool) {
+		return r.Context[key] != value
 	}, h)
 }
 
 func MultiHandler(hs ...LogHandler) LogHandler {
-	// Convert the log handlers to log15.Handlers
-	handlers := []log15.Handler{}
-	for _, h := range hs {
-		if h != nil {
-			handlers = append(handlers, h)
+	return FuncHandler(func(r *Record) error {
+		for _, h := range hs {
+			// what to do about failures?
+			h.Log(r)
 		}
-	}
-
-	return log15.MultiHandler(handlers...)
+		return nil
+	})
 }
 
-// Outputs the records to the passed in stream
-// Uses the `log15.StreamHandler` to perform this task
+// StreamHandler writes log records to an io.Writer
+// with the given format. StreamHandler can be used
+// to easily begin writing log records to other
+// outputs.
+//
+// StreamHandler wraps itself with LazyHandler and SyncHandler
+// to evaluate Lazy objects and perform safe concurrent writes.
 func StreamHandler(wr io.Writer, fmtr LogFormat) LogHandler {
-	return log15.StreamHandler(wr, fmtr)
+	h := FuncHandler(func(r *Record) error {
+		_, err := wr.Write(fmtr.Format(r))
+		return err
+	})
+	return LazyHandler(SyncHandler(h))
 }
 
-// Filter handler, this is the only
-// Uses the `log15.FilterHandler` to perform this task
-func FilterHandler(fn func(r *log15.Record) bool, h LogHandler) LogHandler {
-	return log15.FilterHandler(fn, h)
+// Filter handler
+func FilterHandler(fn func(r *Record) bool, h LogHandler) LogHandler {
+	return FuncHandler(func(r *Record) error {
+		if fn(r) {
+			return h.Log(r)
+		}
+		return nil
+	})
 }
 
+// List log handler handles a list of LogHandlers
 type ListLogHandler struct {
 	handlers []LogHandler
 }
 
+// Create a new list of log handlers
 func NewListLogHandler(h1, h2 LogHandler) *ListLogHandler {
 	ll := &ListLogHandler{handlers: []LogHandler{h1, h2}}
 	return ll
 }
-func (ll *ListLogHandler) Log(r *log15.Record) (err error) {
+
+// Log the record
+func (ll *ListLogHandler) Log(r *Record) (err error) {
 	for _, handler := range ll.handlers {
 		if err == nil {
 			err = handler.Log(r)
@@ -176,175 +190,21 @@ func (ll *ListLogHandler) Log(r *log15.Record) (err error) {
 	}
 	return
 }
+
+// Add another log handler
 func (ll *ListLogHandler) Add(h LogHandler) {
 	if h != nil {
 		ll.handlers = append(ll.handlers, h)
 	}
 }
+
+// Remove a log handler
 func (ll *ListLogHandler) Del(h LogHandler) {
 	if h != nil {
 		for i, handler := range ll.handlers {
 			if handler == h {
 				ll.handlers = append(ll.handlers[:i], ll.handlers[i+1:]...)
 			}
-		}
-	}
-}
-
-type CompositeMultiHandler struct {
-	DebugHandler    LogHandler
-	InfoHandler     LogHandler
-	WarnHandler     LogHandler
-	ErrorHandler    LogHandler
-	CriticalHandler LogHandler
-}
-
-func NewCompositeMultiHandler() (*CompositeMultiHandler, LogHandler) {
-	cw := &CompositeMultiHandler{}
-	return cw, cw
-}
-func (h *CompositeMultiHandler) Log(r *log15.Record) (err error) {
-
-	var handler LogHandler
-	switch r.Lvl {
-	case log15.LvlInfo:
-		handler = h.InfoHandler
-	case log15.LvlDebug:
-		handler = h.DebugHandler
-	case log15.LvlWarn:
-		handler = h.WarnHandler
-	case log15.LvlError:
-		handler = h.ErrorHandler
-	case log15.LvlCrit:
-		handler = h.CriticalHandler
-	}
-
-	// Embed the caller function in the context
-	if handler != nil {
-		handler.Log(r)
-	}
-	return
-}
-func (h *CompositeMultiHandler) SetHandler(handler LogHandler, replace bool, level LogLevel) {
-	if handler == nil {
-		// Ignore empty handler
-		return
-	}
-	source := &h.DebugHandler
-	switch level {
-	case LvlDebug:
-		source = &h.DebugHandler
-	case LvlInfo:
-		source = &h.InfoHandler
-	case LvlWarn:
-		source = &h.WarnHandler
-	case LvlError:
-		source = &h.ErrorHandler
-	case LvlCrit:
-		source = &h.CriticalHandler
-	}
-
-	if !replace && *source != nil {
-		// If this already was a list add a new logger to it
-		if ll, found := (*source).(*ListLogHandler); found {
-			ll.Add(handler)
-		} else {
-			*source = NewListLogHandler(*source, handler)
-		}
-	} else {
-		*source = handler
-	}
-}
-
-func (h *CompositeMultiHandler) SetHandlers(handler LogHandler, options *LogOptions) {
-	if len(options.Levels) == 0 {
-		options.Levels = LvlAllList
-	}
-	// Set all levels
-	for _, lvl := range options.Levels {
-		h.SetHandler(handler, options.ReplaceExistingHandler, lvl)
-	}
-
-}
-func (h *CompositeMultiHandler) SetJson(writer io.Writer, options *LogOptions) {
-	handler := CallerFileHandler(StreamHandler(writer, log15.JsonFormatEx(
-		options.GetBoolDefault("pretty", false),
-		options.GetBoolDefault("lineSeparated", true),
-	)))
-	if options.HandlerWrap != nil {
-		handler = options.HandlerWrap.SetChild(handler)
-	}
-	h.SetHandlers(handler, options)
-}
-
-// Use built in rolling function
-func (h *CompositeMultiHandler) SetJsonFile(filePath string, options *LogOptions) {
-	writer := &lumberjack.Logger{
-		Filename:   filePath,
-		MaxSize:    options.GetIntDefault("maxSizeMB", 1024), // megabytes
-		MaxAge:     options.GetIntDefault("maxAgeDays", 7),   //days
-		MaxBackups: options.GetIntDefault("maxBackups", 7),
-		Compress:   options.GetBoolDefault("compress", true),
-	}
-	h.SetJson(writer, options)
-}
-
-func (h *CompositeMultiHandler) SetTerminal(writer io.Writer, options *LogOptions) {
-	streamHandler := StreamHandler(
-		writer,
-		TerminalFormatHandler(
-			options.GetBoolDefault("noColor", false),
-			options.GetBoolDefault("smallDate", true)))
-
-	if os.Stdout == writer {
-		streamHandler = StreamHandler(
-			colorable.NewColorableStdout(),
-			TerminalFormatHandler(
-				options.GetBoolDefault("noColor", false),
-				options.GetBoolDefault("smallDate", true)))
-	} else if os.Stderr == writer {
-		streamHandler = StreamHandler(
-			colorable.NewColorableStderr(),
-			TerminalFormatHandler(
-				options.GetBoolDefault("noColor", false),
-				options.GetBoolDefault("smallDate", true)))
-	}
-
-	handler := CallerFileHandler(streamHandler)
-	if options.HandlerWrap != nil {
-		handler = options.HandlerWrap.SetChild(handler)
-	}
-	h.SetHandlers(handler, options)
-}
-
-// Use built in rolling function
-func (h *CompositeMultiHandler) SetTerminalFile(filePath string, options *LogOptions) {
-	writer := &lumberjack.Logger{
-		Filename:   filePath,
-		MaxSize:    options.GetIntDefault("maxSizeMB", 1024), // megabytes
-		MaxAge:     options.GetIntDefault("maxAgeDays", 7),   //days
-		MaxBackups: options.GetIntDefault("maxBackups", 7),
-		Compress:   options.GetBoolDefault("compress", true),
-	}
-	h.SetTerminal(writer, options)
-}
-
-func (h *CompositeMultiHandler) Disable(levels ...LogLevel) {
-	if len(levels) == 0 {
-		levels = LvlAllList
-	}
-	for _, level := range levels {
-		switch level {
-		case LvlDebug:
-			h.DebugHandler = nil
-		case LvlInfo:
-			h.InfoHandler = nil
-		case LvlWarn:
-			h.WarnHandler = nil
-		case LvlError:
-			h.ErrorHandler = nil
-		case LvlCrit:
-			h.CriticalHandler = nil
 		}
 	}
 }
