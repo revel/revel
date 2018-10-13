@@ -9,7 +9,7 @@ var sessionLog = RevelLog.New("section", "session")
 
 func SessionFilter(c *Controller, fc []Filter) {
 	CurrentSessionEngine.Decode(c)
-	sessionWasEmpty := len(c.Session) == 0
+	sessionWasEmpty := c.Session.Empty()
 
 	// Make session vars available in templates as {{.session.xyz}}
 	c.ViewArgs["session"] = c.Session

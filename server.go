@@ -138,3 +138,8 @@ func initControllerStack() {
 	cachedControllerStackSize = Config.IntDefault("revel.cache.controller.stack", 10)
 	cachedControllerStackMaxSize = Config.IntDefault("revel.cache.controller.maxstack", 100)
 }
+
+// Called to stop the server
+func StopServer(value interface{}) EventResponse {
+	return RaiseEvent(ENGINE_SHUTDOWN_REQUEST,value)
+}
