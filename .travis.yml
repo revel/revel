@@ -27,12 +27,20 @@ services:
 before_install:
   # TRAVIS_OS_NAME - linux and osx
   - echo $TRAVIS_OS_NAME
+  - echo $PATH
   - |
     if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
       brew update && brew install memcached redis && brew services start redis && brew services start memcached
     fi
-  - redis-server --daemonize yes
-  - redis-cli info
+  - |
+    if [[ "$TRAVIS_OS_NAME" != "windows" ]]; then
+      redis-server --daemonize yes
+      redis-cli info
+    else
+      # redis-server.exe
+      # redis-cli.exe info
+      echo $PATH
+    fi
 
 install:
   # Setting environments variables
@@ -51,13 +59,9 @@ install:
 script:
   - go test -v github.com/revel/revel/...
 
-  # Commented out persona test sample, since persona.org gonna be shutdown.
-  # Also http://personatestuser.org becomes non-responsive most of the time.
-  # https://wiki.mozilla.org/Identity/Persona_Shutdown_Guidelines_for_Reliers
-  # - revel test github.com/revel/examples/persona
-
 matrix:
   allow_failures:
     - go: tip
+    - os: windows
     - go: 1.6
       os: osx
