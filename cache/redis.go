@@ -175,7 +175,7 @@ func (c RedisCache) Increment(key string, delta uint64) (uint64, error) {
 	defer func() {
 		_ = conn.Close()
 	}()
-	// Check for existance *before* increment as per the cache contract.
+	// Check for existence *before* increment as per the cache contract.
 	// redis will auto create the key, and we don't want that. Since we need to do increment
 	// ourselves instead of natively via INCRBY (redis doesn't support wrapping), we get the value
 	// and do the exists check this way to minimize calls to Redis
@@ -202,7 +202,7 @@ func (c RedisCache) Decrement(key string, delta uint64) (newValue uint64, err er
 	defer func() {
 		_ = conn.Close()
 	}()
-	// Check for existance *before* increment as per the cache contract.
+	// Check for existence *before* increment as per the cache contract.
 	// redis will auto create the key, and we don't want that, hence the exists call
 	existed, err := exists(conn, key)
 	if err != nil {

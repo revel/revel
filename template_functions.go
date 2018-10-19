@@ -275,7 +275,7 @@ func TimeAgo(args ...interface{}) string {
 	var viewArgs interface{}
 	switch len(args) {
 	case 0:
-		templateLog.Error("TimeAgo: No arguements passed to timeago")
+		templateLog.Error("TimeAgo: No arguments passed to timeago")
 	case 1:
 		// only the time is passed in
 		datetime = args[0].(time.Time)
