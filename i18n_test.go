@@ -6,13 +6,12 @@ package revel
 
 import (
 	"html/template"
-	"io/ioutil"
-	"log"
 	"net/http"
 	"testing"
 	"time"
 
 	"github.com/revel/config"
+	"github.com/revel/revel/logger"
 )
 
 const (
@@ -166,7 +165,11 @@ func TestI18nMessageUnknownValueFormat(t *testing.T) {
 }
 
 func BenchmarkI18nLoadMessages(b *testing.B) {
-	excludeFromTimer(b, func() { TRACE = log.New(ioutil.Discard, "", 0) })
+	excludeFromTimer(b, func() {
+		RevelLog.SetHandler(logger.FuncHandler(func(r *logger.Record) error {
+			return nil
+		}))
+	})
 
 	for i := 0; i < b.N; i++ {
 		loadMessages(testDataPath)
@@ -180,7 +183,12 @@ func BenchmarkI18nMessage(b *testing.B) {
 }
 
 func BenchmarkI18nMessageWithArguments(b *testing.B) {
-	excludeFromTimer(b, func() { TRACE = log.New(ioutil.Discard, "", 0) })
+	excludeFromTimer(b, func() {
+		RevelLog.SetHandler(logger.FuncHandler(func(r *logger.Record) error {
+			return nil
+		}))
+	})
+
 
 	for i := 0; i < b.N; i++ {
 		Message("en", "arguments.string", "Vincent Hanna")
@@ -188,7 +196,12 @@ func BenchmarkI18nMessageWithArguments(b *testing.B) {
 }
 
 func BenchmarkI18nMessageWithFoldingAndArguments(b *testing.B) {
-	excludeFromTimer(b, func() { TRACE = log.New(ioutil.Discard, "", 0) })
+	excludeFromTimer(b, func() {
+		RevelLog.SetHandler(logger.FuncHandler(func(r *logger.Record) error {
+			return nil
+		}))
+	})
+
 
 	for i := 0; i < b.N; i++ {
 		Message("en", "folded.arguments", 12345)

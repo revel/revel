@@ -88,7 +88,7 @@ func Run(port int) {
 	fmt.Fprintf(os.Stdout, "Revel engine is NOT listening on.. %s\n", ServerEngineInit.Address)
 	RaiseEvent(ENGINE_SHUTDOWN, nil)
 	shutdownHooks.Run()
-	println("\nRevel existed normally\n")
+	println("\nRevel exited normally\n")
 }
 
 // Build an engine initialization object and start the engine

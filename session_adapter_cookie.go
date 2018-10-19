@@ -10,18 +10,27 @@ import (
 	"time"
 )
 
+
+type (
+	// The session cookie engine
+	SessionCookieEngine struct {
+		ExpireAfterDuration time.Duration
+	}
+)
+
+// A logger for the session engine
+var sessionEngineLog = RevelLog.New("section", "session-engine")
+
+// Create a new instance to test
 func init() {
 	RegisterSessionEngine(initCookieEngine, "revel-cookie")
 }
 
-//
-//// For testing purposes this engine is used
+// For testing purposes this engine is used
 func NewSessionCookieEngine() *SessionCookieEngine {
 	ce := &SessionCookieEngine{}
 	return ce
 }
-
-var sessionEngineLog = RevelLog.New("section", "session-engine")
 
 // Called when the the application starts, retrieves data from the app config so cannot be run until then
 func initCookieEngine() SessionEngine {
@@ -38,12 +47,6 @@ func initCookieEngine() SessionEngine {
 
 	return ce
 }
-
-type (
-	SessionCookieEngine struct {
-		ExpireAfterDuration time.Duration
-	}
-)
 
 // Decode the session information from the cookie retrieved from the controller request
 func (cse *SessionCookieEngine) Decode(c *Controller) {

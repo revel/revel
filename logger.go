@@ -2,8 +2,6 @@ package revel
 
 import (
 	"github.com/revel/revel/logger"
-	"log"
-	"os"
 )
 
 //Logger
@@ -28,14 +26,6 @@ var (
 	oldLog = AppLog.New("section", "deprecated")
 	// System logger
 	SysLog = AppLog.New("section", "system")
-	// DEPRECATED Use AppLog
-	TRACE = log.New(os.Stderr, "TRACE ", log.Ldate|log.Ltime|log.Lshortfile)
-	// DEPRECATED Use AppLog
-	INFO = log.New(os.Stderr, "INFO ", log.Ldate|log.Ltime|log.Lshortfile)
-	// DEPRECATED Use AppLog
-	WARN = log.New(os.Stderr, "WARN ", log.Ldate|log.Ltime|log.Lshortfile)
-	// DEPRECATED Use AppLog
-	ERROR = log.New(os.Stderr, "ERROR ", log.Ldate|log.Ltime|log.Lshortfile)
 )
 
 // Initialize the loggers first
@@ -52,23 +42,7 @@ func initLoggers() {
 	appHandle := logger.InitializeFromConfig(BasePath, Config)
 
 	// Set all the log handlers
-	setLog(oldLog, appHandle)
 	setAppLog(AppLog, appHandle)
-}
-
-// Set handlers for the old logs, ERROR,TRACE,WARN,INFO
-// DEPRECATED
-func setLog(mainLogger logger.MultiLogger, handler logger.LogHandler) {
-	oldLog = mainLogger
-	TRACE = logger.GetLogger("trace", oldLog)
-	INFO = logger.GetLogger("info", oldLog)
-	WARN = logger.GetLogger("warn", oldLog)
-	ERROR = logger.GetLogger("error", oldLog)
-
-	// This code sets the caller context for the old package
-	// since the skip level is different
-	oldLog.SetStackDepth(5)
-	oldLog.SetHandler(handler)
 }
 
 // Set the application log and handler, if handler is nil it will

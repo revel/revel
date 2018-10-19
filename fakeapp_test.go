@@ -62,7 +62,7 @@ func (c Static) Serve(prefix, path string) Result {
 	if os.IsNotExist(err) {
 		return c.NotFound("")
 	} else if err != nil {
-		WARN.Printf("Problem opening file (%s): %s ", fname, err)
+		RevelLog.Errorf("Problem opening file (%s): %s ", fname, err)
 		return c.NotFound("This was found but not sure why we couldn't open it.")
 	}
 	return c.RenderFile(file, "")
@@ -139,7 +139,7 @@ func startFakeBookingApp() {
 
 	MainTemplateLoader = NewTemplateLoader([]string{ViewsPath, filepath.Join(RevelPath, "templates")})
 	if err := MainTemplateLoader.Refresh(); err != nil {
-		ERROR.Fatal(err)
+		RevelLog.Fatal("Template error","error",err)
 	}
 
 	registerControllers()
