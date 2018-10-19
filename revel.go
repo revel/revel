@@ -233,7 +233,6 @@ func updateLog(inputmode string) (returnMode string) {
 	appHandle := logger.InitializeFromConfig(BasePath, newContext)
 
 	// Set all the log handlers
-	setLog(oldLog, appHandle)
 	setAppLog(AppLog, appHandle)
 
 	return

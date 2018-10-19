@@ -185,7 +185,7 @@ func (c *Controller) Render(extraViewArgs ...interface{}) Result {
 		}
 	} else {
 		controllerLog.Error(fmt.Sprint("No RenderArg names found for Render call on line", line,
-			"(Action", c.Action, ")"))
+			"(Action", c.Action, ")"),"stack",logger.NewCallStack())
 	}
 
 	return c.RenderTemplate(c.Name + "/" + c.MethodType.Name + "." + c.Request.Format)
