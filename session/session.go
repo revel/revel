@@ -51,7 +51,7 @@ func (s Session) ID() string {
 
 	buffer := uuid.NewV4()
 
-	s[SessionIDKey] = hex.EncodeToString(buffer)
+	s[SessionIDKey] = hex.EncodeToString(buffer.Bytes())
 	return s[SessionIDKey].(string)
 }
 
