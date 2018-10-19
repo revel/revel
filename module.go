@@ -65,12 +65,12 @@ func (m *Module) Namespace() (namespace string) {
 
 // Returns the named controller and action that is in this module
 func (m *Module) ControllerByName(name, action string) (ctype *ControllerType) {
-	comparision := name
+	comparison := name
 	if strings.Index(name, namespaceSeperator) < 0 {
-		comparision = m.Namespace() + name
+		comparison = m.Namespace() + name
 	}
 	for _, c := range m.ControllerTypeList {
-		if c.Name() == comparision {
+		if c.Name() == comparison {
 			ctype = c
 			break
 		}
