@@ -32,6 +32,7 @@ Open http://localhost:9000 in your browser and you should see "It works!"
 * [Gitter](https://gitter.im/revel/community)
 * [StackOverflow](http://stackoverflow.com/questions/tagged/revel)
 
+
 ## Learn More
 
 * [Manual, Samples, Godocs, etc](http://revel.github.io)
@@ -42,3 +43,14 @@ Open http://localhost:9000 in your browser and you should see "It works!"
 
 * [Contributing Code Guidelines](https://github.com/revel/revel/blob/master/CONTRIBUTING.md)
 * [Revel Contributors](https://github.com/revel/revel/graphs/contributors)
+
+## Contributors
+
+[![](https://sourcerer.io/fame/notzippy/revel/revel/images/0)](https://sourcerer.io/fame/notzippy/revel/revel/links/0)
+[![](https://sourcerer.io/fame/notzippy/revel/revel/images/1)](https://sourcerer.io/fame/notzippy/revel/revel/links/1)
+[![](https://sourcerer.io/fame/notzippy/revel/revel/images/2)](https://sourcerer.io/fame/notzippy/revel/revel/links/2)
+[![](https://sourcerer.io/fame/notzippy/revel/revel/images/3)](https://sourcerer.io/fame/notzippy/revel/revel/links/3)
+[![](https://sourcerer.io/fame/notzippy/revel/revel/images/4)](https://sourcerer.io/fame/notzippy/revel/revel/links/4)
+[![](https://sourcerer.io/fame/notzippy/revel/revel/images/5)](https://sourcerer.io/fame/notzippy/revel/revel/links/5)
+[![](https://sourcerer.io/fame/notzippy/revel/revel/images/6)](https://sourcerer.io/fame/notzippy/revel/revel/links/6)
+[![](https://sourcerer.io/fame/notzippy/revel/revel/images/7)](https://sourcerer.io/fame/notzippy/revel/revel/links/7)

@@ -18,6 +18,7 @@ import (
 	"sync"
 
 	"github.com/revel/pathtree"
+	"github.com/revel/revel/logger"
 )
 
 const (
@@ -549,6 +550,7 @@ func routeError(err error, routesPath, content string, n int) *Error {
 		Path:        routesPath,
 		Line:        n + 1,
 		SourceLines: strings.Split(content, "\n"),
+		Stack:       fmt.Sprintf("%s", logger.NewCallStack()),
 	}
 }
 
