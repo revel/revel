@@ -89,7 +89,7 @@ func (e *Error) Error() string {
 			header = fmt.Sprintf("%s: ", e.Title)
 		}
 	}
-	return fmt.Sprintf("%s%s", header, e.Description)
+	return fmt.Sprintf("%s%s Stack: %s", header, e.Description, e.Stack)
 }
 
 // ContextSource method returns a snippet of the source around
