@@ -36,21 +36,22 @@ var compressLog = RevelLog.New("section", "compress")
 
 // WriteFlusher interface for compress writer
 type WriteFlusher interface {
-	io.Writer
-	io.Closer
-	Flush() error
+	io.Writer // An IO Writer
+	io.Closer // A closure
+	Flush() error /// A flush function
 }
 
+// The compressed writer
 type CompressResponseWriter struct {
-	Header             *BufferedServerHeader
-	ControllerResponse *Response
-	OriginalWriter     io.Writer
-	compressWriter     WriteFlusher
-	compressionType    string
-	headersWritten     bool
-	closeNotify        chan bool
-	parentNotify       <-chan bool
-	closed             bool
+	Header             *BufferedServerHeader // The header
+	ControllerResponse *Response // The response
+	OriginalWriter     io.Writer // The writer
+	compressWriter     WriteFlusher // The flushed writer
+	compressionType    string // The compression type
+	headersWritten     bool // True if written
+	closeNotify        chan bool // The notify channel to close
+	parentNotify       <-chan bool // The parent chanel to receive the closed event
+	closed             bool // True if closed
 }
 
 // CompressFilter does compression of response body in gzip/deflate if
@@ -83,6 +84,7 @@ func CompressFilter(c *Controller, fc []Filter) {
 	fc[0](c, fc[1:])
 }
 
+// Called to notify the writer is closing
 func (c CompressResponseWriter) CloseNotify() <-chan bool {
 	if c.parentNotify != nil {
 		return c.parentNotify
@@ -90,9 +92,12 @@ func (c CompressResponseWriter) CloseNotify() <-chan bool {
 	return c.closeNotify
 }
 
+// Cancel the writer
 func (c *CompressResponseWriter) cancel() {
 	c.closed = true
 }
+
+// Prepare the headers
 func (c *CompressResponseWriter) prepareHeaders() {
 	if c.compressionType != "" {
 		responseMime := ""
@@ -121,6 +126,7 @@ func (c *CompressResponseWriter) prepareHeaders() {
 	c.Header.Release()
 }
 
+// Write the headers
 func (c *CompressResponseWriter) WriteHeader(status int) {
 	if c.closed {
 		return
@@ -130,6 +136,7 @@ func (c *CompressResponseWriter) WriteHeader(status int) {
 	c.Header.SetStatus(status)
 }
 
+// Close the writer
 func (c *CompressResponseWriter) Close() error {
 	if c.closed {
 		return nil
@@ -155,6 +162,7 @@ func (c *CompressResponseWriter) Close() error {
 	return nil
 }
 
+// Write to the underling buffer
 func (c *CompressResponseWriter) Write(b []byte) (int, error) {
 	if c.closed {
 		return 0, io.ErrClosedPipe
@@ -268,16 +276,19 @@ func detectCompressionType(req *Request, resp *Response) (found bool, compressio
 // BufferedServerHeader will not send content out until the Released is called, from that point on it will act normally
 // It implements all the ServerHeader
 type BufferedServerHeader struct {
-	cookieList []string
-	headerMap  map[string][]string
-	status     int
-	released   bool
-	original   ServerHeader
+	cookieList []string // The cookie list
+	headerMap  map[string][]string // The header map
+	status     int // The status
+	released   bool // True if released
+	original   ServerHeader // The original header
 }
 
+// Creates a new instance based on the ServerHeader
 func NewBufferedServerHeader(o ServerHeader) *BufferedServerHeader {
 	return &BufferedServerHeader{original: o, headerMap: map[string][]string{}}
 }
+
+// Sets the cookie
 func (bsh *BufferedServerHeader) SetCookie(cookie string) {
 	if bsh.released {
 		bsh.original.SetCookie(cookie)
@@ -285,9 +296,13 @@ func (bsh *BufferedServerHeader) SetCookie(cookie string) {
 		bsh.cookieList = append(bsh.cookieList, cookie)
 	}
 }
+
+// Returns a cookie
 func (bsh *BufferedServerHeader) GetCookie(key string) (ServerCookie, error) {
 	return bsh.original.GetCookie(key)
 }
+
+// Sets (replace) the header key
 func (bsh *BufferedServerHeader) Set(key string, value string) {
 	if bsh.released {
 		bsh.original.Set(key, value)
@@ -295,6 +310,8 @@ func (bsh *BufferedServerHeader) Set(key string, value string) {
 		bsh.headerMap[key] = []string{value}
 	}
 }
+
+// Add (append) to a key this value
 func (bsh *BufferedServerHeader) Add(key string, value string) {
 	if bsh.released {
 		bsh.original.Set(key, value)
@@ -305,16 +322,18 @@ func (bsh *BufferedServerHeader) Add(key string, value string) {
 		}
 		bsh.headerMap[key] = append(old, value)
 	}
-
 }
+
+// Delete this key
 func (bsh *BufferedServerHeader) Del(key string) {
 	if bsh.released {
 		bsh.original.Del(key)
 	} else {
 		delete(bsh.headerMap, key)
 	}
-
 }
+
+// Get this key
 func (bsh *BufferedServerHeader) Get(key string) (value []string) {
 	if bsh.released {
 		value = bsh.original.Get(key)
@@ -327,6 +346,30 @@ func (bsh *BufferedServerHeader) Get(key string) (value []string) {
 	}
 	return
 }
+
+// Get all header keys
+func (bsh *BufferedServerHeader) GetKeys() (value []string) {
+	if bsh.released {
+		value = bsh.original.GetKeys()
+	} else {
+		value = bsh.original.GetKeys()
+		for key := range bsh.headerMap {
+			found := false
+			for _,v := range value {
+				if v==key {
+					found = true
+					break
+				}
+			}
+			if !found {
+				value = append(value,key)
+			}
+		}
+	}
+	return
+}
+
+// Set the status
 func (bsh *BufferedServerHeader) SetStatus(statusCode int) {
 	if bsh.released {
 		bsh.original.SetStatus(statusCode)
@@ -334,6 +377,8 @@ func (bsh *BufferedServerHeader) SetStatus(statusCode int) {
 		bsh.status = statusCode
 	}
 }
+
+// Release the header and push the results to the original
 func (bsh *BufferedServerHeader) Release() {
 	bsh.released = true
 	for k, v := range bsh.headerMap {

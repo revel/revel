@@ -18,8 +18,6 @@ import (
 	"strings"
 )
 
-var signalChan = make(chan os.Signal)
-
 // Register the GoHttpServer engine
 func init() {
 	AddInitEventHandler(func(typeOf Event, value interface{}) (responseOf EventResponse) {
@@ -218,9 +216,9 @@ func (g *GoHttpServer) Engine() interface{} {
 func (g *GoHttpServer) Event(event Event, args interface{}) (r EventResponse) {
 	switch event {
 	case ENGINE_STARTED:
-		signal.Notify(signalChan, os.Interrupt, os.Kill)
+		signal.Notify(g.signalChan, os.Interrupt, os.Kill)
 		go func() {
-			_ = <-signalChan
+			_ = <- g.signalChan
 			serverLogger.Info("Received quit singal Please wait ... ")
 			RaiseEvent(ENGINE_SHUTDOWN_REQUEST, nil)
 		}()
@@ -236,42 +234,55 @@ func (g *GoHttpServer) Event(event Event, args interface{}) (r EventResponse) {
 }
 
 type (
+	// The go context
 	GoContext struct {
-		Request   *GoRequest
-		Response  *GoResponse
-		WebSocket *GoWebSocket
-	}
-	GoRequest struct {
-		Original        *http.Request
-		FormParsed      bool
-		MultiFormParsed bool
-		WebSocket       *websocket.Conn
-		ParsedForm      *GoMultipartForm
-		Goheader        *GoHeader
-		Engine          *GoHttpServer
+		Request   *GoRequest // The request
+		Response  *GoResponse // The response
+		WebSocket *GoWebSocket // The websocket
 	}
 
+	// The go request
+	GoRequest struct {
+		Original        *http.Request // The original
+		FormParsed      bool // True if form parsed
+		MultiFormParsed bool // True if multipart form parsed
+		WebSocket       *websocket.Conn // The websocket
+		ParsedForm      *GoMultipartForm // The parsed form data
+		Goheader        *GoHeader // The header
+		Engine          *GoHttpServer // THe server
+	}
+
+	// The response
 	GoResponse struct {
-		Original http.ResponseWriter
-		Goheader *GoHeader
-		Writer   io.Writer
-		Request  *GoRequest
-		Engine   *GoHttpServer
+		Original http.ResponseWriter // The original writer
+		Goheader *GoHeader // The header
+		Writer   io.Writer // The writer
+		Request  *GoRequest // The request
+		Engine   *GoHttpServer // The engine
 	}
+
+	// The multipart form
 	GoMultipartForm struct {
-		Form *multipart.Form
+		Form *multipart.Form // The form
 	}
+
+	// The go header
 	GoHeader struct {
-		Source     interface{}
-		isResponse bool
+		Source     interface{} // The source
+		isResponse bool // True if response header
 	}
+
+	// The websocket
 	GoWebSocket struct {
-		Conn *websocket.Conn
-		GoResponse
+		Conn *websocket.Conn // The connection
+		GoResponse // The response
 	}
+
+	// The cookie
 	GoCookie http.Cookie
 )
 
+// Create a new go context
 func NewGoContext(instance *GoHttpServer) *GoContext {
 	if instance == nil {
 		instance = &GoHttpServer{MaxMultipartSize: 32 << 20}
@@ -286,15 +297,21 @@ func NewGoContext(instance *GoHttpServer) *GoContext {
 	c.Response = &GoResponse{Goheader: &GoHeader{}, Request: c.Request, Engine: instance}
 	return c
 }
+
+// get the request
 func (c *GoContext) GetRequest() ServerRequest {
 	return c.Request
 }
+
+// Get the response
 func (c *GoContext) GetResponse() ServerResponse {
 	if c.WebSocket != nil {
 		return c.WebSocket
 	}
 	return c.Response
 }
+
+// Destroy the context
 func (c *GoContext) Destroy() {
 	c.Response.Destroy()
 	c.Request.Destroy()
@@ -337,10 +354,13 @@ func (r *GoRequest) Get(key int) (value interface{}, err error) {
 
 	return
 }
+
+// Sets the request key with value
 func (r *GoRequest) Set(key int, value interface{}) bool {
 	return false
 }
 
+// Returns the form
 func (r *GoRequest) GetForm() (url.Values, error) {
 	if !r.FormParsed {
 		if e := r.Original.ParseForm(); e != nil {
@@ -351,6 +371,8 @@ func (r *GoRequest) GetForm() (url.Values, error) {
 
 	return r.Original.Form, nil
 }
+
+// Returns the form
 func (r *GoRequest) GetMultipartForm() (ServerMultipartForm, error) {
 	if !r.MultiFormParsed {
 		if e := r.Original.ParseMultipartForm(r.Engine.MaxMultipartSize); e != nil {
@@ -362,18 +384,26 @@ func (r *GoRequest) GetMultipartForm() (ServerMultipartForm, error) {
 
 	return r.ParsedForm, nil
 }
+
+// Returns the header
 func (r *GoRequest) GetHeader() ServerHeader {
 	return r.Goheader
 }
+
+// Returns the raw value
 func (r *GoRequest) GetRaw() interface{} {
 	return r.Original
 }
+
+// Sets the request
 func (r *GoRequest) SetRequest(req *http.Request) {
 	r.Original = req
 	r.Goheader.Source = r
 	r.Goheader.isResponse = false
 
 }
+
+// Destroy the request
 func (r *GoRequest) Destroy() {
 	r.Goheader.Source = nil
 	r.Original = nil
@@ -381,6 +411,8 @@ func (r *GoRequest) Destroy() {
 	r.MultiFormParsed = false
 	r.ParsedForm = nil
 }
+
+// Gets the key from the response
 func (r *GoResponse) Get(key int) (value interface{}, err error) {
 	switch key {
 	case HTTP_SERVER_HEADER:
@@ -394,6 +426,8 @@ func (r *GoResponse) Get(key int) (value interface{}, err error) {
 	}
 	return
 }
+
+// Sets the key with the value
 func (r *GoResponse) Set(key int, value interface{}) (set bool) {
 	switch key {
 	case ENGINE_RESPONSE_STATUS:
@@ -406,15 +440,22 @@ func (r *GoResponse) Set(key int, value interface{}) (set bool) {
 	return
 }
 
+// Sets the header
 func (r *GoResponse) Header() ServerHeader {
 	return r.Goheader
 }
+
+// Gets the original response
 func (r *GoResponse) GetRaw() interface{} {
 	return r.Original
 }
+
+// Sets the writer
 func (r *GoResponse) SetWriter(writer io.Writer) {
 	r.Writer = writer
 }
+
+// Write output to stream
 func (r *GoResponse) WriteStream(name string, contentlen int64, modtime time.Time, reader io.Reader) error {
 	// Check to see if the output stream is modified, if not send it using the
 	// Native writer
@@ -460,6 +501,7 @@ func (r *GoResponse) WriteStream(name string, contentlen int64, modtime time.Tim
 	return nil
 }
 
+// Frees response
 func (r *GoResponse) Destroy() {
 	if c, ok := r.Writer.(io.Closer); ok {
 		c.Close()
@@ -469,6 +511,7 @@ func (r *GoResponse) Destroy() {
 	r.Writer = nil
 }
 
+// Sets the response
 func (r *GoResponse) SetResponse(w http.ResponseWriter) {
 	r.Original = w
 	r.Writer = w
@@ -476,11 +519,15 @@ func (r *GoResponse) SetResponse(w http.ResponseWriter) {
 	r.Goheader.isResponse = true
 
 }
+
+// Sets the cookie
 func (r *GoHeader) SetCookie(cookie string) {
 	if r.isResponse {
 		r.Source.(*GoResponse).Original.Header().Add("Set-Cookie", cookie)
 	}
 }
+
+// Gets the cookie
 func (r *GoHeader) GetCookie(key string) (value ServerCookie, err error) {
 	if !r.isResponse {
 		var cookie *http.Cookie
@@ -492,21 +539,29 @@ func (r *GoHeader) GetCookie(key string) (value ServerCookie, err error) {
 	}
 	return
 }
+
+// Sets (replaces) header key
 func (r *GoHeader) Set(key string, value string) {
 	if r.isResponse {
 		r.Source.(*GoResponse).Original.Header().Set(key, value)
 	}
 }
+
+// Adds the header key
 func (r *GoHeader) Add(key string, value string) {
 	if r.isResponse {
 		r.Source.(*GoResponse).Original.Header().Add(key, value)
 	}
 }
+
+// Deletes the header key
 func (r *GoHeader) Del(key string) {
 	if r.isResponse {
 		r.Source.(*GoResponse).Original.Header().Del(key)
 	}
 }
+
+// Gets the header key
 func (r *GoHeader) Get(key string) (value []string) {
 	if !r.isResponse {
 		value = r.Source.(*GoRequest).Original.Header[key]
@@ -520,20 +575,44 @@ func (r *GoHeader) Get(key string) (value []string) {
 	}
 	return
 }
+
+// Returns list of header keys
+func (r *GoHeader) GetKeys() (value []string) {
+	if !r.isResponse {
+		for key := range r.Source.(*GoRequest).Original.Header {
+			value = append(value, key)
+		}
+	} else {
+		for key := range r.Source.(*GoResponse).Original.Header() {
+			value = append(value, key)
+		}
+	}
+	return
+}
+
+// Sets the status of the header
 func (r *GoHeader) SetStatus(statusCode int) {
 	if r.isResponse {
 		r.Source.(*GoResponse).Original.WriteHeader(statusCode)
 	}
 }
+
+// Return cookies value
 func (r GoCookie) GetValue() string {
 	return r.Value
 }
+
+// Return files from the form
 func (f *GoMultipartForm) GetFiles() map[string][]*multipart.FileHeader {
 	return f.Form.File
 }
+
+// Return values from the form
 func (f *GoMultipartForm) GetValues() url.Values {
 	return url.Values(f.Form.Value)
 }
+
+// Remove all values from the form freeing memory
 func (f *GoMultipartForm) RemoveAll() error {
 	return f.Form.RemoveAll()
 }
