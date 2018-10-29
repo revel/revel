@@ -68,12 +68,13 @@ type (
 
 	// Expected response for HTTP_SERVER_HEADER type (if implemented)
 	ServerHeader interface {
-		SetCookie(cookie string)
-		GetCookie(key string) (value ServerCookie, err error)
+		SetCookie(cookie string) // Sets the cookie
+		GetCookie(key string) (value ServerCookie, err error) // Gets the cookie
 		Set(key string, value string)
 		Add(key string, value string)
 		Del(key string)
 		Get(key string) (value []string)
+		GetKeys() (headerKeys []string)
 		SetStatus(statusCode int)
 	}
 
