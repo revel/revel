@@ -18,6 +18,7 @@ import (
 
 	"github.com/revel/revel/logger"
 	"github.com/revel/revel/session"
+	"github.com/revel/revel/utils"
 )
 
 // Controller Revel's controller structure that gets embedded in user defined
@@ -87,7 +88,9 @@ func (c *Controller) Destroy() {
 		// Return this instance to the pool
 		appController := c.AppController
 		c.AppController = nil
-		cachedControllerMap[c.Name].Push(appController)
+		if RevelConfig.Controller.Reuse {
+			RevelConfig.Controller.CachedMap[c.Name].Push(appController)
+		}
 		c.AppController = nil
 	}
 
@@ -359,9 +362,11 @@ func (c *Controller) Redirect(val interface{}, args ...interface{}) Result {
 // and what is available directly
 func (c *Controller) Stats() map[string]interface{} {
 	result := CurrentEngine.Stats()
-	result["revel-controllers"] = controllerStack.String()
-	for key, appStack := range cachedControllerMap {
-		result["app-"+key] = appStack.String()
+	if RevelConfig.Controller.Reuse {
+		result["revel-controllers"] = RevelConfig.Controller.Stack.String()
+		for key, appStack := range RevelConfig.Controller.CachedMap {
+			result["app-" + key] = appStack.String()
+		}
 	}
 	return result
 }
@@ -406,18 +411,22 @@ func (c *Controller) SetTypeAction(controllerName, methodName string, typeOfCont
 		c.Log = c.Log.New("action", c.Action, "namespace", c.Type.Namespace)
 	}
 
-	if _, ok := cachedControllerMap[c.Name]; !ok {
-		// Create a new stack for this controller
-		localType := c.Type.Type
-		cachedControllerMap[c.Name] = NewStackLock(
-			cachedControllerStackSize,
-			cachedControllerStackMaxSize,
-			func() interface{} {
-				return reflect.New(localType).Interface()
-			})
+	if RevelConfig.Controller.Reuse {
+		if _, ok := RevelConfig.Controller.CachedMap[c.Name]; !ok {
+			// Create a new stack for this controller
+			localType := c.Type.Type
+			RevelConfig.Controller.CachedMap[c.Name] = utils.NewStackLock(
+				RevelConfig.Controller.CachedStackSize,
+				RevelConfig.Controller.CachedStackMaxSize,
+				func() interface{} {
+					return reflect.New(localType).Interface()
+				})
+		}
+		// Instantiate the controller.
+		c.AppController = RevelConfig.Controller.CachedMap[c.Name].Pop()
+	} else {
+		c.AppController = reflect.New(c.Type.Type).Interface()
 	}
-	// Instantiate the controller.
-	c.AppController = cachedControllerMap[c.Name].Pop()
 	c.setAppControllerFields()
 
 	return nil
