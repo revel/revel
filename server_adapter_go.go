@@ -4,7 +4,6 @@ import (
 	"net"
 	"net/http"
 	"time"
-
 	"context"
 	"golang.org/x/net/websocket"
 	"io"
@@ -16,6 +15,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"github.com/revel/revel/utils"
 )
 
 // Register the GoHttpServer engine
@@ -30,11 +30,11 @@ func init() {
 
 // The Go HTTP server
 type GoHttpServer struct {
-	Server               *http.Server     // The server instance
-	ServerInit           *EngineInit      // The server engine initialization
-	MaxMultipartSize     int64            // The largest size of file to accept
-	goContextStack       *SimpleLockStack // The context stack
-	goMultipartFormStack *SimpleLockStack // The multipart form stack
+	Server               *http.Server           // The server instance
+	ServerInit           *EngineInit            // The server engine initialization
+	MaxMultipartSize     int64                  // The largest size of file to accept
+	goContextStack       *utils.SimpleLockStack // The context stack Set via server.context.stack, server.context.maxstack
+	goMultipartFormStack *utils.SimpleLockStack // The multipart form stack set via server.form.stack, server.form.maxstack
 	HttpMuxList          ServerMuxList
 	HasAppMux            bool
 	signalChan           chan os.Signal
@@ -43,12 +43,12 @@ type GoHttpServer struct {
 // Called to initialize the server with this EngineInit
 func (g *GoHttpServer) Init(init *EngineInit) {
 	g.MaxMultipartSize = int64(Config.IntDefault("server.request.max.multipart.filesize", 32)) << 20 /* 32 MB */
-	g.goContextStack = NewStackLock(Config.IntDefault("server.context.stack", 100),
+	g.goContextStack = utils.NewStackLock(Config.IntDefault("server.context.stack", 100),
 		Config.IntDefault("server.context.maxstack", 200),
 		func() interface{} {
 			return NewGoContext(g)
 		})
-	g.goMultipartFormStack = NewStackLock(Config.IntDefault("server.form.stack", 100),
+	g.goMultipartFormStack = utils.NewStackLock(Config.IntDefault("server.form.stack", 100),
 		Config.IntDefault("server.form.maxstack", 200),
 		func() interface{} { return &GoMultipartForm{} })
 	g.ServerInit = init
@@ -218,7 +218,7 @@ func (g *GoHttpServer) Event(event Event, args interface{}) (r EventResponse) {
 	case ENGINE_STARTED:
 		signal.Notify(g.signalChan, os.Interrupt, os.Kill)
 		go func() {
-			_ = <- g.signalChan
+			_ = <-g.signalChan
 			serverLogger.Info("Received quit singal Please wait ... ")
 			RaiseEvent(ENGINE_SHUTDOWN_REQUEST, nil)
 		}()
@@ -236,29 +236,29 @@ func (g *GoHttpServer) Event(event Event, args interface{}) (r EventResponse) {
 type (
 	// The go context
 	GoContext struct {
-		Request   *GoRequest // The request
-		Response  *GoResponse // The response
+		Request   *GoRequest   // The request
+		Response  *GoResponse  // The response
 		WebSocket *GoWebSocket // The websocket
 	}
 
 	// The go request
 	GoRequest struct {
-		Original        *http.Request // The original
-		FormParsed      bool // True if form parsed
-		MultiFormParsed bool // True if multipart form parsed
-		WebSocket       *websocket.Conn // The websocket
+		Original        *http.Request    // The original
+		FormParsed      bool             // True if form parsed
+		MultiFormParsed bool             // True if multipart form parsed
+		WebSocket       *websocket.Conn  // The websocket
 		ParsedForm      *GoMultipartForm // The parsed form data
-		Goheader        *GoHeader // The header
-		Engine          *GoHttpServer // THe server
+		Goheader        *GoHeader        // The header
+		Engine          *GoHttpServer    // THe server
 	}
 
 	// The response
 	GoResponse struct {
 		Original http.ResponseWriter // The original writer
-		Goheader *GoHeader // The header
-		Writer   io.Writer // The writer
-		Request  *GoRequest // The request
-		Engine   *GoHttpServer // The engine
+		Goheader *GoHeader           // The header
+		Writer   io.Writer           // The writer
+		Request  *GoRequest          // The request
+		Engine   *GoHttpServer       // The engine
 	}
 
 	// The multipart form
@@ -269,13 +269,13 @@ type (
 	// The go header
 	GoHeader struct {
 		Source     interface{} // The source
-		isResponse bool // True if response header
+		isResponse bool        // True if response header
 	}
 
 	// The websocket
 	GoWebSocket struct {
-		Conn *websocket.Conn // The connection
-		GoResponse // The response
+		Conn       *websocket.Conn // The connection
+		GoResponse                 // The response
 	}
 
 	// The cookie
@@ -284,13 +284,14 @@ type (
 
 // Create a new go context
 func NewGoContext(instance *GoHttpServer) *GoContext {
+	// This bit in here is for the test cases, which pass in a nil value
 	if instance == nil {
 		instance = &GoHttpServer{MaxMultipartSize: 32 << 20}
-		instance.goContextStack = NewStackLock(100, 200,
+		instance.goContextStack = utils.NewStackLock(100, 200,
 			func() interface{} {
 				return NewGoContext(instance)
 			})
-		instance.goMultipartFormStack = NewStackLock(100, 200,
+		instance.goMultipartFormStack = utils.NewStackLock(100, 200,
 			func() interface{} { return &GoMultipartForm{} })
 	}
 	c := &GoContext{Request: &GoRequest{Goheader: &GoHeader{}, Engine: instance}}

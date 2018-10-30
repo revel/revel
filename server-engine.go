@@ -131,15 +131,6 @@ type (
 	ServerMuxList []ServerMux
 )
 
-var (
-	// The simple stacks for response and controllers are a linked list
-	// of reused objects.
-	controllerStack              *SimpleLockStack
-	cachedControllerMap          = map[string]*SimpleLockStack{}
-	cachedControllerStackSize    = 10
-	cachedControllerStackMaxSize = 10
-)
-
 // Sorting function
 func (r ServerMuxList) Len() int {
 	return len(r)
@@ -174,9 +165,18 @@ func AddHTTPMux(path string, callback interface{}) {
 // Callback point for the server to handle the
 func handleInternal(ctx ServerContext) {
 	start := time.Now()
+	var c *Controller
+	if RevelConfig.Controller.Reuse {
+		c         = RevelConfig.Controller.Stack.Pop().(*Controller)
+		defer func() {
+			RevelConfig.Controller.Stack.Push(c)
+		}()
+	} else {
+		c = NewControllerEmpty()
+	}
 
 	var (
-		c         = controllerStack.Pop().(*Controller)
+
 		req, resp = c.Request, c.Response
 	)
 	c.SetController(ctx)
@@ -185,9 +185,6 @@ func handleInternal(ctx ServerContext) {
 	clientIP := ClientIP(req)
 
 	// Once finished in the internal, we can return these to the stack
-	defer func() {
-		controllerStack.Push(c)
-	}()
 
 	c.ClientIP = clientIP
 	c.Log = AppLog.New("ip", clientIP,

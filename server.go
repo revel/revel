@@ -10,6 +10,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"github.com/revel/revel/utils"
 )
 
 // Revel's variables server, router, etc
@@ -132,11 +133,18 @@ func InitServerEngine(port int, serverEngine string) {
 
 // Initialize the controller stack for the application
 func initControllerStack() {
-	controllerStack = NewStackLock(
-		Config.IntDefault("revel.controller.stack", 10),
-		Config.IntDefault("revel.controller.maxstack", 200), func() interface{} { return NewControllerEmpty() })
-	cachedControllerStackSize = Config.IntDefault("revel.cache.controller.stack", 10)
-	cachedControllerStackMaxSize = Config.IntDefault("revel.cache.controller.maxstack", 100)
+	RevelConfig.Controller.Reuse = Config.BoolDefault("revel.controller.reuse",true)
+
+	if RevelConfig.Controller.Reuse {
+		RevelConfig.Controller.Stack = utils.NewStackLock(
+			Config.IntDefault("revel.controller.stack", 10),
+			Config.IntDefault("revel.controller.maxstack", 200), func() interface{} {
+				return NewControllerEmpty()
+			})
+		RevelConfig.Controller.CachedStackSize = Config.IntDefault("revel.cache.controller.stack", 10)
+		RevelConfig.Controller.CachedStackMaxSize = Config.IntDefault("revel.cache.controller.maxstack", 100)
+		RevelConfig.Controller.CachedMap = map[string]*utils.SimpleLockStack{}
+	}
 }
 
 // Called to stop the server
