@@ -234,7 +234,6 @@ func (s Session) Serialize() map[string]string {
 			newMap[key] = value.(string)
 			continue
 		}
-		println("Serialize the data for", key)
 		if data, err := json.Marshal(value); err != nil {
 			sessionLog.Error("Unable to marshal session ", "key", key, "error", err)
 			continue
