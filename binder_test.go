@@ -7,6 +7,7 @@ package revel
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/revel/config"
 	"io"
 	"io/ioutil"
 	"os"
@@ -98,6 +99,8 @@ var (
 		"invalidArr":                     {"xyz"},
 		"int8-overflow":                  {"1024"},
 		"uint8-overflow":                 {"1024"},
+		"arrDoS[2]":                      {"2"},
+		"arrDoS[65535]":                  {"65535"},
 	}
 
 	testDate     = time.Date(1982, time.July, 9, 0, 0, 0, 0, time.UTC)
@@ -168,6 +171,7 @@ var binderTestCases = map[string]interface{}{
 	"priv":           A{},
 	"int8-overflow":  int8(0),
 	"uint8-overflow": uint8(0),
+	"arrDoS":         []int{0, 0, 2},
 }
 
 // Types that files may be bound to, and a func that can read the content from
@@ -213,6 +217,12 @@ func TestBinder(t *testing.T) {
 	// Reuse the mvc_test.go multipart request to test the binder.
 	params := &Params{}
 	c := NewTestController(nil, getMultipartRequest())
+	if Config == nil {
+		Config = config.NewContext()
+		defer func() {
+			Config = nil
+		}()
+	}
 	ParseParams(params, NewRequest(c.Request.In))
 	params.Values = ParamTestValues
 
