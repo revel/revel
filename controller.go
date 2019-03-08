@@ -91,7 +91,6 @@ func (c *Controller) Destroy() {
 		if RevelConfig.Controller.Reuse {
 			RevelConfig.Controller.CachedMap[c.Name].Push(appController)
 		}
-		c.AppController = nil
 	}
 
 	c.Request.Destroy()
