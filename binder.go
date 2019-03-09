@@ -233,6 +233,7 @@ func bindSlice(params *Params, name string, typ reflect.Type) reflect.Value {
 		if index > -1 {
 			// Just ignore illegal index, fix issue #1424
 			if index > maxIndexBound {
+				binderLog.Error.Println("Invalid parameter index, ignoring parameter","index", maxIndex,"key",key)
 				return
 			}
 			if index > maxIndex {
