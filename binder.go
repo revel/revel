@@ -213,6 +213,8 @@ func bindSlice(params *Params, name string, typ reflect.Type) reflect.Value {
 	numNoIndex := 0
 	sliceValues := []sliceValue{}
 
+	maxIndexBound := Config.IntDefault("params.max_index", 4096)
+
 	// Factor out the common slice logic (between form values and files).
 	processElement := func(key string, vals []string, files []*multipart.FileHeader) {
 		if !strings.HasPrefix(key, name+"[") {
@@ -229,6 +231,11 @@ func bindSlice(params *Params, name string, typ reflect.Type) reflect.Value {
 
 		// Handle the indexed case.
 		if index > -1 {
+			// Just ignore illegal index, fix issue #1424
+			if index > maxIndexBound {
+				binderLog.Error("Ignoring parameter for security reason", "index", index, "key", key)
+				return
+			}
 			if index > maxIndex {
 				maxIndex = index
 			}
