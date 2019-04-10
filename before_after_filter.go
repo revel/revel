@@ -22,6 +22,7 @@ func BeforeAfterFilter(c *Controller, fc []Filter) {
 	}()
 	if resultValue := beforeAfterFilterInvoke(BEFORE, c); resultValue != nil && !resultValue.IsNil() {
 		c.Result = resultValue.Interface().(Result)
+		return
 	}
 	fc[0](c, fc[1:])
 	if resultValue := beforeAfterFilterInvoke(AFTER, c); resultValue != nil && !resultValue.IsNil() {
