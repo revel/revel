@@ -149,10 +149,10 @@ func initHandlerFor(c *CompositeMultiHandler, output, basePath string, options *
 		options.SetExtendedOptions(
 			"noColor", !options.Ctx.BoolDefault("log.colorize", true),
 			"smallDate", options.Ctx.BoolDefault("log.smallDate", true),
-			"maxSize", options.Ctx.IntDefault("log.maxsize", 1024*10),
-			"maxAge", options.Ctx.IntDefault("log.maxage", 14),
+			"maxSizeMB", options.Ctx.IntDefault("log.maxsize", 1024*10),
+			"maxAgeDays", options.Ctx.IntDefault("log.maxage", 14),
 			"maxBackups", options.Ctx.IntDefault("log.maxbackups", 14),
-			"compressBackups", !options.Ctx.BoolDefault("log.compressBackups", true),
+			"compress", !options.Ctx.BoolDefault("log.compressBackups", true),
 		)
 	}
 
