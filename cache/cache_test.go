@@ -50,6 +50,13 @@ func incrDecr(t *testing.T, newCache cacheFactory) {
 	// Wait for it to complete memcached cmd on a slow machine
 	time.Sleep(2 * time.Second)
 
+	// #1460 - DEBUG
+	value := 0
+	if err = cache.Get("int", &value); err != ErrCacheMiss {
+		t.Logf("Expected CacheMiss, but got: %s", err)
+		cache.Set("int", 10, ForEverNeverExpiry)
+	}
+
 	newValue, err := cache.Increment("int", 50)
 	if err != nil {
 		t.Errorf("Error incrementing int: %s", err)
