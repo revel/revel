@@ -24,7 +24,7 @@ func typicalGetSet(t *testing.T, newCache cacheFactory) {
 		t.Errorf("Error setting a value: %s", err)
 	}
 
-	// TEST: Wait for Slow Memcached in TravisCI
+	// Wait for it to complete memcached cmd on a slow machine
 	time.Sleep(time.Second)
 
 	value = ""
@@ -47,7 +47,7 @@ func incrDecr(t *testing.T, newCache cacheFactory) {
 		t.Errorf("Error setting int: %s", err)
 	}
 
-	// TEST: Wait for Slow Memcached in TravisCI
+	// Wait for it to complete memcached cmd on a slow machine
 	time.Sleep(time.Second)
 
 	newValue, err := cache.Increment("int", 50)
@@ -237,7 +237,7 @@ func testGetMulti(t *testing.T, newCache cacheFactory) {
 		}
 	}
 
-	// TEST: Wait for Slow Memcached in TravisCI
+	// Wait for it to complete memcached cmd on a slow machine
 	time.Sleep(time.Second)
 
 	g, err := cache.GetMulti(keys...)
