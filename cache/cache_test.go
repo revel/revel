@@ -24,6 +24,9 @@ func typicalGetSet(t *testing.T, newCache cacheFactory) {
 		t.Errorf("Error setting a value: %s", err)
 	}
 
+	// TEST: Wait for Slow Memcached in TravisCI
+	time.Sleep(time.Second)
+
 	value = ""
 	err = cache.Get("value", &value)
 	if err != nil {
@@ -43,7 +46,10 @@ func incrDecr(t *testing.T, newCache cacheFactory) {
 	if err = cache.Set("int", 10, ForEverNeverExpiry); err != nil {
 		t.Errorf("Error setting int: %s", err)
 	}
+
+	// TEST: Wait for Slow Memcached in TravisCI
 	time.Sleep(time.Second)
+
 	newValue, err := cache.Increment("int", 50)
 	if err != nil {
 		t.Errorf("Error incrementing int: %s", err)
@@ -230,6 +236,9 @@ func testGetMulti(t *testing.T, newCache cacheFactory) {
 			t.Errorf("Error setting a value: %s", err)
 		}
 	}
+
+	// TEST: Wait for Slow Memcached in TravisCI
+	time.Sleep(time.Second)
 
 	g, err := cache.GetMulti(keys...)
 	if err != nil {
