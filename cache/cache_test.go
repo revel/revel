@@ -25,7 +25,7 @@ func typicalGetSet(t *testing.T, newCache cacheFactory) {
 	}
 
 	// Wait for it to complete memcached cmd on a slow machine
-	time.Sleep(time.Second)
+	time.Sleep(2 * time.Second)
 
 	value = ""
 	err = cache.Get("value", &value)
@@ -48,7 +48,7 @@ func incrDecr(t *testing.T, newCache cacheFactory) {
 	}
 
 	// Wait for it to complete memcached cmd on a slow machine
-	time.Sleep(time.Second)
+	time.Sleep(2 * time.Second)
 
 	newValue, err := cache.Increment("int", 50)
 	if err != nil {
@@ -238,7 +238,7 @@ func testGetMulti(t *testing.T, newCache cacheFactory) {
 	}
 
 	// Wait for it to complete memcached cmd on a slow machine
-	time.Sleep(time.Second)
+	time.Sleep(2 * time.Second)
 
 	g, err := cache.GetMulti(keys...)
 	if err != nil {
