@@ -488,9 +488,19 @@ func isPureTextStrict(str string) (bool, error) {
 			return false, errors.New("detect control character (DEL)")
 		}
 
-		//deny : html tag (< ~ >)
+		//deny : short tag (<~> <~ />)
 		if c == 60 {
 
+			for n := i + 2; n < l; n++ {
+				// 62 (>)
+				if str[n] == 62 {
+					return false, errors.New("detect tag (<(.*)+>)")
+				}
+			}
+		}
+
+		//deny : html tag (< ~ >)
+		if c == 60 {
 			ds := 0
 			for n := i; n < l; n++ {
 
@@ -507,8 +517,9 @@ func isPureTextStrict(str string) (bool, error) {
 			}
 		}
 
-		//deby : html encoded tag (&xxx;)
-		if c == 38 && i+1 <= l && str[i+1] != 35 {
+		//deny : html encoded(hex) tag (&xxx;)
+		// 38(&) , 35(#), 59(;)
+		if c == 38 && i+1 <= l {
 
 			max := i + 64
 			if max > l {
@@ -569,7 +580,7 @@ func (p PureText) IsSatisfied(obj interface{}) bool {
 		case STRICT:
 			ret, _ = isPureTextStrict(str)
 		case NORMAL:
-			ret, _ = isPureTextStrict(str)
+			ret, _ = isPureTextNormal(str)
 		}
 		return ret
 	}
