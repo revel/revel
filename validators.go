@@ -409,6 +409,11 @@ func (d Domain) IsSatisfied(obj interface{}) bool {
 			return false
 		}
 
+		//can't be less than 4 chars.
+		if l < 4 {
+			return false
+		}
+
 		//first and last char must be alphanumeric
 		if str[l-1] == 46 || str[0] == 46 {
 			return false
