@@ -139,7 +139,7 @@ func startFakeBookingApp() {
 
 	MainTemplateLoader = NewTemplateLoader([]string{ViewsPath, filepath.Join(RevelPath, "templates")})
 	if err := MainTemplateLoader.Refresh(); err != nil {
-		RevelLog.Fatal("Template error","error",err)
+		RevelLog.Fatal("Template error", "error", err)
 	}
 
 	registerControllers()

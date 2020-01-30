@@ -188,7 +188,7 @@ func (c *Controller) Render(extraViewArgs ...interface{}) Result {
 		}
 	} else {
 		controllerLog.Error(fmt.Sprint("No RenderArg names found for Render call on line", line,
-			"(Action", c.Action, ")"),"stack",logger.NewCallStack())
+			"(Action", c.Action, ")"), "stack", logger.NewCallStack())
 	}
 
 	return c.RenderTemplate(c.Name + "/" + c.MethodType.Name + "." + c.Request.Format)
@@ -365,7 +365,7 @@ func (c *Controller) Stats() map[string]interface{} {
 	if RevelConfig.Controller.Reuse {
 		result["revel-controllers"] = RevelConfig.Controller.Stack.String()
 		for key, appStack := range RevelConfig.Controller.CachedMap {
-			result["app-" + key] = appStack.String()
+			result["app-"+key] = appStack.String()
 		}
 	}
 	return result

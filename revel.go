@@ -30,13 +30,13 @@ const (
 // App details
 var (
 	RevelConfig *model.RevelContainer
-	AppName    string // e.g. "sample"
-	AppRoot    string // e.g. "/app1"
-	BasePath   string // e.g. "$GOPATH/src/corp/sample"
-	AppPath    string // e.g. "$GOPATH/src/corp/sample/app"
-	ViewsPath  string // e.g. "$GOPATH/src/corp/sample/app/views"
-	ImportPath string // e.g. "corp/sample"
-	SourcePath string // e.g. "$GOPATH/src"
+	AppName     string // e.g. "sample"
+	AppRoot     string // e.g. "/app1"
+	BasePath    string // e.g. "$GOPATH/src/corp/sample"
+	AppPath     string // e.g. "$GOPATH/src/corp/sample/app"
+	ViewsPath   string // e.g. "$GOPATH/src/corp/sample/app/views"
+	ImportPath  string // e.g. "corp/sample"
+	SourcePath  string // e.g. "$GOPATH/src"
 
 	Config  *config.Context
 	RunMode string // Application-defined (by default, "dev" or "prod")

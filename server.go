@@ -7,10 +7,10 @@ package revel
 import (
 	"fmt"
 	"github.com/revel/revel/session"
+	"github.com/revel/revel/utils"
 	"os"
 	"strconv"
 	"strings"
-	"github.com/revel/revel/utils"
 )
 
 // Revel's variables server, router, etc
@@ -133,7 +133,7 @@ func InitServerEngine(port int, serverEngine string) {
 
 // Initialize the controller stack for the application
 func initControllerStack() {
-	RevelConfig.Controller.Reuse = Config.BoolDefault("revel.controller.reuse",true)
+	RevelConfig.Controller.Reuse = Config.BoolDefault("revel.controller.reuse", true)
 
 	if RevelConfig.Controller.Reuse {
 		RevelConfig.Controller.Stack = utils.NewStackLock(
@@ -149,5 +149,5 @@ func initControllerStack() {
 
 // Called to stop the server
 func StopServer(value interface{}) EventResponse {
-	return RaiseEvent(ENGINE_SHUTDOWN_REQUEST,value)
+	return RaiseEvent(ENGINE_SHUTDOWN_REQUEST, value)
 }

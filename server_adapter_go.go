@@ -1,13 +1,13 @@
 package revel
 
 import (
-	"net"
-	"net/http"
-	"time"
 	"context"
+	"github.com/revel/revel/utils"
 	"golang.org/x/net/websocket"
 	"io"
 	"mime/multipart"
+	"net"
+	"net/http"
 	"net/url"
 	"os"
 	"os/signal"
@@ -15,7 +15,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"github.com/revel/revel/utils"
+	"time"
 )
 
 // Register the GoHttpServer engine

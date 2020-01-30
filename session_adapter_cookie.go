@@ -10,7 +10,6 @@ import (
 	"time"
 )
 
-
 type (
 	// The session cookie engine
 	SessionCookieEngine struct {
