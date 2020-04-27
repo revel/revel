@@ -10,7 +10,7 @@ import (
 	"strings"
 	"sync"
 
-	"gopkg.in/fsnotify/fsnotify.v1"
+	"github.com/fsnotify/fsnotify"
 	"time"
 )
 
