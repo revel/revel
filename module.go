@@ -2,12 +2,13 @@ package revel
 
 import (
 	"fmt"
-	"github.com/revel/revel/logger"
 	"go/build"
-	"gopkg.in/stack.v0"
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"github.com/go-stack/stack"
+	"github.com/revel/revel/logger"
 )
 
 // Module specific functions
