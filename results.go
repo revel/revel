@@ -452,7 +452,7 @@ type RedirectToActionResult struct {
 func (r *RedirectToActionResult) Apply(req *Request, resp *Response) {
 	url, err := getRedirectURL(r.val, r.args)
 	if err != nil {
-		resultsLog.Error("Apply: Couldn't resolve redirect", "error", err)
+		req.controller.Log.Error("Apply: Couldn't resolve redirect", "error", err)
 		ErrorResult{Error: err}.Apply(req, resp)
 		return
 	}

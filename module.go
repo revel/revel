@@ -2,7 +2,6 @@ package revel
 
 import (
 	"fmt"
-	"go/build"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -51,7 +50,7 @@ func init() {
 		if typeOf == REVEL_BEFORE_MODULES_LOADED {
 			Modules = []*Module{appModule}
 			appModule.Path = filepath.ToSlash(AppPath)
-			appModule.ImportPath = filepath.ToSlash(AppPath)
+			appModule.ImportPath = filepath.ToSlash(ImportPath)
 		}
 
 		return
@@ -86,31 +85,18 @@ func (m *Module) AddController(ct *ControllerType) {
 
 // Based on the full path given return the relevant module
 // Only to be used on initialization
-func ModuleFromPath(path string, addGopathToPath bool) (module *Module) {
-	path = filepath.ToSlash(path)
-	gopathList := filepath.SplitList(build.Default.GOPATH)
-	// Strip away the vendor folder
-	if i := strings.Index(path, "/vendor/"); i > 0 {
-		path = path[i+len("vendor/"):]
-	}
+func ModuleFromPath(packagePath string, addGopathToPath bool) (module *Module) {
+	packagePath = filepath.ToSlash(packagePath)
+	// The module paths will match the configuration module paths, so we will use those to determine them
+	// Since the revel.Init is called first, then revel.Config exists and can be used to determine the module path
 
 	// See if the path exists in the module based
 	for i := range Modules {
-		if addGopathToPath {
-			for _, gopath := range gopathList {
-				if strings.Contains(filepath.ToSlash(filepath.Clean(filepath.Join(gopath, "src", path))), Modules[i].Path) {
-					module = Modules[i]
-					break
-				}
-			}
-		} else {
-			if strings.Contains(path, Modules[i].ImportPath) {
-				module = Modules[i]
-				break
-			}
-
+		if strings.Index(packagePath, Modules[i].ImportPath)==0 {
+			// This is a prefix, so the module is this module
+			module = Modules[i]
+			break
 		}
-
 		if module != nil {
 			break
 		}

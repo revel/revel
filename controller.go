@@ -24,25 +24,25 @@ import (
 // Controller Revel's controller structure that gets embedded in user defined
 // controllers
 type Controller struct {
-	Name          string          // The controller name, e.g. "Application"
-	Type          *ControllerType // A description of the controller type.
-	MethodName    string          // The method name, e.g. "Index"
-	MethodType    *MethodType     // A description of the invoked action type.
-	AppController interface{}     // The controller that was instantiated. embeds revel.Controller
-	Action        string          // The fully qualified action name, e.g. "App.Index"
-	ClientIP      string          // holds IP address of request came from
+	Name          string                 // The controller name, e.g. "Application"
+	Type          *ControllerType        // A description of the controller type.
+	MethodName    string                 // The method name, e.g. "Index"
+	MethodType    *MethodType            // A description of the invoked action type.
+	AppController interface{}            // The controller that was instantiated. embeds revel.Controller
+	Action        string                 // The fully qualified action name, e.g. "App.Index"
+	ClientIP      string                 // holds IP address of request came from
 
-	Request  *Request
-	Response *Response
-	Result   Result
+	Request       *Request
+	Response      *Response
+	Result        Result
 
-	Flash      Flash                  // User cookie, cleared after 1 request.
-	Session    session.Session        // Session, stored using the session engine specified
-	Params     *Params                // Parameters from URL and form (including multipart).
-	Args       map[string]interface{} // Per-request scratch space.
-	ViewArgs   map[string]interface{} // Variables passed to the template.
-	Validation *Validation            // Data validation helpers
-	Log        logger.MultiLogger     // Context Logger
+	Flash         Flash                  // User cookie, cleared after 1 request.
+	Session       session.Session        // Session, stored using the session engine specified
+	Params        *Params                // Parameters from URL and form (including multipart).
+	Args          map[string]interface{} // Per-request scratch space.
+	ViewArgs      map[string]interface{} // Variables passed to the template.
+	Validation    *Validation            // Data validation helpers
+	Log           logger.MultiLogger     // Context Logger
 }
 
 // The map of controllers, controllers are mapped by using the namespace|controller_name as the key
@@ -187,7 +187,7 @@ func (c *Controller) Render(extraViewArgs ...interface{}) Result {
 		}
 	} else {
 		controllerLog.Error(fmt.Sprint("No RenderArg names found for Render call on line", line,
-			"(Action", c.Action, ")"),"stack",logger.NewCallStack())
+			"(Action", c.Action, ")"), "stack", logger.NewCallStack())
 	}
 
 	return c.RenderTemplate(c.Name + "/" + c.MethodType.Name + "." + c.Request.Format)
@@ -312,7 +312,7 @@ func (c *Controller) RenderFile(file *os.File, delivery ContentDisposition) Resu
 	c.setStatusIfNil(http.StatusOK)
 
 	var (
-		modtime       = time.Now()
+		modtime = time.Now()
 		fileInfo, err = file.Stat()
 	)
 	if err != nil {
@@ -482,8 +482,8 @@ func findControllers(appControllerType reflect.Type) (indexes [][]int) {
 	for len(queue) > 0 {
 		// Get the next value and de-reference it if necessary.
 		var (
-			node     = queue[0]
-			elem     = node.val
+			node = queue[0]
+			elem = node.val
 			elemType = elem.Type()
 		)
 		if elemType.Kind() == reflect.Ptr {
@@ -541,5 +541,5 @@ func RegisterController(c interface{}, methods []*MethodType) {
 
 	controllerType := AddControllerType(controllerModule, elem, methods)
 
-	controllerLog.Debug("RegisterController:Registered controller", "controller", controllerType.Name())
+	controllerLog.Debug("RegisterController:Registered controller", "controller", controllerType.Name(), "module-name", controllerModule.Name)
 }
