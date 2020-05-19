@@ -317,10 +317,10 @@ func splitActionPath(actionPathData *ActionPathData, actionPath string, useCache
 		if i := strings.Index(controllerName, namespaceSeperator); i > -1 {
 			controllerNamespace = controllerName[:i+1]
 			if moduleSource, found := ModuleByName(controllerNamespace[:len(controllerNamespace)-1]); found {
-				log.Debug("Found module namespace")
 				foundModuleSource = moduleSource
 				controllerNamespace = moduleSource.Namespace()
 				log = log.New("namespace",controllerNamespace)
+				log.Debug("Found module namespace")
 			} else {
 				log.Warnf("splitActionPath: Unable to find module %s for action: %s", controllerNamespace[:len(controllerNamespace)-1], actionPath)
 			}

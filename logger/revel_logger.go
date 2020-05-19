@@ -81,7 +81,7 @@ func (rl *RevelLogger) SetStackDepth(amount int) MultiLogger {
 // Create a new logger
 func New(ctx ...interface{}) MultiLogger {
 	r := &RevelLogger{Logger: log15.New(ctx...)}
-	r.SetStackDepth(1)
+	//r.SetStackDepth(2)
 	return r
 }
 
