@@ -21,7 +21,6 @@ func TestContentTypeByFilename(t *testing.T) {
 	srcPath, _ := findSrcPaths(RevelImportPath)
 	ConfPaths = []string{filepath.Join(
 		srcPath,
-		filepath.FromSlash(RevelImportPath),
 		"conf"),
 	}
 	LoadMimeConfig()

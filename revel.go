@@ -6,7 +6,6 @@ package revel
 
 import (
 	"go/build"
-	"log"
 	"path/filepath"
 	"strings"
 
@@ -227,7 +226,7 @@ func updateLog(inputmode string) (returnMode string) {
 		// Ensure that the selected runmode appears in app.conf.
 		// If empty string is passed as the mode, treat it as "DEFAULT"
 		if !Config.HasSection(returnMode) {
-			log.Fatalln("app.conf: No mode found:", returnMode)
+			RevelLog.Fatal("app.conf: Run mode not found:","runmode", returnMode)
 		}
 		Config.SetSection(returnMode)
 		newContext = Config
@@ -311,5 +310,5 @@ func findSrcPaths(importPath string) (revelSourcePath, appSourcePath string) {
 		RevelLog.Fatal("Failed to find Revel with error:", "error", err)
 	}
 
-	return revelPkg.Dir[:len(revelPkg.Dir)-len(RevelImportPath)], appPkg.SrcRoot
+	return revelPkg.Dir, appPkg.Dir
 }
