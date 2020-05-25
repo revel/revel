@@ -55,7 +55,8 @@ install:
   - go get -t -v github.com/revel/revel/...
 
 script:
-  - if [[ "$TRAVIS_OS_NAME" != "windows" ]]; then
+  - |
+    if [[ "$TRAVIS_OS_NAME" != "windows" ]]; then
       go test -v github.com/revel/revel/...
     else
       go test -v github.com/revel/revel/.
