@@ -19,6 +19,7 @@ import (
 
 	"github.com/revel/pathtree"
 	"github.com/revel/revel/logger"
+	"errors"
 )
 
 const (
@@ -316,16 +317,19 @@ func splitActionPath(actionPathData *ActionPathData, actionPath string, useCache
 		if i := strings.Index(controllerName, namespaceSeperator); i > -1 {
 			controllerNamespace = controllerName[:i+1]
 			if moduleSource, found := ModuleByName(controllerNamespace[:len(controllerNamespace)-1]); found {
-				log.Debug("Found module namespace")
 				foundModuleSource = moduleSource
 				controllerNamespace = moduleSource.Namespace()
+				log = log.New("namespace",controllerNamespace)
+				log.Debug("Found module namespace")
 			} else {
 				log.Warnf("splitActionPath: Unable to find module %s for action: %s", controllerNamespace[:len(controllerNamespace)-1], actionPath)
 			}
 			controllerName = controllerName[i+1:]
+			log = log.New("controllerShortName",controllerName)
 			// Check for the type of controller
 			typeOfController = foundModuleSource.ControllerByName(controllerName, methodName)
 			found = typeOfController != nil
+			log.Debug("Found controller","found",found,"type",typeOfController)
 		} else if controllerName[0] != ':' {
 			// First attempt to find the controller in the module source
 			if foundModuleSource != nil {
@@ -616,11 +620,23 @@ func (a *ActionDefinition) String() string {
 }
 
 func (router *Router) Reverse(action string, argValues map[string]string) (ad *ActionDefinition) {
-	log := routerLog.New("action", action)
+	ad, err := router.ReverseError(action,argValues,nil)
+	if err!=nil {
+		routerLog.Error("splitActionPath: Failed to find reverse route", "action", action, "arguments", argValues)
+	}
+	return ad
+}
+func (router *Router) ReverseError(action string, argValues map[string]string, req *Request) (ad *ActionDefinition, err error) {
+	var log logger.MultiLogger
+	if req!=nil {
+		log = req.controller.Log.New("action", action)
+	} else {
+		log = routerLog.New("action", action)
+	}
 	pathData, found := splitActionPath(nil, action, true)
 	if !found {
-		routerLog.Error("splitActionPath: Failed to find reverse route", "action", action, "arguments", argValues)
-		return nil
+		log.Error("splitActionPath: Failed to find reverse route", "action", action, "arguments", argValues)
+		return
 	}
 
 	log.Debug("Checking for route", "pathdataRoute", pathData.Route)
@@ -681,14 +697,16 @@ func (router *Router) Reverse(action string, argValues map[string]string) (ad *A
 					pathData.TypeOfController = controller
 					// See if the path exists in the module based
 				} else {
-					routerLog.Errorf("Reverse: Controller %s not found in reverse lookup", pathData.ControllerNamespace+pathData.ControllerName)
+					log.Errorf("Reverse: Controller %s not found in reverse lookup", pathData.ControllerNamespace+pathData.ControllerName)
+					err = errors.New("Reverse: Controller not found in reverse lookup")
 					return
 				}
 			}
 		}
 
 		if pathData.TypeOfController == nil {
-			routerLog.Errorf("Reverse: Controller %s not found in reverse lookup", pathData.ControllerNamespace+pathData.ControllerName)
+			log.Errorf("Reverse: Controller %s not found in reverse lookup", pathData.ControllerNamespace+pathData.ControllerName)
+			err = errors.New("Reverse: Controller not found in reverse lookup")
 			return
 		}
 		var (
@@ -705,7 +723,10 @@ func (router *Router) Reverse(action string, argValues map[string]string) (ad *A
 			}
 			if !ok {
 				val = "<nil>"
-				routerLog.Error("Reverse: reverse route missing route argument ", "argument", el[1:])
+				log.Error("Reverse: reverse route missing route argument ", "argument", el[1:])
+				panic("Check stack")
+				err = errors.New("Missing route arguement")
+				return
 			}
 			pathElements[i] = val
 			delete(argValues, el[1:])
@@ -730,9 +751,9 @@ func (router *Router) Reverse(action string, argValues map[string]string) (ad *A
 			star = true
 		}
 
-		//INFO.Printf("Reversing action %s to %s Using Route %#v",action,url,pathData.Route)
+		log.Infof("Reversing action %s to %s Using Route %#v",action,urlPath,pathData.Route)
 
-		return &ActionDefinition{
+		ad = &ActionDefinition{
 			URL:    urlPath,
 			Method: method,
 			Star:   star,
@@ -740,10 +761,12 @@ func (router *Router) Reverse(action string, argValues map[string]string) (ad *A
 			Args:   argValues,
 			Host:   "TODO",
 		}
+		return
 	}
 
 	routerLog.Error("Reverse: Failed to find controller for reverse route", "action", action, "arguments", argValues)
-	return nil
+	err = errors.New("Reverse: Failed to find controller for reverse route")
+	return
 }
 
 func RouterFilter(c *Controller, fc []Filter) {

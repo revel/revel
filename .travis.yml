@@ -1,10 +1,9 @@
 language: go
 
 go:
-  - "1.8.x"
-  - "1.9.x"
-  - "1.10.x"
-  - "1.11.x"
+  - "1.12.x"
+  - "1.13.x"
+  - "1.14.x"
   - "tip"
 
 os:
@@ -54,14 +53,16 @@ install:
   - git clone -b $REVEL_BRANCH git://github.com/revel/cron ../cron/
   - git clone -b $REVEL_BRANCH git://github.com/revel/examples ../examples/
   - go get -t -v github.com/revel/revel/...
-  - go get -t -v github.com/revel/cmd/revel
 
 script:
-  - go test -v github.com/revel/revel/...
+  - |
+    if [[ "$TRAVIS_OS_NAME" != "windows" ]]; then
+      go test -v github.com/revel/revel/...
+    else
+      go test -v github.com/revel/revel/.
+    fi
 
 matrix:
   allow_failures:
     - go: tip
     - os: windows
-    - go: 1.6
-      os: osx

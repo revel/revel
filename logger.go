@@ -51,6 +51,7 @@ func setAppLog(appLog logger.MultiLogger, appHandler *logger.CompositeMultiHandl
 	if appLog != nil {
 		AppLog = appLog
 	}
+
 	if appHandler != nil {
 		appLogHandler = appHandler
 		// Set the app log and the handler for all forked loggers
