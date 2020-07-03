@@ -59,6 +59,7 @@ func FlashFilter(c *Controller, fc []Filter) {
 		Value:    url.QueryEscape(flashValue),
 		HttpOnly: true,
 		Secure:   CookieSecure,
+		SameSite: CookieSameSite,
 		Path:     "/",
 	})
 }

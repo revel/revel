@@ -295,6 +295,7 @@ func ValidationFilter(c *Controller, fc []Filter) {
 				Path:     "/",
 				HttpOnly: true,
 				Secure:   CookieSecure,
+				SameSite: CookieSameSite,
 			})
 		} else if hasCookie {
 			c.SetCookie(&http.Cookie{
@@ -304,6 +305,7 @@ func ValidationFilter(c *Controller, fc []Filter) {
 				Path:     "/",
 				HttpOnly: true,
 				Secure:   CookieSecure,
+				SameSite: CookieSameSite,
 			})
 		}
 	}
