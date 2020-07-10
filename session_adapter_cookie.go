@@ -136,6 +136,7 @@ func (cse *SessionCookieEngine) GetCookie(s session.Session) *http.Cookie {
 		Path:     "/",
 		HttpOnly: true,
 		Secure:   CookieSecure,
+		SameSite: CookieSameSite,
 		Expires:  ts.UTC(),
 		MaxAge:   int(cse.ExpireAfterDuration.Seconds()),
 	}

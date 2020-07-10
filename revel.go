@@ -6,6 +6,7 @@ package revel
 
 import (
 	"go/build"
+	"net/http"
 	"path/filepath"
 	"strings"
 
@@ -73,7 +74,8 @@ var (
 	// Cookie domain
 	CookieDomain string
 	// Cookie flags
-	CookieSecure bool
+	CookieSecure   bool
+	CookieSameSite http.SameSite
 
 	// Revel request access log, not exposed from package.
 	// However output settings can be controlled from app.conf
@@ -174,6 +176,18 @@ func Init(inputmode, importPath, srcPath string) {
 	CookiePrefix = Config.StringDefault("cookie.prefix", "REVEL")
 	CookieDomain = Config.StringDefault("cookie.domain", "")
 	CookieSecure = Config.BoolDefault("cookie.secure", HTTPSsl)
+
+	switch Config.StringDefault("cookie.samesite", "") {
+	case "lax":
+		CookieSameSite = http.SameSiteLaxMode
+	case "strict":
+		CookieSameSite = http.SameSiteStrictMode
+	case "none":
+		CookieSameSite = http.SameSiteNoneMode
+	default:
+		CookieSameSite = http.SameSiteDefaultMode
+	}
+
 	if secretStr := Config.StringDefault("app.secret", ""); secretStr != "" {
 		SetSecretKey([]byte(secretStr))
 	}
