@@ -495,9 +495,7 @@ func (r *GoResponse) WriteStream(name string, contentlen int64, modtime time.Tim
 		if _, err := io.Copy(r.Writer, reader); err != nil {
 			r.Original.WriteHeader(http.StatusInternalServerError)
 			return err
-		} else {
-			r.Original.WriteHeader(http.StatusOK)
-		}
+		} 
 	}
 	return nil
 }
