@@ -1,0 +1,1 @@
+INFO  2020/07/11 22:52:29  revel  revel.go:124: Paths                                   app=/tmp/release/v1.0.0/go/src/github.com/revel/revel/testdata/app views=/tmp/release/v1.0.0/go/src/github.com/revel/revel/testdata/app/views   revel=/tmp/release/v1.0.0/go/src/github.com/revel/revel base=/tmp/release/v1.0.0/go/src/github.com/revel/revel/testdata

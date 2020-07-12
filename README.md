@@ -6,15 +6,11 @@
 
 A high productivity, full-stack web framework for the [Go language](http://www.golang.org).
 
-Current Version: 1.0.0-dev (2018-10-30)
+Current Version: 1.0.0 (2020-07-11)
 
-**Because of Default HTTP Server's graceful shutdown, Go 1.8+ is required.**
+**Supports go.mod package management**
 
 ## Quick Start
-
-Enter Go's path (format varies based on OS):
-
-	cd $GOPATH
 
 Install Revel:
 
