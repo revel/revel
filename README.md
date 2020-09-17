@@ -1,10 +1,10 @@
 # Revel Framework
 
-[![Build Status](https://secure.travis-ci.org/revel/revel.svg?branch=master)](http://travis-ci.org/revel/revel) 
+[![Build Status](https://secure.travis-ci.org/revel/revel.svg?branch=master)](https://travis-ci.org/revel/revel) 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Go Report Card](https://goreportcard.com/badge/github.com/revel/revel)](https://goreportcard.com/report/github.com/revel/revel)
 
-A high productivity, full-stack web framework for the [Go language](http://www.golang.org).
+A high productivity, full-stack web framework for the [Go language](https://www.golang.org).
 
 Current Version: 1.0.0 (2020-07-11)
 
@@ -26,12 +26,12 @@ Open http://localhost:9000 in your browser and you should see "It works!"
 ## Community
 
 * [Gitter](https://gitter.im/revel/community)
-* [StackOverflow](http://stackoverflow.com/questions/tagged/revel)
+* [StackOverflow](https://stackoverflow.com/questions/tagged/revel)
 
 
 ## Learn More
 
-* [Manual, Samples, Godocs, etc](http://revel.github.io)
+* [Manual, Samples, Godocs, etc](https://revel.github.io)
 * [Apps using Revel](https://github.com/revel/revel/wiki/Apps-in-the-Wild)
 * [Articles Featuring Revel](https://github.com/revel/revel/wiki/Articles)
 
