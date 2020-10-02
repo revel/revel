@@ -9,9 +9,9 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/fsnotify/fsnotify"
-	"time"
 )
 
 // Listener is an interface for receivers of filesystem events.
@@ -139,7 +139,6 @@ func (w *Watcher) Listen(listener Listener, roots ...string) {
 
 // NotifyWhenUpdated notifies the watcher when a file event is received.
 func (w *Watcher) NotifyWhenUpdated(listener Listener, watcher *fsnotify.Watcher) {
-
 	for {
 		select {
 		case ev := <-watcher.Events:

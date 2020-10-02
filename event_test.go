@@ -1,9 +1,10 @@
 package revel_test
 
 import (
+	"testing"
+
 	"github.com/revel/revel"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 // Test that the event handler can be attached and it dispatches the event received

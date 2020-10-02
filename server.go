@@ -6,10 +6,11 @@ package revel
 
 import (
 	"fmt"
-	"github.com/revel/revel/session"
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/revel/revel/session"
 	"github.com/revel/revel/utils"
 )
 
@@ -56,7 +57,6 @@ func InitServer() {
 	if MainWatcher != nil && Config.BoolDefault("watch.templates", true) {
 		MainWatcher.Listen(MainTemplateLoader, MainTemplateLoader.paths...)
 	}
-
 }
 
 // Run the server.
@@ -102,8 +102,10 @@ func InitServerEngine(port int, serverEngine string) {
 		port = HTTPPort
 	}
 
-	var network = "tcp"
-	var localAddress string
+	var (
+		network      = "tcp"
+		localAddress string
+	)
 
 	// If the port is zero, treat the address as a fully qualified local address.
 	// This address must be prefixed with the network type followed by a colon,
@@ -133,7 +135,7 @@ func InitServerEngine(port int, serverEngine string) {
 
 // Initialize the controller stack for the application
 func initControllerStack() {
-	RevelConfig.Controller.Reuse = Config.BoolDefault("revel.controller.reuse",true)
+	RevelConfig.Controller.Reuse = Config.BoolDefault("revel.controller.reuse", true)
 
 	if RevelConfig.Controller.Reuse {
 		RevelConfig.Controller.Stack = utils.NewStackLock(
@@ -149,5 +151,5 @@ func initControllerStack() {
 
 // Called to stop the server
 func StopServer(value interface{}) EventResponse {
-	return RaiseEvent(ENGINE_SHUTDOWN_REQUEST,value)
+	return RaiseEvent(ENGINE_SHUTDOWN_REQUEST, value)
 }

@@ -21,6 +21,7 @@ type PNN struct{ PN }
 
 // Embedded via two paths
 type P2 struct{ *Controller }
+
 type PP2 struct {
 	*Controller // Need to embed this explicitly to avoid duplicate selector.
 	P

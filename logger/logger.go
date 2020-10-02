@@ -2,8 +2,9 @@ package logger
 
 import (
 	"fmt"
-	"github.com/revel/config"
 	"time"
+
+	"github.com/revel/config"
 )
 
 // The LogHandler defines the interface to handle the log records
@@ -66,7 +67,7 @@ type (
 	// The log handler interface
 	LogHandler interface {
 		Log(*Record) error
-		//log15.Handler
+		// log15.Handler
 	}
 
 	// The log stack handler interface
@@ -101,7 +102,7 @@ type (
 	Record struct {
 		Message string     // The message
 		Time    time.Time  // The time
-		Level   LogLevel   //The level
+		Level   LogLevel   // The level
 		Call    CallStack  // The call stack if built
 		Context ContextMap // The context
 	}
@@ -129,6 +130,7 @@ type formatFunc func(*Record) []byte
 func (f formatFunc) Format(r *Record) []byte {
 	return f(r)
 }
+
 func NewRecord(message string, level LogLevel) *Record {
 	return &Record{Message: message, Context: ContextMap{}, Level: level}
 }
@@ -162,7 +164,7 @@ func (p *parentLogHandler) SetChild(child LogHandler) LogHandler {
 // Create a new log options
 func NewLogOptions(cfg *config.Context, replaceHandler bool, phandler ParentLogHandler, lvl ...LogLevel) (logOptions *LogOptions) {
 	logOptions = &LogOptions{
-		Ctx: cfg,
+		Ctx:                    cfg,
 		ReplaceExistingHandler: replaceHandler,
 		HandlerWrap:            phandler,
 		Levels:                 lvl,

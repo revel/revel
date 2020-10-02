@@ -14,6 +14,7 @@ type ControllerType struct {
 	ControllerIndexes [][]int // FieldByIndex to all embedded *Controllers
 	ControllerEvents  *ControllerTypeEvents
 }
+
 type ControllerTypeEvents struct {
 	Before, After, Finally, Panic []*ControllerFieldPath
 }
@@ -141,6 +142,7 @@ func (cte *ControllerTypeEvents) check(theType reflect.Type, fieldPath []int) {
 		}
 	}
 }
+
 func newFieldPath(isPointer bool, value reflect.Value, fieldPath []int) *ControllerFieldPath {
 	return &ControllerFieldPath{IsPointer: isPointer, FunctionCall: value, FieldIndexPath: fieldPath}
 }

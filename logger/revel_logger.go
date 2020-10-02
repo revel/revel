@@ -2,9 +2,10 @@ package logger
 
 import (
 	"fmt"
-	"github.com/revel/log15"
 	"log"
 	"os"
+
+	"github.com/revel/log15"
 )
 
 // This type implements the MultiLogger
@@ -81,7 +82,7 @@ func (rl *RevelLogger) SetStackDepth(amount int) MultiLogger {
 // Create a new logger
 func New(ctx ...interface{}) MultiLogger {
 	r := &RevelLogger{Logger: log15.New(ctx...)}
-	//r.SetStackDepth(2)
+	// r.SetStackDepth(2)
 	return r
 }
 
@@ -137,6 +138,7 @@ func (m ContextMap) StringMap() (newMap map[string]string) {
 	}
 	return
 }
+
 func (m ContextMap) Add(key string, value interface{}) {
 	m[key] = value
 }

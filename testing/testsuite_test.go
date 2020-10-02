@@ -192,7 +192,6 @@ func TestPostFileUpload(t *testing.T) {
 	testSuite.AssertContains("File: server.go")
 	testSuite.AssertNotContains("File: not_exists.go")
 	testSuite.AssertEqual("text/plain; charset=utf-8", testSuite.Response.Header.Get("Content-Type"))
-
 }
 
 func createNewTestSuite(t *testing.T) *TestSuite {

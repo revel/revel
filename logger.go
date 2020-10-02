@@ -4,7 +4,7 @@ import (
 	"github.com/revel/revel/logger"
 )
 
-//Logger
+// Logger
 var (
 	// The root log is what all other logs are branched from, meaning if you set the handler for the root
 	// it will adjust all children
@@ -30,14 +30,13 @@ var (
 
 // Initialize the loggers first
 func init() {
-
-	//RootLog.SetHandler(
+	// RootLog.SetHandler(
 	//	logger.LevelHandler(logger.LogLevel(log15.LvlDebug),
 	//		logger.StreamHandler(os.Stdout, logger.TerminalFormatHandler(false, true))))
 	initLoggers()
 	OnAppStart(initLoggers, -5)
-
 }
+
 func initLoggers() {
 	appHandle := logger.InitializeFromConfig(BasePath, Config)
 

@@ -18,10 +18,10 @@ const (
 	errorKey            = "REVEL_ERROR"
 )
 
-var (
-	levelString = map[LogLevel]string{LvlDebug: "DEBUG",
-		LvlInfo: "INFO", LvlWarn: "WARN", LvlError: "ERROR", LvlCrit: "CRIT"}
-)
+var levelString = map[LogLevel]string{
+	LvlDebug: "DEBUG",
+	LvlInfo:  "INFO", LvlWarn: "WARN", LvlError: "ERROR", LvlCrit: "CRIT",
+}
 
 // Outputs to the terminal in a format like below
 // INFO  09:11:32 server-engine.go:169: Request Stats
@@ -32,7 +32,7 @@ func TerminalFormatHandler(noColor bool, smallDate bool) LogFormat {
 	}
 	return FormatFunc(func(r *Record) []byte {
 		// Bash coloring http://misc.flogisoft.com/bash/tip_colors_and_formatting
-		var color = 0
+		color := 0
 		switch r.Level {
 		case LvlCrit:
 			// Magenta

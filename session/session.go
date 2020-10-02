@@ -8,11 +8,12 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
-	"github.com/twinj/uuid"
 	"reflect"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/twinj/uuid"
 )
 
 const (
@@ -165,7 +166,7 @@ func (s Session) GetProperty(key string, value interface{}) (interface{}, error)
 		if valueOf == reflect.Zero(reflect.ValueOf(value).Type()) {
 			return nil, nil
 		}
-		//idx := val.MapIndex(reflect.ValueOf(key))
+		// idx := val.MapIndex(reflect.ValueOf(key))
 		if !valueOf.IsValid() {
 			return nil, nil
 		}
@@ -244,7 +245,6 @@ func (s Session) Serialize() map[string]string {
 	if len(newObjectMap) > 0 {
 		if data, err := json.Marshal(newObjectMap); err != nil {
 			sessionLog.Error("Unable to marshal session ", "key", SessionObjectKeyName, "error", err)
-
 		} else {
 			newMap[SessionObjectKeyName] = string(data)
 		}
@@ -266,7 +266,6 @@ func (s Session) Load(data map[string]string) {
 		} else {
 			s[key] = value
 		}
-
 	}
 }
 

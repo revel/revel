@@ -92,7 +92,7 @@ func ModuleFromPath(packagePath string, addGopathToPath bool) (module *Module) {
 
 	// See if the path exists in the module based
 	for i := range Modules {
-		if strings.Index(packagePath, Modules[i].ImportPath)==0 {
+		if strings.Index(packagePath, Modules[i].ImportPath) == 0 {
 			// This is a prefix, so the module is this module
 			module = Modules[i]
 			break
@@ -137,7 +137,6 @@ func loadModules() {
 	sort.Strings(keys)
 	for _, key := range keys {
 		moduleLog.Debug("Sorted keys", "keys", key)
-
 	}
 	for _, key := range keys {
 		moduleImportPath := Config.StringDefault(key, "")
@@ -173,10 +172,12 @@ func addModule(name, importPath, modulePath string) {
 	if _, found := ModuleByName(name); found {
 		moduleLog.Panic("Attempt to import duplicate module %s path %s aborting startup", "name", name, "path", modulePath)
 	}
-	Modules = append(Modules, &Module{Name: name,
+	Modules = append(Modules, &Module{
+		Name:       name,
 		ImportPath: filepath.ToSlash(importPath),
 		Path:       filepath.ToSlash(modulePath),
-		Log:        RootLog.New("module", name)})
+		Log:        RootLog.New("module", name),
+	})
 	if codePath := filepath.Join(modulePath, "app"); DirExists(codePath) {
 		CodePaths = append(CodePaths, codePath)
 		if viewsPath := filepath.Join(modulePath, "app", "views"); DirExists(viewsPath) {

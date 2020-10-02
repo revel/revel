@@ -18,5 +18,4 @@ type (
 	}
 	RevelUnitList []*RevelUnit
 	RevelUnitType int
-
 )

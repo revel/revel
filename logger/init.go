@@ -3,11 +3,12 @@ package logger
 // Get all handlers based on the Config (if available)
 import (
 	"fmt"
-	"github.com/revel/config"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/revel/config"
 )
 
 func InitializeFromConfig(basePath string, config *config.Context) (c *CompositeMultiHandler) {
@@ -61,13 +62,13 @@ func initAllLog(c *CompositeMultiHandler, basePath string, config *config.Contex
 // log.all.filter ....
 // log.error.filter ....
 func initFilterLog(c *CompositeMultiHandler, basePath string, config *config.Context) {
-
 	if config != nil {
 		extraLogFlag := config.BoolDefault(SPECIAL_USE_FLAG, false)
 
 		for _, logFilter := range logFilterList {
 			// Init for all filters
-			for _, name := range []string{"all", "debug", "info", "warn", "error", "crit",
+			for _, name := range []string{
+				"all", "debug", "info", "warn", "error", "crit",
 				"trace", // TODO trace is deprecated
 			} {
 				optionList := config.Options(logFilter.LogPrefix + name + logFilter.LogSuffix)
@@ -96,7 +97,8 @@ func initFilterLog(c *CompositeMultiHandler, basePath string, config *config.Con
 
 // Init the log.error, log.warn etc configuration options
 func initLogLevels(c *CompositeMultiHandler, basePath string, config *config.Context) {
-	for _, name := range []string{"debug", "info", "warn", "error", "crit",
+	for _, name := range []string{
+		"debug", "info", "warn", "error", "crit",
 		"trace", // TODO trace is deprecated
 	} {
 		if config != nil {

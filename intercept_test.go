@@ -9,17 +9,21 @@ import (
 	"testing"
 )
 
-var funcP = func(c *Controller) Result { return nil }
-var funcP2 = func(c *Controller) Result { return nil }
+var (
+	funcP  = func(c *Controller) Result { return nil }
+	funcP2 = func(c *Controller) Result { return nil }
+)
 
-type InterceptController struct{ *Controller }
-type InterceptControllerN struct{ InterceptController }
-type InterceptControllerP struct{ *InterceptController }
-type InterceptControllerNP struct {
-	*Controller
-	InterceptControllerN
-	InterceptControllerP
-}
+type (
+	InterceptController   struct{ *Controller }
+	InterceptControllerN  struct{ InterceptController }
+	InterceptControllerP  struct{ *InterceptController }
+	InterceptControllerNP struct {
+		*Controller
+		InterceptControllerN
+		InterceptControllerP
+	}
+)
 
 func (c InterceptController) methN() Result  { return nil }
 func (c *InterceptController) methP() Result { return nil }

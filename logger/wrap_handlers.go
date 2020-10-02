@@ -14,7 +14,7 @@ func FuncHandler(fn func(r *Record) error) LogHandler {
 	return funcHandler(fn)
 }
 
-// The type decleration for the function
+// The type declaration for the function
 type funcHandler func(r *Record) error
 
 // The implementation of the Log

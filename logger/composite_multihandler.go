@@ -1,10 +1,11 @@
 package logger
 
 import (
-	"github.com/mattn/go-colorable"
-	"gopkg.in/natefinch/lumberjack.v2"
 	"io"
 	"os"
+
+	"github.com/mattn/go-colorable"
+	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 type CompositeMultiHandler struct {
@@ -19,8 +20,8 @@ func NewCompositeMultiHandler() (*CompositeMultiHandler, LogHandler) {
 	cw := &CompositeMultiHandler{}
 	return cw, cw
 }
-func (h *CompositeMultiHandler) Log(r *Record) (err error) {
 
+func (h *CompositeMultiHandler) Log(r *Record) (err error) {
 	var handler LogHandler
 
 	switch r.Level {
@@ -88,8 +89,8 @@ func (h *CompositeMultiHandler) SetHandlers(handler LogHandler, options *LogOpti
 	for _, lvl := range options.Levels {
 		h.SetHandler(handler, options.ReplaceExistingHandler, lvl)
 	}
-
 }
+
 func (h *CompositeMultiHandler) SetJson(writer io.Writer, options *LogOptions) {
 	handler := CallerFileHandler(StreamHandler(writer, JsonFormatEx(
 		options.GetBoolDefault("pretty", false),
@@ -106,7 +107,7 @@ func (h *CompositeMultiHandler) SetJsonFile(filePath string, options *LogOptions
 	writer := &lumberjack.Logger{
 		Filename:   filePath,
 		MaxSize:    options.GetIntDefault("maxSizeMB", 1024), // megabytes
-		MaxAge:     options.GetIntDefault("maxAgeDays", 7),   //days
+		MaxAge:     options.GetIntDefault("maxAgeDays", 7),   // days
 		MaxBackups: options.GetIntDefault("maxBackups", 7),
 		Compress:   options.GetBoolDefault("compress", true),
 	}
@@ -146,7 +147,7 @@ func (h *CompositeMultiHandler) SetTerminalFile(filePath string, options *LogOpt
 	writer := &lumberjack.Logger{
 		Filename:   filePath,
 		MaxSize:    options.GetIntDefault("maxSizeMB", 1024), // megabytes
-		MaxAge:     options.GetIntDefault("maxAgeDays", 7),   //days
+		MaxAge:     options.GetIntDefault("maxAgeDays", 7),   // days
 		MaxBackups: options.GetIntDefault("maxBackups", 7),
 		Compress:   options.GetBoolDefault("compress", true),
 	}
