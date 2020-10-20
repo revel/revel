@@ -36,22 +36,22 @@ var compressLog = RevelLog.New("section", "compress")
 
 // WriteFlusher interface for compress writer
 type WriteFlusher interface {
-	io.Writer // An IO Writer
-	io.Closer // A closure
+	io.Writer     // An IO Writer
+	io.Closer     // A closure
 	Flush() error /// A flush function
 }
 
 // The compressed writer
 type CompressResponseWriter struct {
 	Header             *BufferedServerHeader // The header
-	ControllerResponse *Response // The response
-	OriginalWriter     io.Writer // The writer
-	compressWriter     WriteFlusher // The flushed writer
-	compressionType    string // The compression type
-	headersWritten     bool // True if written
-	closeNotify        chan bool // The notify channel to close
-	parentNotify       <-chan bool // The parent chanel to receive the closed event
-	closed             bool // True if closed
+	ControllerResponse *Response             // The response
+	OriginalWriter     io.Writer             // The writer
+	compressWriter     WriteFlusher          // The flushed writer
+	compressionType    string                // The compression type
+	headersWritten     bool                  // True if written
+	closeNotify        chan bool             // The notify channel to close
+	parentNotify       <-chan bool           // The parent chanel to receive the closed event
+	closed             bool                  // True if closed
 }
 
 // CompressFilter does compression of response body in gzip/deflate if
@@ -276,11 +276,11 @@ func detectCompressionType(req *Request, resp *Response) (found bool, compressio
 // BufferedServerHeader will not send content out until the Released is called, from that point on it will act normally
 // It implements all the ServerHeader
 type BufferedServerHeader struct {
-	cookieList []string // The cookie list
+	cookieList []string            // The cookie list
 	headerMap  map[string][]string // The header map
-	status     int // The status
-	released   bool // True if released
-	original   ServerHeader // The original header
+	status     int                 // The status
+	released   bool                // True if released
+	original   ServerHeader        // The original header
 }
 
 // Creates a new instance based on the ServerHeader
@@ -355,14 +355,14 @@ func (bsh *BufferedServerHeader) GetKeys() (value []string) {
 		value = bsh.original.GetKeys()
 		for key := range bsh.headerMap {
 			found := false
-			for _,v := range value {
-				if v==key {
+			for _, v := range value {
+				if v == key {
 					found = true
 					break
 				}
 			}
 			if !found {
-				value = append(value,key)
+				value = append(value, key)
 			}
 		}
 	}

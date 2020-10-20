@@ -102,5 +102,4 @@ func TestValidateMessageKey(t *testing.T) {
 			t.Fatal("errors should not be present")
 		}
 	})
-
 }

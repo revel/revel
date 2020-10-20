@@ -550,6 +550,7 @@ type testController struct {
 func initControllers() {
 	registerControllers()
 }
+
 func TestReverseRouting(t *testing.T) {
 	initControllers()
 	router := NewRouter("")

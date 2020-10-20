@@ -31,7 +31,6 @@ func BeforeAfterFilter(c *Controller, fc []Filter) {
 }
 
 func beforeAfterFilterInvoke(method When, c *Controller) (r *reflect.Value) {
-
 	if c.Type == nil {
 		return
 	}

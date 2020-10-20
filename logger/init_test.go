@@ -5,12 +5,13 @@
 package logger_test
 
 import (
-	"github.com/revel/config"
-	"github.com/revel/revel/logger"
-	"github.com/stretchr/testify/assert"
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/revel/config"
+	"github.com/revel/revel/logger"
+	"github.com/stretchr/testify/assert"
 )
 
 type (
@@ -32,16 +33,26 @@ type (
 
 // Single test cases
 var singleCases = []testData{
-	{config: []string{"log.crit.output"},
-		result: testResult{0, 0, 0, 0, 1}},
-	{config: []string{"log.error.output"},
-		result: testResult{0, 0, 0, 1, 1}},
-	{config: []string{"log.warn.output"},
-		result: testResult{0, 0, 1, 0, 0}},
-	{config: []string{"log.info.output"},
-		result: testResult{0, 1, 0, 0, 0}},
-	{config: []string{"log.debug.output"},
-		result: testResult{1, 0, 0, 0, 0}},
+	{
+		config: []string{"log.crit.output"},
+		result: testResult{0, 0, 0, 0, 1},
+	},
+	{
+		config: []string{"log.error.output"},
+		result: testResult{0, 0, 0, 1, 1},
+	},
+	{
+		config: []string{"log.warn.output"},
+		result: testResult{0, 0, 1, 0, 0},
+	},
+	{
+		config: []string{"log.info.output"},
+		result: testResult{0, 1, 0, 0, 0},
+	},
+	{
+		config: []string{"log.debug.output"},
+		result: testResult{1, 0, 0, 0, 0},
+	},
 }
 
 // Test singles
@@ -55,26 +66,46 @@ func TestSingleCases(t *testing.T) {
 
 // Filter test cases
 var filterCases = []testData{
-	{config: []string{"log.crit.filter.module.app"},
-		result: testResult{0, 0, 0, 0, 1}},
-	{config: []string{"log.crit.filter.module.appa"},
-		result: testResult{0, 0, 0, 0, 0}},
-	{config: []string{"log.error.filter.module.app"},
-		result: testResult{0, 0, 0, 1, 1}},
-	{config: []string{"log.error.filter.module.appa"},
-		result: testResult{0, 0, 0, 0, 0}},
-	{config: []string{"log.warn.filter.module.app"},
-		result: testResult{0, 0, 1, 0, 0}},
-	{config: []string{"log.warn.filter.module.appa"},
-		result: testResult{0, 0, 0, 0, 0}},
-	{config: []string{"log.info.filter.module.app"},
-		result: testResult{0, 1, 0, 0, 0}},
-	{config: []string{"log.info.filter.module.appa"},
-		result: testResult{0, 0, 0, 0, 0}},
-	{config: []string{"log.debug.filter.module.app"},
-		result: testResult{1, 0, 0, 0, 0}},
-	{config: []string{"log.debug.filter.module.appa"},
-		result: testResult{0, 0, 0, 0, 0}},
+	{
+		config: []string{"log.crit.filter.module.app"},
+		result: testResult{0, 0, 0, 0, 1},
+	},
+	{
+		config: []string{"log.crit.filter.module.appa"},
+		result: testResult{0, 0, 0, 0, 0},
+	},
+	{
+		config: []string{"log.error.filter.module.app"},
+		result: testResult{0, 0, 0, 1, 1},
+	},
+	{
+		config: []string{"log.error.filter.module.appa"},
+		result: testResult{0, 0, 0, 0, 0},
+	},
+	{
+		config: []string{"log.warn.filter.module.app"},
+		result: testResult{0, 0, 1, 0, 0},
+	},
+	{
+		config: []string{"log.warn.filter.module.appa"},
+		result: testResult{0, 0, 0, 0, 0},
+	},
+	{
+		config: []string{"log.info.filter.module.app"},
+		result: testResult{0, 1, 0, 0, 0},
+	},
+	{
+		config: []string{"log.info.filter.module.appa"},
+		result: testResult{0, 0, 0, 0, 0},
+	},
+	{
+		config: []string{"log.debug.filter.module.app"},
+		result: testResult{1, 0, 0, 0, 0},
+	},
+	{
+		config: []string{"log.debug.filter.module.appa"},
+		result: testResult{0, 0, 0, 0, 0},
+	},
 }
 
 // Filter test
@@ -88,28 +119,50 @@ func TestFilterCases(t *testing.T) {
 
 // Inverse test cases
 var nfilterCases = []testData{
-	{config: []string{"log.crit.nfilter.module.appa"},
-		result: testResult{0, 0, 0, 0, 1}},
-	{config: []string{"log.crit.nfilter.modules.appa"},
-		result: testResult{0, 0, 0, 0, 0}},
-	{config: []string{"log.crit.nfilter.module.app"},
-		result: testResult{0, 0, 0, 0, 0}},
-	{config: []string{"log.error.nfilter.module.appa"}, // Special case, when error is not nill critical inherits from error
-		result: testResult{0, 0, 0, 1, 1}},
-	{config: []string{"log.error.nfilter.module.app"},
-		result: testResult{0, 0, 0, 0, 0}},
-	{config: []string{"log.warn.nfilter.module.appa"},
-		result: testResult{0, 0, 1, 0, 0}},
-	{config: []string{"log.warn.nfilter.module.app"},
-		result: testResult{0, 0, 0, 0, 0}},
-	{config: []string{"log.info.nfilter.module.appa"},
-		result: testResult{0, 1, 0, 0, 0}},
-	{config: []string{"log.info.nfilter.module.app"},
-		result: testResult{0, 0, 0, 0, 0}},
-	{config: []string{"log.debug.nfilter.module.appa"},
-		result: testResult{1, 0, 0, 0, 0}},
-	{config: []string{"log.debug.nfilter.module.app"},
-		result: testResult{0, 0, 0, 0, 0}},
+	{
+		config: []string{"log.crit.nfilter.module.appa"},
+		result: testResult{0, 0, 0, 0, 1},
+	},
+	{
+		config: []string{"log.crit.nfilter.modules.appa"},
+		result: testResult{0, 0, 0, 0, 0},
+	},
+	{
+		config: []string{"log.crit.nfilter.module.app"},
+		result: testResult{0, 0, 0, 0, 0},
+	},
+	{
+		config: []string{"log.error.nfilter.module.appa"}, // Special case, when error is not nill critical inherits from error
+		result: testResult{0, 0, 0, 1, 1},
+	},
+	{
+		config: []string{"log.error.nfilter.module.app"},
+		result: testResult{0, 0, 0, 0, 0},
+	},
+	{
+		config: []string{"log.warn.nfilter.module.appa"},
+		result: testResult{0, 0, 1, 0, 0},
+	},
+	{
+		config: []string{"log.warn.nfilter.module.app"},
+		result: testResult{0, 0, 0, 0, 0},
+	},
+	{
+		config: []string{"log.info.nfilter.module.appa"},
+		result: testResult{0, 1, 0, 0, 0},
+	},
+	{
+		config: []string{"log.info.nfilter.module.app"},
+		result: testResult{0, 0, 0, 0, 0},
+	},
+	{
+		config: []string{"log.debug.nfilter.module.appa"},
+		result: testResult{1, 0, 0, 0, 0},
+	},
+	{
+		config: []string{"log.debug.nfilter.module.app"},
+		result: testResult{0, 0, 0, 0, 0},
+	},
 }
 
 // Inverse test
@@ -123,8 +176,10 @@ func TestNotFilterCases(t *testing.T) {
 
 // off test cases
 var offCases = []testData{
-	{config: []string{"log.all.output", "log.error.output=off"},
-		result: testResult{1, 1, 1, 0, 1}},
+	{
+		config: []string{"log.all.output", "log.error.output=off"},
+		result: testResult{1, 1, 1, 0, 1},
+	},
 }
 
 // Off test
@@ -138,8 +193,10 @@ func TestOffCases(t *testing.T) {
 
 // Duplicate test cases
 var duplicateCases = []testData{
-	{config: []string{"log.all.output", "log.error.output", "log.error.filter.module.app"},
-		result: testResult{1, 1, 1, 2, 1}},
+	{
+		config: []string{"log.all.output", "log.error.output", "log.error.filter.module.app"},
+		result: testResult{1, 1, 1, 2, 1},
+	},
 }
 
 // test duplicate cases
@@ -153,14 +210,22 @@ func TestDuplicateCases(t *testing.T) {
 
 // Contradicting cases
 var contradictCases = []testData{
-	{config: []string{"log.all.output", "log.error.output=off", "log.all.output"},
-		result: testResult{1, 1, 1, 0, 1}},
-	{config: []string{"log.all.output", "log.error.output=off", "log.debug.filter.module.app"},
-		result: testResult{2, 1, 1, 0, 1}},
-	{config: []string{"log.all.filter.module.app", "log.info.output=off", "log.info.filter.module.app"},
-		result: testResult{1, 2, 1, 1, 1}},
-	{config: []string{"log.all.output", "log.info.output=off", "log.info.filter.module.app"},
-		result: testResult{1, 1, 1, 1, 1}},
+	{
+		config: []string{"log.all.output", "log.error.output=off", "log.all.output"},
+		result: testResult{1, 1, 1, 0, 1},
+	},
+	{
+		config: []string{"log.all.output", "log.error.output=off", "log.debug.filter.module.app"},
+		result: testResult{2, 1, 1, 0, 1},
+	},
+	{
+		config: []string{"log.all.filter.module.app", "log.info.output=off", "log.info.filter.module.app"},
+		result: testResult{1, 2, 1, 1, 1},
+	},
+	{
+		config: []string{"log.all.output", "log.info.output=off", "log.info.filter.module.app"},
+		result: testResult{1, 1, 1, 1, 1},
+	},
 }
 
 // Contradiction test
@@ -174,10 +239,14 @@ func TestContradictCases(t *testing.T) {
 
 // All test cases
 var allCases = []testData{
-	{config: []string{"log.all.filter.module.app"},
-		result: testResult{1, 1, 1, 1, 1}},
-	{config: []string{"log.all.output"},
-		result: testResult{2, 2, 2, 2, 2}},
+	{
+		config: []string{"log.all.filter.module.app"},
+		result: testResult{1, 1, 1, 1, 1},
+	},
+	{
+		config: []string{"log.all.output"},
+		result: testResult{2, 2, 2, 2, 2},
+	},
 }
 
 // All tests
@@ -195,7 +264,6 @@ func TestAllCases(t *testing.T) {
 	for _, testCase := range allCases {
 		testCase.validate(t)
 	}
-
 }
 
 func (c *testCounter) Log(r *logger.Record) error {
@@ -215,6 +283,7 @@ func (c *testCounter) Log(r *logger.Record) error {
 	}
 	return nil
 }
+
 func (td *testData) logTest(rootLog logger.MultiLogger, t *testing.T) {
 	if td.tc == nil {
 		td.tc = &testCounter{}

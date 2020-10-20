@@ -46,9 +46,11 @@ type Template interface {
 	Location() string // Disk location
 }
 
-var invalidSlugPattern = regexp.MustCompile(`[^a-z0-9 _-]`)
-var whiteSpacePattern = regexp.MustCompile(`\s+`)
-var templateLog = RevelLog.New("section", "template")
+var (
+	invalidSlugPattern = regexp.MustCompile(`[^a-z0-9 _-]`)
+	whiteSpacePattern  = regexp.MustCompile(`\s+`)
+	templateLog        = RevelLog.New("section", "template")
+)
 
 // TemplateOutputArgs returns the result of the template rendered using the passed in arguments.
 func TemplateOutputArgs(templatePath string, args map[string]interface{}) (data []byte, err error) {
@@ -109,9 +111,11 @@ func (loader *TemplateLoader) Refresh() (err *Error) {
 	defer loader.templateMutex.Unlock()
 
 	loader.loadVersionSeed++
-	runtimeLoader := &templateRuntime{loader: loader,
+	runtimeLoader := &templateRuntime{
+		loader:      loader,
 		version:     loader.loadVersionSeed,
-		templateMap: map[string]Template{}}
+		templateMap: map[string]Template{},
+	}
 
 	templateLog.Debug("Refresh: Refreshing templates from ", "path", loader.paths)
 	if err = loader.initializeEngines(runtimeLoader, Config.StringDefault("template.engines", GO_TEMPLATE)); err != nil {

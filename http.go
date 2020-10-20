@@ -6,18 +6,17 @@ package revel
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"net/url"
+	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
-
-	"context"
-	"mime/multipart"
-	"path/filepath"
 )
 
 // Request is Revel's HTTP request object structure
@@ -41,8 +40,10 @@ type Request struct {
 	controller    *Controller    // The controller, so some of this data can be fetched
 }
 
-var FORM_NOT_FOUND = errors.New("Form Not Found")
-var httpLog = RevelLog.New("section", "http")
+var (
+	FORM_NOT_FOUND = errors.New("Form Not Found")
+	httpLog        = RevelLog.New("section", "http")
+)
 
 // Response is Revel's HTTP response object structure
 type Response struct {
@@ -80,6 +81,7 @@ func NewRequest(r ServerRequest) *Request {
 	}
 	return req
 }
+
 func (req *Request) SetRequest(r ServerRequest) {
 	req.In = r
 	if h, e := req.In.Get(HTTP_SERVER_HEADER); e == nil {
@@ -93,7 +95,6 @@ func (req *Request) SetRequest(r ServerRequest) {
 	req.Method, _ = req.GetValue(HTTP_METHOD).(string)
 	req.RemoteAddr, _ = req.GetValue(HTTP_REMOTE_ADDR).(string)
 	req.Host, _ = req.GetValue(HTTP_HOST).(string)
-
 }
 
 // Returns a cookie
@@ -174,7 +175,6 @@ type MultipartForm struct {
 }
 
 func (req *Request) MultipartReader() (*multipart.Reader, error) {
-
 	return nil, errors.New("MultipartReader not supported, use controller.Param")
 }
 
@@ -283,13 +283,13 @@ func (resp *Response) WriteHeader(defaultStatusCode int, defaultContentType stri
 	}
 	resp.SetStatus(resp.Status)
 }
+
 func (resp *Response) SetStatus(statusCode int) {
 	if resp.Out.internalHeader.Server != nil {
 		resp.Out.internalHeader.Server.SetStatus(statusCode)
 	} else {
 		resp.Out.Server.Set(ENGINE_RESPONSE_STATUS, statusCode)
 	}
-
 }
 
 // Return the writer
@@ -378,7 +378,6 @@ func (h *RevelHeader) GetAll(key string) (values []string) {
 // e.g. From "multipart/form-data; boundary=--" to "multipart/form-data"
 // If none is specified, returns "text/html" by default.
 func ResolveContentType(req *Request) string {
-
 	contentType := req.Header.Get("Content-Type")
 	if contentType == "" {
 		return "text/html"

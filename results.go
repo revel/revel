@@ -116,7 +116,6 @@ func (r ErrorResult) Apply(req *Request, resp *Response) {
 			resultsLog.Error("Apply: Response WriteTo failed:", "error", err)
 		}
 	}
-
 }
 
 type PlaintextErrorResult struct {
@@ -223,7 +222,6 @@ func (r *RenderTemplateResult) renderOutput(wr io.Writer) (err error) {
 // This is safe unless white-space: pre; is used in css for formatting.
 // Since there is no way to detect that, you will have to keep trimming off in these cases.
 func (r *RenderTemplateResult) compressHtml(b *bytes.Buffer) (b2 *bytes.Buffer) {
-
 	// Allocate length of original buffer, so we can write everything without allocating again
 	b2.Grow(b.Len())
 	insidePre := false
@@ -279,7 +277,7 @@ func (r *RenderTemplateResult) renderError(err error, req *Request, resp *Respon
 			if tmpl, err := MainTemplateLoader.TemplateLang(templateName, lang); err == nil {
 				templateContent = tmpl.Content()
 			} else {
-				templateLog.Info("Unable to retreive template ", "error", err)
+				templateLog.Info("Unable to retrieve template ", "error", err)
 			}
 		}
 		compileError = &Error{
@@ -413,7 +411,7 @@ func (r *BinaryResult) Apply(req *Request, resp *Response) {
 	if content, ok := r.Reader.(io.ReadSeeker); ok && r.Length < 0 {
 		// get the size from the stream
 		// go1.6 compatibility change, go1.6 does not define constants io.SeekStart
-		//if size, err := content.Seek(0, io.SeekEnd); err == nil {
+		// if size, err := content.Seek(0, io.SeekEnd); err == nil {
 		//	if _, err = content.Seek(0, io.SeekStart); err == nil {
 		if size, err := content.Seek(0, 2); err == nil {
 			if _, err = content.Seek(0, 0); err == nil {

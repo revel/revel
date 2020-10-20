@@ -40,7 +40,9 @@ import (
 //   func (c *AppController) example() revel.Result
 //
 type InterceptorFunc func(*Controller) Result
+
 type InterceptorMethod interface{}
+
 type When int
 
 const (

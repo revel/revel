@@ -23,6 +23,7 @@ const (
 	ENGINE_REQUEST
 	ENGINE_RESPONSE
 )
+
 const (
 	/* HTTP Engine Type Values Starts at 1000 */
 	HTTP_QUERY           = ENGINE_PARAMETERS
@@ -68,7 +69,7 @@ type (
 
 	// Expected response for HTTP_SERVER_HEADER type (if implemented)
 	ServerHeader interface {
-		SetCookie(cookie string) // Sets the cookie
+		SetCookie(cookie string)                              // Sets the cookie
 		GetCookie(key string) (value ServerCookie, err error) // Gets the cookie
 		Set(key string, value string)
 		Add(key string, value string)
@@ -167,7 +168,7 @@ func handleInternal(ctx ServerContext) {
 	start := time.Now()
 	var c *Controller
 	if RevelConfig.Controller.Reuse {
-		c         = RevelConfig.Controller.Stack.Pop().(*Controller)
+		c = RevelConfig.Controller.Stack.Pop().(*Controller)
 		defer func() {
 			RevelConfig.Controller.Stack.Push(c)
 		}()
@@ -176,8 +177,8 @@ func handleInternal(ctx ServerContext) {
 	}
 
 	var (
-
-		req, resp = c.Request, c.Response
+		req  = c.Request
+		resp = c.Response
 	)
 	c.SetController(ctx)
 	req.WebSocket, _ = ctx.GetResponse().(ServerWebSocket)
@@ -217,13 +218,12 @@ func handleInternal(ctx ServerContext) {
 	)
 }
 
-var (
-	ENGINE_UNKNOWN_GET = errors.New("Server Engine Invalid Get")
-)
+var ENGINE_UNKNOWN_GET = errors.New("Server Engine Invalid Get")
 
 func (e *ServerEngineEmpty) Get(_ string) interface{} {
 	return nil
 }
+
 func (e *ServerEngineEmpty) Set(_ string, _ interface{}) bool {
 	return false
 }

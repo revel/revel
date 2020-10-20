@@ -72,7 +72,6 @@ func (loader *TemplateLoader) initializeEngines(runtimeLoader *templateRuntime, 
 	// Walk through the template loader's paths and build up a template set.
 	if templateEngineNameList == "" {
 		templateEngineNameList = GO_TEMPLATE
-
 	}
 	runtimeLoader.templatesAndEngineList = []TemplateEngine{}
 	for _, engine := range strings.Split(templateEngineNameList, ",") {

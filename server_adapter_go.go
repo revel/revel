@@ -1,13 +1,11 @@
 package revel
 
 import (
-	"net"
-	"net/http"
-	"time"
 	"context"
-	"golang.org/x/net/websocket"
 	"io"
 	"mime/multipart"
+	"net"
+	"net/http"
 	"net/url"
 	"os"
 	"os/signal"
@@ -15,7 +13,10 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
+
 	"github.com/revel/revel/utils"
+	"golang.org/x/net/websocket"
 )
 
 // Register the GoHttpServer engine
@@ -69,7 +70,6 @@ func (g *GoHttpServer) Init(init *EngineInit) {
 		ReadTimeout:  time.Duration(Config.IntDefault("http.timeout.read", 0)) * time.Second,
 		WriteTimeout: time.Duration(Config.IntDefault("http.timeout.write", 0)) * time.Second,
 	}
-
 }
 
 // Handler is assigned in the Init
@@ -145,7 +145,7 @@ func (g *GoHttpServer) handleMux(w http.ResponseWriter, r *http.Request) {
 
 	if upgrade == "websocket" || upgrade == "Websocket" {
 		websocket.Handler(func(ws *websocket.Conn) {
-			//Override default Read/Write timeout with sane value for a web socket request
+			// Override default Read/Write timeout with sane value for a web socket request
 			if err := ws.SetDeadline(time.Now().Add(time.Hour * 24)); err != nil {
 				serverLogger.Error("SetDeadLine failed:", err)
 			}
@@ -401,7 +401,6 @@ func (r *GoRequest) SetRequest(req *http.Request) {
 	r.Original = req
 	r.Goheader.Source = r
 	r.Goheader.isResponse = false
-
 }
 
 // Destroy the request
@@ -495,7 +494,7 @@ func (r *GoResponse) WriteStream(name string, contentlen int64, modtime time.Tim
 		if _, err := io.Copy(r.Writer, reader); err != nil {
 			r.Original.WriteHeader(http.StatusInternalServerError)
 			return err
-		} 
+		}
 	}
 	return nil
 }
@@ -516,7 +515,6 @@ func (r *GoResponse) SetResponse(w http.ResponseWriter) {
 	r.Writer = w
 	r.Goheader.Source = r
 	r.Goheader.isResponse = true
-
 }
 
 // Sets the cookie
@@ -532,9 +530,7 @@ func (r *GoHeader) GetCookie(key string) (value ServerCookie, err error) {
 		var cookie *http.Cookie
 		if cookie, err = r.Source.(*GoRequest).Original.Cookie(key); err == nil {
 			value = GoCookie(*cookie)
-
 		}
-
 	}
 	return
 }

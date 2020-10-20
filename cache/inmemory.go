@@ -7,10 +7,10 @@ package cache
 import (
 	"fmt"
 	"reflect"
+	"sync"
 	"time"
 
 	"github.com/patrickmn/go-cache"
-	"sync"
 )
 
 type InMemoryCache struct {

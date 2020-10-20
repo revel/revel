@@ -1,6 +1,6 @@
 package model
 
-type  RevelPaths      struct {
+type RevelPaths struct {
 	Import    string
 	Source    string
 	Base      string

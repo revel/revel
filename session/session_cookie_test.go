@@ -5,13 +5,13 @@
 package session_test
 
 import (
+	"net/http"
 	"testing"
+	"time"
 
 	"github.com/revel/revel"
 	"github.com/revel/revel/session"
 	"github.com/stretchr/testify/assert"
-	"net/http"
-	"time"
 )
 
 func TestCookieRestore(t *testing.T) {
@@ -30,8 +30,8 @@ func TestCookieRestore(t *testing.T) {
 
 	restoredSession := session.NewSession()
 	cse.DecodeCookie(revel.GoCookie(*cookie), restoredSession)
-	a.Equal("foo",restoredSession["foo"])
-	a.Equal("bar",restoredSession["bar"])
+	a.Equal("foo", restoredSession["foo"])
+	a.Equal("bar", restoredSession["bar"])
 	testSharedData(originSession, restoredSession, t, a)
 }
 

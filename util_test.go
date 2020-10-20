@@ -19,9 +19,10 @@ func TestContentTypeByFilename(t *testing.T) {
 		"hello.world.c": "text/x-c; charset=utf-8",
 	}
 	srcPath, _ := findSrcPaths(RevelImportPath)
-	ConfPaths = []string{filepath.Join(
-		srcPath,
-		"conf"),
+	ConfPaths = []string{
+		filepath.Join(
+			srcPath,
+			"conf"),
 	}
 	LoadMimeConfig()
 	for filename, expected := range testCases {

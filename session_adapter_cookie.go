@@ -2,14 +2,14 @@ package revel
 
 import (
 	"fmt"
-	"github.com/revel/revel/session"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
 	"time"
-)
 
+	"github.com/revel/revel/session"
+)
 
 type (
 	// The session cookie engine
@@ -63,7 +63,6 @@ func (cse *SessionCookieEngine) Decode(c *Controller) {
 
 // Encode the session information to the cookie, set the cookie on the controller
 func (cse *SessionCookieEngine) Encode(c *Controller) {
-
 	c.SetCookie(cse.GetCookie(c.Session))
 }
 
@@ -141,5 +140,4 @@ func (cse *SessionCookieEngine) GetCookie(s session.Session) *http.Cookie {
 		MaxAge:   int(cse.ExpireAfterDuration.Seconds()),
 	}
 	return sessionCookie
-
 }

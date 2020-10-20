@@ -13,6 +13,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/http/cookiejar"
+	"net/http/httptest"
 	"net/textproto"
 	"net/url"
 	"os"
@@ -21,10 +22,8 @@ import (
 	"strings"
 
 	"github.com/revel/revel"
-
 	"github.com/revel/revel/session"
 	"golang.org/x/net/websocket"
-	"net/http/httptest"
 )
 
 type TestSuite struct {
@@ -62,7 +61,7 @@ func NewTestSuiteEngine(engine revel.SessionEngine) TestSuite {
 }
 
 // NewTestRequest returns an initialized *TestRequest. It is used for extending
-// testsuite package making it possibe to define own methods. Example:
+// testsuite package making it possible to define own methods. Example:
 //	type MyTestSuite struct {
 //		testing.TestSuite
 //	}
