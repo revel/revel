@@ -27,7 +27,7 @@ import (
 // - Parameter binding
 // - Session, flash, i18n cookies
 // - Render() call magic
-// - Template rendering
+// - Template rendering.
 func BenchmarkServeAction(b *testing.B) {
 	benchmarkRequest(b, showRequest)
 }
@@ -102,7 +102,7 @@ func getFileSize(t *testing.T, name string) int64 {
 	return fi.Size()
 }
 
-// Ensure on app start runs in order
+// Ensure on app start runs in order.
 func TestOnAppStart(t *testing.T) {
 	str := ""
 	a := assert.New(t)
@@ -119,7 +119,7 @@ func TestOnAppStart(t *testing.T) {
 	a.Equal("Hello World", str, "Failed to order OnAppStart")
 }
 
-// Ensure on app stop runs in order
+// Ensure on app stop runs in order.
 func TestOnAppStop(t *testing.T) {
 	a := assert.New(t)
 	startFakeBookingApp()

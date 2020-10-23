@@ -1,6 +1,6 @@
 package revel
 
-// The session engine provides an interface to allow for storage of session data
+// The session engine provides an interface to allow for storage of session data.
 type (
 	SessionEngine interface {
 		Decode(c *Controller) // Called to decode the session information on the controller
@@ -13,7 +13,7 @@ var (
 	CurrentSessionEngine SessionEngine
 )
 
-// Initialize session engine on startup
+// Initialize session engine on startup.
 func init() {
 	OnAppStart(initSessionEngine, 5)
 }
@@ -22,7 +22,7 @@ func RegisterSessionEngine(f func() SessionEngine, name string) {
 	sessionEngineMap[name] = f
 }
 
-// Called when application is starting up
+// Called when application is starting up.
 func initSessionEngine() {
 	// Check for session engine to use and assign it
 	sename := Config.StringDefault("session.engine", "revel-cookie")

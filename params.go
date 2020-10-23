@@ -39,7 +39,7 @@ type Params struct {
 
 var paramsLogger = RevelLog.New("section", "params")
 
-// ParseParams parses the `http.Request` params into `revel.Controller.Params`
+// ParseParams parses the `http.Request` params into `revel.Controller.Params`.
 func ParseParams(params *Params, req *Request) {
 	params.Query = req.GetQuery()
 

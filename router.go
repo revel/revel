@@ -64,11 +64,11 @@ type ActionPathData struct {
 }
 
 var (
-	// Used to store decoded action path mappings
+	// Used to store decoded action path mappings.
 	actionPathCacheMap = map[string]*ActionPathData{}
-	// Used to prevent concurrent writes to map
+	// Used to prevent concurrent writes to map.
 	actionPathCacheLock = sync.Mutex{}
-	// The path returned if not found
+	// The path returned if not found.
 	notFound = &RouteMatch{Action: "404"}
 )
 
@@ -289,7 +289,7 @@ func (router *Router) updateTree() *Error {
 	return nil
 }
 
-// Returns the controller namespace and name, action and module if found from the actionPath specified
+// Returns the controller namespace and name, action and module if found from the actionPath specified.
 func splitActionPath(actionPathData *ActionPathData, actionPath string, useCache bool) (pathData *ActionPathData, found bool) {
 	actionPath = strings.ToLower(actionPath)
 	if pathData, found = actionPathCacheMap[actionPath]; found && useCache {
@@ -749,7 +749,7 @@ func (router *Router) ReverseError(action string, argValues map[string]string, r
 			star = true
 		}
 
-		log.Infof("Reversing action %s to %s Using Route %#v", action, urlPath, pathData.Route)
+		log.Debugf("Reversing action %s to %s Using Route %#v", action, urlPath, pathData.Route)
 
 		ad = &ActionDefinition{
 			URL:    urlPath,
@@ -813,7 +813,7 @@ func RouterFilter(c *Controller, fc []Filter) {
 	fc[0](c, fc[1:])
 }
 
-// HTTPMethodOverride overrides allowed http methods via form or browser param
+// HTTPMethodOverride overrides allowed http methods via form or browser param.
 func HTTPMethodOverride(c *Controller, fc []Filter) {
 	// An array of HTTP verbs allowed.
 	verbs := []string{"POST", "PUT", "PATCH", "DELETE"}
@@ -846,7 +846,6 @@ func HTTPMethodOverride(c *Controller, fc []Filter) {
 				})
 				return
 			}
-
 		}
 	}
 

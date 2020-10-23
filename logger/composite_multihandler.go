@@ -79,7 +79,7 @@ func (h *CompositeMultiHandler) SetHandler(handler LogHandler, replace bool, lev
 	}
 }
 
-// For the multi handler set the handler, using the LogOptions defined
+// For the multi handler set the handler, using the LogOptions defined.
 func (h *CompositeMultiHandler) SetHandlers(handler LogHandler, options *LogOptions) {
 	if len(options.Levels) == 0 {
 		options.Levels = LvlAllList
@@ -102,7 +102,7 @@ func (h *CompositeMultiHandler) SetJson(writer io.Writer, options *LogOptions) {
 	h.SetHandlers(handler, options)
 }
 
-// Use built in rolling function
+// Use built in rolling function.
 func (h *CompositeMultiHandler) SetJsonFile(filePath string, options *LogOptions) {
 	writer := &lumberjack.Logger{
 		Filename:   filePath,
@@ -142,7 +142,7 @@ func (h *CompositeMultiHandler) SetTerminal(writer io.Writer, options *LogOption
 	h.SetHandlers(handler, options)
 }
 
-// Use built in rolling function
+// Use built in rolling function.
 func (h *CompositeMultiHandler) SetTerminalFile(filePath string, options *LogOptions) {
 	writer := &lumberjack.Logger{
 		Filename:   filePath,

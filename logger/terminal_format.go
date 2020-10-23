@@ -24,7 +24,7 @@ var levelString = map[LogLevel]string{
 }
 
 // Outputs to the terminal in a format like below
-// INFO  09:11:32 server-engine.go:169: Request Stats
+// INFO  09:11:32 server-engine.go:169: Request Stats.
 func TerminalFormatHandler(noColor bool, smallDate bool) LogFormat {
 	dateFormat := termTimeFormat
 	if smallDate {
@@ -92,7 +92,7 @@ func TerminalFormatHandler(noColor bool, smallDate bool) LogFormat {
 	})
 }
 
-// formatValue formats a value for serialization
+// formatValue formats a value for serialization.
 func formatLogfmtValue(value interface{}) string {
 	if value == nil {
 		return "nil"
@@ -121,7 +121,7 @@ func formatLogfmtValue(value interface{}) string {
 	}
 }
 
-// Format the value in json format
+// Format the value in json format.
 func formatShared(value interface{}) (result interface{}) {
 	defer func() {
 		if err := recover(); err != nil {
@@ -148,12 +148,12 @@ func formatShared(value interface{}) (result interface{}) {
 	}
 }
 
-// A reusuable buffer for outputting data
+// A reusuable buffer for outputting data.
 var stringBufPool = sync.Pool{
 	New: func() interface{} { return new(bytes.Buffer) },
 }
 
-// Escape the string when needed
+// Escape the string when needed.
 func escapeString(s string) string {
 	needsQuotes := false
 	needsEscape := false

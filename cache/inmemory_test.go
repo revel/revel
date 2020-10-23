@@ -13,12 +13,12 @@ var newInMemoryCache = func(_ *testing.T, defaultExpiration time.Duration) Cache
 	return NewInMemoryCache(defaultExpiration)
 }
 
-// Test typical cache interactions
+// Test typical cache interactions.
 func TestInMemoryCache_TypicalGetSet(t *testing.T) {
 	typicalGetSet(t, newInMemoryCache)
 }
 
-// Test the increment-decrement cases
+// Test the increment-decrement cases.
 func TestInMemoryCache_IncrDecr(t *testing.T) {
 	incrDecr(t, newInMemoryCache)
 }

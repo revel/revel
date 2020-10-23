@@ -15,23 +15,23 @@ import (
 )
 
 type (
-	// A counter for the tester
+	// A counter for the tester.
 	testCounter struct {
 		debug, info, warn, error, critical int
 	}
-	// The data to tes
+	// The data to tes.
 	testData struct {
 		config []string
 		result testResult
 		tc     *testCounter
 	}
-	// The test result
+	// The test result.
 	testResult struct {
 		debug, info, warn, error, critical int
 	}
 )
 
-// Single test cases
+// Single test cases.
 var singleCases = []testData{
 	{
 		config: []string{"log.crit.output"},
@@ -55,7 +55,7 @@ var singleCases = []testData{
 	},
 }
 
-// Test singles
+// Test singles.
 func TestSingleCases(t *testing.T) {
 	rootLog := logger.New()
 	for _, testCase := range singleCases {
@@ -64,7 +64,7 @@ func TestSingleCases(t *testing.T) {
 	}
 }
 
-// Filter test cases
+// Filter test cases.
 var filterCases = []testData{
 	{
 		config: []string{"log.crit.filter.module.app"},
@@ -108,7 +108,7 @@ var filterCases = []testData{
 	},
 }
 
-// Filter test
+// Filter test.
 func TestFilterCases(t *testing.T) {
 	rootLog := logger.New("module", "app")
 	for _, testCase := range filterCases {
@@ -117,7 +117,7 @@ func TestFilterCases(t *testing.T) {
 	}
 }
 
-// Inverse test cases
+// Inverse test cases.
 var nfilterCases = []testData{
 	{
 		config: []string{"log.crit.nfilter.module.appa"},
@@ -165,7 +165,7 @@ var nfilterCases = []testData{
 	},
 }
 
-// Inverse test
+// Inverse test.
 func TestNotFilterCases(t *testing.T) {
 	rootLog := logger.New("module", "app")
 	for _, testCase := range nfilterCases {
@@ -174,7 +174,7 @@ func TestNotFilterCases(t *testing.T) {
 	}
 }
 
-// off test cases
+// off test cases.
 var offCases = []testData{
 	{
 		config: []string{"log.all.output", "log.error.output=off"},
@@ -182,7 +182,7 @@ var offCases = []testData{
 	},
 }
 
-// Off test
+// Off test.
 func TestOffCases(t *testing.T) {
 	rootLog := logger.New("module", "app")
 	for _, testCase := range offCases {
@@ -191,7 +191,7 @@ func TestOffCases(t *testing.T) {
 	}
 }
 
-// Duplicate test cases
+// Duplicate test cases.
 var duplicateCases = []testData{
 	{
 		config: []string{"log.all.output", "log.error.output", "log.error.filter.module.app"},
@@ -199,7 +199,7 @@ var duplicateCases = []testData{
 	},
 }
 
-// test duplicate cases
+// test duplicate cases.
 func TestDuplicateCases(t *testing.T) {
 	rootLog := logger.New("module", "app")
 	for _, testCase := range duplicateCases {
@@ -208,7 +208,7 @@ func TestDuplicateCases(t *testing.T) {
 	}
 }
 
-// Contradicting cases
+// Contradicting cases.
 var contradictCases = []testData{
 	{
 		config: []string{"log.all.output", "log.error.output=off", "log.all.output"},
@@ -228,7 +228,7 @@ var contradictCases = []testData{
 	},
 }
 
-// Contradiction test
+// Contradiction test.
 func TestContradictCases(t *testing.T) {
 	rootLog := logger.New("module", "app")
 	for _, testCase := range contradictCases {
@@ -237,7 +237,7 @@ func TestContradictCases(t *testing.T) {
 	}
 }
 
-// All test cases
+// All test cases.
 var allCases = []testData{
 	{
 		config: []string{"log.all.filter.module.app"},
@@ -249,7 +249,7 @@ var allCases = []testData{
 	},
 }
 
-// All tests
+// All tests.
 func TestAllCases(t *testing.T) {
 	rootLog := logger.New("module", "app")
 	for i, testCase := range allCases {
@@ -285,6 +285,7 @@ func (c *testCounter) Log(r *logger.Record) error {
 }
 
 func (td *testData) logTest(rootLog logger.MultiLogger, t *testing.T) {
+	t.Helper()
 	if td.tc == nil {
 		td.tc = &testCounter{}
 		counterInit(td.tc)
@@ -325,7 +326,7 @@ func (td *testData) validate(t *testing.T) {
 	assert.Equal(t, td.result.critical, td.tc.critical, "Critical failed "+strings.Join(td.config, " "))
 }
 
-// Add test to the function map
+// Add test to the function map.
 func counterInit(tc *testCounter) {
 	logger.LogFunctionMap["test"] = func(c *logger.CompositeMultiHandler, logOptions *logger.LogOptions) {
 		// Output to the test log and the stdout

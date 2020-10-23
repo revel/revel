@@ -68,7 +68,7 @@ func (c Static) Serve(prefix, path string) Result {
 	return c.RenderFile(file, "")
 }
 
-// Register controllers is in its own function so the route test can use it as well
+// Register controllers is in its own function so the route test can use it as well.
 func registerControllers() {
 	controllers = make(map[string]*ControllerType)
 	RaiseEvent(ROUTE_REFRESH_REQUESTED, nil)

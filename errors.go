@@ -70,7 +70,7 @@ func NewErrorFromPanic(err interface{}) *Error {
 
 // Error method constructs a plaintext version of the error, taking
 // account that fields are optionally set. Returns e.g. Compilation Error
-// (in views/header.html:51): expected right delim in end; got "}"
+// (in views/header.html:51): expected right delim in end; got "}".
 func (e *Error) Error() string {
 	loc := ""
 	if e.Path != "" {
@@ -114,7 +114,7 @@ func (e *Error) ContextSource() []SourceLine {
 	return lines
 }
 
-// SetLink method prepares a link and assign to Error.Link attribute
+// SetLink method prepares a link and assign to Error.Link attribute.
 func (e *Error) SetLink(errorLink string) {
 	errorLink = strings.Replace(errorLink, "{{Path}}", e.Path, -1)
 	errorLink = strings.Replace(errorLink, "{{Line}}", strconv.Itoa(e.Line), -1)

@@ -11,12 +11,12 @@ type LevelFilterHandler struct {
 }
 
 // Filters out records which do not match the level
-// Uses the `log15.FilterHandler` to perform this task
+// Uses the `log15.FilterHandler` to perform this task.
 func LevelHandler(lvl LogLevel, h LogHandler) LogHandler {
 	return &LevelFilterHandler{lvl, h}
 }
 
-// The implementation of the Log
+// The implementation of the Log.
 func (h LevelFilterHandler) Log(r *Record) error {
 	if r.Level == h.Level {
 		return h.h.Log(r)
@@ -25,7 +25,7 @@ func (h LevelFilterHandler) Log(r *Record) error {
 }
 
 // Filters out records which do not match the level
-// Uses the `log15.FilterHandler` to perform this task
+// Uses the `log15.FilterHandler` to perform this task.
 func MinLevelHandler(lvl LogLevel, h LogHandler) LogHandler {
 	return FilterHandler(func(r *Record) (pass bool) {
 		return r.Level <= lvl
@@ -33,7 +33,7 @@ func MinLevelHandler(lvl LogLevel, h LogHandler) LogHandler {
 }
 
 // Filters out records which match the level
-// Uses the `log15.FilterHandler` to perform this task
+// Uses the `log15.FilterHandler` to perform this task.
 func NotLevelHandler(lvl LogLevel, h LogHandler) LogHandler {
 	return FilterHandler(func(r *Record) (pass bool) {
 		return r.Level != lvl
@@ -48,13 +48,13 @@ func CallerFileHandler(h LogHandler) LogHandler {
 }
 
 // Adds in a context called `caller` to the record (contains file name and line number like `foo.go:12`)
-// Uses the `log15.CallerFuncHandler` to perform this task
+// Uses the `log15.CallerFuncHandler` to perform this task.
 func CallerFuncHandler(h LogHandler) LogHandler {
 	return CallerFuncHandler(h)
 }
 
 // Filters out records which match the key value pair
-// Uses the `log15.MatchFilterHandler` to perform this task
+// Uses the `log15.MatchFilterHandler` to perform this task.
 func MatchHandler(key string, value interface{}, h LogHandler) LogHandler {
 	return MatchFilterHandler(key, value, h)
 }
@@ -72,7 +72,7 @@ func MatchFilterHandler(key string, value interface{}, h LogHandler) LogHandler 
 	}, h)
 }
 
-// If match then A handler is called otherwise B handler is called
+// If match then A handler is called otherwise B handler is called.
 func MatchAbHandler(key string, value interface{}, a, b LogHandler) LogHandler {
 	return FuncHandler(func(r *Record) error {
 		if r.Context[key] == value {
@@ -85,24 +85,24 @@ func MatchAbHandler(key string, value interface{}, a, b LogHandler) LogHandler {
 	})
 }
 
-// The nil handler is used if logging for a specific request needs to be turned off
+// The nil handler is used if logging for a specific request needs to be turned off.
 func NilHandler() LogHandler {
 	return FuncHandler(func(r *Record) error {
 		return nil
 	})
 }
 
-// Match all values in map to log
+// Match all values in map to log.
 func MatchMapHandler(matchMap map[string]interface{}, a LogHandler) LogHandler {
 	return matchMapHandler(matchMap, false, a)
 }
 
-// Match !(Match all values in map to log) The inverse of MatchMapHandler
+// Match !(Match all values in map to log) The inverse of MatchMapHandler.
 func NotMatchMapHandler(matchMap map[string]interface{}, a LogHandler) LogHandler {
 	return matchMapHandler(matchMap, true, a)
 }
 
-// Rather then chaining multiple filter handlers, process all here
+// Rather then chaining multiple filter handlers, process all here.
 func matchMapHandler(matchMap map[string]interface{}, inverse bool, a LogHandler) LogHandler {
 	return FuncHandler(func(r *Record) error {
 		matchCount := 0
@@ -126,7 +126,7 @@ func matchMapHandler(matchMap map[string]interface{}, inverse bool, a LogHandler
 }
 
 // Filters out records which do not match the key value pair
-// Uses the `log15.FilterHandler` to perform this task
+// Uses the `log15.FilterHandler` to perform this task.
 func NotMatchHandler(key string, value interface{}, h LogHandler) LogHandler {
 	return FilterHandler(func(r *Record) (pass bool) {
 		return r.Context[key] != value
@@ -158,7 +158,7 @@ func StreamHandler(wr io.Writer, fmtr LogFormat) LogHandler {
 	return LazyHandler(SyncHandler(h))
 }
 
-// Filter handler
+// Filter handler.
 func FilterHandler(fn func(r *Record) bool, h LogHandler) LogHandler {
 	return FuncHandler(func(r *Record) error {
 		if fn(r) {
@@ -168,18 +168,18 @@ func FilterHandler(fn func(r *Record) bool, h LogHandler) LogHandler {
 	})
 }
 
-// List log handler handles a list of LogHandlers
+// List log handler handles a list of LogHandlers.
 type ListLogHandler struct {
 	handlers []LogHandler
 }
 
-// Create a new list of log handlers
+// Create a new list of log handlers.
 func NewListLogHandler(h1, h2 LogHandler) *ListLogHandler {
 	ll := &ListLogHandler{handlers: []LogHandler{h1, h2}}
 	return ll
 }
 
-// Log the record
+// Log the record.
 func (ll *ListLogHandler) Log(r *Record) (err error) {
 	for _, handler := range ll.handlers {
 		if err == nil {
@@ -191,14 +191,14 @@ func (ll *ListLogHandler) Log(r *Record) (err error) {
 	return
 }
 
-// Add another log handler
+// Add another log handler.
 func (ll *ListLogHandler) Add(h LogHandler) {
 	if h != nil {
 		ll.handlers = append(ll.handlers, h)
 	}
 }
 
-// Remove a log handler
+// Remove a log handler.
 func (ll *ListLogHandler) Del(h LogHandler) {
 	if h != nil {
 		for i, handler := range ll.handlers {

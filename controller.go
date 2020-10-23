@@ -22,7 +22,7 @@ import (
 )
 
 // Controller Revel's controller structure that gets embedded in user defined
-// controllers
+// controllers.
 type Controller struct {
 	Name          string          // The controller name, e.g. "Application"
 	Type          *ControllerType // A description of the controller type.
@@ -45,25 +45,25 @@ type Controller struct {
 	Log        logger.MultiLogger     // Context Logger
 }
 
-// The map of controllers, controllers are mapped by using the namespace|controller_name as the key
+// The map of controllers, controllers are mapped by using the namespace|controller_name as the key.
 var (
 	controllers   = make(map[string]*ControllerType)
 	controllerLog = RevelLog.New("section", "controller")
 )
 
-// NewController returns new controller instance for Request and Response
+// NewController returns new controller instance for Request and Response.
 func NewControllerEmpty() *Controller {
 	return &Controller{Request: NewRequest(nil), Response: NewResponse(nil)}
 }
 
-// New controller, creates a new instance wrapping the request and response in it
+// New controller, creates a new instance wrapping the request and response in it.
 func NewController(context ServerContext) *Controller {
 	c := NewControllerEmpty()
 	c.SetController(context)
 	return c
 }
 
-// Sets the request and the response for the controller
+// Sets the request and the response for the controller.
 func (c *Controller) SetController(context ServerContext) {
 	c.Request.SetRequest(context.GetRequest())
 	c.Response.SetResponse(context.GetResponse())
@@ -166,7 +166,7 @@ func (c *Controller) setStatusIfNil(status int) {
 // c.RenderTemplate(c.Name + "/" + c.MethodType.Name + "." + c.Request.Format)
 //
 // If you want your code to run faster it is recommended you add the template values directly
-// to the c.ViewArgs and call c.RenderTemplate directly
+// to the c.ViewArgs and call c.RenderTemplate directly.
 func (c *Controller) Render(extraViewArgs ...interface{}) Result {
 	c.setStatusIfNil(http.StatusOK)
 
@@ -224,7 +224,7 @@ func (c *Controller) RenderJSON(o interface{}) Result {
 	return RenderJSONResult{o, ""}
 }
 
-// RenderJSONP renders JSONP result using encoding/json.Marshal
+// RenderJSONP renders JSONP result using encoding/json.Marshal.
 func (c *Controller) RenderJSONP(callback string, o interface{}) Result {
 	c.setStatusIfNil(http.StatusOK)
 
@@ -249,7 +249,7 @@ func (c *Controller) RenderText(text string, objs ...interface{}) Result {
 	return &RenderTextResult{finalText}
 }
 
-// RenderHTML renders html in response
+// RenderHTML renders html in response.
 func (c *Controller) RenderHTML(html string) Result {
 	c.setStatusIfNil(http.StatusOK)
 
@@ -359,7 +359,7 @@ func (c *Controller) Redirect(val interface{}, args ...interface{}) Result {
 }
 
 // This stats returns some interesting stats based on what is cached in memory
-// and what is available directly
+// and what is available directly.
 func (c *Controller) Stats() map[string]interface{} {
 	result := CurrentEngine.Stats()
 	if RevelConfig.Controller.Reuse {
@@ -380,12 +380,12 @@ func (c *Controller) Message(message string, args ...interface{}) string {
 }
 
 // SetAction sets the action that is being invoked in the current request.
-// It sets the following properties: Name, Action, Type, MethodType
+// It sets the following properties: Name, Action, Type, MethodType.
 func (c *Controller) SetAction(controllerName, methodName string) error {
 	return c.SetTypeAction(controllerName, methodName, nil)
 }
 
-// SetAction sets the assigns the Controller type, sets the action and initializes the controller
+// SetAction sets the assigns the Controller type, sets the action and initializes the controller.
 func (c *Controller) SetTypeAction(controllerName, methodName string, typeOfController *ControllerType) error {
 	// Look up the controller and method types.
 	if typeOfController == nil {
@@ -442,7 +442,6 @@ func ControllerTypeByName(controllerName string, moduleSource *Module) (c *Contr
 				if testControllerName == strings.ToLower(controllerName) && (cType.ModuleSource == moduleSource || moduleSource == anyModule) {
 					controllerLog.Warn("ControllerTypeByName: Matched empty namespace controller ", "controller", controllerName, "namespace", cType.ModuleSource.Name)
 					c = cType
-					found = true
 					break
 				}
 			}
@@ -451,7 +450,7 @@ func ControllerTypeByName(controllerName string, moduleSource *Module) (c *Contr
 	return
 }
 
-// Injects this instance (c) into the AppController instance
+// Injects this instance (c) into the AppController instance.
 func (c *Controller) setAppControllerFields() {
 	appController := reflect.ValueOf(c.AppController).Elem()
 	cValue := reflect.ValueOf(c)
@@ -460,7 +459,7 @@ func (c *Controller) setAppControllerFields() {
 	}
 }
 
-// Removes this instance (c) from the AppController instance
+// Removes this instance (c) from the AppController instance.
 func (c *Controller) resetAppControllerFields() {
 	appController := reflect.ValueOf(c.AppController).Elem()
 	// Zero out controller

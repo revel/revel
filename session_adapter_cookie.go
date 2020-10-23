@@ -12,27 +12,27 @@ import (
 )
 
 type (
-	// The session cookie engine
+	// The session cookie engine.
 	SessionCookieEngine struct {
 		ExpireAfterDuration time.Duration
 	}
 )
 
-// A logger for the session engine
+// A logger for the session engine.
 var sessionEngineLog = RevelLog.New("section", "session-engine")
 
-// Create a new instance to test
+// Create a new instance to test.
 func init() {
 	RegisterSessionEngine(initCookieEngine, "revel-cookie")
 }
 
-// For testing purposes this engine is used
+// For testing purposes this engine is used.
 func NewSessionCookieEngine() *SessionCookieEngine {
 	ce := &SessionCookieEngine{}
 	return ce
 }
 
-// Called when the the application starts, retrieves data from the app config so cannot be run until then
+// Called when the the application starts, retrieves data from the app config so cannot be run until then.
 func initCookieEngine() SessionEngine {
 	ce := &SessionCookieEngine{}
 
@@ -48,7 +48,7 @@ func initCookieEngine() SessionEngine {
 	return ce
 }
 
-// Decode the session information from the cookie retrieved from the controller request
+// Decode the session information from the cookie retrieved from the controller request.
 func (cse *SessionCookieEngine) Decode(c *Controller) {
 	// Decode the session from a cookie.
 	c.Session = map[string]interface{}{}
@@ -61,12 +61,12 @@ func (cse *SessionCookieEngine) Decode(c *Controller) {
 	}
 }
 
-// Encode the session information to the cookie, set the cookie on the controller
+// Encode the session information to the cookie, set the cookie on the controller.
 func (cse *SessionCookieEngine) Encode(c *Controller) {
 	c.SetCookie(cse.GetCookie(c.Session))
 }
 
-// Exposed only for testing purposes
+// Exposed only for testing purposes.
 func (cse *SessionCookieEngine) DecodeCookie(cookie ServerCookie, s session.Session) {
 	// Decode the session from a cookie.
 	// Separate the data from the signature.
@@ -100,7 +100,7 @@ func (cse *SessionCookieEngine) DecodeCookie(cookie ServerCookie, s session.Sess
 	}
 }
 
-// Convert session to cookie
+// Convert session to cookie.
 func (cse *SessionCookieEngine) GetCookie(s session.Session) *http.Cookie {
 	var sessionValue string
 	ts := s.GetExpiration(cse.ExpireAfterDuration)

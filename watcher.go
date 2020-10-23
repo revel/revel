@@ -213,7 +213,7 @@ func (w *Watcher) Notify() *Error {
 }
 
 // Build a queue for refresh notifications
-// this will not return until one of the queue completes
+// this will not return until one of the queue completes.
 func (w *Watcher) notifyInProcess(listener Listener) (err *Error) {
 	shouldReturn := false
 	// This code block ensures that either a timer is created

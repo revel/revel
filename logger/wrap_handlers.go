@@ -9,29 +9,29 @@ import (
 	"time"
 )
 
-// Function handler wraps the declared function and returns the handler for it
+// Function handler wraps the declared function and returns the handler for it.
 func FuncHandler(fn func(r *Record) error) LogHandler {
 	return funcHandler(fn)
 }
 
-// The type declaration for the function
+// The type declaration for the function.
 type funcHandler func(r *Record) error
 
-// The implementation of the Log
+// The implementation of the Log.
 func (h funcHandler) Log(r *Record) error {
 	return h(r)
 }
 
 // This function allows you to do a full declaration for the log,
-// it is recommended you use FuncHandler instead
+// it is recommended you use FuncHandler instead.
 func HandlerFunc(log func(message string, time time.Time, level LogLevel, call CallStack, context ContextMap) error) LogHandler {
 	return remoteHandler(log)
 }
 
-// The type used for the HandlerFunc
+// The type used for the HandlerFunc.
 type remoteHandler func(message string, time time.Time, level LogLevel, call CallStack, context ContextMap) error
 
-// The Log implementation
+// The Log implementation.
 func (c remoteHandler) Log(record *Record) error {
 	return c(record.Message, record.Time, record.Level, record.Call, record.Context)
 }
@@ -56,11 +56,9 @@ func LazyHandler(h LogHandler) LogHandler {
 	return FuncHandler(func(r *Record) error {
 		for k, v := range r.Context {
 			if lz, ok := v.(Lazy); ok {
-				value, err := evaluateLazy(lz)
+				_, err := evaluateLazy(lz)
 				if err != nil {
 					r.Context[errorKey] = "bad lazy " + k
-				} else {
-					v = value
 				}
 			}
 		}

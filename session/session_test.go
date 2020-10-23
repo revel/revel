@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// test the commands
+// test the commands.
 func TestSessionString(t *testing.T) {
 	session.InitSession(revel.RevelLog)
 	a := assert.New(t)

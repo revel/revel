@@ -71,7 +71,7 @@ func TestGetNotFound(t *testing.T) {
 	// testSuite.AssertNotContains("not exists")
 }
 
-// This test is known to fail
+// This test is known to fail.
 func TestGetCustom(t *testing.T) {
 	testSuite := createNewTestSuite(t)
 	for x := 0; x < 5; x++ {

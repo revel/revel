@@ -14,7 +14,7 @@ import (
 // They should pass for all implementations.
 type cacheFactory func(*testing.T, time.Duration) Cache
 
-// Test typical cache interactions
+// Test typical cache interactions.
 func typicalGetSet(t *testing.T, newCache cacheFactory) {
 	var err error
 	cache := newCache(t, time.Hour)
@@ -34,7 +34,7 @@ func typicalGetSet(t *testing.T, newCache cacheFactory) {
 	}
 }
 
-// Test the increment-decrement cases
+// Test the increment-decrement cases.
 func incrDecr(t *testing.T, newCache cacheFactory) {
 	var err error
 	cache := newCache(t, time.Hour)

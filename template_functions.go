@@ -211,7 +211,7 @@ var TemplateFuncs = map[string]interface{}{
 /////////////////////
 
 // ReverseURL returns a url capable of invoking a given controller method:
-// "Application.ShowApp 123" => "/app/123"
+// "Application.ShowApp 123" => "/app/123".
 func ReverseURL(args ...interface{}) (template.URL, error) {
 	if len(args) == 0 {
 		return "", errors.New("no arguments provided to reverse route")
@@ -296,24 +296,28 @@ func TimeAgo(args ...interface{}) string {
 	default:
 		// Assume third argument is the region
 		datetime = args[0].(time.Time)
+
 		if reflect.ValueOf(args[1]).Kind() != reflect.Map {
 			templateLog.Error("TimeAgo: unexpected type", "value", args[1])
 		}
+
 		if reflect.ValueOf(args[2]).Kind() != reflect.String {
 			templateLog.Error("TimeAgo: unexpected type: ", "value", args[2])
 		}
-		viewArgs = args[1]
+
 		lang, _ = args[2].(string)
 		if len(args) > 3 {
 			templateLog.Error("TimeAgo: Received more parameters then needed for timeago")
 		}
 	}
+
 	if lang == "" {
 		lang, _ = Config.String(defaultLanguageOption)
 		if lang == "en" {
 			timeAgoLangs[lang] = timeago.English
 		}
 	}
+
 	_, ok := timeAgoLangs[lang]
 	if !ok {
 		timeAgoLangs[lang] = timeago.Config{

@@ -18,7 +18,7 @@ type RedisCache struct {
 }
 
 // NewRedisCache returns a new RedisCache with given parameters
-// until redigo supports sharding/clustering, only one host will be in hostList
+// until redigo supports sharding/clustering, only one host will be in hostList.
 func NewRedisCache(host string, password string, defaultExpiration time.Duration) RedisCache {
 	pool := &redis.Pool{
 		MaxIdle:     revel.Config.IntDefault("cache.redis.maxidle", 5),

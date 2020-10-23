@@ -150,7 +150,7 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
 	chunked := Config.BoolDefault("results.chunked", false)
 
 	// If it's a HEAD request, throw away the bytes.
-	out := io.Writer(resp.GetWriter())
+	out := resp.GetWriter()
 	if req.Method == "HEAD" {
 		out = ioutil.Discard
 	}
@@ -185,7 +185,7 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
 	}
 }
 
-// Return a byte array and or an error object if the template failed to render
+// Return a byte array and or an error object if the template failed to render.
 func (r *RenderTemplateResult) ToBytes() (b *bytes.Buffer, err error) {
 	defer func() {
 		if rerr := recover(); rerr != nil {
@@ -202,7 +202,7 @@ func (r *RenderTemplateResult) ToBytes() (b *bytes.Buffer, err error) {
 	return
 }
 
-// Output the template to the writer, catch any panics and return as an error
+// Output the template to the writer, catch any panics and return as an error.
 func (r *RenderTemplateResult) renderOutput(wr io.Writer) (err error) {
 	defer func() {
 		if rerr := recover(); rerr != nil {
@@ -261,7 +261,7 @@ func (r *RenderTemplateResult) compressHtml(b *bytes.Buffer) (b2 *bytes.Buffer) 
 	return
 }
 
-// Render the error in the response
+// Render the error in the response.
 func (r *RenderTemplateResult) renderError(err error, req *Request, resp *Response) {
 	compileError, found := err.(*Error)
 	if !found {
@@ -271,7 +271,6 @@ func (r *RenderTemplateResult) renderError(err error, req *Request, resp *Respon
 			templateLog.Info("Cannot determine template name to render error", "error", err)
 			templateName = r.Template.Name()
 			templateContent = r.Template.Content()
-
 		} else {
 			lang, _ := r.ViewArgs[CurrentLocaleViewArg].(string)
 			if tmpl, err := MainTemplateLoader.TemplateLang(templateName, lang); err == nil {
