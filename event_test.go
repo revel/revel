@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// Test that the event handler can be attached and it dispatches the event received
+// Test that the event handler can be attached and it dispatches the event received.
 func TestEventHandler(t *testing.T) {
 	counter := 0
 	newListener := func(typeOf revel.Event, value interface{}) (responseOf revel.EventResponse) {

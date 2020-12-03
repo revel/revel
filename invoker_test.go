@@ -19,7 +19,7 @@ type PN struct{ P }
 
 type PNN struct{ PN }
 
-// Embedded via two paths
+// Embedded via two paths.
 type P2 struct{ *Controller }
 
 type PP2 struct {
@@ -82,17 +82,21 @@ func TestSetAction(t *testing.T) {
 }
 
 func BenchmarkSetAction(b *testing.B) {
+	//nolint:unused
 	type Mixin1 struct {
 		*Controller
 		x, y int
 		foo  string
 	}
+
+	//nolint:unused
 	type Mixin2 struct {
 		*Controller
 		a, b float64
 		bar  string
 	}
 
+	//nolint:unused
 	type Benchmark struct {
 		*Controller
 		Mixin1

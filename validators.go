@@ -265,7 +265,7 @@ type IPAddr struct {
 	Vaildtypes []int
 }
 
-// Requires an IP Address string to be exactly a given  validation type (IPv4, IPv6, IPv4MappedIPv6, IPv4CIDR, IPv6CIDR, IPv4MappedIPv6CIDR OR IPAny)
+// Requires an IP Address string to be exactly a given  validation type (IPv4, IPv6, IPv4MappedIPv6, IPv4CIDR, IPv6CIDR, IPv4MappedIPv6CIDR OR IPAny).
 func ValidIPAddr(cktypes ...int) IPAddr {
 	for _, cktype := range cktypes {
 		if cktype != IPAny && cktype != IPv4 && cktype != IPv6 && cktype != IPv4MappedIPv6 && cktype != IPv4CIDR && cktype != IPv6CIDR && cktype != IPv4MappedIPv6CIDR {
@@ -278,7 +278,6 @@ func ValidIPAddr(cktypes ...int) IPAddr {
 
 func isWithCIDR(str string, l int) bool {
 	if str[l-3] == '/' || str[l-2] == '/' {
-
 		cidr_bit := strings.Split(str, "/")
 		if 2 == len(cidr_bit) {
 			bit, err := strconv.Atoi(cidr_bit[1])
@@ -327,7 +326,6 @@ func getIPType(str string, l int) int {
 
 func (i IPAddr) IsSatisfied(obj interface{}) bool {
 	if str, ok := obj.(string); ok {
-
 		l := len(str)
 		ret := getIPType(str, l)
 
@@ -358,7 +356,7 @@ func (i IPAddr) DefaultMessage() string {
 	return fmt.Sprintln("Must be a vaild IP address")
 }
 
-// Requires a MAC Address string to be exactly
+// Requires a MAC Address string to be exactly.
 type MacAddr struct{}
 
 func ValidMacAddr() MacAddr {
@@ -381,7 +379,7 @@ func (m MacAddr) DefaultMessage() string {
 
 var domainPattern = regexp.MustCompile(`^(([a-zA-Z0-9-\p{L}]{1,63}\.)?(xn--)?[a-zA-Z0-9\p{L}]+(-[a-zA-Z0-9\p{L}]+)*\.)+[a-zA-Z\p{L}]{2,63}$`)
 
-// Requires a Domain string to be exactly
+// Requires a Domain string to be exactly.
 type Domain struct {
 	Regexp *regexp.Regexp
 }
@@ -392,7 +390,6 @@ func ValidDomain() Domain {
 
 func (d Domain) IsSatisfied(obj interface{}) bool {
 	if str, ok := obj.(string); ok {
-
 		l := len(str)
 		// can't exceed 253 chars.
 		if l > 253 {
@@ -439,14 +436,14 @@ func (u URL) DefaultMessage() string {
 
 /*
 NORMAL BenchmarkRegex-8   	2000000000	         0.24 ns/op
-STRICT BenchmarkLoop-8    	2000000000	         0.01 ns/op
+STRICT BenchmarkLoop-8    	2000000000	         0.01 ns/op.
 */
 const (
 	NORMAL = 0
 	STRICT = 4
 )
 
-// Requires a string to be without invisible characters
+// Requires a string to be without invisible characters.
 type PureText struct {
 	Mode int
 }
@@ -462,7 +459,6 @@ func isPureTextStrict(str string) (bool, error) {
 	l := len(str)
 
 	for i := 0; i < l; i++ {
-
 		c := str[i]
 
 		// deny : control char (00-31 without 9(TAB) and Single 10(LF),13(CR)
@@ -489,7 +485,6 @@ func isPureTextStrict(str string) (bool, error) {
 		if c == 60 {
 			ds := 0
 			for n := i; n < l; n++ {
-
 				// 60 (<) , 47(/) | 33(!) | 63(?)
 				if str[n] == 60 && n+1 <= l && (str[n+1] == 47 || str[n+1] == 33 || str[n+1] == 63) {
 					ds = 1
@@ -506,7 +501,6 @@ func isPureTextStrict(str string) (bool, error) {
 		// deny : html encoded(hex) tag (&xxx;)
 		// 38(&) , 35(#), 59(;)
 		if c == 38 && i+1 <= l {
-
 			max := i + 64
 			if max > l {
 				max = l
@@ -526,10 +520,10 @@ func isPureTextStrict(str string) (bool, error) {
 // referrer : http://www.w3schools.com/Tags/
 var elementPattern = regexp.MustCompile(`(?im)<(?P<tag>(/*\s*|\?*|\!*)(figcaption|expression|blockquote|plaintext|textarea|progress|optgroup|noscript|noframes|menuitem|frameset|fieldset|!DOCTYPE|datalist|colgroup|behavior|basefont|summary|section|isindex|details|caption|bgsound|article|address|acronym|strong|strike|source|select|script|output|option|object|legend|keygen|ilayer|iframe|header|footer|figure|dialog|center|canvas|button|applet|video|track|title|thead|tfoot|tbody|table|style|small|param|meter|layer|label|input|frame|embed|blink|audio|aside|alert|time|span|samp|ruby|meta|menu|mark|main|link|html|head|form|font|code|cite|body|base|area|abbr|xss|xml|wbr|var|svg|sup|sub|pre|nav|map|kbd|ins|img|div|dir|dfn|del|col|big|bdo|bdi|!--|ul|tt|tr|th|td|rt|rp|ol|li|hr|em|dt|dl|dd|br|u|s|q|p|i|b|a|(h[0-9]+)))([^><]*)([><]*)`)
 
-// Requires a string to match a given urlencoded regex pattern
+// Requires a string to match a given urlencoded regex pattern.
 var urlencodedPattern = regexp.MustCompile(`(?im)(\%[0-9a-fA-F]{1,})`)
 
-// Requires a string to match a given control characters regex pattern (ASCII : 00-08, 11, 12, 14, 15-31)
+// Requires a string to match a given control characters regex pattern (ASCII : 00-08, 11, 12, 14, 15-31).
 var controlcharPattern = regexp.MustCompile(`(?im)([\x00-\x08\x0B\x0C\x0E-\x1F\x7F]+)`)
 
 func isPureTextNormal(str string) (bool, error) {
@@ -558,7 +552,6 @@ func isPureTextNormal(str string) (bool, error) {
 
 func (p PureText) IsSatisfied(obj interface{}) bool {
 	if str, ok := obj.(string); ok {
-
 		var ret bool
 		switch p.Mode {
 		case STRICT:
@@ -591,7 +584,7 @@ var (
 	checkDenyRelativePath  = regexp.MustCompile(`(?m)(` + regexDenyFileNameCharList + regexDenyFileName + `)`)
 )
 
-// Requires an string to be sanitary file path
+// Requires an string to be sanitary file path.
 type FilePath struct {
 	Mode int
 }
@@ -605,10 +598,8 @@ func ValidFilePath(m int) FilePath {
 
 func (f FilePath) IsSatisfied(obj interface{}) bool {
 	if str, ok := obj.(string); ok {
-
 		var ret bool
 		switch f.Mode {
-
 		case ALLOW_RELATIVE_PATH:
 			ret = checkAllowRelativePath.MatchString(str)
 			if ret == false {

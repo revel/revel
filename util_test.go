@@ -36,7 +36,10 @@ func TestContentTypeByFilename(t *testing.T) {
 func TestEqual(t *testing.T) {
 	type testStruct struct{}
 	type testStruct2 struct{}
-	i, i2 := 8, 9
+	const (
+		i  = 8
+		i2 = 9
+	)
 	s, s2 := "@æœ•µ\n\tüöäß", "@æœ•µ\n\tüöäss"
 	slice, slice2 := []int{1, 2, 3, 4, 5}, []int{1, 2, 3, 4, 5}
 	slice3, slice4 := []int{5, 4, 3, 2, 1}, []int{5, 4, 3, 2, 1}

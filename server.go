@@ -14,7 +14,7 @@ import (
 	"github.com/revel/revel/utils"
 )
 
-// Revel's variables server, router, etc
+// Revel's variables server, router, etc.
 var (
 	MainRouter         *Router
 	MainTemplateLoader *TemplateLoader
@@ -92,7 +92,7 @@ func Run(port int) {
 	println("\nRevel exited normally\n")
 }
 
-// Build an engine initialization object and start the engine
+// Build an engine initialization object and start the engine.
 func InitServerEngine(port int, serverEngine string) {
 	address := HTTPAddr
 	if address == "" {
@@ -133,7 +133,7 @@ func InitServerEngine(port int, serverEngine string) {
 	AddInitEventHandler(CurrentEngine.Event)
 }
 
-// Initialize the controller stack for the application
+// Initialize the controller stack for the application.
 func initControllerStack() {
 	RevelConfig.Controller.Reuse = Config.BoolDefault("revel.controller.reuse", true)
 
@@ -149,7 +149,7 @@ func initControllerStack() {
 	}
 }
 
-// Called to stop the server
+// Called to stop the server.
 func StopServer(value interface{}) EventResponse {
 	return RaiseEvent(ENGINE_SHUTDOWN_REQUEST, value)
 }

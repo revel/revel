@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-// These tests require memcached running on localhost:11211 (the default)
+// These tests require memcached running on localhost:11211 (the default).
 const testServer = "localhost:11211"
 
 var newMemcachedCache = func(t *testing.T, defaultExpiration time.Duration) Cache {

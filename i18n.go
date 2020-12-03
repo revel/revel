@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	// CurrentLocaleViewArg the key for the current locale view arg value
+	// CurrentLocaleViewArg the key for the current locale view arg value.
 	CurrentLocaleViewArg = "currentLocale"
 
 	messageFilesDirectory  = "messages"
@@ -138,7 +138,7 @@ func loadMessages(path string) {
 	}
 }
 
-// Load a single message file
+// Load a single message file.
 func loadMessageFile(path string, info os.FileInfo, osError error) error {
 	if osError != nil {
 		return osError

@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	/* Minimum Engine Type Values */
+	/* Minimum Engine Type Values. */
 	_ = iota
 	ENGINE_RESPONSE_STATUS
 	ENGINE_WRITER
@@ -25,7 +25,7 @@ const (
 )
 
 const (
-	/* HTTP Engine Type Values Starts at 1000 */
+	/* HTTP Engine Type Values Starts at 1000. */
 	HTTP_QUERY           = ENGINE_PARAMETERS
 	HTTP_PATH            = ENGINE_PATH
 	HTTP_BODY            = iota + 1000
@@ -48,17 +48,17 @@ type (
 		GetResponse() ServerResponse
 	}
 
-	// Callback ServerRequest type
+	// Callback ServerRequest type.
 	ServerRequest interface {
 		GetRaw() interface{}
 		Get(theType int) (interface{}, error)
 		Set(theType int, theValue interface{}) bool
 	}
-	// Callback ServerResponse type
+	// Callback ServerResponse type.
 	ServerResponse interface {
 		ServerRequest
 	}
-	// Callback WebSocket type
+	// Callback WebSocket type.
 	ServerWebSocket interface {
 		ServerResponse
 		MessageSendJSON(v interface{}) error
@@ -67,7 +67,7 @@ type (
 		MessageReceive(v interface{}) error
 	}
 
-	// Expected response for HTTP_SERVER_HEADER type (if implemented)
+	// Expected response for HTTP_SERVER_HEADER type (if implemented).
 	ServerHeader interface {
 		SetCookie(cookie string)                              // Sets the cookie
 		GetCookie(key string) (value ServerCookie, err error) // Gets the cookie
@@ -79,12 +79,12 @@ type (
 		SetStatus(statusCode int)
 	}
 
-	// Expected response for FROM_HTTP_COOKIE type (if implemented)
+	// Expected response for FROM_HTTP_COOKIE type (if implemented).
 	ServerCookie interface {
 		GetValue() string
 	}
 
-	// Expected response for HTTP_MULTIPART_FORM
+	// Expected response for HTTP_MULTIPART_FORM.
 	ServerMultipartForm interface {
 		GetFiles() map[string][]*multipart.FileHeader
 		GetValues() url.Values
@@ -109,7 +109,7 @@ type (
 		Stats() map[string]interface{}
 	}
 
-	// The initialization structure passed into the engine
+	// The initialization structure passed into the engine.
 	EngineInit struct {
 		Address, // The address
 		Network string // The network
@@ -118,36 +118,36 @@ type (
 		Callback    func(ServerContext) // The ServerContext callback endpoint
 	}
 
-	// An empty server engine
+	// An empty server engine.
 	ServerEngineEmpty struct {
 	}
 
-	// The route handler structure
+	// The route handler structure.
 	ServerMux struct {
 		PathPrefix string      // The path prefix
 		Callback   interface{} // The callback interface as appropriate to the server
 	}
 
-	// A list of handlers used for adding special route functions
+	// A list of handlers used for adding special route functions.
 	ServerMuxList []ServerMux
 )
 
-// Sorting function
+// Sorting function.
 func (r ServerMuxList) Len() int {
 	return len(r)
 }
 
-// Sorting function
+// Sorting function.
 func (r ServerMuxList) Less(i, j int) bool {
 	return len(r[i].PathPrefix) > len(r[j].PathPrefix)
 }
 
-// Sorting function
+// Sorting function.
 func (r ServerMuxList) Swap(i, j int) {
 	r[i], r[j] = r[j], r[i]
 }
 
-// Search function, returns the largest path matching this
+// Search function, returns the largest path matching this.
 func (r ServerMuxList) Find(path string) (interface{}, bool) {
 	for _, p := range r {
 		if p.PathPrefix == path || strings.HasPrefix(path, p.PathPrefix) {
@@ -158,12 +158,12 @@ func (r ServerMuxList) Find(path string) (interface{}, bool) {
 }
 
 // Adds this routehandler to the route table. It will be called (if the path prefix matches)
-// before the Revel mux, this can only be called after the ENGINE_BEFORE_INITIALIZED event
+// before the Revel mux, this can only be called after the ENGINE_BEFORE_INITIALIZED event.
 func AddHTTPMux(path string, callback interface{}) {
 	ServerEngineInit.HTTPMuxList = append(ServerEngineInit.HTTPMuxList, ServerMux{PathPrefix: path, Callback: callback})
 }
 
-// Callback point for the server to handle the
+// Callback point for the server to handle the.
 func handleInternal(ctx ServerContext) {
 	start := time.Now()
 	var c *Controller

@@ -39,7 +39,7 @@ type TestRequest struct {
 	testSuite *TestSuite
 }
 
-// This is populated by the generated code in the run/run/go file
+// This is populated by the generated code in the run/run/go file.
 var TestSuites []interface{} // Array of structs that embed TestSuite
 
 // NewTestSuite returns an initialized TestSuite ready for use. It is invoked
@@ -48,7 +48,7 @@ func NewTestSuite() TestSuite {
 	return NewTestSuiteEngine(revel.NewSessionCookieEngine())
 }
 
-// Define a new test suite with a custom session engine
+// Define a new test suite with a custom session engine.
 func NewTestSuiteEngine(engine revel.SessionEngine) TestSuite {
 	jar, _ := cookiejar.New(nil)
 	ts := TestSuite{
@@ -79,7 +79,7 @@ func (t *TestSuite) NewTestRequest(req *http.Request) *TestRequest {
 	return request
 }
 
-// Host returns the address and port of the server, e.g. "127.0.0.1:8557"
+// Host returns the address and port of the server, e.g. "127.0.0.1:8557".
 func (t *TestSuite) Host() string {
 	if revel.ServerEngineInit.Address[0] == ':' {
 		return "127.0.0.1" + revel.ServerEngineInit.Address
@@ -260,7 +260,7 @@ func (r *TestRequest) Send() {
 
 // MakeRequest issues any request and read the response. If successful, the
 // caller may examine the Response and ResponseBody properties. You will need to
-// manage session / cookie data manually
+// manage session / cookie data manually.
 func (r *TestRequest) MakeRequest() {
 	var err error
 	if r.testSuite.Response, err = r.testSuite.Client.Do(r.Request); err != nil {
@@ -286,7 +286,7 @@ func (r *TestRequest) MakeRequest() {
 	r.testSuite.Session = controller.Session
 }
 
-// WebSocket creates a websocket connection to the given path and returns it
+// WebSocket creates a websocket connection to the given path and returns it.
 func (t *TestSuite) WebSocket(path string) *websocket.Conn {
 	origin := t.BaseUrl() + "/"
 	urlPath := t.WebSocketUrl() + path

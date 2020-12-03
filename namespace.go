@@ -7,11 +7,11 @@ import (
 
 // Module matching template syntax allows for modules to replace this text with the name of the module declared on import
 // this allows the reverse router to use correct syntax
-// Match _LOCAL_.static or  _LOCAL_|
+// Match _LOCAL_.static or  _LOCAL_|.
 var namespaceReplacement = regexp.MustCompile(`(_LOCAL_)(\.(.*?))?\\`)
 
 // Function to replace the bytes data that may match the _LOCAL_ namespace specifier,
-// the replacement will be the current module.Name
+// the replacement will be the current module.Name.
 func namespaceReplace(fileBytes []byte, module *Module) []byte {
 	newBytes, lastIndex := &bytes.Buffer{}, 0
 	matches := namespaceReplacement.FindAllSubmatchIndex(fileBytes, -1)

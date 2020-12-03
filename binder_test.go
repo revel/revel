@@ -20,9 +20,10 @@ import (
 )
 
 type A struct {
-	ID      int
-	Name    string
-	B       B
+	ID   int
+	Name string
+	B    B
+	//nolint:unused
 	private int
 }
 
@@ -210,7 +211,6 @@ func TestJsonBinder(t *testing.T) {
 		if actualb["a"]["b"] != 45 {
 			t.Errorf("Failed to fetch map value %#v", actual["a"])
 		}
-
 	}
 }
 

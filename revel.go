@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	// RevelImportPath Revel framework import path
+	// RevelImportPath Revel framework import path.
 	RevelImportPath = "github.com/revel/revel"
 )
 
@@ -27,7 +27,7 @@ const (
 	SPECIAL_USE_FLAG = "specialUseFlag"
 )
 
-// App details
+// App details.
 var (
 	RevelConfig *model.RevelContainer
 	AppName     string // e.g. "sample"
@@ -42,7 +42,7 @@ var (
 	RunMode string // Application-defined (by default, "dev" or "prod")
 	DevMode bool   // if true, RunMode is a development mode.
 
-	// Revel installation details
+	// Revel installation details.
 	RevelPath string // e.g. "$GOPATH/src/github.com/revel/revel"
 
 	// Where to look for templates
@@ -54,7 +54,7 @@ var (
 	// Config load order
 	// 1. framework (revel/conf/*)
 	// 2. application (conf/*)
-	// 3. user supplied configs (...) - User configs can override/add any from above
+	// 3. user supplied configs (...) - User configs can override/add any from above.
 	ConfPaths []string
 
 	// Server config.
@@ -71,19 +71,19 @@ var (
 
 	// All cookies dropped by the framework begin with this prefix.
 	CookiePrefix string
-	// Cookie domain
+	// Cookie domain.
 	CookieDomain string
-	// Cookie flags
+	// Cookie flags.
 	CookieSecure   bool
 	CookieSameSite http.SameSite
 
 	// Revel request access log, not exposed from package.
-	// However output settings can be controlled from app.conf
+	// However output settings can be controlled from app.conf.
 
-	// True when revel engine has been initialized (Init has returned)
+	// True when revel engine has been initialized (Init has returned).
 	Initialized bool
 
-	// Private
+	// Private.
 	secretKey      []byte                // Key used to sign cookies. An empty key disables signing.
 	packaged       bool                  // If true, this is running from a pre-built package.
 	initEventList  = []EventHandler{}    // Event handler list for receiving events
@@ -121,7 +121,7 @@ func Init(inputmode, importPath, srcPath string) {
 	RevelPath = revelSourcePath // filepath.Join(revelSourcePath, filepath.FromSlash(RevelImportPath))
 	AppPath = filepath.Join(BasePath, "app")
 	ViewsPath = filepath.Join(AppPath, "views")
-	RevelLog.Info("Paths", "revel", RevelPath, "base", BasePath, "app", AppPath, "views", ViewsPath)
+	RevelLog.Debug("Paths", "revel", RevelPath, "base", BasePath, "app", AppPath, "views", ViewsPath)
 
 	CodePaths = []string{AppPath}
 
@@ -203,7 +203,7 @@ func Init(inputmode, importPath, srcPath string) {
 // The input mode can be as simple as "prod" or it can be a JSON string like
 // {"mode":"%s","testModeFlag":true}
 // When this function is called it returns the true "inputmode" extracted from the parameter
-// and it sets the log context appropriately
+// and it sets the log context appropriately.
 func updateLog(inputmode string) (returnMode string) {
 	if inputmode == "" {
 		returnMode = config.DefaultSection
@@ -262,7 +262,7 @@ func updateLog(inputmode string) (returnMode string) {
 	return
 }
 
-// Set the secret key
+// Set the secret key.
 func SetSecretKey(newKey []byte) error {
 	secretKey = newKey
 	return nil
@@ -285,7 +285,7 @@ func ResolveImportPath(importPath string) (string, error) {
 	return modPkg.Dir, nil
 }
 
-// CheckInit method checks `revel.Initialized` if not initialized it panics
+// CheckInit method checks `revel.Initialized` if not initialized it panics.
 func CheckInit() {
 	if !Initialized {
 		RevelLog.Panic("CheckInit: Revel has not been initialized!")

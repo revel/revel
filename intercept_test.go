@@ -33,7 +33,7 @@ func (c *InterceptControllerN) methNP() Result { return nil }
 func (c InterceptControllerP) methPN() Result  { return nil }
 func (c *InterceptControllerP) methPP() Result { return nil }
 
-// Methods accessible from InterceptControllerN
+// Methods accessible from InterceptControllerN.
 var MethodN = []interface{}{
 	InterceptController.methN,
 	(*InterceptController).methP,
@@ -41,7 +41,7 @@ var MethodN = []interface{}{
 	(*InterceptControllerN).methNP,
 }
 
-// Methods accessible from InterceptControllerP
+// Methods accessible from InterceptControllerP.
 var MethodP = []interface{}{
 	InterceptController.methN,
 	(*InterceptController).methP,

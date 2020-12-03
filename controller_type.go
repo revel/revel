@@ -20,7 +20,7 @@ type ControllerTypeEvents struct {
 }
 
 // The controller field path provides the caller the ability to invoke the call
-// directly
+// directly.
 type ControllerFieldPath struct {
 	IsPointer      bool
 	FieldIndexPath []int
@@ -68,7 +68,7 @@ func AddControllerType(moduleSource *Module, controllerType reflect.Type, method
 	return
 }
 
-// Method searches for a given exported method (case insensitive)
+// Method searches for a given exported method (case insensitive).
 func (ct *ControllerType) Method(name string) *MethodType {
 	lowerName := strings.ToLower(name)
 	for _, method := range ct.Methods {
@@ -79,12 +79,12 @@ func (ct *ControllerType) Method(name string) *MethodType {
 	return nil
 }
 
-// The controller name with the namespace
+// The controller name with the namespace.
 func (ct *ControllerType) Name() string {
 	return ct.Namespace + ct.ShortName()
 }
 
-// The controller name without the namespace
+// The controller name without the namespace.
 func (ct *ControllerType) ShortName() string {
 	return strings.ToLower(ct.Type.Name())
 }
@@ -98,7 +98,7 @@ func NewControllerTypeEvents(c *ControllerType) (ce *ControllerTypeEvents) {
 }
 
 // Add in before after panic and finally, recursive call
-// Befores are ordered in revers, everything else is in order of first encountered
+// Befores are ordered in revers, everything else is in order of first encountered.
 func (cte *ControllerTypeEvents) check(theType reflect.Type, fieldPath []int) {
 	typeChecker := func(checkType reflect.Type) {
 		for index := 0; index < checkType.NumMethod(); index++ {

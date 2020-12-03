@@ -12,7 +12,7 @@ import (
 	"runtime"
 )
 
-// ValidationError simple struct to store the Message & Key of a validation error
+// ValidationError simple struct to store the Message & Key of a validation error.
 type ValidationError struct {
 	Message, Key string
 }
@@ -43,7 +43,7 @@ func (v *Validation) Keep() {
 	v.keep = true
 }
 
-// Clear *all* ValidationErrors
+// Clear *all* ValidationErrors.
 func (v *Validation) Clear() {
 	v.Errors = []*ValidationError{}
 }
@@ -98,7 +98,7 @@ type ValidationResult struct {
 	Translator func(locale, message string, args ...interface{}) string
 }
 
-// Key sets the ValidationResult's Error "key" and returns itself for chaining
+// Key sets the ValidationResult's Error "key" and returns itself for chaining.
 func (r *ValidationResult) Key(key string) *ValidationResult {
 	if r.Error != nil {
 		r.Error.Key = key
@@ -107,7 +107,7 @@ func (r *ValidationResult) Key(key string) *ValidationResult {
 }
 
 // Message sets the error message for a ValidationResult. Returns itself to
-// allow chaining.  Allows Sprintf() type calling with multiple parameters
+// allow chaining.  Allows Sprintf() type calling with multiple parameters.
 func (r *ValidationResult) Message(message string, args ...interface{}) *ValidationResult {
 	if r.Error != nil {
 		if len(args) == 0 {
@@ -120,7 +120,7 @@ func (r *ValidationResult) Message(message string, args ...interface{}) *Validat
 }
 
 // Allow a message key to be passed into the validation result. The Validation has already
-// setup the translator to translate the message key
+// setup the translator to translate the message key.
 func (r *ValidationResult) MessageKey(message string, args ...interface{}) *ValidationResult {
 	if r.Error == nil {
 		return r
@@ -136,7 +136,7 @@ func (r *ValidationResult) MessageKey(message string, args ...interface{}) *Vali
 	return r
 }
 
-// Required tests that the argument is non-nil and non-empty (if string or list)
+// Required tests that the argument is non-nil and non-empty (if string or list).
 func (v *Validation) Required(obj interface{}) *ValidationResult {
 	return v.apply(Required{}, obj)
 }

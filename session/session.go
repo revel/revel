@@ -17,19 +17,19 @@ import (
 )
 
 const (
-	// The key for the identity of the session
+	// The key for the identity of the session.
 	SessionIDKey = "_ID"
-	// The expiration date of the session
+	// The expiration date of the session.
 	TimestampKey = "_TS"
 	// The value name indicating how long the session should persist - ie should it persist after the browser closes
-	// this is set under the TimestampKey if the session data should expire immediately
+	// this is set under the TimestampKey if the session data should expire immediately.
 	SessionValueName = "session"
 	// The key container for the json objects of the data, any non strings found in the map will be placed in here
-	// serialized by key using JSON
+	// serialized by key using JSON.
 	SessionObjectKeyName = "_object_"
-	// The mapped session object
+	// The mapped session object.
 	SessionMapKeyName = "_map_"
-	// The suffix of the session cookie
+	// The suffix of the session cookie.
 	SessionCookieSuffix = "_SESSION"
 )
 
@@ -58,7 +58,7 @@ func (s Session) ID() string {
 
 // getExpiration return a time.Time with the session's expiration date.
 // It uses the passed in expireAfterDuration to add with the current time if the timeout is not
-// browser dependent (ie session). If previous session has set to "session", the time returned is time.IsZero()
+// browser dependent (ie session). If previous session has set to "session", the time returned is time.IsZero().
 func (s Session) GetExpiration(expireAfterDuration time.Duration) time.Time {
 	if expireAfterDuration == 0 || s[TimestampKey] == SessionValueName {
 		// Expire after closing browser
@@ -67,12 +67,12 @@ func (s Session) GetExpiration(expireAfterDuration time.Duration) time.Time {
 	return time.Now().Add(expireAfterDuration)
 }
 
-// SetNoExpiration sets session to expire when browser session ends
+// SetNoExpiration sets session to expire when browser session ends.
 func (s Session) SetNoExpiration() {
 	s[TimestampKey] = SessionValueName
 }
 
-// SetDefaultExpiration sets session to expire after default duration
+// SetDefaultExpiration sets session to expire after default duration.
 func (s Session) SetDefaultExpiration() {
 	delete(s, TimestampKey)
 }
@@ -91,7 +91,7 @@ func (s Session) SessionTimeoutExpiredOrMissing() bool {
 	return false
 }
 
-// Constant error if session value is not found
+// Constant error if session value is not found.
 var SESSION_VALUE_NOT_FOUND = errors.New("Session value not found")
 
 // Get an object or property from the session
@@ -105,7 +105,7 @@ func (s Session) Get(key string) (newValue interface{}, err error) {
 }
 
 // Get into the specified value.
-// If value exists in the session it will just return the value
+// If value exists in the session it will just return the value.
 func (s Session) GetInto(key string, target interface{}, force bool) (result interface{}, err error) {
 	if v, found := s[key]; found && !force {
 		return v, nil
@@ -143,7 +143,7 @@ func (s Session) GetInto(key string, target interface{}, force bool) (result int
 	return s.getNestedProperty(splitKey, v)
 }
 
-// Returns the default value if the key is not found
+// Returns the default value if the key is not found.
 func (s Session) GetDefault(key string, value interface{}, defaultValue interface{}) interface{} {
 	v, e := s.GetInto(key, value, false)
 	if e != nil {
@@ -152,7 +152,7 @@ func (s Session) GetDefault(key string, value interface{}, defaultValue interfac
 	return v
 }
 
-// Extract the values from the session
+// Extract the values from the session.
 func (s Session) GetProperty(key string, value interface{}) (interface{}, error) {
 	// Capitalize the first letter
 	key = strings.Title(key)
@@ -184,7 +184,7 @@ func (s Session) GetProperty(key string, value interface{}) (interface{}, error)
 }
 
 // Places the object into the session, a nil value will cause remove the key from the session
-// (or you can use the Session.Del(key) function
+// (or you can use the Session.Del(key) function.
 func (s Session) Set(key string, value interface{}) error {
 	if value == nil {
 		s.Del(key)
@@ -195,14 +195,14 @@ func (s Session) Set(key string, value interface{}) error {
 	return nil
 }
 
-// Delete the key from the sessionObjects and Session
+// Delete the key from the sessionObjects and Session.
 func (s Session) Del(key string) {
 	sessionJsonMap := s.getSessionJsonMap()
 	delete(sessionJsonMap, key)
 	delete(s, key)
 }
 
-// Extracts the session as a map of [string keys] and json values
+// Extracts the session as a map of [string keys] and json values.
 func (s Session) getSessionJsonMap() map[string]string {
 	if sessionJson, found := s[SessionObjectKeyName]; found {
 		if _, valid := sessionJson.(map[string]string); !valid {
@@ -219,7 +219,7 @@ func (s Session) getSessionJsonMap() map[string]string {
 
 // Convert the map to a simple map[string]string map
 // this will marshal any non string objects encountered and store them the the jsonMap
-// The expiration time will also be assigned
+// The expiration time will also be assigned.
 func (s Session) Serialize() map[string]string {
 	sessionJsonMap := s.getSessionJsonMap()
 	newMap := map[string]string{}
@@ -253,7 +253,7 @@ func (s Session) Serialize() map[string]string {
 	return newMap
 }
 
-// Set the session object from the loaded data
+// Set the session object from the loaded data.
 func (s Session) Load(data map[string]string) {
 	for key, value := range data {
 		if key == SessionObjectKeyName {
@@ -269,7 +269,7 @@ func (s Session) Load(data map[string]string) {
 	}
 }
 
-// Checks to see if the session is empty
+// Checks to see if the session is empty.
 func (s Session) Empty() bool {
 	i := 0
 	for k := range s {
@@ -293,7 +293,7 @@ func (s *Session) reflectValue(obj interface{}) reflect.Value {
 	return val
 }
 
-// Starting at position 1 drill into the object
+// Starting at position 1 drill into the object.
 func (s Session) getNestedProperty(keys []string, newValue interface{}) (result interface{}, err error) {
 	for x := 1; x < len(keys); x++ {
 		newValue, err = s.GetProperty(keys[x], newValue)
@@ -305,7 +305,7 @@ func (s Session) getNestedProperty(keys []string, newValue interface{}) (result 
 }
 
 // Always converts the data from the session mapped objects into the target,
-// it will store the results under the session key name SessionMapKeyName
+// it will store the results under the session key name SessionMapKeyName.
 func (s Session) sessionDataFromMap(key string) (result interface{}, err error) {
 	var mapValue map[string]interface{}
 	uncastMapValue, found := s[SessionMapKeyName]
@@ -330,7 +330,7 @@ func (s Session) sessionDataFromMap(key string) (result interface{}, err error) 
 	return
 }
 
-// Unpack the object from the session map and store it in the session when done, if no error occurs
+// Unpack the object from the session map and store it in the session when done, if no error occurs.
 func (s Session) sessionDataFromObject(key string, newValue interface{}) (result interface{}, err error) {
 	result, err = s.convertSessionData(key, newValue)
 	if err != nil {
@@ -340,7 +340,7 @@ func (s Session) sessionDataFromObject(key string, newValue interface{}) (result
 	return
 }
 
-// Converts from the session json map into the target,
+// Converts from the session json map into the target,.
 func (s Session) convertSessionData(key string, target interface{}) (result interface{}, err error) {
 	sessionJsonMap := s.getSessionJsonMap()
 	v, found := sessionJsonMap[key]
