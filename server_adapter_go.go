@@ -1,13 +1,11 @@
 package revel
 
 import (
-	"net"
-	"net/http"
-	"time"
 	"context"
-	"golang.org/x/net/websocket"
 	"io"
 	"mime/multipart"
+	"net"
+	"net/http"
 	"net/url"
 	"os"
 	"os/signal"
@@ -15,7 +13,11 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"syscall"
+	"time"
+
 	"github.com/revel/revel/utils"
+	"golang.org/x/net/websocket"
 )
 
 // Register the GoHttpServer engine
@@ -216,7 +218,7 @@ func (g *GoHttpServer) Engine() interface{} {
 func (g *GoHttpServer) Event(event Event, args interface{}) (r EventResponse) {
 	switch event {
 	case ENGINE_STARTED:
-		signal.Notify(g.signalChan, os.Interrupt, os.Kill)
+		signal.Notify(g.signalChan, os.Interrupt, syscall.SIGTERM, os.Kill)
 		go func() {
 			_ = <-g.signalChan
 			serverLogger.Info("Received quit singal Please wait ... ")
@@ -495,7 +497,7 @@ func (r *GoResponse) WriteStream(name string, contentlen int64, modtime time.Tim
 		if _, err := io.Copy(r.Writer, reader); err != nil {
 			r.Original.WriteHeader(http.StatusInternalServerError)
 			return err
-		} 
+		}
 	}
 	return nil
 }
