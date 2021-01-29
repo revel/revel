@@ -117,9 +117,9 @@ func matchMapHandler(matchMap map[string]interface{}, inverse bool, a LogHandler
 			// Test for two failure cases
 			if value == v && inverse || value != v && !inverse {
 				return nil
-			} else {
-				matchCount++
 			}
+
+			matchCount++
 		}
 		if matchCount != len(matchMap) {
 			return nil
@@ -140,7 +140,9 @@ func MultiHandler(hs ...LogHandler) LogHandler {
 	return FuncHandler(func(r *Record) error {
 		for _, h := range hs {
 			// what to do about failures?
-			h.Log(r)
+			if err := h.Log(r); err != nil {
+				return err
+			}
 		}
 		return nil
 	})
@@ -188,7 +190,8 @@ func (ll *ListLogHandler) Log(r *Record) (err error) {
 		if err == nil {
 			err = handler.Log(r)
 		} else {
-			handler.Log(r)
+			// earlier error will be reported
+			_ = handler.Log(r)
 		}
 	}
 	return

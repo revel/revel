@@ -208,12 +208,18 @@ func BenchmarkI18nMessageWithFoldingAndArguments(b *testing.B) {
 
 // Exclude whatever operations the given function performs from the benchmark timer.
 func excludeFromTimer(b *testing.B, f func()) {
+	b.Helper()
+
 	b.StopTimer()
+
 	f()
+
 	b.StartTimer()
 }
 
 func loadTestI18nConfig(t *testing.T) {
+	t.Helper()
+
 	ConfPaths = append(ConfPaths, testConfigPath)
 	testConfig, err := config.LoadContext(testConfigName, ConfPaths)
 	if err != nil {
@@ -224,11 +230,15 @@ func loadTestI18nConfig(t *testing.T) {
 }
 
 func loadTestI18nConfigWithoutLanguageCookieOption(t *testing.T) {
+	t.Helper()
+
 	loadTestI18nConfig(t)
 	Config.Raw().RemoveOption("DEFAULT", "i18n.cookie")
 }
 
 func loadTestI18nConfigWithUnknowFormatOption(t *testing.T) {
+	t.Helper()
+
 	loadTestI18nConfig(t)
 	Config.Raw().AddOption("DEFAULT", "i18n.unknown_format", "*** %s ***")
 }

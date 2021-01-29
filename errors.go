@@ -12,6 +12,37 @@ import (
 	"strings"
 )
 
+// StaticError is used for constant string errors.
+type StaticError string
+
+// Error implements the error interface.
+func (e StaticError) Error() string {
+	return string(e)
+}
+
+const (
+	ErrActionNotFound          StaticError = "action not found"
+	ErrControlCharacter        StaticError = "detected control character"
+	ErrControllerNotFound      StaticError = "controller not found"
+	ErrHTMLElement             StaticError = "detected HTML element"
+	ErrHTMLEntity              StaticError = "detected HTML entity"
+	ErrMethodNotFound          StaticError = "couldn't find method"
+	ErrMissingRoute            StaticError = "missing route argument"
+	ErrMultipartReader         StaticError = "unsupported MultipartReader, use controller.Param"
+	ErrNoArguments             StaticError = "no arguments provided to reverse route"
+	ErrNoRoute                 StaticError = "no route for action"
+	ErrNotPointer              StaticError = "not a pointer"
+	ErrTag                     StaticError = "detected tag"
+	ErrTemplateNotFound        StaticError = "couldn't find template"
+	ErrTemplateParsingFailed   StaticError = "template parsing failed"
+	ErrUnreconizedType         StaticError = "unrecognized type"
+	ErrUnknownTemplateEngine   StaticError = "unknown template engine"
+	ErrDuplicateTemplateLoader StaticError = "duplicate template loader"
+	ErrReverseRoute            StaticError = "bad route, expected Controller.Action"
+	ErrFunctionNotFound        StaticError = "failed to find function"
+	ErrArgumentNumberMismatch  StaticError = "wrong number of arguments"
+)
+
 // Error description, used as an argument to the error template.
 type Error struct {
 	SourceType               string   // The type of source that failed to build.
@@ -116,8 +147,8 @@ func (e *Error) ContextSource() []SourceLine {
 
 // SetLink method prepares a link and assign to Error.Link attribute.
 func (e *Error) SetLink(errorLink string) {
-	errorLink = strings.Replace(errorLink, "{{Path}}", e.Path, -1)
-	errorLink = strings.Replace(errorLink, "{{Line}}", strconv.Itoa(e.Line), -1)
+	errorLink = strings.ReplaceAll(errorLink, "{{Path}}", e.Path)
+	errorLink = strings.ReplaceAll(errorLink, "{{Line}}", strconv.Itoa(e.Line))
 
 	e.Link = "<a href=" + errorLink + ">" + e.Path + ":" + strconv.Itoa(e.Line) + "</a>"
 }
@@ -131,24 +162,29 @@ func findRelevantStackFrame(stack string) (int, string) {
 	sourcePath := filepath.ToSlash(SourcePath)
 	revelPath := filepath.ToSlash(RevelPath)
 	sumFrame := 0
+
 	for {
 		frame := strings.Index(partialStack, sourcePath)
 		revelFrame := strings.Index(partialStack, revelPath)
 
 		if frame == -1 {
 			break
-		} else if frame != revelFrame {
-			return sumFrame + frame, SourcePath
-		} else {
-			// Need to at least trim off the first character so this frame isn't caught again.
-			partialStack = partialStack[frame+1:]
-			sumFrame += frame + 1
 		}
+
+		if frame != revelFrame {
+			return sumFrame + frame, SourcePath
+		}
+
+		// Need to at least trim off the first character so this frame isn't caught again.
+		partialStack = partialStack[frame+1:]
+		sumFrame += frame + 1
 	}
+
 	for _, module := range Modules {
 		if frame := strings.Index(stack, filepath.ToSlash(module.Path)); frame != -1 {
 			return frame, module.Path
 		}
 	}
+
 	return -1, ""
 }

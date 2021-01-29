@@ -19,7 +19,7 @@ func ActionInvoker(c *Controller, _ []Filter) {
 	methodValue := reflect.ValueOf(c.AppController).MethodByName(c.MethodType.Name)
 
 	// Collect the values for the method's arguments.
-	var methodArgs []reflect.Value
+	methodArgs := make([]reflect.Value, 0, len(c.MethodType.Args))
 	for _, arg := range c.MethodType.Args {
 		// If they accept a websocket connection, treat that arg specially.
 		var boundArg reflect.Value

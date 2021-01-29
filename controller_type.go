@@ -136,8 +136,7 @@ func (cte *ControllerTypeEvents) check(theType reflect.Type, fieldPath []int) {
 	for i := 0; i < theType.NumField(); i++ {
 		v := theType.Field(i)
 
-		switch v.Type.Kind() {
-		case reflect.Struct:
+		if v.Type.Kind() == reflect.Struct {
 			cte.check(v.Type, append(fieldPath, i))
 		}
 	}

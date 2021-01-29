@@ -5,6 +5,7 @@
 package revel
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -84,8 +85,13 @@ func (v *Validation) ErrorKey(message string, args ...interface{}) *ValidationRe
 func (v *Validation) ValidationResult(ok bool) *ValidationResult {
 	if ok {
 		return &ValidationResult{Ok: ok}
-	} else {
-		return &ValidationResult{Ok: ok, Error: &ValidationError{}, Locale: v.Request.Locale, Translator: v.Translator}
+	}
+
+	return &ValidationResult{
+		Ok:         ok,
+		Error:      &ValidationError{},
+		Locale:     v.Request.Locale,
+		Translator: v.Translator,
 	}
 }
 
@@ -260,14 +266,14 @@ func ValidationFilter(c *Controller, fc []Filter) {
 		c.Validation = &Validation{Request: c.Request, Translator: MessageFunc}
 		fc[0](c, fc[1:])
 	} else {
-		errors, err := restoreValidationErrors(c.Request)
+		errs, err := restoreValidationErrors(c.Request)
 		c.Validation = &Validation{
-			Errors:     errors,
+			Errors:     errs,
 			keep:       false,
 			Request:    c.Request,
 			Translator: MessageFunc,
 		}
-		hasCookie := (err != http.ErrNoCookie)
+		hasCookie := (!errors.Is(err, http.ErrNoCookie))
 
 		fc[0](c, fc[1:])
 

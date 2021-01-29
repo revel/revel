@@ -66,7 +66,7 @@ func (m *Module) Namespace() (namespace string) {
 // Returns the named controller and action that is in this module.
 func (m *Module) ControllerByName(name, action string) (ctype *ControllerType) {
 	comparison := name
-	if strings.Index(name, namespaceSeperator) < 0 {
+	if !strings.Contains(name, namespaceSeperator) {
 		comparison = m.Namespace() + name
 	}
 	for _, c := range m.ControllerTypeList {
@@ -129,9 +129,7 @@ func ModuleByName(name string) (*Module, bool) {
 // Loads the modules specified in the config.
 func loadModules() {
 	keys := []string{}
-	for _, key := range Config.Options("module.") {
-		keys = append(keys, key)
-	}
+	keys = append(keys, Config.Options("module.")...)
 
 	// Reorder module order by key name, a poor mans sort but at least it is consistent
 	sort.Strings(keys)

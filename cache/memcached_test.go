@@ -14,6 +14,8 @@ import (
 const testServer = "localhost:11211"
 
 var newMemcachedCache = func(t *testing.T, defaultExpiration time.Duration) Cache {
+	t.Helper()
+
 	c, err := net.Dial("tcp", testServer)
 	if err == nil {
 		if _, err = c.Write([]byte("flush_all\r\n")); err != nil {
@@ -22,9 +24,11 @@ var newMemcachedCache = func(t *testing.T, defaultExpiration time.Duration) Cach
 		_ = c.Close()
 		return NewMemcachedCache([]string{testServer}, defaultExpiration)
 	}
-	t.Errorf("couldn't connect to memcached on %s", testServer)
-	t.FailNow()
-	panic("")
+
+	t.Logf("couldn't connect to memcached on %s", testServer)
+	t.Skip()
+
+	return nil
 }
 
 func TestMemcachedCache_TypicalGetSet(t *testing.T) {

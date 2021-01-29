@@ -13,7 +13,7 @@ import (
 
 func InitializeFromConfig(basePath string, config *config.Context) (c *CompositeMultiHandler) {
 	// If running in test mode suppress anything that is not an error
-	if config != nil && config.BoolDefault(TEST_MODE_FLAG, false) {
+	if config != nil && config.BoolDefault(TestModeFlag, false) {
 		// Preconfigure all the options
 		config.SetOption("log.info.output", "off")
 		config.SetOption("log.debug.output", "off")
@@ -26,14 +26,14 @@ func InitializeFromConfig(basePath string, config *config.Context) (c *Composite
 	c, _ = NewCompositeMultiHandler()
 
 	// Filters are assigned first, non filtered items override filters
-	if config != nil && !config.BoolDefault(TEST_MODE_FLAG, false) {
+	if config != nil && !config.BoolDefault(TestModeFlag, false) {
 		initAllLog(c, basePath, config)
 	}
 	initLogLevels(c, basePath, config)
 	if c.CriticalHandler == nil && c.ErrorHandler != nil {
 		c.CriticalHandler = c.ErrorHandler
 	}
-	if config != nil && !config.BoolDefault(TEST_MODE_FLAG, false) {
+	if config != nil && !config.BoolDefault(TestModeFlag, false) {
 		initFilterLog(c, basePath, config)
 		if c.CriticalHandler == nil && c.ErrorHandler != nil {
 			c.CriticalHandler = c.ErrorHandler
@@ -47,7 +47,7 @@ func InitializeFromConfig(basePath string, config *config.Context) (c *Composite
 // Init the log.all configuration options.
 func initAllLog(c *CompositeMultiHandler, basePath string, config *config.Context) {
 	if config != nil {
-		extraLogFlag := config.BoolDefault(SPECIAL_USE_FLAG, false)
+		extraLogFlag := config.BoolDefault(SpecialUseFlag, false)
 		if output, found := config.String("log.all.output"); found {
 			// Set all output for the specified handler
 			if extraLogFlag {
@@ -63,7 +63,7 @@ func initAllLog(c *CompositeMultiHandler, basePath string, config *config.Contex
 // log.error.filter ....
 func initFilterLog(c *CompositeMultiHandler, basePath string, config *config.Context) {
 	if config != nil {
-		extraLogFlag := config.BoolDefault(SPECIAL_USE_FLAG, false)
+		extraLogFlag := config.BoolDefault(SpecialUseFlag, false)
 
 		for _, logFilter := range logFilterList {
 			// Init for all filters
@@ -102,7 +102,7 @@ func initLogLevels(c *CompositeMultiHandler, basePath string, config *config.Con
 		"trace", // TODO trace is deprecated
 	} {
 		if config != nil {
-			extraLogFlag := config.BoolDefault(SPECIAL_USE_FLAG, false)
+			extraLogFlag := config.BoolDefault(SpecialUseFlag, false)
 			output, found := config.String("log." + name + ".output")
 			if found {
 				if extraLogFlag {
@@ -178,7 +178,7 @@ func initHandlerFor(c *CompositeMultiHandler, output, basePath string, options *
 			}
 
 			if strings.HasSuffix(output, "json") {
-				c.SetJsonFile(output, options)
+				c.SetJSONFile(output, options)
 			} else {
 				// Override defaults for a terminal file
 				options.SetExtendedOptions("noColor", true)
@@ -187,5 +187,4 @@ func initHandlerFor(c *CompositeMultiHandler, output, basePath string, options *
 			}
 		}
 	}
-	return
 }

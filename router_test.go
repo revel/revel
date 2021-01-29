@@ -616,7 +616,9 @@ func BenchmarkLargeRouter(b *testing.B) {
 		"http://example.org/resource9/123/property1",
 		"http://example.org/doesnotexist",
 	}
-	var reqs []*http.Request
+
+	reqs := make([]*http.Request, 0, len(requestUrls))
+
 	for _, url := range requestUrls {
 		req, _ := http.NewRequest("GET", url, nil)
 		reqs = append(reqs, req)
@@ -667,9 +669,12 @@ func TestOverrideMethodFilter(t *testing.T) {
 // Helpers
 
 func eq(t *testing.T, name string, a, b interface{}) bool {
+	t.Helper()
+
 	if a != b {
 		t.Error(name, ": (actual)", a, " != ", b, "(expected)")
 		return false
 	}
+
 	return true
 }

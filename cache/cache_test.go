@@ -5,6 +5,7 @@
 package cache
 
 import (
+	"errors"
 	"math"
 	"testing"
 	"time"
@@ -16,6 +17,8 @@ type cacheFactory func(*testing.T, time.Duration) Cache
 
 // Test typical cache interactions.
 func typicalGetSet(t *testing.T, newCache cacheFactory) {
+	t.Helper()
+
 	var err error
 	cache := newCache(t, time.Hour)
 
@@ -36,6 +39,8 @@ func typicalGetSet(t *testing.T, newCache cacheFactory) {
 
 // Test the increment-decrement cases.
 func incrDecr(t *testing.T, newCache cacheFactory) {
+	t.Helper()
+
 	var err error
 	cache := newCache(t, time.Hour)
 
@@ -79,6 +84,8 @@ func incrDecr(t *testing.T, newCache cacheFactory) {
 }
 
 func expiration(t *testing.T, newCache cacheFactory) {
+	t.Helper()
+
 	// memcached does not support expiration times less than 1 second.
 	var err error
 	cache := newCache(t, time.Second)
@@ -88,7 +95,7 @@ func expiration(t *testing.T, newCache cacheFactory) {
 		t.Errorf("Set failed: %s", err)
 	}
 	time.Sleep(2 * time.Second)
-	if err = cache.Get("int", &value); err != ErrCacheMiss {
+	if err = cache.Get("int", &value); !errors.Is(err, ErrCacheMiss) {
 		t.Errorf("Expected CacheMiss, but got: %s", err)
 	}
 
@@ -97,7 +104,7 @@ func expiration(t *testing.T, newCache cacheFactory) {
 		t.Errorf("Set failed: %s", err)
 	}
 	time.Sleep(2 * time.Second)
-	if err = cache.Get("int", &value); err != ErrCacheMiss {
+	if err = cache.Get("int", &value); !errors.Is(err, ErrCacheMiss) {
 		t.Errorf("Expected CacheMiss, but got: %s", err)
 	}
 
@@ -121,6 +128,8 @@ func expiration(t *testing.T, newCache cacheFactory) {
 }
 
 func emptyCache(t *testing.T, newCache cacheFactory) {
+	t.Helper()
+
 	var err error
 	cache := newCache(t, time.Hour)
 
@@ -128,32 +137,34 @@ func emptyCache(t *testing.T, newCache cacheFactory) {
 	if err == nil {
 		t.Errorf("Error expected for non-existent key")
 	}
-	if err != ErrCacheMiss {
+	if !errors.Is(err, ErrCacheMiss) {
 		t.Errorf("Expected ErrCacheMiss for non-existent key: %s", err)
 	}
 
 	err = cache.Delete("notexist")
-	if err != ErrCacheMiss {
+	if !errors.Is(err, ErrCacheMiss) {
 		t.Errorf("Expected ErrCacheMiss for non-existent key: %s", err)
 	}
 
 	_, err = cache.Increment("notexist", 1)
-	if err != ErrCacheMiss {
+	if !errors.Is(err, ErrCacheMiss) {
 		t.Errorf("Expected cache miss incrementing non-existent key: %s", err)
 	}
 
 	_, err = cache.Decrement("notexist", 1)
-	if err != ErrCacheMiss {
+	if !errors.Is(err, ErrCacheMiss) {
 		t.Errorf("Expected cache miss decrementing non-existent key: %s", err)
 	}
 }
 
 func testReplace(t *testing.T, newCache cacheFactory) {
+	t.Helper()
+
 	var err error
 	cache := newCache(t, time.Hour)
 
 	// Replace in an empty cache.
-	if err = cache.Replace("notexist", 1, ForEverNeverExpiry); err != ErrNotStored {
+	if err = cache.Replace("notexist", 1, ForEverNeverExpiry); !errors.Is(err, ErrNotStored) {
 		t.Errorf("Replace in empty cache: expected ErrNotStored, got: %s", err)
 	}
 
@@ -175,15 +186,17 @@ func testReplace(t *testing.T, newCache cacheFactory) {
 
 	// Wait for it to expire and replace with 3 (unsuccessfully).
 	time.Sleep(2 * time.Second)
-	if err = cache.Replace("int", 3, time.Second); err != ErrNotStored {
+	if err = cache.Replace("int", 3, time.Second); !errors.Is(err, ErrNotStored) {
 		t.Errorf("Expected ErrNotStored, got: %s", err)
 	}
-	if err = cache.Get("int", &i); err != ErrCacheMiss {
+	if err = cache.Get("int", &i); !errors.Is(err, ErrCacheMiss) {
 		t.Errorf("Expected cache miss, got: %s", err)
 	}
 }
 
 func testAdd(t *testing.T, newCache cacheFactory) {
+	t.Helper()
+
 	var err error
 	cache := newCache(t, time.Hour)
 	// Add to an empty cache.
@@ -192,10 +205,8 @@ func testAdd(t *testing.T, newCache cacheFactory) {
 	}
 
 	// Try to add again. (fail)
-	if err = cache.Add("int", 2, time.Second*3); err != nil {
-		if err != ErrNotStored {
-			t.Errorf("Expected ErrNotStored adding dupe to cache: %s", err)
-		}
+	if err = cache.Add("int", 2, time.Second*3); !errors.Is(err, ErrNotStored) {
+		t.Errorf("Expected ErrNotStored adding dupe to cache: %s", err)
 	}
 
 	// Wait for it to expire, and add again.
@@ -215,6 +226,8 @@ func testAdd(t *testing.T, newCache cacheFactory) {
 }
 
 func testGetMulti(t *testing.T, newCache cacheFactory) {
+	t.Helper()
+
 	cache := newCache(t, time.Hour)
 
 	m := map[string]interface{}{
@@ -223,7 +236,7 @@ func testGetMulti(t *testing.T, newCache cacheFactory) {
 		"foo": struct{ Bar string }{"baz"},
 	}
 
-	var keys []string
+	keys := make([]string, 0, len(m))
 	for key, value := range m {
 		keys = append(keys, key)
 		if err := cache.Set(key, value, time.Second*30); err != nil {

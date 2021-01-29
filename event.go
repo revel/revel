@@ -47,11 +47,11 @@ func RaiseEvent(key Event, value interface{}) (response EventResponse) {
 	for _, handler := range initEventList {
 		response |= handler(key, value)
 	}
+
 	return
 }
 
 // Add event handler to listen for all system events.
 func AddInitEventHandler(handler EventHandler) {
 	initEventList = append(initEventList, handler)
-	return
 }

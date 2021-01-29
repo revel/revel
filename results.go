@@ -53,16 +53,17 @@ func (r ErrorResult) Apply(req *Request, resp *Response) {
 	// This func shows a plaintext error message, in case the template rendering
 	// doesn't work.
 	showPlaintext := func(err error) {
-		PlaintextErrorResult{fmt.Errorf("Server Error:\n%s\n\n"+
-			"Additionally, an error occurred when rendering the error page:\n%s",
-			r.Error, err)}.Apply(req, resp)
+		PlaintextErrorResult{fmt.Errorf("Error %w showing error %s",
+			err, r.Error)}.Apply(req, resp)
 	}
 
 	if tmpl == nil {
 		if err == nil {
-			err = fmt.Errorf("Couldn't find template %s", templatePath)
+			err = fmt.Errorf("apply: %w %s", ErrTemplateNotFound,
+				templatePath)
 		}
-		templateLog.Warn("Got an error rendering template", "error", err, "template", templatePath, "lang", lang)
+		templateLog.Warn("Got an error rendering template", "error",
+			err, "template", templatePath, "lang", lang)
 		showPlaintext(err)
 		return
 	}
@@ -142,7 +143,7 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
 	defer func() {
 		if err := recover(); err != nil {
 			resultsLog.Error("Apply: panic recovery", "error", err)
-			PlaintextErrorResult{fmt.Errorf("Template Execution Panic in %s:\n%s",
+			PlaintextErrorResult{fmt.Errorf("template panic in %s: %+v",
 				r.Template.Name(), err)}.Apply(req, resp)
 		}
 	}()
@@ -190,13 +191,13 @@ func (r *RenderTemplateResult) ToBytes() (b *bytes.Buffer, err error) {
 	defer func() {
 		if rerr := recover(); rerr != nil {
 			resultsLog.Error("ApplyBytes: panic recovery", "recover-error", rerr)
-			err = fmt.Errorf("Template Execution Panic in %s:\n%s", r.Template.Name(), rerr)
+			err = fmt.Errorf("template panic in %s: %+v", r.Template.Name(), rerr)
 		}
 	}()
 	b = &bytes.Buffer{}
 	if err = r.renderOutput(b); err == nil {
 		if Config.BoolDefault("results.trim.html", false) {
-			b = r.compressHtml(b)
+			b = r.compressHTML(b)
 		}
 	}
 	return
@@ -207,7 +208,7 @@ func (r *RenderTemplateResult) renderOutput(wr io.Writer) (err error) {
 	defer func() {
 		if rerr := recover(); rerr != nil {
 			resultsLog.Error("ApplyBytes: panic recovery", "recover-error", rerr)
-			err = fmt.Errorf("Template Execution Panic in %s:\n%s", r.Template.Name(), rerr)
+			err = fmt.Errorf("template panic in %s: %+v", r.Template.Name(), rerr)
 		}
 	}()
 	err = r.Template.Render(wr, r.ViewArgs)
@@ -221,7 +222,7 @@ func (r *RenderTemplateResult) renderOutput(wr io.Writer) (err error) {
 //
 // This is safe unless white-space: pre; is used in css for formatting.
 // Since there is no way to detect that, you will have to keep trimming off in these cases.
-func (r *RenderTemplateResult) compressHtml(b *bytes.Buffer) (b2 *bytes.Buffer) {
+func (r *RenderTemplateResult) compressHTML(b *bytes.Buffer) (b2 *bytes.Buffer) {
 	// Allocate length of original buffer, so we can write everything without allocating again
 	b2.Grow(b.Len())
 	insidePre := false
@@ -244,10 +245,8 @@ func (r *RenderTemplateResult) compressHtml(b *bytes.Buffer) (b2 *bytes.Buffer) 
 					resultsLog.Error("Apply: ", "error", err)
 				}
 			}
-		} else {
-			if _, err = b2.WriteString(text); err != nil {
-				resultsLog.Error("Apply: ", "error", err)
-			}
+		} else if _, err = b2.WriteString(text); err != nil {
+			resultsLog.Error("Apply: ", "error", err)
 		}
 		if strings.Contains(tl, "</pre>") {
 			insidePre = false
@@ -263,8 +262,8 @@ func (r *RenderTemplateResult) compressHtml(b *bytes.Buffer) (b2 *bytes.Buffer) 
 
 // Render the error in the response.
 func (r *RenderTemplateResult) renderError(err error, req *Request, resp *Response) {
-	compileError, found := err.(*Error)
-	if !found {
+	var compileError *Error
+	if !errors.As(err, &compileError) {
 		var templateContent []string
 		templateName, line, description := ParseTemplateError(err)
 		if templateName == "" {
@@ -471,7 +470,7 @@ func getRedirectURL(item interface{}, args []interface{}) (string, error) {
 		recvType := typ.In(0)
 		method := FindMethod(recvType, val)
 		if method == nil {
-			return "", errors.New("couldn't find method")
+			return "", ErrMethodNotFound
 		}
 
 		// Construct the action string (e.g. "Controller.Method")
@@ -483,7 +482,8 @@ func getRedirectURL(item interface{}, args []interface{}) (string, error) {
 		// Fetch the action path to get the defaults
 		pathData, found := splitActionPath(nil, action, true)
 		if !found {
-			return "", fmt.Errorf("Unable to redirect '%s', expected 'Controller.Action'", action)
+			return "", fmt.Errorf("redirect '%s': %w", action,
+				ErrReverseRoute)
 		}
 
 		// Build the map for the router to reverse
@@ -499,12 +499,12 @@ func getRedirectURL(item interface{}, args []interface{}) (string, error) {
 
 		actionDef := MainRouter.Reverse(action, argsByName)
 		if actionDef == nil {
-			return "", errors.New("no route for action " + action)
+			return "", fmt.Errorf("%w %s", ErrNoRoute, action)
 		}
 
 		return actionDef.String(), nil
 	}
 
 	// Out of guesses
-	return "", errors.New("didn't recognize type: " + typ.String())
+	return "", fmt.Errorf("%w %s", ErrUnreconizedType, typ.String())
 }

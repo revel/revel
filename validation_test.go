@@ -5,6 +5,7 @@
 package revel
 
 import (
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -13,7 +14,7 @@ import (
 // getRecordedCookie returns the recorded cookie from a ResponseRecorder with
 // the given name. It utilizes the cookie reader found in the standard library.
 func getRecordedCookie(recorder *httptest.ResponseRecorder, name string) (*http.Cookie, error) {
-	r := &http.Response{Header: recorder.HeaderMap}
+	r := &http.Response{Header: recorder.Result().Header}
 	for _, cookie := range r.Cookies() {
 		if cookie.Name == name {
 			return cookie, nil
@@ -60,7 +61,8 @@ func TestValidationNoKeep(t *testing.T) {
 		}
 	})
 
-	if _, err := getRecordedCookie(recorder, "REVEL_ERRORS"); err != http.ErrNoCookie {
+	if _, err := getRecordedCookie(recorder, "REVEL_ERRORS"); !errors.Is(err,
+		http.ErrNoCookie) {
 		t.Fatal(err)
 	}
 }

@@ -44,6 +44,8 @@ func TestFindControllers(t *testing.T) {
 }
 
 func checkSearchResults(t *testing.T, obj interface{}, expected [][]int) {
+	t.Helper()
+
 	actual := findControllers(reflect.TypeOf(obj))
 	if !reflect.DeepEqual(expected, actual) {
 		t.Errorf("Indexes do not match.  expected %v actual %v", expected, actual)
@@ -82,21 +84,21 @@ func TestSetAction(t *testing.T) {
 }
 
 func BenchmarkSetAction(b *testing.B) {
-	//nolint:unused
+	//nolint:unused,structcheck
 	type Mixin1 struct {
 		*Controller
 		x, y int
 		foo  string
 	}
 
-	//nolint:unused
+	//nolint:unused,structcheck
 	type Mixin2 struct {
 		*Controller
 		a, b float64
 		bar  string
 	}
 
-	//nolint:unused
+	//nolint:unused,structcheck
 	type Benchmark struct {
 		*Controller
 		Mixin1

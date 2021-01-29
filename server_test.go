@@ -47,6 +47,8 @@ func BenchmarkServeStatic(b *testing.B) {
 }
 
 func benchmarkRequest(b *testing.B, req *http.Request) {
+	b.Helper()
+
 	startFakeBookingApp()
 	b.ResetTimer()
 	resp := httptest.NewRecorder()
@@ -94,6 +96,8 @@ func TestFakeServer(t *testing.T) {
 }
 
 func getFileSize(t *testing.T, name string) int64 {
+	t.Helper()
+
 	fi, err := os.Stat(name)
 	if err != nil {
 		t.Errorf("Unable to stat file:\n%s", name)

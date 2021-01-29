@@ -195,6 +195,8 @@ func TestPostFileUpload(t *testing.T) {
 }
 
 func createNewTestSuite(t *testing.T) *TestSuite {
+	t.Helper()
+
 	suite := NewTestSuite()
 
 	if suite.Client == nil || suite.SessionEngine == nil {

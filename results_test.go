@@ -5,7 +5,6 @@
 package revel
 
 import (
-	"fmt"
 	"net/http/httptest"
 	"strings"
 	"testing"
@@ -14,7 +13,7 @@ import (
 // Added test case for redirection testing for strings.
 func TestRedirect(t *testing.T) {
 	startFakeBookingApp()
-	redirect := RedirectToURLResult{fmt.Sprintf("/hotels/index/foo")}
+	redirect := RedirectToURLResult{"/hotels/index/foo"}
 	resp := httptest.NewRecorder()
 	c := NewTestController(resp, showRequest)
 	redirect.Apply(c.Request, c.Response)

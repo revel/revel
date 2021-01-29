@@ -24,12 +24,12 @@ func PanicFilter(c *Controller, fc []Filter) {
 // This function handles a panic in an action invocation.
 // It cleans up the stack trace, logs it, and displays an error page.
 func handleInvocationPanic(c *Controller, err interface{}) {
-	error := NewErrorFromPanic(err)
-	if error != nil {
-		utilLog.Error("PanicFilter: Caught panic", "error", err, "stack", error.Stack)
+	er := NewErrorFromPanic(err)
+	if er != nil {
+		utilLog.Error("PanicFilter: Caught panic", "error", err, "stack", er.Stack)
 		if DevMode {
 			fmt.Println(err)
-			fmt.Println(error.Stack)
+			fmt.Println(er.Stack)
 		}
 	} else {
 		utilLog.Error("PanicFilter: Caught panic, unable to determine stack location", "error", err, "stack", string(debug.Stack()))
@@ -39,12 +39,12 @@ func handleInvocationPanic(c *Controller, err interface{}) {
 		}
 	}
 
-	if error == nil && DevMode {
+	if er == nil && DevMode {
 		// Only show the sensitive information in the debug stack trace in development mode, not production
 		c.Response.SetStatus(http.StatusInternalServerError)
 		_, _ = c.Response.GetWriter().Write(debug.Stack())
 		return
 	}
 
-	c.Result = c.RenderError(error)
+	c.Result = c.RenderError(er)
 }

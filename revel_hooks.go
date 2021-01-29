@@ -43,18 +43,18 @@ func (r RevelHooks) Add(fn func(), order ...int) RevelHooks {
 }
 
 // Sorting function.
-func (slice RevelHooks) Len() int {
-	return len(slice)
+func (r RevelHooks) Len() int {
+	return len(r)
 }
 
 // Sorting function.
-func (slice RevelHooks) Less(i, j int) bool {
-	return slice[i].order < slice[j].order
+func (r RevelHooks) Less(i, j int) bool {
+	return r[i].order < r[j].order
 }
 
 // Sorting function.
-func (slice RevelHooks) Swap(i, j int) {
-	slice[i], slice[j] = slice[j], slice[i]
+func (r RevelHooks) Swap(i, j int) {
+	r[i], r[j] = r[j], r[i]
 }
 
 // OnAppStart registers a function to be run at app startup.

@@ -2,7 +2,6 @@ package revel
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"html"
 	"html/template"
@@ -13,7 +12,7 @@ import (
 	"github.com/xeonx/timeago"
 )
 
-// The functions available for use in the templates.
+// TemplateFuncs contains ghe functions available for use in the templates.
 var TemplateFuncs = map[string]interface{}{
 	"url": ReverseURL,
 	"set": func(viewArgs map[string]interface{}, key string, value interface{}) template.JS {
@@ -101,7 +100,7 @@ var TemplateFuncs = map[string]interface{}{
 
 	// Replaces newlines with <br>
 	"nl2br": func(text string) template.HTML {
-		return template.HTML(strings.Replace(template.HTMLEscapeString(text), "\n", "<br>", -1))
+		return template.HTML(strings.ReplaceAll(template.HTMLEscapeString(text), "\n", "<br>"))
 	},
 
 	// Skips sanitation on the parameter.  Do not use with dynamic data.
@@ -148,17 +147,18 @@ var TemplateFuncs = map[string]interface{}{
 	"session": func(key string, viewArgs map[string]interface{}) interface{} {
 		if viewArgs != nil {
 			if c, found := viewArgs["_controller"]; found {
-				if v, err := c.(*Controller).Session.Get(key); err == nil {
+				v, err := c.(*Controller).Session.Get(key)
+				if err == nil {
 					return v
-				} else {
-					templateLog.Errorf("template.session, key %s error %v", key, err)
 				}
+				templateLog.Errorf("template.session, key %s error %v", key, err)
 			} else {
 				templateLog.Warnf("template.session, key %s requested without controller", key)
 			}
 		} else {
 			templateLog.Warnf("template.session, key %s requested passing in view args", key)
 		}
+
 		return ""
 	},
 
@@ -206,15 +206,13 @@ var TemplateFuncs = map[string]interface{}{
 	},
 }
 
-/////////////////////
 // Template functions
-/////////////////////
 
 // ReverseURL returns a url capable of invoking a given controller method:
 // "Application.ShowApp 123" => "/app/123".
 func ReverseURL(args ...interface{}) (template.URL, error) {
 	if len(args) == 0 {
-		return "", errors.New("no arguments provided to reverse route")
+		return "", ErrNoArguments
 	}
 
 	action := args[0].(string)
@@ -225,24 +223,27 @@ func ReverseURL(args ...interface{}) (template.URL, error) {
 	pathData, found := splitActionPath(nil, action, true)
 
 	if !found {
-		return "", fmt.Errorf("reversing '%s', expected 'Controller.Action'", action)
+		return "", fmt.Errorf("%w %s", ErrReverseRoute, action)
 	}
 
 	// Look up the types.
 
 	if pathData.TypeOfController == nil {
-		return "", fmt.Errorf("Failed reversing %s: controller not found %#v", action, pathData)
+		return "", fmt.Errorf("reverse: %w %s: %#v", ErrReverseRoute,
+			action, pathData)
 	}
 
 	// Note method name is case insensitive search
 	methodType := pathData.TypeOfController.Method(pathData.MethodName)
 	if methodType == nil {
-		return "", errors.New("revel/controller: In " + action + " failed to find function " + pathData.MethodName)
+		return "", fmt.Errorf("revel/controller: %w %s %s",
+			ErrFunctionNotFound, action, pathData.MethodName)
 	}
 
 	if len(methodType.Args) < len(args)-1 {
-		return "", fmt.Errorf("reversing %s: route defines %d args, but received %d",
-			action, len(methodType.Args), len(args)-1)
+		return "", fmt.Errorf("reversing %s: %w want %d got %d",
+			action, ErrArgumentNumberMismatch,
+			len(methodType.Args), len(args)-1)
 	}
 	// Unbind the arguments.
 	argsByName := make(map[string]string)
@@ -326,12 +327,36 @@ func TimeAgo(args ...interface{}) string {
 			FuturePrefix: MessageFunc(lang, "in") + " ",
 			FutureSuffix: "",
 			Periods: []timeago.FormatPeriod{
-				{time.Second, MessageFunc(lang, "about a second"), MessageFunc(lang, "%d seconds")},
-				{time.Minute, MessageFunc(lang, "about a minute"), MessageFunc(lang, "%d minutes")},
-				{time.Hour, MessageFunc(lang, "about an hour"), MessageFunc(lang, "%d hours")},
-				{timeago.Day, MessageFunc(lang, "one day"), MessageFunc(lang, "%d days")},
-				{timeago.Month, MessageFunc(lang, "one month"), MessageFunc(lang, "%d months")},
-				{timeago.Year, MessageFunc(lang, "one year"), MessageFunc(lang, "%d years")},
+				{
+					D:    time.Second,
+					One:  MessageFunc(lang, "about a second"),
+					Many: MessageFunc(lang, "%d seconds"),
+				},
+				{
+					D:    time.Minute,
+					One:  MessageFunc(lang, "about a minute"),
+					Many: MessageFunc(lang, "%d minutes"),
+				},
+				{
+					D:    time.Hour,
+					One:  MessageFunc(lang, "about an hour"),
+					Many: MessageFunc(lang, "%d hours"),
+				},
+				{
+					D:    timeago.Day,
+					One:  MessageFunc(lang, "one day"),
+					Many: MessageFunc(lang, "%d days"),
+				},
+				{
+					D:    timeago.Month,
+					One:  MessageFunc(lang, "one month"),
+					Many: MessageFunc(lang, "%d months"),
+				},
+				{
+					D:    timeago.Year,
+					One:  MessageFunc(lang, "one year"),
+					Many: MessageFunc(lang, "%d years"),
+				},
 			},
 			Zero:          MessageFunc(lang, "about a second"),
 			Max:           73 * time.Hour,

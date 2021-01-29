@@ -166,8 +166,8 @@ func InterceptMethod(intc InterceptorMethod, when When) {
 	})
 }
 
-// This item is used to provide a sortable set to be returned to the caller. This ensures calls order is maintained
-//
+// This item is used to provide a sortable set to be returned to the caller.
+// This ensures calls order is maintained.
 type interceptorItem struct {
 	Interceptor *Interception
 	Target      reflect.Value

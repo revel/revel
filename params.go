@@ -6,7 +6,7 @@ package revel
 
 import (
 	"encoding/json"
-	"errors"
+	"fmt"
 	"io/ioutil"
 	"mime/multipart"
 	"net/url"
@@ -106,7 +106,7 @@ func (p *Params) BindJSON(dest interface{}) error {
 	value := reflect.ValueOf(dest)
 	if value.Kind() != reflect.Ptr {
 		paramsLogger.Warn("BindJSON: Not a pointer")
-		return errors.New("BindJSON not a pointer")
+		return fmt.Errorf("BindJSON: %w", ErrNotPointer)
 	}
 	if err := json.Unmarshal(p.JSON, dest); err != nil {
 		paramsLogger.Warn("BindJSON: Unable to unmarshal request:", "error", err)
@@ -121,7 +121,7 @@ func (p *Params) calcValues() url.Values {
 
 	// If there were no params, return an empty map.
 	if numParams == 0 {
-		return make(url.Values, 0)
+		return make(url.Values)
 	}
 
 	// If only one of the param sources has anything, return that directly.

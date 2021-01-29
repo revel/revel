@@ -94,7 +94,7 @@ func NewRoute(moduleSource *Module, method, path, action, fixedArgs, routesPath 
 	csvReader := csv.NewReader(argsReader)
 	csvReader.TrimLeadingSpace = true
 	fargs, err := csvReader.Read()
-	if err != nil && err != io.EOF {
+	if errors.Is(err, io.EOF) {
 		routerLog.Error("NewRoute: Invalid fixed parameters for string ", "error", err, "fixedargs", fixedArgs)
 	}
 
@@ -697,7 +697,7 @@ func (router *Router) ReverseError(action string, argValues map[string]string, r
 					// See if the path exists in the module based
 				} else {
 					log.Errorf("Reverse: Controller %s not found in reverse lookup", pathData.ControllerNamespace+pathData.ControllerName)
-					err = errors.New("Reverse: Controller not found in reverse lookup")
+					err = fmt.Errorf("reverse: %w", ErrControllerNotFound)
 					return
 				}
 			}
@@ -705,7 +705,7 @@ func (router *Router) ReverseError(action string, argValues map[string]string, r
 
 		if pathData.TypeOfController == nil {
 			log.Errorf("Reverse: Controller %s not found in reverse lookup", pathData.ControllerNamespace+pathData.ControllerName)
-			err = errors.New("Reverse: Controller not found in reverse lookup")
+			err = fmt.Errorf("reverse: %w", ErrControllerNotFound)
 			return
 		}
 		var (
@@ -723,7 +723,7 @@ func (router *Router) ReverseError(action string, argValues map[string]string, r
 			if !ok {
 				val = "<nil>"
 				log.Error("Reverse: reverse route missing route argument ", "argument", el[1:])
-				err = errors.New("Missing route argument")
+				err = ErrMissingRoute
 				panic("Check stack")
 			}
 			pathElements[i] = val
@@ -763,7 +763,7 @@ func (router *Router) ReverseError(action string, argValues map[string]string, r
 	}
 
 	routerLog.Error("Reverse: Failed to find controller for reverse route", "action", action, "arguments", argValues)
-	err = errors.New("Reverse: Failed to find controller for reverse route")
+	err = fmt.Errorf("reverse: %w", ErrControllerNotFound)
 	return
 }
 

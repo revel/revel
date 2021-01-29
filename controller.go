@@ -130,7 +130,8 @@ type ErrorCoder interface {
 }
 
 func (c *Controller) RenderError(err error) Result {
-	if coder, ok := err.(ErrorCoder); ok {
+	var coder ErrorCoder
+	if errors.As(err, &coder) {
 		c.setStatusIfNil(coder.HTTPCode())
 	} else {
 		c.setStatusIfNil(http.StatusInternalServerError)
@@ -390,7 +391,8 @@ func (c *Controller) SetTypeAction(controllerName, methodName string, typeOfCont
 	// Look up the controller and method types.
 	if typeOfController == nil {
 		if c.Type = ControllerTypeByName(controllerName, anyModule); c.Type == nil {
-			return errors.New("revel/controller: failed to find controller " + controllerName)
+			return fmt.Errorf("revel/controller: %w %s",
+				ErrControllerNotFound, controllerName)
 		}
 	} else {
 		c.Type = typeOfController
@@ -398,7 +400,8 @@ func (c *Controller) SetTypeAction(controllerName, methodName string, typeOfCont
 
 	// Note method name is case insensitive search
 	if c.MethodType = c.Type.Method(methodName); c.MethodType == nil {
-		return errors.New("revel/controller: failed to find action " + controllerName + "." + methodName)
+		return fmt.Errorf("revel/controller: %w %s", ErrActionNotFound,
+			controllerName+"."+methodName)
 	}
 
 	c.Name, c.MethodName = c.Type.Type.Name(), c.MethodType.Name
