@@ -17,9 +17,10 @@ import (
 	"os"
 	"sync"
 
+	"errors"
+
 	"github.com/revel/pathtree"
 	"github.com/revel/revel/logger"
-	"errors"
 )
 
 const (
@@ -751,7 +752,7 @@ func (router *Router) ReverseError(action string, argValues map[string]string, r
 			star = true
 		}
 
-		log.Infof("Reversing action %s to %s Using Route %#v",action,urlPath,pathData.Route)
+		log.Debugf("Reversing action %s to %s Using Route %#v",action,urlPath,pathData.Route)
 
 		ad = &ActionDefinition{
 			URL:    urlPath,
