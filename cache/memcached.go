@@ -8,8 +8,9 @@ import (
 	"errors"
 	"time"
 
-	"github.com/bradfitz/gomemcache/memcache"
+	"github.com/rainycape/memcache"
 	"github.com/revel/revel/logger"
+	"github.com/revel/revel"
 )
 
 // MemcachedCache wraps the Memcached client to meet the Cache interface.
@@ -19,7 +20,11 @@ type MemcachedCache struct {
 }
 
 func NewMemcachedCache(hostList []string, defaultExpiration time.Duration) MemcachedCache {
-	return MemcachedCache{memcache.New(hostList...), defaultExpiration}
+	client,err := memcache.New(hostList...)
+	if err!=nil {
+		revel.RevelLog.Error("Unable to create memcache instance", "error", err)
+	}
+	return MemcachedCache{client, defaultExpiration}
 }
 
 func (c MemcachedCache) Set(key string, value interface{}, expires time.Duration) error {
@@ -31,7 +36,7 @@ func (c MemcachedCache) Add(key string, value interface{}, expires time.Duration
 }
 
 func (c MemcachedCache) Replace(key string, value interface{}, expires time.Duration) error {
-	return c.invoke((*memcache.Client).Replace, key, value, expires)
+	return c.invoke((*memcache.Client).CompareAndSwap, key, value, expires)
 }
 
 func (c MemcachedCache) Get(key string, ptrValue interface{}) error {
