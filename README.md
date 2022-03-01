@@ -6,7 +6,7 @@
 
 A high productivity, full-stack web framework for the [Go language](http://www.golang.org).
 
-Current Version: 1.0.0 (2020-07-11)
+Current Version: 1.1.0-dev (2020-07-11)
 
 **Supports go.mod package management**
 

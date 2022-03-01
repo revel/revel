@@ -3,7 +3,6 @@ package revel
 // SessionFilter is a Revel Filter that retrieves and sets the session cookie.
 // Within Revel, it is available as a Session attribute on Controller instances.
 // The name of the Session cookie is set as CookiePrefix + "_SESSION".
-import ()
 
 var sessionLog = RevelLog.New("section", "session")
 

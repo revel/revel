@@ -6,21 +6,20 @@ package revel
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"net/url"
+	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
-
-	"context"
-	"mime/multipart"
-	"path/filepath"
 )
 
-// Request is Revel's HTTP request object structure
+// Request is Revel's HTTP request object structure.
 type Request struct {
 	In              ServerRequest   // The server request
 	Header          *RevelHeader    // The revel header
@@ -41,10 +40,12 @@ type Request struct {
 	controller    *Controller    // The controller, so some of this data can be fetched
 }
 
-var FORM_NOT_FOUND = errors.New("Form Not Found")
-var httpLog = RevelLog.New("section", "http")
+var (
+	FORM_NOT_FOUND = errors.New("Form Not Found")
+	httpLog        = RevelLog.New("section", "http")
+)
 
-// Response is Revel's HTTP response object structure
+// Response is Revel's HTTP response object structure.
 type Response struct {
 	Status      int
 	ContentType string
@@ -52,7 +53,7 @@ type Response struct {
 	writer      io.Writer
 }
 
-// The output response
+// The output response.
 type OutResponse struct {
 	// internalHeader.Server Set by ServerResponse.Get(HTTP_SERVER_HEADER), saves calling the get every time the header needs to be written to
 	internalHeader *RevelHeader   // The internal header
@@ -60,19 +61,19 @@ type OutResponse struct {
 	response       *Response      // The response
 }
 
-// The header defined in Revel
+// The header defined in Revel.
 type RevelHeader struct {
 	Server ServerHeader // The server
 }
 
-// NewResponse wraps ServerResponse inside a Revel's Response and returns it
+// NewResponse wraps ServerResponse inside a Revel's Response and returns it.
 func NewResponse(w ServerResponse) (r *Response) {
 	r = &Response{Out: OutResponse{Server: w, internalHeader: &RevelHeader{}}}
 	r.Out.response = r
 	return r
 }
 
-// NewRequest returns a Revel's HTTP request instance with given HTTP instance
+// NewRequest returns a Revel's HTTP request instance with given HTTP instance.
 func NewRequest(r ServerRequest) *Request {
 	req := &Request{Header: &RevelHeader{}}
 	if r != nil {
@@ -80,6 +81,7 @@ func NewRequest(r ServerRequest) *Request {
 	}
 	return req
 }
+
 func (req *Request) SetRequest(r ServerRequest) {
 	req.In = r
 	if h, e := req.In.Get(HTTP_SERVER_HEADER); e == nil {
@@ -93,10 +95,9 @@ func (req *Request) SetRequest(r ServerRequest) {
 	req.Method, _ = req.GetValue(HTTP_METHOD).(string)
 	req.RemoteAddr, _ = req.GetValue(HTTP_REMOTE_ADDR).(string)
 	req.Host, _ = req.GetValue(HTTP_HOST).(string)
-
 }
 
-// Returns a cookie
+// Returns a cookie.
 func (req *Request) Cookie(key string) (ServerCookie, error) {
 	if req.Header.Server != nil {
 		return req.Header.Server.GetCookie(key)
@@ -104,42 +105,42 @@ func (req *Request) Cookie(key string) (ServerCookie, error) {
 	return nil, http.ErrNoCookie
 }
 
-// Fetch the requested URI
+// Fetch the requested URI.
 func (req *Request) GetRequestURI() string {
 	uri, _ := req.GetValue(HTTP_REQUEST_URI).(string)
 	return uri
 }
 
-// Fetch the query
+// Fetch the query.
 func (req *Request) GetQuery() (v url.Values) {
 	v, _ = req.GetValue(ENGINE_PARAMETERS).(url.Values)
 	return
 }
 
-// Fetch the path
+// Fetch the path.
 func (req *Request) GetPath() (path string) {
 	path, _ = req.GetValue(ENGINE_PATH).(string)
 	return
 }
 
-// Fetch the body
+// Fetch the body.
 func (req *Request) GetBody() (body io.Reader) {
 	body, _ = req.GetValue(HTTP_BODY).(io.Reader)
 	return
 }
 
-// Fetch the context
+// Fetch the context.
 func (req *Request) Context() (c context.Context) {
 	c, _ = req.GetValue(HTTP_REQUEST_CONTEXT).(context.Context)
 	return
 }
 
-// Deprecated use controller.Params.Get()
+// Deprecated use controller.Params.Get().
 func (req *Request) FormValue(key string) (value string) {
 	return req.controller.Params.Get(key)
 }
 
-// Deprecated use controller.Params.Form[Key]
+// Deprecated use controller.Params.Form[Key].
 func (req *Request) PostFormValue(key string) (value string) {
 	valueList := req.controller.Params.Form[key]
 	if len(valueList) > 0 {
@@ -148,7 +149,7 @@ func (req *Request) PostFormValue(key string) (value string) {
 	return
 }
 
-// Deprecated use GetForm() instead
+// Deprecated use GetForm() instead.
 func (req *Request) ParseForm() (e error) {
 	if req.Form == nil {
 		req.Form, e = req.GetForm()
@@ -166,7 +167,7 @@ func (req *Request) GetForm() (url.Values, error) {
 	return nil, FORM_NOT_FOUND
 }
 
-// Deprecated for backwards compatibility only
+// Deprecated for backwards compatibility only.
 type MultipartForm struct {
 	File   map[string][]*multipart.FileHeader
 	Value  url.Values
@@ -174,16 +175,15 @@ type MultipartForm struct {
 }
 
 func (req *Request) MultipartReader() (*multipart.Reader, error) {
-
 	return nil, errors.New("MultipartReader not supported, use controller.Param")
 }
 
-// Deprecated for backwards compatibility only
+// Deprecated for backwards compatibility only.
 func newMultipareForm(s ServerMultipartForm) (f *MultipartForm) {
 	return &MultipartForm{File: s.GetFiles(), Value: s.GetValues(), origin: s}
 }
 
-// Deprecated use GetMultipartForm() instead
+// Deprecated use GetMultipartForm() instead.
 func (req *Request) ParseMultipartForm(_ int64) (e error) {
 	var s ServerMultipartForm
 	if s, e = req.GetMultipartForm(); e == nil {
@@ -192,12 +192,12 @@ func (req *Request) ParseMultipartForm(_ int64) (e error) {
 	return
 }
 
-// Return the args for the controller
+// Return the args for the controller.
 func (req *Request) Args() map[string]interface{} {
 	return req.controller.Args
 }
 
-// Return a multipart form
+// Return a multipart form.
 func (req *Request) GetMultipartForm() (ServerMultipartForm, error) {
 	if form, err := req.In.Get(HTTP_MULTIPART_FORM); err != nil {
 		return nil, err
@@ -207,7 +207,7 @@ func (req *Request) GetMultipartForm() (ServerMultipartForm, error) {
 	return nil, FORM_NOT_FOUND
 }
 
-// Destroy the request
+// Destroy the request.
 func (req *Request) Destroy() {
 	req.In = nil
 	req.ContentType = ""
@@ -222,7 +222,7 @@ func (req *Request) Destroy() {
 	req.MultipartForm = nil
 }
 
-// Set the server response
+// Set the server response.
 func (resp *Response) SetResponse(r ServerResponse) {
 	resp.Out.Server = r
 	if h, e := r.Get(HTTP_SERVER_HEADER); e == nil {
@@ -230,18 +230,18 @@ func (resp *Response) SetResponse(r ServerResponse) {
 	}
 }
 
-// Destroy the output response
+// Destroy the output response.
 func (o *OutResponse) Destroy() {
 	o.response = nil
 	o.internalHeader.Destroy()
 }
 
-// Destroy the RevelHeader
+// Destroy the RevelHeader.
 func (h *RevelHeader) Destroy() {
 	h.Server = nil
 }
 
-// Destroy the Response
+// Destroy the Response.
 func (resp *Response) Destroy() {
 	resp.Out.Destroy()
 	resp.Status = 0
@@ -259,12 +259,12 @@ func (req *Request) Referer() string {
 	return req.Header.Get("Referer")
 }
 
-// Return the httpheader for the key
+// Return the httpheader for the key.
 func (req *Request) GetHttpHeader(key string) string {
 	return req.Header.Get(key)
 }
 
-// Return the value from the server
+// Return the value from the server.
 func (r *Request) GetValue(key int) (value interface{}) {
 	value, _ = r.In.Get(key)
 	return
@@ -283,16 +283,16 @@ func (resp *Response) WriteHeader(defaultStatusCode int, defaultContentType stri
 	}
 	resp.SetStatus(resp.Status)
 }
+
 func (resp *Response) SetStatus(statusCode int) {
 	if resp.Out.internalHeader.Server != nil {
 		resp.Out.internalHeader.Server.SetStatus(statusCode)
 	} else {
 		resp.Out.Server.Set(ENGINE_RESPONSE_STATUS, statusCode)
 	}
-
 }
 
-// Return the writer
+// Return the writer.
 func (resp *Response) GetWriter() (writer io.Writer) {
 	writer = resp.writer
 	if writer == nil {
@@ -304,14 +304,14 @@ func (resp *Response) GetWriter() (writer io.Writer) {
 	return
 }
 
-// Replace the writer
+// Replace the writer.
 func (resp *Response) SetWriter(writer io.Writer) bool {
 	resp.writer = writer
 	// Leave it up to the engine to flush and close the writer
 	return resp.Out.Server.Set(ENGINE_WRITER, writer)
 }
 
-// Passes full control to the response to the caller - terminates any initial writes
+// Passes full control to the response to the caller - terminates any initial writes.
 func (resp *Response) GetStreamWriter() (writer StreamWriter) {
 	if w, e := resp.Out.Server.Get(HTTP_STREAM_WRITER); e == nil {
 		writer = w.(StreamWriter)
@@ -319,45 +319,45 @@ func (resp *Response) GetStreamWriter() (writer StreamWriter) {
 	return
 }
 
-// Return the header
+// Return the header.
 func (o *OutResponse) Header() *RevelHeader {
 	return o.internalHeader
 }
 
-// Write the header out
+// Write the header out.
 func (o *OutResponse) Write(data []byte) (int, error) {
 	return o.response.GetWriter().Write(data)
 }
 
-// Set a value in the header
+// Set a value in the header.
 func (h *RevelHeader) Set(key, value string) {
 	if h.Server != nil {
 		h.Server.Set(key, value)
 	}
 }
 
-// Add a key to the header
+// Add a key to the header.
 func (h *RevelHeader) Add(key, value string) {
 	if h.Server != nil {
 		h.Server.Add(key, value)
 	}
 }
 
-// Set a cookie in the header
+// Set a cookie in the header.
 func (h *RevelHeader) SetCookie(cookie string) {
 	if h.Server != nil {
 		h.Server.SetCookie(cookie)
 	}
 }
 
-// Set the status for the header
+// Set the status for the header.
 func (h *RevelHeader) SetStatus(status int) {
 	if h.Server != nil {
 		h.Server.SetStatus(status)
 	}
 }
 
-// Get a key from the header
+// Get a key from the header.
 func (h *RevelHeader) Get(key string) (value string) {
 	values := h.GetAll(key)
 	if len(values) > 0 {
@@ -366,7 +366,7 @@ func (h *RevelHeader) Get(key string) (value string) {
 	return
 }
 
-// GetAll returns []string of items (the header split by a comma)
+// GetAll returns []string of items (the header split by a comma).
 func (h *RevelHeader) GetAll(key string) (values []string) {
 	if h.Server != nil {
 		values = h.Server.Get(key)
@@ -378,7 +378,6 @@ func (h *RevelHeader) GetAll(key string) (values []string) {
 // e.g. From "multipart/form-data; boundary=--" to "multipart/form-data"
 // If none is specified, returns "text/html" by default.
 func ResolveContentType(req *Request) string {
-
 	contentType := req.Header.Get("Content-Type")
 	if contentType == "" {
 		return "text/html"

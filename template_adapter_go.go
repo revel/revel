@@ -9,7 +9,7 @@ import (
 
 const GO_TEMPLATE = "go"
 
-// Called on startup, initialized when the REVEL_BEFORE_MODULES_LOADED is called
+// Called on startup, initialized when the REVEL_BEFORE_MODULES_LOADED is called.
 func init() {
 	AddInitEventHandler(func(typeOf Event, value interface{}) (responseOf EventResponse) {
 		if typeOf == REVEL_BEFORE_MODULES_LOADED {
@@ -50,7 +50,7 @@ func (gotmpl GoTemplate) Render(wr io.Writer, arg interface{}) error {
 	return gotmpl.Execute(wr, arg)
 }
 
-// The main template engine for Go
+// The main template engine for Go.
 type GoEngine struct {
 	// The template loader
 	loader *TemplateLoader
@@ -64,7 +64,7 @@ type GoEngine struct {
 	CaseInsensitive bool
 }
 
-// Convert the path to lower case if needed
+// Convert the path to lower case if needed.
 func (i *GoEngine) ConvertPath(path string) string {
 	if i.CaseInsensitive {
 		return strings.ToLower(path)
@@ -72,12 +72,12 @@ func (i *GoEngine) ConvertPath(path string) string {
 	return path
 }
 
-// Returns true if this engine can handle the response
+// Returns true if this engine can handle the response.
 func (i *GoEngine) Handles(templateView *TemplateView) bool {
 	return EngineHandles(i, templateView)
 }
 
-// Parses the template vide and adds it to the template set
+// Parses the template vide and adds it to the template set.
 func (engine *GoEngine) ParseAndAdd(baseTemplate *TemplateView) error {
 	// If alternate delimiters set for the project, change them for this set
 	if engine.splitDelims != nil && strings.Index(baseTemplate.Location(), ViewsPath) > -1 {
@@ -103,7 +103,7 @@ func (engine *GoEngine) ParseAndAdd(baseTemplate *TemplateView) error {
 	return nil
 }
 
-// Lookups the template name, to see if it is contained in this engine
+// Lookups the template name, to see if it is contained in this engine.
 func (engine *GoEngine) Lookup(templateName string) Template {
 	// Case-insensitive matching of template file name
 	if tpl, found := engine.templatesByName[engine.ConvertPath(templateName)]; found {
@@ -112,12 +112,12 @@ func (engine *GoEngine) Lookup(templateName string) Template {
 	return nil
 }
 
-// Return the engine name
+// Return the engine name.
 func (engine *GoEngine) Name() string {
 	return GO_TEMPLATE
 }
 
-// An event listener to listen for Revel INIT events
+// An event listener to listen for Revel INIT events.
 func (engine *GoEngine) Event(action Event, i interface{}) {
 	if action == TEMPLATE_REFRESH_REQUESTED {
 		// At this point all the templates have been passed into the

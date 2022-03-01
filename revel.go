@@ -5,20 +5,20 @@
 package revel
 
 import (
+	"encoding/json"
+	"fmt"
 	"go/build"
 	"net/http"
 	"path/filepath"
 	"strings"
 
-	"encoding/json"
-	"fmt"
 	"github.com/revel/config"
 	"github.com/revel/revel/logger"
 	"github.com/revel/revel/model"
 )
 
 const (
-	// RevelImportPath Revel framework import path
+	// RevelImportPath Revel framework import path.
 	RevelImportPath = "github.com/revel/revel"
 )
 
@@ -27,22 +27,22 @@ const (
 	SPECIAL_USE_FLAG = "specialUseFlag"
 )
 
-// App details
+// App details.
 var (
 	RevelConfig *model.RevelContainer
-	AppName    string // e.g. "sample"
-	AppRoot    string // e.g. "/app1"
-	BasePath   string // e.g. "$GOPATH/src/corp/sample"
-	AppPath    string // e.g. "$GOPATH/src/corp/sample/app"
-	ViewsPath  string // e.g. "$GOPATH/src/corp/sample/app/views"
-	ImportPath string // e.g. "corp/sample"
-	SourcePath string // e.g. "$GOPATH/src"
+	AppName     string // e.g. "sample"
+	AppRoot     string // e.g. "/app1"
+	BasePath    string // e.g. "$GOPATH/src/corp/sample"
+	AppPath     string // e.g. "$GOPATH/src/corp/sample/app"
+	ViewsPath   string // e.g. "$GOPATH/src/corp/sample/app/views"
+	ImportPath  string // e.g. "corp/sample"
+	SourcePath  string // e.g. "$GOPATH/src"
 
 	Config  *config.Context
 	RunMode string // Application-defined (by default, "dev" or "prod")
 	DevMode bool   // if true, RunMode is a development mode.
 
-	// Revel installation details
+	// Revel installation details.
 	RevelPath string // e.g. "$GOPATH/src/github.com/revel/revel"
 
 	// Where to look for templates
@@ -54,7 +54,7 @@ var (
 	// Config load order
 	// 1. framework (revel/conf/*)
 	// 2. application (conf/*)
-	// 3. user supplied configs (...) - User configs can override/add any from above
+	// 3. user supplied configs (...) - User configs can override/add any from above.
 	ConfPaths []string
 
 	// Server config.
@@ -71,22 +71,22 @@ var (
 
 	// All cookies dropped by the framework begin with this prefix.
 	CookiePrefix string
-	// Cookie domain
+	// Cookie domain.
 	CookieDomain string
-	// Cookie flags
+	// Cookie flags.
 	CookieSecure   bool
 	CookieSameSite http.SameSite
 
 	// Revel request access log, not exposed from package.
-	// However output settings can be controlled from app.conf
+	// However output settings can be controlled from app.conf.
 
-	// True when revel engine has been initialized (Init has returned)
+	// True when revel engine has been initialized (Init has returned).
 	Initialized bool
 
-	// Private
-	secretKey     []byte             // Key used to sign cookies. An empty key disables signing.
-	packaged      bool               // If true, this is running from a pre-built package.
-	initEventList = []EventHandler{} // Event handler list for receiving events
+	// Private.
+	secretKey      []byte                // Key used to sign cookies. An empty key disables signing.
+	packaged       bool                  // If true, this is running from a pre-built package.
+	initEventList  = []EventHandler{}    // Event handler list for receiving events
 	packagePathMap = map[string]string{} // The map of the directories needed
 )
 
@@ -109,19 +109,19 @@ func Init(inputmode, importPath, srcPath string) {
 	var revelSourcePath string // may be different from the app source path
 	if SourcePath == "" {
 		revelSourcePath, SourcePath = findSrcPaths(importPath)
-        BasePath = SourcePath
+		BasePath = SourcePath
 	} else {
 		// If the SourcePath was specified, assume both Revel and the app are within it.
 		SourcePath = filepath.Clean(SourcePath)
 		revelSourcePath = filepath.Join(SourcePath, filepath.FromSlash(RevelImportPath))
-        BasePath = filepath.Join(SourcePath, filepath.FromSlash(importPath))
+		BasePath = filepath.Join(SourcePath, filepath.FromSlash(importPath))
 		packaged = true
 	}
 
-	RevelPath = revelSourcePath //filepath.Join(revelSourcePath, filepath.FromSlash(RevelImportPath))
+	RevelPath = revelSourcePath // filepath.Join(revelSourcePath, filepath.FromSlash(RevelImportPath))
 	AppPath = filepath.Join(BasePath, "app")
 	ViewsPath = filepath.Join(AppPath, "views")
-	RevelLog.Info("Paths","revel", RevelPath,"base", BasePath,"app", AppPath,"views", ViewsPath)
+	RevelLog.Debug("Paths", "revel", RevelPath, "base", BasePath, "app", AppPath, "views", ViewsPath)
 
 	CodePaths = []string{AppPath}
 
@@ -203,7 +203,7 @@ func Init(inputmode, importPath, srcPath string) {
 // The input mode can be as simple as "prod" or it can be a JSON string like
 // {"mode":"%s","testModeFlag":true}
 // When this function is called it returns the true "inputmode" extracted from the parameter
-// and it sets the log context appropriately
+// and it sets the log context appropriately.
 func updateLog(inputmode string) (returnMode string) {
 	if inputmode == "" {
 		returnMode = config.DefaultSection
@@ -225,10 +225,10 @@ func updateLog(inputmode string) (returnMode string) {
 			specialUseFlag, _ = specialUse.(bool)
 		}
 		if packagePathMapI, found := modemap["packagePathMap"]; found {
-            for k,v := range packagePathMapI.(map[string]interface{}) {
-                packagePathMap[k]=v.(string)
-            }
-        }
+			for k, v := range packagePathMapI.(map[string]interface{}) {
+				packagePathMap[k] = v.(string)
+			}
+		}
 	}
 
 	var newContext *config.Context
@@ -240,7 +240,7 @@ func updateLog(inputmode string) (returnMode string) {
 		// Ensure that the selected runmode appears in app.conf.
 		// If empty string is passed as the mode, treat it as "DEFAULT"
 		if !Config.HasSection(returnMode) {
-			RevelLog.Fatal("app.conf: Run mode not found:","runmode", returnMode)
+			RevelLog.Fatal("app.conf: Run mode not found:", "runmode", returnMode)
 		}
 		Config.SetSection(returnMode)
 		newContext = Config
@@ -262,7 +262,7 @@ func updateLog(inputmode string) (returnMode string) {
 	return
 }
 
-// Set the secret key
+// Set the secret key.
 func SetSecretKey(newKey []byte) error {
 	secretKey = newKey
 	return nil
@@ -274,9 +274,9 @@ func ResolveImportPath(importPath string) (string, error) {
 	if packaged {
 		return filepath.Join(SourcePath, importPath), nil
 	}
-	if path,found := packagePathMap[importPath];found {
-        return path, nil
-    }
+	if path, found := packagePathMap[importPath]; found {
+		return path, nil
+	}
 
 	modPkg, err := build.Import(importPath, RevelPath, build.FindOnly)
 	if err != nil {
@@ -285,7 +285,7 @@ func ResolveImportPath(importPath string) (string, error) {
 	return modPkg.Dir, nil
 }
 
-// CheckInit method checks `revel.Initialized` if not initialized it panics
+// CheckInit method checks `revel.Initialized` if not initialized it panics.
 func CheckInit() {
 	if !Initialized {
 		RevelLog.Panic("CheckInit: Revel has not been initialized!")
@@ -295,9 +295,9 @@ func CheckInit() {
 // findSrcPaths uses the "go/build" package to find the source root for Revel
 // and the app.
 func findSrcPaths(importPath string) (revelSourcePath, appSourcePath string) {
-    if importFsPath,found := packagePathMap[importPath];found {
-        return packagePathMap[RevelImportPath],importFsPath
-    }
+	if importFsPath, found := packagePathMap[importPath]; found {
+		return packagePathMap[RevelImportPath], importFsPath
+	}
 	var (
 		gopaths = filepath.SplitList(build.Default.GOPATH)
 		goroot  = build.Default.GOROOT

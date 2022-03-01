@@ -19,7 +19,7 @@ import (
 	"sync/atomic"
 )
 
-// ErrorCSSClass httml CSS error class name
+// ErrorCSSClass httml CSS error class name.
 var ErrorCSSClass = "hasError"
 
 // TemplateLoader object handles loading and parsing of templates.
@@ -46,9 +46,11 @@ type Template interface {
 	Location() string // Disk location
 }
 
-var invalidSlugPattern = regexp.MustCompile(`[^a-z0-9 _-]`)
-var whiteSpacePattern = regexp.MustCompile(`\s+`)
-var templateLog = RevelLog.New("section", "template")
+var (
+	invalidSlugPattern = regexp.MustCompile(`[^a-z0-9 _-]`)
+	whiteSpacePattern  = regexp.MustCompile(`\s+`)
+	templateLog        = RevelLog.New("section", "template")
+)
 
 // TemplateOutputArgs returns the result of the template rendered using the passed in arguments.
 func TemplateOutputArgs(templatePath string, args map[string]interface{}) (data []byte, err error) {
@@ -77,20 +79,20 @@ func NewTemplateLoader(paths []string) *TemplateLoader {
 }
 
 // WatchDir returns true of directory doesn't start with . (dot)
-// otherwise false
+// otherwise false.
 func (loader *TemplateLoader) WatchDir(info os.FileInfo) bool {
 	// Watch all directories, except the ones starting with a dot.
 	return !strings.HasPrefix(info.Name(), ".")
 }
 
 // WatchFile returns true of file doesn't start with . (dot)
-// otherwise false
+// otherwise false.
 func (loader *TemplateLoader) WatchFile(basename string) bool {
 	// Watch all files, except the ones starting with a dot.
 	return !strings.HasPrefix(basename, ".")
 }
 
-// DEPRECATED Use TemplateLang, will be removed in future release
+// DEPRECATED Use TemplateLang, will be removed in future release.
 func (loader *TemplateLoader) Template(name string) (tmpl Template, err error) {
 	runtimeLoader := loader.runtimeLoader.Load().(*templateRuntime)
 	return runtimeLoader.TemplateLang(name, "")
@@ -103,15 +105,17 @@ func (loader *TemplateLoader) TemplateLang(name, lang string) (tmpl Template, er
 
 // Refresh method scans the views directory and parses all templates as Go Templates.
 // If a template fails to parse, the error is set on the loader.
-// (It's awkward to refresh a single Go Template)
+// (It's awkward to refresh a single Go Template).
 func (loader *TemplateLoader) Refresh() (err *Error) {
 	loader.templateMutex.Lock()
 	defer loader.templateMutex.Unlock()
 
 	loader.loadVersionSeed++
-	runtimeLoader := &templateRuntime{loader: loader,
+	runtimeLoader := &templateRuntime{
+		loader:      loader,
 		version:     loader.loadVersionSeed,
-		templateMap: map[string]Template{}}
+		templateMap: map[string]Template{},
+	}
 
 	templateLog.Debug("Refresh: Refreshing templates from ", "path", loader.paths)
 	if err = loader.initializeEngines(runtimeLoader, Config.StringDefault("template.engines", GO_TEMPLATE)); err != nil {
@@ -183,6 +187,7 @@ func (loader *TemplateLoader) Refresh() (err *Error) {
 				return nil
 			}
 
+			//nolint:scopelint
 			fileBytes, err := runtimeLoader.findAndAddTemplate(path, fullSrcDir, basePath)
 			if err != nil {
 				// Add in this template name to the list of templates unable to be compiled
@@ -206,7 +211,6 @@ func (loader *TemplateLoader) Refresh() (err *Error) {
 				templateLog.Errorf("Refresh: Template compilation error (In %s around line %d):\n\t%s",
 					path, runtimeLoader.compileError.Line, err.Error())
 			} else if nil != err { //&& strings.HasPrefix(templateName, "errors/") {
-
 				if compileError, ok := err.(*Error); ok {
 					templateLog.Errorf("Template compilation error (In %s around line %d):\n\t%s",
 						path, compileError.Line, err.Error())
@@ -254,7 +258,7 @@ type templateRuntime struct {
 }
 
 // Checks to see if template exists in templatePaths, if so it is skipped (templates are imported in order
-// reads the template file into memory, replaces namespace keys with module (if found
+// reads the template file into memory, replaces namespace keys with module (if found.
 func (runtimeLoader *templateRuntime) findAndAddTemplate(path, fullSrcDir, basePath string) (fileBytes []byte, err error) {
 	templateName := filepath.ToSlash(path[len(fullSrcDir)+1:])
 	// Convert template names to use forward slashes, even on Windows.
@@ -344,7 +348,7 @@ func (runtimeLoader *templateRuntime) loadIntoEngine(engine TemplateEngine, base
 }
 
 // Parse the line, and description from an error message like:
-// html/template:Application/Register.html:36: no such template "footer.html"
+// html/template:Application/Register.html:36: no such template "footer.html".
 func ParseTemplateError(err error) (templateName string, line int, description string) {
 	if e, ok := err.(*Error); ok {
 		return "", e.Line, e.Description
@@ -390,7 +394,7 @@ func (runtimeLoader *templateRuntime) TemplateLang(name, lang string) (tmpl Temp
 	return
 }
 
-// Load and also updates map if name is not found (to speed up next lookup)
+// Load and also updates map if name is not found (to speed up next lookup).
 func (runtimeLoader *templateRuntime) templateLoad(name, lang string) (tmpl Template) {
 	langName := name
 	found := false

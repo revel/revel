@@ -137,9 +137,11 @@ func Flush() error                                                { return Insta
 func Set(key string, value interface{}, expires time.Duration) error {
 	return Instance.Set(key, value, expires)
 }
+
 func Add(key string, value interface{}, expires time.Duration) error {
 	return Instance.Add(key, value, expires)
 }
+
 func Replace(key string, value interface{}, expires time.Duration) error {
 	return Instance.Replace(key, value, expires)
 }

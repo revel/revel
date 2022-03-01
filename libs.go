@@ -29,7 +29,7 @@ func Sign(message string) string {
 }
 
 // Verify returns true if the given signature is correct for the given message.
-// e.g. it matches what we generate with Sign()
+// e.g. it matches what we generate with Sign().
 func Verify(message, sig string) bool {
 	return hmac.Equal([]byte(sig), []byte(Sign(message)))
 }
@@ -42,7 +42,7 @@ func Verify(message, sig string) bool {
 // - For string value, please refer `revel.Atob` method
 // - An array, map, slice with zero elements
 // - Boolean value returned as-is
-// - "nil" value
+// - "nil" value.
 func ToBool(val interface{}) bool {
 	if val == nil {
 		return false
@@ -74,7 +74,7 @@ func ToBool(val interface{}) bool {
 // - The "false" string
 // - The "f" string
 // - The "off" string,
-// - The string "0" & "0.0"
+// - The string "0" & "0.0".
 func Atob(v string) bool {
 	switch strings.TrimSpace(strings.ToLower(v)) {
 	case "", "false", "off", "f", "0", "0.0":

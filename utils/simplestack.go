@@ -45,6 +45,7 @@ func NewStackLock(startsize, maxsize int, creator func() interface{}) *SimpleLoc
 	}
 	return ss
 }
+
 func (s *SimpleLockStack) Pop() (value interface{}) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
@@ -64,6 +65,7 @@ func (s *SimpleLockStack) Pop() (value interface{}) {
 	s.active++
 	return
 }
+
 func (s *SimpleLockStack) Push(value interface{}) {
 	if d, ok := value.(ObjectDestroy); ok {
 		d.Destroy()
@@ -86,18 +88,22 @@ func (s *SimpleLockStack) Push(value interface{}) {
 	}
 	s.len++
 	s.active--
-	//println("Push ",value, s.len, s.active, s.capacity)
+	// println("Push ",value, s.len, s.active, s.capacity)
 	return
 }
+
 func (s *SimpleLockStack) Len() int {
 	return s.len
 }
+
 func (s *SimpleLockStack) Capacity() int {
 	return s.capacity
 }
+
 func (s *SimpleLockStack) Active() int {
 	return s.active
 }
+
 func (s *SimpleLockStack) String() string {
 	return fmt.Sprintf("SS: Capacity:%d Active:%d Stored:%d", s.capacity, s.active, s.len)
 }

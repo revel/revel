@@ -6,14 +6,15 @@ package revel
 
 import (
 	"fmt"
-	"github.com/revel/revel/session"
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/revel/revel/session"
 	"github.com/revel/revel/utils"
 )
 
-// Revel's variables server, router, etc
+// Revel's variables server, router, etc.
 var (
 	MainRouter         *Router
 	MainTemplateLoader *TemplateLoader
@@ -56,7 +57,6 @@ func InitServer() {
 	if MainWatcher != nil && Config.BoolDefault("watch.templates", true) {
 		MainWatcher.Listen(MainTemplateLoader, MainTemplateLoader.paths...)
 	}
-
 }
 
 // Run the server.
@@ -92,7 +92,7 @@ func Run(port int) {
 	println("\nRevel exited normally\n")
 }
 
-// Build an engine initialization object and start the engine
+// Build an engine initialization object and start the engine.
 func InitServerEngine(port int, serverEngine string) {
 	address := HTTPAddr
 	if address == "" {
@@ -102,8 +102,10 @@ func InitServerEngine(port int, serverEngine string) {
 		port = HTTPPort
 	}
 
-	var network = "tcp"
-	var localAddress string
+	var (
+		network      = "tcp"
+		localAddress string
+	)
 
 	// If the port is zero, treat the address as a fully qualified local address.
 	// This address must be prefixed with the network type followed by a colon,
@@ -131,9 +133,9 @@ func InitServerEngine(port int, serverEngine string) {
 	AddInitEventHandler(CurrentEngine.Event)
 }
 
-// Initialize the controller stack for the application
+// Initialize the controller stack for the application.
 func initControllerStack() {
-	RevelConfig.Controller.Reuse = Config.BoolDefault("revel.controller.reuse",true)
+	RevelConfig.Controller.Reuse = Config.BoolDefault("revel.controller.reuse", true)
 
 	if RevelConfig.Controller.Reuse {
 		RevelConfig.Controller.Stack = utils.NewStackLock(
@@ -147,7 +149,7 @@ func initControllerStack() {
 	}
 }
 
-// Called to stop the server
+// Called to stop the server.
 func StopServer(value interface{}) EventResponse {
-	return RaiseEvent(ENGINE_SHUTDOWN_REQUEST,value)
+	return RaiseEvent(ENGINE_SHUTDOWN_REQUEST, value)
 }

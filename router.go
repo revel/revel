@@ -6,20 +6,19 @@ package revel
 
 import (
 	"encoding/csv"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net/url"
+	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
-
-	"os"
 	"sync"
 
 	"github.com/revel/pathtree"
 	"github.com/revel/revel/logger"
-	"errors"
 )
 
 const (
@@ -65,11 +64,11 @@ type ActionPathData struct {
 }
 
 var (
-	// Used to store decoded action path mappings
+	// Used to store decoded action path mappings.
 	actionPathCacheMap = map[string]*ActionPathData{}
-	// Used to prevent concurrent writes to map
+	// Used to prevent concurrent writes to map.
 	actionPathCacheLock = sync.Mutex{}
-	// The path returned if not found
+	// The path returned if not found.
 	notFound = &RouteMatch{Action: "404"}
 )
 
@@ -194,7 +193,7 @@ func (router *Router) Route(req *Request) (routeMatch *RouteMatch) {
 	routeList := leaf.Value.([]*Route)
 	var typeOfController *ControllerType
 
-	//INFO.Printf("Found route for path %s %#v", req.URL.Path, len(routeList))
+	// INFO.Printf("Found route for path %s %#v", req.URL.Path, len(routeList))
 	for index := range routeList {
 		route = routeList[index]
 		methodName = route.MethodName
@@ -231,7 +230,6 @@ func (router *Router) Route(req *Request) (routeMatch *RouteMatch) {
 	if route == nil {
 		routeMatch = notFound
 	} else {
-
 		routeMatch = &RouteMatch{
 			ControllerName:   route.ControllerNamespace + controllerName,
 			MethodName:       methodName,
@@ -291,7 +289,7 @@ func (router *Router) updateTree() *Error {
 	return nil
 }
 
-// Returns the controller namespace and name, action and module if found from the actionPath specified
+// Returns the controller namespace and name, action and module if found from the actionPath specified.
 func splitActionPath(actionPathData *ActionPathData, actionPath string, useCache bool) (pathData *ActionPathData, found bool) {
 	actionPath = strings.ToLower(actionPath)
 	if pathData, found = actionPathCacheMap[actionPath]; found && useCache {
@@ -319,17 +317,17 @@ func splitActionPath(actionPathData *ActionPathData, actionPath string, useCache
 			if moduleSource, found := ModuleByName(controllerNamespace[:len(controllerNamespace)-1]); found {
 				foundModuleSource = moduleSource
 				controllerNamespace = moduleSource.Namespace()
-				log = log.New("namespace",controllerNamespace)
+				log = log.New("namespace", controllerNamespace)
 				log.Debug("Found module namespace")
 			} else {
 				log.Warnf("splitActionPath: Unable to find module %s for action: %s", controllerNamespace[:len(controllerNamespace)-1], actionPath)
 			}
 			controllerName = controllerName[i+1:]
-			log = log.New("controllerShortName",controllerName)
+			log = log.New("controllerShortName", controllerName)
 			// Check for the type of controller
 			typeOfController = foundModuleSource.ControllerByName(controllerName, methodName)
 			found = typeOfController != nil
-			log.Debug("Found controller","found",found,"type",typeOfController)
+			log.Debug("Found controller", "found", found, "type", typeOfController)
 		} else if controllerName[0] != ':' {
 			// First attempt to find the controller in the module source
 			if foundModuleSource != nil {
@@ -620,15 +618,16 @@ func (a *ActionDefinition) String() string {
 }
 
 func (router *Router) Reverse(action string, argValues map[string]string) (ad *ActionDefinition) {
-	ad, err := router.ReverseError(action,argValues,nil)
-	if err!=nil {
+	ad, err := router.ReverseError(action, argValues, nil)
+	if err != nil {
 		routerLog.Error("splitActionPath: Failed to find reverse route", "action", action, "arguments", argValues)
 	}
 	return ad
 }
+
 func (router *Router) ReverseError(action string, argValues map[string]string, req *Request) (ad *ActionDefinition, err error) {
 	var log logger.MultiLogger
-	if req!=nil {
+	if req != nil {
 		log = req.controller.Log.New("action", action)
 	} else {
 		log = routerLog.New("action", action)
@@ -724,9 +723,8 @@ func (router *Router) ReverseError(action string, argValues map[string]string, r
 			if !ok {
 				val = "<nil>"
 				log.Error("Reverse: reverse route missing route argument ", "argument", el[1:])
+				err = errors.New("Missing route argument")
 				panic("Check stack")
-				err = errors.New("Missing route arguement")
-				return
 			}
 			pathElements[i] = val
 			delete(argValues, el[1:])
@@ -751,7 +749,7 @@ func (router *Router) ReverseError(action string, argValues map[string]string, r
 			star = true
 		}
 
-		log.Infof("Reversing action %s to %s Using Route %#v",action,urlPath,pathData.Route)
+		log.Debugf("Reversing action %s to %s Using Route %#v", action, urlPath, pathData.Route)
 
 		ad = &ActionDefinition{
 			URL:    urlPath,
@@ -815,7 +813,7 @@ func RouterFilter(c *Controller, fc []Filter) {
 	fc[0](c, fc[1:])
 }
 
-// HTTPMethodOverride overrides allowed http methods via form or browser param
+// HTTPMethodOverride overrides allowed http methods via form or browser param.
 func HTTPMethodOverride(c *Controller, fc []Filter) {
 	// An array of HTTP verbs allowed.
 	verbs := []string{"POST", "PUT", "PATCH", "DELETE"}
@@ -848,7 +846,6 @@ func HTTPMethodOverride(c *Controller, fc []Filter) {
 				})
 				return
 			}
-
 		}
 	}
 

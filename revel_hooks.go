@@ -4,9 +4,9 @@ import (
 	"sort"
 )
 
-// The list of startup hooks
+// The list of startup hooks.
 type (
-	// The startup hooks structure
+	// The startup hooks structure.
 	RevelHook struct {
 		order int    // The order
 		f     func() // The function to call
@@ -16,14 +16,14 @@ type (
 )
 
 var (
-	// The local instance of the list
+	// The local instance of the list.
 	startupHooks RevelHooks
 
-	// The instance of the list
+	// The instance of the list.
 	shutdownHooks RevelHooks
 )
 
-// Called to run the hooks
+// Called to run the hooks.
 func (r RevelHooks) Run() {
 	serverLogger.Infof("There is %d hooks need to run ...", len(r))
 	sort.Sort(r)
@@ -33,7 +33,7 @@ func (r RevelHooks) Run() {
 	}
 }
 
-// Adds a new function hook, using the order
+// Adds a new function hook, using the order.
 func (r RevelHooks) Add(fn func(), order ...int) RevelHooks {
 	o := 1
 	if len(order) > 0 {
@@ -42,17 +42,17 @@ func (r RevelHooks) Add(fn func(), order ...int) RevelHooks {
 	return append(r, RevelHook{order: o, f: fn})
 }
 
-// Sorting function
+// Sorting function.
 func (slice RevelHooks) Len() int {
 	return len(slice)
 }
 
-// Sorting function
+// Sorting function.
 func (slice RevelHooks) Less(i, j int) bool {
 	return slice[i].order < slice[j].order
 }
 
-// Sorting function
+// Sorting function.
 func (slice RevelHooks) Swap(i, j int) {
 	slice[i], slice[j] = slice[j], slice[i]
 }
@@ -97,7 +97,7 @@ func OnAppStart(f func(), order ...int) {
 	startupHooks = startupHooks.Add(f, order...)
 }
 
-// Called to add a new stop hook
+// Called to add a new stop hook.
 func OnAppStop(f func(), order ...int) {
 	shutdownHooks = shutdownHooks.Add(f, order...)
 }

@@ -5,7 +5,6 @@
 package revel
 
 import (
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -13,6 +12,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 // This tries to benchmark the usual request-serving pipeline to get an overall
@@ -26,7 +27,7 @@ import (
 // - Parameter binding
 // - Session, flash, i18n cookies
 // - Render() call magic
-// - Template rendering
+// - Template rendering.
 func BenchmarkServeAction(b *testing.B) {
 	benchmarkRequest(b, showRequest)
 }
@@ -101,7 +102,7 @@ func getFileSize(t *testing.T, name string) int64 {
 	return fi.Size()
 }
 
-// Ensure on app start runs in order
+// Ensure on app start runs in order.
 func TestOnAppStart(t *testing.T) {
 	str := ""
 	a := assert.New(t)
@@ -118,7 +119,7 @@ func TestOnAppStart(t *testing.T) {
 	a.Equal("Hello World", str, "Failed to order OnAppStart")
 }
 
-// Ensure on app stop runs in order
+// Ensure on app stop runs in order.
 func TestOnAppStop(t *testing.T) {
 	a := assert.New(t)
 	startFakeBookingApp()
@@ -137,7 +138,6 @@ func TestOnAppStop(t *testing.T) {
 	}()
 	Run(0)
 	a.Equal("goodbye cruel world", i, "Did not get shutdown events")
-
 }
 
 var (

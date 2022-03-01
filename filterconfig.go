@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-// Map from "Controller" or "Controller.Method" to the Filter chain
+// Map from "Controller" or "Controller.Method" to the Filter chain.
 var filterOverrides = make(map[string][]Filter)
 
 // FilterConfigurator allows the developer configure the filter chain on a
@@ -102,7 +102,7 @@ func FilterAction(methodRef interface{}) FilterConfigurator {
 }
 
 // Add the given filter in the second-to-last position in the filter chain.
-// (Second-to-last so that it is before ActionInvoker)
+// (Second-to-last so that it is before ActionInvoker).
 func (conf FilterConfigurator) Add(f Filter) FilterConfigurator {
 	conf.apply(func(fc []Filter) []Filter {
 		return conf.addFilter(f, fc)
@@ -211,7 +211,7 @@ func FilterConfiguringFilter(c *Controller, fc []Filter) {
 	fc[0](c, fc[1:])
 }
 
-// getOverrideChain retrieves the overrides for the action that is set
+// getOverrideChain retrieves the overrides for the action that is set.
 func getOverrideChain(controllerName, action string) []Filter {
 	if newChain, ok := filterOverrides[action]; ok {
 		return newChain

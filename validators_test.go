@@ -291,7 +291,6 @@ func TestEmail(t *testing.T) {
 }
 
 func runIPAddrTestfunc(t *testing.T, test_type int, ipaddr_list map[string]bool, msg_fmt string) {
-
 	// generate dataset for test
 	test_ipaddr_list := []Expect{}
 	for ipaddr, expected := range ipaddr_list {
@@ -304,8 +303,7 @@ func runIPAddrTestfunc(t *testing.T, test_type int, ipaddr_list map[string]bool,
 }
 
 func TestIPAddr(t *testing.T) {
-
-	//IPv4
+	// IPv4
 	test_ipv4_ipaddrs := map[string]bool{
 		"192.168.1.1":     true,
 		"127.0.0.1":       true,
@@ -317,7 +315,7 @@ func TestIPAddr(t *testing.T) {
 		"192.192.19.999":  false,
 	}
 
-	//IPv4 with CIDR
+	// IPv4 with CIDR
 	test_ipv4_with_cidr_ipaddrs := map[string]bool{
 		"192.168.1.1/24": true,
 		"127.0.0.1/32":   true,
@@ -331,11 +329,11 @@ func TestIPAddr(t *testing.T) {
 		"4.4.4.4/256":    false,
 	}
 
-	//IPv6
+	// IPv6
 	test_ipv6_ipaddrs := map[string]bool{
 		"2607:f0d0:1002:51::4":                    true,
 		"2607:f0d0:1002:0051:0000:0000:0000:0004": true,
-		"ff05::1:3":                               true,
+		"ff05::1:3": true,
 		"FE80:0000:0000:0000:0202:B3FF:FE1E:8329": true,
 		"FE80::0202:B3FF:FE1E:8329":               true,
 		"fe80::202:b3ff:fe1e:8329":                true,
@@ -351,7 +349,7 @@ func TestIPAddr(t *testing.T) {
 		"234:23:23:23:23:23:23":                   false,
 	}
 
-	//IPv6 with CIDR
+	// IPv6 with CIDR
 	test_ipv6_with_cidr_ipaddrs := map[string]bool{
 		"2000::/5":      true,
 		"2000::/15":     true,
@@ -360,7 +358,7 @@ func TestIPAddr(t *testing.T) {
 		"fc00::/7":      true,
 	}
 
-	//IPv4-Mapped Embedded IPv6 Address
+	// IPv4-Mapped Embedded IPv6 Address
 	test_ipv4_mapped_ipv6_ipaddrs := map[string]bool{
 		"2001:470:1f09:495::3:217.126.185.215":         true,
 		"2001:470:1f1d:275::1:213.0.69.132":            true,
@@ -384,7 +382,6 @@ func TestIPAddr(t *testing.T) {
 }
 
 func TestMacAddr(t *testing.T) {
-
 	macaddr_list := map[string]bool{
 		"02:f3:71:eb:9e:4b": true,
 		"02-f3-71-eb-9e-4b": true,
@@ -411,7 +408,6 @@ func TestMacAddr(t *testing.T) {
 }
 
 func TestDomain(t *testing.T) {
-
 	test_domains := map[string]bool{
 		"대한민국.xn-korea.co.kr":           true,
 		"google.com":                    true,
@@ -477,12 +473,11 @@ func TestDomain(t *testing.T) {
 }
 
 func TestURL(t *testing.T) {
-
 	test_urls := map[string]bool{
-		"https://www.google.co.kr/url?sa=t&rct=j&q=&esrc=s&source=web":                                      true,
-		"http://stackoverflow.com/questions/27812164/can-i-import-3rd-party-package-into-golang-playground": true,
-		"https://tour.golang.org/welcome/4":                                                                 true,
-		"https://revel.github.io/":                                                                          true,
+		"https://www.google.co.kr/url?sa=t&rct=j&q=&esrc=s&source=web":                                                         true,
+		"http://stackoverflow.com/questions/27812164/can-i-import-3rd-party-package-into-golang-playground":                    true,
+		"https://tour.golang.org/welcome/4":                                                                                    true,
+		"https://revel.github.io/":                                                                                             true,
 		"https://github.com/revel/revel/commit/bd1d083ee4345e919b3bca1e4c42ca682525e395#diff-972a2b2141d27e9d7a8a4149a7e28eef": true,
 		"https://github.com/ndevilla/iniparser/pull/82#issuecomment-261817064":                                                 true,
 		"http://www.baidu.com/s?ie=utf-8&f=8&rsv_bp=0&rsv_idx=1&tn=baidu&wd=golang":                                            true,
@@ -498,11 +493,9 @@ func TestURL(t *testing.T) {
 	for _, url := range []revel.URL{{}, revel.ValidURL()} {
 		performTests(url, tests, t)
 	}
-
 }
 
 func TestPureTextNormal(t *testing.T) {
-
 	test_txts := map[string]bool{
 		`<script ?>qwdpijqwd</script>qd08j123lneqw\t\nqwedojiqwd\rqwdoihjqwd1d[08jaedl;jkqwd\r\nqdolijqdwqwd`:       false,
 		`a\r\nb<script ?>qwdpijqwd</script>qd08j123lneqw\t\nqwedojiqwd\rqwdoihjqwd1d[08jaedl;jkqwd\r\nqdolijqdwqwd`: false,
@@ -519,17 +512,17 @@ func TestPureTextNormal(t *testing.T) {
 		`I like Golang\r\na`:      true,
 		"I &#32; like Golang\t\n": true,
 		"I &amp; like Golang\t\n": true,
-		`ハイレゾ対応ウォークマン®、ヘッドホン、スピーカー「Winter Gift Collection ～Presented by JUJU～」をソニーストアにて販売開始`:                                                                      true,
-		`VAIOパーソナルコンピューター type T TZシリーズ 無償点検・修理のお知らせとお詫び（2009年10月15日更新）`:                                                                                          true,
-		`把百度设为主页关于百度About  Baidu百度推广`:                                                                                                                             true,
+		`ハイレゾ対応ウォークマン®、ヘッドホン、スピーカー「Winter Gift Collection ～Presented by JUJU～」をソニーストアにて販売開始`: true,
+		`VAIOパーソナルコンピューター type T TZシリーズ 無償点検・修理のお知らせとお詫び（2009年10月15日更新）`:                     true,
+		`把百度设为主页关于百度About  Baidu百度推广`: true,
 		`%E6%8A%8A%E7%99%BE%E5%BA%A6%E8%AE%BE%E4%B8%BA%E4%B8%BB%E9%A1%B5%E5%85%B3%E4%BA%8E%E7%99%BE%E5%BA%A6About++Baidu%E7%99%BE%E5%BA%A6%E6%8E%A8%E5%B9%BF`:     true,
 		`%E6%8A%8A%E7%99%BE%E5%BA%A6%E8%AE%BE%E4%B8%BA%E4%B8%BB%E9%A1%B5%E5%85%B3%E4%BA%8E%E7%99%BE%E5%BA%A6About%20%20Baidu%E7%99%BE%E5%BA%A6%E6%8E%A8%E5%B9%BF`: true,
-		`abcd/>qwdqwdoijhwer/>qwdojiqwdqwd</>qwdoijqwdoiqjd`:                                                                                                      true,
-		`abcd/>qwdqwdoijhwer/>qwdojiqwdqwd</a>qwdoijqwdoiqjd`:                                                                                                     false,
-		`<img src="Bar" onerror="alert(123)" />`:                                                                                                                  false,
-		`<img src="javascript:alert('abc')">`:                                                                                                                     false,
-		`&#x3C;img src=&#x22;javascript:alert(&#x27;abc&#x27;)&#x22;&#x3E;`:                                                                                       false,
-		`&#x3C;a href=&#x22;javascript:alert(&#x27;hello&#x27;);&#x22;&#x3E;AAA&#x3C;/a&#x3E;`:                                                                    false,
+		`abcd/>qwdqwdoijhwer/>qwdojiqwdqwd</>qwdoijqwdoiqjd`:                                   true,
+		`abcd/>qwdqwdoijhwer/>qwdojiqwdqwd</a>qwdoijqwdoiqjd`:                                  false,
+		`<img src="Bar" onerror="alert(123)" />`:                                               false,
+		`<img src="javascript:alert('abc')">`:                                                  false,
+		`&#x3C;img src=&#x22;javascript:alert(&#x27;abc&#x27;)&#x22;&#x3E;`:                    false,
+		`&#x3C;a href=&#x22;javascript:alert(&#x27;hello&#x27;);&#x22;&#x3E;AAA&#x3C;/a&#x3E;`: false,
 	}
 
 	tests := []Expect{}
@@ -545,7 +538,6 @@ func TestPureTextNormal(t *testing.T) {
 }
 
 func TestPureTextStrict(t *testing.T) {
-
 	test_txts := map[string]bool{
 		`<script ?>qwdpijqwd</script>qd08j123lneqw\t\nqwedojiqwd\rqwdoihjqwd1d[08jaedl;jkqwd\r\nqdolijqdwqwd`:       false,
 		`a\r\nb<script ?>qwdpijqwd</script>qd08j123lneqw\t\nqwedojiqwd\rqwdoihjqwd1d[08jaedl;jkqwd\r\nqdolijqdwqwd`: false,
@@ -562,17 +554,17 @@ func TestPureTextStrict(t *testing.T) {
 		`I like Golang\r\na`:      true,
 		"I &#32; like Golang\t\n": false,
 		"I &amp; like Golang\t\n": false,
-		`ハイレゾ対応ウォークマン®、ヘッドホン、スピーカー「Winter Gift Collection ～Presented by JUJU～」をソニーストアにて販売開始`:                                                                      true,
-		`VAIOパーソナルコンピューター type T TZシリーズ 無償点検・修理のお知らせとお詫び（2009年10月15日更新）`:                                                                                          true,
-		`把百度设为主页关于百度About  Baidu百度推广`:                                                                                                                             true,
+		`ハイレゾ対応ウォークマン®、ヘッドホン、スピーカー「Winter Gift Collection ～Presented by JUJU～」をソニーストアにて販売開始`: true,
+		`VAIOパーソナルコンピューター type T TZシリーズ 無償点検・修理のお知らせとお詫び（2009年10月15日更新）`:                     true,
+		`把百度设为主页关于百度About  Baidu百度推广`: true,
 		`%E6%8A%8A%E7%99%BE%E5%BA%A6%E8%AE%BE%E4%B8%BA%E4%B8%BB%E9%A1%B5%E5%85%B3%E4%BA%8E%E7%99%BE%E5%BA%A6About++Baidu%E7%99%BE%E5%BA%A6%E6%8E%A8%E5%B9%BF`:     true,
 		`%E6%8A%8A%E7%99%BE%E5%BA%A6%E8%AE%BE%E4%B8%BA%E4%B8%BB%E9%A1%B5%E5%85%B3%E4%BA%8E%E7%99%BE%E5%BA%A6About%20%20Baidu%E7%99%BE%E5%BA%A6%E6%8E%A8%E5%B9%BF`: true,
-		`abcd/>qwdqwdoijhwer/>qwdojiqwdqwd</>qwdoijqwdoiqjd`:                                                                                                      false,
-		`abcd/>qwdqwdoijhwer/>qwdojiqwdqwd</a>qwdoijqwdoiqjd`:                                                                                                     false,
-		`<img src="Bar" onerror="alert(123)" />`:                                                                                                                  false,
-		`<img src="javascript:alert('abc')">`:                                                                                                                     false,
-		`&#x3C;img src=&#x22;javascript:alert(&#x27;abc&#x27;)&#x22;&#x3E;`:                                                                                       false,
-		`&#x3C;a href=&#x22;javascript:alert(&#x27;hello&#x27;);&#x22;&#x3E;AAA&#x3C;/a&#x3E;`:                                                                    false,
+		`abcd/>qwdqwdoijhwer/>qwdojiqwdqwd</>qwdoijqwdoiqjd`:                                   false,
+		`abcd/>qwdqwdoijhwer/>qwdojiqwdqwd</a>qwdoijqwdoiqjd`:                                  false,
+		`<img src="Bar" onerror="alert(123)" />`:                                               false,
+		`<img src="javascript:alert('abc')">`:                                                  false,
+		`&#x3C;img src=&#x22;javascript:alert(&#x27;abc&#x27;)&#x22;&#x3E;`:                    false,
+		`&#x3C;a href=&#x22;javascript:alert(&#x27;hello&#x27;);&#x22;&#x3E;AAA&#x3C;/a&#x3E;`: false,
 	}
 
 	tests := []Expect{}
@@ -588,7 +580,6 @@ func TestPureTextStrict(t *testing.T) {
 }
 
 func TestFilePathOnlyFilePath(t *testing.T) {
-
 	test_filepaths := map[string]bool{
 		"../../qwdqwdqwd/../qwdqwdqwd.txt": false,
 		`../../qwdqwdqwd/..
@@ -596,12 +587,12 @@ func TestFilePathOnlyFilePath(t *testing.T) {
 		"\t../../qwdqwdqwd/../qwdqwdqwd.txt": false,
 		`../../qwdqwdqwd/../qwdqwdqwd.txt`: false,
 		`../../qwdqwdqwd/../qwdqwdqwd.txt`: false,
-		"../../etc/passwd":                 false,
-		"a.txt;rm -rf /":                   false,
-		"sudo rm -rf ../":                  false,
-		"a-1-s-d-v-we-wd_+qwd-qwd-qwd.txt": false,
-		"a-qwdqwd_qwdqwdqwd-123.txt":       true,
-		"a.txt": true,
+		"../../etc/passwd":                         false,
+		"a.txt;rm -rf /":                           false,
+		"sudo rm -rf ../":                          false,
+		"a-1-s-d-v-we-wd_+qwd-qwd-qwd.txt":         false,
+		"a-qwdqwd_qwdqwdqwd-123.txt":               true,
+		"a.txt":                                    true,
 		"a-1-e-r-t-_1_21234_d_1234_qwed_1423_.txt": true,
 	}
 
@@ -618,7 +609,6 @@ func TestFilePathOnlyFilePath(t *testing.T) {
 }
 
 func TestFilePathAllowRelativePath(t *testing.T) {
-
 	test_filepaths := map[string]bool{
 		"../../qwdqwdqwd/../qwdqwdqwd.txt": true,
 		`../../qwdqwdqwd/..
@@ -626,13 +616,13 @@ func TestFilePathAllowRelativePath(t *testing.T) {
 		"\t../../qwdqwdqwd/../qwdqwdqwd.txt": false,
 		`../../qwdqwdqwd/../qwdqwdqwd.txt`: false,
 		`../../qwdqwdqwd/../qwdqwdqwd.txt`: false,
-		"../../etc/passwd":                 true,
-		"a.txt;rm -rf /":                   false,
-		"sudo rm -rf ../":                  true,
-		"a-1-s-d-v-we-wd_+qwd-qwd-qwd.txt": false,
-		"a-qwdqwd_qwdqwdqwd-123.txt":       true,
-		"a.txt": true,
-		"a-1-e-r-t-_1_21234_d_1234_qwed_1423_.txt":                                       true,
+		"../../etc/passwd":                         true,
+		"a.txt;rm -rf /":                           false,
+		"sudo rm -rf ../":                          true,
+		"a-1-s-d-v-we-wd_+qwd-qwd-qwd.txt":         false,
+		"a-qwdqwd_qwdqwdqwd-123.txt":               true,
+		"a.txt":                                    true,
+		"a-1-e-r-t-_1_21234_d_1234_qwed_1423_.txt": true,
 		"/asdasd/asdasdasd/qwdqwd_qwdqwd/12-12/a-1-e-r-t-_1_21234_d_1234_qwed_1423_.txt": true,
 	}
 

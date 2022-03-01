@@ -90,7 +90,7 @@ func (f *Field) ErrorClass() string {
 	return ""
 }
 
-// Get the short name and translate it
+// Get the short name and translate it.
 func (f *Field) ShortName() string {
 	name := f.Name
 	if i := strings.LastIndex(name, "."); i > 0 {
@@ -99,7 +99,7 @@ func (f *Field) ShortName() string {
 	return f.Translate(name)
 }
 
-// Translate the text
+// Translate the text.
 func (f *Field) Translate(text string, args ...interface{}) string {
 	if f.controller != nil {
 		text = f.controller.Message(text, args...)
