@@ -14,7 +14,8 @@ Current Version: 1.1.0-dev (2020-07-11)
 
 Install Revel:
 
-	go get -u github.com/revel/cmd/revel
+	go install github.com/revel/cmd/revel@latest
+
 
 Create & Run your app:
 
