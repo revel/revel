@@ -8,7 +8,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
-	"github.com/twinj/uuid"
+	"github.com/google/uuid"
 	"reflect"
 	"strconv"
 	"strings"
@@ -49,9 +49,9 @@ func (s Session) ID() string {
 		return sessionIDStr.(string)
 	}
 
-	buffer := uuid.NewV4()
+	suuid := uuid.New()
 
-	s[SessionIDKey] = hex.EncodeToString(buffer.Bytes())
+	s[SessionIDKey] = hex.EncodeToString(suuid[0:])
 	return s[SessionIDKey].(string)
 }
 
