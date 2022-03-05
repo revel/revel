@@ -410,15 +410,21 @@ func (c *Controller) SetTypeAction(controllerName, methodName string, typeOfCont
 	}
 
 	if RevelConfig.Controller.Reuse {
+		RevelConfig.Controller.CacheMapLocked.RLock()
 		if _, ok := RevelConfig.Controller.CachedMap[c.Name]; !ok {
 			// Create a new stack for this controller
 			localType := c.Type.Type
+			RevelConfig.Controller.CacheMapLocked.RUnlock()
+			RevelConfig.Controller.CacheMapLocked.Lock()
+			defer RevelConfig.Controller.CacheMapLocked.Unlock()
 			RevelConfig.Controller.CachedMap[c.Name] = utils.NewStackLock(
 				RevelConfig.Controller.CachedStackSize,
 				RevelConfig.Controller.CachedStackMaxSize,
 				func() interface{} {
 					return reflect.New(localType).Interface()
 				})
+		} else {
+			defer RevelConfig.Controller.CacheMapLocked.RUnlock()
 		}
 		// Instantiate the controller.
 		c.AppController = RevelConfig.Controller.CachedMap[c.Name].Pop()
