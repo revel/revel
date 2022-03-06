@@ -543,13 +543,10 @@ var reverseRoutingTestCases = map[*ReverseRouteArgs]*ActionDefinition{
 	},
 }
 
-type testController struct {
-	*Controller
-}
-
 func initControllers() {
 	registerControllers()
 }
+
 func TestReverseRouting(t *testing.T) {
 	initControllers()
 	router := NewRouter("")
@@ -584,7 +581,7 @@ func BenchmarkRouter(b *testing.B) {
 	}
 }
 
-// The benchmark from github.com/ant0ine/go-urlrouter
+// The benchmark from github.com/ant0ine/go-urlrouter.
 func BenchmarkLargeRouter(b *testing.B) {
 	router := NewRouter("")
 

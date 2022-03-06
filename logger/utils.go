@@ -1,29 +1,31 @@
 package logger
 
 import (
+	"log"
+
 	"github.com/revel/log15"
 	"gopkg.in/stack.v0"
-	"log"
 )
 
-// Utility package to make existing logging backwards compatible
+// Utility package to make existing logging backwards compatible.
 var (
-	// Convert the string to LogLevel
-	toLevel = map[string]LogLevel{"debug": LogLevel(log15.LvlDebug),
-		"info": LogLevel(log15.LvlInfo), "request": LogLevel(log15.LvlInfo), "warn": LogLevel(log15.LvlWarn),
+	// Convert the string to LogLevel.
+	toLevel = map[string]LogLevel{
+		"debug": LogLevel(log15.LvlDebug),
+		"info":  LogLevel(log15.LvlInfo), "request": LogLevel(log15.LvlInfo), "warn": LogLevel(log15.LvlWarn),
 		"error": LogLevel(log15.LvlError), "crit": LogLevel(log15.LvlCrit),
 		"trace": LogLevel(log15.LvlDebug), // TODO trace is deprecated, replaced by debug
 	}
 )
 
 const (
-	// The test mode flag overrides the default log level and shows only errors
+	// The test mode flag overrides the default log level and shows only errors.
 	TEST_MODE_FLAG = "testModeFlag"
-	// The special use flag enables showing messages when the logger is setup
+	// The special use flag enables showing messages when the logger is setup.
 	SPECIAL_USE_FLAG = "specialUseFlag"
 )
 
-// Returns the logger for the name
+// Returns the logger for the name.
 func GetLogger(name string, logger MultiLogger) (l *log.Logger) {
 	switch name {
 	case "trace": // TODO trace is deprecated, replaced by debug
@@ -41,10 +43,9 @@ func GetLogger(name string, logger MultiLogger) (l *log.Logger) {
 	}
 
 	return l
-
 }
 
-// Used by the initFilterLog to handle the filters
+// Used by the initFilterLog to handle the filters.
 var logFilterList = []struct {
 	LogPrefix, LogSuffix string
 	parentHandler        func(map[string]interface{}) ParentLogHandler
@@ -54,7 +55,6 @@ var logFilterList = []struct {
 		return NewParentLogHandler(func(child LogHandler) LogHandler {
 			return MatchMapHandler(keyMap, child)
 		})
-
 	},
 }, {
 	"log.", ".nfilter",
@@ -65,17 +65,17 @@ var logFilterList = []struct {
 	},
 }}
 
-// This structure and method will handle the old output format and log it to the new format
+// This structure and method will handle the old output format and log it to the new format.
 type loggerRewrite struct {
 	Logger         MultiLogger
 	Level          log15.Lvl
 	hideDeprecated bool
 }
 
-// The message indicating that a logger is using a deprecated log mechanism
+// The message indicating that a logger is using a deprecated log mechanism.
 var log_deprecated = []byte("* LOG DEPRECATED * ")
 
-// Implements the Write of the logger
+// Implements the Write of the logger.
 func (lr loggerRewrite) Write(p []byte) (n int, err error) {
 	if !lr.hideDeprecated {
 		p = append(log_deprecated, p...)
@@ -104,7 +104,7 @@ func (lr loggerRewrite) Write(p []byte) (n int, err error) {
 
 // For logging purposes the call stack can be used to record the stack trace of a bad error
 // simply pass it as a context field in your log statement like
-// `controller.Log.Crit("This should not occur","stack",revel.NewCallStack())`
+// `controller.Log.Crit("This should not occur","stack",revel.NewCallStack())`.
 func NewCallStack() interface{} {
 	return stack.Trace()
 }

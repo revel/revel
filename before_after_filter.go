@@ -5,7 +5,7 @@ import (
 )
 
 // Autocalls any defined before and after methods on the target controller
-// If either calls returns a value then the result is returned
+// If either calls returns a value then the result is returned.
 func BeforeAfterFilter(c *Controller, fc []Filter) {
 	defer func() {
 		if resultValue := beforeAfterFilterInvoke(FINALLY, c); resultValue != nil && !resultValue.IsNil() {
@@ -31,7 +31,6 @@ func BeforeAfterFilter(c *Controller, fc []Filter) {
 }
 
 func beforeAfterFilterInvoke(method When, c *Controller) (r *reflect.Value) {
-
 	if c.Type == nil {
 		return
 	}

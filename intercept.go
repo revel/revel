@@ -40,7 +40,9 @@ import (
 //   func (c *AppController) example() revel.Result
 //
 type InterceptorFunc func(*Controller) Result
+
 type InterceptorMethod interface{}
+
 type When int
 
 const (
@@ -207,7 +209,7 @@ func getInterceptors(when When, val reflect.Value) interceptorItemList {
 
 // Find the value of the target, starting from val and including embedded types.
 // Also, convert between any difference in indirection.
-// If the target couldn't be found, the returned Value will have IsValid() == false
+// If the target couldn't be found, the returned Value will have IsValid() == false.
 func findTarget(val reflect.Value, target reflect.Type) (int, reflect.Value) {
 	// Look through the embedded types (until we reach the *revel.Controller at the top).
 	valueQueue := []reflect.Value{val}

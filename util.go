@@ -6,7 +6,6 @@ package revel
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"net"
@@ -22,7 +21,7 @@ import (
 )
 
 const (
-	// DefaultFileContentType Revel's default response content type
+	// DefaultFileContentType Revel's default response content type.
 	DefaultFileContentType = "application/octet-stream"
 )
 
@@ -191,7 +190,7 @@ func Equal(a, b interface{}) bool {
 // you may get inaccurate Client IP address. Revel parses the
 // IP address in the order of X-Forwarded-For, X-Real-IP.
 //
-// By default revel will get http.Request's RemoteAddr
+// By default revel will get http.Request's RemoteAddr.
 func ClientIP(r *Request) string {
 	if Config.BoolDefault("app.behind.proxy", false) {
 		// Header X-Forwarded-For
@@ -220,20 +219,6 @@ func ClientIP(r *Request) string {
 // Always returns the path of the file or directory.
 func Walk(root string, walkFn filepath.WalkFunc) error {
 	return fsWalk(root, root, walkFn)
-}
-
-// createDir method creates nested directories if not exists
-func createDir(path string) error {
-	if _, err := os.Stat(path); err != nil {
-		if os.IsNotExist(err) {
-			if err = os.MkdirAll(path, 0755); err != nil {
-				return fmt.Errorf("Failed to create directory '%v': %v", path, err)
-			}
-		} else {
-			return fmt.Errorf("Failed to create directory '%v': %v", path, err)
-		}
-	}
-	return nil
 }
 
 func fsWalk(fname string, linkName string, walkFn filepath.WalkFunc) error {

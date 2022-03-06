@@ -57,16 +57,16 @@ func ValueBinder(f func(value string, typ reflect.Type) reflect.Value) func(*Par
 	}
 }
 
-// Revel's default date and time constants
+// Revel's default date and time constants.
 const (
 	DefaultDateFormat     = "2006-01-02"
 	DefaultDateTimeFormat = "2006-01-02 15:04"
 )
 
-// Binders type and kind definition
+// Binders type and kind definition.
 var (
 	// These are the lookups to find a Binder for any type of data.
-	// The most specific binder found will be used (Type before Kind)
+	// The most specific binder found will be used (Type before Kind).
 	TypeBinders = make(map[reflect.Type]Binder)
 	KindBinders = make(map[reflect.Kind]Binder)
 
@@ -284,7 +284,7 @@ func bindSlice(params *Params, name string, typ reflect.Type) reflect.Value {
 }
 
 // Break on dots and brackets.
-// e.g. bar => "bar", bar.baz => "bar", bar[0] => "bar"
+// e.g. bar => "bar", bar.baz => "bar", bar[0] => "bar".
 func nextKey(key string) string {
 	fieldLen := strings.IndexAny(key, ".[")
 	if fieldLen == -1 {

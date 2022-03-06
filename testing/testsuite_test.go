@@ -71,7 +71,7 @@ func TestGetNotFound(t *testing.T) {
 	// testSuite.AssertNotContains("not exists")
 }
 
-// This test is known to fail
+// This test is known to fail.
 func TestGetCustom(t *testing.T) {
 	testSuite := createNewTestSuite(t)
 	for x := 0; x < 5; x++ {
@@ -192,7 +192,6 @@ func TestPostFileUpload(t *testing.T) {
 	testSuite.AssertContains("File: server.go")
 	testSuite.AssertNotContains("File: not_exists.go")
 	testSuite.AssertEqual("text/plain; charset=utf-8", testSuite.Response.Header.Get("Content-Type"))
-
 }
 
 func createNewTestSuite(t *testing.T) *TestSuite {

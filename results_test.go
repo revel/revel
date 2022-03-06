@@ -11,7 +11,7 @@ import (
 	"testing"
 )
 
-// Added test case for redirection testing for strings
+// Added test case for redirection testing for strings.
 func TestRedirect(t *testing.T) {
 	startFakeBookingApp()
 	redirect := RedirectToURLResult{fmt.Sprintf("/hotels/index/foo")}

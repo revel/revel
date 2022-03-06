@@ -1,6 +1,6 @@
 package session
 
-// The logger for the session
+// The logger for the session.
 import "github.com/revel/revel/logger"
 
 var sessionLog logger.MultiLogger

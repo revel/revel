@@ -10,7 +10,7 @@ import (
 	"github.com/revel/revel/logger"
 )
 
-// Module specific functions
+// Module specific functions.
 type Module struct {
 	Name, ImportPath, Path string
 	ControllerTypeList     []*ControllerType
@@ -21,7 +21,7 @@ type Module struct {
 // Modules can be called back after they are loaded in revel by using this interface.
 type ModuleCallbackInterface func(*Module)
 
-// The namespace separator constant
+// The namespace separator constant.
 const namespaceSeperator = `\` // (note cannot be . or : as this is already used for routes)
 
 var (
@@ -32,7 +32,7 @@ var (
 )
 
 // Called by a module init() function, caller will receive the *Module object created for that module
-// This would be useful for assigning a logger for logging information in the module (since the module context would be correct)
+// This would be useful for assigning a logger for logging information in the module (since the module context would be correct).
 func RegisterModuleInit(callback ModuleCallbackInterface) {
 	// Store the module that called this so we can do a callback when the app is initialized
 	// The format %+k is from go-stack/Call.Format and returns the package path
@@ -44,7 +44,7 @@ func RegisterModuleInit(callback ModuleCallbackInterface) {
 	}
 }
 
-// Called on startup to make a callback so that modules can be initialized through the `RegisterModuleInit` function
+// Called on startup to make a callback so that modules can be initialized through the `RegisterModuleInit` function.
 func init() {
 	AddInitEventHandler(func(typeOf Event, value interface{}) (responseOf EventResponse) {
 		if typeOf == REVEL_BEFORE_MODULES_LOADED {
@@ -57,13 +57,13 @@ func init() {
 	})
 }
 
-// Returns the namespace for the module in the format `module_name|`
+// Returns the namespace for the module in the format `module_name|`.
 func (m *Module) Namespace() (namespace string) {
 	namespace = m.Name + namespaceSeperator
 	return
 }
 
-// Returns the named controller and action that is in this module
+// Returns the named controller and action that is in this module.
 func (m *Module) ControllerByName(name, action string) (ctype *ControllerType) {
 	comparison := name
 	if strings.Index(name, namespaceSeperator) < 0 {
@@ -78,13 +78,13 @@ func (m *Module) ControllerByName(name, action string) (ctype *ControllerType) {
 	return
 }
 
-// Adds the controller type to this module
+// Adds the controller type to this module.
 func (m *Module) AddController(ct *ControllerType) {
 	m.ControllerTypeList = append(m.ControllerTypeList, ct)
 }
 
 // Based on the full path given return the relevant module
-// Only to be used on initialization
+// Only to be used on initialization.
 func ModuleFromPath(packagePath string, addGopathToPath bool) (module *Module) {
 	packagePath = filepath.ToSlash(packagePath)
 	// The module paths will match the configuration module paths, so we will use those to determine them
@@ -92,7 +92,7 @@ func ModuleFromPath(packagePath string, addGopathToPath bool) (module *Module) {
 
 	// See if the path exists in the module based
 	for i := range Modules {
-		if strings.Index(packagePath, Modules[i].ImportPath)==0 {
+		if strings.Index(packagePath, Modules[i].ImportPath) == 0 {
 			// This is a prefix, so the module is this module
 			module = Modules[i]
 			break
@@ -126,7 +126,7 @@ func ModuleByName(name string) (*Module, bool) {
 	return nil, false
 }
 
-// Loads the modules specified in the config
+// Loads the modules specified in the config.
 func loadModules() {
 	keys := []string{}
 	for _, key := range Config.Options("module.") {
@@ -137,7 +137,6 @@ func loadModules() {
 	sort.Strings(keys)
 	for _, key := range keys {
 		moduleLog.Debug("Sorted keys", "keys", key)
-
 	}
 	for _, key := range keys {
 		moduleImportPath := Config.StringDefault(key, "")
@@ -168,15 +167,17 @@ func loadModules() {
 	}
 }
 
-// called by `loadModules`, creates a new `Module` instance and appends it to the `Modules` list
+// called by `loadModules`, creates a new `Module` instance and appends it to the `Modules` list.
 func addModule(name, importPath, modulePath string) {
 	if _, found := ModuleByName(name); found {
 		moduleLog.Panic("Attempt to import duplicate module %s path %s aborting startup", "name", name, "path", modulePath)
 	}
-	Modules = append(Modules, &Module{Name: name,
+	Modules = append(Modules, &Module{
+		Name:       name,
 		ImportPath: filepath.ToSlash(importPath),
 		Path:       filepath.ToSlash(modulePath),
-		Log:        RootLog.New("module", name)})
+		Log:        RootLog.New("module", name),
+	})
 	if codePath := filepath.Join(modulePath, "app"); DirExists(codePath) {
 		CodePaths = append(CodePaths, codePath)
 		if viewsPath := filepath.Join(modulePath, "app", "views"); DirExists(viewsPath) {

@@ -7,10 +7,10 @@ package cache
 import (
 	"fmt"
 	"reflect"
+	"sync"
 	"time"
 
 	"github.com/patrickmn/go-cache"
-	"sync"
 )
 
 type InMemoryCache struct {
@@ -122,7 +122,7 @@ func (c InMemoryCache) Flush() error {
 	return nil
 }
 
-// Fetches and returns the converted type to a uint64
+// Fetches and returns the converted type to a uint64.
 func (c InMemoryCache) convertTypeToUint64(key string) (newValue uint64, err error) {
 	v, found := c.cache.Get(key)
 	if !found {
@@ -151,7 +151,7 @@ func (c InMemoryCache) convertTypeToUint64(key string) (newValue uint64, err err
 	case uint32:
 		newValue = uint64(v.(uint32))
 	case uint64:
-		newValue = uint64(v.(uint64))
+		newValue = v.(uint64)
 	case float32:
 		newValue = uint64(v.(float32))
 	case float64:

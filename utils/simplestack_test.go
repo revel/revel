@@ -59,8 +59,8 @@ func TestUnique(b *testing.T) {
 	if !isDifferent(value1, value2, value3) {
 		b.Errorf("Failed to get unique values")
 	}
-
 }
+
 func TestLimits(b *testing.T) {
 	stack := NewStackLock(10, 20, func() interface{} {
 		newone := &SimpleStackTest{}
@@ -79,8 +79,8 @@ func TestLimits(b *testing.T) {
 	if stack.Capacity() != 20 {
 		b.Errorf("Failed to match 20 capcity %v ", stack.Capacity())
 	}
-
 }
+
 func isDifferent(values ...*SimpleStackTest) bool {
 	if len(values) == 2 {
 		return values[0] != values[1]
@@ -99,15 +99,18 @@ func BenchmarkCreateWrite(b *testing.B) {
 		stack.Push(x)
 	}
 }
+
 func BenchmarkAllocWrite(b *testing.B) {
 	stack := NewStackLock(b.N, b.N+100, func() interface{} { return &SimpleStackTest{} })
 	for x := 0; x < b.N; x++ {
 		stack.Push(x)
 	}
 }
+
 func BenchmarkCreate(b *testing.B) {
 	NewStackLock(b.N, b.N+100, func() interface{} { return &SimpleStackTest{} })
 }
+
 func BenchmarkParrallel(b *testing.B) {
 	stack := NewStackLock(b.N, b.N+100, func() interface{} { return &SimpleStackTest{} })
 	b.RunParallel(func(pb *testing.PB) {

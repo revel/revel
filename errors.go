@@ -34,7 +34,6 @@ type SourceLine struct {
 // provide a code listing of that, on the line that eventually triggered
 // the panic.  Returns nil if no relevant stack frame can be found.
 func NewErrorFromPanic(err interface{}) *Error {
-
 	// Parse the filename and line from the originating line of app code.
 	// /Users/robfig/code/gocode/src/revel/examples/booking/app/controllers/hotels.go:191 (0x44735)
 	stack := string(debug.Stack())
@@ -71,7 +70,7 @@ func NewErrorFromPanic(err interface{}) *Error {
 
 // Error method constructs a plaintext version of the error, taking
 // account that fields are optionally set. Returns e.g. Compilation Error
-// (in views/header.html:51): expected right delim in end; got "}"
+// (in views/header.html:51): expected right delim in end; got "}".
 func (e *Error) Error() string {
 	loc := ""
 	if e.Path != "" {
@@ -115,7 +114,7 @@ func (e *Error) ContextSource() []SourceLine {
 	return lines
 }
 
-// SetLink method prepares a link and assign to Error.Link attribute
+// SetLink method prepares a link and assign to Error.Link attribute.
 func (e *Error) SetLink(errorLink string) {
 	errorLink = strings.Replace(errorLink, "{{Path}}", e.Path, -1)
 	errorLink = strings.Replace(errorLink, "{{Line}}", strconv.Itoa(e.Line), -1)

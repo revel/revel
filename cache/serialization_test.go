@@ -77,11 +77,3 @@ func TestRoundTrip(t *testing.T) {
 		}
 	}
 }
-
-func zeroMap(arg map[string]interface{}) map[string]interface{} {
-	result := map[string]interface{}{}
-	for key, value := range arg {
-		result[key] = reflect.Zero(reflect.TypeOf(value)).Interface()
-	}
-	return result
-}

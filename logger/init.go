@@ -1,22 +1,23 @@
 package logger
 
-// Get all handlers based on the Config (if available)
+// Get all handlers based on the Config (if available).
 import (
 	"fmt"
-	"github.com/revel/config"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/revel/config"
 )
 
 func InitializeFromConfig(basePath string, config *config.Context) (c *CompositeMultiHandler) {
 	// If running in test mode suppress anything that is not an error
 	if config != nil && config.BoolDefault(TEST_MODE_FLAG, false) {
 		// Preconfigure all the options
-		config.SetOption("log.info.output", "none")
-		config.SetOption("log.debug.output", "none")
-		config.SetOption("log.warn.output", "none")
+		config.SetOption("log.info.output", "off")
+		config.SetOption("log.debug.output", "off")
+		config.SetOption("log.warn.output", "off")
 		config.SetOption("log.error.output", "stderr")
 		config.SetOption("log.crit.output", "stderr")
 	}
@@ -43,7 +44,7 @@ func InitializeFromConfig(basePath string, config *config.Context) (c *Composite
 	return c
 }
 
-// Init the log.all configuration options
+// Init the log.all configuration options.
 func initAllLog(c *CompositeMultiHandler, basePath string, config *config.Context) {
 	if config != nil {
 		extraLogFlag := config.BoolDefault(SPECIAL_USE_FLAG, false)
@@ -61,13 +62,13 @@ func initAllLog(c *CompositeMultiHandler, basePath string, config *config.Contex
 // log.all.filter ....
 // log.error.filter ....
 func initFilterLog(c *CompositeMultiHandler, basePath string, config *config.Context) {
-
 	if config != nil {
 		extraLogFlag := config.BoolDefault(SPECIAL_USE_FLAG, false)
 
 		for _, logFilter := range logFilterList {
 			// Init for all filters
-			for _, name := range []string{"all", "debug", "info", "warn", "error", "crit",
+			for _, name := range []string{
+				"all", "debug", "info", "warn", "error", "crit",
 				"trace", // TODO trace is deprecated
 			} {
 				optionList := config.Options(logFilter.LogPrefix + name + logFilter.LogSuffix)
@@ -94,9 +95,10 @@ func initFilterLog(c *CompositeMultiHandler, basePath string, config *config.Con
 	}
 }
 
-// Init the log.error, log.warn etc configuration options
+// Init the log.error, log.warn etc configuration options.
 func initLogLevels(c *CompositeMultiHandler, basePath string, config *config.Context) {
-	for _, name := range []string{"debug", "info", "warn", "error", "crit",
+	for _, name := range []string{
+		"debug", "info", "warn", "error", "crit",
 		"trace", // TODO trace is deprecated
 	} {
 		if config != nil {
@@ -115,7 +117,7 @@ func initLogLevels(c *CompositeMultiHandler, basePath string, config *config.Con
 	}
 }
 
-// Init the request log options
+// Init the request log options.
 func initRequestLog(c *CompositeMultiHandler, basePath string, config *config.Context) {
 	// Request logging to a separate output handler
 	// This takes the InfoHandlers and adds a MatchAbHandler handler to it to direct
@@ -143,7 +145,7 @@ func initRequestLog(c *CompositeMultiHandler, basePath string, config *config.Co
 // Returns a handler for the level using the output string
 // Accept formats for output string are
 // LogFunctionMap[value] callback function
-// `stdout` `stderr` `full/file/path/to/location/app.log` `full/file/path/to/location/app.json`
+// `stdout` `stderr` `full/file/path/to/location/app.log` `full/file/path/to/location/app.json`.
 func initHandlerFor(c *CompositeMultiHandler, output, basePath string, options *LogOptions) {
 	if options.Ctx != nil {
 		options.SetExtendedOptions(

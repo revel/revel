@@ -9,17 +9,21 @@ import (
 	"testing"
 )
 
-var funcP = func(c *Controller) Result { return nil }
-var funcP2 = func(c *Controller) Result { return nil }
+var (
+	funcP  = func(c *Controller) Result { return nil }
+	funcP2 = func(c *Controller) Result { return nil }
+)
 
-type InterceptController struct{ *Controller }
-type InterceptControllerN struct{ InterceptController }
-type InterceptControllerP struct{ *InterceptController }
-type InterceptControllerNP struct {
-	*Controller
-	InterceptControllerN
-	InterceptControllerP
-}
+type (
+	InterceptController   struct{ *Controller }
+	InterceptControllerN  struct{ InterceptController }
+	InterceptControllerP  struct{ *InterceptController }
+	InterceptControllerNP struct {
+		*Controller
+		InterceptControllerN
+		InterceptControllerP
+	}
+)
 
 func (c InterceptController) methN() Result  { return nil }
 func (c *InterceptController) methP() Result { return nil }
@@ -29,7 +33,7 @@ func (c *InterceptControllerN) methNP() Result { return nil }
 func (c InterceptControllerP) methPN() Result  { return nil }
 func (c *InterceptControllerP) methPP() Result { return nil }
 
-// Methods accessible from InterceptControllerN
+// Methods accessible from InterceptControllerN.
 var MethodN = []interface{}{
 	InterceptController.methN,
 	(*InterceptController).methP,
@@ -37,7 +41,7 @@ var MethodN = []interface{}{
 	(*InterceptControllerN).methNP,
 }
 
-// Methods accessible from InterceptControllerP
+// Methods accessible from InterceptControllerP.
 var MethodP = []interface{}{
 	InterceptController.methN,
 	(*InterceptController).methP,

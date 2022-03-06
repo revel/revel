@@ -22,7 +22,7 @@ func getRecordedCookie(recorder *httptest.ResponseRecorder, name string) (*http.
 	return nil, http.ErrNoCookie
 }
 
-// r.Original.URL.String()
+// r.Original.URL.String().
 func validationTester(req *Request, fn func(c *Controller)) *httptest.ResponseRecorder {
 	recorder := httptest.NewRecorder()
 	c := NewTestController(recorder, req.In.GetRaw().(*http.Request))
@@ -102,5 +102,4 @@ func TestValidateMessageKey(t *testing.T) {
 			t.Fatal("errors should not be present")
 		}
 	})
-
 }

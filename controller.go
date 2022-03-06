@@ -22,48 +22,49 @@ import (
 )
 
 // Controller Revel's controller structure that gets embedded in user defined
-// controllers
+// controllers.
 type Controller struct {
-	Name          string                 // The controller name, e.g. "Application"
-	Type          *ControllerType        // A description of the controller type.
-	MethodName    string                 // The method name, e.g. "Index"
-	MethodType    *MethodType            // A description of the invoked action type.
-	AppController interface{}            // The controller that was instantiated. embeds revel.Controller
-	Action        string                 // The fully qualified action name, e.g. "App.Index"
-	ClientIP      string                 // holds IP address of request came from
+	Name          string          // The controller name, e.g. "Application"
+	Type          *ControllerType // A description of the controller type.
+	MethodName    string          // The method name, e.g. "Index"
+	MethodType    *MethodType     // A description of the invoked action type.
+	AppController interface{}     // The controller that was instantiated. embeds revel.Controller
+	Action        string          // The fully qualified action name, e.g. "App.Index"
+	ClientIP      string          // holds IP address of request came from
 
-	Request       *Request
-	Response      *Response
-	Result        Result
+	Request  *Request
+	Response *Response
+	Result   Result
 
-	Flash         Flash                  // User cookie, cleared after 1 request.
-	Session       session.Session        // Session, stored using the session engine specified
-	Params        *Params                // Parameters from URL and form (including multipart).
-	Args          map[string]interface{} // Per-request scratch space.
-	ViewArgs      map[string]interface{} // Variables passed to the template.
-	Validation    *Validation            // Data validation helpers
-	Log           logger.MultiLogger     // Context Logger
+	Flash      Flash                  // User cookie, cleared after 1 request.
+	Session    session.Session        // Session, stored using the session engine specified
+	Params     *Params                // Parameters from URL and form (including multipart).
+	Args       map[string]interface{} // Per-request scratch space.
+	ViewArgs   map[string]interface{} // Variables passed to the template.
+	Validation *Validation            // Data validation helpers
+	Log        logger.MultiLogger     // Context Logger
 }
 
-// The map of controllers, controllers are mapped by using the namespace|controller_name as the key
-var controllers = make(map[string]*ControllerType)
-var controllerLog = RevelLog.New("section", "controller")
+// The map of controllers, controllers are mapped by using the namespace|controller_name as the key.
+var (
+	controllers   = make(map[string]*ControllerType)
+	controllerLog = RevelLog.New("section", "controller")
+)
 
-// NewController returns new controller instance for Request and Response
+// NewController returns new controller instance for Request and Response.
 func NewControllerEmpty() *Controller {
 	return &Controller{Request: NewRequest(nil), Response: NewResponse(nil)}
 }
 
-// New controller, creates a new instance wrapping the request and response in it
+// New controller, creates a new instance wrapping the request and response in it.
 func NewController(context ServerContext) *Controller {
 	c := NewControllerEmpty()
 	c.SetController(context)
 	return c
 }
 
-// Sets the request and the response for the controller
+// Sets the request and the response for the controller.
 func (c *Controller) SetController(context ServerContext) {
-
 	c.Request.SetRequest(context.GetRequest())
 	c.Response.SetResponse(context.GetResponse())
 	c.Request.controller = c
@@ -73,8 +74,8 @@ func (c *Controller) SetController(context ServerContext) {
 		"RunMode": RunMode,
 		"DevMode": DevMode,
 	}
-
 }
+
 func (c *Controller) Destroy() {
 	// When the instantiated controller gets injected
 	// It inherits this method, so we need to
@@ -165,7 +166,7 @@ func (c *Controller) setStatusIfNil(status int) {
 // c.RenderTemplate(c.Name + "/" + c.MethodType.Name + "." + c.Request.Format)
 //
 // If you want your code to run faster it is recommended you add the template values directly
-// to the c.ViewArgs and call c.RenderTemplate directly
+// to the c.ViewArgs and call c.RenderTemplate directly.
 func (c *Controller) Render(extraViewArgs ...interface{}) Result {
 	c.setStatusIfNil(http.StatusOK)
 
@@ -223,7 +224,7 @@ func (c *Controller) RenderJSON(o interface{}) Result {
 	return RenderJSONResult{o, ""}
 }
 
-// RenderJSONP renders JSONP result using encoding/json.Marshal
+// RenderJSONP renders JSONP result using encoding/json.Marshal.
 func (c *Controller) RenderJSONP(callback string, o interface{}) Result {
 	c.setStatusIfNil(http.StatusOK)
 
@@ -248,7 +249,7 @@ func (c *Controller) RenderText(text string, objs ...interface{}) Result {
 	return &RenderTextResult{finalText}
 }
 
-// RenderHTML renders html in response
+// RenderHTML renders html in response.
 func (c *Controller) RenderHTML(html string) Result {
 	c.setStatusIfNil(http.StatusOK)
 
@@ -312,7 +313,7 @@ func (c *Controller) RenderFile(file *os.File, delivery ContentDisposition) Resu
 	c.setStatusIfNil(http.StatusOK)
 
 	var (
-		modtime = time.Now()
+		modtime       = time.Now()
 		fileInfo, err = file.Stat()
 	)
 	if err != nil {
@@ -358,13 +359,13 @@ func (c *Controller) Redirect(val interface{}, args ...interface{}) Result {
 }
 
 // This stats returns some interesting stats based on what is cached in memory
-// and what is available directly
+// and what is available directly.
 func (c *Controller) Stats() map[string]interface{} {
 	result := CurrentEngine.Stats()
 	if RevelConfig.Controller.Reuse {
 		result["revel-controllers"] = RevelConfig.Controller.Stack.String()
 		for key, appStack := range RevelConfig.Controller.CachedMap {
-			result["app-" + key] = appStack.String()
+			result["app-"+key] = appStack.String()
 		}
 	}
 	return result
@@ -379,15 +380,13 @@ func (c *Controller) Message(message string, args ...interface{}) string {
 }
 
 // SetAction sets the action that is being invoked in the current request.
-// It sets the following properties: Name, Action, Type, MethodType
+// It sets the following properties: Name, Action, Type, MethodType.
 func (c *Controller) SetAction(controllerName, methodName string) error {
-
 	return c.SetTypeAction(controllerName, methodName, nil)
 }
 
-// SetAction sets the assigns the Controller type, sets the action and initializes the controller
+// SetAction sets the assigns the Controller type, sets the action and initializes the controller.
 func (c *Controller) SetTypeAction(controllerName, methodName string, typeOfController *ControllerType) error {
-
 	// Look up the controller and method types.
 	if typeOfController == nil {
 		if c.Type = ControllerTypeByName(controllerName, anyModule); c.Type == nil {
@@ -443,7 +442,6 @@ func ControllerTypeByName(controllerName string, moduleSource *Module) (c *Contr
 				if testControllerName == strings.ToLower(controllerName) && (cType.ModuleSource == moduleSource || moduleSource == anyModule) {
 					controllerLog.Warn("ControllerTypeByName: Matched empty namespace controller ", "controller", controllerName, "namespace", cType.ModuleSource.Name)
 					c = cType
-					found = true
 					break
 				}
 			}
@@ -452,7 +450,7 @@ func ControllerTypeByName(controllerName string, moduleSource *Module) (c *Contr
 	return
 }
 
-// Injects this instance (c) into the AppController instance
+// Injects this instance (c) into the AppController instance.
 func (c *Controller) setAppControllerFields() {
 	appController := reflect.ValueOf(c.AppController).Elem()
 	cValue := reflect.ValueOf(c)
@@ -461,7 +459,7 @@ func (c *Controller) setAppControllerFields() {
 	}
 }
 
-// Removes this instance (c) from the AppController instance
+// Removes this instance (c) from the AppController instance.
 func (c *Controller) resetAppControllerFields() {
 	appController := reflect.ValueOf(c.AppController).Elem()
 	// Zero out controller
@@ -482,8 +480,8 @@ func findControllers(appControllerType reflect.Type) (indexes [][]int) {
 	for len(queue) > 0 {
 		// Get the next value and de-reference it if necessary.
 		var (
-			node = queue[0]
-			elem = node.val
+			node     = queue[0]
+			elem     = node.val
 			elemType = elem.Type()
 		)
 		if elemType.Kind() == reflect.Ptr {

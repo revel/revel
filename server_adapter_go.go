@@ -20,7 +20,7 @@ import (
 	"golang.org/x/net/websocket"
 )
 
-// Register the GoHttpServer engine
+// Register the GoHttpServer engine.
 func init() {
 	AddInitEventHandler(func(typeOf Event, value interface{}) (responseOf EventResponse) {
 		if typeOf == REVEL_BEFORE_MODULES_LOADED {
@@ -30,7 +30,7 @@ func init() {
 	})
 }
 
-// The Go HTTP server
+// The Go HTTP server.
 type GoHttpServer struct {
 	Server               *http.Server           // The server instance
 	ServerInit           *EngineInit            // The server engine initialization
@@ -42,7 +42,7 @@ type GoHttpServer struct {
 	signalChan           chan os.Signal
 }
 
-// Called to initialize the server with this EngineInit
+// Called to initialize the server with this EngineInit.
 func (g *GoHttpServer) Init(init *EngineInit) {
 	g.MaxMultipartSize = int64(Config.IntDefault("server.request.max.multipart.filesize", 32)) << 20 /* 32 MB */
 	g.goContextStack = utils.NewStackLock(Config.IntDefault("server.context.stack", 100),
@@ -71,10 +71,9 @@ func (g *GoHttpServer) Init(init *EngineInit) {
 		ReadTimeout:  time.Duration(Config.IntDefault("http.timeout.read", 0)) * time.Second,
 		WriteTimeout: time.Duration(Config.IntDefault("http.timeout.write", 0)) * time.Second,
 	}
-
 }
 
-// Handler is assigned in the Init
+// Handler is assigned in the Init.
 func (g *GoHttpServer) Start() {
 	go func() {
 		time.Sleep(100 * time.Millisecond)
@@ -97,7 +96,7 @@ func (g *GoHttpServer) Start() {
 	}
 }
 
-// Handle the request and response for the server
+// Handle the request and response for the server.
 func (g *GoHttpServer) Handle(w http.ResponseWriter, r *http.Request) {
 	// This section is called if the developer has added custom mux to the app
 	if g.HasAppMux && g.handleAppMux(w, r) {
@@ -106,7 +105,7 @@ func (g *GoHttpServer) Handle(w http.ResponseWriter, r *http.Request) {
 	g.handleMux(w, r)
 }
 
-// Handle the request and response for the servers mux
+// Handle the request and response for the servers mux.
 func (g *GoHttpServer) handleAppMux(w http.ResponseWriter, r *http.Request) bool {
 	// Check the prefix and split them
 	requestPath := path.Clean(r.URL.Path)
@@ -131,7 +130,7 @@ func (g *GoHttpServer) handleAppMux(w http.ResponseWriter, r *http.Request) bool
 	return false
 }
 
-// Passes the server request to Revel
+// Passes the server request to Revel.
 func (g *GoHttpServer) handleMux(w http.ResponseWriter, r *http.Request) {
 	if maxRequestSize := int64(Config.IntDefault("http.maxrequestsize", 0)); maxRequestSize > 0 {
 		r.Body = http.MaxBytesReader(w, r.Body, maxRequestSize)
@@ -147,7 +146,7 @@ func (g *GoHttpServer) handleMux(w http.ResponseWriter, r *http.Request) {
 
 	if upgrade == "websocket" || upgrade == "Websocket" {
 		websocket.Handler(func(ws *websocket.Conn) {
-			//Override default Read/Write timeout with sane value for a web socket request
+			// Override default Read/Write timeout with sane value for a web socket request
 			if err := ws.SetDeadline(time.Now().Add(time.Hour * 24)); err != nil {
 				serverLogger.Error("SetDeadLine failed:", err)
 			}
@@ -168,7 +167,7 @@ func (g *GoHttpServer) handleMux(w http.ResponseWriter, r *http.Request) {
 // you may get inaccurate Client IP address. Revel parses the
 // IP address in the order of X-Forwarded-For, X-Real-IP.
 //
-// By default revel will get http.Request's RemoteAddr
+// By default revel will get http.Request's RemoteAddr.
 func HttpClientIP(r *http.Request) string {
 	if Config.BoolDefault("app.behind.proxy", false) {
 		// Header X-Forwarded-For
@@ -193,15 +192,15 @@ func HttpClientIP(r *http.Request) string {
 	return ""
 }
 
-// The server key name
+// The server key name.
 const GO_NATIVE_SERVER_ENGINE = "go"
 
-// Returns the name of this engine
+// Returns the name of this engine.
 func (g *GoHttpServer) Name() string {
 	return GO_NATIVE_SERVER_ENGINE
 }
 
-// Returns stats for this engine
+// Returns stats for this engine.
 func (g *GoHttpServer) Stats() map[string]interface{} {
 	return map[string]interface{}{
 		"Go Engine Context": g.goContextStack.String(),
@@ -209,12 +208,12 @@ func (g *GoHttpServer) Stats() map[string]interface{} {
 	}
 }
 
-// Return the engine instance
+// Return the engine instance.
 func (g *GoHttpServer) Engine() interface{} {
 	return g.Server
 }
 
-// Handles an event from Revel
+// Handles an event from Revel.
 func (g *GoHttpServer) Event(event Event, args interface{}) (r EventResponse) {
 	switch event {
 	case ENGINE_STARTED:
@@ -229,21 +228,20 @@ func (g *GoHttpServer) Event(event Event, args interface{}) (r EventResponse) {
 		defer cancel()
 		g.Server.Shutdown(ctx)
 	default:
-
 	}
 
 	return
 }
 
 type (
-	// The go context
+	// The go context.
 	GoContext struct {
 		Request   *GoRequest   // The request
 		Response  *GoResponse  // The response
 		WebSocket *GoWebSocket // The websocket
 	}
 
-	// The go request
+	// The go request.
 	GoRequest struct {
 		Original        *http.Request    // The original
 		FormParsed      bool             // True if form parsed
@@ -254,7 +252,7 @@ type (
 		Engine          *GoHttpServer    // THe server
 	}
 
-	// The response
+	// The response.
 	GoResponse struct {
 		Original http.ResponseWriter // The original writer
 		Goheader *GoHeader           // The header
@@ -263,28 +261,28 @@ type (
 		Engine   *GoHttpServer       // The engine
 	}
 
-	// The multipart form
+	// The multipart form.
 	GoMultipartForm struct {
 		Form *multipart.Form // The form
 	}
 
-	// The go header
+	// The go header.
 	GoHeader struct {
 		Source     interface{} // The source
 		isResponse bool        // True if response header
 	}
 
-	// The websocket
+	// The websocket.
 	GoWebSocket struct {
 		Conn       *websocket.Conn // The connection
 		GoResponse                 // The response
 	}
 
-	// The cookie
+	// The cookie.
 	GoCookie http.Cookie
 )
 
-// Create a new go context
+// Create a new go context.
 func NewGoContext(instance *GoHttpServer) *GoContext {
 	// This bit in here is for the test cases, which pass in a nil value
 	if instance == nil {
@@ -301,12 +299,12 @@ func NewGoContext(instance *GoHttpServer) *GoContext {
 	return c
 }
 
-// get the request
+// get the request.
 func (c *GoContext) GetRequest() ServerRequest {
 	return c.Request
 }
 
-// Get the response
+// Get the response.
 func (c *GoContext) GetResponse() ServerResponse {
 	if c.WebSocket != nil {
 		return c.WebSocket
@@ -314,7 +312,7 @@ func (c *GoContext) GetResponse() ServerResponse {
 	return c.Response
 }
 
-// Destroy the context
+// Destroy the context.
 func (c *GoContext) Destroy() {
 	c.Response.Destroy()
 	c.Request.Destroy()
@@ -324,7 +322,7 @@ func (c *GoContext) Destroy() {
 	}
 }
 
-// Communicate with the server engine to exchange data
+// Communicate with the server engine to exchange data.
 func (r *GoRequest) Get(key int) (value interface{}, err error) {
 	switch key {
 	case HTTP_SERVER_HEADER:
@@ -358,12 +356,12 @@ func (r *GoRequest) Get(key int) (value interface{}, err error) {
 	return
 }
 
-// Sets the request key with value
+// Sets the request key with value.
 func (r *GoRequest) Set(key int, value interface{}) bool {
 	return false
 }
 
-// Returns the form
+// Returns the form.
 func (r *GoRequest) GetForm() (url.Values, error) {
 	if !r.FormParsed {
 		if e := r.Original.ParseForm(); e != nil {
@@ -375,7 +373,7 @@ func (r *GoRequest) GetForm() (url.Values, error) {
 	return r.Original.Form, nil
 }
 
-// Returns the form
+// Returns the form.
 func (r *GoRequest) GetMultipartForm() (ServerMultipartForm, error) {
 	if !r.MultiFormParsed {
 		if e := r.Original.ParseMultipartForm(r.Engine.MaxMultipartSize); e != nil {
@@ -388,25 +386,24 @@ func (r *GoRequest) GetMultipartForm() (ServerMultipartForm, error) {
 	return r.ParsedForm, nil
 }
 
-// Returns the header
+// Returns the header.
 func (r *GoRequest) GetHeader() ServerHeader {
 	return r.Goheader
 }
 
-// Returns the raw value
+// Returns the raw value.
 func (r *GoRequest) GetRaw() interface{} {
 	return r.Original
 }
 
-// Sets the request
+// Sets the request.
 func (r *GoRequest) SetRequest(req *http.Request) {
 	r.Original = req
 	r.Goheader.Source = r
 	r.Goheader.isResponse = false
-
 }
 
-// Destroy the request
+// Destroy the request.
 func (r *GoRequest) Destroy() {
 	r.Goheader.Source = nil
 	r.Original = nil
@@ -415,7 +412,7 @@ func (r *GoRequest) Destroy() {
 	r.ParsedForm = nil
 }
 
-// Gets the key from the response
+// Gets the key from the response.
 func (r *GoResponse) Get(key int) (value interface{}, err error) {
 	switch key {
 	case HTTP_SERVER_HEADER:
@@ -430,7 +427,7 @@ func (r *GoResponse) Get(key int) (value interface{}, err error) {
 	return
 }
 
-// Sets the key with the value
+// Sets the key with the value.
 func (r *GoResponse) Set(key int, value interface{}) (set bool) {
 	switch key {
 	case ENGINE_RESPONSE_STATUS:
@@ -443,22 +440,22 @@ func (r *GoResponse) Set(key int, value interface{}) (set bool) {
 	return
 }
 
-// Sets the header
+// Sets the header.
 func (r *GoResponse) Header() ServerHeader {
 	return r.Goheader
 }
 
-// Gets the original response
+// Gets the original response.
 func (r *GoResponse) GetRaw() interface{} {
 	return r.Original
 }
 
-// Sets the writer
+// Sets the writer.
 func (r *GoResponse) SetWriter(writer io.Writer) {
 	r.Writer = writer
 }
 
-// Write output to stream
+// Write output to stream.
 func (r *GoResponse) WriteStream(name string, contentlen int64, modtime time.Time, reader io.Reader) error {
 	// Check to see if the output stream is modified, if not send it using the
 	// Native writer
@@ -502,7 +499,7 @@ func (r *GoResponse) WriteStream(name string, contentlen int64, modtime time.Tim
 	return nil
 }
 
-// Frees response
+// Frees response.
 func (r *GoResponse) Destroy() {
 	if c, ok := r.Writer.(io.Closer); ok {
 		c.Close()
@@ -512,57 +509,54 @@ func (r *GoResponse) Destroy() {
 	r.Writer = nil
 }
 
-// Sets the response
+// Sets the response.
 func (r *GoResponse) SetResponse(w http.ResponseWriter) {
 	r.Original = w
 	r.Writer = w
 	r.Goheader.Source = r
 	r.Goheader.isResponse = true
-
 }
 
-// Sets the cookie
+// Sets the cookie.
 func (r *GoHeader) SetCookie(cookie string) {
 	if r.isResponse {
 		r.Source.(*GoResponse).Original.Header().Add("Set-Cookie", cookie)
 	}
 }
 
-// Gets the cookie
+// Gets the cookie.
 func (r *GoHeader) GetCookie(key string) (value ServerCookie, err error) {
 	if !r.isResponse {
 		var cookie *http.Cookie
 		if cookie, err = r.Source.(*GoRequest).Original.Cookie(key); err == nil {
 			value = GoCookie(*cookie)
-
 		}
-
 	}
 	return
 }
 
-// Sets (replaces) header key
+// Sets (replaces) header key.
 func (r *GoHeader) Set(key string, value string) {
 	if r.isResponse {
 		r.Source.(*GoResponse).Original.Header().Set(key, value)
 	}
 }
 
-// Adds the header key
+// Adds the header key.
 func (r *GoHeader) Add(key string, value string) {
 	if r.isResponse {
 		r.Source.(*GoResponse).Original.Header().Add(key, value)
 	}
 }
 
-// Deletes the header key
+// Deletes the header key.
 func (r *GoHeader) Del(key string) {
 	if r.isResponse {
 		r.Source.(*GoResponse).Original.Header().Del(key)
 	}
 }
 
-// Gets the header key
+// Gets the header key.
 func (r *GoHeader) Get(key string) (value []string) {
 	if !r.isResponse {
 		value = r.Source.(*GoRequest).Original.Header[key]
@@ -577,7 +571,7 @@ func (r *GoHeader) Get(key string) (value []string) {
 	return
 }
 
-// Returns list of header keys
+// Returns list of header keys.
 func (r *GoHeader) GetKeys() (value []string) {
 	if !r.isResponse {
 		for key := range r.Source.(*GoRequest).Original.Header {
@@ -591,56 +585,56 @@ func (r *GoHeader) GetKeys() (value []string) {
 	return
 }
 
-// Sets the status of the header
+// Sets the status of the header.
 func (r *GoHeader) SetStatus(statusCode int) {
 	if r.isResponse {
 		r.Source.(*GoResponse).Original.WriteHeader(statusCode)
 	}
 }
 
-// Return cookies value
+// Return cookies value.
 func (r GoCookie) GetValue() string {
 	return r.Value
 }
 
-// Return files from the form
+// Return files from the form.
 func (f *GoMultipartForm) GetFiles() map[string][]*multipart.FileHeader {
 	return f.Form.File
 }
 
-// Return values from the form
+// Return values from the form.
 func (f *GoMultipartForm) GetValues() url.Values {
 	return url.Values(f.Form.Value)
 }
 
-// Remove all values from the form freeing memory
+// Remove all values from the form freeing memory.
 func (f *GoMultipartForm) RemoveAll() error {
 	return f.Form.RemoveAll()
 }
 
 /**
- * Message send JSON
+ * Message send JSON.
  */
 func (g *GoWebSocket) MessageSendJSON(v interface{}) error {
 	return websocket.JSON.Send(g.Conn, v)
 }
 
 /**
- * Message receive JSON
+ * Message receive JSON.
  */
 func (g *GoWebSocket) MessageReceiveJSON(v interface{}) error {
 	return websocket.JSON.Receive(g.Conn, v)
 }
 
 /**
- * Message Send
+ * Message Send.
  */
 func (g *GoWebSocket) MessageSend(v interface{}) error {
 	return websocket.Message.Send(g.Conn, v)
 }
 
 /**
- * Message receive
+ * Message receive.
  */
 func (g *GoWebSocket) MessageReceive(v interface{}) error {
 	return websocket.Message.Receive(g.Conn, v)

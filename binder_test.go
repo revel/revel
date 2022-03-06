@@ -7,7 +7,6 @@ package revel
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/revel/config"
 	"io"
 	"io/ioutil"
 	"os"
@@ -16,12 +15,15 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/revel/config"
 )
 
 type A struct {
-	ID      int
-	Name    string
-	B       B
+	ID   int
+	Name string
+	B    B
+	//nolint:unused
 	private int
 }
 
@@ -209,7 +211,6 @@ func TestJsonBinder(t *testing.T) {
 		if actualb["a"]["b"] != 45 {
 			t.Errorf("Failed to fetch map value %#v", actual["a"])
 		}
-
 	}
 }
 
@@ -250,7 +251,6 @@ func TestBinder(t *testing.T) {
 	}
 
 	for k, fhs := range expectedBoundFiles {
-
 		if len(fhs) == 1 {
 			// Test binding single files to: *os.File, []byte, io.Reader, io.ReadSeeker
 			for _, binding := range fileBindings {
@@ -263,7 +263,6 @@ func TestBinder(t *testing.T) {
 				returns := reflect.ValueOf(binding.f).Call([]reflect.Value{actual})
 				valEq(t, k, returns[0], reflect.ValueOf(fhs[0].content))
 			}
-
 		} else {
 			// Test binding multi to:
 			// []*os.File, [][]byte, []io.Reader, []io.ReadSeeker

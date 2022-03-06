@@ -26,7 +26,7 @@ type TemplateEngine interface {
 	Name() string
 }
 
-// The template view information
+// The template view information.
 type TemplateView struct {
 	TemplateName string // The name of the view
 	FilePath     string // The file path (view relative)
@@ -37,7 +37,7 @@ type TemplateView struct {
 
 var templateLoaderMap = map[string]func(loader *TemplateLoader) (TemplateEngine, error){}
 
-// Allow for templates to be registered during init but not initialized until application has been started
+// Allow for templates to be registered during init but not initialized until application has been started.
 func RegisterTemplateLoader(key string, loader func(loader *TemplateLoader) (TemplateEngine, error)) (err error) {
 	if _, found := templateLoaderMap[key]; found {
 		err = fmt.Errorf("Template loader %s already exists", key)
@@ -48,18 +48,18 @@ func RegisterTemplateLoader(key string, loader func(loader *TemplateLoader) (Tem
 }
 
 // Sets the template name from Config
-// Sets the template API methods for parsing and storing templates before rendering
+// Sets the template API methods for parsing and storing templates before rendering.
 func (loader *TemplateLoader) CreateTemplateEngine(templateEngineName string) (TemplateEngine, error) {
-	if "" == templateEngineName {
+	if templateEngineName == "" {
 		templateEngineName = GO_TEMPLATE
 	}
 	factory := templateLoaderMap[templateEngineName]
-	if nil == factory {
+	if factory == nil {
 		fmt.Printf("registered factories %#v\n %s \n", templateLoaderMap, templateEngineName)
 		return nil, errors.New("Unknown template engine name - " + templateEngineName + ".")
 	}
 	templateEngine, err := factory(loader)
-	if nil != err {
+	if err != nil {
 		return nil, errors.New("Failed to init template engine (" + templateEngineName + "), " + err.Error())
 	}
 
@@ -67,12 +67,11 @@ func (loader *TemplateLoader) CreateTemplateEngine(templateEngineName string) (T
 	return templateEngine, nil
 }
 
-// Passing in a comma delimited list of engine names to be used with this loader to parse the template files
+// Passing in a comma delimited list of engine names to be used with this loader to parse the template files.
 func (loader *TemplateLoader) initializeEngines(runtimeLoader *templateRuntime, templateEngineNameList string) (err *Error) {
 	// Walk through the template loader's paths and build up a template set.
 	if templateEngineNameList == "" {
 		templateEngineNameList = GO_TEMPLATE
-
 	}
 	runtimeLoader.templatesAndEngineList = []TemplateEngine{}
 	for _, engine := range strings.Split(templateEngineNameList, ",") {

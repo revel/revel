@@ -189,7 +189,6 @@ func BenchmarkI18nMessageWithArguments(b *testing.B) {
 		}))
 	})
 
-
 	for i := 0; i < b.N; i++ {
 		Message("en", "arguments.string", "Vincent Hanna")
 	}
@@ -201,7 +200,6 @@ func BenchmarkI18nMessageWithFoldingAndArguments(b *testing.B) {
 			return nil
 		}))
 	})
-
 
 	for i := 0; i < b.N; i++ {
 		Message("en", "folded.arguments", 12345)
