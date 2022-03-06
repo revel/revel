@@ -20,6 +20,7 @@ var compressionTypes = [...]string{
 
 var compressableMimes = [...]string{
 	"text/plain",
+	"text/csv",
 	"text/html",
 	"text/xml",
 	"text/css",
