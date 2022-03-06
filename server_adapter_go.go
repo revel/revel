@@ -13,6 +13,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/revel/revel/utils"
@@ -216,7 +217,7 @@ func (g *GoHttpServer) Engine() interface{} {
 func (g *GoHttpServer) Event(event Event, args interface{}) (r EventResponse) {
 	switch event {
 	case ENGINE_STARTED:
-		signal.Notify(g.signalChan, os.Interrupt, os.Kill)
+		signal.Notify(g.signalChan, os.Interrupt, syscall.SIGTERM, os.Kill)
 		go func() {
 			_ = <-g.signalChan
 			serverLogger.Info("Received quit singal Please wait ... ")
