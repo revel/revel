@@ -353,7 +353,7 @@ func (i IPAddr) IsSatisfied(obj interface{}) bool {
 }
 
 func (i IPAddr) DefaultMessage() string {
-	return fmt.Sprintln("Must be a vaild IP address")
+	return fmt.Sprintln("Must be a valid IP address")
 }
 
 // Requires a MAC Address string to be exactly.
@@ -374,7 +374,7 @@ func (m MacAddr) IsSatisfied(obj interface{}) bool {
 }
 
 func (m MacAddr) DefaultMessage() string {
-	return fmt.Sprintln("Must be a vaild MAC address")
+	return fmt.Sprintln("Must be a valid MAC address")
 }
 
 var domainPattern = regexp.MustCompile(`^(([a-zA-Z0-9-\p{L}]{1,63}\.)?(xn--)?[a-zA-Z0-9\p{L}]+(-[a-zA-Z0-9\p{L}]+)*\.)+[a-zA-Z\p{L}]{2,63}$`)
@@ -408,7 +408,7 @@ func (d Domain) IsSatisfied(obj interface{}) bool {
 }
 
 func (d Domain) DefaultMessage() string {
-	return fmt.Sprintln("Must be a vaild domain address")
+	return fmt.Sprintln("Must be a valid domain address")
 }
 
 var urlPattern = regexp.MustCompile(`^((((https?|ftps?|gopher|telnet|nntp)://)|(mailto:|news:))(%[0-9A-Fa-f]{2}|[-()_.!~*';/?:@#&=+$,A-Za-z0-9\p{L}])+)([).!';/?:,][[:blank:]])?$`)
@@ -431,7 +431,7 @@ func (u URL) IsSatisfied(obj interface{}) bool {
 }
 
 func (u URL) DefaultMessage() string {
-	return fmt.Sprintln("Must be a vaild URL address")
+	return fmt.Sprintln("Must be a valid URL address")
 }
 
 /*
@@ -566,7 +566,7 @@ func (p PureText) IsSatisfied(obj interface{}) bool {
 }
 
 func (p PureText) DefaultMessage() string {
-	return fmt.Sprintln("Must be a vaild Text")
+	return fmt.Sprintln("Must be a valid Text")
 }
 
 const (
