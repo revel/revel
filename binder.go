@@ -162,7 +162,7 @@ var (
 				return v.Addr()
 			}
 
-			return v
+			return reflect.Zero(typ)
 		},
 		Unbind: func(output map[string]string, name string, val interface{}) {
 			Unbind(output, name, reflect.ValueOf(val).Elem().Interface())
