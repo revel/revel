@@ -50,7 +50,10 @@ func CallerFileHandler(h LogHandler) LogHandler {
 // Adds in a context called `caller` to the record (contains file name and line number like `foo.go:12`)
 // Uses the `log15.CallerFuncHandler` to perform this task.
 func CallerFuncHandler(h LogHandler) LogHandler {
-	return CallerFuncHandler(h)
+	return FuncHandler(func(r *Record) error {
+		r.Context.Add("fn", fmt.Sprintf("%+n", r.Call))
+		return h.Log(r)
+	})
 }
 
 // Filters out records which match the key value pair
