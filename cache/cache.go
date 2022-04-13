@@ -5,7 +5,6 @@
 package cache
 
 import (
-	"errors"
 	"time"
 )
 
@@ -118,12 +117,20 @@ type Cache interface {
 	Flush() error
 }
 
-var (
-	Instance Cache
+var Instance Cache
 
-	ErrCacheMiss    = errors.New("revel/cache: key not found")
-	ErrNotStored    = errors.New("revel/cache: not stored")
-	ErrInvalidValue = errors.New("revel/cache: invalid value")
+// Error is used for constant errors.
+type Error string
+
+// Error implements the error interface.
+func (e Error) Error() string {
+	return string(e)
+}
+
+const (
+	ErrCacheMiss    Error = "revel/cache: key not found"
+	ErrNotStored    Error = "revel/cache: not stored"
+	ErrInvalidValue Error = "revel/cache: invalid value"
 )
 
 // The package implements the Cache interface (as sugar).

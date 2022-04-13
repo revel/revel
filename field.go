@@ -18,25 +18,22 @@ type Field struct {
 }
 
 func NewField(name string, viewArgs map[string]interface{}) *Field {
-	err, _ := viewArgs["errors"].(map[string]*ValidationError)[name]
-	controller, _ := viewArgs["_controller"].(*Controller)
 	return &Field{
 		Name:       name,
-		Error:      err,
+		Error:      viewArgs["errors"].(map[string]*ValidationError)[name],
 		viewArgs:   viewArgs,
-		controller: controller,
+		controller: viewArgs["_controller"].(*Controller),
 	}
 }
 
 // ID returns an identifier suitable for use as an HTML id.
 func (f *Field) ID() string {
-	return strings.Replace(f.Name, ".", "_", -1)
+	return strings.ReplaceAll(f.Name, ".", "_")
 }
 
 // Flash returns the flashed value of this Field.
 func (f *Field) Flash() string {
-	v, _ := f.viewArgs["flash"].(map[string]string)[f.Name]
-	return v
+	return f.viewArgs["flash"].(map[string]string)[f.Name]
 }
 
 // Options returns the option list of this Field.
@@ -44,8 +41,8 @@ func (f *Field) Options() []string {
 	if f.viewArgs["options"] == nil {
 		return nil
 	}
-	v, _ := f.viewArgs["options"].(map[string][]string)[f.Name]
-	return v
+
+	return f.viewArgs["options"].(map[string][]string)[f.Name]
 }
 
 // FlashArray returns the flashed value of this Field as a list split on comma.
@@ -54,6 +51,7 @@ func (f *Field) FlashArray() []string {
 	if v == "" {
 		return []string{}
 	}
+
 	return strings.Split(v, ",")
 }
 

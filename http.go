@@ -135,12 +135,12 @@ func (req *Request) Context() (c context.Context) {
 	return
 }
 
-// Deprecated use controller.Params.Get().
+// Deprecated: use controller.Params.Get().
 func (req *Request) FormValue(key string) (value string) {
 	return req.controller.Params.Get(key)
 }
 
-// Deprecated use controller.Params.Form[Key].
+// Deprecated: use controller.Params.Form[Key].
 func (req *Request) PostFormValue(key string) (value string) {
 	valueList := req.controller.Params.Form[key]
 	if len(valueList) > 0 {
@@ -149,7 +149,7 @@ func (req *Request) PostFormValue(key string) (value string) {
 	return
 }
 
-// Deprecated use GetForm() instead.
+// Deprecated: use GetForm() instead.
 func (req *Request) ParseForm() (e error) {
 	if req.Form == nil {
 		req.Form, e = req.GetForm()
@@ -167,7 +167,7 @@ func (req *Request) GetForm() (url.Values, error) {
 	return nil, FORM_NOT_FOUND
 }
 
-// Deprecated for backwards compatibility only.
+// Deprecated: for backwards compatibility only.
 type MultipartForm struct {
 	File   map[string][]*multipart.FileHeader
 	Value  url.Values
@@ -175,15 +175,15 @@ type MultipartForm struct {
 }
 
 func (req *Request) MultipartReader() (*multipart.Reader, error) {
-	return nil, errors.New("MultipartReader not supported, use controller.Param")
+	return nil, ErrMultipartReader
 }
 
-// Deprecated for backwards compatibility only.
+// Deprecated: for backwards compatibility only.
 func newMultipareForm(s ServerMultipartForm) (f *MultipartForm) {
 	return &MultipartForm{File: s.GetFiles(), Value: s.GetValues(), origin: s}
 }
 
-// Deprecated use GetMultipartForm() instead.
+// Deprecated: use GetMultipartForm() instead.
 func (req *Request) ParseMultipartForm(_ int64) (e error) {
 	var s ServerMultipartForm
 	if s, e = req.GetMultipartForm(); e == nil {
@@ -250,8 +250,8 @@ func (resp *Response) Destroy() {
 }
 
 // UserAgent returns the client's User-Agent header string.
-func (r *Request) UserAgent() string {
-	return r.Header.Get("User-Agent")
+func (req *Request) UserAgent() string {
+	return req.Header.Get("User-Agent")
 }
 
 // Referer returns the client's Referer header string.
@@ -265,8 +265,8 @@ func (req *Request) GetHttpHeader(key string) string {
 }
 
 // Return the value from the server.
-func (r *Request) GetValue(key int) (value interface{}) {
-	value, _ = r.In.Get(key)
+func (req *Request) GetValue(key int) (value interface{}) {
+	value, _ = req.In.Get(key)
 	return
 }
 

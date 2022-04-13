@@ -119,8 +119,7 @@ type (
 	}
 
 	// An empty server engine.
-	ServerEngineEmpty struct {
-	}
+	ServerEngineEmpty struct{}
 
 	// The route handler structure.
 	ServerMux struct {

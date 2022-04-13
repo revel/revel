@@ -13,16 +13,18 @@ import (
 	"github.com/patrickmn/go-cache"
 )
 
+const ErrCannotSet Error = "revel/cache: cannot set/get"
+
 type InMemoryCache struct {
 	cache cache.Cache  // Only expose the methods we want to make available
 	mu    sync.RWMutex // For increment / decrement prevent reads and writes
 }
 
-func NewInMemoryCache(defaultExpiration time.Duration) InMemoryCache {
-	return InMemoryCache{cache: *cache.New(defaultExpiration, time.Minute), mu: sync.RWMutex{}}
+func NewInMemoryCache(defaultExpiration time.Duration) *InMemoryCache {
+	return &InMemoryCache{cache: *cache.New(defaultExpiration, time.Minute), mu: sync.RWMutex{}}
 }
 
-func (c InMemoryCache) Get(key string, ptrValue interface{}) error {
+func (c *InMemoryCache) Get(key string, ptrValue interface{}) error {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
@@ -37,16 +39,16 @@ func (c InMemoryCache) Get(key string, ptrValue interface{}) error {
 		return nil
 	}
 
-	err := fmt.Errorf("revel/cache: attempt to get %s, but can not set value %v", key, v)
+	err := fmt.Errorf("%w, get %s, value %v", ErrCannotSet, key, v)
 	cacheLog.Error(err.Error())
 	return err
 }
 
-func (c InMemoryCache) GetMulti(keys ...string) (Getter, error) {
+func (c *InMemoryCache) GetMulti(keys ...string) (Getter, error) {
 	return c, nil
 }
 
-func (c InMemoryCache) Set(key string, value interface{}, expires time.Duration) error {
+func (c *InMemoryCache) Set(key string, value interface{}, expires time.Duration) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	// NOTE: go-cache understands the values of DefaultExpiryTime and ForEverNeverExpiry
@@ -54,7 +56,7 @@ func (c InMemoryCache) Set(key string, value interface{}, expires time.Duration)
 	return nil
 }
 
-func (c InMemoryCache) Add(key string, value interface{}, expires time.Duration) error {
+func (c *InMemoryCache) Add(key string, value interface{}, expires time.Duration) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	err := c.cache.Add(key, value, expires)
@@ -64,7 +66,7 @@ func (c InMemoryCache) Add(key string, value interface{}, expires time.Duration)
 	return err
 }
 
-func (c InMemoryCache) Replace(key string, value interface{}, expires time.Duration) error {
+func (c *InMemoryCache) Replace(key string, value interface{}, expires time.Duration) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if err := c.cache.Replace(key, value, expires); err != nil {
@@ -73,7 +75,7 @@ func (c InMemoryCache) Replace(key string, value interface{}, expires time.Durat
 	return nil
 }
 
-func (c InMemoryCache) Delete(key string) error {
+func (c *InMemoryCache) Delete(key string) error {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	if _, found := c.cache.Get(key); !found {
@@ -83,7 +85,7 @@ func (c InMemoryCache) Delete(key string) error {
 	return nil
 }
 
-func (c InMemoryCache) Increment(key string, n uint64) (newValue uint64, err error) {
+func (c *InMemoryCache) Increment(key string, n uint64) (newValue uint64, err error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if _, found := c.cache.Get(key); !found {
@@ -96,17 +98,20 @@ func (c InMemoryCache) Increment(key string, n uint64) (newValue uint64, err err
 	return c.convertTypeToUint64(key)
 }
 
-func (c InMemoryCache) Decrement(key string, n uint64) (newValue uint64, err error) {
+func (c *InMemoryCache) Decrement(key string, n uint64) (newValue uint64, err error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	if nv, err := c.convertTypeToUint64(key); err != nil {
+
+	nv, err := c.convertTypeToUint64(key)
+	if err != nil {
 		return 0, err
-	} else {
-		// Stop from going below zero
-		if n > nv {
-			n = nv
-		}
 	}
+
+	// Stop from going below zero
+	if n > nv {
+		n = nv
+	}
+
 	if err = c.cache.Decrement(key, int64(n)); err != nil {
 		return
 	}
@@ -114,7 +119,7 @@ func (c InMemoryCache) Decrement(key string, n uint64) (newValue uint64, err err
 	return c.convertTypeToUint64(key)
 }
 
-func (c InMemoryCache) Flush() error {
+func (c *InMemoryCache) Flush() error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -123,7 +128,7 @@ func (c InMemoryCache) Flush() error {
 }
 
 // Fetches and returns the converted type to a uint64.
-func (c InMemoryCache) convertTypeToUint64(key string) (newValue uint64, err error) {
+func (c *InMemoryCache) convertTypeToUint64(key string) (newValue uint64, err error) {
 	v, found := c.cache.Get(key)
 	if !found {
 		return newValue, ErrCacheMiss

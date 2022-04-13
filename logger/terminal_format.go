@@ -54,7 +54,7 @@ func TerminalFormatHandler(noColor bool, smallDate bool) LogFormat {
 		b := &bytes.Buffer{}
 		caller, _ := r.Context["caller"].(string)
 		module, _ := r.Context["module"].(string)
-		if noColor == false && color > 0 {
+		if !noColor && color > 0 {
 			if len(module) > 0 {
 				fmt.Fprintf(b, "\x1b[%dm%-5s\x1b[0m %s %6s %13s: %-40s ", color, levelString[r.Level], r.Time.Format(dateFormat), module, caller, r.Message)
 			} else {
@@ -77,7 +77,7 @@ func TerminalFormatHandler(noColor bool, smallDate bool) LogFormat {
 			v := formatLogfmtValue(v)
 
 			// TODO: we should probably check that all of your key bytes aren't invalid
-			if noColor == false && color > 0 {
+			if !noColor && color > 0 {
 				fmt.Fprintf(b, "\x1b[%dm%s\x1b[0m=%s", color, k, v)
 			} else {
 				b.WriteString(k)
@@ -165,7 +165,7 @@ func escapeString(s string) string {
 			needsEscape = true
 		}
 	}
-	if needsEscape == false && needsQuotes == false {
+	if !needsEscape && !needsQuotes {
 		return s
 	}
 	e := stringBufPool.Get().(*bytes.Buffer)
@@ -197,10 +197,10 @@ func escapeString(s string) string {
 	return ret
 }
 
-// JsonFormatEx formats log records as JSON objects. If pretty is true,
+// JSONFormatEx formats log records as JSON objects. If pretty is true,
 // records will be pretty-printed. If lineSeparated is true, records
 // will be logged with a new line between each record.
-func JsonFormatEx(pretty, lineSeparated bool) LogFormat {
+func JSONFormatEx(pretty, lineSeparated bool) LogFormat {
 	jsonMarshal := json.Marshal
 	if pretty {
 		jsonMarshal = func(v interface{}) ([]byte, error) {
@@ -215,7 +215,7 @@ func JsonFormatEx(pretty, lineSeparated bool) LogFormat {
 		props["lvl"] = levelString[r.Level]
 		props["msg"] = r.Message
 		for k, v := range r.Context {
-			props[k] = formatJsonValue(v)
+			props[k] = formatJSONValue(v)
 		}
 
 		b, err := jsonMarshal(props)
@@ -234,7 +234,7 @@ func JsonFormatEx(pretty, lineSeparated bool) LogFormat {
 	})
 }
 
-func formatJsonValue(value interface{}) interface{} {
+func formatJSONValue(value interface{}) interface{} {
 	value = formatShared(value)
 	switch value.(type) {
 	case int, int8, int16, int32, int64, float32, float64, uint, uint8, uint16, uint32, uint64, string:

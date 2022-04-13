@@ -7,12 +7,12 @@ package session
 import (
 	"encoding/hex"
 	"encoding/json"
-	"errors"
-	"github.com/google/uuid"
 	"reflect"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 const (
@@ -32,9 +32,21 @@ const (
 	SessionCookieSuffix = "_SESSION"
 )
 
+// Error is used for constant string errors.
+type Error string
+
+// Error implements the error interface.
+func (e Error) Error() string {
+	return string(e)
+}
+
+const (
+	ErrSessionValueNotFound Error = "session value not found"
+)
+
 // Session data, can be any data, there are reserved keywords used by the storage data
 // SessionIDKey Is the key name for the session
-// TimestampKey Is the time that the session should expire
+// TimestampKey Is the time that the session should expire.
 //
 type Session map[string]interface{}
 
@@ -89,9 +101,6 @@ func (s Session) SessionTimeoutExpiredOrMissing() bool {
 	}
 	return false
 }
-
-// Constant error if session value is not found.
-var SESSION_VALUE_NOT_FOUND = errors.New("Session value not found")
 
 // Get an object or property from the session
 // it may be embedded inside the session.
@@ -176,7 +185,7 @@ func (s Session) GetProperty(key string, value interface{}) (interface{}, error)
 	objValue := s.reflectValue(value)
 	field := objValue.FieldByName(key)
 	if !field.IsValid() {
-		return nil, SESSION_VALUE_NOT_FOUND
+		return nil, ErrSessionValueNotFound
 	}
 
 	return field.Interface(), nil
@@ -196,16 +205,16 @@ func (s Session) Set(key string, value interface{}) error {
 
 // Delete the key from the sessionObjects and Session.
 func (s Session) Del(key string) {
-	sessionJsonMap := s.getSessionJsonMap()
-	delete(sessionJsonMap, key)
+	sessionJSONMap := s.getSessionJSONMap()
+	delete(sessionJSONMap, key)
 	delete(s, key)
 }
 
 // Extracts the session as a map of [string keys] and json values.
-func (s Session) getSessionJsonMap() map[string]string {
-	if sessionJson, found := s[SessionObjectKeyName]; found {
-		if _, valid := sessionJson.(map[string]string); !valid {
-			sessionLog.Error("Session object key corrupted, reset", "was", sessionJson)
+func (s Session) getSessionJSONMap() map[string]string {
+	if sessionJSON, found := s[SessionObjectKeyName]; found {
+		if _, valid := sessionJSON.(map[string]string); !valid {
+			sessionLog.Error("Session object key corrupted, reset", "was", sessionJSON)
 			s[SessionObjectKeyName] = map[string]string{}
 		}
 		// serialized data inside the session _objects
@@ -220,10 +229,10 @@ func (s Session) getSessionJsonMap() map[string]string {
 // this will marshal any non string objects encountered and store them the the jsonMap
 // The expiration time will also be assigned.
 func (s Session) Serialize() map[string]string {
-	sessionJsonMap := s.getSessionJsonMap()
+	sessionJSONMap := s.getSessionJSONMap()
 	newMap := map[string]string{}
 	newObjectMap := map[string]string{}
-	for key, value := range sessionJsonMap {
+	for key, value := range sessionJSONMap {
 		newObjectMap[key] = value
 	}
 	for key, value := range s {
@@ -341,10 +350,10 @@ func (s Session) sessionDataFromObject(key string, newValue interface{}) (result
 
 // Converts from the session json map into the target,.
 func (s Session) convertSessionData(key string, target interface{}) (result interface{}, err error) {
-	sessionJsonMap := s.getSessionJsonMap()
-	v, found := sessionJsonMap[key]
+	sessionJSONMap := s.getSessionJSONMap()
+	v, found := sessionJSONMap[key]
 	if !found {
-		return target, SESSION_VALUE_NOT_FOUND
+		return target, ErrSessionValueNotFound
 	}
 
 	// Create a target if needed

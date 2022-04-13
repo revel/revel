@@ -42,7 +42,7 @@ func initCookieEngine() SessionEngine {
 	} else if expiresString == session.SessionValueName {
 		ce.ExpireAfterDuration = 0
 	} else if ce.ExpireAfterDuration, err = time.ParseDuration(expiresString); err != nil {
-		panic(fmt.Errorf("session.expires invalid: %s", err))
+		panic(fmt.Errorf("session.expires invalid: %w", err))
 	}
 
 	return ce
@@ -53,12 +53,13 @@ func (cse *SessionCookieEngine) Decode(c *Controller) {
 	// Decode the session from a cookie.
 	c.Session = map[string]interface{}{}
 	sessionMap := c.Session
-	if cookie, err := c.Request.Cookie(CookiePrefix + session.SessionCookieSuffix); err != nil {
+	cookie, err := c.Request.Cookie(CookiePrefix + session.SessionCookieSuffix)
+	if err != nil {
 		return
-	} else {
-		cse.DecodeCookie(cookie, sessionMap)
-		c.Session = sessionMap
 	}
+
+	cse.DecodeCookie(cookie, sessionMap)
+	c.Session = sessionMap
 }
 
 // Encode the session information to the cookie, set the cookie on the controller.

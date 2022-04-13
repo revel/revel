@@ -21,7 +21,7 @@ func NewCompositeMultiHandler() (*CompositeMultiHandler, LogHandler) {
 	return cw, cw
 }
 
-func (h *CompositeMultiHandler) Log(r *Record) (err error) {
+func (h *CompositeMultiHandler) Log(r *Record) error {
 	var handler LogHandler
 
 	switch r.Level {
@@ -39,9 +39,12 @@ func (h *CompositeMultiHandler) Log(r *Record) (err error) {
 
 	// Embed the caller function in the context
 	if handler != nil {
-		handler.Log(r)
+		if err := handler.Log(r); err != nil {
+			return err
+		}
 	}
-	return
+
+	return nil
 }
 
 func (h *CompositeMultiHandler) SetHandler(handler LogHandler, replace bool, level LogLevel) {
@@ -91,8 +94,8 @@ func (h *CompositeMultiHandler) SetHandlers(handler LogHandler, options *LogOpti
 	}
 }
 
-func (h *CompositeMultiHandler) SetJson(writer io.Writer, options *LogOptions) {
-	handler := CallerFileHandler(StreamHandler(writer, JsonFormatEx(
+func (h *CompositeMultiHandler) SetJSON(writer io.Writer, options *LogOptions) {
+	handler := CallerFileHandler(StreamHandler(writer, JSONFormatEx(
 		options.GetBoolDefault("pretty", false),
 		options.GetBoolDefault("lineSeparated", true),
 	)))
@@ -103,7 +106,7 @@ func (h *CompositeMultiHandler) SetJson(writer io.Writer, options *LogOptions) {
 }
 
 // Use built in rolling function.
-func (h *CompositeMultiHandler) SetJsonFile(filePath string, options *LogOptions) {
+func (h *CompositeMultiHandler) SetJSONFile(filePath string, options *LogOptions) {
 	writer := &lumberjack.Logger{
 		Filename:   filePath,
 		MaxSize:    options.GetIntDefault("maxSizeMB", 1024), // megabytes
@@ -111,7 +114,7 @@ func (h *CompositeMultiHandler) SetJsonFile(filePath string, options *LogOptions
 		MaxBackups: options.GetIntDefault("maxBackups", 7),
 		Compress:   options.GetBoolDefault("compress", true),
 	}
-	h.SetJson(writer, options)
+	h.SetJSON(writer, options)
 }
 
 func (h *CompositeMultiHandler) SetTerminal(writer io.Writer, options *LogOptions) {

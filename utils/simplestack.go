@@ -49,6 +49,7 @@ func NewStackLock(startsize, maxsize int, creator func() interface{}) *SimpleLoc
 func (s *SimpleLockStack) Pop() (value interface{}) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
+
 	if s.len == 0 {
 		// Pool is empty, create a new item to return
 		if s.Creator != nil {
@@ -61,8 +62,9 @@ func (s *SimpleLockStack) Pop() (value interface{}) {
 			s.Current = s.Current.Previous
 		}
 	}
-	// println("Pop ",value, s.len, s.active, s.capacity, s.Current.Next)
+
 	s.active++
+
 	return
 }
 
@@ -70,8 +72,15 @@ func (s *SimpleLockStack) Push(value interface{}) {
 	if d, ok := value.(ObjectDestroy); ok {
 		d.Destroy()
 	}
+
 	s.lock.Lock()
 	defer s.lock.Unlock()
+
+	if s.len >= s.maxsize {
+		// If we exceeded the capacity of stack do not store the created object
+		return
+	}
+
 	if s.len == 0 {
 		s.Current.Value = value
 	} else if s.len < s.maxsize {
@@ -82,14 +91,10 @@ func (s *SimpleLockStack) Push(value interface{}) {
 			s.Current.Next.Value = value
 		}
 		s.Current = s.Current.Next
-	} else {
-		// If we exceeded the capacity of stack do not store the created object
-		return
 	}
+
 	s.len++
 	s.active--
-	// println("Push ",value, s.len, s.active, s.capacity)
-	return
 }
 
 func (s *SimpleLockStack) Len() int {

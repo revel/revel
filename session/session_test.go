@@ -18,7 +18,7 @@ func TestSessionString(t *testing.T) {
 	session.InitSession(revel.RevelLog)
 	a := assert.New(t)
 	s := session.NewSession()
-	s.Set("happy", "day")
+	a.Nil(s.Set("happy", "day"))
 	a.Equal("day", s.GetDefault("happy", nil, ""), fmt.Sprintf("Session Data %#v\n", s))
 }
 
@@ -32,7 +32,7 @@ func TestSessionStruct(t *testing.T) {
 	stringMap := s.Serialize()
 	s1 := session.NewSession()
 	s1.Load(stringMap)
-	testSharedData(s, s1, t, a)
+	testSharedData(t, s, s1, a)
 }
 
 func setSharedDataTest(s session.Session) {
@@ -51,10 +51,14 @@ func setSharedDataTest(s session.Session) {
 		C: "test",
 		D: -325.25,
 	}
-	s.Set("happy", data)
+	if err := s.Set("happy", data); err != nil {
+		panic(err)
+	}
 }
 
-func testSharedData(s, s1 session.Session, t *testing.T, a *assert.Assertions) {
+func testSharedData(t *testing.T, s, s1 session.Session, a *assert.Assertions) {
+	t.Helper()
+
 	// Compress the session to a string
 	t.Logf("Original session %#v\n", s)
 	t.Logf("New built session %#v\n", s1)

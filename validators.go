@@ -5,7 +5,6 @@
 package revel
 
 import (
-	"errors"
 	"fmt"
 	"html"
 	"net"
@@ -278,9 +277,9 @@ func ValidIPAddr(cktypes ...int) IPAddr {
 
 func isWithCIDR(str string, l int) bool {
 	if str[l-3] == '/' || str[l-2] == '/' {
-		cidr_bit := strings.Split(str, "/")
-		if 2 == len(cidr_bit) {
-			bit, err := strconv.Atoi(cidr_bit[1])
+		cidrBit := strings.Split(str, "/")
+		if len(cidrBit) == 2 {
+			bit, err := strconv.Atoi(cidrBit[1])
 			// IPv4 : 0~32, IPv6 : 0 ~ 128
 			if err == nil && bit >= 0 && bit <= 128 {
 				return true
@@ -296,29 +295,26 @@ func getIPType(str string, l int) int {
 		return None
 	}
 
-	has_dot := strings.Index(str[2:], ".")
-	has_colon := strings.Index(str[2:], ":")
+	hasDot := strings.Contains(str[2:], ".")
+	hasColon := strings.Contains(str[2:], ":")
 
 	switch {
-	case has_dot > -1 && has_colon == -1 && l >= 7 && l <= IPv4CIDR:
-		if isWithCIDR(str, l) == true {
+	case hasDot && !hasColon && l >= 7 && l <= IPv4CIDR:
+		if isWithCIDR(str, l) {
 			return IPv4CIDR
-		} else {
-			return IPv4
 		}
-	case has_dot == -1 && has_colon > -1 && l >= 6 && l <= IPv6CIDR:
-		if isWithCIDR(str, l) == true {
+		return IPv4
+	case !hasDot && hasColon && l >= 6 && l <= IPv6CIDR:
+		if isWithCIDR(str, l) {
 			return IPv6CIDR
-		} else {
-			return IPv6
 		}
+		return IPv6
 
-	case has_dot > -1 && has_colon > -1 && l >= 14 && l <= IPv4MappedIPv6:
-		if isWithCIDR(str, l) == true {
+	case hasDot && hasColon && l >= 14 && l <= IPv4MappedIPv6:
+		if isWithCIDR(str, l) {
 			return IPv4MappedIPv6CIDR
-		} else {
-			return IPv4MappedIPv6
 		}
+		return IPv4MappedIPv6
 	}
 
 	return None
@@ -462,13 +458,13 @@ func isPureTextStrict(str string) (bool, error) {
 		c := str[i]
 
 		// deny : control char (00-31 without 9(TAB) and Single 10(LF),13(CR)
-		if c >= 0 && c <= 31 && c != 9 && c != 10 && c != 13 {
-			return false, errors.New("detect control character")
+		if c <= 31 && c != 9 && c != 10 && c != 13 {
+			return false, ErrControlCharacter
 		}
 
 		// deny : control char (DEL)
 		if c == 127 {
-			return false, errors.New("detect control character (DEL)")
+			return false, fmt.Errorf("%w (DEL)", ErrControlCharacter)
 		}
 
 		// deny : short tag (<~> <~ />)
@@ -476,7 +472,7 @@ func isPureTextStrict(str string) (bool, error) {
 			for n := i + 2; n < l; n++ {
 				// 62 (>)
 				if str[n] == 62 {
-					return false, errors.New("detect tag (<(.*)+>)")
+					return false, fmt.Errorf("%w (<(.*)+>)", ErrTag)
 				}
 			}
 		}
@@ -493,7 +489,7 @@ func isPureTextStrict(str string) (bool, error) {
 
 				// 62 (>)
 				if ds == 1 && str[n] == 62 {
-					return false, errors.New("detect tag (<[!|?]~>)")
+					return false, fmt.Errorf("%w (<[!|?]~>)", ErrTag)
 				}
 			}
 		}
@@ -507,7 +503,7 @@ func isPureTextStrict(str string) (bool, error) {
 			}
 			for n := i; n < max; n++ {
 				if str[n] == 59 {
-					return false, errors.New("detect html encoded ta (&XXX;)")
+					return false, fmt.Errorf("%w (&XXX;)", ErrHTMLEntity)
 				}
 			}
 		}
@@ -527,24 +523,21 @@ var urlencodedPattern = regexp.MustCompile(`(?im)(\%[0-9a-fA-F]{1,})`)
 var controlcharPattern = regexp.MustCompile(`(?im)([\x00-\x08\x0B\x0C\x0E-\x1F\x7F]+)`)
 
 func isPureTextNormal(str string) (bool, error) {
-	decoded_str := html.UnescapeString(str)
+	decoded := html.UnescapeString(str)
 
-	matched_urlencoded := urlencodedPattern.MatchString(decoded_str)
-	if matched_urlencoded == true {
-		temp_buf, err := url.QueryUnescape(decoded_str)
+	if urlencodedPattern.MatchString(decoded) {
+		buf, err := url.QueryUnescape(decoded)
 		if err == nil {
-			decoded_str = temp_buf
+			decoded = buf
 		}
 	}
 
-	matched_element := elementPattern.MatchString(decoded_str)
-	if matched_element == true {
-		return false, errors.New("detect html element")
+	if elementPattern.MatchString(decoded) {
+		return false, ErrHTMLElement
 	}
 
-	matched_cc := controlcharPattern.MatchString(decoded_str)
-	if matched_cc == true {
-		return false, errors.New("detect control character")
+	if controlcharPattern.MatchString(decoded) {
+		return false, ErrControlCharacter
 	}
 
 	return true, nil
@@ -602,12 +595,12 @@ func (f FilePath) IsSatisfied(obj interface{}) bool {
 		switch f.Mode {
 		case ALLOW_RELATIVE_PATH:
 			ret = checkAllowRelativePath.MatchString(str)
-			if ret == false {
+			if !ret {
 				return true
 			}
 		default: // ONLY_FILENAME
 			ret = checkDenyRelativePath.MatchString(str)
-			if ret == false {
+			if !ret {
 				return true
 			}
 		}

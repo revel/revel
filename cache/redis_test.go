@@ -17,6 +17,8 @@ import (
 const redisTestServer = "localhost:6379"
 
 var newRedisCache = func(t *testing.T, defaultExpiration time.Duration) Cache {
+	t.Helper()
+
 	revel.Config = config.NewContext()
 
 	c, err := net.Dial("tcp", redisTestServer)

@@ -39,7 +39,7 @@ type TestRequest struct {
 	testSuite *TestSuite
 }
 
-// This is populated by the generated code in the run/run/go file.
+// TestSuites is populated by the generated code in the run/run/go file.
 var TestSuites []interface{} // Array of structs that embed TestSuite
 
 // NewTestSuite returns an initialized TestSuite ready for use. It is invoked
@@ -262,10 +262,15 @@ func (r *TestRequest) Send() {
 // caller may examine the Response and ResponseBody properties. You will need to
 // manage session / cookie data manually.
 func (r *TestRequest) MakeRequest() {
-	var err error
-	if r.testSuite.Response, err = r.testSuite.Client.Do(r.Request); err != nil {
+	resp, err := r.testSuite.Client.Do(r.Request)
+	defer resp.Body.Close()
+
+	if err != nil {
 		panic(err)
 	}
+
+	r.testSuite.Response = resp
+
 	if r.testSuite.ResponseBody, err = ioutil.ReadAll(r.testSuite.Response.Body); err != nil {
 		panic(err)
 	}
@@ -307,7 +312,8 @@ func (t *TestSuite) AssertNotFound() {
 
 func (t *TestSuite) AssertStatus(status int) {
 	if t.Response.StatusCode != status {
-		panic(fmt.Errorf("Status: (expected) %d != %d (actual)", status, t.Response.StatusCode))
+		panic(fmt.Sprintf("Status: (expected) %d != %d (actual)",
+			status, t.Response.StatusCode))
 	}
 }
 
@@ -318,19 +324,22 @@ func (t *TestSuite) AssertContentType(contentType string) {
 func (t *TestSuite) AssertHeader(name, value string) {
 	actual := t.Response.Header.Get(name)
 	if actual != value {
-		panic(fmt.Errorf("Header %s: (expected) %s != %s (actual)", name, value, actual))
+		panic(fmt.Sprintf("Header %s: (expected) %s != %s (actual)",
+			name, value, actual))
 	}
 }
 
 func (t *TestSuite) AssertEqual(expected, actual interface{}) {
 	if !revel.Equal(expected, actual) {
-		panic(fmt.Errorf("(expected) %v != %v (actual)", expected, actual))
+		panic(fmt.Sprintf("(expected) %v != %v (actual)",
+			expected, actual))
 	}
 }
 
 func (t *TestSuite) AssertNotEqual(expected, actual interface{}) {
 	if revel.Equal(expected, actual) {
-		panic(fmt.Errorf("(expected) %v == %v (actual)", expected, actual))
+		panic(fmt.Sprintf("(expected) %v == %v (actual)",
+			expected, actual))
 	}
 }
 
@@ -340,21 +349,23 @@ func (t *TestSuite) Assert(exp bool) {
 
 func (t *TestSuite) Assertf(exp bool, formatStr string, args ...interface{}) {
 	if !exp {
-		panic(fmt.Errorf(formatStr, args...))
+		panic(fmt.Sprintf(formatStr, args...))
 	}
 }
 
 // AssertContains asserts that the response contains the given string.
 func (t *TestSuite) AssertContains(s string) {
 	if !bytes.Contains(t.ResponseBody, []byte(s)) {
-		panic(fmt.Errorf("Assertion failed. Expected response to contain %s", s))
+		panic(fmt.Sprintf("Assertion failed. Expected response to contain %s",
+			s))
 	}
 }
 
 // AssertNotContains asserts that the response does not contain the given string.
 func (t *TestSuite) AssertNotContains(s string) {
 	if bytes.Contains(t.ResponseBody, []byte(s)) {
-		panic(fmt.Errorf("Assertion failed. Expected response not to contain %s", s))
+		panic(fmt.Sprintf("Assertion failed. Expected response not to contain %s",
+			s))
 	}
 }
 
@@ -363,7 +374,8 @@ func (t *TestSuite) AssertContainsRegex(regex string) {
 	r := regexp.MustCompile(regex)
 
 	if !r.Match(t.ResponseBody) {
-		panic(fmt.Errorf("Assertion failed. Expected response to match regexp %s", regex))
+		panic(fmt.Sprintf("Assertion failed. Expected response to match regexp %s",
+			regex))
 	}
 }
 

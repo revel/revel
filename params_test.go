@@ -159,10 +159,8 @@ func TestResolveAcceptLanguage(t *testing.T) {
 	request = buildHTTPRequestWithAcceptLanguage("en;q=0.8,nl;q=0.6,en-AU;q=malformed")
 	if result := ResolveAcceptLanguage(request); len(result) != 3 {
 		t.Errorf("Unexpected Accept-Language values length of %d (expected %d)", len(result), 3)
-	} else {
-		if result[0].Language != "en-AU" {
-			t.Errorf("Expected '%s' to be most qualified but instead it's '%s'", "en-AU", result[0].Language)
-		}
+	} else if result[0].Language != "en-AU" {
+		t.Errorf("Expected '%s' to be most qualified but instead it's '%s'", "en-AU", result[0].Language)
 	}
 }
 

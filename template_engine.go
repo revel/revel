@@ -3,7 +3,6 @@ package revel
 import (
 	"bufio"
 	"bytes"
-	"errors"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -40,7 +39,7 @@ var templateLoaderMap = map[string]func(loader *TemplateLoader) (TemplateEngine,
 // Allow for templates to be registered during init but not initialized until application has been started.
 func RegisterTemplateLoader(key string, loader func(loader *TemplateLoader) (TemplateEngine, error)) (err error) {
 	if _, found := templateLoaderMap[key]; found {
-		err = fmt.Errorf("Template loader %s already exists", key)
+		err = fmt.Errorf("%w %s", ErrDuplicateTemplateLoader, key)
 	}
 	templateLog.Debug("Registered template engine loaded", "name", key)
 	templateLoaderMap[key] = loader
@@ -56,11 +55,12 @@ func (loader *TemplateLoader) CreateTemplateEngine(templateEngineName string) (T
 	factory := templateLoaderMap[templateEngineName]
 	if factory == nil {
 		fmt.Printf("registered factories %#v\n %s \n", templateLoaderMap, templateEngineName)
-		return nil, errors.New("Unknown template engine name - " + templateEngineName + ".")
+		return nil, fmt.Errorf("%w %s", ErrUnknownTemplateEngine, templateEngineName)
 	}
 	templateEngine, err := factory(loader)
 	if err != nil {
-		return nil, errors.New("Failed to init template engine (" + templateEngineName + "), " + err.Error())
+		return nil, fmt.Errorf("failed to init template engine %s: %w",
+			templateEngineName, err)
 	}
 
 	templateLog.Debug("CreateTemplateEngine: init templates", "name", templateEngineName)
@@ -77,17 +77,19 @@ func (loader *TemplateLoader) initializeEngines(runtimeLoader *templateRuntime, 
 	for _, engine := range strings.Split(templateEngineNameList, ",") {
 		engine := strings.TrimSpace(strings.ToLower(engine))
 
-		if templateLoader, err := loader.CreateTemplateEngine(engine); err != nil {
+		templateLoader, err := loader.CreateTemplateEngine(engine)
+		if err != nil {
 			runtimeLoader.compileError = &Error{
 				Title:       "Panic (Template Loader)",
 				Description: err.Error(),
 			}
+
 			return runtimeLoader.compileError
-		} else {
-			// Always assign a default engine, switch it if it is specified in the config
-			runtimeLoader.templatesAndEngineList = append(runtimeLoader.templatesAndEngineList, templateLoader)
 		}
+		// Always assign a default engine, switch it if it is specified in the config
+		runtimeLoader.templatesAndEngineList = append(runtimeLoader.templatesAndEngineList, templateLoader)
 	}
+
 	return
 }
 

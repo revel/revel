@@ -32,7 +32,7 @@ func TestCookieRestore(t *testing.T) {
 	cse.DecodeCookie(revel.GoCookie(*cookie), restoredSession)
 	a.Equal("foo", restoredSession["foo"])
 	a.Equal("bar", restoredSession["bar"])
-	testSharedData(originSession, restoredSession, t, a)
+	testSharedData(t, originSession, restoredSession, a)
 }
 
 func TestCookieSessionExpire(t *testing.T) {

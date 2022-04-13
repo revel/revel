@@ -9,7 +9,9 @@ import (
 	"time"
 )
 
-var newInMemoryCache = func(_ *testing.T, defaultExpiration time.Duration) Cache {
+var newInMemoryCache = func(t *testing.T, defaultExpiration time.Duration) Cache {
+	t.Helper()
+
 	return NewInMemoryCache(defaultExpiration)
 }
 

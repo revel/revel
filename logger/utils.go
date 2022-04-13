@@ -20,9 +20,9 @@ var (
 
 const (
 	// The test mode flag overrides the default log level and shows only errors.
-	TEST_MODE_FLAG = "testModeFlag"
+	TestModeFlag = "testModeFlag"
 	// The special use flag enables showing messages when the logger is setup.
-	SPECIAL_USE_FLAG = "specialUseFlag"
+	SpecialUseFlag = "specialUseFlag"
 )
 
 // Returns the logger for the name.
@@ -73,12 +73,12 @@ type loggerRewrite struct {
 }
 
 // The message indicating that a logger is using a deprecated log mechanism.
-var log_deprecated = []byte("* LOG DEPRECATED * ")
+var logDeprecated = []byte("* LOG DEPRECATED * ")
 
 // Implements the Write of the logger.
 func (lr loggerRewrite) Write(p []byte) (n int, err error) {
 	if !lr.hideDeprecated {
-		p = append(log_deprecated, p...)
+		p = append(logDeprecated, p...)
 	}
 	n = len(p)
 	if len(p) > 0 && p[n-1] == '\n' {

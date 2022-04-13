@@ -12,6 +12,8 @@ import (
 	"github.com/revel/revel/logger"
 )
 
+const ErrCannotFlush Error = "flush: can not flush memcached"
+
 // MemcachedCache wraps the Memcached client to meet the Cache interface.
 type MemcachedCache struct {
 	*memcache.Client
@@ -65,7 +67,7 @@ func (c MemcachedCache) Decrement(key string, delta uint64) (newValue uint64, er
 }
 
 func (c MemcachedCache) Flush() error {
-	err := errors.New("Flush: can not flush memcached")
+	err := ErrCannotFlush
 	cacheLog.Error(err.Error())
 	return err
 }
@@ -103,12 +105,15 @@ func (g ItemMapGetter) Get(key string, ptrValue interface{}) error {
 }
 
 func convertMemcacheError(err error) error {
-	switch err {
-	case nil:
+	if err == nil {
 		return nil
-	case memcache.ErrCacheMiss:
+	}
+
+	if errors.Is(err, memcache.ErrCacheMiss) {
 		return ErrCacheMiss
-	case memcache.ErrNotStored:
+	}
+
+	if errors.Is(err, memcache.ErrNotStored) {
 		return ErrNotStored
 	}
 

@@ -23,8 +23,8 @@ const (
 )
 
 const (
-	TEST_MODE_FLAG   = "testModeFlag"
-	SPECIAL_USE_FLAG = "specialUseFlag"
+	TestModeFlag   = "testModeFlag"
+	SpecialUseFlag = "specialUseFlag"
 )
 
 // App details.
@@ -208,9 +208,9 @@ func updateLog(inputmode string) (returnMode string) {
 	if inputmode == "" {
 		returnMode = config.DefaultSection
 		return
-	} else {
-		returnMode = inputmode
 	}
+
+	returnMode = inputmode
 
 	// Check to see if the mode is a json object
 	modemap := map[string]interface{}{}
@@ -218,10 +218,10 @@ func updateLog(inputmode string) (returnMode string) {
 	var testModeFlag, specialUseFlag bool
 	if err := json.Unmarshal([]byte(inputmode), &modemap); err == nil {
 		returnMode = modemap["mode"].(string)
-		if testmode, found := modemap[TEST_MODE_FLAG]; found {
+		if testmode, found := modemap[TestModeFlag]; found {
 			testModeFlag, _ = testmode.(bool)
 		}
-		if specialUse, found := modemap[SPECIAL_USE_FLAG]; found {
+		if specialUse, found := modemap[SpecialUseFlag]; found {
 			specialUseFlag, _ = specialUse.(bool)
 		}
 		if packagePathMapI, found := modemap["packagePathMap"]; found {
@@ -235,7 +235,7 @@ func updateLog(inputmode string) (returnMode string) {
 	// If the Config is nil, set the logger to minimal log messages by adding the option
 	if Config == nil {
 		newContext = config.NewContext()
-		newContext.SetOption(TEST_MODE_FLAG, fmt.Sprint(true))
+		newContext.SetOption(TestModeFlag, fmt.Sprint(true))
 	} else {
 		// Ensure that the selected runmode appears in app.conf.
 		// If empty string is passed as the mode, treat it as "DEFAULT"
@@ -247,11 +247,11 @@ func updateLog(inputmode string) (returnMode string) {
 	}
 
 	// Only set the testmode flag if it doesnt exist
-	if _, found := newContext.Bool(TEST_MODE_FLAG); !found {
-		newContext.SetOption(TEST_MODE_FLAG, fmt.Sprint(testModeFlag))
+	if _, found := newContext.Bool(TestModeFlag); !found {
+		newContext.SetOption(TestModeFlag, fmt.Sprint(testModeFlag))
 	}
-	if _, found := newContext.Bool(SPECIAL_USE_FLAG); !found {
-		newContext.SetOption(SPECIAL_USE_FLAG, fmt.Sprint(specialUseFlag))
+	if _, found := newContext.Bool(SpecialUseFlag); !found {
+		newContext.SetOption(SpecialUseFlag, fmt.Sprint(specialUseFlag))
 	}
 
 	appHandle := logger.InitializeFromConfig(BasePath, newContext)
@@ -263,9 +263,8 @@ func updateLog(inputmode string) (returnMode string) {
 }
 
 // Set the secret key.
-func SetSecretKey(newKey []byte) error {
+func SetSecretKey(newKey []byte) {
 	secretKey = newKey
-	return nil
 }
 
 // ResolveImportPath returns the filesystem path for the given import path.

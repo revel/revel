@@ -23,7 +23,7 @@ type A struct {
 	ID   int
 	Name string
 	B    B
-	//nolint:unused
+	//nolint:unused,structcheck
 	private int
 }
 
@@ -386,6 +386,8 @@ func TestUnbinder(t *testing.T) {
 // Helpers
 
 func valEq(t *testing.T, name string, actual, expected reflect.Value) {
+	t.Helper()
+
 	switch expected.Kind() {
 	case reflect.Slice:
 		// Check the type/length/element type

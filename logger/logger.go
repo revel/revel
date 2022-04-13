@@ -7,6 +7,14 @@ import (
 	"github.com/revel/config"
 )
 
+// Error is used for static errors.
+type Error string
+
+// Error implements the error interface.
+func (e Error) Error() string {
+	return string(e)
+}
+
 // The LogHandler defines the interface to handle the log records.
 type (
 	// The Multilogger reduces the number of exposed defined logging variables,
@@ -143,7 +151,7 @@ const (
 	LvlDebug                 // Debug
 )
 
-// A list of all the log levels.
+// LvlAllList is a a list of all the log levels.
 var LvlAllList = []LogLevel{LvlDebug, LvlInfo, LvlWarn, LvlError, LvlCrit}
 
 // Implements the ParentLogHandler.

@@ -39,7 +39,7 @@ var compressLog = RevelLog.New("section", "compress")
 type WriteFlusher interface {
 	io.Writer     // An IO Writer
 	io.Closer     // A closure
-	Flush() error /// A flush function
+	Flush() error // A flush function
 }
 
 // The compressed writer.

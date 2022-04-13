@@ -1,7 +1,6 @@
-/*
-  Package logger contains filters and handles for the logging utilities in Revel.
-  These facilities all currently use the logging library called log15 at
-  https://github.com/inconshreveable/log15
+/* Package logger contains filters and handles for the logging utilities in Revel.
+These facilities all currently use the logging library called log15 at
+https://github.com/inconshreveable/log15
 
 	Defining handlers happens as follows
 	1) ALL handlers (log.all.output) replace any existing handlers

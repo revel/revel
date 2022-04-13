@@ -41,14 +41,14 @@ type Watcher struct {
 	timerMutex          *sync.Mutex         // A mutex to prevent concurrent updates
 	refreshChannel      chan *Error         // The error channel to listen to when waiting for a refresh
 	refreshChannelCount int                 // The number of clients listening on the channel
-	refreshTimerMS      time.Duration       // The number of milliseconds between refreshing builds
+	timerInterval       time.Duration       // The interval between refreshing builds
 }
 
 func NewWatcher() *Watcher {
 	return &Watcher{
 		forceRefresh:        true,
 		lastError:           -1,
-		refreshTimerMS:      time.Duration(Config.IntDefault("watch.rebuild.delay", 10)),
+		timerInterval:       time.Duration(Config.IntDefault("watch.rebuild.delay", 10)),
 		timerMutex:          &sync.Mutex{},
 		refreshChannel:      make(chan *Error, 10),
 		refreshChannelCount: 0,
@@ -98,9 +98,7 @@ func (w *Watcher) Listen(listener Listener, roots ...string) {
 			continue
 		}
 
-		var watcherWalker func(path string, info os.FileInfo, err error) error
-
-		watcherWalker = func(path string, info os.FileInfo, err error) error {
+		watcherWalker := func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				utilLog.Error("Watcher: Error walking path:", "error", err)
 				return nil
@@ -155,7 +153,9 @@ func (w *Watcher) NotifyWhenUpdated(listener Listener, watcher *fsnotify.Watcher
 				} else {
 					// Run refresh in parallel
 					go func() {
-						w.notifyInProcess(listener)
+						if err := w.notifyInProcess(listener); err != nil {
+							utilLog.Error("Error notifying", "err", err)
+						}
 					}()
 				}
 			}
@@ -225,11 +225,11 @@ func (w *Watcher) notifyInProcess(listener Listener) (err *Error) {
 		w.forceRefresh = true
 		if w.refreshTimer != nil {
 			utilLog.Info("Found existing timer running, resetting")
-			w.refreshTimer.Reset(time.Millisecond * w.refreshTimerMS)
+			w.refreshTimer.Reset(w.timerInterval)
 			shouldReturn = true
 			w.refreshChannelCount++
 		} else {
-			w.refreshTimer = time.NewTimer(time.Millisecond * w.refreshTimerMS)
+			w.refreshTimer = time.NewTimer(w.timerInterval)
 		}
 	}()
 

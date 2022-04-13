@@ -219,14 +219,16 @@ func (g *GoHttpServer) Event(event Event, args interface{}) (r EventResponse) {
 	case ENGINE_STARTED:
 		signal.Notify(g.signalChan, os.Interrupt, syscall.SIGTERM, os.Kill)
 		go func() {
-			_ = <-g.signalChan
+			<-g.signalChan
 			serverLogger.Info("Received quit singal Please wait ... ")
 			RaiseEvent(ENGINE_SHUTDOWN_REQUEST, nil)
 		}()
 	case ENGINE_SHUTDOWN_REQUEST:
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(Config.IntDefault("app.cancel.timeout", 60)))
 		defer cancel()
-		g.Server.Shutdown(ctx)
+		if err := g.Server.Shutdown(ctx); err != nil {
+			serverLogger.Error("Shutting down", "err", err)
+		}
 	default:
 	}
 

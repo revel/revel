@@ -7,6 +7,7 @@ package revel
 import (
 	"bufio"
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -166,9 +167,7 @@ func (loader *TemplateLoader) Refresh() (err *Error) {
 			fullSrcDir = basePath
 		}
 
-		var templateWalker filepath.WalkFunc
-
-		templateWalker = func(path string, info os.FileInfo, err error) error {
+		templateWalker := filepath.WalkFunc(func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				templateLog.Error("Refresh: error walking templates:", "error", err)
 				return nil
@@ -195,9 +194,12 @@ func (loader *TemplateLoader) Refresh() (err *Error) {
 			}
 			// Store / report the first error encountered.
 			if err != nil && runtimeLoader.compileError == nil {
-				runtimeLoader.compileError, _ = err.(*Error)
+				var er *Error
+				if errors.As(err, &er) {
+					runtimeLoader.compileError = er
+				}
 
-				if nil == runtimeLoader.compileError {
+				if runtimeLoader.compileError == nil {
 					_, line, description := ParseTemplateError(err)
 
 					runtimeLoader.compileError = &Error{
@@ -210,17 +212,21 @@ func (loader *TemplateLoader) Refresh() (err *Error) {
 				}
 				templateLog.Errorf("Refresh: Template compilation error (In %s around line %d):\n\t%s",
 					path, runtimeLoader.compileError.Line, err.Error())
-			} else if nil != err { //&& strings.HasPrefix(templateName, "errors/") {
-				if compileError, ok := err.(*Error); ok {
-					templateLog.Errorf("Template compilation error (In %s around line %d):\n\t%s",
-						path, compileError.Line, err.Error())
+			} else if err != nil { // && strings.HasPrefix(templateName, "errors/") {
+				var er *Error
+
+				if errors.As(err, &er) {
+					templateLog.Errorf(
+						"Template compilation error (In %s around line %d):\n\t%s",
+						path, er.Line, err.Error())
 				} else {
-					templateLog.Errorf("Template compilation error (In %s ):\n\t%s",
+					templateLog.Errorf(
+						"Template compilation error (In %s ):\n\t%s",
 						path, err.Error())
 				}
 			}
 			return nil
-		}
+		})
 
 		if _, err = os.Lstat(fullSrcDir); os.IsNotExist(err) {
 			// #1058 Given views/template path is not exists
@@ -263,7 +269,7 @@ func (runtimeLoader *templateRuntime) findAndAddTemplate(path, fullSrcDir, baseP
 	templateName := filepath.ToSlash(path[len(fullSrcDir)+1:])
 	// Convert template names to use forward slashes, even on Windows.
 	if os.PathSeparator == '\\' {
-		templateName = strings.Replace(templateName, `\`, `/`, -1) // `
+		templateName = strings.ReplaceAll(templateName, `\`, `/`) // `
 	}
 
 	// Check to see if template was found
@@ -298,13 +304,14 @@ func (runtimeLoader *templateRuntime) findAndAddTemplate(path, fullSrcDir, baseP
 	// Try all engines available
 	var defaultError error
 	for _, engine := range runtimeLoader.templatesAndEngineList {
-		if loaded, loaderr := runtimeLoader.loadIntoEngine(engine, baseTemplate); loaded {
+		loaded, loaderr := runtimeLoader.loadIntoEngine(engine, baseTemplate)
+		if loaded {
 			return
-		} else {
-			templateLog.Debugf("findAndAddTemplate: Engine '%s' unable to compile %s %s", engine.Name(), path, loaderr.Error())
-			if defaultError == nil {
-				defaultError = loaderr
-			}
+		}
+
+		templateLog.Debugf("findAndAddTemplate: Engine '%s' unable to compile %s %s", engine.Name(), path, loaderr.Error())
+		if defaultError == nil {
+			defaultError = loaderr
 		}
 	}
 
@@ -313,7 +320,7 @@ func (runtimeLoader *templateRuntime) findAndAddTemplate(path, fullSrcDir, baseP
 
 	// No engines could be found return the err
 	if err == nil {
-		err = fmt.Errorf("Failed to parse template file using engines %s", path)
+		err = fmt.Errorf("%w %s", ErrTemplateParsingFailed, path)
 	}
 
 	return
@@ -350,8 +357,9 @@ func (runtimeLoader *templateRuntime) loadIntoEngine(engine TemplateEngine, base
 // Parse the line, and description from an error message like:
 // html/template:Application/Register.html:36: no such template "footer.html".
 func ParseTemplateError(err error) (templateName string, line int, description string) {
-	if e, ok := err.(*Error); ok {
-		return "", e.Line, e.Description
+	var er *Error
+	if errors.As(err, &er) {
+		return "", er.Line, er.Description
 	}
 
 	description = err.Error()
@@ -388,7 +396,7 @@ func (runtimeLoader *templateRuntime) TemplateLang(name, lang string) (tmpl Temp
 	// Fetch the template from the map
 	tmpl = runtimeLoader.templateLoad(name, lang)
 	if tmpl == nil {
-		err = fmt.Errorf("Template %s not found.", name)
+		err = fmt.Errorf("%w %s", ErrTemplateNotFound, name)
 	}
 
 	return
