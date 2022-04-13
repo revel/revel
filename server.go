@@ -9,6 +9,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/revel/revel/session"
 	"github.com/revel/revel/utils"
@@ -146,6 +147,7 @@ func initControllerStack() {
 		RevelConfig.Controller.CachedStackSize = Config.IntDefault("revel.cache.controller.stack", 10)
 		RevelConfig.Controller.CachedStackMaxSize = Config.IntDefault("revel.cache.controller.maxstack", 100)
 		RevelConfig.Controller.CachedMap = map[string]*utils.SimpleLockStack{}
+		RevelConfig.Controller.CacheMapLocked = &sync.RWMutex{}
 	}
 }
 
