@@ -19,6 +19,7 @@ import (
 
 	"github.com/revel/pathtree"
 	"github.com/revel/revel/logger"
+	"golang.org/x/net/http/httpguts"
 )
 
 const (
@@ -170,6 +171,12 @@ type Router struct {
 func (router *Router) Route(req *Request) (routeMatch *RouteMatch) {
 	// Override method if set in header
 	if method := req.GetHttpHeader("X-HTTP-Method-Override"); method != "" && req.Method == "POST" {
+		isNotToken := func(r rune) bool {
+			return !httpguts.IsTokenRune(r)
+		}
+		if strings.IndexFunc(method, isNotToken) != -1 {
+			return nil
+		}
 		req.Method = method
 	}
 
