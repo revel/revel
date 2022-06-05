@@ -5,6 +5,8 @@
 package revel
 
 import (
+	"bufio"
+	"bytes"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -672,4 +674,51 @@ func eq(t *testing.T, name string, a, b interface{}) bool {
 		return false
 	}
 	return true
+}
+
+var validMethod_tests = []struct {
+	in   string
+	want bool
+}{
+	{"OPTIONS", true},
+	{"GET", true},
+	{"HEAD", true},
+	{"POST", true},
+	{"PUT", true},
+	{"DELETE", true},
+	{"TRACE", true},
+	{"CONNECT", true},
+	{"RANDOMSTRING", true},
+	{"BAD/STRING", false},
+	{"", false},
+	{"UNDERSCORE_FINE", true},
+	{"BAD SPACE", false},
+	{" ", false},
+	{"A ", false},
+	{" A", false},
+}
+
+func Test_validMethod(t *testing.T) {
+	for _, tt := range validMethod_tests {
+		got := validMethod(tt.in)
+		if tt.want != got {
+			t.Errorf("validMethod(%q) = %t, want %t", tt.in, got, tt.want)
+		}
+	}
+}
+
+func Test_validMethod_againtsNetHttp(t *testing.T) {
+	for i := 0; i < 256; i++ {
+		s := string(byte(i))
+		for _, in := range []string{s, s + "A", "A" + s, s + "A" + s, "A" + s + "A"} {
+
+			_, err := http.ReadRequest(bufio.NewReader(bytes.NewBuffer([]byte(in + " / HTTP/1.0\r\nHost: a\r\n\r\n"))))
+			got := validMethod(in)
+			if (err == nil) != got {
+				t.Errorf("validMethod(%q) = %t, http.ReadRequest(...) = %v", in, got, err)
+			}
+
+		}
+	}
+
 }

@@ -19,6 +19,7 @@ import (
 
 	"github.com/revel/pathtree"
 	"github.com/revel/revel/logger"
+	"golang.org/x/net/http/httpguts"
 )
 
 const (
@@ -160,6 +161,16 @@ func treePath(method, path string) string {
 	return "/" + method + path
 }
 
+//validMethod is copied from net/http/request.go
+func validMethod(method string) bool {
+	return len(method) > 0 && strings.IndexFunc(method, isNotToken) == -1
+}
+
+//isNotToken is copied from net/http/http.go
+func isNotToken(r rune) bool {
+	return !httpguts.IsTokenRune(r)
+}
+
 type Router struct {
 	Routes []*Route
 	Tree   *pathtree.Node
@@ -169,7 +180,7 @@ type Router struct {
 
 func (router *Router) Route(req *Request) (routeMatch *RouteMatch) {
 	// Override method if set in header
-	if method := req.GetHttpHeader("X-HTTP-Method-Override"); method != "" && req.Method == "POST" {
+	if method := req.GetHttpHeader("X-HTTP-Method-Override"); method != "" && req.Method == "POST" && validMethod(method) {
 		req.Method = method
 	}
 
