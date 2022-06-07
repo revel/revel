@@ -162,11 +162,13 @@ func treePath(method, path string) string {
 }
 
 //validMethod is copied from net/http/request.go
+//its used to validate the X-HTTP-Method-Override so that it only may contain valid characters for a http method in a identical way to how net/http validates method.
 func validMethod(method string) bool {
 	return len(method) > 0 && strings.IndexFunc(method, isNotToken) == -1
 }
 
 //isNotToken is copied from net/http/http.go
+//its is used by validMethod to validate X-HTTP-Method-Override
 func isNotToken(r rune) bool {
 	return !httpguts.IsTokenRune(r)
 }
@@ -179,7 +181,7 @@ type Router struct {
 }
 
 func (router *Router) Route(req *Request) (routeMatch *RouteMatch) {
-	// Override method if set in header
+	// Override method if set in header and content is a valid method
 	if method := req.GetHttpHeader("X-HTTP-Method-Override"); method != "" && req.Method == "POST" && validMethod(method) {
 		req.Method = method
 	}
