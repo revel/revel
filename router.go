@@ -19,6 +19,7 @@ import (
 
 	"github.com/revel/pathtree"
 	"github.com/revel/revel/logger"
+	"golang.org/x/net/http/httpguts"
 )
 
 const (
@@ -160,6 +161,18 @@ func treePath(method, path string) string {
 	return "/" + method + path
 }
 
+//validMethod is copied from net/http/request.go
+// used to validate the X-HTTP-Method-Override so that only valid HTTP method characters are allowed (in the same way as in net/http/request.go).
+func validMethod(method string) bool {
+	return len(method) > 0 && strings.IndexFunc(method, isNotToken) == -1
+}
+
+//isNotToken is copied from net/http/http.go
+// used by validMethod to detect unacceptable characters in X-HTTP-Method-Override
+func isNotToken(r rune) bool {
+	return !httpguts.IsTokenRune(r)
+}
+
 type Router struct {
 	Routes []*Route
 	Tree   *pathtree.Node
@@ -168,8 +181,9 @@ type Router struct {
 }
 
 func (router *Router) Route(req *Request) (routeMatch *RouteMatch) {
-	// Override method if set in header
-	if method := req.GetHttpHeader("X-HTTP-Method-Override"); method != "" && req.Method == "POST" {
+	// Override method if set in header and content is a valid method
+	// It's important to verify that the override method is a valid method before using it. This is because revels internal routing key is based on the concatenation of method and path. If / would be allowed in the override method then it would be possible to modify the path portion of the routing key which we don't want.
+	if method := req.GetHttpHeader("X-HTTP-Method-Override"); method != "" && req.Method == "POST" && validMethod(method) {
 		req.Method = method
 	}
 
