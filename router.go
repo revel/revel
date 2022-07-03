@@ -182,6 +182,7 @@ type Router struct {
 
 func (router *Router) Route(req *Request) (routeMatch *RouteMatch) {
 	// Override method if set in header and content is a valid method
+	// It's important to verify that the override method is a valid method before using it. This is because revels internal routing key is based on the concatenation of method and path. If / would be allowed in the override method then it would be possible to modify the path portion of the routing key which we don't want.
 	if method := req.GetHttpHeader("X-HTTP-Method-Override"); method != "" && req.Method == "POST" && validMethod(method) {
 		req.Method = method
 	}
