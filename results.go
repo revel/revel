@@ -397,7 +397,10 @@ func (r *BinaryResult) Apply(req *Request, resp *Response) {
 	if r.Delivery != NoDisposition {
 		disposition := string(r.Delivery)
 		if r.Name != "" {
-			disposition += fmt.Sprintf(`; filename="%s"`, r.Name)
+			disposition += fmt.Sprintf(
+				`; filename="%s"`,
+				strings.Replace(r.Name, "\"", "\\\"", -1),
+			)
 		}
 		resp.Out.internalHeader.Set("Content-Disposition", disposition)
 	}
