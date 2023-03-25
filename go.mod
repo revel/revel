@@ -14,7 +14,7 @@ require (
 	github.com/revel/log15 v2.11.20+incompatible
 	github.com/revel/pathtree v0.0.0-20140121041023-41257a1839e9
 	github.com/stretchr/testify v1.7.1
-	github.com/xeonx/timeago v1.0.0-rc4
+	github.com/xeonx/timeago v1.0.0-rc5
 	golang.org/x/net v0.0.0-20220412020605-290c469a71a5
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 	gopkg.in/stack.v0 v0.0.0-20141108040640-9b43fcefddd0
