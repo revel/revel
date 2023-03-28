@@ -313,10 +313,26 @@ func TimeAgo(args ...interface{}) string {
 
 	if lang == "" {
 		lang, _ = Config.String(defaultLanguageOption)
-		if lang == "en" {
-			timeAgoLangs[lang] = timeago.English
-		}
 	}
+	switch lang {
+	case "de":
+		timeAgoLangs[lang] = timeago.German
+	case "fr":
+		timeAgoLangs[lang] = timeago.French
+	case "ko":
+		timeAgoLangs[lang] = timeago.Korean
+	case "pt":
+		timeAgoLangs[lang] = timeago.Portuguese
+	case "sp":
+		timeAgoLangs[lang] = timeago.Spanish
+	case "tr":
+		timeAgoLangs[lang] = timeago.Turkish
+	case "zh":
+		timeAgoLangs[lang] = timeago.Chinese
+	default:
+		timeAgoLangs[lang] = timeago.English
+	}
+	
 
 	_, ok := timeAgoLangs[lang]
 	if !ok {
