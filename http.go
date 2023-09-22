@@ -26,7 +26,7 @@ type Request struct {
 	ContentType     string          // The content type
 	Format          string          // The output format "html", "xml", "json", or "txt"
 	AcceptLanguages AcceptLanguages // The languages to accept
-	Locale          string          // THe locale
+	Locale          string          // The locale
 	WebSocket       ServerWebSocket // The websocket
 	Method          string          // The method
 	RemoteAddr      string          // The remote address
