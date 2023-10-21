@@ -7,7 +7,7 @@ package revel
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"reflect"
@@ -112,7 +112,7 @@ func TestMultipartForm(t *testing.T) {
 	for key, fileHeaders := range c.Params.Files {
 		for _, fileHeader := range fileHeaders {
 			file, _ := fileHeader.Open()
-			content, _ := ioutil.ReadAll(file)
+			content, _ := io.ReadAll(file)
 			actualFiles[key] = append(actualFiles[key], fh{fileHeader.Filename, content})
 		}
 	}

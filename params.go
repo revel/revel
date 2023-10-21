@@ -7,7 +7,7 @@ package revel
 import (
 	"encoding/json"
 	"errors"
-	"io/ioutil"
+	"io"
 	"mime/multipart"
 	"net/url"
 	"os"
@@ -64,7 +64,7 @@ func ParseParams(params *Params, req *Request) {
 		fallthrough
 	case "text/json":
 		if body := req.GetBody(); body != nil {
-			if content, err := ioutil.ReadAll(body); err == nil {
+			if content, err := io.ReadAll(body); err == nil {
 				// We wont bind it until we determine what we are binding too
 				params.JSON = content
 			} else {

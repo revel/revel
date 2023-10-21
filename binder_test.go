@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"reflect"
 	"sort"
@@ -180,10 +179,10 @@ var binderTestCases = map[string]interface{}{
 // that type.
 // TODO: Is there any way to create a slice, given only the element Type?
 var fileBindings = []struct{ val, arrval, f interface{} }{
-	{(**os.File)(nil), []*os.File{}, ioutil.ReadAll},
+	{(**os.File)(nil), []*os.File{}, io.ReadAll},
 	{(*[]byte)(nil), [][]byte{}, func(b []byte) []byte { return b }},
-	{(*io.Reader)(nil), []io.Reader{}, ioutil.ReadAll},
-	{(*io.ReadSeeker)(nil), []io.ReadSeeker{}, ioutil.ReadAll},
+	{(*io.Reader)(nil), []io.Reader{}, io.ReadAll},
+	{(*io.ReadSeeker)(nil), []io.ReadSeeker{}, io.ReadAll},
 }
 
 func TestJsonBinder(t *testing.T) {

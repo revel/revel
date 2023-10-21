@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"mime/multipart"
 	"os"
 	"reflect"
@@ -380,7 +379,7 @@ func bindFile(params *Params, name string, typ reflect.Type) reflect.Value {
 	}
 
 	// Otherwise, have to store it.
-	tmpFile, err := ioutil.TempFile("", "revel-upload")
+	tmpFile, err := os.CreateTemp("", "revel-upload")
 	if err != nil {
 		binderLog.Warn("bindFile: Failed to create a temp file to store upload", "name", name, "error", err)
 		return reflect.Zero(typ)
@@ -406,7 +405,7 @@ func bindFile(params *Params, name string, typ reflect.Type) reflect.Value {
 
 func bindByteArray(params *Params, name string, typ reflect.Type) reflect.Value {
 	if reader := getMultipartFile(params, name); reader != nil {
-		b, err := ioutil.ReadAll(reader)
+		b, err := io.ReadAll(reader)
 		if err == nil {
 			return reflect.ValueOf(b)
 		}
@@ -423,7 +422,8 @@ func bindReadSeeker(params *Params, name string, typ reflect.Type) reflect.Value
 }
 
 // bindMap converts parameters using map syntax into the corresponding map. e.g.:
-//   params["a[5]"]=foo, name="a", typ=map[int]string => map[int]string{5: "foo"}
+//
+//	params["a[5]"]=foo, name="a", typ=map[int]string => map[int]string{5: "foo"}
 func bindMap(params *Params, name string, typ reflect.Type) reflect.Value {
 	var (
 		keyType   = typ.Key()

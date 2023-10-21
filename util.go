@@ -7,7 +7,6 @@ package revel
 import (
 	"bytes"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
@@ -58,7 +57,7 @@ func MustReadLines(filename string) []string {
 
 // ReadLines reads the lines of the given file.  Panics in the case of error.
 func ReadLines(filename string) ([]string, error) {
-	dataBytes, err := ioutil.ReadFile(filename)
+	dataBytes, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}
@@ -144,11 +143,11 @@ func FirstNonEmpty(strs ...string) string {
 }
 
 // Equal is a helper for comparing value equality, following these rules:
-//  - Values with equivalent types are compared with reflect.DeepEqual
-//  - int, uint, and float values are compared without regard to the type width.
-//    for example, Equal(int32(5), int64(5)) == true
-//  - strings and byte slices are converted to strings before comparison.
-//  - else, return false.
+//   - Values with equivalent types are compared with reflect.DeepEqual
+//   - int, uint, and float values are compared without regard to the type width.
+//     for example, Equal(int32(5), int64(5)) == true
+//   - strings and byte slices are converted to strings before comparison.
+//   - else, return false.
 func Equal(a, b interface{}) bool {
 	if reflect.TypeOf(a) == reflect.TypeOf(b) {
 		return reflect.DeepEqual(a, b)
