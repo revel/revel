@@ -9,7 +9,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -273,7 +272,7 @@ func (runtimeLoader *templateRuntime) findAndAddTemplate(path, fullSrcDir, baseP
 		return
 	}
 
-	fileBytes, err = ioutil.ReadFile(path)
+	fileBytes, err = os.ReadFile(path)
 	if err != nil {
 		templateLog.Error("findAndAddTemplate: Failed reading file:", "path", path, "error", err)
 		return

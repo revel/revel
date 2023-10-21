@@ -8,7 +8,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"mime"
 	"mime/multipart"
 	"net/http"
@@ -62,6 +61,7 @@ func NewTestSuiteEngine(engine revel.SessionEngine) TestSuite {
 
 // NewTestRequest returns an initialized *TestRequest. It is used for extending
 // testsuite package making it possible to define own methods. Example:
+//
 //	type MyTestSuite struct {
 //		testing.TestSuite
 //	}
@@ -266,7 +266,7 @@ func (r *TestRequest) MakeRequest() {
 	if r.testSuite.Response, err = r.testSuite.Client.Do(r.Request); err != nil {
 		panic(err)
 	}
-	if r.testSuite.ResponseBody, err = ioutil.ReadAll(r.testSuite.Response.Body); err != nil {
+	if r.testSuite.ResponseBody, err = io.ReadAll(r.testSuite.Response.Body); err != nil {
 		panic(err)
 	}
 

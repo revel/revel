@@ -11,7 +11,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"reflect"
 	"strconv"
@@ -152,7 +151,7 @@ func (r *RenderTemplateResult) Apply(req *Request, resp *Response) {
 	// If it's a HEAD request, throw away the bytes.
 	out := resp.GetWriter()
 	if req.Method == "HEAD" {
-		out = ioutil.Discard
+		out = io.Discard
 	}
 
 	// In a prod mode, write the status, render, and hope for the best.
