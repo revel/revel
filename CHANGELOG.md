@@ -850,7 +850,7 @@ Changes since v0.9.1:
 - [BUG] #287 - Don't remove the parent folders containing generated code.
 - [BUG] #556 - fix for #534, also added url path to not found message
 - [BUG] #534 - Websocket route not found
-- [BUG] #343 - validation.Required(funtionCall).Key(...) - reflect.go:715: Failed to generate name for field.
+- [BUG] #343 - validation.Required(functionCall).Key(...) - reflect.go:715: Failed to generate name for field.
 - [ENH] #643 - Documentation Fix in Skeleton for OnAppStart
 - [ENH] #674 - Removes custom `eq` template function
 - [ENH] #669 - Develop compress closenotifier
